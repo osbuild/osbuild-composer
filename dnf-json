@@ -1,0 +1,72 @@
+#!/usr/bin/python3
+
+import datetime
+import dnf
+import json
+import sys
+
+
+def timestamp_to_rfc3339(timestamp):
+    d = datetime.datetime.utcfromtimestamp(package.buildtime)
+    return d.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+# base.sack.query().filter(provides=str(reldep))
+
+
+try:
+    command = sys.argv[1]
+    arguments = sys.argv[2:]
+except IndexError:
+    command = "list"
+    arguments = []
+
+
+base = dnf.Base()
+
+base.conf.cachedir = "./dnf-cache"
+base.conf.substitutions["releasever"] = "30"
+base.conf.substitutions["basearch"] = "x86_64"
+
+repo = dnf.repo.Repo("fedora", base.conf)
+repo.name = "Fedora"
+repo.metalink = "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch"
+
+base.repos.add(repo)
+base.fill_sack(load_system_repo=False)
+
+if command == "list":
+    packages = [p.name for p in base.sack.query().available()]
+    json.dump(packages, sys.stdout)
+
+elif command == "dump":
+    packages = []
+    for package in base.sack.query().available():
+        packages.append({
+            "name": package.name,
+            "summary": package.summary,
+            "description": package.description,
+            "url": package.url,
+            "epoch": package.epoch,
+            "version": package.version,
+            "release": package.release,
+            "arch": package.arch,
+            "buildtime": timestamp_to_rfc3339(package.buildtime),
+            "license": package.license
+        })
+    json.dump(packages, sys.stdout)
+
+elif command == "depsolve":
+    for pkgspec in arguments:
+        base.install(pkgspec)
+    base.resolve()
+    packages = []
+    for package in base.transaction.install_set:
+        packages.append({
+            "name": package.name,
+            "epoch": package.epoch,
+            "version": package.version,
+            "release": package.release,
+            "arch": package.arch
+        })
+    json.dump(packages, sys.stdout)
