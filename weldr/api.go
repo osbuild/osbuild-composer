@@ -13,33 +13,19 @@ import (
 )
 
 type API struct {
-	store    *store
-	composer Composer
+	store *store
 
-	baseRepo rpmmd.RepoConfig
+	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
 
 	router *httprouter.Router
 }
 
-type Composer interface {
-	Repositories() []string
-	RepositoryConfig(name string) (rpmmd.RepoConfig, bool)
-}
-
-func New(composer Composer) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList) *API {
 	api := &API{
-		composer: composer,
 		store:    newStore(),
-	}
-
-	// only one repository right now
-	api.baseRepo, _ = composer.RepositoryConfig(composer.Repositories()[0])
-
-	var err error
-	api.packages, err = rpmmd.FetchPackageList(api.baseRepo)
-	if err != nil {
-		panic(err)
+		repo:     repo,
+		packages: packages,
 	}
 
 	// sample blueprint
@@ -142,7 +128,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		Sources: []string{api.baseRepo.Name},
+		Sources: []string{api.repo.Name},
 	})
 }
 
@@ -164,27 +150,27 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	// we only have one repository
 	names := strings.Split(params.ByName("sources"), ",")
-	if names[0] != api.baseRepo.Name && names[0] != "*" {
+	if names[0] != api.repo.Name && names[0] != "*" {
 		statusResponseError(writer, http.StatusBadRequest, "repository not found: "+names[0])
 		return
 	}
 
 	cfg := sourceConfig{
-		Id:       api.baseRepo.Id,
-		Name:     api.baseRepo.Name,
+		Id:       api.repo.Id,
+		Name:     api.repo.Name,
 		CheckGPG: true,
 		CheckSSL: true,
 		System:   true,
 	}
 
-	if api.baseRepo.BaseURL != "" {
-		cfg.URL = api.baseRepo.BaseURL
+	if api.repo.BaseURL != "" {
+		cfg.URL = api.repo.BaseURL
 		cfg.Type = "yum-baseurl"
-	} else if api.baseRepo.Metalink != "" {
-		cfg.URL = api.baseRepo.Metalink
+	} else if api.repo.Metalink != "" {
+		cfg.URL = api.repo.Metalink
 		cfg.Type = "yum-metalink"
-	} else if api.baseRepo.MirrorList != "" {
-		cfg.URL = api.baseRepo.MirrorList
+	} else if api.repo.MirrorList != "" {
+		cfg.URL = api.repo.MirrorList
 		cfg.Type = "yum-mirrorlist"
 	}
 
