@@ -7,7 +7,7 @@ import (
 )
 
 func parseOffsetAndLimit(query url.Values) (uint, uint, error) {
-	var offset, limit uint64 = 0, 10
+	var offset, limit uint64 = 0, 20
 	var err error
 
 	if v := query.Get("offset"); v != "" {

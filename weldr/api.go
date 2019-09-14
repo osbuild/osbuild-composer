@@ -204,12 +204,12 @@ func (api *API) modulesListAllHandler(writer http.ResponseWriter, request *http.
 	}
 
 	total := uint(len(api.packages))
-	offset = min(offset, total)
-	limit = min(limit, total-offset)
+	start := min(offset, total)
+	n := min(limit, total-start)
 
-	modules := make([]modulesListModule, limit)
-	for i := uint(0); i < limit; i++ {
-		modules[i] = modulesListModule{api.packages[offset+i].Name, "rpm"}
+	modules := make([]modulesListModule, n)
+	for i := uint(0); i < n; i++ {
+		modules[i] = modulesListModule{api.packages[start+i].Name, "rpm"}
 	}
 
 	json.NewEncoder(writer).Encode(modulesListReply{
@@ -256,8 +256,8 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	json.NewEncoder(writer).Encode(modulesListReply{
 		Total:   total,
-		Offset:  min(offset, total),
-		Limit:   min(limit, total-offset),
+		Offset:  offset,
+		Limit:   limit,
 		Modules: modules,
 	})
 }
