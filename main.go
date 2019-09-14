@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +14,10 @@ import (
 )
 
 func main() {
+	var verbose bool
+	flag.BoolVar(&verbose, "v", false, "Print access log")
+	flag.Parse()
+
 	err := os.Remove("/run/weldr/api.socket")
 	if err != nil && !os.IsNotExist(err) {
 		panic(err)
@@ -33,7 +39,12 @@ func main() {
 		panic(err)
 	}
 
-	api := weldr.New(repo, packages)
+	var logger *log.Logger
+	if verbose {
+		logger = log.New(os.Stdout, "", 0)
+	}
+
+	api := weldr.New(repo, packages, logger)
 	server := http.Server{Handler: api}
 
 	shutdownDone := make(chan struct{}, 1)

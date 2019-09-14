@@ -18,14 +18,16 @@ type API struct {
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
 
+	logger *log.Logger
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger) *API {
 	api := &API{
 		store:    newStore(),
 		repo:     repo,
 		packages: packages,
+		logger:   logger,
 	}
 
 	// sample blueprint
@@ -68,7 +70,10 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList) *API {
 }
 
 func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	log.Println(request.URL.Path)
+	if api.logger != nil {
+		log.Println(request.Method, request.URL.Path)
+	}
+
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	api.router.ServeHTTP(writer, request)
 }
