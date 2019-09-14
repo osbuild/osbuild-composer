@@ -133,7 +133,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		Sources: []string{api.repo.Name},
+		Sources: []string{api.repo.Id},
 	})
 }
 
@@ -155,7 +155,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	// we only have one repository
 	names := strings.Split(params.ByName("sources"), ",")
-	if names[0] != api.repo.Name && names[0] != "*" {
+	if names[0] != api.repo.Id && names[0] != "*" {
 		statusResponseError(writer, http.StatusBadRequest, "repository not found: "+names[0])
 		return
 	}
@@ -180,7 +180,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		Sources: map[string]sourceConfig{cfg.Name: cfg},
+		Sources: map[string]sourceConfig{cfg.Id: cfg},
 	})
 }
 
