@@ -12,6 +12,11 @@ import (
 )
 
 func main() {
+	err := os.Remove("/run/weldr/api.socket")
+	if err != nil && !os.IsNotExist(err) {
+		panic(err)
+	}
+
 	listener, err := net.Listen("unix", "/run/weldr/api.socket")
 	if err != nil {
 		panic(err)
