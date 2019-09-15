@@ -1,6 +1,7 @@
 package weldr_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,56 @@ var packages = rpmmd.PackageList {
 	{ Name: "package2" },
 }
 
-func TestAPI(t *testing.T) {
+func testRoute(t *testing.T, api *weldr.API, method, path, body string, expectedStatus int, expectedJSON string) {
+	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp := httptest.NewRecorder()
+	api.ServeHTTP(resp, req)
+
+	if resp.Code != expectedStatus {
+		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, resp.Code)
+		return
+	}
+
+	replyJSON, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("%s: could not read reponse body: %v", path, err)
+		return
+	}
+
+	if expectedJSON == "" {
+		if len(replyJSON) != 0 {
+			t.Errorf("%s: expected no response body, but got:\n%s", path, replyJSON)
+		}
+		return
+	}
+
+	var reply, expected interface{}
+	err = json.Unmarshal(replyJSON, &reply)
+	if err != nil {
+		t.Errorf("%s: %v\n%s", path, err, string(replyJSON))
+		return
+	}
+
+	if expectedJSON == "*" {
+		return
+	}
+
+	err = json.Unmarshal([]byte(expectedJSON), &expected)
+	if err != nil {
+		t.Errorf("%s: expected JSON is invalid: %v", path, err)
+		return
+	}
+
+	if !reflect.DeepEqual(reply, expected) {
+		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON)
+		return
+	}
+}
+
+func TestBasic(t *testing.T) {
 	var cases = []struct {
 		Path           string
 		ExpectedStatus int
@@ -61,50 +111,27 @@ func TestAPI(t *testing.T) {
 	}
 
 	for _, c:= range cases {
-		req := httptest.NewRequest("GET", c.Path, nil)
-		resp := httptest.NewRecorder()
-
 		api := weldr.New(repo, packages, nil)
-		api.ServeHTTP(resp, req)
-
-		if resp.Code != c.ExpectedStatus {
-			t.Errorf("%s: unexpected status code: %v", c.Path, resp.Code)
-			continue
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Errorf("%s: could not read reponse body: %v", c.Path, err)
-			continue
-		}
-
-		if c.ExpectedJSON == "" {
-			if len(body) != 0 {
-				t.Errorf("%s: expected no response body, but got:\n%s", c.Path, body)
-			}
-			continue
-		}
-
-		var reply, expected interface{}
-		err = json.Unmarshal(body, &reply)
-		if err != nil {
-			t.Errorf("%s: %v\n%s", c.Path, err, string(body))
-			continue
-		}
-
-		if c.ExpectedJSON == "*" {
-			continue
-		}
-
-		err = json.Unmarshal([]byte(c.ExpectedJSON), &expected)
-		if err != nil {
-			t.Errorf("%s: expected JSON is invalid: %v", c.Path, err)
-			continue
-		}
-
-		if !reflect.DeepEqual(reply, expected) {
-			t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s", c.Path, strings.TrimSpace(string(body)), c.ExpectedJSON)
-			continue
-		}
+		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
+}
+
+func TestBlueprints(t *testing.T) {
+	api := weldr.New(repo, packages, nil)
+
+	testRoute(t, api, "POST", "/api/v0/blueprints/new",
+		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
+		http.StatusOK, `{"status":true}`)
+
+	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
+	http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}],
+		"changes":[{"name":"test","changed":false}], "errors":[]}`)
+
+	testRoute(t, api, "POST", "/api/v0/blueprints/workspace",
+		`{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0"}`,
+		http.StatusOK, `{"status":true}`)
+
+	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
+	http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
+		"changes":[{"name":"test","changed":true}], "errors":[]}`)
 }

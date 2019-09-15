@@ -61,6 +61,9 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger) 
 	api.router.GET("/api/v0/blueprints/depsolve/:blueprints", api.blueprintsDepsolveHandler)
 	api.router.GET("/api/v0/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
 	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
+	api.router.POST("/api/v0/blueprints/workspace", api.blueprintsWorkspaceHandler)
+	api.router.DELETE("/api/v0/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
+	api.router.DELETE("/api/v0/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
 	api.router.GET("/api/v0/compose/queue", api.composeQueueHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
@@ -388,13 +391,14 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	blueprints := []blueprint{}
 	changes := []change{}
 	for _, name := range names {
-		blueprint, ok := api.store.getBlueprint(name)
-		if !ok {
+		var blueprint blueprint
+		var changed bool
+		if !api.store.getBlueprint(name, &blueprint, &changed) {
 			statusResponseError(writer, http.StatusNotFound)
 			return
 		}
 		blueprints = append(blueprints, blueprint)
-		changes = append(changes, change{false, blueprint.Name})
+		changes = append(changes, change{changed, blueprint.Name})
 	}
 
 	json.NewEncoder(writer).Encode(reply{
@@ -422,8 +426,8 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 	blueprints := []entry{}
 	for _, name := range names {
-		blueprint, ok := api.store.getBlueprint(name)
-		if !ok {
+		var blueprint blueprint
+		if !api.store.getBlueprint(name, &blueprint, nil) {
 			statusResponseError(writer, http.StatusNotFound)
 			return
 		}
@@ -472,6 +476,35 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 
 	api.store.pushBlueprint(blueprint)
 
+	statusResponseOK(writer)
+}
+
+func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
+		return
+	}
+
+	var blueprint blueprint
+	err := json.NewDecoder(request.Body).Decode(&blueprint)
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid blueprint: "+err.Error())
+		return
+	}
+
+	api.store.pushBlueprintToWorkspace(blueprint)
+
+	statusResponseOK(writer)
+}
+
+func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	api.store.deleteBlueprint(params.ByName("blueprint"))
+	statusResponseOK(writer)
+}
+
+func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	api.store.deleteBlueprintFromWorkspace(params.ByName("blueprint"))
 	statusResponseOK(writer)
 }
 

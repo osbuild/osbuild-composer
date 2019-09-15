@@ -7,6 +7,7 @@ import (
 
 type store struct {
 	Blueprints map[string]blueprint `json:"blueprints"`
+	Workspace  map[string]blueprint `json:"workspace"`
 
 	mu sync.RWMutex // protects all fields
 }
@@ -27,6 +28,7 @@ type blueprintPackage struct {
 func newStore() *store {
 	return &store{
 		Blueprints: make(map[string]blueprint),
+		Workspace:  make(map[string]blueprint),
 	}
 }
 
@@ -43,17 +45,61 @@ func (s *store) listBlueprints() []string {
 	return names
 }
 
-func (s *store) getBlueprint(name string) (blueprint, bool) {
+func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	bp, ok := s.Blueprints[name]
-	return bp, ok
+	var inWorkspace bool
+	*bp, inWorkspace = s.Workspace[name]
+	if !inWorkspace {
+		var ok bool
+		*bp, ok = s.Blueprints[name]
+		if !ok {
+			return false
+		}
+	}
+
+	// cockpit-composer cannot deal with missing "packages" or "modules"
+	if bp.Packages == nil {
+		bp.Packages = []blueprintPackage{}
+	}
+	if bp.Modules == nil {
+		bp.Modules = []blueprintPackage{}
+	}
+
+	if changed != nil {
+		*changed = inWorkspace
+	}
+
+	return true
 }
 
 func (s *store) pushBlueprint(bp blueprint) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	delete(s.Workspace, bp.Name)
 	s.Blueprints[bp.Name] = bp
+}
+
+func (s *store) pushBlueprintToWorkspace(bp blueprint) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.Workspace[bp.Name] = bp
+}
+
+func (s *store) deleteBlueprint(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.Workspace, name)
+	delete(s.Blueprints, name)
+}
+
+func (s *store) deleteBlueprintFromWorkspace(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.Workspace, name)
 }
