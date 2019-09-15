@@ -22,22 +22,24 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte) *API {
 	api := &API{
-		store:    newStore(),
+		store:    newStore(initialState, stateChannel),
 		repo:     repo,
 		packages: packages,
 		logger:   logger,
 	}
 
-	// sample blueprint
-	api.store.pushBlueprint(blueprint{
-		Name:        "example",
-		Description: "An Example",
-		Version:     "1",
-		Packages:    []blueprintPackage{{"httpd", "2.*"}},
-		Modules:     []blueprintPackage{},
-	})
+	// sample blueprint on first run
+	if initialState == nil {
+		api.store.pushBlueprint(blueprint{
+			Name:        "example",
+			Description: "An Example",
+			Version:     "1",
+			Packages:    []blueprintPackage{{"httpd", "2.*"}},
+			Modules:     []blueprintPackage{},
+		})
+	}
 
 	api.router = httprouter.New()
 	api.router.RedirectTrailingSlash = false

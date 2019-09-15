@@ -1,6 +1,8 @@
 package weldr
 
 import (
+	"log"
+	"encoding/json"
 	"sort"
 	"sync"
 )
@@ -9,7 +11,8 @@ type store struct {
 	Blueprints map[string]blueprint `json:"blueprints"`
 	Workspace  map[string]blueprint `json:"workspace"`
 
-	mu sync.RWMutex // protects all fields
+	mu           sync.RWMutex // protects all fields
+	stateChannel chan<- []byte
 }
 
 type blueprint struct {
@@ -25,10 +28,41 @@ type blueprintPackage struct {
 	Version string `json:"version,omitempty"`
 }
 
-func newStore() *store {
-	return &store{
-		Blueprints: make(map[string]blueprint),
-		Workspace:  make(map[string]blueprint),
+func newStore(initialState []byte, stateChannel chan<- []byte) *store {
+	var s store
+
+	if initialState != nil {
+		err := json.Unmarshal(initialState, &s)
+		if err != nil {
+			log.Fatalf("invalid initial state: %v", err)
+		}
+	}
+
+	if s.Blueprints == nil {
+		s.Blueprints = make(map[string]blueprint)
+	}
+	if s.Workspace == nil {
+		s.Workspace = make(map[string]blueprint)
+	}
+	s.stateChannel = stateChannel
+
+	return &s
+}
+
+func (s *store) change(f func()) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	f()
+
+	if s.stateChannel != nil {
+		serialized, err := json.Marshal(s)
+		if err != nil {
+			// we ought to know all types that go into the store
+			panic(err)
+		}
+
+		s.stateChannel <- serialized
 	}
 }
 
@@ -75,31 +109,27 @@ func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 }
 
 func (s *store) pushBlueprint(bp blueprint) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.Workspace, bp.Name)
-	s.Blueprints[bp.Name] = bp
+	s.change(func() {
+		delete(s.Workspace, bp.Name)
+		s.Blueprints[bp.Name] = bp
+	})
 }
 
 func (s *store) pushBlueprintToWorkspace(bp blueprint) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.Workspace[bp.Name] = bp
+	s.change(func() {
+		s.Workspace[bp.Name] = bp
+	})
 }
 
 func (s *store) deleteBlueprint(name string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.Workspace, name)
-	delete(s.Blueprints, name)
+	s.change(func() {
+		delete(s.Workspace, name)
+		delete(s.Blueprints, name)
+	})
 }
 
 func (s *store) deleteBlueprintFromWorkspace(name string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.Workspace, name)
+	s.change(func() {
+		delete(s.Workspace, name)
+	})
 }
