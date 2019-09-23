@@ -9,7 +9,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"osbuild-composer/rpmmd"
+	"osbuild-composer/internal/rpmmd"
 )
 
 type API struct {

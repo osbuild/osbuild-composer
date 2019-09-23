@@ -11,8 +11,8 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"osbuild-composer/rpmmd"
-	"osbuild-composer/weldr"
+	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/weldr"
 )
 
 const StateFile = "/var/lib/osbuild-composer/weldr-state.json"

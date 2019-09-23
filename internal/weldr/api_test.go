@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"osbuild-composer/rpmmd"
-	"osbuild-composer/weldr"
+	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/weldr"
 )
 
 var repo = rpmmd.RepoConfig{
