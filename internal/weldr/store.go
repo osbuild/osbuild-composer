@@ -1,8 +1,8 @@
 package weldr
 
 import (
-	"log"
 	"encoding/json"
+	"log"
 	"sort"
 	"sync"
 )

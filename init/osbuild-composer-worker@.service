@@ -1,0 +1,10 @@
+[Unit]
+Description=OSBuild Composer Worker (%i)
+
+[Service]
+PrivateTmp=true
+ExecStart=/usr/local/lib/osbuild-composer/osbuild-composer-worker -C /var/lib/osbuild
+
+[Install]
+DefaultInstance=1
+WantedBy=default.target

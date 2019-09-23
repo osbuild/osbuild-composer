@@ -405,8 +405,8 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 
 	json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
-		Changes: changes,
-		Errors: []string{},
+		Changes:    changes,
+		Errors:     []string{},
 	})
 }
 
@@ -449,7 +449,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 	json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
-		Errors: []string{},
+		Errors:     []string{},
 	})
 }
 
