@@ -11,8 +11,8 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"osbuild-composer/rpmmd"
-	"osbuild-composer/weldr"
+	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/weldr"
 )
 
 const StateFile = "/var/lib/osbuild-composer/weldr-state.json"
@@ -90,7 +90,7 @@ func main() {
 func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
 	dir, name := filepath.Dir(filename), filepath.Base(filename)
 
-	tmpfile, err := ioutil.TempFile(dir, name + "-*.tmp")
+	tmpfile, err := ioutil.TempFile(dir, name+"-*.tmp")
 	if err != nil {
 		return err
 	}

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"osbuild-composer/rpmmd"
-	"osbuild-composer/weldr"
+	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/weldr"
 )
 
 var repo = rpmmd.RepoConfig{
@@ -20,9 +20,9 @@ var repo = rpmmd.RepoConfig{
 	BaseURL: "http://example.com/test/os",
 }
 
-var packages = rpmmd.PackageList {
-	{ Name: "package1" },
-	{ Name: "package2" },
+var packages = rpmmd.PackageList{
+	{Name: "package1"},
+	{Name: "package2"},
 }
 
 func testRoute(t *testing.T, api *weldr.API, method, path, body string, expectedStatus int, expectedJSON string) {
@@ -110,21 +110,21 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/blueprints/info/example", http.StatusOK, `*`},
 	}
 
-	for _, c:= range cases {
-		api := weldr.New(repo, packages, nil)
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, nil, nil)
 		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestBlueprints(t *testing.T) {
-	api := weldr.New(repo, packages, nil)
+	api := weldr.New(repo, packages, nil, nil, nil)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
-	http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}],
+		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}],
 		"changes":[{"name":"test","changed":false}], "errors":[]}`)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/workspace",
@@ -132,6 +132,6 @@ func TestBlueprints(t *testing.T) {
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
-	http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
+		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
 		"changes":[{"name":"test","changed":true}], "errors":[]}`)
 }
