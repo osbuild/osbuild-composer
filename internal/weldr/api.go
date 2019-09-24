@@ -10,13 +10,13 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"osbuild-composer/internal/queue"
+	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
 )
 
 type API struct {
-	store         *store
-	pendingBuilds chan queue.Build
+	store       *store
+	pendingJobs chan<- job.Job
 
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
@@ -25,15 +25,15 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, builds chan queue.Build) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, jobs chan<- job.Job) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:         newStore(initialState, stateChannel),
-		pendingBuilds: builds,
-		repo:          repo,
-		packages:      packages,
-		logger:        logger,
+		store:       newStore(initialState, stateChannel),
+		pendingJobs: jobs,
+		repo:        repo,
+		packages:    packages,
+		logger:      logger,
 	}
 
 	// sample blueprint on first run
@@ -131,7 +131,7 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 
 func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type reply struct {
-		Api           uint     `json:"api"`
+		API           uint     `json:"api"`
 		DBSupported   bool     `json:"db_supported"`
 		DBVersion     string   `json:"db_version"`
 		SchemaVersion string   `json:"schema_version"`
@@ -141,7 +141,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		Api:           1,
+		API:           1,
 		DBSupported:   true,
 		DBVersion:     "0",
 		SchemaVersion: "0",
@@ -165,7 +165,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	// weldr uses a slightly different format than dnf to store repository
 	// configuration
 	type sourceConfig struct {
-		Id       string `json:"id"`
+		ID       string `json:"id"`
 		Name     string `json:"name"`
 		Type     string `json:"type"`
 		URL      string `json:"url"`
@@ -185,7 +185,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	cfg := sourceConfig{
-		Id:       api.repo.Id,
+		ID:       api.repo.Id,
 		Name:     api.repo.Name,
 		CheckGPG: true,
 		CheckSSL: true,
@@ -204,7 +204,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		Sources: map[string]sourceConfig{cfg.Id: cfg},
+		Sources: map[string]sourceConfig{cfg.ID: cfg},
 	})
 }
 
@@ -270,7 +270,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 	for _, pkg := range api.packages {
 		for _, name := range names {
 			if strings.Contains(pkg.Name, name) {
-				total += 1
+				total++
 				if total > offset && total < end {
 					modules = append(modules, modulesListModule{pkg.Name, "rpm"})
 				}
@@ -593,7 +593,7 @@ func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, requ
 
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
-func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Request, _ httprouter.Params) {
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
 		BlueprintName string `json:"blueprint_name"`
@@ -601,14 +601,14 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Branch        string `json:"branch"`
 	}
 
-	contentType := request.Header["Content-Type"]
+	contentType := httpRequest.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
 		return
 	}
 
 	var cr ComposeRequest
-	err := json.NewDecoder(request.Body).Decode(&cr)
+	err := json.NewDecoder(httpRequest.Body).Decode(&cr)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid request format: "+err.Error())
 		return
@@ -619,9 +619,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		api.pendingBuilds <- queue.Build{
-			Pipeline: bp.translateToPipeline(cr.ComposeType),
-			Manifest: "{\"output-path\": \"/var/cache/osbuild\"}",
+		api.pendingJobs <- job.Job{
+			ComposeID: "TODO",
+			Pipeline:  bp.translateToPipeline(cr.ComposeType),
+			Target:    `{"output-path":"/var/cache/osbuild-composer"}`,
 		}
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")

@@ -8,7 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"osbuild-composer/internal/queue"
+	"osbuild-composer/internal/job"
+	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/weldr"
 )
@@ -30,7 +31,22 @@ func main() {
 		panic(err)
 	}
 
-	listener, err := net.Listen("unix", "/run/weldr/api.socket")
+	weldrListener, err := net.Listen("unix", "/run/weldr/api.socket")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.Remove("/run/osbuild-composer/job.socket")
+	if err != nil && !os.IsNotExist(err) {
+		panic(err)
+	}
+
+	err = os.Mkdir("/run/osbuild-composer", 0755)
+	if err != nil && !os.IsExist(err) {
+		panic(err)
+	}
+
+	jobListener, err := net.Listen("unix", "/run/osbuild-composer/job.socket")
 	if err != nil {
 		panic(err)
 	}
@@ -62,8 +78,9 @@ func main() {
 	}
 
 	stateChannel := make(chan []byte, 10)
-	buildChannel := make(chan queue.Build, 200)
-	api := weldr.New(repo, packages, logger, state, stateChannel, buildChannel)
+	jobChannel := make(chan job.Job, 200)
+	jobAPI := jobqueue.New(logger, jobChannel)
+	weldrAPI := weldr.New(repo, packages, logger, state, stateChannel, jobChannel)
 	go func() {
 		for {
 			err := writeFileAtomically(StateFile, <-stateChannel, 0755)
@@ -73,7 +90,8 @@ func main() {
 		}
 	}()
 
-	api.Serve(listener)
+	go jobAPI.Serve(jobListener)
+	weldrAPI.Serve(weldrListener)
 }
 
 func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {

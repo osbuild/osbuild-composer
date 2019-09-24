@@ -30,7 +30,6 @@ func parseOffsetAndLimit(query url.Values) (uint, uint, error) {
 func min(a, b uint) uint {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }

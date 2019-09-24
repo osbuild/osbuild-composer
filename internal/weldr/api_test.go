@@ -10,8 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"osbuild-composer/internal/queue"
+	"osbuild-composer/internal/job"
+	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/target"
 	"osbuild-composer/internal/weldr"
 )
 
@@ -141,8 +143,8 @@ func TestBlueprints(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	buildChannel := make(chan queue.Build, 200)
-	api := weldr.New(repo, packages, nil, nil, nil, buildChannel)
+	jobChannel := make(chan job.Job, 200)
+	api := weldr.New(repo, packages, nil, nil, nil, jobChannel)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
@@ -154,13 +156,13 @@ func TestCompose(t *testing.T) {
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
 		http.StatusOK, `{"status":true}`)
 
-	build := <-buildChannel
-	expected_pipeline := `{"pipeline": "string"}`
-	expected_manifest := `{"output-path": "/var/cache/osbuild"}`
-	if expected_manifest != build.Manifest {
-		t.Errorf("Expected this manifest: %s; got this: %s", expected_manifest, build.Manifest)
+	job := <-jobChannel
+	expected_pipeline := pipeline.Pipeline(`{"pipeline":"string"}`)
+	expected_target := target.Target(`{"output-path":"/var/cache/osbuild-composer"}`)
+	if expected_target != job.Target {
+		t.Errorf("Expected this manifest: %s; got this: %s", expected_target, job.Target)
 	}
-	if expected_pipeline != build.Pipeline {
-		t.Errorf("Expected this manifest: %s; got this: %s", expected_pipeline, build.Pipeline)
+	if expected_pipeline != job.Pipeline {
+		t.Errorf("Expected this manifest: %s; got this: %s", expected_pipeline, job.Pipeline)
 	}
 }
