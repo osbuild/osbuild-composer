@@ -135,6 +135,9 @@ func TestBlueprints(t *testing.T) {
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
 		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
 		"changes":[{"name":"test","changed":true}], "errors":[]}`)
+
+	testRoute(t, api, "GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``,
+		http.StatusOK, `{"diff":[{"new":{"Package":{"name":"systemd","version":"123"}},"old":null},{"new":null,"old":{"Package":{"name":"httpd","version":"2.4.*"}}}]}`)
 }
 
 func TestCompose(t *testing.T) {

@@ -462,13 +462,72 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	})
 }
 
-func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	var reply struct {
-		Diff []interface{} `json:"diff"`
+func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	type pack struct {
+		Package blueprintPackage `json:"Package"`
 	}
 
-	reply.Diff = make([]interface{}, 0)
-	json.NewEncoder(writer).Encode(reply)
+	type diff struct {
+		New *pack `json:"new"`
+		Old *pack `json:"old"`
+	}
+
+	type reply struct {
+		Diffs []diff `json:"diff"`
+	}
+
+	name := params.ByName("blueprint")
+	if len(name) == 0 {
+		statusResponseError(writer, http.StatusNotFound, "no blueprint name given")
+		return
+	}
+	fromCommit := params.ByName("from")
+	if len(fromCommit) == 0 || fromCommit != "NEWEST" {
+		statusResponseError(writer, http.StatusNotFound, "invalid from commit ID given")
+		return
+	}
+	toCommit := params.ByName("to")
+	if len(toCommit) == 0 || toCommit != "WORKSPACE" {
+		statusResponseError(writer, http.StatusNotFound, "invalid to commit ID given")
+		return
+	}
+
+	// Fetch old and new blueprint details from store and return error if not found
+	var oldBlueprint, newBlueprint blueprint
+	if !api.store.getBlueprintCommitted(name, &oldBlueprint) || !api.store.getBlueprint(name, &newBlueprint, nil) {
+		statusResponseError(writer, http.StatusNotFound)
+		return
+	}
+
+	newSlice := newBlueprint.Packages
+	oldMap := make(map[string]blueprintPackage)
+	diffs := []diff{}
+
+	for _, oldPackage := range oldBlueprint.Packages {
+		oldMap[oldPackage.Name] = oldPackage
+	}
+
+	// For each package in new blueprint check if the old one contains it
+	for _, newPackage := range newSlice {
+		oldPackage, found := oldMap[newPackage.Name]
+		// If found remove from old packages map but otherwise create a diff with the added package
+		if found {
+			delete(oldMap, oldPackage.Name)
+			// Create a diff if the versions changed
+			if oldPackage.Version != newPackage.Version {
+				diffs = append(diffs, diff{Old: &pack{oldPackage}, New: &pack{newPackage}})
+			}
+		} else {
+			diffs = append(diffs, diff{Old: nil, New: &pack{newPackage}})
+		}
+	}
+
+	// All packages remaining in the old packages map have been removed in the new blueprint so create a diff
+	for _, oldPackage := range oldMap {
+		diffs = append(diffs, diff{Old: &pack{oldPackage}, New: nil})
+	}
+
+	json.NewEncoder(writer).Encode(reply{diffs})
 }
 
 func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
