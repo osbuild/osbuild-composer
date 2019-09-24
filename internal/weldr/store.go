@@ -2,6 +2,7 @@ package weldr
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"sort"
 	"sync"
@@ -132,4 +133,8 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 	s.change(func() {
 		delete(s.Workspace, name)
 	})
+}
+
+func (b *blueprint) translateToPipeline(outputFormat string) string {
+	return fmt.Sprintf("{\"pipeline\": \"%s\"}", "string")
 }

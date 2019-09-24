@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"osbuild-composer/internal/queue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/weldr"
 )
@@ -111,13 +112,13 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := weldr.New(repo, packages, nil, nil, nil)
+		api := weldr.New(repo, packages, nil, nil, nil, nil)
 		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestBlueprints(t *testing.T) {
-	api := weldr.New(repo, packages, nil, nil, nil)
+	api := weldr.New(repo, packages, nil, nil, nil, nil)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
@@ -134,4 +135,29 @@ func TestBlueprints(t *testing.T) {
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
 		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
 		"changes":[{"name":"test","changed":true}], "errors":[]}`)
+}
+
+func TestCompose(t *testing.T) {
+	buildChannel := make(chan queue.Build, 200)
+	api := weldr.New(repo, packages, nil, nil, nil, buildChannel)
+
+	testRoute(t, api, "POST", "/api/v0/blueprints/new",
+		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
+		http.StatusOK, `{"status":true}`)
+
+	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,
+		http.StatusBadRequest, `{"status":false,"errors":["blueprint does not exist"]}`)
+
+	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
+		http.StatusOK, `{"status":true}`)
+
+	build := <-buildChannel
+	expected_pipeline := `{"pipeline": "string"}`
+	expected_manifest := `{"output-path": "/var/cache/osbuild"}`
+	if expected_manifest != build.Manifest {
+		t.Errorf("Expected this manifest: %s; got this: %s", expected_manifest, build.Manifest)
+	}
+	if expected_pipeline != build.Pipeline {
+		t.Errorf("Expected this manifest: %s; got this: %s", expected_pipeline, build.Pipeline)
+	}
 }

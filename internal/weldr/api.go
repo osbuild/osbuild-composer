@@ -9,11 +9,13 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"osbuild-composer/internal/queue"
 	"osbuild-composer/internal/rpmmd"
 )
 
 type API struct {
-	store *store
+	store         *store
+	pendingBuilds chan queue.Build
 
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
@@ -22,12 +24,15 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, builds chan queue.Build) *API {
+	// This needs to be shared with the worker API so that they can communicate with each other
+	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:    newStore(initialState, stateChannel),
-		repo:     repo,
-		packages: packages,
-		logger:   logger,
+		store:         newStore(initialState, stateChannel),
+		pendingBuilds: builds,
+		repo:          repo,
+		packages:      packages,
+		logger:        logger,
 	}
 
 	// sample blueprint on first run
@@ -67,6 +72,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.DELETE("/api/v0/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
 	api.router.DELETE("/api/v0/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
+	api.router.POST("/api/v0/compose", api.composeHandler)
 	api.router.GET("/api/v0/compose/queue", api.composeQueueHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
@@ -507,6 +513,46 @@ func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http
 
 func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	api.store.deleteBlueprintFromWorkspace(params.ByName("blueprint"))
+	statusResponseOK(writer)
+}
+
+// Schedule new compose by first translating the appropriate blueprint into a pipeline and then
+// pushing it into the channel for waiting builds.
+func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
+	type ComposeRequest struct {
+		BlueprintName string `json:"blueprint_name"`
+		ComposeType   string `json:"compose_type"`
+		Branch        string `json:"branch"`
+	}
+
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
+		return
+	}
+
+	var cr ComposeRequest
+	err := json.NewDecoder(request.Body).Decode(&cr)
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid request format: "+err.Error())
+		return
+	}
+
+	bp := blueprint{}
+	changed := false
+	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
+
+	if found {
+		api.pendingBuilds <- queue.Build{
+			Pipeline: bp.translateToPipeline(cr.ComposeType),
+			Manifest: "{\"output-path\": \"/var/cache/osbuild\"}",
+		}
+	} else {
+		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")
+		return
+	}
+
 	statusResponseOK(writer)
 }
 
