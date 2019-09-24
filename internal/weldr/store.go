@@ -108,6 +108,27 @@ func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 	return true
 }
 
+func (s *store) getBlueprintCommitted(name string, bp *blueprint) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var ok bool
+	*bp, ok = s.Blueprints[name]
+	if !ok {
+		return false
+	}
+
+	// cockpit-composer cannot deal with missing "packages" or "modules"
+	if bp.Packages == nil {
+		bp.Packages = []blueprintPackage{}
+	}
+	if bp.Modules == nil {
+		bp.Modules = []blueprintPackage{}
+	}
+
+	return true
+}
+
 func (s *store) pushBlueprint(bp blueprint) {
 	s.change(func() {
 		delete(s.Workspace, bp.Name)
