@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"osbuild-composer/internal/pipeline"
 	"sort"
 	"sync"
 )
@@ -135,6 +136,6 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (b *blueprint) translateToPipeline(outputFormat string) string {
-	return fmt.Sprintf("{\"pipeline\": \"%s\"}", "string")
+func (b *blueprint) translateToPipeline(outputFormat string) pipeline.Pipeline {
+	return pipeline.Pipeline(fmt.Sprintf("{\"pipeline\":\"%s\"}", "string"))
 }
