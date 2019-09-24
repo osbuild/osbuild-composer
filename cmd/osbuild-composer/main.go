@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	"osbuild-composer/internal/queue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/weldr"
 )
@@ -59,7 +60,8 @@ func main() {
 	}
 
 	stateChannel := make(chan []byte, 10)
-	api := weldr.New(repo, packages, logger, state, stateChannel)
+	buildChannel := make(chan queue.Build, 200)
+	api := weldr.New(repo, packages, logger, state, stateChannel, buildChannel)
 	go func() {
 		for {
 			err := writeFileAtomically(StateFile, <-stateChannel, 0755)
