@@ -443,11 +443,14 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		specs := make([]string, len(blueprint.Packages))
 		for i, pkg := range blueprint.Packages {
 			specs[i] = pkg.Name
-			if pkg.Version != "" {
+			// If a package has version "*" the package name suffix must be equal to "-*-*.*"
+			// Using just "-*" would find any other package containing the package name
+			if pkg.Version != "" && pkg.Version != "*" {
 				specs[i] += "-" + pkg.Version
+			} else if pkg.Version == "*" {
+				specs[i] += "-*-*.*"
 			}
 		}
-
 		dependencies, _ := rpmmd.Depsolve(specs...)
 
 		blueprints = append(blueprints, entry{blueprint, dependencies})
