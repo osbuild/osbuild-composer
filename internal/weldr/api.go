@@ -3,6 +3,7 @@ package weldr
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -78,6 +79,17 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
 
 	return api
+}
+
+func (api *API) Serve(listener net.Listener) error {
+	server := http.Server{Handler: api}
+
+	err := server.Serve(listener)
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
 func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
