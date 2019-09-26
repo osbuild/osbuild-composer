@@ -8,5 +8,5 @@ import (
 type Job struct {
 	ComposeID string
 	Pipeline  pipeline.Pipeline
-	Target    target.Target
+	Targets   []target.Target
 }

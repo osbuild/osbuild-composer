@@ -38,7 +38,7 @@ func (s *Store) UpdateJob(id string, job Job) bool {
 	req, _ := s.jobs[id]
 	req.ComposeID = job.ComposeID
 	req.Pipeline = job.Pipeline
-	req.Target = job.Target
+	req.Targets = job.Targets
 
 	return true
 }

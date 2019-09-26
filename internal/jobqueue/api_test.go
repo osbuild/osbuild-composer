@@ -64,6 +64,7 @@ func testRoute(t *testing.T, api *jobqueue.API, method, path, body string, expec
 }
 
 func TestBasic(t *testing.T) {
+	expected_job := `{"pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/ffffffff-ffff–ffff-ffff-ffffffffffff"}}]}`
 	var cases = []struct {
 		Method         string
 		Path           string
@@ -76,8 +77,8 @@ func TestBasic(t *testing.T) {
 		{"PATH", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
 		{"DELETE", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
 
-		{"POST", "/job-queue/v1/jobs", `{"job-id":"ffffffff-ffff–ffff-ffff-ffffffffffff"}`, http.StatusOK, `{"pipeline":"pipeline","target":"target"}`},
-		{"POST", "/job-queue/v1/jobs", `{"job-id":"ffffffff-ffff–ffff-ffff-ffffffffffff"}`, http.StatusBadRequest, ``},
+		{"POST", "/job-queue/v1/jobs", `{"id":"ffffffff-ffff–ffff-ffff-ffffffffffff"}`, http.StatusOK, expected_job},
+		{"POST", "/job-queue/v1/jobs", `{"id":"ffffffff-ffff–ffff-ffff-ffffffffffff"}`, http.StatusBadRequest, ``},
 		//{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"finished"}`, http.StatusBadRequest, ``},
 		{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"running"}`, http.StatusOK, ``},
 		{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"running"}`, http.StatusOK, ``},
@@ -90,10 +91,23 @@ func TestBasic(t *testing.T) {
 	api := jobqueue.New(nil, jobChannel)
 	for _, c := range cases {
 		jobChannel <- job.Job{
-			ComposeID: "ID",
-			Pipeline:  pipeline.Pipeline("pipeline"),
-			Target:    target.Target("target"),
+			ComposeID: "ffffffff-ffff–ffff-ffff-ffffffffffff",
+			Pipeline: pipeline.Pipeline{
+				Assembler: pipeline.Assembler{
+					Name: "org.osbuild.tar",
+					Options: pipeline.AssemblerTarOptions{
+						Filename: "image.tar",
+					},
+				},
+			},
+			Targets: []target.Target{{
+				Name: "org.osbuild.local",
+				Options: target.LocalOptions{
+					Location: "/var/lib/osbuild-composer/ffffffff-ffff–ffff-ffff-ffffffffffff",
+				}},
+			},
 		}
+
 		testRoute(t, api, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
