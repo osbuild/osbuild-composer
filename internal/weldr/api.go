@@ -13,12 +13,10 @@ import (
 
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
-	"osbuild-composer/internal/target"
 )
 
 type API struct {
-	store       *store
-	pendingJobs chan<- job.Job
+	store *store
 
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
@@ -31,11 +29,10 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:       newStore(initialState, stateChannel),
-		pendingJobs: jobs,
-		repo:        repo,
-		packages:    packages,
-		logger:      logger,
+		store:    newStore(initialState, stateChannel, jobs),
+		repo:     repo,
+		packages: packages,
+		logger:   logger,
 	}
 
 	// sample blueprint on first run
@@ -630,16 +627,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		api.pendingJobs <- job.Job{
-			ComposeID: reply.BuildID,
-			Pipeline:  bp.translateToPipeline(cr.ComposeType),
-			Targets: []target.Target{{
-				Name: "org.osbuild.local",
-				Options: target.LocalOptions{
-					Location: "/var/lib/osbuild-composer/" + reply.BuildID.String(),
-				}},
-			},
-		}
+		api.store.addCompose(reply.BuildID, bp, cr.ComposeType)
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")
 		return

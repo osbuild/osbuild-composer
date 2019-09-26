@@ -3,16 +3,22 @@ package weldr
 import (
 	"encoding/json"
 	"log"
+	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/pipeline"
+	"osbuild-composer/internal/target"
 	"sort"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type store struct {
-	Blueprints map[string]blueprint `json:"blueprints"`
-	Workspace  map[string]blueprint `json:"workspace"`
+	Blueprints map[string]blueprint  `json:"blueprints"`
+	Workspace  map[string]blueprint  `json:"workspace"`
+	Composes   map[uuid.UUID]compose `json:"composes"`
 
 	mu           sync.RWMutex // protects all fields
+	pendingJobs  chan<- job.Job
 	stateChannel chan<- []byte
 }
 
@@ -29,7 +35,13 @@ type blueprintPackage struct {
 	Version string `json:"version,omitempty"`
 }
 
-func newStore(initialState []byte, stateChannel chan<- []byte) *store {
+type compose struct {
+	State    string            `json:"state"`
+	Pipeline pipeline.Pipeline `json:"pipeline"`
+	Targets  []target.Target   `json:"targets"`
+}
+
+func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job) *store {
 	var s store
 
 	if initialState != nil {
@@ -45,7 +57,12 @@ func newStore(initialState []byte, stateChannel chan<- []byte) *store {
 	if s.Workspace == nil {
 		s.Workspace = make(map[string]blueprint)
 	}
+	if s.Composes == nil {
+		// TODO: push pending/running composes to workers again
+		s.Composes = make(map[uuid.UUID]compose)
+	}
 	s.stateChannel = stateChannel
+	s.pendingJobs = pendingJobs
 
 	return &s
 }
@@ -153,6 +170,34 @@ func (s *store) deleteBlueprint(name string) {
 func (s *store) deleteBlueprintFromWorkspace(name string) {
 	s.change(func() {
 		delete(s.Workspace, name)
+	})
+}
+
+func (s *store) addCompose(composeID uuid.UUID, bp blueprint, composeType string) {
+	pipeline := bp.translateToPipeline(composeType)
+	targets := []target.Target{{
+		Name: "org.osbuild.local",
+		Options: target.LocalOptions{
+			Location: "/var/lib/osbuild-composer/" + composeID.String(),
+		},
+	}}
+	s.change(func() {
+		s.Composes[composeID] = compose{"pending", pipeline, targets}
+	})
+	s.pendingJobs <- job.Job{
+		ComposeID: composeID,
+		Pipeline:  pipeline,
+		Targets:   targets,
+	}
+}
+
+func (s *store) updateCompose(composeID uuid.UUID, state string) {
+	s.change(func() {
+		compose, exists := s.Composes[composeID]
+		if !exists {
+			return
+		}
+		compose.State = state
 	})
 }
 
