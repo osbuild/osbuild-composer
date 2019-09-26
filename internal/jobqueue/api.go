@@ -9,6 +9,7 @@ import (
 	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/target"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -77,7 +78,7 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type requestBody struct {
-		ID string `json:"id"`
+		ID uuid.UUID `json:"id"`
 	}
 	type replyBody struct {
 		Pipeline pipeline.Pipeline `json:"pipeline"`
@@ -123,14 +124,20 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
+	id, err := uuid.Parse(params.ByName("id"))
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid job id: "+err.Error())
+		return
+	}
+
 	var body requestBody
-	err := json.NewDecoder(request.Body).Decode(&body)
+	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
 	} else if body.Status == "running" {
 		statusResponseOK(writer)
 	} else if body.Status == "finished" {
-		api.jobStore.DeleteJob(params.ByName("id"))
+		api.jobStore.DeleteJob(id)
 		statusResponseOK(writer)
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+body.Status)

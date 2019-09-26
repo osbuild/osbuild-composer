@@ -2,22 +2,24 @@ package job
 
 import (
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Store struct {
-	jobs map[string]Job
+	jobs map[uuid.UUID]Job
 	mu   sync.RWMutex
 }
 
 func NewStore() *Store {
 	var s Store
 
-	s.jobs = make(map[string]Job)
+	s.jobs = make(map[uuid.UUID]Job)
 
 	return &s
 }
 
-func (s *Store) AddJob(id string, job Job) bool {
+func (s *Store) AddJob(id uuid.UUID, job Job) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -31,7 +33,7 @@ func (s *Store) AddJob(id string, job Job) bool {
 	return true
 }
 
-func (s *Store) UpdateJob(id string, job Job) bool {
+func (s *Store) UpdateJob(id uuid.UUID, job Job) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -43,7 +45,7 @@ func (s *Store) UpdateJob(id string, job Job) bool {
 	return true
 }
 
-func (s *Store) DeleteJob(id string) {
+func (s *Store) DeleteJob(id uuid.UUID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"osbuild-composer/internal/job"
@@ -601,6 +602,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 		ComposeType   string `json:"compose_type"`
 		Branch        string `json:"branch"`
 	}
+	type ComposeReply struct {
+		BuildID uuid.UUID `json:"build_id"`
+		Status  bool      `json:"status"`
+	}
 
 	contentType := httpRequest.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
@@ -615,20 +620,23 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 		return
 	}
 
+	reply := ComposeReply{
+		BuildID: uuid.New(),
+		Status:  true,
+	}
+
 	bp := blueprint{}
 	changed := false
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
-	uuid := "ffffffff-ffff–ffff-ffff-ffffffffffff" // TODO: generate
-
 	if found {
 		api.pendingJobs <- job.Job{
-			ComposeID: uuid,
+			ComposeID: reply.BuildID,
 			Pipeline:  bp.translateToPipeline(cr.ComposeType),
 			Targets: []target.Target{{
 				Name: "org.osbuild.local",
 				Options: target.LocalOptions{
-					Location: "/var/lib/osbuild-composer/" + uuid,
+					Location: "/var/lib/osbuild-composer/" + reply.BuildID.String(),
 				}},
 			},
 		}
@@ -637,7 +645,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 		return
 	}
 
-	statusResponseOK(writer)
+	json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {

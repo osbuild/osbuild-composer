@@ -152,7 +152,7 @@ func TestCompose(t *testing.T) {
 		http.StatusBadRequest, `{"status":false,"errors":["blueprint does not exist"]}`)
 
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
-		http.StatusOK, `{"status":true}`)
+		http.StatusOK, `*`)
 
 	job := <-jobChannel
 	if job.Pipeline.Assembler.Name != "org.osbuild.tar" {
