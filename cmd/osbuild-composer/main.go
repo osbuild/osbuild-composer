@@ -1,14 +1,11 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 
 	"osbuild-composer/internal/queue"
@@ -25,6 +22,11 @@ func main() {
 
 	err := os.Remove("/run/weldr/api.socket")
 	if err != nil && !os.IsNotExist(err) {
+		panic(err)
+	}
+
+	err = os.Mkdir("/run/weldr", 0755)
+	if err != nil && !os.IsExist(err) {
 		panic(err)
 	}
 
@@ -71,22 +73,7 @@ func main() {
 		}
 	}()
 
-	server := http.Server{Handler: api}
-	shutdownDone := make(chan struct{}, 1)
-	go func() {
-		channel := make(chan os.Signal, 1)
-		signal.Notify(channel, os.Interrupt)
-		<-channel
-		server.Shutdown(context.Background())
-		close(shutdownDone)
-	}()
-
-	err = server.Serve(listener)
-	if err != nil && err != http.ErrServerClosed {
-		panic(err)
-	}
-
-	<-shutdownDone
+	api.Serve(listener)
 }
 
 func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
