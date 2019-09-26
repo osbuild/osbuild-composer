@@ -74,6 +74,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.DELETE("/api/v0/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
 	api.router.POST("/api/v0/compose", api.composeHandler)
+	api.router.GET("/api/v0/compose/types", api.composeTypesHandler)
 	api.router.GET("/api/v0/compose/queue", api.composeQueueHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
@@ -628,6 +629,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	statusResponseOK(writer)
+}
+
+func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	type composeType struct {
+		Name    string `json:"name"`
+		Enabled bool   `json:"enabled"`
+	}
+
+	var reply struct {
+		Types []composeType `json:"types"`
+	}
+
+	reply.Types = append(reply.Types, composeType{"tar", true})
+
+	json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
