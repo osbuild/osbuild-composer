@@ -34,7 +34,7 @@ func New(logger *log.Logger, jobs <-chan job.Job) *API {
 	api.router.NotFound = http.HandlerFunc(notFoundHandler)
 
 	api.router.POST("/job-queue/v1/jobs", api.addJobHandler)
-	api.router.PATCH("/job-queue/v1/jobs/:job-id", api.updateJobHandler)
+	api.router.PATCH("/job-queue/v1/jobs/:id", api.updateJobHandler)
 
 	return api
 }
@@ -77,11 +77,11 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type requestBody struct {
-		JobID string `json:"job-id"`
+		ID string `json:"id"`
 	}
 	type replyBody struct {
 		Pipeline pipeline.Pipeline `json:"pipeline"`
-		Target   target.Target     `json:"target"`
+		Targets  []target.Target   `json:"targets"`
 	}
 
 	contentType := request.Header["Content-Type"]
@@ -93,22 +93,22 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	var body requestBody
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid job-id: "+err.Error())
+		statusResponseError(writer, http.StatusBadRequest, "invalid id: "+err.Error())
 		return
 	}
 
-	id := body.JobID
-	var req job.Job
+	id := body.ID
+	var jobSlot job.Job
 
-	if !api.jobStore.AddJob(id, req) {
+	if !api.jobStore.AddJob(id, jobSlot) {
 		statusResponseError(writer, http.StatusBadRequest)
 		return
 	}
 
-	req = <-api.pendingJobs
-	api.jobStore.UpdateJob(id, req)
+	nextJob := <-api.pendingJobs
+	api.jobStore.UpdateJob(id, nextJob)
 
-	json.NewEncoder(writer).Encode(replyBody{req.Pipeline, req.Target})
+	json.NewEncoder(writer).Encode(replyBody{nextJob.Pipeline, nextJob.Targets})
 
 }
 
@@ -127,15 +127,12 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
-		return
 	} else if body.Status == "running" {
 		statusResponseOK(writer)
-		return
-	} else if body.Status != "finished" {
+	} else if body.Status == "finished" {
+		api.jobStore.DeleteJob(params.ByName("id"))
+		statusResponseOK(writer)
+	} else {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+body.Status)
-		return
 	}
-
-	api.jobStore.DeleteJob(params.ByName("job-id"))
-	statusResponseOK(writer)
 }

@@ -2,7 +2,6 @@ package weldr
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"osbuild-composer/internal/pipeline"
 	"sort"
@@ -158,5 +157,12 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 }
 
 func (b *blueprint) translateToPipeline(outputFormat string) pipeline.Pipeline {
-	return pipeline.Pipeline(fmt.Sprintf("{\"pipeline\":\"%s\"}", "string"))
+	return pipeline.Pipeline{
+		Assembler: pipeline.Assembler{
+			Name: "org.osbuild.tar",
+			Options: pipeline.AssemblerTarOptions{
+				Filename: "image.tar",
+			},
+		},
+	}
 }

@@ -12,6 +12,7 @@ import (
 
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/target"
 )
 
 type API struct {
@@ -618,11 +619,18 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	changed := false
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
+	uuid := "ffffffff-ffff–ffff-ffff-ffffffffffff" // TODO: generate
+
 	if found {
 		api.pendingJobs <- job.Job{
-			ComposeID: "TODO",
+			ComposeID: uuid,
 			Pipeline:  bp.translateToPipeline(cr.ComposeType),
-			Target:    `{"output-path":"/var/cache/osbuild-composer"}`,
+			Targets: []target.Target{{
+				Name: "org.osbuild.local",
+				Options: target.LocalOptions{
+					Location: "/var/lib/osbuild-composer/" + uuid,
+				}},
+			},
 		}
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")

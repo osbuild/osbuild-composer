@@ -11,9 +11,7 @@ import (
 	"testing"
 
 	"osbuild-composer/internal/job"
-	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/rpmmd"
-	"osbuild-composer/internal/target"
 	"osbuild-composer/internal/weldr"
 )
 
@@ -157,12 +155,10 @@ func TestCompose(t *testing.T) {
 		http.StatusOK, `{"status":true}`)
 
 	job := <-jobChannel
-	expected_pipeline := pipeline.Pipeline(`{"pipeline":"string"}`)
-	expected_target := target.Target(`{"output-path":"/var/cache/osbuild-composer"}`)
-	if expected_target != job.Target {
-		t.Errorf("Expected this manifest: %s; got this: %s", expected_target, job.Target)
+	if job.Pipeline.Assembler.Name != "org.osbuild.tar" {
+		t.Errorf("Expected tar assembler, got: %s", job.Pipeline.Assembler.Name)
 	}
-	if expected_pipeline != job.Pipeline {
-		t.Errorf("Expected this manifest: %s; got this: %s", expected_pipeline, job.Pipeline)
+	if job.Targets[0].Name != "org.osbuild.local" {
+		t.Errorf("Expected local target, got: %s", job.Targets[0].Name)
 	}
 }
