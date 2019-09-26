@@ -108,8 +108,8 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	nextJob := <-api.pendingJobs
 	api.jobStore.UpdateJob(id, nextJob)
 
+	writer.WriteHeader(http.StatusCreated)
 	json.NewEncoder(writer).Encode(replyBody{nextJob.Pipeline, nextJob.Targets})
-
 }
 
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
