@@ -1,0 +1,109 @@
+#!/usr/bin/python3
+
+import contextlib
+import glob
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+
+image = sys.argv[1]
+
+subprocess.run(["modprobe", "nbd"], check=True)
+
+
+@contextlib.contextmanager
+def nbd_connect(image):
+    for device in glob.glob("/dev/nbd*"):
+        r = subprocess.run(["qemu-nbd", "--connect", device, "--read-only", image], check=False).returncode
+        if r == 0:
+            try:
+                yield device
+            finally:
+                subprocess.run(["qemu-nbd", "--disconnect", device], check=True, stdout=subprocess.DEVNULL)
+            break
+    else:
+        raise RuntimeError("no free network block device")
+
+
+@contextlib.contextmanager
+def mount(device):
+    with tempfile.TemporaryDirectory() as mountpoint:
+        subprocess.run(["mount", "-o", "ro", device, mountpoint], check=True)
+        try:
+            yield mountpoint
+        finally:
+            subprocess.run(["umount", "--lazy", mountpoint], check=True)
+
+
+def subprocess_check_output(argv, parse_fn=None):
+    output = subprocess.check_output(argv, encoding="utf-8")
+    return parse_fn(output) if parse_fn else output
+
+
+def read_partition_table(device):
+    sfdisk = subprocess_check_output(["sfdisk", "--json", device], json.loads)
+    ptable = sfdisk["partitiontable"]
+    assert ptable["unit"] == "sectors"
+
+    partitions = []
+    for p in ptable["partitions"]:
+        partitions.append({
+            "type": p["type"],
+            "bootable": p["bootable"],
+            "start": p["start"] * 512,
+            "size": p["size"] * 512
+        })
+
+    return ptable["label"], partitions
+
+
+def read_bootloader_type(device):
+    with open(device, "rb") as f:
+        if b"GRUB" in f.read(512):
+            return "grub"
+        else:
+            raise RuntimeError("unkown bootloader")
+
+
+def read_os_release(tree):
+    r = {}
+    with open(f"{tree}/etc/os-release") as f:
+        for line in f:
+            key, value = line.strip().split("=")
+            r[key] = value.strip('"')
+    return r
+
+
+def read_bls_conf(filename):
+    with open(filename) as f:
+        return dict(line.strip().split(" ", 1) for line in f)
+
+
+report = {}
+with nbd_connect(image) as device:
+    report["bootloader"] = read_bootloader_type(device)
+    report["partition_table"], report["partitions"] = read_partition_table(device)
+
+    # only one partition containing the root filesystem supported for now
+    assert len(report["partitions"]) == 1
+
+    with mount(device + "p1") as tree:
+        report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
+        report["os_release"] = read_os_release(tree)
+
+        with open(f"{tree}/etc/fstab") as f:
+            report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
+
+        with open(f"{tree}/etc/passwd") as f:
+            report["passwd"] = sorted(f.read().strip().split("\n"))
+
+        with open(f"{tree}/etc/group") as f:
+            report["groups"] = sorted(f.read().strip().split("\n"))
+
+        report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/boot/loader/entries/*.conf")]
+
+
+json.dump(report, sys.stdout, sort_keys=True, indent=2)
