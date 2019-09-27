@@ -56,22 +56,23 @@ func (job *Job) Run() error {
 		return err
 	}
 
-	for _, target := range job.Targets {
-		if target.Name != "org.osbuild.local" {
+	for _, t := range job.Targets {
+		switch options := t.Options.(type) {
+		case *target.LocalTargetOptions:
+			err = os.MkdirAll(options.Location, 0755)
+			if err != nil {
+				panic(err)
+			}
+
+			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID, options.Location)
+			cp.Stderr = os.Stderr
+			cp.Stdout = os.Stdout
+			err = cp.Run()
+			if err != nil {
+				panic(err)
+			}
+		default:
 			panic("foo")
-		}
-
-		err = os.MkdirAll(target.Options.Location, 0755)
-		if err != nil {
-			panic(err)
-		}
-
-		cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/" + result.OutputID, target.Options.Location)
-		cp.Stderr = os.Stderr
-		cp.Stdout = os.Stdout
-		err = cp.Run()
-		if err != nil {
-			panic(err)
 		}
 	}
 

@@ -83,8 +83,8 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 		ID uuid.UUID `json:"id"`
 	}
 	type replyBody struct {
-		Pipeline pipeline.Pipeline `json:"pipeline"`
-		Targets  []*target.Target  `json:"targets"`
+		Pipeline *pipeline.Pipeline `json:"pipeline"`
+		Targets  []*target.Target   `json:"targets"`
 	}
 
 	contentType := request.Header["Content-Type"]

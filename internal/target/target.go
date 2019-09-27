@@ -1,21 +1,44 @@
 package target
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+	"errors"
+)
 
 type Target struct {
-	Name    string  `json:"name"`
-	Options Options `json:"options"`
+	Name    string        `json:"name"`
+	Options TargetOptions `json:"options"`
 }
 
-type Options struct {
-	Location string `json:"location"`
+type TargetOptions interface {
+	isTargetOptions()
 }
 
-func New(ComposeID uuid.UUID) *Target {
-	return &Target{
-		Name: "org.osbuild.local",
-		Options: Options{
-			Location: "/var/lib/osbuild-composer/outputs/" + ComposeID.String(),
-		},
+type rawTarget struct {
+	Name    string          `json:"name"`
+	Options json.RawMessage `json:"options"`
+}
+
+func (target *Target) UnmarshalJSON(data []byte) error {
+	var rawTarget rawTarget
+	err := json.Unmarshal(data, &rawTarget)
+	if err != nil {
+		return err
 	}
+	var options TargetOptions
+	switch rawTarget.Name {
+	case "org.osbuild.local":
+		options = new(LocalTargetOptions)
+	default:
+		return errors.New("unexpected target name")
+	}
+	err = json.Unmarshal(rawTarget.Options, options)
+	if err != nil {
+		return err
+	}
+
+	target.Name = rawTarget.Name
+	target.Options = options
+
+	return nil
 }

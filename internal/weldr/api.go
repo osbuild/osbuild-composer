@@ -627,7 +627,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		api.store.addCompose(reply.BuildID, bp, cr.ComposeType)
+		api.store.addCompose(reply.BuildID, &bp, cr.ComposeType)
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")
 		return

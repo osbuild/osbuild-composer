@@ -153,12 +153,4 @@ func TestCompose(t *testing.T) {
 
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
 		http.StatusOK, `*`)
-
-	job := <-jobChannel
-	if job.Pipeline.Assembler.Name != "org.osbuild.tar" {
-		t.Errorf("Expected tar assembler, got: %s", job.Pipeline.Assembler.Name)
-	}
-	if job.Targets[0].Name != "org.osbuild.local" {
-		t.Errorf("Expected local target, got: %s", job.Targets[0].Name)
-	}
 }

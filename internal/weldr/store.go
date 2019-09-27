@@ -37,9 +37,9 @@ type blueprintPackage struct {
 }
 
 type compose struct {
-	Status   string            `json:"status"`
-	Pipeline pipeline.Pipeline `json:"pipeline"`
-	Targets  []*target.Target  `json:"targets"`
+	Status    string           `json:"status"`
+	Blueprint *blueprint       `json:"blueprint"`
+	Targets   []*target.Target `json:"targets"`
 }
 
 func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
@@ -188,26 +188,22 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *store) addCompose(composeID uuid.UUID, bp blueprint, composeType string) {
-	pipeline := bp.translateToPipeline(composeType)
-	targets := []*target.Target{target.New(composeID)}
+func (s *store) addCompose(composeID uuid.UUID, bp *blueprint, composeType string) {
+	targets := []*target.Target{
+		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
+	}
 	s.change(func() {
-		s.Composes[composeID] = compose{"pending", pipeline, targets}
+		s.Composes[composeID] = compose{"pending", bp, targets}
 	})
 	s.pendingJobs <- job.Job{
 		ComposeID: composeID,
-		Pipeline:  pipeline,
+		Pipeline:  bp.translateToPipeline(composeType),
 		Targets:   targets,
 	}
 }
 
-func (b *blueprint) translateToPipeline(outputFormat string) pipeline.Pipeline {
-	return pipeline.Pipeline{
-		Assembler: pipeline.Assembler{
-			Name: "org.osbuild.tar",
-			Options: pipeline.AssemblerTarOptions{
-				Filename: "image.tar",
-			},
-		},
-	}
+func (b *blueprint) translateToPipeline(outputFormat string) *pipeline.Pipeline {
+	p := &pipeline.Pipeline{}
+	p.SetAssembler(pipeline.NewTarAssembler(pipeline.NewTarAssemblerOptions("image.tar")))
+	return p
 }

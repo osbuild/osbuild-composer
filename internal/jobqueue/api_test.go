@@ -66,7 +66,7 @@ func testRoute(t *testing.T, api *jobqueue.API, method, path, body string, expec
 }
 
 func TestBasic(t *testing.T) {
-	expected_job := `{"pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/outputs/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`
+	expected_job := `{"pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/tmp/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`
 	var cases = []struct {
 		Method         string
 		Path           string
@@ -94,17 +94,14 @@ func TestBasic(t *testing.T) {
 	api := jobqueue.New(nil, jobChannel, statusChannel)
 	for _, c := range cases {
 		id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
+		p := &pipeline.Pipeline{}
+		p.SetAssembler(pipeline.NewTarAssembler(pipeline.NewTarAssemblerOptions("image.tar")))
 		jobChannel <- job.Job{
 			ComposeID: id,
-			Pipeline: pipeline.Pipeline{
-				Assembler: pipeline.Assembler{
-					Name: "org.osbuild.tar",
-					Options: pipeline.AssemblerTarOptions{
-						Filename: "image.tar",
-					},
-				},
+			Pipeline:  p,
+			Targets: []*target.Target{
+				target.NewLocalTarget(target.NewLocalTargetOptions("/tmp/" + id.String())),
 			},
-			Targets: []*target.Target{target.New(id)},
 		}
 
 		testRoute(t, api, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
