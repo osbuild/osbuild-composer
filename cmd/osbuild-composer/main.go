@@ -79,8 +79,9 @@ func main() {
 
 	stateChannel := make(chan []byte, 10)
 	jobChannel := make(chan job.Job, 200)
-	jobAPI := jobqueue.New(logger, jobChannel)
-	weldrAPI := weldr.New(repo, packages, logger, state, stateChannel, jobChannel)
+	jobUpdateChannel := make(chan job.Status, 200)
+	jobAPI := jobqueue.New(logger, jobChannel, jobUpdateChannel)
+	weldrAPI := weldr.New(repo, packages, logger, state, stateChannel, jobChannel, jobUpdateChannel)
 	go func() {
 		for {
 			err := writeFileAtomically(StateFile, <-stateChannel, 0755)

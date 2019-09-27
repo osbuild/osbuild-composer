@@ -16,16 +16,18 @@ import (
 type API struct {
 	jobStore    *job.Store
 	pendingJobs <-chan job.Job
+	jobStatus   chan<- job.Status
 
 	logger *log.Logger
 	router *httprouter.Router
 }
 
-func New(logger *log.Logger, jobs <-chan job.Job) *API {
+func New(logger *log.Logger, jobs <-chan job.Job, jobStatus chan<- job.Status) *API {
 	api := &API{
 		jobStore:    job.NewStore(),
 		logger:      logger,
 		pendingJobs: jobs,
+		jobStatus:   jobStatus,
 	}
 
 	api.router = httprouter.New()
@@ -135,6 +137,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
 	} else if body.Status == "running" {
+		api.jobStatus <- job.Status{ComposeID: id, Status: body.Status}
 		statusResponseOK(writer)
 	} else if body.Status == "finished" {
 		api.jobStore.DeleteJob(id)

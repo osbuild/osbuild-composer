@@ -12,3 +12,8 @@ type Job struct {
 	Pipeline  pipeline.Pipeline
 	Targets   []target.Target
 }
+
+type Status struct {
+	ComposeID uuid.UUID
+	Status    string
+}

@@ -19,6 +19,7 @@ type store struct {
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan<- job.Job
+	jobUpdates   <-chan job.Status
 	stateChannel chan<- []byte
 }
 
@@ -36,12 +37,12 @@ type blueprintPackage struct {
 }
 
 type compose struct {
-	State    string            `json:"state"`
+	Status   string            `json:"status"`
 	Pipeline pipeline.Pipeline `json:"pipeline"`
 	Targets  []target.Target   `json:"targets"`
 }
 
-func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job) *store {
+func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
 	var s store
 
 	if initialState != nil {
@@ -63,6 +64,20 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 	}
 	s.stateChannel = stateChannel
 	s.pendingJobs = pendingJobs
+	s.jobUpdates = jobUpdates
+
+	go func() {
+		for {
+			update := <-s.jobUpdates
+			s.change(func() {
+				compose, exists := s.Composes[update.ComposeID]
+				if !exists {
+					return
+				}
+				compose.Status = update.Status
+			})
+		}
+	}()
 
 	return &s
 }
@@ -189,16 +204,6 @@ func (s *store) addCompose(composeID uuid.UUID, bp blueprint, composeType string
 		Pipeline:  pipeline,
 		Targets:   targets,
 	}
-}
-
-func (s *store) updateCompose(composeID uuid.UUID, state string) {
-	s.change(func() {
-		compose, exists := s.Composes[composeID]
-		if !exists {
-			return
-		}
-		compose.State = state
-	})
 }
 
 func (b *blueprint) translateToPipeline(outputFormat string) pipeline.Pipeline {

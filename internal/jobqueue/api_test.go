@@ -90,7 +90,8 @@ func TestBasic(t *testing.T) {
 	}
 
 	jobChannel := make(chan job.Job, 100)
-	api := jobqueue.New(nil, jobChannel)
+	statusChannel := make(chan job.Status, 100)
+	api := jobqueue.New(nil, jobChannel, statusChannel)
 	for _, c := range cases {
 		id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 		jobChannel <- job.Job{

@@ -25,11 +25,11 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, jobs chan<- job.Job) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, jobs chan<- job.Job, jobStatus <-chan job.Status) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:    newStore(initialState, stateChannel, jobs),
+		store:    newStore(initialState, stateChannel, jobs, jobStatus),
 		repo:     repo,
 		packages: packages,
 		logger:   logger,
