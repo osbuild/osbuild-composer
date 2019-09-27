@@ -66,7 +66,7 @@ func testRoute(t *testing.T, api *jobqueue.API, method, path, body string, expec
 }
 
 func TestBasic(t *testing.T) {
-	expected_job := `{"pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`
+	expected_job := `{"pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/outputs/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`
 	var cases = []struct {
 		Method         string
 		Path           string
@@ -104,12 +104,7 @@ func TestBasic(t *testing.T) {
 					},
 				},
 			},
-			Targets: []target.Target{{
-				Name: "org.osbuild.local",
-				Options: target.LocalOptions{
-					Location: "/var/lib/osbuild-composer/ffffffff-ffff-ffff-ffff-ffffffffffff",
-				}},
-			},
+			Targets: []*target.Target{target.New(id)},
 		}
 
 		testRoute(t, api, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)

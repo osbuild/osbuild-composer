@@ -10,7 +10,7 @@ import (
 type Job struct {
 	ComposeID uuid.UUID
 	Pipeline  pipeline.Pipeline
-	Targets   []target.Target
+	Targets   []*target.Target
 }
 
 type Status struct {

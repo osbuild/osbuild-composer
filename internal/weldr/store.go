@@ -39,7 +39,7 @@ type blueprintPackage struct {
 type compose struct {
 	Status   string            `json:"status"`
 	Pipeline pipeline.Pipeline `json:"pipeline"`
-	Targets  []target.Target   `json:"targets"`
+	Targets  []*target.Target  `json:"targets"`
 }
 
 func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
@@ -190,12 +190,7 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 
 func (s *store) addCompose(composeID uuid.UUID, bp blueprint, composeType string) {
 	pipeline := bp.translateToPipeline(composeType)
-	targets := []target.Target{{
-		Name: "org.osbuild.local",
-		Options: target.LocalOptions{
-			Location: "/var/lib/osbuild-composer/" + composeID.String(),
-		},
-	}}
+	targets := []*target.Target{target.New(composeID)}
 	s.change(func() {
 		s.Composes[composeID] = compose{"pending", pipeline, targets}
 	})
