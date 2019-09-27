@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -18,12 +17,6 @@ import (
 
 type ComposerClient struct {
 	client *http.Client
-}
-
-type Job struct {
-	ID       uuid.UUID
-	Pipeline pipeline.Pipeline
-	Target   target.Target
 }
 
 func NewClient() *ComposerClient {
@@ -43,7 +36,7 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 	}
 	type reply struct {
 		Pipeline *pipeline.Pipeline `json:"pipeline"`
-		Target   *target.Target     `json:"target"`
+		Targets  *[]target.Target   `json:"targets"`
 	}
 
 	job := &Job{
@@ -64,7 +57,7 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&reply{
 		Pipeline: &job.Pipeline,
-		Target: &job.Target,
+		Targets: &job.Targets,
 	})
 	if err != nil {
 		return nil, err
@@ -110,7 +103,7 @@ func main() {
 		}
 
 		fmt.Printf("Running job %s\n", job.ID.String())
-		time.Sleep(15 * time.Second)
+		job.Run()
 
 		client.UpdateJob(job, "finished")
 	}
