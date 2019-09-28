@@ -64,7 +64,7 @@ func (job *Job) Run() error {
 				panic(err)
 			}
 
-			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID, options.Location)
+			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/.", options.Location)
 			cp.Stderr = os.Stderr
 			cp.Stdout = os.Stdout
 			err = cp.Run()
