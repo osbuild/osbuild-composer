@@ -136,10 +136,10 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
-	} else if body.Status == "running" {
+	} else if body.Status == "RUNNING" {
 		api.jobStatus <- job.Status{ComposeID: id, Status: body.Status}
 		statusResponseOK(writer)
-	} else if body.Status == "finished" {
+	} else if body.Status == "FINISHED" {
 		api.jobStore.DeleteJob(id)
 		statusResponseOK(writer)
 	} else {

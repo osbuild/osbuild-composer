@@ -8,6 +8,7 @@ import (
 	"osbuild-composer/internal/target"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -37,9 +38,13 @@ type blueprintPackage struct {
 }
 
 type compose struct {
-	Status    string           `json:"status"`
-	Blueprint *blueprint       `json:"blueprint"`
-	Targets   []*target.Target `json:"targets"`
+	QueueStatus string           `json:"queue_status"`
+	Blueprint   *blueprint       `json:"blueprint"`
+	OutputType  string           `json:"output-type"`
+	Targets     []*target.Target `json:"targets"`
+	JobCreated  time.Time        `json:"job_created"`
+	JobStarted  time.Time        `json:"job_started"`
+	JobFinished time.Time        `json:"job_finished"`
 }
 
 func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
@@ -59,7 +64,7 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 		s.Workspace = make(map[string]blueprint)
 	}
 	if s.Composes == nil {
-		// TODO: push pending/running composes to workers again
+		// TODO: push waiting/running composes to workers again
 		s.Composes = make(map[uuid.UUID]compose)
 	}
 	s.stateChannel = stateChannel
@@ -74,7 +79,17 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 				if !exists {
 					return
 				}
-				compose.Status = update.Status
+				if compose.QueueStatus != update.Status {
+					switch update.Status {
+					case "RUNNING":
+						compose.JobStarted = time.Now()
+					case "FINISHED":
+						fallthrough
+					case "FAILED":
+						compose.JobFinished = time.Now()
+					}
+					compose.QueueStatus = update.Status
+				}
 			})
 		}
 	}()
@@ -193,7 +208,13 @@ func (s *store) addCompose(composeID uuid.UUID, bp *blueprint, composeType strin
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
 	s.change(func() {
-		s.Composes[composeID] = compose{"pending", bp, targets}
+		s.Composes[composeID] = compose{
+			QueueStatus: "WAITING",
+			Blueprint:   bp,
+			OutputType:  composeType,
+			Targets:     targets,
+			JobCreated:  time.Now(),
+		}
 	})
 	s.pendingJobs <- job.Job{
 		ComposeID: composeID,

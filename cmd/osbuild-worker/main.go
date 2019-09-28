@@ -57,7 +57,7 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&reply{
 		Pipeline: &job.Pipeline,
-		Targets: &job.Targets,
+		Targets:  &job.Targets,
 	})
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (c *ComposerClient) UpdateJob(job *Job, status string) error {
 
 	var b bytes.Buffer
 	json.NewEncoder(&b).Encode(&request{status})
-	req, err:= http.NewRequest("PATCH", "http://localhost/job-queue/v1/jobs/" + job.ID.String(), &b)
+	req, err := http.NewRequest("PATCH", "http://localhost/job-queue/v1/jobs/"+job.ID.String(), &b)
 	if err != nil {
 		return err
 	}
@@ -105,6 +105,6 @@ func main() {
 		fmt.Printf("Running job %s\n", job.ID.String())
 		job.Run()
 
-		client.UpdateJob(job, "finished")
+		client.UpdateJob(job, "FINISHED")
 	}
 }
