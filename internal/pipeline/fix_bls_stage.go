@@ -5,7 +5,7 @@ type FixBLSStageOptions struct {
 
 func (FixBLSStageOptions) isStageOptions() {}
 
-func NewFIXBLSStage() *Stage {
+func NewFixBLSStage() *Stage {
 	return &Stage{
 		Name: "org.osbuild.fix-bls",
 	}
