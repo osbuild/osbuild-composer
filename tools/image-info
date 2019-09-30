@@ -52,7 +52,7 @@ def read_partition_table(device):
     for p in ptable["partitions"]:
         partitions.append({
             "type": p["type"],
-            "bootable": p["bootable"],
+            "bootable": p.get("bootable", False),
             "start": p["start"] * 512,
             "size": p["size"] * 512
         })
