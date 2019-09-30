@@ -43,6 +43,11 @@ def subprocess_check_output(argv, parse_fn=None):
     return parse_fn(output) if parse_fn else output
 
 
+def read_image_format(device):
+    qemu = subprocess_check_output(["qemu-img", "info", "--output=json", device], json.loads)
+    return qemu["format"]
+
+
 def read_partition_table(device):
     sfdisk = subprocess_check_output(["sfdisk", "--json", device], json.loads)
     ptable = sfdisk["partitiontable"]
@@ -84,6 +89,7 @@ def read_bls_conf(filename):
 
 report = {}
 with nbd_connect(image) as device:
+    report["image-format"] = read_image_format(image)
     report["bootloader"] = read_bootloader_type(device)
     report["partition_table"], report["partitions"] = read_partition_table(device)
 
