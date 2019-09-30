@@ -38,6 +38,17 @@ def mount(device):
             subprocess.run(["umount", "--lazy", mountpoint], check=True)
 
 
+def parse_environment_vars(s):
+    r = {}
+    for line in s.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        key, value = line.split("=")
+        r[key] = value.strip('"')
+    return r
+
+
 def subprocess_check_output(argv, parse_fn=None):
     output = subprocess.check_output(argv, encoding="utf-8")
     return parse_fn(output) if parse_fn else output
@@ -55,8 +66,12 @@ def read_partition_table(device):
 
     partitions = []
     for p in ptable["partitions"]:
+        blkid = subprocess_check_output(["blkid", "--output", "export", p["node"]], parse_environment_vars)
         partitions.append({
+            "label": blkid.get("LABEL"), # doesn't exist for mbr
             "type": p["type"],
+            "uuid": blkid["UUID"],
+            "fstype": blkid["TYPE"],
             "bootable": p.get("bootable", False),
             "start": p["start"] * 512,
             "size": p["size"] * 512
@@ -71,15 +86,6 @@ def read_bootloader_type(device):
             return "grub"
         else:
             return "unknown"
-
-
-def read_os_release(tree):
-    r = {}
-    with open(f"{tree}/etc/os-release") as f:
-        for line in f:
-            key, value = line.strip().split("=")
-            r[key] = value.strip('"')
-    return r
 
 
 def read_bls_conf(filename):
@@ -98,7 +104,9 @@ with nbd_connect(image) as device:
         with mount(device + f"p{n}") as tree:
             if os.path.exists(f"{tree}/etc/os-release"):
                 report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
-                report["os-release"] = read_os_release(tree)
+
+                with open(f"{tree}/etc/os-release") as f:
+                    report["os-release"] = parse_environment_vars(f.read())
 
                 with open(f"{tree}/etc/fstab") as f:
                     report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
