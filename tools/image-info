@@ -87,23 +87,32 @@ with nbd_connect(image) as device:
     report["bootloader"] = read_bootloader_type(device)
     report["partition_table"], report["partitions"] = read_partition_table(device)
 
-    # only one partition containing the root filesystem supported for now
-    assert len(report["partitions"]) == 1
+    n_partitions = len(report["partitions"])
 
-    with mount(device + "p1") as tree:
-        report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
-        report["os_release"] = read_os_release(tree)
 
-        with open(f"{tree}/etc/fstab") as f:
-            report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
+    for n in range(1, n_partitions + 1):
+        with mount(device + f"p{n}") as tree:
+            # subprocess.run(["ls", "-l", tree])
+            if os.path.exists(f"{tree}/etc/os-release"):
+                report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
+                report["os_release"] = read_os_release(tree)
 
-        with open(f"{tree}/etc/passwd") as f:
-            report["passwd"] = sorted(f.read().strip().split("\n"))
+                with open(f"{tree}/etc/fstab") as f:
+                    report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
 
-        with open(f"{tree}/etc/group") as f:
-            report["groups"] = sorted(f.read().strip().split("\n"))
+                with open(f"{tree}/etc/passwd") as f:
+                    report["passwd"] = sorted(f.read().strip().split("\n"))
 
-        report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/boot/loader/entries/*.conf")]
+                with open(f"{tree}/etc/group") as f:
+                    report["groups"] = sorted(f.read().strip().split("\n"))
+
+                if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
+                    assert "bootmenu" not in report
+                    report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/boot/loader/entries/*.conf")]
+
+            elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
+                assert "bootmenu" not in report
+                report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/loader/entries/*.conf")]
 
 
 json.dump(report, sys.stdout, sort_keys=True, indent=2)
