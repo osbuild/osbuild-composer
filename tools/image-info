@@ -65,7 +65,7 @@ def read_bootloader_type(device):
         if b"GRUB" in f.read(512):
             return "grub"
         else:
-            raise RuntimeError("unkown bootloader")
+            return "unknown"
 
 
 def read_os_release(tree):
