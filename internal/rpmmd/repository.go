@@ -32,7 +32,7 @@ type Package struct {
 
 type PackageSpec struct {
 	Name    string `json:"name"`
-	Epoch   uint   `json:"epoch,omitempty"`
+	Epoch   uint   `json:"epoch"`
 	Version string `json:"version,omitempty"`
 	Release string `json:"release,omitempty"`
 	Arch    string `json:"arch,omitempty"`

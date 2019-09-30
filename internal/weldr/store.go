@@ -26,10 +26,11 @@ type store struct {
 
 type blueprint struct {
 	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
+	Description string             `json:"description"`
 	Version     string             `json:"version,omitempty"`
 	Packages    []blueprintPackage `json:"packages"`
 	Modules     []blueprintPackage `json:"modules"`
+	Groups      []blueprintPackage `json:"groups"`
 }
 
 type blueprintPackage struct {
@@ -148,6 +149,12 @@ func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 	if bp.Modules == nil {
 		bp.Modules = []blueprintPackage{}
 	}
+	if bp.Groups == nil {
+		bp.Groups = []blueprintPackage{}
+	}
+	if bp.Version == "" {
+		bp.Version = "0.0.0"
+	}
 
 	if changed != nil {
 		*changed = inWorkspace
@@ -172,6 +179,12 @@ func (s *store) getBlueprintCommitted(name string, bp *blueprint) bool {
 	}
 	if bp.Modules == nil {
 		bp.Modules = []blueprintPackage{}
+	}
+	if bp.Groups == nil {
+		bp.Groups = []blueprintPackage{}
+	}
+	if bp.Version == "" {
+		bp.Version = "0.0.0"
 	}
 
 	return true
