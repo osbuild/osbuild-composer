@@ -88,8 +88,8 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/projects/source/info", http.StatusNotFound, ``},
 		{"/api/v0/projects/source/info/", http.StatusNotFound, ``},
 		{"/api/v0/projects/source/info/foo", http.StatusBadRequest, `{"status":false,"errors":["repository not found: foo"]}`},
-		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}}}`},
-		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}}}`},
+		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
 		{"/api/v0/modules/list", http.StatusOK, `{"total":2,"offset":0,"limit":20,"modules":[{"name":"package1","group_type":"rpm"},{"name":"package2","group_type":"rpm"}]}`},
 		{"/api/v0/modules/list/*", http.StatusOK, `{"total":2,"offset":0,"limit":20,"modules":[{"name":"package1","group_type":"rpm"},{"name":"package2","group_type":"rpm"}]}`},
@@ -121,19 +121,19 @@ func TestBlueprints(t *testing.T) {
 	api := weldr.New(repo, packages, nil, nil, nil, nil, nil)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
-		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
+		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
-		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}],
+		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test","changed":false}], "errors":[]}`)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/workspace",
-		`{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0"}`,
+		`{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
-		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"version":"0"}],
+		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test","changed":true}], "errors":[]}`)
 
 	testRoute(t, api, "GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``,
@@ -145,7 +145,7 @@ func TestCompose(t *testing.T) {
 	api := weldr.New(repo, packages, nil, nil, nil, jobChannel, nil)
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
-		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0"}`,
+		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,

@@ -174,6 +174,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 	type reply struct {
 		Sources map[string]sourceConfig `json:"sources"`
+		Errors  []string                `json:"errors"`
 	}
 
 	// we only have one repository
@@ -204,6 +205,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	json.NewEncoder(writer).Encode(reply{
 		Sources: map[string]sourceConfig{cfg.ID: cfg},
+		Errors:  []string{},
 	})
 }
 
