@@ -14,7 +14,6 @@ import (
 )
 
 type API struct {
-	jobStore    *job.Store
 	pendingJobs <-chan job.Job
 	jobStatus   chan<- job.Status
 
@@ -24,7 +23,6 @@ type API struct {
 
 func New(logger *log.Logger, jobs <-chan job.Job, jobStatus chan<- job.Status) *API {
 	api := &API{
-		jobStore:    job.NewStore(),
 		logger:      logger,
 		pendingJobs: jobs,
 		jobStatus:   jobStatus,
@@ -80,9 +78,9 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type requestBody struct {
-		ID uuid.UUID `json:"id"`
 	}
 	type replyBody struct {
+		ID       uuid.UUID          `json:"id"`
 		Pipeline *pipeline.Pipeline `json:"pipeline"`
 		Targets  []*target.Target   `json:"targets"`
 	}
@@ -96,23 +94,14 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	var body requestBody
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid id: "+err.Error())
-		return
-	}
-
-	id := body.ID
-	var jobSlot job.Job
-
-	if !api.jobStore.AddJob(id, jobSlot) {
-		statusResponseError(writer, http.StatusBadRequest)
+		statusResponseError(writer, http.StatusBadRequest, "invalid request: "+err.Error())
 		return
 	}
 
 	nextJob := <-api.pendingJobs
-	api.jobStore.UpdateJob(id, nextJob)
 
 	writer.WriteHeader(http.StatusCreated)
-	json.NewEncoder(writer).Encode(replyBody{nextJob.Pipeline, nextJob.Targets})
+	json.NewEncoder(writer).Encode(replyBody{nextJob.ComposeID, nextJob.Pipeline, nextJob.Targets})
 }
 
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -128,7 +117,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 
 	id, err := uuid.Parse(params.ByName("id"))
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid job id: "+err.Error())
+		statusResponseError(writer, http.StatusBadRequest, "invalid compose id: "+err.Error())
 		return
 	}
 
@@ -136,13 +125,8 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
-	} else if body.Status == "RUNNING" {
-		api.jobStatus <- job.Status{ComposeID: id, Status: body.Status}
-		statusResponseOK(writer)
-	} else if body.Status == "FINISHED" {
-		api.jobStore.DeleteJob(id)
-		statusResponseOK(writer)
-	} else {
-		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+body.Status)
 	}
+
+	api.jobStatus <- job.Status{ComposeID: id, Status: body.Status}
+	statusResponseOK(writer)
 }
