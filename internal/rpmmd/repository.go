@@ -2,6 +2,7 @@ package rpmmd
 
 import (
 	"encoding/json"
+	"log"
 	"os/exec"
 	"sort"
 	"time"
@@ -44,6 +45,7 @@ func runDNF(command string, arguments []string, result interface{}) error {
 	cmd := exec.Command("python3", argv...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		log.Fatalf("Could not execute dnf-json")
 		return err
 	}
 

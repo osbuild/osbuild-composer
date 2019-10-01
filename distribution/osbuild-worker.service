@@ -1,0 +1,15 @@
+[Unit]
+Description=OSBuild Composer Worker (%i)
+After=multi-user.target osbuild-composer.socket
+
+[Service]
+Type=simple
+PrivateTmp=true
+ExecStart=/usr/lib/osbuild-composer/osbuild-worker -C /var/lib/osbuild
+CacheDirectory=osbuild-composer
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+DefaultInstance=1
+WantedBy=multi-user.target

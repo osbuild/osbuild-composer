@@ -1,0 +1,9 @@
+[Unit]
+PartOf=osbuild-composer.service
+
+[Socket]
+ListenStream=/run/weldr/api.socket
+ListenStream=/run/osbuild-composer/job.socket
+
+[Install]
+WantedBy=sockets.target

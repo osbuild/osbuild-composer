@@ -1,0 +1,16 @@
+[Unit]
+Description=OSBuild Composer
+After=multi-user.target
+Requires=osbuild-composer.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/osbuild-composer/osbuild-composer
+RuntimeDirectory=osbuild-composer weldr
+StateDirectory=osbuild-composer
+WorkingDirectory=/usr/lib/osbuild-composer/
+User=_osbuild-composer
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
