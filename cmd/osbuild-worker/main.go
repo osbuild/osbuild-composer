@@ -8,11 +8,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/google/uuid"
-
-	"osbuild-composer/internal/pipeline"
-	"osbuild-composer/internal/target"
 )
 
 type ComposerClient struct {
@@ -32,19 +27,10 @@ func NewClient() *ComposerClient {
 
 func (c *ComposerClient) AddJob() (*Job, error) {
 	type request struct {
-		ID string `json:"id"`
-	}
-	type reply struct {
-		Pipeline *pipeline.Pipeline `json:"pipeline"`
-		Targets  *[]target.Target   `json:"targets"`
-	}
-
-	job := &Job{
-		ID: uuid.New(),
 	}
 
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(request{job.ID.String()})
+	json.NewEncoder(&b).Encode(request{})
 	response, err := c.client.Post("http://localhost/job-queue/v1/jobs", "application/json", &b)
 	if err != nil {
 		return nil, err
@@ -55,10 +41,8 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 		return nil, errors.New("couldn't create job")
 	}
 
-	err = json.NewDecoder(response.Body).Decode(&reply{
-		Pipeline: &job.Pipeline,
-		Targets:  &job.Targets,
-	})
+	job := &Job{}
+	err = json.NewDecoder(response.Body).Decode(job)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +85,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		client.UpdateJob(job, "RUNNING")
 
 		fmt.Printf("Running job %s\n", job.ID.String())
 		job.Run()

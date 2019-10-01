@@ -12,9 +12,9 @@ import (
 )
 
 type Job struct {
-	ID       uuid.UUID
-	Pipeline pipeline.Pipeline
-	Targets  []target.Target
+	ID       uuid.UUID         `json:"id"`
+	Pipeline pipeline.Pipeline `json:"pipeline"`
+	Targets  []target.Target   `json:"targets"`
 }
 
 func (job *Job) Run() error {
