@@ -93,6 +93,29 @@ def read_bls_conf(filename):
         return dict(line.strip().split(" ", 1) for line in f)
 
 
+def rpm_verify(tree):
+    rpm = subprocess.Popen(["rpm", "--root", tree, "--verify", "--all"],
+            stdout=subprocess.PIPE, encoding="utf-8")
+
+    changed = {}
+    missing = []
+    for line in rpm.stdout:
+        # format description in rpm(8), under `--verify`
+        attrs = line[:9]
+        if attrs == "missing  ":
+            missing.append(line[12:].rstrip())
+        else:
+            changed[line[13:].rstrip()] = attrs
+
+    # ignore return value, because it returns non-zero when it found changes
+    rpm.wait()
+
+    return {
+        "missing": sorted(missing),
+        "changed": changed
+    }
+
+
 report = {}
 with nbd_connect(image) as device:
     report["image-format"] = read_image_format(image)
@@ -104,6 +127,7 @@ with nbd_connect(image) as device:
         with mount(device + f"p{n}") as tree:
             if os.path.exists(f"{tree}/etc/os-release"):
                 report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
+                report["rpm-verify"] = rpm_verify(tree)
 
                 with open(f"{tree}/etc/os-release") as f:
                     report["os-release"] = parse_environment_vars(f.read())
