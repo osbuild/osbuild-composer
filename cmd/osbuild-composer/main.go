@@ -4,7 +4,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 
@@ -12,6 +11,8 @@ import (
 	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/weldr"
+
+	"github.com/coreos/go-systemd/activation"
 )
 
 const StateFile = "/var/lib/osbuild-composer/weldr-state.json"
@@ -21,35 +22,17 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
 
-	err := os.Remove("/run/weldr/api.socket")
-	if err != nil && !os.IsNotExist(err) {
-		panic(err)
-	}
-
-	err = os.Mkdir("/run/weldr", 0755)
-	if err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-
-	weldrListener, err := net.Listen("unix", "/run/weldr/api.socket")
+	listeners, err := activation.Listeners()
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.Remove("/run/osbuild-composer/job.socket")
-	if err != nil && !os.IsNotExist(err) {
-		panic(err)
+	if len(listeners) != 2 {
+		panic("Unexpected number of sockets. Composer require 2 of them.")
 	}
 
-	err = os.Mkdir("/run/osbuild-composer", 0755)
-	if err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-
-	jobListener, err := net.Listen("unix", "/run/osbuild-composer/job.socket")
-	if err != nil {
-		panic(err)
-	}
+	weldrListener := listeners[0]
+	jobListener := listeners[1]
 
 	repo := rpmmd.RepoConfig{
 		Id:       "fedora-30",
