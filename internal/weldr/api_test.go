@@ -2,10 +2,13 @@ package weldr_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -26,16 +29,55 @@ var packages = rpmmd.PackageList{
 	{Name: "package2"},
 }
 
-func testRoute(t *testing.T, api *weldr.API, method, path, body string, expectedStatus int, expectedJSON string) {
+func externalRequest(method, path, body string) *http.Response {
+	client := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/run/weldr/api.socket")
+			},
+		},
+	}
+
+	req, err := http.NewRequest(method, "http://localhost"+path, bytes.NewReader([]byte(body)))
+	if err != nil {
+		panic(err)
+	}
+
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	return resp
+}
+
+func internalRequest(api *weldr.API, method, path, body string) *http.Response {
 	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
+
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	resp := httptest.NewRecorder()
 	api.ServeHTTP(resp, req)
 
-	if resp.Code != expectedStatus {
-		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, resp.Code)
+	return resp.Result()
+}
+
+func testRoute(t *testing.T, api *weldr.API, method, path, body string, expectedStatus int, expectedJSON string) {
+	var resp *http.Response
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		resp = externalRequest(method, path, body)
+	} else {
+		resp = internalRequest(api, method, path, body)
+	}
+
+	if resp.StatusCode != expectedStatus {
+		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, resp.StatusCode)
 		return
 	}
 
