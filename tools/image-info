@@ -88,9 +88,13 @@ def read_bootloader_type(device):
             return "unknown"
 
 
-def read_bls_conf(filename):
-    with open(filename) as f:
-        return dict(line.strip().split(" ", 1) for line in f)
+def read_boot_entries(boot_dir):
+    entries = []
+    for conf in glob.glob(f"{boot_dir}/loader/entries/*.conf"):
+        with open(conf) as f:
+           entries.append(dict(line.strip().split(" ", 1) for line in f))
+
+    return sorted(entries, key=lambda e: e["title"])
 
 
 def rpm_verify(tree):
@@ -143,11 +147,11 @@ with nbd_connect(image) as device:
 
                 if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
                     assert "bootmenu" not in report
-                    report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/boot/loader/entries/*.conf")]
+                    report["bootmenu"] = read_boot_entries(f"{tree}/boot")
 
             elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
                 assert "bootmenu" not in report
-                report["bootmenu"] = [read_bls_conf(f) for f in glob.glob(f"{tree}/loader/entries/*.conf")]
+                report["bootmenu"] = read_boot_entries(tree)
 
 
 json.dump(report, sys.stdout, sort_keys=True, indent=2)
