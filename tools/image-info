@@ -98,7 +98,10 @@ def read_boot_entries(boot_dir):
 
 
 def rpm_verify(tree):
-    rpm = subprocess.Popen(["rpm", "--root", tree, "--verify", "--all"],
+    # cannot use `rpm --root` here, because rpm uses passwd from the host to
+    # verify user and group ownership:
+    #   https://github.com/rpm-software-management/rpm/issues/882
+    rpm = subprocess.Popen(["chroot", tree, "rpm", "--verify", "--all"],
             stdout=subprocess.PIPE, encoding="utf-8")
 
     changed = {}
