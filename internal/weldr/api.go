@@ -649,7 +649,9 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	reply.Types = append(reply.Types, composeType{"tar", true})
+	for _, format := range blueprint.ListOutputFormats() {
+		reply.Types = append(reply.Types, composeType{format, true})
+	}
 
 	json.NewEncoder(writer).Encode(reply)
 }

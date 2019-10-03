@@ -2,7 +2,10 @@
 // translating them to OSBuild pipelines
 package blueprint
 
-import "osbuild-composer/internal/pipeline"
+import (
+	"osbuild-composer/internal/pipeline"
+	"sort"
+)
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
@@ -20,9 +23,43 @@ type Package struct {
 	Version string `json:"version,omitempty"`
 }
 
-// TranslateToPipeline converts the blueprint to a pipeline for a given output format.
-func (b *Blueprint) TranslateToPipeline(outputFormat string) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(pipeline.NewTarAssembler(pipeline.NewTarAssemblerOptions("image.tar")))
-	return p
+type output interface {
+	translate(b *Blueprint) *pipeline.Pipeline
+	getName() string
+	getMime() string
+}
+
+var outputs = map[string]output{
+	"ami":              &amiOutput{},
+	"ext4-filesystem":  &ext4Output{},
+	"live-iso":         &liveIsoOutput{},
+	"partitioned-disk": &diskOutput{},
+	"qcow2":            &qcow2Output{},
+	"openstack":        &openstackOutput{},
+	"tar":              &tarOutput{},
+	"vhd":              &vhdOutput{},
+	"vmdk":             &vmdkOutput{},
+}
+
+// ListOutputFormats returns a sorted list of the supported output formats
+func ListOutputFormats() []string {
+	formats := make([]string, 0, len(outputs))
+	for name := range outputs {
+		formats = append(formats, name)
+	}
+	sort.Strings(formats)
+
+	return formats
+}
+
+// ToPipeline converts the blueprint to a pipeline for a given output format.
+func (b *Blueprint) ToPipeline(outputFormat string) *pipeline.Pipeline {
+	return outputs[outputFormat].translate(b)
+}
+
+// FilenameFromType gets the canonical filename and MIME type for a given
+// output format
+func FilenameFromType(outputFormat string) (string, string) {
+	translator := outputs[outputFormat]
+	return translator.getName(), translator.getMime()
 }

@@ -217,7 +217,7 @@ func (s *store) addCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compose
 	})
 	s.pendingJobs <- job.Job{
 		ComposeID: composeID,
-		Pipeline:  bp.TranslateToPipeline(composeType),
+		Pipeline:  bp.ToPipeline(composeType),
 		Targets:   targets,
 	}
 }
