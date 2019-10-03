@@ -1,0 +1,63 @@
+package pipeline
+
+import (
+	"encoding/json"
+	"errors"
+)
+
+// A Stage transforms a filesystem tree.
+type Stage struct {
+	// Well-known name in reverse domain-name notation, uniquely identifying
+	// the stage type.
+	Name string `json:"name"`
+	// Stage-type specific options fully determining the operations of the
+	// stage.
+	Options StageOptions `json:"options"`
+}
+
+// StageOptions specify the operations of a given stage-type.
+type StageOptions interface {
+	isStageOptions()
+}
+
+type rawStage struct {
+	Name    string          `json:"name"`
+	Options json.RawMessage `json:"options"`
+}
+
+// UnmarshalJSON unmarshals JSON into a Stage object. Each type of stage has
+// a custom unmarshaller for its options, selected based on the stage name.
+func (stage *Stage) UnmarshalJSON(data []byte) error {
+	var rawStage rawStage
+	err := json.Unmarshal(data, &rawStage)
+	if err != nil {
+		return err
+	}
+	var options StageOptions
+	switch rawStage.Name {
+	case "org.osbuild.dnf":
+		options = new(DNFStageOptions)
+	case "org.osbuild.fix-bls":
+		// TODO: verify that we can unmarshall this also if "options" is omitted
+		options = new(FixBLSStageOptions)
+	case "org.osbuild.fstab":
+		options = new(FSTabStageOptions)
+	case "org.osbuild.grub2":
+		options = new(GRUB2StageOptions)
+	case "org.osbuild.locale":
+		options = new(LocaleStageOptions)
+	case "org.osbuild.selinux":
+		options = new(SELinuxStageOptions)
+	default:
+		return errors.New("unexpected stage name")
+	}
+	err = json.Unmarshal(rawStage.Options, options)
+	if err != nil {
+		return err
+	}
+
+	stage.Name = rawStage.Name
+	stage.Options = options
+
+	return nil
+}
