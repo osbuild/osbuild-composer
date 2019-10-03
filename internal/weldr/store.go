@@ -3,8 +3,8 @@ package weldr
 import (
 	"encoding/json"
 	"log"
+	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
-	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/target"
 	"sort"
 	"sync"
@@ -14,9 +14,9 @@ import (
 )
 
 type store struct {
-	Blueprints map[string]blueprint  `json:"blueprints"`
-	Workspace  map[string]blueprint  `json:"workspace"`
-	Composes   map[uuid.UUID]compose `json:"composes"`
+	Blueprints map[string]blueprint.Blueprint `json:"blueprints"`
+	Workspace  map[string]blueprint.Blueprint `json:"workspace"`
+	Composes   map[uuid.UUID]compose          `json:"composes"`
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan<- job.Job
@@ -24,28 +24,14 @@ type store struct {
 	stateChannel chan<- []byte
 }
 
-type blueprint struct {
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Version     string             `json:"version,omitempty"`
-	Packages    []blueprintPackage `json:"packages"`
-	Modules     []blueprintPackage `json:"modules"`
-	Groups      []blueprintPackage `json:"groups"`
-}
-
-type blueprintPackage struct {
-	Name    string `json:"name"`
-	Version string `json:"version,omitempty"`
-}
-
 type compose struct {
-	QueueStatus string           `json:"queue_status"`
-	Blueprint   *blueprint       `json:"blueprint"`
-	OutputType  string           `json:"output-type"`
-	Targets     []*target.Target `json:"targets"`
-	JobCreated  time.Time        `json:"job_created"`
-	JobStarted  time.Time        `json:"job_started"`
-	JobFinished time.Time        `json:"job_finished"`
+	QueueStatus string               `json:"queue_status"`
+	Blueprint   *blueprint.Blueprint `json:"blueprint"`
+	OutputType  string               `json:"output-type"`
+	Targets     []*target.Target     `json:"targets"`
+	JobCreated  time.Time            `json:"job_created"`
+	JobStarted  time.Time            `json:"job_started"`
+	JobFinished time.Time            `json:"job_finished"`
 }
 
 func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
@@ -59,10 +45,10 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 	}
 
 	if s.Blueprints == nil {
-		s.Blueprints = make(map[string]blueprint)
+		s.Blueprints = make(map[string]blueprint.Blueprint)
 	}
 	if s.Workspace == nil {
-		s.Workspace = make(map[string]blueprint)
+		s.Workspace = make(map[string]blueprint.Blueprint)
 	}
 	if s.Composes == nil {
 		// TODO: push waiting/running composes to workers again
@@ -128,7 +114,7 @@ func (s *store) listBlueprints() []string {
 	return names
 }
 
-func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
+func (s *store) getBlueprint(name string, bp *blueprint.Blueprint, changed *bool) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -144,13 +130,13 @@ func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 
 	// cockpit-composer cannot deal with missing "packages" or "modules"
 	if bp.Packages == nil {
-		bp.Packages = []blueprintPackage{}
+		bp.Packages = []blueprint.Package{}
 	}
 	if bp.Modules == nil {
-		bp.Modules = []blueprintPackage{}
+		bp.Modules = []blueprint.Package{}
 	}
 	if bp.Groups == nil {
-		bp.Groups = []blueprintPackage{}
+		bp.Groups = []blueprint.Package{}
 	}
 	if bp.Version == "" {
 		bp.Version = "0.0.0"
@@ -163,7 +149,7 @@ func (s *store) getBlueprint(name string, bp *blueprint, changed *bool) bool {
 	return true
 }
 
-func (s *store) getBlueprintCommitted(name string, bp *blueprint) bool {
+func (s *store) getBlueprintCommitted(name string, bp *blueprint.Blueprint) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -175,13 +161,13 @@ func (s *store) getBlueprintCommitted(name string, bp *blueprint) bool {
 
 	// cockpit-composer cannot deal with missing "packages" or "modules"
 	if bp.Packages == nil {
-		bp.Packages = []blueprintPackage{}
+		bp.Packages = []blueprint.Package{}
 	}
 	if bp.Modules == nil {
-		bp.Modules = []blueprintPackage{}
+		bp.Modules = []blueprint.Package{}
 	}
 	if bp.Groups == nil {
-		bp.Groups = []blueprintPackage{}
+		bp.Groups = []blueprint.Package{}
 	}
 	if bp.Version == "" {
 		bp.Version = "0.0.0"
@@ -190,14 +176,14 @@ func (s *store) getBlueprintCommitted(name string, bp *blueprint) bool {
 	return true
 }
 
-func (s *store) pushBlueprint(bp blueprint) {
+func (s *store) pushBlueprint(bp blueprint.Blueprint) {
 	s.change(func() {
 		delete(s.Workspace, bp.Name)
 		s.Blueprints[bp.Name] = bp
 	})
 }
 
-func (s *store) pushBlueprintToWorkspace(bp blueprint) {
+func (s *store) pushBlueprintToWorkspace(bp blueprint.Blueprint) {
 	s.change(func() {
 		s.Workspace[bp.Name] = bp
 	})
@@ -216,7 +202,7 @@ func (s *store) deleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *store) addCompose(composeID uuid.UUID, bp *blueprint, composeType string) {
+func (s *store) addCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
@@ -231,13 +217,7 @@ func (s *store) addCompose(composeID uuid.UUID, bp *blueprint, composeType strin
 	})
 	s.pendingJobs <- job.Job{
 		ComposeID: composeID,
-		Pipeline:  bp.translateToPipeline(composeType),
+		Pipeline:  bp.TranslateToPipeline(composeType),
 		Targets:   targets,
 	}
-}
-
-func (b *blueprint) translateToPipeline(outputFormat string) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(pipeline.NewTarAssembler(pipeline.NewTarAssemblerOptions("image.tar")))
-	return p
 }
