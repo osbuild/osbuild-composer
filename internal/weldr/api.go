@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
+	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
 )
@@ -37,12 +38,12 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 
 	// sample blueprint on first run
 	if initialState == nil {
-		api.store.pushBlueprint(blueprint{
+		api.store.pushBlueprint(blueprint.Blueprint{
 			Name:        "example",
 			Description: "An Example",
 			Version:     "1",
-			Packages:    []blueprintPackage{{"httpd", "2.*"}},
-			Modules:     []blueprintPackage{},
+			Packages:    []blueprint.Package{{"httpd", "2.*"}},
+			Modules:     []blueprint.Package{},
 		})
 	}
 
@@ -399,9 +400,9 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		Name    string `json:"name"`
 	}
 	type reply struct {
-		Blueprints []blueprint `json:"blueprints"`
-		Changes    []change    `json:"changes"`
-		Errors     []string    `json:"errors"`
+		Blueprints []blueprint.Blueprint `json:"blueprints"`
+		Changes    []change              `json:"changes"`
+		Errors     []string              `json:"errors"`
 	}
 
 	names := strings.Split(params.ByName("blueprints"), ",")
@@ -410,10 +411,10 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	blueprints := []blueprint{}
+	blueprints := []blueprint.Blueprint{}
 	changes := []change{}
 	for _, name := range names {
-		var blueprint blueprint
+		var blueprint blueprint.Blueprint
 		var changed bool
 		if !api.store.getBlueprint(name, &blueprint, &changed) {
 			statusResponseError(writer, http.StatusNotFound)
@@ -432,7 +433,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 
 func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	type entry struct {
-		Blueprint    blueprint           `json:"blueprint"`
+		Blueprint    blueprint.Blueprint `json:"blueprint"`
 		Dependencies []rpmmd.PackageSpec `json:"dependencies"`
 	}
 	type reply struct {
@@ -448,7 +449,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 	blueprints := []entry{}
 	for _, name := range names {
-		var blueprint blueprint
+		var blueprint blueprint.Blueprint
 		if !api.store.getBlueprint(name, &blueprint, nil) {
 			statusResponseError(writer, http.StatusNotFound)
 			return
@@ -478,7 +479,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	type pack struct {
-		Package blueprintPackage `json:"Package"`
+		Package blueprint.Package `json:"Package"`
 	}
 
 	type diff struct {
@@ -507,14 +508,14 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	// Fetch old and new blueprint details from store and return error if not found
-	var oldBlueprint, newBlueprint blueprint
+	var oldBlueprint, newBlueprint blueprint.Blueprint
 	if !api.store.getBlueprintCommitted(name, &oldBlueprint) || !api.store.getBlueprint(name, &newBlueprint, nil) {
 		statusResponseError(writer, http.StatusNotFound)
 		return
 	}
 
 	newSlice := newBlueprint.Packages
-	oldMap := make(map[string]blueprintPackage)
+	oldMap := make(map[string]blueprint.Package)
 	diffs := []diff{}
 
 	for _, oldPackage := range oldBlueprint.Packages {
@@ -551,7 +552,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	var blueprint blueprint
+	var blueprint blueprint.Blueprint
 	err := json.NewDecoder(request.Body).Decode(&blueprint)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid blueprint: "+err.Error())
@@ -570,7 +571,7 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		return
 	}
 
-	var blueprint blueprint
+	var blueprint blueprint.Blueprint
 	err := json.NewDecoder(request.Body).Decode(&blueprint)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid blueprint: "+err.Error())
@@ -624,7 +625,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 		Status:  true,
 	}
 
-	bp := blueprint{}
+	bp := blueprint.Blueprint{}
 	changed := false
 	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
