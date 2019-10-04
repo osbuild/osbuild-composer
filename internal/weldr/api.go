@@ -2,6 +2,8 @@ package weldr
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -79,6 +81,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/v0/compose/status/:uuids", api.composeStatusHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
+	api.router.GET("/api/v0/compose/image/:id", api.composeImageHandler)
 
 	return api
 }
@@ -696,6 +699,33 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	reply.UUIDs = api.store.listQueue(uuids)
 
 	json.NewEncoder(writer).Encode(reply)
+}
+
+func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	idString := params.ByName("id")
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid UUID")
+		return
+	}
+
+	image, err := api.store.getImage(id)
+	if err != nil {
+		statusResponseError(writer, http.StatusNotFound, "image for compose not found")
+		return
+	}
+
+	stat, err := image.file.Stat()
+	if err != nil {
+		statusResponseError(writer, http.StatusInternalServerError)
+		return
+	}
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-"+image.name)
+	writer.Header().Set("Content-Type", image.mime)
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+
+	io.Copy(writer, image.file)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {

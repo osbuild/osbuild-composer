@@ -2,7 +2,9 @@ package weldr
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
+	"os"
 	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/target"
@@ -283,4 +285,37 @@ func (s *store) addCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compose
 		Pipeline:  bp.ToPipeline(composeType),
 		Targets:   targets,
 	}
+}
+
+type image struct {
+	file *os.File
+	name string
+	mime string
+}
+
+func (s *store) getImage(composeID uuid.UUID) (*image, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if compose, exists := s.Composes[composeID]; exists {
+		if compose.QueueStatus != "FINISHED" {
+			return nil, errors.New("compose not ready")
+		}
+		name, mime := blueprint.FilenameFromType(compose.OutputType)
+		for _, t := range compose.Targets {
+			switch options := t.Options.(type) {
+			case *target.LocalTargetOptions:
+				file, err := os.Open(options.Location + "/" + name)
+				if err == nil {
+					return &image{
+						file: file,
+						name: name,
+						mime: mime,
+					}, nil
+				}
+			}
+		}
+	}
+
+	return nil, errors.New("image not found")
 }
