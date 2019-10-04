@@ -76,6 +76,7 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 						compose.JobFinished = time.Now()
 					}
 					compose.QueueStatus = update.Status
+					s.Composes[update.ComposeID] = compose
 				}
 			})
 		}
