@@ -114,6 +114,68 @@ func (s *store) listBlueprints() []string {
 	return names
 }
 
+type composeEntry struct {
+	ID          uuid.UUID `json:"id"`
+	Blueprint   string    `json:"blueprint"`
+	QueueStatus string    `json:"queue_status"`
+	JobCreated  float64   `json:"job_created"`
+	JobStarted  float64   `json:"job_started,omitempty"`
+	JobFinished float64   `json:"job_finished,omitempty"`
+}
+
+func (s *store) listQueue(uuids []uuid.UUID) []*composeEntry {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	newCompose := func(id uuid.UUID, compose compose) *composeEntry {
+		switch compose.QueueStatus {
+		case "WAITING":
+			return &composeEntry{
+				ID:          id,
+				Blueprint:   compose.Blueprint.Name,
+				QueueStatus: compose.QueueStatus,
+				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
+			}
+		case "RUNNING":
+			return &composeEntry{
+				ID:          id,
+				Blueprint:   compose.Blueprint.Name,
+				QueueStatus: compose.QueueStatus,
+				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
+				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
+			}
+		case "FAILED", "FINISHED":
+			return &composeEntry{
+				ID:          id,
+				Blueprint:   compose.Blueprint.Name,
+				QueueStatus: compose.QueueStatus,
+				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
+				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
+				JobFinished: float64(compose.JobFinished.UnixNano()) / 1000000000,
+			}
+		default:
+			panic("invalid compose state")
+		}
+	}
+
+	var composes []*composeEntry
+	if uuids == nil {
+		composes = make([]*composeEntry, 0, len(s.Composes))
+		for id, compose := range s.Composes {
+			composes = append(composes, newCompose(id, compose))
+		}
+	} else {
+		composes = make([]*composeEntry, 0, len(uuids))
+		for _, id := range uuids {
+			if compose, exists := s.Composes[id]; exists {
+				composes = append(composes, newCompose(id, compose))
+			}
+		}
+	}
+
+	return composes
+}
+
 func (s *store) getBlueprint(name string, bp *blueprint.Blueprint, changed *bool) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

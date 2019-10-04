@@ -76,6 +76,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.POST("/api/v0/compose", api.composeHandler)
 	api.router.GET("/api/v0/compose/types", api.composeTypesHandler)
 	api.router.GET("/api/v0/compose/queue", api.composeQueueHandler)
+	api.router.GET("/api/v0/compose/status/:uuids", api.composeStatusHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
 
@@ -658,12 +659,41 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 
 func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	var reply struct {
-		New []interface{} `json:"new"`
-		Run []interface{} `json:"run"`
+		New []*composeEntry `json:"new"`
+		Run []*composeEntry `json:"run"`
 	}
 
-	reply.New = make([]interface{}, 0)
-	reply.Run = make([]interface{}, 0)
+	reply.New = make([]*composeEntry, 0)
+	reply.Run = make([]*composeEntry, 0)
+
+	for _, entry := range api.store.listQueue(nil) {
+		switch entry.QueueStatus {
+		case "WAITING":
+			reply.New = append(reply.New, entry)
+		case "RUNNING":
+			reply.Run = append(reply.Run, entry)
+		}
+	}
+
+	json.NewEncoder(writer).Encode(reply)
+}
+
+func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	var reply struct {
+		UUIDs []*composeEntry `json:"uuids"`
+	}
+
+	uuidStrings := strings.Split(params.ByName("uuids"), ",")
+	uuids := make([]uuid.UUID, len(uuidStrings))
+	for _, uuidString := range uuidStrings {
+		id, err := uuid.Parse(uuidString)
+		if err != nil {
+			statusResponseError(writer, http.StatusBadRequest, "invalid UUID")
+ 			return
+ 		}
+		uuids = append(uuids, id)
+	}
+	reply.UUIDs = api.store.listQueue(uuids)
 
 	json.NewEncoder(writer).Encode(reply)
 }
