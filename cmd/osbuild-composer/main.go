@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/store"
@@ -64,16 +63,6 @@ func main() {
 	stateChannel := make(chan []byte, 10)
 
 	store := store.New(state, stateChannel)
-	// sample blueprint on first run
-	if state == nil {
-		store.PushBlueprint(blueprint.Blueprint{
-			Name:        "example",
-			Description: "An Example",
-			Version:     "1",
-			Packages:    []blueprint.Package{{"httpd", "2.*"}},
-			Modules:     []blueprint.Package{},
-		})
-	}
 
 	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(repo, packages, logger, store)
