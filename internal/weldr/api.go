@@ -16,10 +16,11 @@ import (
 	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/store"
 )
 
 type API struct {
-	store *store
+	store *store.Store
 
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
@@ -32,7 +33,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:    newStore(initialState, stateChannel, jobs, jobStatus),
+		store:    store.New(initialState, stateChannel, jobs, jobStatus),
 		repo:     repo,
 		packages: packages,
 		logger:   logger,
@@ -40,7 +41,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 
 	// sample blueprint on first run
 	if initialState == nil {
-		api.store.pushBlueprint(blueprint.Blueprint{
+		api.store.PushBlueprint(blueprint.Blueprint{
 			Name:        "example",
 			Description: "An Example",
 			Version:     "1",
@@ -385,7 +386,7 @@ func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	names := api.store.listBlueprints()
+	names := api.store.ListBlueprints()
 	total := uint(len(names))
 	offset = min(offset, total)
 	limit = min(limit, total-offset)
@@ -420,7 +421,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	for _, name := range names {
 		var blueprint blueprint.Blueprint
 		var changed bool
-		if !api.store.getBlueprint(name, &blueprint, &changed) {
+		if !api.store.GetBlueprint(name, &blueprint, &changed) {
 			statusResponseError(writer, http.StatusNotFound)
 			return
 		}
@@ -454,7 +455,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	blueprints := []entry{}
 	for _, name := range names {
 		var blueprint blueprint.Blueprint
-		if !api.store.getBlueprint(name, &blueprint, nil) {
+		if !api.store.GetBlueprint(name, &blueprint, nil) {
 			statusResponseError(writer, http.StatusNotFound)
 			return
 		}
@@ -513,7 +514,7 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 
 	// Fetch old and new blueprint details from store and return error if not found
 	var oldBlueprint, newBlueprint blueprint.Blueprint
-	if !api.store.getBlueprintCommitted(name, &oldBlueprint) || !api.store.getBlueprint(name, &newBlueprint, nil) {
+	if !api.store.GetBlueprintCommitted(name, &oldBlueprint) || !api.store.GetBlueprint(name, &newBlueprint, nil) {
 		statusResponseError(writer, http.StatusNotFound)
 		return
 	}
@@ -563,7 +564,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	api.store.pushBlueprint(blueprint)
+	api.store.PushBlueprint(blueprint)
 
 	statusResponseOK(writer)
 }
@@ -582,18 +583,18 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		return
 	}
 
-	api.store.pushBlueprintToWorkspace(blueprint)
+	api.store.PushBlueprintToWorkspace(blueprint)
 
 	statusResponseOK(writer)
 }
 
 func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	api.store.deleteBlueprint(params.ByName("blueprint"))
+	api.store.DeleteBlueprint(params.ByName("blueprint"))
 	statusResponseOK(writer)
 }
 
 func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	api.store.deleteBlueprintFromWorkspace(params.ByName("blueprint"))
+	api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint"))
 	statusResponseOK(writer)
 }
 
@@ -631,10 +632,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 
 	bp := blueprint.Blueprint{}
 	changed := false
-	found := api.store.getBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
+	found := api.store.GetBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		api.store.addCompose(reply.BuildID, &bp, cr.ComposeType)
+		api.store.AddCompose(reply.BuildID, &bp, cr.ComposeType)
 	} else {
 		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")
 		return
@@ -662,14 +663,14 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 
 func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	var reply struct {
-		New []*composeEntry `json:"new"`
-		Run []*composeEntry `json:"run"`
+		New []*store.ComposeEntry `json:"new"`
+		Run []*store.ComposeEntry `json:"run"`
 	}
 
-	reply.New = make([]*composeEntry, 0)
-	reply.Run = make([]*composeEntry, 0)
+	reply.New = make([]*store.ComposeEntry, 0)
+	reply.Run = make([]*store.ComposeEntry, 0)
 
-	for _, entry := range api.store.listQueue(nil) {
+	for _, entry := range api.store.ListQueue(nil) {
 		switch entry.QueueStatus {
 		case "WAITING":
 			reply.New = append(reply.New, entry)
@@ -683,7 +684,7 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 
 func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var reply struct {
-		UUIDs []*composeEntry `json:"uuids"`
+		UUIDs []*store.ComposeEntry `json:"uuids"`
 	}
 
 	uuidStrings := strings.Split(params.ByName("uuids"), ",")
@@ -696,7 +697,7 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
  		}
 		uuids = append(uuids, id)
 	}
-	reply.UUIDs = api.store.listQueue(uuids)
+	reply.UUIDs = api.store.ListQueue(uuids)
 
 	json.NewEncoder(writer).Encode(reply)
 }
@@ -709,23 +710,23 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	image, err := api.store.getImage(id)
+	image, err := api.store.GetImage(id)
 	if err != nil {
 		statusResponseError(writer, http.StatusNotFound, "image for compose not found")
 		return
 	}
 
-	stat, err := image.file.Stat()
+	stat, err := image.File.Stat()
 	if err != nil {
 		statusResponseError(writer, http.StatusInternalServerError)
 		return
 	}
 
-	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-"+image.name)
-	writer.Header().Set("Content-Type", image.mime)
+	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-"+image.Name)
+	writer.Header().Set("Content-Type", image.Mime)
 	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 
-	io.Copy(writer, image.file)
+	io.Copy(writer, image.File)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {

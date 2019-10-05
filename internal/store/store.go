@@ -1,4 +1,6 @@
-package weldr
+// Package store contains primitives for representing and changing the
+// osbuild-composer state.
+package store
 
 import (
 	"encoding/json"
@@ -15,10 +17,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type store struct {
+// A Store contains all the persistent state of osbuild-composer, and is serialized
+// on every change, and deserialized on start.
+type Store struct {
 	Blueprints map[string]blueprint.Blueprint `json:"blueprints"`
 	Workspace  map[string]blueprint.Blueprint `json:"workspace"`
-	Composes   map[uuid.UUID]compose          `json:"composes"`
+	Composes   map[uuid.UUID]Compose          `json:"composes"`
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan<- job.Job
@@ -26,7 +30,9 @@ type store struct {
 	stateChannel chan<- []byte
 }
 
-type compose struct {
+// A Compose represent the task of building one image. It contains all the information
+// necessary to generate the inputs for the job, as well as the job's state.
+type Compose struct {
 	QueueStatus string               `json:"queue_status"`
 	Blueprint   *blueprint.Blueprint `json:"blueprint"`
 	OutputType  string               `json:"output-type"`
@@ -36,8 +42,15 @@ type compose struct {
 	JobFinished time.Time            `json:"job_finished"`
 }
 
-func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *store {
-	var s store
+// An Image represents the image resulting from a compose.
+type Image struct {
+	File *os.File
+	Name string
+	Mime string
+}
+
+func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *Store {
+	var s Store
 
 	if initialState != nil {
 		err := json.Unmarshal(initialState, &s)
@@ -54,7 +67,7 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 	}
 	if s.Composes == nil {
 		// TODO: push waiting/running composes to workers again
-		s.Composes = make(map[uuid.UUID]compose)
+		s.Composes = make(map[uuid.UUID]Compose)
 	}
 	s.stateChannel = stateChannel
 	s.pendingJobs = pendingJobs
@@ -87,7 +100,7 @@ func newStore(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<
 	return &s
 }
 
-func (s *store) change(f func()) {
+func (s *Store) change(f func()) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -104,7 +117,7 @@ func (s *store) change(f func()) {
 	}
 }
 
-func (s *store) listBlueprints() []string {
+func (s *Store) ListBlueprints() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -117,7 +130,7 @@ func (s *store) listBlueprints() []string {
 	return names
 }
 
-type composeEntry struct {
+type ComposeEntry struct {
 	ID          uuid.UUID `json:"id"`
 	Blueprint   string    `json:"blueprint"`
 	QueueStatus string    `json:"queue_status"`
@@ -126,21 +139,21 @@ type composeEntry struct {
 	JobFinished float64   `json:"job_finished,omitempty"`
 }
 
-func (s *store) listQueue(uuids []uuid.UUID) []*composeEntry {
+func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	newCompose := func(id uuid.UUID, compose compose) *composeEntry {
+	newCompose := func(id uuid.UUID, compose Compose) *ComposeEntry {
 		switch compose.QueueStatus {
 		case "WAITING":
-			return &composeEntry{
+			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
 				QueueStatus: compose.QueueStatus,
 				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
 			}
 		case "RUNNING":
-			return &composeEntry{
+			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
 				QueueStatus: compose.QueueStatus,
@@ -148,7 +161,7 @@ func (s *store) listQueue(uuids []uuid.UUID) []*composeEntry {
 				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
 			}
 		case "FAILED", "FINISHED":
-			return &composeEntry{
+			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
 				QueueStatus: compose.QueueStatus,
@@ -161,14 +174,14 @@ func (s *store) listQueue(uuids []uuid.UUID) []*composeEntry {
 		}
 	}
 
-	var composes []*composeEntry
+	var composes []*ComposeEntry
 	if uuids == nil {
-		composes = make([]*composeEntry, 0, len(s.Composes))
+		composes = make([]*ComposeEntry, 0, len(s.Composes))
 		for id, compose := range s.Composes {
 			composes = append(composes, newCompose(id, compose))
 		}
 	} else {
-		composes = make([]*composeEntry, 0, len(uuids))
+		composes = make([]*ComposeEntry, 0, len(uuids))
 		for _, id := range uuids {
 			if compose, exists := s.Composes[id]; exists {
 				composes = append(composes, newCompose(id, compose))
@@ -179,7 +192,7 @@ func (s *store) listQueue(uuids []uuid.UUID) []*composeEntry {
 	return composes
 }
 
-func (s *store) getBlueprint(name string, bp *blueprint.Blueprint, changed *bool) bool {
+func (s *Store) GetBlueprint(name string, bp *blueprint.Blueprint, changed *bool) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -214,7 +227,7 @@ func (s *store) getBlueprint(name string, bp *blueprint.Blueprint, changed *bool
 	return true
 }
 
-func (s *store) getBlueprintCommitted(name string, bp *blueprint.Blueprint) bool {
+func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -241,38 +254,38 @@ func (s *store) getBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 	return true
 }
 
-func (s *store) pushBlueprint(bp blueprint.Blueprint) {
+func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
 	s.change(func() {
 		delete(s.Workspace, bp.Name)
 		s.Blueprints[bp.Name] = bp
 	})
 }
 
-func (s *store) pushBlueprintToWorkspace(bp blueprint.Blueprint) {
+func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) {
 	s.change(func() {
 		s.Workspace[bp.Name] = bp
 	})
 }
 
-func (s *store) deleteBlueprint(name string) {
+func (s *Store) DeleteBlueprint(name string) {
 	s.change(func() {
 		delete(s.Workspace, name)
 		delete(s.Blueprints, name)
 	})
 }
 
-func (s *store) deleteBlueprintFromWorkspace(name string) {
+func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	s.change(func() {
 		delete(s.Workspace, name)
 	})
 }
 
-func (s *store) addCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
+func (s *Store) AddCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
 	s.change(func() {
-		s.Composes[composeID] = compose{
+		s.Composes[composeID] = Compose{
 			QueueStatus: "WAITING",
 			Blueprint:   bp,
 			OutputType:  composeType,
@@ -287,13 +300,7 @@ func (s *store) addCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compose
 	}
 }
 
-type image struct {
-	file *os.File
-	name string
-	mime string
-}
-
-func (s *store) getImage(composeID uuid.UUID) (*image, error) {
+func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -307,10 +314,10 @@ func (s *store) getImage(composeID uuid.UUID) (*image, error) {
 			case *target.LocalTargetOptions:
 				file, err := os.Open(options.Location + "/" + name)
 				if err == nil {
-					return &image{
-						file: file,
-						name: name,
-						mime: mime,
+					return &Image{
+						File: file,
+						Name: name,
+						Mime: mime,
 					}, nil
 				}
 			}
