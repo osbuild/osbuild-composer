@@ -88,7 +88,7 @@ func TestBasic(t *testing.T) {
 		//{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"FINISHED"}`, http.StatusNotAllowed, ``},
 	}
 
-	store := store.New(nil, nil)
+	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 	for _, c := range cases {
 		id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")

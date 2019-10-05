@@ -5,11 +5,13 @@ package store
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"os"
 	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/target"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -26,7 +28,7 @@ type Store struct {
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan job.Job
-	stateChannel chan<- []byte
+	stateChannel chan []byte
 }
 
 // A Compose represent the task of building one image. It contains all the information
@@ -48,14 +50,30 @@ type Image struct {
 	Mime string
 }
 
-func New(initialState []byte, stateChannel chan<- []byte) *Store {
+func New(stateFile *string) *Store {
 	var s Store
 
-	if initialState != nil {
-		err := json.Unmarshal(initialState, &s)
-		if err != nil {
-			log.Fatalf("invalid initial state: %v", err)
+	if stateFile != nil {
+		state, err := ioutil.ReadFile(*stateFile)
+		if state != nil {
+			err := json.Unmarshal(state, &s)
+			if err != nil {
+				log.Fatalf("invalid initial state: %v", err)
+			}
+		} else if !os.IsNotExist(err) {
+			log.Fatalf("cannot read state: %v", err)
 		}
+
+		s.stateChannel = make(chan []byte, 128)
+
+		go func() {
+			for {
+				err := writeFileAtomically(*stateFile, <-s.stateChannel, 0755)
+				if err != nil {
+					log.Fatalf("cannot write state: %v", err)
+				}
+			}
+		}()
 	}
 
 	if s.Blueprints == nil {
@@ -68,10 +86,43 @@ func New(initialState []byte, stateChannel chan<- []byte) *Store {
 		// TODO: push waiting/running composes to workers again
 		s.Composes = make(map[uuid.UUID]Compose)
 	}
-	s.stateChannel = stateChannel
 	s.pendingJobs = make(chan job.Job, 200)
 
 	return &s
+}
+
+func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
+	dir, name := filepath.Dir(filename), filepath.Base(filename)
+
+	tmpfile, err := ioutil.TempFile(dir, name+"-*.tmp")
+	if err != nil {
+		return err
+	}
+
+	_, err = tmpfile.Write(data)
+	if err != nil {
+		os.Remove(tmpfile.Name())
+		return err
+	}
+
+	err = tmpfile.Chmod(mode)
+	if err != nil {
+		return err
+	}
+
+	err = tmpfile.Close()
+	if err != nil {
+		os.Remove(tmpfile.Name())
+		return err
+	}
+
+	err = os.Rename(tmpfile.Name(), filename)
+	if err != nil {
+		os.Remove(tmpfile.Name())
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) change(f func()) {
