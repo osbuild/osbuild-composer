@@ -122,8 +122,20 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
+		return
 	}
 
-	api.store.UpdateCompose(id, body.Status)
+	err = api.store.UpdateCompose(id, body.Status)
+	if err != nil {
+		switch err.(type) {
+		case *store.NotFoundError:
+			statusResponseError(writer, http.StatusNotFound, err.Error())
+		case *store.NotPendingError:
+			statusResponseError(writer, http.StatusBadRequest, err.Error())
+		case *store.InvalidRequestError:
+			statusResponseError(writer, http.StatusBadRequest, err.Error())
+		}
+		return
+	}
 	statusResponseOK(writer)
 }

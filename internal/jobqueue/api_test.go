@@ -17,6 +17,13 @@ import (
 	"github.com/google/uuid"
 )
 
+func sendHTTP(api *jobqueue.API, method, path, body string) {
+	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	api.ServeHTTP(resp, req)
+}
+
 func testRoute(t *testing.T, api *jobqueue.API, method, path, body string, expectedStatus int, expectedJSON string) {
 	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
@@ -65,7 +72,6 @@ func testRoute(t *testing.T, api *jobqueue.API, method, path, body string, expec
 }
 
 func TestBasic(t *testing.T) {
-	expected_job := `{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/outputs/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`
 	var cases = []struct {
 		Method         string
 		Path           string
@@ -73,27 +79,73 @@ func TestBasic(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{"POST", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
-		{"GET", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
-		{"PATH", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
-		{"DELETE", "/job-queue/v1/foo", ``, http.StatusNotFound, ``},
-
-		{"POST", "/job-queue/v1/jobs", `{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff"}`, http.StatusCreated, expected_job},
-		//{"POST", "/job-queue/v1/jobs", `{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff"}`, http.StatusBadRequest, ``},
-		//{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusBadRequest, ``},
-		{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"RUNNING"}`, http.StatusOK, ``},
-		{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"RUNNING"}`, http.StatusOK, ``},
-		{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"FINISHED"}`, http.StatusOK, ``},
-		//{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"RUNNING"}`, http.StatusNotAllowed, ``},
-		//{"PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"FINISHED"}`, http.StatusNotAllowed, ``},
+		// Create job with invalid body
+		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest, ``},
+		// Update job with invalid ID
+		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"RUNNING"}`, http.StatusBadRequest, ``},
+		// Update job that does not exist, with invalid body
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest, ``},
+		// Update job that does not exist
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"RUNNING"}`, http.StatusNotFound, ``},
 	}
 
-	store := store.New(nil)
-	api := jobqueue.New(nil, store)
 	for _, c := range cases {
-		id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-		store.PushCompose(id, &blueprint.Blueprint{}, "tar")
+		api := jobqueue.New(nil, store.New(nil))
 
 		testRoute(t, api, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestCreate(t *testing.T) {
+	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
+	store := store.New(nil)
+	api := jobqueue.New(nil, store)
+
+	store.PushCompose(id, &blueprint.Blueprint{}, "tar")
+
+	testRoute(t, api, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
+		`{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","pipeline":{"assembler":{"name":"org.osbuild.tar","options":{"filename":"image.tar"}}},"targets":[{"name":"org.osbuild.local","options":{"location":"/var/lib/osbuild-composer/outputs/ffffffff-ffff-ffff-ffff-ffffffffffff"}}]}`)
+}
+
+func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
+	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
+	store := store.New(nil)
+	api := jobqueue.New(nil, store)
+
+	store.PushCompose(id, &blueprint.Blueprint{}, "tar")
+
+	sendHTTP(api, "POST", "/job-queue/v1/jobs", `{}`)
+	if from != "WAITING" {
+		sendHTTP(api, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+from+`"}`)
+	}
+	testRoute(t, api, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+to+`"}`, expectedStatus, ``)
+}
+
+func TestUpdate(t *testing.T) {
+	var cases = []struct {
+		From           string
+		To             string
+		ExpectedStatus int
+	}{
+		{"WAITING", "WAITING", http.StatusBadRequest},
+		{"WAITING", "RUNNING", http.StatusOK},
+		{"WAITING", "FINISHED", http.StatusOK},
+		{"WAITING", "FAILED", http.StatusOK},
+		{"RUNNING", "RUNNING", http.StatusOK},
+		{"RUNNING", "RUNNING", http.StatusOK},
+		{"RUNNING", "FINISHED", http.StatusOK},
+		{"RUNNING", "FAILED", http.StatusOK},
+		{"FINISHED", "WAITING", http.StatusBadRequest},
+		{"FINISHED", "RUNNING", http.StatusBadRequest},
+		{"FINISHED", "FINISHED", http.StatusBadRequest},
+		{"FINISHED", "FAILED", http.StatusBadRequest},
+		{"FAILED", "WAITING", http.StatusBadRequest},
+		{"FAILED", "RUNNING", http.StatusBadRequest},
+		{"FAILED", "FINISHED", http.StatusBadRequest},
+		{"FAILED", "FAILED", http.StatusBadRequest},
+	}
+
+	for _, c := range cases {
+		testUpdateTransition(t, c.From, c.To, c.ExpectedStatus)
 	}
 }
