@@ -154,13 +154,13 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := weldr.New(repo, packages, nil, store.New(nil, nil, nil, nil))
+		api := weldr.New(repo, packages, nil, store.New(nil, nil, nil))
 		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestBlueprints(t *testing.T) {
-	api := weldr.New(repo, packages, nil, store.New(nil, nil, nil, nil))
+	api := weldr.New(repo, packages, nil, store.New(nil, nil, nil))
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
@@ -184,7 +184,7 @@ func TestBlueprints(t *testing.T) {
 
 func TestCompose(t *testing.T) {
 	jobChannel := make(chan job.Job, 200)
-	api := weldr.New(repo, packages, nil, store.New(nil, nil, jobChannel, nil))
+	api := weldr.New(repo, packages, nil, store.New(nil, nil, jobChannel))
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,

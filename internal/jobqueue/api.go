@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/pipeline"
+	"osbuild-composer/internal/store"
 	"osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
@@ -15,17 +16,17 @@ import (
 
 type API struct {
 	pendingJobs <-chan job.Job
-	jobStatus   chan<- job.Status
 
 	logger *log.Logger
+	store  *store.Store
 	router *httprouter.Router
 }
 
-func New(logger *log.Logger, jobs <-chan job.Job, jobStatus chan<- job.Status) *API {
+func New(logger *log.Logger, store *store.Store, jobs <-chan job.Job) *API {
 	api := &API{
 		logger:      logger,
+		store:       store,
 		pendingJobs: jobs,
-		jobStatus:   jobStatus,
 	}
 
 	api.router = httprouter.New()
@@ -127,6 +128,6 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
 	}
 
-	api.jobStatus <- job.Status{ComposeID: id, Status: body.Status}
+	api.store.UpdateCompose(id, body.Status)
 	statusResponseOK(writer)
 }

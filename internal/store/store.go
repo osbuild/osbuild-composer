@@ -26,7 +26,6 @@ type Store struct {
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan<- job.Job
-	jobUpdates   <-chan job.Status
 	stateChannel chan<- []byte
 }
 
@@ -49,7 +48,7 @@ type Image struct {
 	Mime string
 }
 
-func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job, jobUpdates <-chan job.Status) *Store {
+func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job) *Store {
 	var s Store
 
 	if initialState != nil {
@@ -71,31 +70,6 @@ func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job
 	}
 	s.stateChannel = stateChannel
 	s.pendingJobs = pendingJobs
-	s.jobUpdates = jobUpdates
-
-	go func() {
-		for {
-			update := <-s.jobUpdates
-			s.change(func() {
-				compose, exists := s.Composes[update.ComposeID]
-				if !exists {
-					return
-				}
-				if compose.QueueStatus != update.Status {
-					switch update.Status {
-					case "RUNNING":
-						compose.JobStarted = time.Now()
-					case "FINISHED":
-						fallthrough
-					case "FAILED":
-						compose.JobFinished = time.Now()
-					}
-					compose.QueueStatus = update.Status
-					s.Composes[update.ComposeID] = compose
-				}
-			})
-		}
-	}()
 
 	return &s
 }
@@ -298,6 +272,27 @@ func (s *Store) AddCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compose
 		Pipeline:  bp.ToPipeline(composeType),
 		Targets:   targets,
 	}
+}
+
+func (s *Store) UpdateCompose(composeID uuid.UUID, status string) {
+	s.change(func() {
+		compose, exists := s.Composes[composeID]
+		if !exists {
+			return
+		}
+		if compose.QueueStatus != status {
+			switch status {
+			case "RUNNING":
+				compose.JobStarted = time.Now()
+			case "FINISHED":
+				fallthrough
+			case "FAILED":
+				compose.JobFinished = time.Now()
+			}
+			compose.QueueStatus = status
+			s.Composes[composeID] = compose
+		}
+	})
 }
 
 func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
