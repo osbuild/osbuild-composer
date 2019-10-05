@@ -4,7 +4,6 @@ package store
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -55,6 +54,30 @@ type Image struct {
 	File *os.File
 	Name string
 	Mime string
+}
+
+type NotFoundError struct {
+	message string
+}
+
+func (e *NotFoundError) Error() string {
+	return e.message
+}
+
+type NotPendingError struct {
+	message string
+}
+
+func (e *NotPendingError) Error() string {
+	return e.message
+}
+
+type InvalidRequestError struct {
+	message string
+}
+
+func (e *InvalidRequestError) Error() string {
+	return e.message
 }
 
 func New(stateFile *string) *Store {
@@ -132,11 +155,11 @@ func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
 	return nil
 }
 
-func (s *Store) change(f func()) {
+func (s *Store) change(f func() error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f()
+	result := f()
 
 	if s.stateChannel != nil {
 		serialized, err := json.Marshal(s)
@@ -147,6 +170,7 @@ func (s *Store) change(f func()) {
 
 		s.stateChannel <- serialized
 	}
+	return result
 }
 
 func (s *Store) ListBlueprints() []string {
@@ -287,28 +311,32 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 }
 
 func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
-	s.change(func() {
+	s.change(func() error {
 		delete(s.Workspace, bp.Name)
 		s.Blueprints[bp.Name] = bp
+		return nil
 	})
 }
 
 func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) {
-	s.change(func() {
+	s.change(func() error {
 		s.Workspace[bp.Name] = bp
+		return nil
 	})
 }
 
 func (s *Store) DeleteBlueprint(name string) {
-	s.change(func() {
+	s.change(func() error {
 		delete(s.Workspace, name)
 		delete(s.Blueprints, name)
+		return nil
 	})
 }
 
 func (s *Store) DeleteBlueprintFromWorkspace(name string) {
-	s.change(func() {
+	s.change(func() error {
 		delete(s.Workspace, name)
+		return nil
 	})
 }
 
@@ -316,7 +344,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
-	s.change(func() {
+	s.change(func() error {
 		s.Composes[composeID] = Compose{
 			QueueStatus: "WAITING",
 			Blueprint:   bp,
@@ -324,6 +352,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 			Targets:     targets,
 			JobCreated:  time.Now(),
 		}
+		return nil
 	})
 	s.pendingJobs <- Job{
 		ComposeID: composeID,
@@ -336,24 +365,38 @@ func (s *Store) PopCompose() Job {
 	return <-s.pendingJobs
 }
 
-func (s *Store) UpdateCompose(composeID uuid.UUID, status string) {
-	s.change(func() {
+func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
+	return s.change(func() error {
 		compose, exists := s.Composes[composeID]
 		if !exists {
-			return
+			return &NotFoundError{"compose does not exist"}
 		}
-		if compose.QueueStatus != status {
-			switch status {
-			case "RUNNING":
+		switch status {
+		case "RUNNING":
+			switch compose.QueueStatus {
+			case "WAITING":
 				compose.JobStarted = time.Now()
-			case "FINISHED":
-				fallthrough
-			case "FAILED":
+			case "RUNNING":
+			default:
+				return &NotPendingError{"compose was not pending"}
+			}
+		case "FINISHED", "FAILED":
+			switch compose.QueueStatus {
+			case "WAITING":
+				now := time.Now()
+				compose.JobStarted = now
+				compose.JobFinished = now
+			case "RUNNING":
 				compose.JobFinished = time.Now()
+			default:
+				return &NotPendingError{"compose was not pending"}
 			}
 			compose.QueueStatus = status
 			s.Composes[composeID] = compose
+		default:
+			return &InvalidRequestError{"invalid state transition"}
 		}
+		return nil
 	})
 }
 
@@ -363,7 +406,7 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 
 	if compose, exists := s.Composes[composeID]; exists {
 		if compose.QueueStatus != "FINISHED" {
-			return nil, errors.New("compose not ready")
+			return nil, &InvalidRequestError{"compose was not finished"}
 		}
 		name, mime := blueprint.FilenameFromType(compose.OutputType)
 		for _, t := range compose.Targets {
@@ -379,7 +422,8 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 				}
 			}
 		}
+		return nil, &NotFoundError{"image could not be found"}
 	}
 
-	return nil, errors.New("image not found")
+	return nil, &NotFoundError{"compose could not be found"}
 }
