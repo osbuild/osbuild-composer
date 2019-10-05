@@ -14,7 +14,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/store"
 )
@@ -29,25 +28,14 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, initialState []byte, stateChannel chan<- []byte, jobs chan<- job.Job, jobStatus <-chan job.Status) *API {
+func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:    store.New(initialState, stateChannel, jobs, jobStatus),
+		store:    store,
 		repo:     repo,
 		packages: packages,
 		logger:   logger,
-	}
-
-	// sample blueprint on first run
-	if initialState == nil {
-		api.store.PushBlueprint(blueprint.Blueprint{
-			Name:        "example",
-			Description: "An Example",
-			Version:     "1",
-			Packages:    []blueprint.Package{{"httpd", "2.*"}},
-			Modules:     []blueprint.Package{},
-		})
 	}
 
 	api.router = httprouter.New()
