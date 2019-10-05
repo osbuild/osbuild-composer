@@ -15,6 +15,7 @@ import (
 
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/store"
 	"osbuild-composer/internal/weldr"
 )
 
@@ -147,20 +148,19 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/modules/info", http.StatusNotFound, ``},
 		{"/api/v0/modules/info/", http.StatusNotFound, ``},
 
-		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["example"]}`},
+		{"/api/v0/blueprints/list", http.StatusOK, `{"total":0,"offset":0,"limit":0,"blueprints":[]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, ``},
 		{"/api/v0/blueprints/info/foo", http.StatusNotFound, `{"status":false}`},
-		{"/api/v0/blueprints/info/example", http.StatusOK, `*`},
 	}
 
 	for _, c := range cases {
-		api := weldr.New(repo, packages, nil, nil, nil, nil, nil)
+		api := weldr.New(repo, packages, nil, store.New(nil, nil, nil, nil))
 		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestBlueprints(t *testing.T) {
-	api := weldr.New(repo, packages, nil, nil, nil, nil, nil)
+	api := weldr.New(repo, packages, nil, store.New(nil, nil, nil, nil))
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
@@ -184,7 +184,7 @@ func TestBlueprints(t *testing.T) {
 
 func TestCompose(t *testing.T) {
 	jobChannel := make(chan job.Job, 200)
-	api := weldr.New(repo, packages, nil, nil, nil, jobChannel, nil)
+	api := weldr.New(repo, packages, nil, store.New(nil, nil, jobChannel, nil))
 
 	testRoute(t, api, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,

@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"osbuild-composer/internal/blueprint"
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/rpmmd"
+	"osbuild-composer/internal/store"
 	"osbuild-composer/internal/weldr"
 
 	"github.com/coreos/go-systemd/activation"
@@ -63,8 +65,21 @@ func main() {
 	stateChannel := make(chan []byte, 10)
 	jobChannel := make(chan job.Job, 200)
 	jobUpdateChannel := make(chan job.Status, 200)
+
+	store := store.New(state, stateChannel, jobChannel, jobUpdateChannel)
+	// sample blueprint on first run
+	if state == nil {
+		store.PushBlueprint(blueprint.Blueprint{
+			Name:        "example",
+			Description: "An Example",
+			Version:     "1",
+			Packages:    []blueprint.Package{{"httpd", "2.*"}},
+			Modules:     []blueprint.Package{},
+		})
+	}
+
 	jobAPI := jobqueue.New(logger, jobChannel, jobUpdateChannel)
-	weldrAPI := weldr.New(repo, packages, logger, state, stateChannel, jobChannel, jobUpdateChannel)
+	weldrAPI := weldr.New(repo, packages, logger, store)
 	go func() {
 		for {
 			err := writeFileAtomically(StateFile, <-stateChannel, 0755)
