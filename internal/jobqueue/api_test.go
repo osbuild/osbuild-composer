@@ -13,6 +13,7 @@ import (
 	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/pipeline"
+	"osbuild-composer/internal/store"
 	"osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
@@ -90,8 +91,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	jobChannel := make(chan job.Job, 100)
-	statusChannel := make(chan job.Status, 100)
-	api := jobqueue.New(nil, jobChannel, statusChannel)
+	api := jobqueue.New(nil, store.New(nil, nil, jobChannel), jobChannel)
 	for _, c := range cases {
 		id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 		p := &pipeline.Pipeline{}

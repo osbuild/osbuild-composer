@@ -64,9 +64,8 @@ func main() {
 
 	stateChannel := make(chan []byte, 10)
 	jobChannel := make(chan job.Job, 200)
-	jobUpdateChannel := make(chan job.Status, 200)
 
-	store := store.New(state, stateChannel, jobChannel, jobUpdateChannel)
+	store := store.New(state, stateChannel, jobChannel)
 	// sample blueprint on first run
 	if state == nil {
 		store.PushBlueprint(blueprint.Blueprint{
@@ -78,7 +77,7 @@ func main() {
 		})
 	}
 
-	jobAPI := jobqueue.New(logger, jobChannel, jobUpdateChannel)
+	jobAPI := jobqueue.New(logger, store, jobChannel)
 	weldrAPI := weldr.New(repo, packages, logger, store)
 	go func() {
 		for {
