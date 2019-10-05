@@ -15,7 +15,7 @@ import (
 	"github.com/coreos/go-systemd/activation"
 )
 
-const StateFile = "/var/lib/osbuild-composer/weldr-state.json"
+const StateFile = "/var/lib/osbuild-composer/state.json"
 
 func main() {
 	var verbose bool
