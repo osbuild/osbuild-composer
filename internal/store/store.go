@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/job"
+	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/target"
 	"path/filepath"
 	"sort"
@@ -27,7 +27,7 @@ type Store struct {
 	Composes   map[uuid.UUID]Compose          `json:"composes"`
 
 	mu           sync.RWMutex // protects all fields
-	pendingJobs  chan job.Job
+	pendingJobs  chan Job
 	stateChannel chan []byte
 }
 
@@ -41,6 +41,13 @@ type Compose struct {
 	JobCreated  time.Time            `json:"job_created"`
 	JobStarted  time.Time            `json:"job_started"`
 	JobFinished time.Time            `json:"job_finished"`
+}
+
+// A Job contains the information about a compose a worker needs to process it.
+type Job struct {
+	ComposeID uuid.UUID
+	Pipeline  *pipeline.Pipeline
+	Targets   []*target.Target
 }
 
 // An Image represents the image resulting from a compose.
@@ -86,7 +93,7 @@ func New(stateFile *string) *Store {
 		// TODO: push waiting/running composes to workers again
 		s.Composes = make(map[uuid.UUID]Compose)
 	}
-	s.pendingJobs = make(chan job.Job, 200)
+	s.pendingJobs = make(chan Job, 200)
 
 	return &s
 }
@@ -318,14 +325,14 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 			JobCreated:  time.Now(),
 		}
 	})
-	s.pendingJobs <- job.Job{
+	s.pendingJobs <- Job{
 		ComposeID: composeID,
 		Pipeline:  bp.ToPipeline(composeType),
 		Targets:   targets,
 	}
 }
 
-func (s *Store) PopCompose() job.Job {
+func (s *Store) PopCompose() Job {
 	return <-s.pendingJobs
 }
 
