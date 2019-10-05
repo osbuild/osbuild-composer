@@ -25,7 +25,7 @@ type Store struct {
 	Composes   map[uuid.UUID]Compose          `json:"composes"`
 
 	mu           sync.RWMutex // protects all fields
-	pendingJobs  chan<- job.Job
+	pendingJobs  chan job.Job
 	stateChannel chan<- []byte
 }
 
@@ -48,7 +48,7 @@ type Image struct {
 	Mime string
 }
 
-func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job.Job) *Store {
+func New(initialState []byte, stateChannel chan<- []byte) *Store {
 	var s Store
 
 	if initialState != nil {
@@ -69,7 +69,7 @@ func New(initialState []byte, stateChannel chan<- []byte, pendingJobs chan<- job
 		s.Composes = make(map[uuid.UUID]Compose)
 	}
 	s.stateChannel = stateChannel
-	s.pendingJobs = pendingJobs
+	s.pendingJobs = make(chan job.Job, 200)
 
 	return &s
 }
@@ -254,7 +254,7 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *Store) AddCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
+func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
@@ -272,6 +272,10 @@ func (s *Store) AddCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compose
 		Pipeline:  bp.ToPipeline(composeType),
 		Targets:   targets,
 	}
+}
+
+func (s *Store) PopCompose() job.Job {
+	return <-s.pendingJobs
 }
 
 func (s *Store) UpdateCompose(composeID uuid.UUID, status string) {

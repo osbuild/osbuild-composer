@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/jobqueue"
 	"osbuild-composer/internal/rpmmd"
 	"osbuild-composer/internal/store"
@@ -63,9 +62,8 @@ func main() {
 	}
 
 	stateChannel := make(chan []byte, 10)
-	jobChannel := make(chan job.Job, 200)
 
-	store := store.New(state, stateChannel, jobChannel)
+	store := store.New(state, stateChannel)
 	// sample blueprint on first run
 	if state == nil {
 		store.PushBlueprint(blueprint.Blueprint{
@@ -77,7 +75,7 @@ func main() {
 		})
 	}
 
-	jobAPI := jobqueue.New(logger, store, jobChannel)
+	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(repo, packages, logger, store)
 	go func() {
 		for {

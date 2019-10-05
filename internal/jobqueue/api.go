@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"osbuild-composer/internal/job"
 	"osbuild-composer/internal/pipeline"
 	"osbuild-composer/internal/store"
 	"osbuild-composer/internal/target"
@@ -15,18 +14,15 @@ import (
 )
 
 type API struct {
-	pendingJobs <-chan job.Job
-
 	logger *log.Logger
 	store  *store.Store
 	router *httprouter.Router
 }
 
-func New(logger *log.Logger, store *store.Store, jobs <-chan job.Job) *API {
+func New(logger *log.Logger, store *store.Store) *API {
 	api := &API{
-		logger:      logger,
-		store:       store,
-		pendingJobs: jobs,
+		logger: logger,
+		store:  store,
 	}
 
 	api.router = httprouter.New()
@@ -99,7 +95,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 		return
 	}
 
-	nextJob := <-api.pendingJobs
+	nextJob := api.store.PopCompose()
 
 	writer.WriteHeader(http.StatusCreated)
 	json.NewEncoder(writer).Encode(replyBody{nextJob.ComposeID, nextJob.Pipeline, nextJob.Targets})
