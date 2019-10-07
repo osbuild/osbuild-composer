@@ -34,7 +34,7 @@ func NewQEMUAssemblerOptions(format string, ptUUID string, filename string, root
 // NewQEMUAssembler creates a new QEMU Assembler object.
 func NewQEMUAssembler(options *QEMUAssemblerOptions) *Assembler {
 	return &Assembler{
-		Name:    "org.osbuild.qcow2",
+		Name:    "org.osbuild.qemu",
 		Options: options,
 	}
 }

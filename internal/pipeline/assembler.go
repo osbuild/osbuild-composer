@@ -34,7 +34,7 @@ func (assembler *Assembler) UnmarshalJSON(data []byte) error {
 	switch rawAssembler.Name {
 	case "org.osbuild.tar":
 		options = new(TarAssemblerOptions)
-	case "org.osbuild.qcow2":
+	case "org.osbuild.qemu":
 		options = new(QEMUAssemblerOptions)
 	default:
 		return errors.New("unexpected assembler name")
