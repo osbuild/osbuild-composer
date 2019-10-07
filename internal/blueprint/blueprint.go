@@ -7,6 +7,14 @@ import (
 	"sort"
 )
 
+type InvalidOutputFormatError struct {
+	message string
+}
+
+func (e *InvalidOutputFormatError) Error() string {
+	return e.message
+}
+
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
 	Name        string    `json:"name"`
@@ -53,13 +61,20 @@ func ListOutputFormats() []string {
 }
 
 // ToPipeline converts the blueprint to a pipeline for a given output format.
-func (b *Blueprint) ToPipeline(outputFormat string) *pipeline.Pipeline {
-	return outputs[outputFormat].translate(b)
+func (b *Blueprint) ToPipeline(outputFormat string) (*pipeline.Pipeline, error) {
+	if output, exists := outputs[outputFormat]; exists {
+		return output.translate(b), nil
+	}
+
+	return nil, &InvalidOutputFormatError{outputFormat}
 }
 
 // FilenameFromType gets the canonical filename and MIME type for a given
 // output format
-func FilenameFromType(outputFormat string) (string, string) {
-	translator := outputs[outputFormat]
-	return translator.getName(), translator.getMime()
+func FilenameFromType(outputFormat string) (string, string, error) {
+	if output, exists := outputs[outputFormat]; exists {
+		return output.getName(), output.getMime(), nil
+	}
+
+	return "", "", &InvalidOutputFormatError{outputFormat}
 }

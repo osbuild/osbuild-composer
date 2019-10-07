@@ -340,9 +340,13 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) {
+func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) error {
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
+	}
+	pipeline, err := bp.ToPipeline(composeType)
+	if err != nil {
+		return &InvalidRequestError{"invalid output type: " + composeType}
 	}
 	s.change(func() error {
 		s.Composes[composeID] = Compose{
@@ -356,9 +360,11 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	})
 	s.pendingJobs <- Job{
 		ComposeID: composeID,
-		Pipeline:  bp.ToPipeline(composeType),
+		Pipeline:  pipeline,
 		Targets:   targets,
 	}
+
+	return nil
 }
 
 func (s *Store) PopCompose() Job {
@@ -408,7 +414,10 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 		if compose.QueueStatus != "FINISHED" {
 			return nil, &InvalidRequestError{"compose was not finished"}
 		}
-		name, mime := blueprint.FilenameFromType(compose.OutputType)
+		name, mime, err := blueprint.FilenameFromType(compose.OutputType)
+		if err != nil {
+			panic("invalid output type")
+		}
 		for _, t := range compose.Targets {
 			switch options := t.Options.(type) {
 			case *target.LocalTargetOptions:
