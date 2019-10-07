@@ -8,10 +8,10 @@ package pipeline
 // metadata of the repository has changed since the stage options were
 // first generated, the stage may fail.
 type DNFStageOptions struct {
-	Repositories     map[string]*DNFRepository `json:"repos"`
-	Packages         []string                  `json:"packages"`
-	ReleaseVersion   string                    `json:"releasever"`
-	BaseArchitecture string                    `json:"basearch"`
+	Repositories     []*DNFRepository `json:"repos"`
+	Packages         []string         `json:"packages"`
+	ReleaseVersion   string           `json:"releasever"`
+	BaseArchitecture string           `json:"basearch"`
 }
 
 func (DNFStageOptions) isStageOptions() {}
@@ -30,7 +30,8 @@ type DNFRepository struct {
 // mandatory fields, but no repositories.
 func NewDNFStageOptions(releaseVersion string, baseArchitecture string) *DNFStageOptions {
 	return &DNFStageOptions{
-		Repositories:     make(map[string]*DNFRepository),
+		Repositories:     make([]*DNFRepository, 0),
+		Packages:         make([]string, 0),
 		ReleaseVersion:   releaseVersion,
 		BaseArchitecture: baseArchitecture,
 	}
@@ -50,8 +51,8 @@ func (options *DNFStageOptions) AddPackage(pkg string) {
 }
 
 // AddRepository adds a repository to a DNFStageOptions object.
-func (options *DNFStageOptions) AddRepository(name string, repo *DNFRepository) {
-	options.Repositories[name] = repo
+func (options *DNFStageOptions) AddRepository(repo *DNFRepository) {
+	options.Repositories = append(options.Repositories, repo)
 }
 
 // NewDNFRepository creates a new DNFRepository object. Exactly one of the
