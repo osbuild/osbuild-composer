@@ -5,13 +5,9 @@ import "osbuild-composer/internal/pipeline"
 type ext4Output struct{}
 
 func (t *ext4Output) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(
-		pipeline.NewQEMUAssembler(
-			&pipeline.QEMUAssemblerOptions{
-				Format:   "raw",
-				Filename: t.getName(),
-			}))
+	p := getF30Pipeline()
+	addF30SELinuxStage(p)
+	addF30RawFSAssembler(p, t.getName())
 	return p
 }
 

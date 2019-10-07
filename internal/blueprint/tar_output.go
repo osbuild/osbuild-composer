@@ -5,12 +5,9 @@ import "osbuild-composer/internal/pipeline"
 type tarOutput struct{}
 
 func (t *tarOutput) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(
-		pipeline.NewTarAssembler(
-			&pipeline.TarAssemblerOptions{
-				Filename: "image.tar",
-			}))
+	p := getF30Pipeline()
+	addF30SELinuxStage(p)
+	addF30TarAssembler(p, t.getName())
 	return p
 }
 

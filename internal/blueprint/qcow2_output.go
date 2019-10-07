@@ -5,13 +5,11 @@ import "osbuild-composer/internal/pipeline"
 type qcow2Output struct{}
 
 func (t *qcow2Output) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(
-		pipeline.NewQEMUAssembler(
-			&pipeline.QEMUAssemblerOptions{
-				Format:   "qcow2",
-				Filename: t.getName(),
-			}))
+	p := getF30Pipeline()
+	addF30FSTabStage(p)
+	addF30GRUB2Stage(p)
+	addF30SELinuxStage(p)
+	addF30QemuAssembler(p, "qcow2", t.getName())
 	return p
 }
 

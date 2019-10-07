@@ -5,13 +5,11 @@ import "osbuild-composer/internal/pipeline"
 type vmdkOutput struct{}
 
 func (t *vmdkOutput) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{}
-	p.SetAssembler(
-		pipeline.NewQEMUAssembler(
-			&pipeline.QEMUAssemblerOptions{
-				Format:   "vmdk",
-				Filename: t.getName(),
-			}))
+	p := getF30Pipeline()
+	addF30FSTabStage(p)
+	addF30GRUB2Stage(p)
+	addF30SELinuxStage(p)
+	addF30QemuAssembler(p, "vmdk", t.getName())
 	return p
 }
 
