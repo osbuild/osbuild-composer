@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"osbuild-composer/internal/pipeline"
-	"osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Job struct {

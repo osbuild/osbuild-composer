@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
-	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/rpmmd"
-	"osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type API struct {
@@ -681,8 +681,8 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		id, err := uuid.Parse(uuidString)
 		if err != nil {
 			statusResponseError(writer, http.StatusBadRequest, "invalid UUID")
- 			return
- 		}
+			return
+		}
 		uuids = append(uuids, id)
 	}
 	reply.UUIDs = api.store.ListQueue(uuids)

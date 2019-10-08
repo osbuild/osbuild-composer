@@ -1,6 +1,6 @@
 package blueprint
 
-import "osbuild-composer/internal/pipeline"
+import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type qcow2Output struct{}
 

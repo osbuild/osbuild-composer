@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"osbuild-composer/internal/jobqueue"
-	"osbuild-composer/internal/rpmmd"
-	"osbuild-composer/internal/store"
-	"osbuild-composer/internal/weldr"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/weldr"
 
 	"github.com/coreos/go-systemd/activation"
 )
