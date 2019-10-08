@@ -2,12 +2,12 @@ package jobqueue
 
 import (
 	"encoding/json"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"log"
 	"net"
 	"net/http"
-	"osbuild-composer/internal/pipeline"
-	"osbuild-composer/internal/store"
-	"osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"

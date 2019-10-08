@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/jobqueue"
-	"osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/store"
 
 	"github.com/google/uuid"
 )

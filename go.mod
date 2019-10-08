@@ -1,4 +1,4 @@
-module osbuild-composer
+module github.com/osbuild/osbuild-composer
 
 go 1.12
 

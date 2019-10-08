@@ -4,12 +4,12 @@ package store
 
 import (
 	"encoding/json"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"io/ioutil"
 	"log"
 	"os"
-	"osbuild-composer/internal/blueprint"
-	"osbuild-composer/internal/pipeline"
-	"osbuild-composer/internal/target"
 	"path/filepath"
 	"sort"
 	"sync"
