@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"os"
-	"osbuild-composer/internal/blueprint"
 )
 
 func main() {
