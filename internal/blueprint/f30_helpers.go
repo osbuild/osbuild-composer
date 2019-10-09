@@ -1,7 +1,7 @@
 package blueprint
 
 import (
-	"osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
 
 	"github.com/google/uuid"
 )
