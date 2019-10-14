@@ -46,18 +46,18 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 
 	api.router.GET("/api/status", api.statusHandler)
 	api.router.GET("/api/v0/projects/source/list", api.sourceListHandler)
-	api.router.GET("/api/v0/projects/source/info/:sources", api.sourceInfoHandler)
+	api.router.GET("/api/v0/projects/source/info/*sources", api.sourceInfoHandler)
 
 	api.router.GET("/api/v0/modules/list", api.modulesListAllHandler)
 	api.router.GET("/api/v0/modules/list/:modules", api.modulesListHandler)
 
 	// these are the same, except that modules/info also includes dependencies
-	api.router.GET("/api/v0/modules/info/:modules", api.modulesInfoHandler)
-	api.router.GET("/api/v0/projects/info/:modules", api.modulesInfoHandler)
+	api.router.GET("/api/v0/modules/info/*modules", api.modulesInfoHandler)
+	api.router.GET("/api/v0/projects/info/*modules", api.modulesInfoHandler)
 
 	api.router.GET("/api/v0/blueprints/list", api.blueprintsListHandler)
-	api.router.GET("/api/v0/blueprints/info/:blueprints", api.blueprintsInfoHandler)
-	api.router.GET("/api/v0/blueprints/depsolve/:blueprints", api.blueprintsDepsolveHandler)
+	api.router.GET("/api/v0/blueprints/info/*blueprints", api.blueprintsInfoHandler)
+	api.router.GET("/api/v0/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
 	api.router.GET("/api/v0/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
 	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
 	api.router.POST("/api/v0/blueprints/workspace", api.blueprintsWorkspaceHandler)
@@ -70,7 +70,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/v0/compose/status/:uuids", api.composeStatusHandler)
 	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
-	api.router.GET("/api/v0/compose/image/:id", api.composeImageHandler)
+	api.router.GET("/api/v0/compose/image/:uuid", api.composeImageHandler)
 
 	return api
 }
@@ -112,10 +112,16 @@ func statusResponseOK(writer http.ResponseWriter) {
 	json.NewEncoder(writer).Encode(reply{true})
 }
 
-func statusResponseError(writer http.ResponseWriter, code int, errors ...string) {
+type responseError struct {
+	Code int    `json:"code,omitempty"`
+	ID   string `json:"id"`
+	Msg  string `json:"msg"`
+}
+
+func statusResponseError(writer http.ResponseWriter, code int, errors ...responseError) {
 	type reply struct {
-		Status bool     `json:"status"`
-		Errors []string `json:"errors,omitempty"`
+		Status bool            `json:"status"`
+		Errors []responseError `json:"errors,omitempty"`
 	}
 
 	writer.WriteHeader(code)
@@ -168,13 +174,29 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 	type reply struct {
 		Sources map[string]sourceConfig `json:"sources"`
-		Errors  []string                `json:"errors"`
+		Errors  []responseError         `json:"errors"`
 	}
-
 	// we only have one repository
 	names := strings.Split(params.ByName("sources"), ",")
-	if names[0] != api.repo.Id && names[0] != "*" {
-		statusResponseError(writer, http.StatusBadRequest, "repository not found: "+names[0])
+
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
+		return
+	}
+
+	// Remove the leading / from the names
+	sourceName := names[0][1:]
+	if sourceName != api.repo.Id && sourceName != "*" {
+		errors := responseError{
+			ID:  "UnknownSource",
+			Msg: fmt.Sprintf("%s is not a valid source", sourceName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -199,7 +221,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	json.NewEncoder(writer).Encode(reply{
 		Sources: map[string]sourceConfig{cfg.ID: cfg},
-		Errors:  []string{},
+		Errors:  []responseError{},
 	})
 }
 
@@ -218,7 +240,11 @@ type modulesListReply struct {
 func (api *API) modulesListAllHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "BadRequest: "+err.Error())
+		errors := responseError{
+			ID:  "BadLimitOrOffset",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -248,7 +274,12 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "BadRequest: "+err.Error())
+		errors := responseError{
+			ID:  "BadLimitOrOffset",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -261,16 +292,31 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 	modules := make([]modulesListModule, 0)
 	total := uint(0)
 	end := offset + limit
-
-	for _, pkg := range api.packages {
-		for _, name := range names {
+	for i, name := range names {
+		for _, pkg := range api.packages {
 			if strings.Contains(pkg.Name, name) {
 				total++
 				if total > offset && total < end {
 					modules = append(modules, modulesListModule{pkg.Name, "rpm"})
+					// this removes names that have been found from the list of names
+					if len(names) < i - 1 {
+						names = append(names[:i], names[i+1:]...)
+					} else {
+						names = names[:i]
+					}
 				}
 			}
 		}
+	}
+
+	// if a name remains in the list it was not found
+	if len(names) > 0 {
+		errors := responseError{
+			ID:  "UnknownModule",
+			Msg: fmt.Sprintf("one of the requested modules does not exist: ['%s']", names[0]),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
 	}
 
 	json.NewEncoder(writer).Encode(modulesListReply{
@@ -312,16 +358,30 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	modulesRequested := strings.HasPrefix(request.URL.Path, "/api/v0/modules")
 
 	names := strings.Split(params.ByName("modules"), ",")
-	if names[0] == "" {
-		statusResponseError(writer, http.StatusNotFound)
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
 
 	projects := make([]project, 0)
-	for _, name := range names {
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
+
 		first, n := api.packages.Search(name)
 		if n == 0 {
-			statusResponseError(writer, http.StatusNotFound)
+			errors := responseError{
+				ID:  "UnknownModule",
+				Msg: fmt.Sprintf("one of the requested modules does not exist: %s", name),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
 
@@ -370,7 +430,11 @@ func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.
 
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "BadRequest: "+err.Error())
+		errors := responseError{
+			ID:  "BadLimitOrOffset",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -395,22 +459,36 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	type reply struct {
 		Blueprints []blueprint.Blueprint `json:"blueprints"`
 		Changes    []change              `json:"changes"`
-		Errors     []string              `json:"errors"`
+		Errors     []responseError       `json:"errors"`
 	}
 
 	names := strings.Split(params.ByName("blueprints"), ",")
-	if names[0] == "" {
-		statusResponseError(writer, http.StatusNotFound)
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
 
 	blueprints := []blueprint.Blueprint{}
 	changes := []change{}
-	for _, name := range names {
+
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
 		var blueprint blueprint.Blueprint
 		var changed bool
 		if !api.store.GetBlueprint(name, &blueprint, &changed) {
-			statusResponseError(writer, http.StatusNotFound)
+			errors := responseError{
+				ID:  "UnknownBlueprint",
+				Msg: fmt.Sprintf("%s: ", name),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
 		blueprints = append(blueprints, blueprint)
@@ -420,7 +498,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
 		Changes:    changes,
-		Errors:     []string{},
+		Errors:     []responseError{},
 	})
 }
 
@@ -430,21 +508,34 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		Dependencies []rpmmd.PackageSpec `json:"dependencies"`
 	}
 	type reply struct {
-		Blueprints []entry  `json:"blueprints"`
-		Errors     []string `json:"errors"`
+		Blueprints []entry         `json:"blueprints"`
+		Errors     []responseError `json:"errors"`
 	}
 
 	names := strings.Split(params.ByName("blueprints"), ",")
-	if names[0] == "" {
-		statusResponseError(writer, http.StatusNotFound)
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
 
 	blueprints := []entry{}
-	for _, name := range names {
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
 		var blueprint blueprint.Blueprint
 		if !api.store.GetBlueprint(name, &blueprint, nil) {
-			statusResponseError(writer, http.StatusNotFound)
+			errors := responseError{
+				ID:  "UnknownBlueprint",
+				Msg: fmt.Sprintf("%s: blueprint not found", name),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
 
@@ -466,7 +557,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 	json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
-		Errors:     []string{},
+		Errors:     []responseError{},
 	})
 }
 
@@ -485,25 +576,43 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	name := params.ByName("blueprint")
-	if len(name) == 0 {
-		statusResponseError(writer, http.StatusNotFound, "no blueprint name given")
-		return
-	}
 	fromCommit := params.ByName("from")
-	if len(fromCommit) == 0 || fromCommit != "NEWEST" {
-		statusResponseError(writer, http.StatusNotFound, "invalid from commit ID given")
+	toCommit := params.ByName("to")
+
+	if len(name) == 0 || len(fromCommit) == 0 || len(toCommit) == 0 {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
-	toCommit := params.ByName("to")
-	if len(toCommit) == 0 || toCommit != "WORKSPACE" {
-		statusResponseError(writer, http.StatusNotFound, "invalid to commit ID given")
+	if fromCommit != "NEWEST" {
+		errors := responseError{
+			ID:  "UnknownCommit",
+			Msg: fmt.Sprintf("ggit-error: revspec '%s' not found (-3)", fromCommit),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	if toCommit != "WORKSPACE" {
+		errors := responseError{
+			ID:  "UnknownCommit",
+			Msg: fmt.Sprintf("ggit-error: revspec '%s' not found (-3)", toCommit),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	// Fetch old and new blueprint details from store and return error if not found
 	var oldBlueprint, newBlueprint blueprint.Blueprint
 	if !api.store.GetBlueprintCommitted(name, &oldBlueprint) || !api.store.GetBlueprint(name, &newBlueprint, nil) {
-		statusResponseError(writer, http.StatusNotFound)
+		errors := responseError{
+			ID:  "UnknownBlueprint",
+			Msg: fmt.Sprintf("Unknown blueprint name: %s", name),
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
 
@@ -541,14 +650,22 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "'blueprint must be json'",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var blueprint blueprint.Blueprint
 	err := json.NewDecoder(request.Body).Decode(&blueprint)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid blueprint: "+err.Error())
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -560,14 +677,22 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "'blueprint must be json'",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var blueprint blueprint.Blueprint
 	err := json.NewDecoder(request.Body).Decode(&blueprint)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid blueprint: "+err.Error())
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -602,14 +727,23 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 
 	contentType := httpRequest.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType, "blueprint must be json")
+		errors := responseError{
+			ID:  "MissingPost",
+			Msg: "blueprint must be json",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var cr ComposeRequest
 	err := json.NewDecoder(httpRequest.Body).Decode(&cr)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid request format: "+err.Error())
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
 		return
 	}
 
@@ -625,7 +759,11 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	if found {
 		api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType)
 	} else {
-		statusResponseError(writer, http.StatusBadRequest, "blueprint does not exist")
+		errors := responseError{
+			ID:  "UnknownBlueprint",
+			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -680,7 +818,11 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	for _, uuidString := range uuidStrings {
 		id, err := uuid.Parse(uuidString)
 		if err != nil {
-			statusResponseError(writer, http.StatusBadRequest, "invalid UUID")
+			errors := responseError{
+				ID:  "UnknownUUID",
+				Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
 		uuids = append(uuids, id)
@@ -691,16 +833,24 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	idString := params.ByName("id")
-	id, err := uuid.Parse(idString)
+	uuidString := params.ByName("uuid")
+	uuid, err := uuid.Parse(uuidString)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid UUID")
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
-	image, err := api.store.GetImage(id)
+	image, err := api.store.GetImage(uuid)
 	if err != nil {
-		statusResponseError(writer, http.StatusNotFound, "image for compose not found")
+		errors := responseError{
+			ID:  "BuildMissingFile",
+			Msg: fmt.Sprintf("Build %s is missing image file %s", uuidString, image.Name),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -710,7 +860,7 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-"+image.Name)
+	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+image.Name)
 	writer.Header().Set("Content-Type", image.Mime)
 	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 

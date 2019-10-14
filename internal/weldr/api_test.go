@@ -128,8 +128,8 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/projects/source/list", http.StatusOK, `{"sources":["test"]}`},
 
 		{"/api/v0/projects/source/info", http.StatusNotFound, ``},
-		{"/api/v0/projects/source/info/", http.StatusNotFound, ``},
-		{"/api/v0/projects/source/info/foo", http.StatusBadRequest, `{"status":false,"errors":["repository not found: foo"]}`},
+		{"/api/v0/projects/source/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
+		{"/api/v0/projects/source/info/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"status":false}`},
 		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
@@ -139,17 +139,17 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/modules/list?limit=1", http.StatusOK, `{"total":2,"offset":0,"limit":1,"modules":[{"name":"package1","group_type":"rpm"}]}`},
 		{"/api/v0/modules/list?limit=0", http.StatusOK, `{"total":2,"offset":0,"limit":0,"modules":[]}`},
 		{"/api/v0/modules/list?offset=10&limit=10", http.StatusOK, `{"total":2,"offset":10,"limit":10,"modules":[]}`},
-		{"/api/v0/modules/list/foo", http.StatusOK, `{"total":0,"offset":0,"limit":20,"modules":[]}`}, // returns empty list instead of an error for unknown packages
+		{"/api/v0/modules/list/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownModule","msg":"one of the requested modules does not exist: ['foo']"}],"status":false}`}, // returns empty list instead of an error for unknown packages
 		{"/api/v0/modules/list/package2", http.StatusOK, `{"total":1,"offset":0,"limit":20,"modules":[{"name":"package2","group_type":"rpm"}]}`},
 		{"/api/v0/modules/list/*package2*", http.StatusOK, `{"total":1,"offset":0,"limit":20,"modules":[{"name":"package2","group_type":"rpm"}]}`},
 		{"/api/v0/modules/list/*package*", http.StatusOK, `{"total":2,"offset":0,"limit":20,"modules":[{"name":"package1","group_type":"rpm"},{"name":"package2","group_type":"rpm"}]}`},
 
 		{"/api/v0/modules/info", http.StatusNotFound, ``},
-		{"/api/v0/modules/info/", http.StatusNotFound, ``},
+		{"/api/v0/modules/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":0,"offset":0,"limit":0,"blueprints":[]}`},
-		{"/api/v0/blueprints/info/", http.StatusNotFound, ``},
-		{"/api/v0/blueprints/info/foo", http.StatusNotFound, `{"status":false}`},
+		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
+		{"/api/v0/blueprints/info/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"foo: "}],"status":false}`},
 	}
 
 	for _, c := range cases {
@@ -192,7 +192,7 @@ func TestCompose(t *testing.T) {
 		http.StatusOK, `{"status":true}`)
 
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,
-		http.StatusBadRequest, `{"status":false,"errors":["blueprint does not exist"]}`)
+		http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}],"status":false}`)
 
 	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
 		http.StatusOK, `*`)
