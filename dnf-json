@@ -24,7 +24,6 @@ except IndexError:
 
 base = dnf.Base()
 
-base.conf.cachedir = "./dnf-cache"
 base.conf.substitutions["releasever"] = "30"
 base.conf.substitutions["basearch"] = "x86_64"
 
