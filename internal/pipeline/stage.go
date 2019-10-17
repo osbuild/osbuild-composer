@@ -48,6 +48,22 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(LocaleStageOptions)
 	case "org.osbuild.selinux":
 		options = new(SELinuxStageOptions)
+	case "org.osbuild.hostname":
+		options = new(HostnameStageOptions)
+	case "org.osbuild.users":
+		options = new(UsersStageOptions)
+	case "org.osbuild.groups":
+		options = new(GroupsStageOptions)
+	case "org.osbuild.timezone":
+		options = new(TimezoneStageOptions)
+	case "org.osbuild.chrony":
+		options = new(ChronyStageOptions)
+	case "org.osbuild.keymap":
+		options = new(KeymapStageOptions)
+	case "org.osbuild.firewall":
+		options = new(FirewallStageOptions)
+	case "org.osbuild.systemd":
+		options = new(SystemdStageOptions)
 	default:
 		return errors.New("unexpected stage name")
 	}

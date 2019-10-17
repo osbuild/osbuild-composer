@@ -1,0 +1,18 @@
+package pipeline
+
+type GroupsStageOptions struct {
+	Groups map[string]GroupsStageOptionsGroup `json:"groups"`
+}
+
+func (GroupsStageOptions) isStageOptions() {}
+
+type GroupsStageOptionsGroup struct {
+	GID *string `json:"gid,omitempty"`
+}
+
+func NewGroupsStage(options *GroupsStageOptions) *Stage {
+	return &Stage{
+		Name:    "org.osbuild.groups",
+		Options: options,
+	}
+}
