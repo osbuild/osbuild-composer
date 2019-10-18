@@ -78,7 +78,7 @@ func addF30FSTabStage(p *pipeline.Pipeline) {
 		panic("invalid UUID")
 	}
 	options := &pipeline.FSTabStageOptions{}
-	options.AddFilesystem(id, "extf4", "/", "defaults", 1, 1)
+	options.AddFilesystem(id, "ext4", "/", "defaults", 1, 1)
 	p.AddStage(pipeline.NewFSTabStage(options))
 }
 
@@ -87,6 +87,17 @@ func addF30SELinuxStage(p *pipeline.Pipeline) {
 		&pipeline.SELinuxStageOptions{
 			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 		}))
+}
+
+func addF30LocaleStage(p *pipeline.Pipeline) {
+	p.AddStage(pipeline.NewLocaleStage(
+		&pipeline.LocaleStageOptions{
+			Language: "en_US",
+		}))
+}
+
+func addF30FixBlsStage(p *pipeline.Pipeline) {
+	p.AddStage(pipeline.NewFixBLSStage())
 }
 
 func addF30QemuAssembler(p *pipeline.Pipeline, format string, filename string) {

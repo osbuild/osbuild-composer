@@ -2,6 +2,7 @@
 build:
 	go build -o osbuild-composer ./cmd/osbuild-composer/
 	go build -o osbuild-worker ./cmd/osbuild-worker/
+	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 
 .PHONY: install
 install:

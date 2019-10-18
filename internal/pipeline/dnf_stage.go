@@ -10,6 +10,7 @@ package pipeline
 type DNFStageOptions struct {
 	Repositories     []*DNFRepository `json:"repos"`
 	Packages         []string         `json:"packages"`
+	ExcludedPackages []string         `json:"exclude_packages,omitempty"`
 	ReleaseVersion   string           `json:"releasever"`
 	BaseArchitecture string           `json:"basearch"`
 }
@@ -48,6 +49,11 @@ func NewDNFStage(options *DNFStageOptions) *Stage {
 // AddPackage adds a package to a DNFStageOptions object.
 func (options *DNFStageOptions) AddPackage(pkg string) {
 	options.Packages = append(options.Packages, pkg)
+}
+
+// ExcludePackage adds an excluded package to a DNFStageOptions object.
+func (options *DNFStageOptions) ExcludePackage(pkg string) {
+	options.ExcludedPackages = append(options.ExcludedPackages, pkg)
 }
 
 // AddRepository adds a repository to a DNFStageOptions object.
