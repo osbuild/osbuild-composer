@@ -40,9 +40,7 @@ type PackageSpec struct {
 }
 
 func runDNF(command string, arguments []string, result interface{}) error {
-	argv := append([]string{"dnf-json", command}, arguments...)
-
-	cmd := exec.Command("python3", argv...)
+	cmd := exec.Command("dnf-json", append([]string{command}, arguments...)...)
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
