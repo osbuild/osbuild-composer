@@ -2,6 +2,7 @@
 
 import datetime
 import dnf
+import hawkey
 import json
 import sys
 
@@ -11,7 +12,13 @@ def timestamp_to_rfc3339(timestamp):
     return d.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-# base.sack.query().filter(provides=str(reldep))
+hawkey_checksums = {
+    hawkey.CHKSUM_MD5: "md5",
+    hawkey.CHKSUM_SHA1: "sha1",
+    hawkey.CHKSUM_SHA256: "sha256",
+    hawkey.CHKSUM_SHA384: "sha384",
+    hawkey.CHKSUM_SHA512: "sha512"
+}
 
 
 try:
@@ -29,10 +36,11 @@ base.conf.substitutions["basearch"] = "x86_64"
 
 repo = dnf.repo.Repo("fedora", base.conf)
 repo.name = "Fedora"
-repo.metalink = "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch"
+repo.baseurl = "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os"
 
 base.repos.add(repo)
 base.fill_sack(load_system_repo=False)
+base.read_comps()
 
 if command == "list":
     packages = [p.name for p in base.sack.query().available()]
@@ -46,6 +54,7 @@ elif command == "dump":
             "summary": package.summary,
             "description": package.description,
             "url": package.url,
+            "href": package.relativepath,
             "epoch": package.epoch,
             "version": package.version,
             "release": package.release,
@@ -57,15 +66,22 @@ elif command == "dump":
 
 elif command == "depsolve":
     for pkgspec in arguments:
-        base.install(pkgspec)
+        if pkgspec.startswith("@"):
+            base.group_install(pkgspec[1:].lower(), ("mandatory", "default"))
+        else:
+            base.install(pkgspec)
     base.resolve()
     packages = []
     for package in base.transaction.install_set:
+        baseurl = base.repos[package.reponame].baseurl[0]
+        algorithm, checksum = hawkey_checksums[package.chksum[0]], package.chksum[1].hex()
         packages.append({
             "name": package.name,
             "epoch": package.epoch,
             "version": package.version,
             "release": package.release,
-            "arch": package.arch
+            "arch": package.arch,
+            "checksum": f"{algorithm}:{checksum}",
+            "url": f"{baseurl}/{package.relativepath}"
         })
     json.dump(packages, sys.stdout)

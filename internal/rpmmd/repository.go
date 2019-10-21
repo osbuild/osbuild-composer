@@ -32,11 +32,13 @@ type Package struct {
 }
 
 type PackageSpec struct {
-	Name    string `json:"name"`
-	Epoch   uint   `json:"epoch"`
-	Version string `json:"version,omitempty"`
-	Release string `json:"release,omitempty"`
-	Arch    string `json:"arch,omitempty"`
+	Name     string `json:"name"`
+	Epoch    uint   `json:"epoch"`
+	Version  string `json:"version,omitempty"`
+	Release  string `json:"release,omitempty"`
+	Arch     string `json:"arch,omitempty"`
+	Checksum string `json:"checksum"`
+	URL      string `json:"url"`
 }
 
 func runDNF(command string, arguments []string, result interface{}) error {
