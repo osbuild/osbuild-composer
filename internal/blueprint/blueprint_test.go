@@ -84,6 +84,11 @@ func TestBlueprint_ToPipeline(t *testing.T) {
 			want: "pipelines/ami_empty_blueprint.json",
 		},
 		{
+			name: "ext4",
+			args: args{"ext4-filesystem"},
+			want: "pipelines/ext4_empty_blueprint.json",
+		},
+		{
 			name: "live-iso",
 			args: args{"live-iso"},
 			want: "pipelines/liveiso_empty_blueprint.json",
@@ -167,6 +172,12 @@ func TestFilenameFromType(t *testing.T) {
 			args:  args{"ami"},
 			want:  "image.ami",
 			want1: "application/x-qemu-disk",
+		},
+		{
+			name:  "ext4",
+			args:  args{"ext4-filesystem"},
+			want:  "image.img",
+			want1: "application/octet-stream",
 		},
 		{
 			name:  "live-iso",
