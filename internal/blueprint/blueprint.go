@@ -3,10 +3,13 @@
 package blueprint
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"sort"
+
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
 )
 
+// An InvalidOutputFormatError is returned when a requested output format is
+// not supported. The requested format is included as the error message.
 type InvalidOutputFormatError struct {
 	message string
 }
