@@ -20,12 +20,13 @@ func (e *InvalidOutputFormatError) Error() string {
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Version     string    `json:"version,omitempty"`
-	Packages    []Package `json:"packages"`
-	Modules     []Package `json:"modules"`
-	Groups      []Package `json:"groups"`
+	Name           string          `json:"name"`
+	Description    string          `json:"description"`
+	Version        string          `json:"version,omitempty"`
+	Packages       []Package       `json:"packages"`
+	Modules        []Package       `json:"modules"`
+	Groups         []Package       `json:"groups"`
+	Customizations *Customizations `json:"customizations,omitempty"`
 }
 
 // A Package specifies an RPM package.
