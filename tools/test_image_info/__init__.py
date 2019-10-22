@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 import urllib.request
@@ -43,7 +44,11 @@ class TestImageInfo(unittest.TestCase):
                 osbuild_cmd.append("--build-pipeline")
                 osbuild_cmd.append(os.path.abspath(build_pipeline))
 
-            result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=input))
+            try:
+                result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=input))
+            except subprocess.CalledProcessError as err:
+                print(err.output, file=sys.stderr)
+
             return result["tree_id"], result["output_id"]
 
     def run_image_info(self, image):
