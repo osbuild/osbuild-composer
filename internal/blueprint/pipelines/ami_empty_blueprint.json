@@ -43,10 +43,12 @@
           "kernel",
           "selinux-policy-targeted",
           "grub2-pc",
-          "spice-vdagent",
-          "qemu-guest-agent",
-          "xen-libs",
-          "langpacks-en"
+          "langpacks-en",
+          "libxcrypt-compat",
+          "xfsprogs",
+          "cloud-init",
+          "checkpolicy",
+          "net-tools"
         ],
         "releasever": "30",
         "basearch": "x86_64"
