@@ -149,7 +149,10 @@ func TestBlueprint_ToPipeline(t *testing.T) {
 			}
 			if !tt.wantErr {
 				if !reflect.DeepEqual(got, &want) {
-					t.Errorf("Blueprint.ToPipeline() = %v, want %v", got, &want)
+					// Without this the "difference" is just a list of pointers.
+					gotJson, _ := json.Marshal(got)
+					fileJson, _ := json.Marshal(want)
+					t.Errorf("Blueprint.ToPipeline() =\n%v,\nwant =\n%v", string(gotJson), string(fileJson))
 				}
 			}
 		})
