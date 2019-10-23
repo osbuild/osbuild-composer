@@ -43,18 +43,15 @@
           "kernel",
           "selinux-policy-targeted",
           "grub2-pc",
-          "spice-vdagent",
-          "qemu-guest-agent",
-          "xen-libs",
-          "langpacks-en"
+          "langpacks-en",
+          "net-tools",
+          "ntfsprogs",
+          "WALinuxAgent",
+          "libxcrypt-compat"
         ],
         "releasever": "30",
         "basearch": "x86_64"
       }
-    },
-    {
-      "name": "org.osbuild.fix-bls",
-      "options": {}
     },
     {
       "name": "org.osbuild.locale",
@@ -90,6 +87,10 @@
       "options": {
         "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
       }
+    },
+    {
+      "name": "org.osbuild.fix-bls",
+      "options": {}
     }
   ],
   "assembler": {

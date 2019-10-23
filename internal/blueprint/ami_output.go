@@ -5,15 +5,6 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 type amiOutput struct{}
 
 func (t *amiOutput) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{
-		BuildPipeline: getF30BuildPipeline(),
-	}
-
-	options := &pipeline.DNFStageOptions{
-		ReleaseVersion:   "30",
-		BaseArchitecture: "x86_64",
-	}
-	options.AddRepository(getF30Repository())
 	packages := [...]string{
 		"@Core",
 		"chrony",
@@ -27,10 +18,7 @@ func (t *amiOutput) translate(b *Blueprint) *pipeline.Pipeline {
 		"checkpolicy",
 		"net-tools",
 	}
-	for _, pkg := range packages {
-		options.AddPackage(pkg)
-	}
-	p.AddStage(pipeline.NewDNFStage(options))
+	p := getCustomF30PackageSet(packages[:], []string{})
 	addF30FixBlsStage(p)
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)

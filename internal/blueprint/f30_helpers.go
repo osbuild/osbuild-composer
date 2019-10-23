@@ -59,6 +59,25 @@ func getF30Pipeline() *pipeline.Pipeline {
 	return p
 }
 
+func getCustomF30PackageSet(packages []string, excludedPackages []string) *pipeline.Pipeline {
+	p := &pipeline.Pipeline{
+		BuildPipeline: getF30BuildPipeline(),
+	}
+	options := &pipeline.DNFStageOptions{
+		ReleaseVersion:   "30",
+		BaseArchitecture: "x86_64",
+	}
+	options.AddRepository(getF30Repository())
+	for _, pkg := range packages {
+		options.AddPackage(pkg)
+	}
+	for _, pkg := range excludedPackages {
+		options.ExcludePackage(pkg)
+	}
+	p.AddStage(pipeline.NewDNFStage(options))
+	return p
+}
+
 func addF30GRUB2Stage(p *pipeline.Pipeline) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {

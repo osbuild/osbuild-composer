@@ -5,35 +5,24 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 type qcow2Output struct{}
 
 func (t *qcow2Output) translate(b *Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{
-		BuildPipeline: getF30BuildPipeline(),
-	}
-
-	options := &pipeline.DNFStageOptions{
-		ReleaseVersion:   "30",
-		BaseArchitecture: "x86_64",
-	}
-	options.AddRepository(getF30Repository())
-	packages := [...]string{"kernel-core",
+	packages := [...]string{
+		"kernel-core",
 		"@Fedora Cloud Server",
 		"chrony",
 		"polkit",
 		"systemd-udev",
 		"selinux-policy-targeted",
 		"grub2-pc",
-		"langpacks-en"}
-	for _, pkg := range packages {
-		options.AddPackage(pkg)
+		"langpacks-en",
 	}
-	excludedPackages := [...]string{"dracut-config-rescue",
+	excludedPackages := [...]string{
+		"dracut-config-rescue",
 		"etables",
 		"firewalld",
 		"gobject-introspection",
-		"plymouth"}
-	for _, pkg := range excludedPackages {
-		options.ExcludePackage(pkg)
+		"plymouth",
 	}
-	p.AddStage(pipeline.NewDNFStage(options))
+	p := getCustomF30PackageSet(packages[:], excludedPackages[:])
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)
 	addF30GRUB2Stage(p)
