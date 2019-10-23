@@ -67,10 +67,13 @@ func internalRequest(api *weldr.API, method, path, body string) *http.Response {
 	return resp.Result()
 }
 
-func testRoute(t *testing.T, api *weldr.API, method, path, body string, expectedStatus int, expectedJSON string) {
+func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string) {
 	var resp *http.Response
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		if !external {
+			t.Skip("This test is for internal testing only")
+		}
 		resp = externalRequest(method, path, body)
 	} else {
 		resp = internalRequest(api, method, path, body)
@@ -83,7 +86,7 @@ func testRoute(t *testing.T, api *weldr.API, method, path, body string, expected
 
 	replyJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		t.Errorf("%s: could not read reponse body: %v", path, err)
+		t.Errorf("%s: could not read response body: %v", path, err)
 		return
 	}
 
@@ -154,49 +157,49 @@ func TestBasic(t *testing.T) {
 
 	for _, c := range cases {
 		api := weldr.New(repo, packages, nil, store.New(nil))
-		testRoute(t, api, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+		testRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestBlueprints(t *testing.T) {
 	api := weldr.New(repo, packages, nil, store.New(nil))
 
-	testRoute(t, api, "POST", "/api/v0/blueprints/new",
+	testRoute(t, api, true, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
-	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
+	testRoute(t, api, true, "GET", "/api/v0/blueprints/info/test", ``,
 		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test","changed":false}], "errors":[]}`)
 
-	testRoute(t, api, "POST", "/api/v0/blueprints/workspace",
+	testRoute(t, api, true, "POST", "/api/v0/blueprints/workspace",
 		`{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
-	testRoute(t, api, "GET", "/api/v0/blueprints/info/test", ``,
+	testRoute(t, api, true, "GET", "/api/v0/blueprints/info/test", ``,
 		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test","changed":true}], "errors":[]}`)
 
-	testRoute(t, api, "GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``,
+	testRoute(t, api, true, "GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``,
 		http.StatusOK, `{"diff":[{"new":{"Package":{"name":"systemd","version":"123"}},"old":null},{"new":null,"old":{"Package":{"name":"httpd","version":"2.4.*"}}}]}`)
 
-	testRoute(t, api, "DELETE", "/api/v0/blueprints/delete/test", ``,
+	testRoute(t, api, true, "DELETE", "/api/v0/blueprints/delete/test", ``,
 		http.StatusOK, `{"status":true}`)
 }
 
 func TestCompose(t *testing.T) {
 	api := weldr.New(repo, packages, nil, store.New(nil))
 
-	testRoute(t, api, "POST", "/api/v0/blueprints/new",
+	testRoute(t, api, true, "POST", "/api/v0/blueprints/new",
 		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
 		http.StatusOK, `{"status":true}`)
 
-	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,
+	testRoute(t, api, true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,
 		http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}],"status":false}`)
 
-	testRoute(t, api, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
+	testRoute(t, api, true, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
 		http.StatusOK, `*`)
 
-	testRoute(t, api, "DELETE", "/api/v0/blueprints/delete/test", ``,
+	testRoute(t, api, true, "DELETE", "/api/v0/blueprints/delete/test", ``,
 		http.StatusOK, `{"status":true}`)
 }
