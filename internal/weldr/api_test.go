@@ -67,16 +67,21 @@ func internalRequest(api *weldr.API, method, path, body string) *http.Response {
 	return resp.Result()
 }
 
-func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string) {
-	var resp *http.Response
-
+func sendHTTP(api *weldr.API, external bool, method, path, body string) *http.Response {
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
 		if !external {
-			t.Skip("This test is for internal testing only")
+			return nil
 		}
-		resp = externalRequest(method, path, body)
+		return externalRequest(method, path, body)
 	} else {
-		resp = internalRequest(api, method, path, body)
+		return internalRequest(api, method, path, body)
+	}
+}
+
+func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string) {
+	resp := sendHTTP(api, external, method, path, body)
+	if resp == nil {
+		t.Skip("This test is for internal testing only")
 	}
 
 	if resp.StatusCode != expectedStatus {
