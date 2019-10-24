@@ -4,9 +4,6 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,6 +11,10 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
 )
@@ -69,6 +70,14 @@ type NotPendingError struct {
 }
 
 func (e *NotPendingError) Error() string {
+	return e.message
+}
+
+type NotRunningError struct {
+	message string
+}
+
+func (e *NotRunningError) Error() string {
 	return e.message
 }
 
@@ -368,7 +377,18 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 }
 
 func (s *Store) PopCompose() Job {
-	return <-s.pendingJobs
+	job := <-s.pendingJobs
+	s.change(func() error {
+		compose, exists := s.Composes[job.ComposeID]
+		if !exists || compose.QueueStatus != "WAITING" {
+			panic("Invalid job in queue.")
+		}
+		compose.JobStarted = time.Now()
+		compose.QueueStatus = "RUNNING"
+		s.Composes[job.ComposeID] = compose
+		return nil
+	})
+	return job
 }
 
 func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
@@ -377,25 +397,22 @@ func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
 		if !exists {
 			return &NotFoundError{"compose does not exist"}
 		}
+		if compose.QueueStatus == "WAITING" {
+			return &NotPendingError{"compose has not been popped"}
+		}
 		switch status {
 		case "RUNNING":
 			switch compose.QueueStatus {
-			case "WAITING":
-				compose.JobStarted = time.Now()
 			case "RUNNING":
 			default:
-				return &NotPendingError{"compose was not pending"}
+				return &NotRunningError{"compose was not running"}
 			}
 		case "FINISHED", "FAILED":
 			switch compose.QueueStatus {
-			case "WAITING":
-				now := time.Now()
-				compose.JobStarted = now
-				compose.JobFinished = now
 			case "RUNNING":
 				compose.JobFinished = time.Now()
 			default:
-				return &NotPendingError{"compose was not pending"}
+				return &NotRunningError{"compose was not running"}
 			}
 			compose.QueueStatus = status
 			s.Composes[composeID] = compose
