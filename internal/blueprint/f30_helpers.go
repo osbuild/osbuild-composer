@@ -78,15 +78,21 @@ func getCustomF30PackageSet(packages []string, excludedPackages []string) *pipel
 	return p
 }
 
-func addF30GRUB2Stage(p *pipeline.Pipeline) {
+func addF30GRUB2Stage(p *pipeline.Pipeline, kernelCustomization *KernelCustomization) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
 	}
+	kernelOptions := "ro biosdevname=0 net.ifnames=0"
+
+	if kernelCustomization != nil {
+		kernelOptions += " " + kernelCustomization.Append
+	}
+
 	p.AddStage(pipeline.NewGRUB2Stage(
 		&pipeline.GRUB2StageOptions{
 			RootFilesystemUUID: id,
-			KernelOptions:      "ro biosdevname=0 net.ifnames=0",
+			KernelOptions:      kernelOptions,
 		},
 	))
 }

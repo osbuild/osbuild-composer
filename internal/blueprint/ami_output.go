@@ -22,7 +22,7 @@ func (t *amiOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30FixBlsStage(p)
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)
-	addF30GRUB2Stage(p)
+	addF30GRUB2Stage(p, nil)
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "qcow2", t.getName())
 	return p

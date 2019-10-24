@@ -7,7 +7,7 @@ type diskOutput struct{}
 func (t *diskOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	p := getF30Pipeline()
 	addF30FSTabStage(p)
-	addF30GRUB2Stage(p)
+	addF30GRUB2Stage(p, b.getKernelCustomization())
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "raw", t.getName())
 	return p

@@ -20,7 +20,7 @@ func (t *vhdOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	p := getCustomF30PackageSet(packages[:], []string{})
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)
-	addF30GRUB2Stage(p)
+	addF30GRUB2Stage(p, b.getKernelCustomization())
 	addF30SELinuxStage(p)
 	addF30FixBlsStage(p)
 	addF30QemuAssembler(p, "qcow2", t.getName())

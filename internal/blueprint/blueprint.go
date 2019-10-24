@@ -73,6 +73,14 @@ func (b *Blueprint) ToPipeline(outputFormat string) (*pipeline.Pipeline, error) 
 	return nil, &InvalidOutputFormatError{outputFormat}
 }
 
+func (b *Blueprint) getKernelCustomization() *KernelCustomization {
+	if b.Customizations == nil {
+		return nil
+	}
+
+	return b.Customizations.Kernel
+}
+
 // FilenameFromType gets the canonical filename and MIME type for a given
 // output format
 func FilenameFromType(outputFormat string) (string, string, error) {
