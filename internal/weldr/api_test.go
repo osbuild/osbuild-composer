@@ -166,45 +166,122 @@ func TestBasic(t *testing.T) {
 	}
 }
 
-func TestBlueprints(t *testing.T) {
-	api := weldr.New(repo, packages, nil, store.New(nil))
+func TestBlueprintsNew(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
+	}
 
-	testRoute(t, api, true, "POST", "/api/v0/blueprints/new",
-		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
-		http.StatusOK, `{"status":true}`)
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
 
-	testRoute(t, api, true, "GET", "/api/v0/blueprints/info/test", ``,
-		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
-		"changes":[{"name":"test","changed":false}], "errors":[]}`)
+func TestBlueprintsWorkspace(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
+	}
 
-	testRoute(t, api, true, "POST", "/api/v0/blueprints/workspace",
-		`{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`,
-		http.StatusOK, `{"status":true}`)
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
 
-	testRoute(t, api, true, "GET", "/api/v0/blueprints/info/test", ``,
-		http.StatusOK, `{"blueprints":[{"name":"test","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
-		"changes":[{"name":"test","changed":true}], "errors":[]}`)
+func TestBlueprintsInfo(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"GET", "/api/v0/blueprints/info/test1", ``, http.StatusOK, `{"blueprints":[{"name":"test1","description":"Test","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
+		"changes":[{"name":"test1","changed":false}], "errors":[]}`},
+		{"GET", "/api/v0/blueprints/info/test2", ``, http.StatusOK, `{"blueprints":[{"name":"test2","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
+		"changes":[{"name":"test2","changed":true}], "errors":[]}`},
+	}
 
-	testRoute(t, api, true, "GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``,
-		http.StatusOK, `{"diff":[{"new":{"Package":{"name":"systemd","version":"123"}},"old":null},{"new":null,"old":{"Package":{"name":"httpd","version":"2.4.*"}}}]}`)
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test2","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test2", ``)
+		sendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test1", ``)
+	}
+}
 
-	testRoute(t, api, true, "DELETE", "/api/v0/blueprints/delete/test", ``,
-		http.StatusOK, `{"status":true}`)
+func TestBlueprintsDiff(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``, http.StatusOK, `{"diff":[{"new":{"Package":{"name":"systemd","version":"123"}},"old":null},{"new":null,"old":{"Package":{"name":"httpd","version":"2.4.*"}}}]}`},
+	}
+
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
+}
+
+func TestBlueprintsDelete(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"DELETE", "/api/v0/blueprints/delete/test", ``, http.StatusOK, `{"status":true}`},
+	}
+
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
 }
 
 func TestCompose(t *testing.T) {
-	api := weldr.New(repo, packages, nil, store.New(nil))
+	var cases = []struct {
+		External       bool
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`},
+		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`, http.StatusOK, `*`},
+	}
 
-	testRoute(t, api, true, "POST", "/api/v0/blueprints/new",
-		`{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`,
-		http.StatusOK, `{"status":true}`)
-
-	testRoute(t, api, true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`,
-		http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}],"status":false}`)
-
-	testRoute(t, api, true, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`,
-		http.StatusOK, `*`)
-
-	testRoute(t, api, true, "DELETE", "/api/v0/blueprints/delete/test", ``,
-		http.StatusOK, `{"status":true}`)
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, c.External, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		testRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, c.External, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
 }
