@@ -285,3 +285,40 @@ func TestCompose(t *testing.T) {
 		sendHTTP(api, c.External, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
 }
+
+func TestComposeQueue(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"GET", "/api/v0/compose/queue", ``, http.StatusOK, `*`}, // TODO: we need a way to verify we actually get the expected json here
+	}
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	for _, c := range cases {
+		s := store.New(nil)
+		api := weldr.New(repo, packages, nil, s)
+		sendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+		// create job and leave it waiting
+		sendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
+		// create job and leave it running
+		sendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
+		s.PopCompose()
+		// create job and mark it as finished
+		sendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
+		job := s.PopCompose()
+		s.UpdateCompose(job.ComposeID, "FINISHED")
+		// create job and mark it as failed
+		sendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
+		job = s.PopCompose()
+		s.UpdateCompose(job.ComposeID, "FAILED")
+		testRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
+}
