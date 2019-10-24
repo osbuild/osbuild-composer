@@ -112,12 +112,16 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
-	store.PushCompose(id, &blueprint.Blueprint{}, "tar")
-
-	sendHTTP(api, "POST", "/job-queue/v1/jobs", `{}`)
-	if from != "WAITING" {
-		sendHTTP(api, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+from+`"}`)
+	if from != "VOID" {
+		store.PushCompose(id, &blueprint.Blueprint{}, "tar")
+		if from != "WAITING" {
+			sendHTTP(api, "POST", "/job-queue/v1/jobs", `{}`)
+			if from != "RUNNING" {
+				sendHTTP(api, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+from+`"}`)
+			}
+		}
 	}
+
 	testRoute(t, api, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+to+`"}`, expectedStatus, ``)
 }
 
@@ -127,11 +131,15 @@ func TestUpdate(t *testing.T) {
 		To             string
 		ExpectedStatus int
 	}{
-		{"WAITING", "WAITING", http.StatusBadRequest},
-		{"WAITING", "RUNNING", http.StatusOK},
-		{"WAITING", "FINISHED", http.StatusOK},
-		{"WAITING", "FAILED", http.StatusOK},
-		{"RUNNING", "RUNNING", http.StatusOK},
+		{"VOID", "WAITING", http.StatusNotFound},
+		{"VOID", "RUNNING", http.StatusNotFound},
+		{"VOID", "FINISHED", http.StatusNotFound},
+		{"VOID", "FAILED", http.StatusNotFound},
+		{"WAITING", "WAITING", http.StatusNotFound},
+		{"WAITING", "RUNNING", http.StatusNotFound},
+		{"WAITING", "FINISHED", http.StatusNotFound},
+		{"WAITING", "FAILED", http.StatusNotFound},
+		{"RUNNING", "WAITING", http.StatusBadRequest},
 		{"RUNNING", "RUNNING", http.StatusOK},
 		{"RUNNING", "FINISHED", http.StatusOK},
 		{"RUNNING", "FAILED", http.StatusOK},

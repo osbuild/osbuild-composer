@@ -2,12 +2,13 @@ package jobqueue
 
 import (
 	"encoding/json"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
-	"github.com/osbuild/osbuild-composer/internal/store"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"log"
 	"net"
 	"net/http"
+
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -131,6 +132,8 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		case *store.NotFoundError:
 			statusResponseError(writer, http.StatusNotFound, err.Error())
 		case *store.NotPendingError:
+			statusResponseError(writer, http.StatusNotFound, err.Error())
+		case *store.NotRunningError:
 			statusResponseError(writer, http.StatusBadRequest, err.Error())
 		case *store.InvalidRequestError:
 			statusResponseError(writer, http.StatusBadRequest, err.Error())
