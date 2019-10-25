@@ -198,6 +198,8 @@ func (s *Store) ListBlueprints() []string {
 type ComposeEntry struct {
 	ID          uuid.UUID `json:"id"`
 	Blueprint   string    `json:"blueprint"`
+	Version     string    `json:"version"`
+	ComposeType string    `json:"compose_type"`
 	QueueStatus string    `json:"queue_status"`
 	JobCreated  float64   `json:"job_created"`
 	JobStarted  float64   `json:"job_started,omitempty"`
@@ -214,6 +216,8 @@ func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
+				Version:     compose.Blueprint.Version,
+				ComposeType: compose.OutputType,
 				QueueStatus: compose.QueueStatus,
 				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
 			}
@@ -221,6 +225,8 @@ func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
+				Version:     compose.Blueprint.Version,
+				ComposeType: compose.OutputType,
 				QueueStatus: compose.QueueStatus,
 				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
 				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
@@ -229,6 +235,8 @@ func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,
+				Version:     compose.Blueprint.Version,
+				ComposeType: compose.OutputType,
 				QueueStatus: compose.QueueStatus,
 				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
 				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
