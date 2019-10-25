@@ -33,7 +33,8 @@ Requires: osbuild
 %{common_description}
 
 %prep
-%forgeautosetup -p1
+%autosetup -p1
+#forgeautosetup -p1
 
 %build
 %gobuildroot
