@@ -55,6 +55,7 @@ type Image struct {
 	File *os.File
 	Name string
 	Mime string
+	Size int64
 }
 
 type NotFoundError struct {
@@ -448,10 +449,17 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 			case *target.LocalTargetOptions:
 				file, err := os.Open(options.Location + "/" + name)
 				if err == nil {
+					fileStat, err := file.Stat()
+					if err != nil {
+						return nil, &NotFoundError{"image info could not be found"}
+					}
+					size := fileStat.Size()
+
 					return &Image{
 						File: file,
 						Name: name,
 						Mime: mime,
+						Size: size,
 					}, nil
 				}
 			}
