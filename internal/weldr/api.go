@@ -854,15 +854,9 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	stat, err := image.File.Stat()
-	if err != nil {
-		statusResponseError(writer, http.StatusInternalServerError)
-		return
-	}
-
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+image.Name)
 	writer.Header().Set("Content-Type", image.Mime)
-	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", image.Size))
 
 	io.Copy(writer, image.File)
 }
