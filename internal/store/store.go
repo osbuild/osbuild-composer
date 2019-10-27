@@ -201,6 +201,7 @@ type ComposeEntry struct {
 	Blueprint   string    `json:"blueprint"`
 	Version     string    `json:"version"`
 	ComposeType string    `json:"compose_type"`
+	ImageSize   int64     `json:"image_size"`
 	QueueStatus string    `json:"queue_status"`
 	JobCreated  float64   `json:"job_created"`
 	JobStarted  float64   `json:"job_started,omitempty"`
@@ -232,7 +233,24 @@ func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
 				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
 			}
-		case "FAILED", "FINISHED":
+		case "FINISHED":
+			image, err := s.GetImage(id)
+			imageSize := int64(0)
+			if err == nil {
+				imageSize = image.Size
+			}
+			return &ComposeEntry{
+				ID:          id,
+				Blueprint:   compose.Blueprint.Name,
+				Version:     compose.Blueprint.Version,
+				ComposeType: compose.OutputType,
+				ImageSize:   imageSize,
+				QueueStatus: compose.QueueStatus,
+				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
+				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
+				JobFinished: float64(compose.JobFinished.UnixNano()) / 1000000000,
+			}
+		case "FAILED":
 			return &ComposeEntry{
 				ID:          id,
 				Blueprint:   compose.Blueprint.Name,

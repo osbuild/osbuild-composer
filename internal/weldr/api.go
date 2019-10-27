@@ -299,7 +299,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 				if total > offset && total < end {
 					modules = append(modules, modulesListModule{pkg.Name, "rpm"})
 					// this removes names that have been found from the list of names
-					if len(names) < i - 1 {
+					if len(names) < i-1 {
 						names = append(names[:i], names[i+1:]...)
 					} else {
 						names = names[:i]
