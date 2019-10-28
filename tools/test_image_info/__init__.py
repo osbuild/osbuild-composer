@@ -63,6 +63,8 @@ class TestImageInfo(unittest.TestCase):
             "expected": the expected output from image-info
         """
         for name, case in json_files(f"{TEST_DIR}/pipelines"):
+            if "expected" not in case:
+                continue
             with self.subTest(name):
                 _, output_id = self.run_osbuild("-", input=json.dumps(case["pipeline"]))
                 filename = os.path.join(self.store, "refs", output_id, case["pipeline"]["assembler"]["options"]["filename"])

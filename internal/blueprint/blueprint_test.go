@@ -60,98 +60,43 @@ func TestListOutputFormats(t *testing.T) {
 }
 
 func TestBlueprint_ToPipeline(t *testing.T) {
-	type fields struct {
-		Name        string
-		Description string
-		Version     string
-		Packages    []blueprint.Package
-		Modules     []blueprint.Package
-		Groups      []blueprint.Package
+	pipelinePath := "../../tools/test_image_info/pipelines/"
+	fileInfos, err := ioutil.ReadDir(pipelinePath)
+	if err != nil {
+		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)
 	}
-	type args struct {
-		outputFormat string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "ami",
-			args: args{"ami"},
-			want: "pipelines/ami_empty_blueprint.json",
-		},
-		{
-			name: "ext4",
-			args: args{"ext4-filesystem"},
-			want: "pipelines/ext4_empty_blueprint.json",
-		},
-		{
-			name: "live-iso",
-			args: args{"live-iso"},
-			want: "pipelines/liveiso_empty_blueprint.json",
-		},
-		{
-			name: "openstack",
-			args: args{"openstack"},
-			want: "pipelines/openstack_empty_blueprint.json",
-		},
-		{
-			name: "partitioned-disk",
-			args: args{"partitioned-disk"},
-			want: "pipelines/disk_empty_blueprint.json",
-		},
-		{
-			name: "qcow2",
-			args: args{"qcow2"},
-			want: "pipelines/qcow2_empty_blueprint.json",
-		},
-		{
-			name: "tar",
-			args: args{"tar"},
-			want: "pipelines/tar_empty_blueprint.json",
-		},
-		{
-			name: "vhd",
-			args: args{"vhd"},
-			want: "pipelines/vhd_empty_blueprint.json",
-		},
-		{
-			name: "vmdk",
-			args: args{"vmdk"},
-			want: "pipelines/vmdk_empty_blueprint.json",
-		},
-		{
-			name:    "invalid-output-type",
-			args:    args{"foobar"},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			b := &blueprint.Blueprint{
-				Name:        tt.fields.Name,
-				Description: tt.fields.Description,
-				Version:     tt.fields.Version,
-				Packages:    tt.fields.Packages,
-				Modules:     tt.fields.Modules,
-				Groups:      tt.fields.Groups,
-			}
-			file, _ := ioutil.ReadFile(tt.want)
-			var want pipeline.Pipeline
-			json.Unmarshal([]byte(file), &want)
-			got, err := b.ToPipeline(tt.args.outputFormat)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Blueprint.ToPipeline() error = %v, wantErr %v", err, tt.wantErr)
+	for _, fileInfo := range fileInfos {
+		type compose struct {
+			OutputFormat string               `json:"output-format"`
+			Blueprint    *blueprint.Blueprint `json:"blueprint"`
+		}
+		var tt struct {
+			Compose  *compose           `json:"compose"`
+			Pipeline *pipeline.Pipeline `json:"pipeline,omitempty"`
+		}
+		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
+		if err != nil {
+			t.Errorf("Colud not read test-case '%s': %v", fileInfo.Name(), err)
+		}
+		err = json.Unmarshal([]byte(file), &tt)
+		if err != nil {
+			t.Errorf("Colud not parse test-case '%s': %v", fileInfo.Name(), err)
+		}
+		if tt.Compose == nil || tt.Compose.Blueprint == nil {
+			t.Logf("Skipping '%s'.", fileInfo.Name())
+			continue
+		}
+		t.Run(tt.Compose.OutputFormat, func(t *testing.T) {
+			got, err := tt.Compose.Blueprint.ToPipeline(tt.Compose.OutputFormat)
+			if (err != nil) != (tt.Pipeline == nil) {
+				t.Errorf("Blueprint.ToPipeline() error = %v", err)
 				return
 			}
-			if !tt.wantErr {
-				if !reflect.DeepEqual(got, &want) {
+			if tt.Pipeline != nil {
+				if !reflect.DeepEqual(got, tt.Pipeline) {
 					// Without this the "difference" is just a list of pointers.
 					gotJson, _ := json.Marshal(got)
-					fileJson, _ := json.Marshal(want)
+					fileJson, _ := json.Marshal(tt.Pipeline)
 					t.Errorf("Blueprint.ToPipeline() =\n%v,\nwant =\n%v", string(gotJson), string(fileJson))
 				}
 			}
