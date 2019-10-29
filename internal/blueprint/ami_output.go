@@ -18,7 +18,10 @@ func (t *amiOutput) translate(b *Blueprint) *pipeline.Pipeline {
 		"checkpolicy",
 		"net-tools",
 	}
-	p := getCustomF30PackageSet(packages[:], []string{})
+	excludedPackages := [...]string{
+		"dracut-config-rescue",
+	}
+	p := getCustomF30PackageSet(packages[:], excludedPackages[:])
 	addF30FixBlsStage(p)
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)

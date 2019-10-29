@@ -55,6 +55,9 @@
             "cloud-init",
             "libdrm"
           ],
+          "exclude_packages": [
+            "dracut-config-rescue"
+          ],
           "releasever": "30",
           "basearch": "x86_64"
         }
