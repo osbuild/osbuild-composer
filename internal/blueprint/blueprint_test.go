@@ -60,7 +60,7 @@ func TestListOutputFormats(t *testing.T) {
 }
 
 func TestBlueprint_ToPipeline(t *testing.T) {
-	pipelinePath := "../../tools/test_image_info/pipelines/"
+	pipelinePath := "../../test/cases/"
 	fileInfos, err := ioutil.ReadDir(pipelinePath)
 	if err != nil {
 		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)

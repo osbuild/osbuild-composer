@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+
+import contextlib
+import glob
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+import urllib.request
+
+
+TEST_DIR = os.path.dirname(__file__)
+
+
+@contextlib.contextmanager
+def osbuild_test_store():
+    store = os.getenv("OSBUILD_TEST_STORE")
+    if store:
+        yield store
+    else:
+        with tempfile.TemporaryDirectory(dir="/var/tmp", prefix="osbuild-composer-test-") as store:
+            yield store
+
+
+@contextlib.contextmanager
+def temporary_json_file(obj):
+    f = tempfile.NamedTemporaryFile("w", delete=False)
+    json.dump(obj, f, indent=2)
+    f.close()
+    try:
+        yield f.name
+    finally:
+        os.unlink(f.name)
+
+
+def run_osbuild(pipeline, store):
+    osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--libdir", ".", "--store", store, "-"]
+
+    build_pipeline = os.getenv("OSBUILD_TEST_BUILD_PIPELINE", None)
+    if build_pipeline:
+        osbuild_cmd.append("--build-pipeline")
+        osbuild_cmd.append(os.path.abspath(build_pipeline))
+
+    try:
+        result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(pipeline)))
+    except subprocess.CalledProcessError as err:
+        print(err.output)
+
+    return result["tree_id"], result["output_id"]
+
+
+def run_test(case, store):
+    if "pipeline" in case:
+        _, output_id = run_osbuild(case["pipeline"], store)
+        filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
+    else:
+        filename, _ = urllib.request.urlretrieve(case["url"])
+
+    info = json.loads(subprocess.check_output(["tools/image-info", filename]))
+    if info != case["expected"]:
+        with temporary_json_file(case["expected"]) as a, temporary_json_file(info) as b:
+            subprocess.run(["diff", "--unified", "--color", "--label", "expected", a, "--label", "got", b], check=False)
+        return False
+
+    return True
+
+
+def main(args):
+    failed = False
+    with osbuild_test_store() as store:
+        for filename in args or glob.glob(f"{TEST_DIR}/cases/*.json"):
+            name = os.path.basename(filename)[:-5]
+            with open(filename) as f:
+                case = json.load(f)
+
+            print(f"{name}")
+            if not run_test(case, store):
+                print(f"FAIL")
+                print()
+                failed = True
+
+    return 1 if failed else 0
+
+r = main(sys.argv[1:])
+if r:
+    sys.exit(r)
