@@ -18,7 +18,10 @@ func (t *openstackOutput) translate(b *Blueprint) *pipeline.Pipeline {
 		"cloud-init",
 		"libdrm",
 	}
-	p := getCustomF30PackageSet(packages[:], []string{})
+	excludedPackages := [...]string{
+		"dracut-config-rescue",
+	}
+	p := getCustomF30PackageSet(packages[:], excludedPackages[:])
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)
 	addF30GRUB2Stage(p, b.getKernelCustomization())
