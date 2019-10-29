@@ -142,7 +142,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "partitioned-disk",
 			args:  args{"partitioned-disk"},
-			want:  "image.img",
+			want:  "disk.img",
 			want1: "application/octet-stream",
 		},
 		{
