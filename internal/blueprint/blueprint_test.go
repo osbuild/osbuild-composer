@@ -124,7 +124,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "ext4",
 			args:  args{"ext4-filesystem"},
-			want:  "image.img",
+			want:  "filesystem.img",
 			want1: "application/octet-stream",
 		},
 		{
