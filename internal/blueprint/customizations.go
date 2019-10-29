@@ -1,6 +1,7 @@
 package blueprint
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"strconv"
 	"strings"
@@ -161,8 +162,16 @@ func (c *Customizations) customizeUserAndSSHKey(p *pipeline.Pipeline) error {
 
 	users := make(map[string]pipeline.UsersStageOptionsUser)
 	for _, user := range c.User {
-		// TODO: only hashed password are currently supported as an input
-		// plain-text passwords should be also supported due to parity with lorax-composer
+
+		if user.Password != nil && !crypt.PasswordIsCrypted(*user.Password) {
+			cryptedPassword, err := crypt.CryptSHA512(*user.Password)
+			if err != nil {
+				return err
+			}
+
+			user.Password = &cryptedPassword
+		}
+
 		userData := pipeline.UsersStageOptionsUser{
 			Groups:      user.Groups,
 			Description: user.Description,
