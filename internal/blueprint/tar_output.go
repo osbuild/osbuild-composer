@@ -5,14 +5,28 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 type tarOutput struct{}
 
 func (t *tarOutput) translate(b *Blueprint) *pipeline.Pipeline {
-	p := getF30Pipeline()
+	packages := [...]string{
+		"policycoreutils",
+		"selinux-policy-targeted",
+		"kernel",
+		"firewalld",
+		"chrony",
+		"langpacks-en",
+	}
+	excludedPackages := [...]string{
+		"dracut-config-rescue",
+	}
+	p := getCustomF30PackageSet(packages[:], excludedPackages[:])
+	addF30LocaleStage(p)
+	addF30GRUB2Stage(p, b.getKernelCustomization())
+	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
-	addF30TarAssembler(p, t.getName())
+	addF30TarAssembler(p, t.getName(), "xz")
 	return p
 }
 
 func (t *tarOutput) getName() string {
-	return "image.tar"
+	return "root.tar.xz"
 }
 
 func (t *tarOutput) getMime() string {

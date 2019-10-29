@@ -170,7 +170,7 @@ func addF30QemuAssembler(p *pipeline.Pipeline, format string, filename string) {
 		})
 }
 
-func addF30TarAssembler(p *pipeline.Pipeline, filename string) {
+func addF30TarAssembler(p *pipeline.Pipeline, filename, compression string) {
 	p.Assembler = pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
 			Filename: filename,
