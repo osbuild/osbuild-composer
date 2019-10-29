@@ -1,6 +1,7 @@
 {
   "compose": {
-    "output-format": "vhd",
+    "output-format": "vmdk",
+    "filename": "disk.vmdk",
     "blueprint": {}
   },
   "pipeline": {
@@ -43,16 +44,14 @@
             }
           ],
           "packages": [
-            "@Core",
+            "@core",
             "chrony",
-            "kernel",
-            "selinux-policy-targeted",
+            "firewalld",
             "grub2-pc",
+            "kernel",
             "langpacks-en",
-            "net-tools",
-            "ntfsprogs",
-            "WALinuxAgent",
-            "libxcrypt-compat"
+            "open-vm-tools",
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
             "dracut-config-rescue"
@@ -104,8 +103,8 @@
     "assembler": {
       "name": "org.osbuild.qemu",
       "options": {
-        "format": "qcow2",
-        "filename": "image.vhd",
+        "format": "vmdk",
+        "filename": "disk.vmdk",
         "ptuuid": "0x14fc63d2",
         "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
         "size": 3221225472
@@ -115,16 +114,6 @@
   "expected": {
     "bootloader": "grub",
     "bootmenu": [
-      {
-        "grub_arg": "--unrestricted",
-        "grub_class": "kernel",
-        "grub_users": "$grub_users",
-        "initrd": "/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
-        "linux": "/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "$kernelopts",
-        "title": "Fedora (0-rescue-ffffffffffffffffffffffffffffffff) 30 (Thirty)",
-        "version": "0-rescue-ffffffffffffffffffffffffffffffff"
-      },
       {
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
@@ -189,7 +178,7 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
-    "image-format": "qcow2",
+    "image-format": "vmdk",
     "os-release": {
       "ANSI_COLOR": "0;34",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -214,7 +203,6 @@
     "packages": [
       "NetworkManager-1.16.0-1.fc30.x86_64",
       "NetworkManager-libnm-1.16.0-1.fc30.x86_64",
-      "WALinuxAgent-2.2.38-1.fc30.noarch",
       "acl-2.2.53-3.fc30.x86_64",
       "alternatives-1.11-4.fc30.x86_64",
       "audit-3.0-0.7.20190326git03e7489.fc30.x86_64",
@@ -252,7 +240,6 @@
       "dnf-plugins-core-4.0.6-1.fc30.noarch",
       "dnf-yum-4.2.2-2.fc30.noarch",
       "dracut-049-26.git20181204.fc30.x86_64",
-      "dracut-config-rescue-049-26.git20181204.fc30.x86_64",
       "e2fsprogs-1.44.6-1.fc30.x86_64",
       "e2fsprogs-libs-1.44.6-1.fc30.x86_64",
       "ebtables-2.0.10-31.fc30.x86_64",
@@ -273,6 +260,8 @@
       "firewalld-0.6.3-2.fc30.noarch",
       "firewalld-filesystem-0.6.3-2.fc30.noarch",
       "freetype-2.9.1-7.fc30.x86_64",
+      "fuse-2.9.9-3.fc30.x86_64",
+      "fuse-common-3.4.2-3.fc30.x86_64",
       "fuse-libs-2.9.9-3.fc30.x86_64",
       "gawk-4.2.1-6.fc30.x86_64",
       "gdbm-libs-1.18-4.fc30.x86_64",
@@ -303,6 +292,7 @@
       "gzip-1.9-9.fc30.x86_64",
       "hardlink-1.3-8.fc30.x86_64",
       "hostname-3.20-8.fc30.x86_64",
+      "hwdata-0.322-1.fc30.noarch",
       "ima-evm-utils-1.1-5.fc30.x86_64",
       "ipcalc-0.2.5-2.fc30.x86_64",
       "iproute-5.0.0-2.fc30.x86_64",
@@ -344,7 +334,9 @@
       "libdb-5.3.28-37.fc30.x86_64",
       "libdb-utils-5.3.28-37.fc30.x86_64",
       "libdhash-0.5.0-42.fc30.x86_64",
+      "libdnet-1.12-30.fc30.x86_64",
       "libdnf-0.28.1-1.fc30.x86_64",
+      "libdrm-2.4.97-2.fc30.x86_64",
       "libedit-3.1-26.20181209cvs.fc30.x86_64",
       "libevent-2.1.8-5.fc30.x86_64",
       "libfdisk-2.33.2-1.fc30.x86_64",
@@ -353,6 +345,7 @@
       "libgcrypt-1.8.4-3.fc30.x86_64",
       "libgomp-9.0.1-0.10.fc30.x86_64",
       "libgpg-error-1.33-2.fc30.x86_64",
+      "libicu-63.1-2.fc30.x86_64",
       "libidn2-2.1.1a-1.fc30.x86_64",
       "libini_config-1.3.1-42.fc30.x86_64",
       "libkcapi-1.1.4-1.fc30.x86_64",
@@ -364,6 +357,7 @@
       "libmnl-1.0.4-9.fc30.x86_64",
       "libmodulemd1-1.8.6-3.fc30.x86_64",
       "libmount-2.33.2-1.fc30.x86_64",
+      "libmspack-0.9.1-0.2.alpha.fc30.x86_64",
       "libndp-1.7-3.fc30.x86_64",
       "libnetfilter_conntrack-1.0.7-2.fc30.x86_64",
       "libnfnetlink-1.0.1-15.fc30.x86_64",
@@ -374,6 +368,7 @@
       "libnsl2-1.2.0-4.20180605git4a062cf.fc30.x86_64",
       "libpath_utils-0.2.1-42.fc30.x86_64",
       "libpcap-1.9.0-3.fc30.x86_64",
+      "libpciaccess-0.14-3.fc30.x86_64",
       "libpipeline-1.5.1-2.fc30.x86_64",
       "libpng-1.6.36-1.fc30.x86_64",
       "libpsl-0.20.2-6.fc30.x86_64",
@@ -403,6 +398,7 @@
       "libtdb-1.3.18-1.fc30.x86_64",
       "libtevent-0.9.39-1.fc30.x86_64",
       "libtirpc-1.1.4-2.rc2.fc30.1.x86_64",
+      "libtool-ltdl-2.4.6-29.fc30.x86_64",
       "libunistring-0.9.10-5.fc30.x86_64",
       "libusbx-1.0.22-2.fc30.x86_64",
       "libuser-0.62-20.fc30.x86_64",
@@ -410,9 +406,9 @@
       "libuuid-2.33.2-1.fc30.x86_64",
       "libverto-0.3.0-7.fc30.x86_64",
       "libxcrypt-4.4.4-2.fc30.x86_64",
-      "libxcrypt-compat-4.4.4-2.fc30.x86_64",
       "libxkbcommon-0.8.3-1.fc30.x86_64",
       "libxml2-2.9.9-2.fc30.x86_64",
+      "libxslt-1.1.32-4.fc30.x86_64",
       "libyaml-0.2.1-5.fc30.x86_64",
       "libzstd-1.3.8-2.fc30.x86_64",
       "linux-atm-libs-2.5.1-21.fc29.x86_64",
@@ -428,13 +424,10 @@
       "ncurses-6.1-10.20180923.fc30.x86_64",
       "ncurses-base-6.1-10.20180923.fc30.noarch",
       "ncurses-libs-6.1-10.20180923.fc30.x86_64",
-      "net-tools-2.0-0.54.20160912git.fc30.x86_64",
       "nettle-3.4.1rc1-2.fc30.x86_64",
       "nftables-0.9.0-5.fc30.x86_64",
       "npth-1.6-2.fc30.x86_64",
-      "ntfs-3g-2017.3.23-11.fc30.x86_64",
-      "ntfs-3g-system-compression-1.0-1.fc30.x86_64",
-      "ntfsprogs-2017.3.23-11.fc30.x86_64",
+      "open-vm-tools-10.3.10-1.fc30.x86_64",
       "openldap-2.4.47-1.fc30.x86_64",
       "openssh-7.9p1-5.fc30.x86_64",
       "openssh-clients-7.9p1-5.fc30.x86_64",
@@ -448,6 +441,8 @@
       "pam-1.3.1-17.fc30.x86_64",
       "parted-3.2-40.fc30.x86_64",
       "passwd-0.80-5.fc30.x86_64",
+      "pciutils-3.6.2-2.fc30.x86_64",
+      "pciutils-libs-3.6.2-2.fc30.x86_64",
       "pcre-8.43-1.fc30.x86_64",
       "pcre2-10.32-9.fc30.x86_64",
       "pigz-2.4-4.fc30.x86_64",
@@ -480,7 +475,6 @@
       "python3-libs-3.7.3-1.fc30.x86_64",
       "python3-libselinux-2.9-1.fc30.x86_64",
       "python3-pip-19.0.3-1.fc30.noarch",
-      "python3-pyasn1-0.4.4-4.fc30.noarch",
       "python3-rpm-4.14.2.1-4.fc30.1.x86_64",
       "python3-setuptools-40.8.0-1.fc30.noarch",
       "python3-six-1.12.0-1.fc30.noarch",
@@ -514,6 +508,7 @@
       "systemd-pam-241-7.gita2eaa1c.fc30.x86_64",
       "systemd-rpm-macros-241-7.gita2eaa1c.fc30.noarch",
       "systemd-udev-241-7.gita2eaa1c.fc30.x86_64",
+      "tar-1.32-1.fc30.x86_64",
       "timedatex-0.5-6.fc30.x86_64",
       "trousers-0.3.13-12.fc30.x86_64",
       "trousers-lib-0.3.13-12.fc30.x86_64",
@@ -524,6 +519,8 @@
       "which-2.21-14.fc30.x86_64",
       "whois-nls-5.4.2-1.fc30.noarch",
       "xkeyboard-config-2.24-5.fc30.noarch",
+      "xmlsec1-1.2.27-2.fc30.x86_64",
+      "xmlsec1-openssl-1.2.27-2.fc30.x86_64",
       "xz-5.2.4-5.fc30.x86_64",
       "xz-libs-5.2.4-5.fc30.x86_64",
       "zchunk-libs-1.1.1-3.fc30.x86_64",
