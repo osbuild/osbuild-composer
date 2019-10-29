@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
 type ComposerClient struct {
@@ -25,7 +27,7 @@ func NewClient() *ComposerClient {
 	return &ComposerClient{client}
 }
 
-func (c *ComposerClient) AddJob() (*Job, error) {
+func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	type request struct {
 	}
 
@@ -41,7 +43,7 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 		return nil, errors.New("couldn't create job")
 	}
 
-	job := &Job{}
+	job := &jobqueue.Job{}
 	err = json.NewDecoder(response.Body).Decode(job)
 	if err != nil {
 		return nil, err
@@ -50,13 +52,9 @@ func (c *ComposerClient) AddJob() (*Job, error) {
 	return job, nil
 }
 
-func (c *ComposerClient) UpdateJob(job *Job, status string) error {
-	type request struct {
-		Status string `json:"status"`
-	}
-
+func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string) error {
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(&request{status})
+	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status})
 	req, err := http.NewRequest("PATCH", "http://localhost/job-queue/v1/jobs/"+job.ID.String(), &b)
 	if err != nil {
 		return err

@@ -6,9 +6,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/store"
-	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -77,11 +75,7 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type requestBody struct {
 	}
-	type replyBody struct {
-		ID       uuid.UUID          `json:"id"`
-		Pipeline *pipeline.Pipeline `json:"pipeline"`
-		Targets  []*target.Target   `json:"targets"`
-	}
+	type replyBody Job
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
@@ -103,9 +97,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 }
 
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	type requestBody struct {
-		Status string `json:"status"`
-	}
+	type requestBody JobStatus
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
