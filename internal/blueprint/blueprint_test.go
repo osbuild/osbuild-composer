@@ -166,7 +166,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "vmdk",
 			args:  args{"vmdk"},
-			want:  "image.vmdk",
+			want:  "disk.vmdk",
 			want1: "application/x-vmdk",
 		},
 		{
