@@ -1,4 +1,4 @@
-package main
+package jobqueue
 
 import (
 	"encoding/json"
@@ -6,15 +6,18 @@ import (
 	"os/exec"
 
 	"github.com/google/uuid"
-
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Job struct {
-	ID       uuid.UUID         `json:"id"`
-	Pipeline pipeline.Pipeline `json:"pipeline"`
-	Targets  []target.Target   `json:"targets"`
+	ID       uuid.UUID          `json:"id"`
+	Pipeline *pipeline.Pipeline `json:"pipeline"`
+	Targets  []*target.Target   `json:"targets"`
+}
+
+type JobStatus struct {
+	Status string `json:"status"`
 }
 
 func (job *Job) Run() error {
