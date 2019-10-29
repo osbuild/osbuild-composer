@@ -108,7 +108,7 @@ func dropFields(obj interface{}, fields ...string) {
 	}
 }
 
-func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string) {
+func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
 	resp := sendHTTP(api, external, method, path, body)
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
@@ -148,6 +148,9 @@ func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body s
 		t.Errorf("%s: expected JSON is invalid: %v", path, err)
 		return
 	}
+
+	dropFields(reply, ignoreFields...)
+	dropFields(expected, ignoreFields...)
 
 	if !reflect.DeepEqual(reply, expected) {
 		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON)
@@ -303,15 +306,16 @@ func TestCompose(t *testing.T) {
 		Body           string
 		ExpectedStatus int
 		ExpectedJSON   string
+		IgnoreFields   []string
 	}{
-		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`},
-		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`, http.StatusOK, `*`},
+		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, []string{"build_id"}},
+		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`, http.StatusOK, `{"status": true}`, []string{"build_id"}},
 	}
 
 	for _, c := range cases {
 		api := weldr.New(repo, packages, nil, store.New(nil))
 		sendHTTP(api, c.External, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
-		testRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		testRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 		sendHTTP(api, c.External, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
 }
@@ -323,8 +327,9 @@ func TestComposeQueue(t *testing.T) {
 		Body           string
 		ExpectedStatus int
 		ExpectedJSON   string
+		IgnoreFields   []string
 	}{
-		{"GET", "/api/v0/compose/queue", ``, http.StatusOK, `*`}, // TODO: we need a way to verify we actually get the expected json here
+		{"GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`, []string{"id", "job_created", "job_started"}},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -348,7 +353,8 @@ func TestComposeQueue(t *testing.T) {
 		sendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
 		job = s.PopCompose()
 		s.UpdateCompose(job.ComposeID, "FAILED")
-		testRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+
+		testRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 		sendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
 }
