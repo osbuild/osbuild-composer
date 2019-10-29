@@ -34,37 +34,38 @@ import (
 )
 
 /*
-   #cgo LDFLAGS: -lcrypt
+	#cgo LDFLAGS: -lcrypt
 
-   #define _GNU_SOURCE
+	// this is needed for Ubuntu
+	#define _GNU_SOURCE
 
-   #include <stdlib.h>
-   #include <string.h>
-   #include <crypt.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <crypt.h>
 
-   char *gnu_ext_crypt(char *pass, char *salt) {
-     char *enc = NULL;
-     char *ret = NULL;
-     struct crypt_data data;
-     data.initialized = 0;
+	char *gnu_ext_crypt(char *pass, char *salt) {
+		char *enc = NULL;
+		char *ret = NULL;
+		struct crypt_data data;
+		data.initialized = 0;
 
-     enc = crypt_r(pass, salt, &data);
-     if(enc == NULL) {
-       return NULL;
-     }
+		enc = crypt_r(pass, salt, &data);
+		if(enc == NULL) {
+			return NULL;
+		}
 
-     ret = (char *)malloc(strlen(enc)+1); // for trailing null
-     strncpy(ret, enc, strlen(enc));
-     ret[strlen(enc)]= '\0'; // paranoid
+		ret = (char *)malloc((strlen(enc)+1) * sizeof(char)); // for trailing null
+		strcpy(ret, enc);
+		ret[strlen(enc)]= '\0';
 
-     return ret;
-   }
+	 return ret;
+	}
 */
 import "C"
 
 // Crypt provides a wrapper around the glibc crypt_r() function.
 // For the meaning of the arguments, refer to the package README.
-func Crypt(pass, salt string) (string, error) {
+func crypt(pass, salt string) (string, error) {
 	c_pass := C.CString(pass)
 	defer C.free(unsafe.Pointer(c_pass))
 
