@@ -154,7 +154,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "tar",
 			args:  args{"tar"},
-			want:  "image.tar",
+			want:  "root.tar.xz",
 			want1: "application/x-tar",
 		},
 		{
