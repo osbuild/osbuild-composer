@@ -78,6 +78,36 @@ func sendHTTP(api *weldr.API, external bool, method, path, body string) *http.Re
 	}
 }
 
+// this function serves to drop fields that shouldn't be tested from the unmarshalled json objects
+func dropFields(obj interface{}, fields ...string) {
+	switch v := obj.(type) {
+	// if the interface type is a map attempt to delete the fields
+	case map[string]interface{}:
+		for i, field := range fields {
+			if _, ok := v[field]; ok {
+				delete(v, field)
+				// if the field is found remove it from the fields slice
+				if len(fields) < i-1 {
+					fields = append(fields[:i], fields[i+1:]...)
+				} else {
+					fields = fields[:i]
+				}
+			}
+		}
+		// call dropFields on the remaining elements since they may contain a map containing the field
+		for _, val := range v {
+			dropFields(val, fields...)
+		}
+	// if the type is a list of interfaces call dropFields on each interface
+	case []interface{}:
+		for _, element := range v {
+			dropFields(element, fields...)
+		}
+	default:
+		return
+	}
+}
+
 func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body string, expectedStatus int, expectedJSON string) {
 	resp := sendHTTP(api, external, method, path, body)
 	if resp == nil {
