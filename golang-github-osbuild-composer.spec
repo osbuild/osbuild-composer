@@ -2,7 +2,7 @@
 
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        0
+Version:        1
 
 %gometa
 
