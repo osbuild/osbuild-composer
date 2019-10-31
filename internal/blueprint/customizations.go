@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -110,9 +111,13 @@ func (c *Customizations) customizeGroup(p *pipeline.Pipeline) {
 		return
 	}
 
-	// TODO: lorax-composer doesn't create group with the same name as user if both specified
 	groups := make(map[string]pipeline.GroupsStageOptionsGroup)
 	for _, group := range c.Group {
+		if userCustomizationsContainUsername(c.User, group.Name) {
+			log.Println("group with name ", group.Name, " was not created, because user with same name was defined!")
+			continue
+		}
+
 		groupData := pipeline.GroupsStageOptionsGroup{}
 		if group.GID != nil {
 			gid := strconv.Itoa(*group.GID)
@@ -304,4 +309,14 @@ func findKeysForUser(sshKeyCustomizations []SSHKeyCustomization, user string) (k
 		}
 	}
 	return
+}
+
+func userCustomizationsContainUsername(userCustomizations []UserCustomization, name string) bool {
+	for _, usr := range userCustomizations {
+		if usr.Name == name {
+			return true
+		}
+	}
+
+	return false
 }
