@@ -306,7 +306,7 @@ func (s *Store) GetBlueprint(name string, bp *blueprint.Blueprint, changed *bool
 		bp.Modules = []blueprint.Package{}
 	}
 	if bp.Groups == nil {
-		bp.Groups = []blueprint.Package{}
+		bp.Groups = []blueprint.Group{}
 	}
 	if bp.Version == "" {
 		bp.Version = "0.0.0"
@@ -337,7 +337,7 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 		bp.Modules = []blueprint.Package{}
 	}
 	if bp.Groups == nil {
-		bp.Groups = []blueprint.Package{}
+		bp.Groups = []blueprint.Group{}
 	}
 	if bp.Version == "" {
 		bp.Version = "0.0.0"
