@@ -89,7 +89,7 @@ func getF30Pipeline() *pipeline.Pipeline {
 	return p
 }
 
-func getCustomF30PackageSet(packages []string, excludedPackages []string) *pipeline.Pipeline {
+func getCustomF30PackageSet(packages []string, excludedPackages []string, blueprint *Blueprint) *pipeline.Pipeline {
 	p := &pipeline.Pipeline{
 		BuildPipeline: getF30BuildPipeline(),
 	}
@@ -104,6 +104,20 @@ func getCustomF30PackageSet(packages []string, excludedPackages []string) *pipel
 	for _, pkg := range excludedPackages {
 		options.ExcludePackage(pkg)
 	}
+
+	// handle extra packages, modules (currently synonym to packages) and groups
+	for _, pkg := range blueprint.Packages {
+		options.AddPackage(pkg.ToNameVersion())
+	}
+
+	for _, pkg := range blueprint.Modules {
+		options.AddPackage(pkg.ToNameVersion())
+	}
+
+	for _, group := range blueprint.Groups {
+		options.AddPackage(group.Name)
+	}
+
 	p.AddStage(pipeline.NewDNFStage(options))
 	return p
 }

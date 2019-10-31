@@ -95,3 +95,12 @@ func FilenameFromType(outputFormat string) (string, string, error) {
 
 	return "", "", &InvalidOutputFormatError{outputFormat}
 }
+
+func (p Package) ToNameVersion() string {
+	// Omit version to prevent all packages with prefix of name to be installed
+	if p.Version == "*" {
+		return p.Name
+	}
+
+	return p.Name + "-" + p.Version
+}

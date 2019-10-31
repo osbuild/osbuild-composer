@@ -20,7 +20,7 @@ func (t *vhdOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	excludedPackages := [...]string{
 		"dracut-config-rescue",
 	}
-	p := getCustomF30PackageSet(packages[:], excludedPackages[:])
+	p := getCustomF30PackageSet(packages[:], excludedPackages[:], b)
 	addF30LocaleStage(p)
 	addF30FSTabStage(p)
 	addF30GRUB2Stage(p, b.getKernelCustomization())
