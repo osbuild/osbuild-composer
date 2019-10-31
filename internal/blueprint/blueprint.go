@@ -25,7 +25,7 @@ type Blueprint struct {
 	Version        string          `json:"version,omitempty"`
 	Packages       []Package       `json:"packages"`
 	Modules        []Package       `json:"modules"`
-	Groups         []Package       `json:"groups"`
+	Groups         []Group         `json:"groups"`
 	Customizations *Customizations `json:"customizations,omitempty"`
 }
 
@@ -33,6 +33,11 @@ type Blueprint struct {
 type Package struct {
 	Name    string `json:"name"`
 	Version string `json:"version,omitempty"`
+}
+
+// A group specifies an package group.
+type Group struct {
+	Name string `json:"name"`
 }
 
 type output interface {
