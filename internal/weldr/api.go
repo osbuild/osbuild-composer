@@ -757,7 +757,19 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	found := api.store.GetBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType)
+		err := api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType)
+
+		// TODO: we should probably do some kind of blueprint validation in future
+		// for now, let's just 500 and bail out
+		if err != nil {
+			log.Println("error when pushing new compose: ", err.Error())
+			errors := responseError{
+				ID:  "ComposePushErrored",
+				Msg: err.Error(),
+			}
+			statusResponseError(writer, http.StatusInternalServerError, errors)
+			return
+		}
 	} else {
 		errors := responseError{
 			ID:  "UnknownBlueprint",

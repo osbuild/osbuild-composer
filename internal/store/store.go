@@ -382,7 +382,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	}
 	pipeline, err := bp.ToPipeline(composeType)
 	if err != nil {
-		return &InvalidRequestError{"invalid output type: " + composeType}
+		return err
 	}
 	s.change(func() error {
 		s.Composes[composeID] = Compose{
