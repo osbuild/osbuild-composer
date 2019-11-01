@@ -4,7 +4,7 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type tarOutput struct{}
 
-func (t *tarOutput) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *tarOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"policycoreutils",
 		"selinux-policy-targeted",
@@ -22,7 +22,14 @@ func (t *tarOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
 	addF30TarAssembler(p, t.getName(), "xz")
-	return p
+
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *tarOutput) getName() string {

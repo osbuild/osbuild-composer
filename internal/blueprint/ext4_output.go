@@ -4,7 +4,7 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type ext4Output struct{}
 
-func (t *ext4Output) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *ext4Output) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"policycoreutils",
 		"selinux-policy-targeted",
@@ -22,7 +22,14 @@ func (t *ext4Output) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
 	addF30RawFSAssembler(p, t.getName())
-	return p
+
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *ext4Output) getName() string {

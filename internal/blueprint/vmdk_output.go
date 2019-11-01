@@ -4,7 +4,7 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type vmdkOutput struct{}
 
-func (t *vmdkOutput) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *vmdkOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"@core",
 		"chrony",
@@ -25,7 +25,14 @@ func (t *vmdkOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "vmdk", t.getName())
-	return p
+
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *vmdkOutput) getName() string {

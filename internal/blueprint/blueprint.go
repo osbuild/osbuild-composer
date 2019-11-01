@@ -41,7 +41,7 @@ type Group struct {
 }
 
 type output interface {
-	translate(b *Blueprint) *pipeline.Pipeline
+	translate(b *Blueprint) (*pipeline.Pipeline, error)
 	getName() string
 	getMime() string
 }
@@ -72,7 +72,7 @@ func ListOutputFormats() []string {
 // ToPipeline converts the blueprint to a pipeline for a given output format.
 func (b *Blueprint) ToPipeline(outputFormat string) (*pipeline.Pipeline, error) {
 	if output, exists := outputs[outputFormat]; exists {
-		return output.translate(b), nil
+		return output.translate(b)
 	}
 
 	return nil, &InvalidOutputFormatError{outputFormat}

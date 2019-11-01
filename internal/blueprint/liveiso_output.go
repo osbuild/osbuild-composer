@@ -4,12 +4,19 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type liveIsoOutput struct{}
 
-func (t *liveIsoOutput) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *liveIsoOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	// TODO!
 	p := getF30Pipeline()
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "raw", t.getName())
-	return p
+
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *liveIsoOutput) getName() string {
