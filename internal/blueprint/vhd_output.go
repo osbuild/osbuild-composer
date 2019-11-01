@@ -4,7 +4,7 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type vhdOutput struct{}
 
-func (t *vhdOutput) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *vhdOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"@Core",
 		"chrony",
@@ -27,7 +27,14 @@ func (t *vhdOutput) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "qcow2", t.getName())
-	return p
+
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *vhdOutput) getName() string {

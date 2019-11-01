@@ -4,7 +4,7 @@ import "github.com/osbuild/osbuild-composer/internal/pipeline"
 
 type qcow2Output struct{}
 
-func (t *qcow2Output) translate(b *Blueprint) *pipeline.Pipeline {
+func (t *qcow2Output) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"kernel-core",
 		"@Fedora Cloud Server",
@@ -30,7 +30,13 @@ func (t *qcow2Output) translate(b *Blueprint) *pipeline.Pipeline {
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "qcow2", t.getName())
 
-	return p
+	if b.Customizations != nil {
+		err := b.Customizations.customizeAll(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p, nil
 }
 
 func (t *qcow2Output) getName() string {
