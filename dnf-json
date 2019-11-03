@@ -43,12 +43,7 @@ call = json.load(sys.stdin)
 command = call["command"]
 arguments = call.get("arguments", {})
 
-if command == "list":
-    base = create_base(arguments.get("repos", {}))
-    packages = [p.name for p in base.sack.query().available()]
-    json.dump(packages, sys.stdout)
-
-elif command == "dump":
+if command == "dump":
     base = create_base(arguments.get("repos", {}))
     packages = []
     for package in base.sack.query().available():
