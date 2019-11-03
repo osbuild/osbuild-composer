@@ -33,12 +33,12 @@ func main() {
 	jobListener := listeners[1]
 
 	repo := rpmmd.RepoConfig{
-		Id:       "fedora-30",
+		Id:       "fedora",
 		Name:     "Fedora 30",
 		Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
 	}
 
-	packages, err := rpmmd.FetchPackageList(repo)
+	packages, err := rpmmd.FetchPackageList([]rpmmd.RepoConfig{repo})
 	if err != nil {
 		panic(err)
 	}

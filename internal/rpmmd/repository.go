@@ -80,16 +80,20 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 	return cmd.Wait()
 }
 
-func FetchPackageList(repo RepoConfig) (PackageList, error) {
+func FetchPackageList(repos []RepoConfig) (PackageList, error) {
+	var arguments = struct {
+		Repos []RepoConfig `json:"repos"`
+	}{repos}
 	var packages PackageList
-	err := runDNF("dump", nil, &packages)
+	err := runDNF("dump", arguments, &packages)
 	return packages, err
 }
 
-func Depsolve(specs ...string) ([]PackageSpec, error) {
+func Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error) {
 	var arguments = struct {
-		PackageSpecs []string `json:"package-specs"`
-	}{ specs }
+		PackageSpecs []string     `json:"package-specs"`
+		Repos        []RepoConfig `json:"repos"`
+	}{specs, repos}
 	var dependencies []PackageSpec
 	err := runDNF("depsolve", arguments, &dependencies)
 	return dependencies, err

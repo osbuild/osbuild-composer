@@ -407,7 +407,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		}
 
 		if modulesRequested {
-			project.Dependencies, _ = rpmmd.Depsolve(pkg.Name)
+			project.Dependencies, _ = rpmmd.Depsolve([]string{pkg.Name}, []rpmmd.RepoConfig{api.repo})
 		}
 
 		projects = append(projects, project)
@@ -550,7 +550,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 				specs[i] += "-*-*.*"
 			}
 		}
-		dependencies, _ := rpmmd.Depsolve(specs...)
+		dependencies, _ := rpmmd.Depsolve(specs, []rpmmd.RepoConfig{api.repo})
 
 		blueprints = append(blueprints, entry{blueprint, dependencies})
 	}
