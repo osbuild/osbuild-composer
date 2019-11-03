@@ -11,16 +11,9 @@ def timestamp_to_rfc3339(timestamp):
     return d.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-# base.sack.query().filter(provides=str(reldep))
-
-
-try:
-    command = sys.argv[1]
-    arguments = sys.argv[2:]
-except IndexError:
-    command = "list"
-    arguments = []
-
+call = json.load(sys.stdin)
+command = call["command"]
+arguments = call.get("arguments", {})
 
 base = dnf.Base()
 
