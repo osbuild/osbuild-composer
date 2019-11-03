@@ -11,24 +11,45 @@ def timestamp_to_rfc3339(timestamp):
     return d.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def dnfrepo(desc, parent_conf=None):
+    """Makes a dnf.repo.Repo out of a JSON repository description"""
+
+    repo = dnf.repo.Repo(desc["id"], parent_conf)
+    repo.name = desc["name"]
+
+    if "baseurl" in desc:
+        repo.baseurl = desc["baseurl"]
+    elif "metalink" in desc:
+        repo.metalink = desc["metalink"]
+    elif "mirrorlist" in desc:
+        repo.metalink = desc["mirrorlist"]
+    else:
+        assert False
+
+    return repo
+
+
+def create_base(repos):
+    base = dnf.Base()
+
+    for repo in repos:
+        base.repos.add(dnfrepo(repo, base.conf))
+
+    base.fill_sack(load_system_repo=False)
+    return base
+
+
 call = json.load(sys.stdin)
 command = call["command"]
 arguments = call.get("arguments", {})
 
-base = dnf.Base()
-
-repo = dnf.repo.Repo("fedora", base.conf)
-repo.name = "Fedora"
-repo.metalink = "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64"
-
-base.repos.add(repo)
-base.fill_sack(load_system_repo=False)
-
 if command == "list":
+    base = create_base(arguments.get("repos", {}))
     packages = [p.name for p in base.sack.query().available()]
     json.dump(packages, sys.stdout)
 
 elif command == "dump":
+    base = create_base(arguments.get("repos", {}))
     packages = []
     for package in base.sack.query().available():
         packages.append({
@@ -46,6 +67,7 @@ elif command == "dump":
     json.dump(packages, sys.stdout)
 
 elif command == "depsolve":
+    base = create_base(arguments.get("repos", {}))
     for pkgspec in arguments:
         base.install(pkgspec)
     base.resolve()
