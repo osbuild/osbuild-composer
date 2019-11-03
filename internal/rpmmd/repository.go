@@ -39,10 +39,22 @@ type PackageSpec struct {
 	Arch    string `json:"arch,omitempty"`
 }
 
-func runDNF(command string, arguments []string, result interface{}) error {
-	argv := append([]string{"dnf-json", command}, arguments...)
+func runDNF(command string, arguments interface{}, result interface{}) error {
+	var call = struct {
+		Command   string      `json:"command"`
+		Arguments interface{} `json:"arguments,omitempty"`
+	}{
+		command,
+		arguments,
+	}
 
-	cmd := exec.Command("python3", argv...)
+	cmd := exec.Command("python3", "dnf-json")
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+
 	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -53,6 +65,12 @@ func runDNF(command string, arguments []string, result interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	err = json.NewEncoder(stdin).Encode(call)
+	if err != nil {
+		return err
+	}
+	stdin.Close()
 
 	err = json.NewDecoder(stdout).Decode(result)
 	if err != nil {
@@ -69,8 +87,11 @@ func FetchPackageList(repo RepoConfig) (PackageList, error) {
 }
 
 func Depsolve(specs ...string) ([]PackageSpec, error) {
+	var arguments = struct {
+		PackageSpecs []string `json:"package-specs"`
+	}{ specs }
 	var dependencies []PackageSpec
-	err := runDNF("depsolve", specs, &dependencies)
+	err := runDNF("depsolve", arguments, &dependencies)
 	return dependencies, err
 }
 
