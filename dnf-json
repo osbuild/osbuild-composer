@@ -17,12 +17,9 @@ arguments = call.get("arguments", {})
 
 base = dnf.Base()
 
-base.conf.substitutions["releasever"] = "30"
-base.conf.substitutions["basearch"] = "x86_64"
-
 repo = dnf.repo.Repo("fedora", base.conf)
 repo.name = "Fedora"
-repo.metalink = "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch"
+repo.metalink = "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64"
 
 base.repos.add(repo)
 base.fill_sack(load_system_repo=False)
