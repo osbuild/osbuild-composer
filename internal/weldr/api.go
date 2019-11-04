@@ -47,6 +47,8 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/status", api.statusHandler)
 	api.router.GET("/api/v0/projects/source/list", api.sourceListHandler)
 	api.router.GET("/api/v0/projects/source/info/*sources", api.sourceInfoHandler)
+	api.router.POST("/api/v0/projects/source/new", api.sourceNewHandler)
+	api.router.DELETE("/api/v0/projects/source/delete/*source", api.sourceDeleteHandler)
 
 	api.router.GET("/api/v0/modules/list", api.modulesListAllHandler)
 	api.router.GET("/api/v0/modules/list/:modules", api.modulesListHandler)
@@ -155,28 +157,22 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 		Sources []string `json:"sources"`
 	}
 
+	names := api.store.ListSources()
+	names = append(names, api.repo.Id)
+
 	json.NewEncoder(writer).Encode(reply{
-		Sources: []string{api.repo.Id},
+		Sources: names,
 	})
 }
 
 func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	// weldr uses a slightly different format than dnf to store repository
 	// configuration
-	type sourceConfig struct {
-		ID       string `json:"id"`
-		Name     string `json:"name"`
-		Type     string `json:"type"`
-		URL      string `json:"url"`
-		CheckGPG bool   `json:"check_gpg"`
-		CheckSSL bool   `json:"check_ssl"`
-		System   bool   `json:"system"`
-	}
 	type reply struct {
-		Sources map[string]sourceConfig `json:"sources"`
-		Errors  []responseError         `json:"errors"`
+		Sources map[string]store.SourceConfig `json:"sources"`
+		Errors  []responseError               `json:"errors"`
 	}
-	// we only have one repository
+
 	names := strings.Split(params.ByName("sources"), ",")
 
 	if names[0] == "/" {
@@ -189,40 +185,99 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	// Remove the leading / from the names
-	sourceName := names[0][1:]
-	if sourceName != api.repo.Id && sourceName != "*" {
+	sources := map[string]store.SourceConfig{}
+	errors := []responseError{}
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
+		// if name is "*" we want all sources from the store and the base repo
+		if name == "*" {
+			sources = api.store.GetAllSources()
+		}
+		// check if the source is in the base repo
+		if name == api.repo.Id || name == "*" {
+			cfg := store.SourceConfig{
+				Name:     api.repo.Name,
+				CheckGPG: true,
+				CheckSSL: true,
+				System:   true,
+			}
+
+			if api.repo.BaseURL != "" {
+				cfg.URL = api.repo.BaseURL
+				cfg.Type = "yum-baseurl"
+			} else if api.repo.Metalink != "" {
+				cfg.URL = api.repo.Metalink
+				cfg.Type = "yum-metalink"
+			} else if api.repo.MirrorList != "" {
+				cfg.URL = api.repo.MirrorList
+				cfg.Type = "yum-mirrorlist"
+			}
+			sources[cfg.Name] = cfg
+			// check if the source is in the store
+		} else if source := api.store.GetSource(name); source != nil {
+			sources[source.Name] = *source
+		} else {
+			error := responseError{
+				ID:  "UnknownSource",
+				Msg: fmt.Sprintf("%s is not a valid source", name),
+			}
+			errors = append(errors, error)
+		}
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		Sources: sources,
+		Errors:  errors,
+	})
+}
+
+func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
 		errors := responseError{
-			ID:  "UnknownSource",
-			Msg: fmt.Sprintf("%s is not a valid source", sourceName),
+			ID:  "HTTPError",
+			Msg: "Internal Server Error",
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
+	var source store.SourceConfig
+	err := json.NewDecoder(request.Body).Decode(&source)
+	if err != nil {
+		errors := responseError{
+			Code: http.StatusBadRequest,
+			ID:   "HTTPError",
+			Msg:  "Bad Request",
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
-	cfg := sourceConfig{
-		ID:       api.repo.Id,
-		Name:     api.repo.Name,
-		CheckGPG: true,
-		CheckSSL: true,
-		System:   true,
+	api.store.PushSource(source)
+
+	statusResponseOK(writer)
+}
+
+func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	name := strings.Split(params.ByName("source"), ",")
+
+	if name[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
+		return
 	}
 
-	if api.repo.BaseURL != "" {
-		cfg.URL = api.repo.BaseURL
-		cfg.Type = "yum-baseurl"
-	} else if api.repo.Metalink != "" {
-		cfg.URL = api.repo.Metalink
-		cfg.Type = "yum-metalink"
-	} else if api.repo.MirrorList != "" {
-		cfg.URL = api.repo.MirrorList
-		cfg.Type = "yum-mirrorlist"
-	}
+	api.store.DeleteSource(name[0])
 
-	json.NewEncoder(writer).Encode(reply{
-		Sources: map[string]sourceConfig{cfg.ID: cfg},
-		Errors:  []responseError{},
-	})
+	statusResponseOK(writer)
 }
 
 type modulesListModule struct {
