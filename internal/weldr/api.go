@@ -47,6 +47,8 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/status", api.statusHandler)
 	api.router.GET("/api/v0/projects/source/list", api.sourceListHandler)
 	api.router.GET("/api/v0/projects/source/info/*sources", api.sourceInfoHandler)
+	api.router.POST("/api/v0/projects/source/new", api.sourceNewHandler)
+	api.router.DELETE("/api/v0/projects/source/delete/*source", api.sourceDeleteHandler)
 
 	api.router.GET("/api/v0/modules/list", api.modulesListAllHandler)
 	api.router.GET("/api/v0/modules/list/:modules", api.modulesListHandler)
@@ -223,6 +225,26 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		Sources: map[string]sourceConfig{cfg.ID: cfg},
 		Errors:  []responseError{},
 	})
+}
+
+func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	statusResponseOK(writer)
+}
+
+func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	name := strings.Split(params.ByName("source"), ",")
+
+	if name[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
+		return
+	}
+
+	statusResponseOK(writer)
 }
 
 type modulesListModule struct {
