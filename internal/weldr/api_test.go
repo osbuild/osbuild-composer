@@ -170,9 +170,9 @@ func TestBasic(t *testing.T) {
 
 		{"/api/v0/projects/source/info", http.StatusNotFound, ``},
 		{"/api/v0/projects/source/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
-		{"/api/v0/projects/source/info/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"status":false}`},
-		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
-		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"id":"test","name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/foo", http.StatusOK, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"sources":{}}`},
+		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"Test":{"name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"Test":{"name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
 		{"/api/v0/modules/list", http.StatusOK, `{"total":2,"offset":0,"limit":20,"modules":[{"name":"package1","group_type":"rpm"},{"name":"package2","group_type":"rpm"}]}`},
 		{"/api/v0/modules/list/*", http.StatusOK, `{"total":2,"offset":0,"limit":20,"modules":[{"name":"package1","group_type":"rpm"},{"name":"package2","group_type":"rpm"}]}`},
@@ -356,5 +356,44 @@ func TestComposeQueue(t *testing.T) {
 
 		testRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 		sendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
+}
+
+func TestSourcesNew(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"POST", "/api/v0/projects/source/new", ``, http.StatusBadRequest, `{"errors":[{"code":400,"id":"HTTPError","msg":"Bad Request"}],"status":false}`},
+		{"POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusOK, `{"status":true}`},
+	}
+
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
+	}
+}
+
+func TestSourcesDelete(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"DELETE", "/api/v0/projects/source/delete/", ``, http.StatusNotFound, `{"status":false,"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}]}`},
+		{"DELETE", "/api/v0/projects/source/delete/fish", ``, http.StatusOK, `{"status":true}`},
+	}
+
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		sendHTTP(api, true, "POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`)
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 	}
 }
