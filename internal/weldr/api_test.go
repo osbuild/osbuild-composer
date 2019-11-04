@@ -358,3 +358,21 @@ func TestComposeQueue(t *testing.T) {
 		sendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
 }
+
+func TestSourcesNew(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{"POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusOK, `{"status":true}`},
+		{"DELETE", "/api/v0/projects/source/delete/fish", ``, http.StatusOK, `{"status":true}`},
+	}
+
+	for _, c := range cases {
+		api := weldr.New(repo, packages, nil, store.New(nil))
+		testRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
