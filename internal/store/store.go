@@ -25,6 +25,7 @@ type Store struct {
 	Blueprints map[string]blueprint.Blueprint `json:"blueprints"`
 	Workspace  map[string]blueprint.Blueprint `json:"workspace"`
 	Composes   map[uuid.UUID]Compose          `json:"composes"`
+	Sources    map[string]SourceConfig        `json:"sources"`
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan Job
@@ -56,6 +57,15 @@ type Image struct {
 	Name string
 	Mime string
 	Size int64
+}
+
+type SourceConfig struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	URL      string `json:"url"`
+	CheckGPG bool   `json:"check_gpg"`
+	CheckSSL bool   `json:"check_ssl"`
+	System   bool   `json:"system"`
 }
 
 type NotFoundError struct {
@@ -125,6 +135,9 @@ func New(stateFile *string) *Store {
 	if s.Composes == nil {
 		// TODO: push waiting/running composes to workers again
 		s.Composes = make(map[uuid.UUID]Compose)
+	}
+	if s.Sources == nil {
+		s.Sources = make(map[string]SourceConfig)
 	}
 	s.pendingJobs = make(chan Job, 200)
 
@@ -486,4 +499,54 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 	}
 
 	return nil, &NotFoundError{"compose could not be found"}
+}
+
+func (s *Store) PushSource(source SourceConfig) {
+	s.change(func() error {
+		s.Sources[source.Name] = source
+		return nil
+	})
+}
+
+func (s *Store) DeleteSource(name string) {
+	s.change(func() error {
+		delete(s.Sources, name)
+		return nil
+	})
+}
+
+func (s *Store) ListSources() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	names := make([]string, 0, len(s.Sources))
+	for name := range s.Sources {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	return names
+}
+
+func (s *Store) GetSource(name string) *SourceConfig {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	source, ok := s.Sources[name]
+	if !ok {
+		return nil
+	}
+	return &source
+}
+
+func (s *Store) GetAllSources() map[string]SourceConfig {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sources := make(map[string]SourceConfig)
+
+	for k, v := range s.Sources {
+		sources[k] = v
+	}
+
+	return sources
 }
