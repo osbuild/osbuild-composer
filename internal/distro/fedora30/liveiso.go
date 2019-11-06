@@ -1,17 +1,20 @@
-package blueprint
+package fedora30
 
-import "github.com/osbuild/osbuild-composer/internal/pipeline"
+import (
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+)
 
 type liveIsoOutput struct{}
 
-func (t *liveIsoOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
+func (t *liveIsoOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error) {
 	// TODO!
 	p := getF30Pipeline()
 	addF30SELinuxStage(p)
 	addF30QemuAssembler(p, "raw", t.getName())
 
 	if b.Customizations != nil {
-		err := b.Customizations.customizeAll(p)
+		err := customizeAll(p, b.Customizations)
 		if err != nil {
 			return nil, err
 		}

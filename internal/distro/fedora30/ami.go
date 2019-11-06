@@ -1,10 +1,13 @@
-package blueprint
+package fedora30
 
-import "github.com/osbuild/osbuild-composer/internal/pipeline"
+import (
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
+)
 
 type amiOutput struct{}
 
-func (t *amiOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
+func (t *amiOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error) {
 	packages := [...]string{
 		"@Core",
 		"chrony",
@@ -30,7 +33,7 @@ func (t *amiOutput) translate(b *Blueprint) (*pipeline.Pipeline, error) {
 	addF30QemuAssembler(p, "qcow2", t.getName())
 
 	if b.Customizations != nil {
-		err := b.Customizations.customizeAll(p)
+		err := customizeAll(p, b.Customizations)
 		if err != nil {
 			return nil, err
 		}

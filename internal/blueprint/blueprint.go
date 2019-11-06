@@ -1,12 +1,5 @@
-// Package blueprint contains primitives for representing weldr blueprints and
-// translating them to OSBuild pipelines
+// Package blueprint contains primitives for representing weldr blueprints
 package blueprint
-
-import (
-	"sort"
-
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
-)
 
 // An InvalidOutputFormatError is returned when a requested output format is
 // not supported. The requested format is included as the error message.
@@ -40,45 +33,7 @@ type Group struct {
 	Name string `json:"name"`
 }
 
-type output interface {
-	translate(b *Blueprint) (*pipeline.Pipeline, error)
-	getName() string
-	getMime() string
-}
-
-var outputs = map[string]output{
-	"ami":              &amiOutput{},
-	"ext4-filesystem":  &ext4Output{},
-	"live-iso":         &liveIsoOutput{},
-	"partitioned-disk": &diskOutput{},
-	"qcow2":            &qcow2Output{},
-	"openstack":        &openstackOutput{},
-	"tar":              &tarOutput{},
-	"vhd":              &vhdOutput{},
-	"vmdk":             &vmdkOutput{},
-}
-
-// ListOutputFormats returns a sorted list of the supported output formats
-func ListOutputFormats() []string {
-	formats := make([]string, 0, len(outputs))
-	for name := range outputs {
-		formats = append(formats, name)
-	}
-	sort.Strings(formats)
-
-	return formats
-}
-
-// ToPipeline converts the blueprint to a pipeline for a given output format.
-func (b *Blueprint) ToPipeline(outputFormat string) (*pipeline.Pipeline, error) {
-	if output, exists := outputs[outputFormat]; exists {
-		return output.translate(b)
-	}
-
-	return nil, &InvalidOutputFormatError{outputFormat}
-}
-
-func (b *Blueprint) getKernelCustomization() *KernelCustomization {
+func (b *Blueprint) GetKernelCustomization() *KernelCustomization {
 	if b.Customizations == nil {
 		return nil
 	}
@@ -86,21 +41,11 @@ func (b *Blueprint) getKernelCustomization() *KernelCustomization {
 	return b.Customizations.Kernel
 }
 
-// FilenameFromType gets the canonical filename and MIME type for a given
-// output format
-func FilenameFromType(outputFormat string) (string, string, error) {
-	if output, exists := outputs[outputFormat]; exists {
-		return output.getName(), output.getMime(), nil
-	}
-
-	return "", "", &InvalidOutputFormatError{outputFormat}
-}
-
 func (p Package) ToNameVersion() string {
-	// Omit version to prevent all packages with prefix of name to be installed
-	if p.Version == "*" {
-		return p.Name
-	}
+       // Omit version to prevent all packages with prefix of name to be installed
+       if p.Version == "*" {
+               return p.Name
+       }
 
-	return p.Name + "-" + p.Version
+       return p.Name + "-" + p.Version
 }

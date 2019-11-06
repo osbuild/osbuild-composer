@@ -16,6 +16,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 )
 
 type API struct {
@@ -792,7 +795,8 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	for _, format := range blueprint.ListOutputFormats() {
+	f30 := distro.New("fedora-30")
+	for _, format := range f30.ListOutputFormats() {
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 

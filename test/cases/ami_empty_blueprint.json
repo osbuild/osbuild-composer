@@ -1,5 +1,6 @@
 {
   "compose": {
+    "distro": "fedora-30",
     "filename": "image.ami",
     "output-format": "ami",
     "blueprint": {}

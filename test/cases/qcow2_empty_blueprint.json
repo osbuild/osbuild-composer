@@ -1,5 +1,6 @@
 {
   "compose": {
+    "distro": "fedora-30",
     "output-format": "qcow2",
     "filename": "image.qcow2",
     "blueprint": {}

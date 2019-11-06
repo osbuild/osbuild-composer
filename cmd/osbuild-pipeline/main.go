@@ -7,6 +7,9 @@ import (
 	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 )
 
 func main() {
@@ -27,7 +30,9 @@ func main() {
 			panic("Colud not parse blueprint")
 		}
 	}
-	pipeline, err := blueprint.ToPipeline(format)
+
+	f30 := distro.New("fedora-30")
+	pipeline, err := f30.Pipeline(blueprint, format)
 	if err != nil {
 		panic(err.Error())
 	}

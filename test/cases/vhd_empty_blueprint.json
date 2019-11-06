@@ -1,5 +1,6 @@
 {
   "compose": {
+    "distro": "fedora-30",
     "output-format": "vhd",
     "filename": "image.vhd",
     "blueprint": {}
