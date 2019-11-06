@@ -1,6 +1,7 @@
-package blueprint
+package fedora30
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 
 	"github.com/google/uuid"
@@ -89,7 +90,7 @@ func getF30Pipeline() *pipeline.Pipeline {
 	return p
 }
 
-func getCustomF30PackageSet(packages []string, excludedPackages []string, blueprint *Blueprint) *pipeline.Pipeline {
+func getCustomF30PackageSet(packages []string, excludedPackages []string, blueprint *blueprint.Blueprint) *pipeline.Pipeline {
 	p := &pipeline.Pipeline{
 		BuildPipeline: getF30BuildPipeline(),
 	}
@@ -122,7 +123,7 @@ func getCustomF30PackageSet(packages []string, excludedPackages []string, bluepr
 	return p
 }
 
-func addF30GRUB2Stage(p *pipeline.Pipeline, kernelCustomization *KernelCustomization) {
+func addF30GRUB2Stage(p *pipeline.Pipeline, kernelCustomization *blueprint.KernelCustomization) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")

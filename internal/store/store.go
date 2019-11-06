@@ -16,6 +16,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+
 	"github.com/google/uuid"
 )
 
@@ -393,7 +396,8 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
-	pipeline, err := bp.ToPipeline(composeType)
+	f30 := distro.New("fedora-30")
+	pipeline, err := f30.Pipeline(bp, composeType)
 	if err != nil {
 		return err
 	}
@@ -471,7 +475,8 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 		if compose.QueueStatus != "FINISHED" {
 			return nil, &InvalidRequestError{"compose was not finished"}
 		}
-		name, mime, err := blueprint.FilenameFromType(compose.OutputType)
+		f30 := distro.New("fedora-30")
+		name, mime, err := f30.FilenameFromType(compose.OutputType)
 		if err != nil {
 			panic("invalid output type")
 		}

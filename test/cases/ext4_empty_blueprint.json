@@ -1,5 +1,6 @@
 {
   "compose": {
+    "distro": "fedora-30",
     "output-format": "ext4-filesystem",
     "filename": "filesystem.img",
     "blueprint": {}
