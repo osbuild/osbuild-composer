@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"sort"
 	"time"
+
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type RepoConfig struct {
@@ -158,4 +160,21 @@ func (packages PackageList) Search(name string) (int, int) {
 	}
 
 	return first, last - first
+}
+
+func SourceToRepo(source store.SourceConfig) RepoConfig {
+	var repo RepoConfig
+
+	repo.Name = source.Name
+	repo.Id = source.Name
+
+	if source.Type == "yum-baseurl" {
+		repo.BaseURL = source.URL
+	} else if source.Type == "yum-metalink" {
+		repo.Metalink = source.URL
+	} else if source.Type == "yum-mirrorlist" {
+		repo.MirrorList = source.URL
+	}
+
+	return repo
 }
