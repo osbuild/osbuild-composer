@@ -32,15 +32,14 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
-		store:    store,
-		rpmmd:    rpmmd,
-		repo:     repo,
-		packages: packages,
-		logger:   logger,
+		store:  store,
+		rpmmd:  rpmmd,
+		repo:   repo,
+		logger: logger,
 	}
 
 	api.router = httprouter.New()

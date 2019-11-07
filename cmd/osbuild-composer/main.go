@@ -40,11 +40,6 @@ func main() {
 
 	rpm := rpmmd.NewRPMMD()
 
-	packages, err := rpm.FetchPackageList([]rpmmd.RepoConfig{repo})
-	if err != nil {
-		panic(err)
-	}
-
 	var logger *log.Logger
 	if verbose {
 		logger = log.New(os.Stdout, "", 0)
@@ -58,7 +53,7 @@ func main() {
 	store := store.New(&stateFile)
 
 	jobAPI := jobqueue.New(logger, store)
-	weldrAPI := weldr.New(rpm, repo, packages, logger, store)
+	weldrAPI := weldr.New(rpm, repo, logger, store)
 
 	go jobAPI.Serve(jobListener)
 	weldrAPI.Serve(weldrListener)
