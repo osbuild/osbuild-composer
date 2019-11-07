@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
@@ -159,13 +159,8 @@ func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body s
 func createWeldrAPI(fixture rpmmd_mock.Fixture) (*weldr.API, *store.Store) {
 	s := store.New(nil)
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	packageList, err := rpm.FetchPackageList([]rpmmd.RepoConfig{repo})
 
-	if err != nil {
-		panic(err)
-	}
-
-	return weldr.New(rpm, repo, packageList, nil, s), s
+	return weldr.New(rpm, repo, nil, s), s
 }
 
 func TestBasic(t *testing.T) {
