@@ -1,16 +1,19 @@
 #!/usr/bin/python3
 
+import argparse
 import contextlib
 import glob
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
-import unittest
+import time
+import shutil
 import urllib.request
 
+
+from typing import Dict, Any
 
 TEST_DIR = os.path.dirname(__file__)
 
@@ -36,6 +39,40 @@ def temporary_json_file(obj):
         os.unlink(f.name)
 
 
+@contextlib.contextmanager
+def create_ssh_keys():
+    with tempfile.TemporaryDirectory() as dir:
+        # Copy the keys and set correct permissions/ownership on the directory and keys
+        # Proper directory ownership is implied by the fact that this process creates the directory
+        # The mode is adjusted by `chmod`
+        shutil.copyfile(f"{TEST_DIR}/keyring/id_rsa", f"{dir}/id_rsa")
+        shutil.copyfile(f"{TEST_DIR}/keyring/id_rsa.pub", f"{dir}/id_rsa.pub")
+        os.chmod(f"{dir}/id_rsa", 0o600)
+        try:
+            yield dir
+        finally:
+            pass
+
+
+@contextlib.contextmanager
+def qemu_boot_image(image_file):
+    # run in background
+    cmd = ["qemu-system-x86_64",
+           "-m", "2048",
+           "-snapshot",
+           "-accel", "accel=kvm:hvf:tcg",
+           "-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::1022-:22",
+           "-nographic",
+           image_file
+           ]
+    print(f"running qemu command: {' '.join(cmd)}")
+    vm = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        yield None
+    finally:
+        vm.kill()
+
+
 def run_osbuild(pipeline, store):
     osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--libdir", ".", "--store", store, "-"]
 
@@ -44,6 +81,7 @@ def run_osbuild(pipeline, store):
         osbuild_cmd.append("--build-pipeline")
         osbuild_cmd.append(os.path.abspath(build_pipeline))
 
+    result = dict()
     try:
         result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(pipeline)))
     except subprocess.CalledProcessError as err:
@@ -53,25 +91,81 @@ def run_osbuild(pipeline, store):
 
 
 def run_test(case, store):
-    if "pipeline" in case:
-        _, output_id = run_osbuild(case["pipeline"], store)
-        filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
-    else:
-        filename, _ = urllib.request.urlretrieve(case["url"])
+    try:
+        if "pipeline" in case:
+            _, output_id = run_osbuild(case["pipeline"], store)
+            filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
+        else:
+            filename, _ = urllib.request.urlretrieve(case["url"])
 
-    info = json.loads(subprocess.check_output(["tools/image-info", filename]))
-    if info != case["expected"]:
-        with temporary_json_file(case["expected"]) as a, temporary_json_file(info) as b:
-            subprocess.run(["diff", "--unified", "--color", "--label", "expected", a, "--label", "got", b], check=False)
-        return False
+        info = json.loads(subprocess.check_output(["tools/image-info", filename]))
+        if info != case["expected"]:
+            with temporary_json_file(case["expected"]) as a, temporary_json_file(info) as b:
+                subprocess.run(["diff", "--unified", "--color", "--label", "expected", a, "--label", "got", b], check=False)
+            return False
+    except KeyError:
+        pass
 
     return True
 
 
-def main(args):
+def get_local_boot_test_case(image_type: str) -> (str, Dict[Any, Any]):
+    with open(f"test/cases/{image_type}_local_boot.json", "r") as fd:
+        test_case_dict = json.load(fd)
+
+    pipeline_dict = test_case_dict["pipeline"]
+    return test_case_dict["metadata"]["filename"], pipeline_dict
+
+
+def run_ssh_test(private_key):
+    cmd = ["ssh",
+           "-p", "1022",
+           "-i", private_key,
+           "-o", "StrictHostKeyChecking=no",
+           "redhat@localhost",
+           "systemctl is-system-running"]
+    for _ in range(40):
+        try:
+            sp = subprocess.run(cmd, timeout=120, check=True, stdout=subprocess.PIPE)
+            output = sp.stdout.decode('utf-8').strip()
+            print(output)
+            if output == "running":
+                print("ssh test success")
+                return 0
+        except subprocess.TimeoutExpired:
+            print("ssh timeout expired")
+        except subprocess.CalledProcessError as e:
+            print(f"ssh error: {e}")
+            time.sleep(20)
+
+    print("ssh test failure")
+    return 1
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Run test cases.')
+    parser.add_argument('--boot-test', type=str, nargs='*', help='Boot images produced by osbuild')
+    parser.add_argument('--image-info', type=str, nargs='*',
+                        help='Build images and run image-info on them (default action)')
+    arg = parser.parse_args()
+
+    # Run local boot test
+    if arg.boot_test is not None:
+        with osbuild_test_store() as store:
+            with create_ssh_keys() as keydir:
+                for test_case in arg.boot_test if arg.boot_test != [] else ["qcow2"]:
+                    image_fname, pl_dict = get_local_boot_test_case(test_case)
+                    print("starting osbuild")
+                    _, output_id = run_osbuild(pl_dict, store)
+                    print("osbuild success")
+                    with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
+                        ret = run_ssh_test(f"{keydir}/id_rsa")
+
+        return ret
+
     failed = False
     with osbuild_test_store() as store:
-        for filename in args or glob.glob(f"{TEST_DIR}/cases/*.json"):
+        for filename in arg.image_info if arg.image_info != [] else glob.glob(f"{TEST_DIR}/cases/*.json"):
             name = os.path.basename(filename)[:-5]
             with open(filename) as f:
                 case = json.load(f)
@@ -84,6 +178,7 @@ def main(args):
 
     return 1 if failed else 0
 
-r = main(sys.argv[1:])
+
+r = main()
 if r:
     sys.exit(r)

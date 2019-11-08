@@ -21,7 +21,7 @@ func TestDistro_Pipeline(t *testing.T) {
 	}
 	for _, fileInfo := range fileInfos {
 		type compose struct {
-			Distro       string		  `json:"distro"`
+			Distro       string               `json:"distro"`
 			OutputFormat string               `json:"output-format"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
@@ -63,4 +63,3 @@ func TestDistro_Pipeline(t *testing.T) {
 		})
 	}
 }
-
