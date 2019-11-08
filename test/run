@@ -188,3 +188,5 @@ def main(args):
 r = main(sys.argv[1:])
 if r:
     sys.exit(r)
+
+# Go!
