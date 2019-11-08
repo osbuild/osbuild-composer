@@ -118,16 +118,6 @@
         }
       },
       {
-        "name": "org.osbuild.fix-bls",
-        "options": {}
-      },
-      {
-        "name": "org.osbuild.selinux",
-        "options": {
-          "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-        }
-      },
-      {
         "name": "org.osbuild.systemd",
         "options": {
           "enabled_services": [
@@ -148,6 +138,16 @@
             }
           }
         }
+      },
+      {
+        "name": "org.osbuild.selinux",
+        "options": {
+          "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+        }
+      },
+      {
+        "name": "org.osbuild.fix-bls",
+        "options": {}
       }
     ],
     "assembler": {
