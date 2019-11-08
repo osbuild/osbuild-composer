@@ -117,17 +117,12 @@ def run_test(case, store):
     return True
 
 
-def generate_pipeline(temporary_directory: str, image_type: str) -> (str, Dict[Any, Any]):
-    with open("test/cases/qcow2_local_boot.json", "r") as fd:
+def get_local_boot_test_case(image_type: str) -> (str, Dict[Any, Any]):
+    with open(f"test/cases/{image_type}_local_boot.json", "r") as fd:
         test_case_dict = json.load(fd)
 
     pipeline_dict = test_case_dict["pipeline"]
-    pipeline_string = json.dumps(pipeline_dict)
-    pipeline_fname = f"{temporary_directory}/pipeline-{image_type}.json"
-    with open(pipeline_fname, "w") as pipeline:
-        pipeline.write(pipeline_string)
-
-    return pipeline_fname, pipeline_dict
+    return test_case_dict["compose"]["filename"], pipeline_dict
 
 
 def run_ssh_test(private_key):
@@ -162,13 +157,12 @@ def main(args):
         if flag.startswith("--local-boot-test"):
             with osbuild_test_store() as store:
                 with temporary_ssh_keypair() as keydir:
-                    with temporary_directory_without_cleanup() as tmpdir:
-                        _, pl_string = generate_pipeline(tmpdir, "qcow2")
-                        print("starting osbuild")
-                        _, output_id = run_osbuild(pl_string, store)
-                        print("osbuild success")
-                        with qemu_boot_image(f"{store}/refs/{output_id}/image.qcow2"):
-                            ret = run_ssh_test(f"{keydir}/id_rsa")
+                    image_fname, pl_dict = get_local_boot_test_case("qcow2")
+                    print("starting osbuild")
+                    _, output_id = run_osbuild(pl_dict, store)
+                    print("osbuild success")
+                    with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
+                        ret = run_ssh_test(f"{keydir}/id_rsa")
 
             return ret
     except IndexError:
