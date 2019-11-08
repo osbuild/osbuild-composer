@@ -63,7 +63,7 @@ if command == "dump":
 
 elif command == "depsolve":
     base = create_base(arguments.get("repos", {}))
-    for pkgspec in arguments:
+    for pkgspec in arguments["package-specs"]:
         base.install(pkgspec)
     base.resolve()
     packages = []
