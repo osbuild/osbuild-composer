@@ -41,7 +41,6 @@ def temporary_json_file(obj):
 def temporary_ssh_keypair():
     #with tempfile.TemporaryDirectory() as dir:
     with temporary_directory_without_cleanup() as dir:
-        #subprocess.run(["ssh-keygen", "-b", "2048", "-t", "rsa", "-f", f"{dir}/id_rsa", "-q", "-N", ""])
         with open("test/keyring/id_rsa", "r") as fd:
             private_key = fd.readlines()
         with open(f"{dir}/id_rsa", "w") as fd:
@@ -77,15 +76,11 @@ def qemu_boot_image(image_file):
            "-nographic",
            image_file
            ]
-    print(f"command: {' '.join(cmd)}")
+    print(f"running qemu command: {' '.join(cmd)}")
     vm = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         yield None
     finally:
-        #print("STDOUT")
-        #print(str(vm.stdout))
-        #print("STDERR")
-        #print(str(vm.stderr))
         vm.kill()
 
 
@@ -122,64 +117,7 @@ def run_test(case, store):
     return True
 
 
-def public_key_to_string(public_key_file) -> str:
-    with open(public_key_file) as pk_file:
-        ssh_key_content = str(pk_file.read())
-
-    return ssh_key_content.strip()
-
-
-def qcow2_image_blueprint(public_key_file):
-    blueprint = {
-        "name": "qcow2-boot-test",
-        "description": "Image for boot test",
-        "packages": [],
-        "modules": [],
-        "groups": [],
-        "customizations": {
-            "user": [
-                {
-                    "name": "redhat",
-                    "password": "$y$j9T$hMKTMCO/s27TcOMRH9eUN1$6G0Jrc20QiptW6P3fwm3LKDd/4IIVSr1N2u611UwNgB",
-                    "groups": ["wheel"]
-                }
-            ],
-            "sshkey": [
-                {
-                    "user": "redhat",
-                    "key": public_key_to_string(public_key_file)
-                }
-            ],
-            "services": {
-                "enabled": ["sshd"]
-            }
-        }
-    }
-    return blueprint
-
-
-def generate_blueprint(temporary_directory: str, image_type: str, public_key_file: str) -> str:
-    dispatcher = {
-        "qcow2": qcow2_image_blueprint
-    }
-    blueprint_dict = dispatcher[image_type](public_key_file)
-    blueprint_fname = f"{temporary_directory}/blueprint-{image_type}.json"
-    with open(blueprint_fname, "w") as blueprint_fd:
-        blueprint_fd.write(json.dumps(blueprint_dict))
-
-    return blueprint_fname
-
-
-def generate_pipeline(temporary_directory: str, image_type: str, blueprint_fname: str) -> (str, Dict[Any, Any]):
-    # res = subprocess.run(["./osbuild-pipeline", "-output-format", image_type, "-blueprint", blueprint_fname],
-    #                      stdout=subprocess.PIPE,
-    #                      check=True)
-    #
-    # pipeline_string = res.stdout.decode("utf-8")
-    # pipeline_dict = json.loads(pipeline_string)
-    # pipeline_fname = f"{temporary_directory}/pipeline-{image_type}.json"
-    # with open(pipeline_fname, "w") as pipeline:
-    #     pipeline.write(pipeline_string)
+def generate_pipeline(temporary_directory: str, image_type: str) -> (str, Dict[Any, Any]):
     with open("test/cases/qcow2_local_boot.json", "r") as fd:
         test_case_dict = json.load(fd)
 
@@ -197,27 +135,23 @@ def run_ssh_test(private_key):
            "-p", "1022",
            "-i", private_key,
            "-o", "StrictHostKeyChecking=no",
-           "-v",
            "redhat@localhost",
            "systemctl is-system-running"]
-    print(cmd)
     for _ in range(40):
         try:
-            print("running ssh with timeout")
             sp = subprocess.run(cmd, timeout=120, check=True, stdout=subprocess.PIPE)
-            #stdout = subprocess.check_output(cmd, timeout=20, stderr=subprocess.STDOUT)
             output = sp.stdout.decode('utf-8').strip()
             print(output)
             if output == "running":
-                print("success")
+                print("ssh test success")
                 return 0
         except subprocess.TimeoutExpired:
-            print("timeout expired")
+            print("ssh timeout expired")
         except subprocess.CalledProcessError as e:
-            print(e)
+            print(f"ssh error: {e}")
             time.sleep(20)
 
-    print("failure")
+    print("ssh test failure")
     return 1
 
 
@@ -225,25 +159,15 @@ def main(args):
     # New part, this should be better organized
     try:
         flag: str = args[0]
-        if flag.startswith("--"):
+        if flag.startswith("--local-boot-test"):
             with osbuild_test_store() as store:
-                print("created test store")
-                #store = "/var/osbuild"
                 with temporary_ssh_keypair() as keydir:
-                    print("created ssh key")
                     with temporary_directory_without_cleanup() as tmpdir:
-                        print("created tmp dir")
-                        bp_fname = generate_blueprint(tmpdir, "qcow2", f"{keydir}/id_rsa.pub")
-                        print("bp generated")
-                        pl_fname, pl_string = generate_pipeline(tmpdir, "qcow2", bp_fname)
-                        print("pl generated")
-                        print(pl_fname)
+                        _, pl_string = generate_pipeline(tmpdir, "qcow2")
                         print("starting osbuild")
                         _, output_id = run_osbuild(pl_string, store)
                         print("osbuild success")
                         with qemu_boot_image(f"{store}/refs/{output_id}/image.qcow2"):
-                            #print("image is booting, you have 5 mins to play around with it")
-                            #time.sleep(5*60)
                             ret = run_ssh_test(f"{keydir}/id_rsa")
 
             return ret

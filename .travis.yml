@@ -22,4 +22,4 @@ matrix:
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
         # - sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run
         # - make build
-        - sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run --
+        - sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run --local-boot-test
