@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -66,6 +67,9 @@ func TestBlueprint_ToPipeline(t *testing.T) {
 		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)
 	}
 	for _, fileInfo := range fileInfos {
+		if !strings.HasSuffix(fileInfo.Name(), "empty_blueprint.json") {
+			continue
+		}
 		type compose struct {
 			OutputFormat string               `json:"output-format"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
