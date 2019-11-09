@@ -31,8 +31,8 @@ func main() {
 		}
 	}
 
-	f30 := distro.New("fedora-30")
-	pipeline, err := f30.Pipeline(blueprint, format)
+	d := distro.New("")
+	pipeline, err := d.Pipeline(blueprint, format)
 	if err != nil {
 		panic(err.Error())
 	}

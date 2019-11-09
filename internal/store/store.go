@@ -396,8 +396,8 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	targets := []*target.Target{
 		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
 	}
-	f30 := distro.New("fedora-30")
-	pipeline, err := f30.Pipeline(bp, composeType)
+	d := distro.New("")
+	pipeline, err := d.Pipeline(bp, composeType)
 	if err != nil {
 		return err
 	}
@@ -475,8 +475,8 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 		if compose.QueueStatus != "FINISHED" {
 			return nil, &InvalidRequestError{"compose was not finished"}
 		}
-		f30 := distro.New("fedora-30")
-		name, mime, err := f30.FilenameFromType(compose.OutputType)
+		d := distro.New("")
+		name, mime, err := d.FilenameFromType(compose.OutputType)
 		if err != nil {
 			panic("invalid output type")
 		}
