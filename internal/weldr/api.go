@@ -278,7 +278,8 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	api.store.DeleteSource(name[0])
+	// remove leading / from first name
+	api.store.DeleteSource(name[0][1:])
 
 	statusResponseOK(writer)
 }
