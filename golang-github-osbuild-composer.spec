@@ -42,7 +42,7 @@ done
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
 install -m 0755 -vp _bin/*                                  %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0644 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
