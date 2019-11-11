@@ -7,7 +7,7 @@ Version:        1
 %gometa
 
 %global common_description %{expand:
-An image building service based on osbuild.
+An image building service based on osbuild
 It is inspired by lorax-composer and exposes the same API.
 As such, it is a drop-in replacement.
 }
@@ -76,6 +76,6 @@ export GOPATH=$(pwd)/_build:%{gopath}
 %{_sysusersdir}/osbuild-composer.conf
 
 %changelog
-* Fri Oct 25 13:23:00 CEST 2019 Ondřej Budai <obudai@redhat.com> - 0-1
-- CHANGE ME, this is not official Fedora release!
+* Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 1-1
+- First release.
 
