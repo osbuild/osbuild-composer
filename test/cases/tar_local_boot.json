@@ -1,10 +1,10 @@
 {
   "boot-test": {
-    "output-format": "qcow2",
-    "filename": "image.qcow2",
-    "boot-type": "qemu",
+    "output-format": "tar",
+    "filename": "root.tar.xz",
+    "boot-type": "nspawn-extract",
     "blueprint": {
-      "name": "qcow2-boot-test",
+      "name": "tar-boot-test",
       "description": "Image for boot test",
       "packages": [],
       "modules": [],
@@ -73,21 +73,16 @@
             }
           ],
           "packages": [
-            "kernel-core",
-            "@Fedora Cloud Server",
-            "chrony",
-            "polkit",
-            "systemd-udev",
+            "policycoreutils",
             "selinux-policy-targeted",
-            "grub2-pc",
-            "langpacks-en"
+            "kernel",
+            "firewalld",
+            "chrony",
+            "langpacks-en",
+            "openssh-server"
           ],
           "exclude_packages": [
-            "dracut-config-rescue",
-            "etables",
-            "firewalld",
-            "gobject-introspection",
-            "plymouth"
+            "dracut-config-rescue"
           ],
           "releasever": "30",
           "basearch": "x86_64"
@@ -100,21 +95,6 @@
         }
       },
       {
-        "name": "org.osbuild.fstab",
-        "options": {
-          "filesystems": [
-            {
-              "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-              "vfs_type": "ext4",
-              "path": "/",
-              "options": "defaults",
-              "freq": 1,
-              "passno": 1
-            }
-          ]
-        }
-      },
-      {
         "name": "org.osbuild.grub2",
         "options": {
           "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
@@ -123,10 +103,19 @@
         }
       },
       {
+        "name": "org.osbuild.script",
+        "options": {
+          "script": "sed -i 's|#Port 22|Port 1022|' /etc/ssh/sshd_config; sed -i 's|#ListenAddress 0.0.0.0|ListenAddress 127.0.0.1|' /etc/ssh/sshd_config"
+        }
+      },
+      {
         "name": "org.osbuild.systemd",
         "options": {
           "enabled_services": [
             "sshd"
+          ],
+          "disabled_services": [
+            "auditd"
           ]
         }
       },
@@ -156,13 +145,9 @@
       }
     ],
     "assembler": {
-      "name": "org.osbuild.qemu",
+      "name": "org.osbuild.tar",
       "options": {
-        "format": "qcow2",
-        "filename": "image.qcow2",
-        "ptuuid": "0x14fc63d2",
-        "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-        "size": 3221225472
+        "filename": "root.tar.xz"
       }
     }
   }

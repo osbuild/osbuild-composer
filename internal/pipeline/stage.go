@@ -64,6 +64,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(FirewallStageOptions)
 	case "org.osbuild.systemd":
 		options = new(SystemdStageOptions)
+	case "org.osbuild.script":
+		options = new(ScriptStageOptions)
 	default:
 		return errors.New("unexpected stage name")
 	}

@@ -13,7 +13,7 @@ import shutil
 import urllib.request
 
 
-from typing import Dict, Any
+from typing import Dict, Any, Union, Tuple
 
 TEST_DIR = os.path.dirname(__file__)
 
@@ -73,6 +73,30 @@ def qemu_boot_image(image_file):
         vm.kill()
 
 
+@contextlib.contextmanager
+def nspawn_boot_container(image_file):
+    cmd = ["systemd-nspawn", "--boot", "-M", "boottest", "--image", image_file]
+    print(f"running nspawn command: {' '.join(cmd)}")
+    container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        yield None
+    finally:
+        container.kill()
+
+
+@contextlib.contextmanager
+def nspawn_extract_container(image_file):
+    with tempfile.TemporaryDirectory() as dir:
+        subprocess.run(["tar", "xf", image_file], cwd=dir)
+        cmd = ["systemd-nspawn", "--boot", "-M", "boottest", "--directory", "."]
+        print(f"running nspawn command: {' '.join(cmd)}")
+        container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dir)
+        try:
+            yield None
+        finally:
+            container.kill()
+
+
 def run_osbuild(pipeline, store):
     osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--libdir", ".", "--store", store, "-"]
 
@@ -92,6 +116,10 @@ def run_osbuild(pipeline, store):
 
 def run_test(case, store):
     try:
+        if "compose" not in case:
+            print("skipping this test case")
+            return True
+
         if "pipeline" in case:
             _, output_id = run_osbuild(case["pipeline"], store)
             filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
@@ -109,12 +137,15 @@ def run_test(case, store):
     return True
 
 
-def get_local_boot_test_case(image_type: str) -> (str, Dict[Any, Any]):
-    with open(f"test/cases/{image_type}_local_boot.json", "r") as fd:
+def get_local_boot_test_case(fname: str) -> Union[Tuple[str, str, Dict[Any, Any]], None]:
+    with open(fname, "r") as fd:
         test_case_dict = json.load(fd)
 
+    if "boot-test" not in test_case_dict:
+        return None
+
     pipeline_dict = test_case_dict["pipeline"]
-    return test_case_dict["metadata"]["filename"], pipeline_dict
+    return test_case_dict["boot-test"]["boot-type"], test_case_dict["boot-test"]["filename"], pipeline_dict
 
 
 def run_ssh_test(private_key):
@@ -126,12 +157,21 @@ def run_ssh_test(private_key):
            "systemctl is-system-running"]
     for _ in range(40):
         try:
-            sp = subprocess.run(cmd, timeout=120, check=True, stdout=subprocess.PIPE)
+            # Run the process with check=False because it returns non-zero return code for "degraded"
+            sp = subprocess.run(cmd, timeout=120, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if sp.returncode == 255:
+                raise subprocess.CalledProcessError(sp.returncode, cmd)
             output = sp.stdout.decode('utf-8').strip()
             print(output)
             if output == "running":
                 print("ssh test success")
                 return 0
+            elif output == "degraded":
+                print("ssh test passed, but the system is degraded")
+                return 0
+            else:
+                print(f"ssh test failed, system status is: {output}")
+                return 1
         except subprocess.TimeoutExpired:
             print("ssh timeout expired")
         except subprocess.CalledProcessError as e:
@@ -151,17 +191,37 @@ def main():
 
     # Run local boot test
     if arg.boot_test is not None:
+        failed = False
         with osbuild_test_store() as store:
             with create_ssh_keys() as keydir:
-                for test_case in arg.boot_test if arg.boot_test != [] else ["qcow2"]:
-                    image_fname, pl_dict = get_local_boot_test_case(test_case)
-                    print("starting osbuild")
-                    _, output_id = run_osbuild(pl_dict, store)
-                    print("osbuild success")
-                    with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
-                        ret = run_ssh_test(f"{keydir}/id_rsa")
+                if arg.boot_test != []:
+                    test_cases = list(map(lambda x: f"{TEST_DIR}/cases/{x}_local_boot.json", arg.boot_test))
+                else:
+                    test_cases = glob.glob(f"{TEST_DIR}/cases/*.json")
 
-        return ret
+                for test_case in test_cases:
+                    test_case_tuple = get_local_boot_test_case(test_case)
+                    if test_case_tuple:
+                        test_type, image_fname, pl_dict = test_case_tuple
+                        print("starting osbuild")
+                        _, output_id = run_osbuild(pl_dict, store)
+                        print("osbuild success")
+                        if test_type == "qemu":
+                            with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
+                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                    failed = True
+                        elif test_type == "nspawn":
+                            with nspawn_boot_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                    failed = True
+                        elif test_type == "nspawn-extract":
+                            with nspawn_extract_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                    failed = True
+                        else:
+                            print("unknown test type")
+
+        return 1 if failed else 0
 
     failed = False
     with osbuild_test_store() as store:

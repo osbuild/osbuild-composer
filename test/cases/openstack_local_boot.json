@@ -1,10 +1,10 @@
 {
   "boot-test": {
-    "output-format": "qcow2",
+    "output-format": "openstack",
     "filename": "image.qcow2",
     "boot-type": "qemu",
     "blueprint": {
-      "name": "qcow2-boot-test",
+      "name": "openstack-boot-test",
       "description": "Image for boot test",
       "packages": [],
       "modules": [],
@@ -73,21 +73,20 @@
             }
           ],
           "packages": [
-            "kernel-core",
-            "@Fedora Cloud Server",
+            "@Core",
             "chrony",
-            "polkit",
-            "systemd-udev",
+            "kernel",
             "selinux-policy-targeted",
             "grub2-pc",
-            "langpacks-en"
+            "spice-vdagent",
+            "qemu-guest-agent",
+            "xen-libs",
+            "langpacks-en",
+            "cloud-init",
+            "libdrm"
           ],
           "exclude_packages": [
-            "dracut-config-rescue",
-            "etables",
-            "firewalld",
-            "gobject-introspection",
-            "plymouth"
+            "dracut-config-rescue"
           ],
           "releasever": "30",
           "basearch": "x86_64"
