@@ -1,6 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        1
+Version:        2
 
 %gometa
 
@@ -75,6 +75,6 @@ install -m 0755 -vd                                         %{buildroot}%{_local
 %{_sysusersdir}/osbuild-composer.conf
 
 %changelog
-* Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 1-1
+* Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 2-1
 - First release.
 
