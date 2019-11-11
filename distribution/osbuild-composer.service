@@ -5,9 +5,9 @@ Requires=osbuild-composer.socket
 
 [Service]
 Type=simple
-ExecStart=/usr/lib/osbuild-composer/osbuild-composer
+ExecStart=/usr/libexec/osbuild-composer/osbuild-composer
 StateDirectory=osbuild-composer
-WorkingDirectory=/usr/lib/osbuild-composer/
+WorkingDirectory=/usr/libexec/osbuild-composer/
 User=_osbuild-composer
 Restart=on-failure
 

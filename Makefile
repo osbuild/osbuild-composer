@@ -6,10 +6,10 @@ build:
 
 .PHONY: install
 install:
-	- mkdir -p /usr/lib/osbuild-composer
-	cp osbuild-composer /usr/lib/osbuild-composer/
-	cp osbuild-worker /usr/lib/osbuild-composer/
-	cp dnf-json /usr/lib/osbuild-composer/
+	- mkdir -p /usr/libexec/osbuild-composer
+	cp osbuild-composer /usr/libexec/osbuild-composer/
+	cp osbuild-worker /usr/libexec/osbuild-composer/
+	cp dnf-json /usr/libexec/osbuild-composer/
 	- mkdir -p /etc/sysusers.d/
 	cp distribution/osbuild-composer.conf /etc/sysusers.d/
 	systemd-sysusers osbuild-composer.conf
