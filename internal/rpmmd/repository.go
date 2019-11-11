@@ -86,6 +86,9 @@ func FetchPackageList(repos []RepoConfig) (PackageList, error) {
 	}{repos}
 	var packages PackageList
 	err := runDNF("dump", arguments, &packages)
+	sort.Slice(packages, func(i, j int) bool {
+		return packages[i].Name < packages[j].Name
+	})
 	return packages, err
 }
 
