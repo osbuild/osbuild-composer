@@ -1,5 +1,3 @@
-%bcond_without check
-
 %global goipath         github.com/osbuild/osbuild-composer
 
 Version:        1
@@ -34,10 +32,9 @@ Requires: osbuild
 %{common_description}
 
 %prep
-%forgeautosetup -p1
+%goprep
 
 %build
-%gobuildroot
 for cmd in cmd/* ; do
   %gobuild -o _bin/$(basename $cmd) %{goipath}/$cmd
 done
@@ -55,18 +52,8 @@ install -m 0644 -vp distribution/osbuild-composer.conf      %{buildroot}%{_sysus
 
 install -m 0755 -vd                                         %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
-%if %{with check}
 %check
-
-# turn off modules
-export GO111MODULE=off
-
-# fix GOPATH, so that tests can found deps
-export GOPATH=$(pwd)/_build:%{gopath}
-
-%gotest ./...
-
-%endif
+%gocheck
 
 %post
 %systemd_post osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
@@ -81,7 +68,9 @@ export GOPATH=$(pwd)/_build:%{gopath}
 %license LICENSE
 %doc README.md
 %{_libexecdir}/osbuild-composer
-%{_libexecdir}/osbuild-composer/*
+%{_libexecdir}/osbuild-composer/osbuild-composer
+%{_libexecdir}/osbuild-composer/osbuild-worker
+%{_libexecdir}/osbuild-composer/dnf-json
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
 
