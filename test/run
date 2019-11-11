@@ -153,7 +153,7 @@ def main():
     if arg.boot_test is not None:
         with osbuild_test_store() as store:
             with create_ssh_keys() as keydir:
-                for test_case in arg.boot_test if arg.boot_test != [] else ["qcow2"]:
+                for test_case in arg.boot_test if arg.boot_test != [] else ["qcow2", "openstack", "vhd", "ami", "vmdk"]:
                     image_fname, pl_dict = get_local_boot_test_case(test_case)
                     print("starting osbuild")
                     _, output_id = run_osbuild(pl_dict, store)
