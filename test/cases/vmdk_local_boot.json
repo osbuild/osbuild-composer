@@ -1,10 +1,10 @@
 {
   "boot-test": {
-    "output-format": "qcow2",
-    "filename": "image.qcow2",
+    "output-format": "vmdk",
+    "filename": "disk.vmdk",
     "boot-type": "qemu",
     "blueprint": {
-      "name": "qcow2-boot-test",
+      "name": "vmdk-boot-test",
       "description": "Image for boot test",
       "packages": [],
       "modules": [],
@@ -73,21 +73,17 @@
             }
           ],
           "packages": [
-            "kernel-core",
-            "@Fedora Cloud Server",
+            "@core",
             "chrony",
-            "polkit",
-            "systemd-udev",
-            "selinux-policy-targeted",
+            "firewalld",
             "grub2-pc",
-            "langpacks-en"
+            "kernel",
+            "langpacks-en",
+            "open-vm-tools",
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
-            "dracut-config-rescue",
-            "etables",
-            "firewalld",
-            "gobject-introspection",
-            "plymouth"
+            "dracut-config-rescue"
           ],
           "releasever": "30",
           "basearch": "x86_64"
@@ -158,8 +154,8 @@
     "assembler": {
       "name": "org.osbuild.qemu",
       "options": {
-        "format": "qcow2",
-        "filename": "image.qcow2",
+        "format": "vmdk",
+        "filename": "disk.vmdk",
         "ptuuid": "0x14fc63d2",
         "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
         "size": 3221225472
