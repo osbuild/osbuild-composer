@@ -21,6 +21,7 @@ License:        ASL 2.0
 URL:            %{gourl}
 Source0:        %{gosource}
 
+BuildRequires:  systemd-rpm-macros
 BuildRequires:  systemd
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/google/uuid)
@@ -40,7 +41,6 @@ Requires: osbuild
 for cmd in cmd/* ; do
   %gobuild -o _bin/$(basename $cmd) %{goipath}/$cmd
 done
-
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
@@ -67,6 +67,15 @@ export GOPATH=$(pwd)/_build:%{gopath}
 %gotest ./...
 
 %endif
+
+%post
+%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
+
+%preun
+%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
+
+%postun
+%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
 
 %files
 %license LICENSE
