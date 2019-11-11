@@ -43,9 +43,9 @@ done
 
 
 %install
-install -m 0755 -vd                                         %{buildroot}%{_prefix}/lib/osbuild-composer
-install -m 0755 -vp _bin/*                                  %{buildroot}%{_prefix}/lib/osbuild-composer/
-install -m 0644 -vp dnf-json                                %{buildroot}%{_prefix}/lib/osbuild-composer/
+install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
+install -m 0755 -vp _bin/*                                  %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0644 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
@@ -71,7 +71,8 @@ export GOPATH=$(pwd)/_build:%{gopath}
 %files
 %license LICENSE
 %doc README.md
-%{_prefix}/lib/osbuild-composer/*
+%{_libexecdir}/osbuild-composer
+%{_libexecdir}/osbuild-composer/*
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
 

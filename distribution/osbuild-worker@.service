@@ -5,7 +5,7 @@ After=multi-user.target osbuild-composer.socket
 [Service]
 Type=simple
 PrivateTmp=true
-ExecStart=/usr/lib/osbuild-composer/osbuild-worker -C /var/lib/osbuild
+ExecStart=/usr/libexec/osbuild-composer/osbuild-worker -C /var/lib/osbuild
 CacheDirectory=osbuild-composer
 Restart=on-failure
 RestartSec=10s
