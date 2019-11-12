@@ -29,3 +29,4 @@ matrix:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
         - sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run --boot-test
+          # Go travis go  
