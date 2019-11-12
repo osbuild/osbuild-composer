@@ -48,7 +48,7 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 		arguments,
 	}
 
-	cmd := exec.Command("dnf-json")
+	cmd := exec.Command("python3", "dnf-json")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
