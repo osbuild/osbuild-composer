@@ -22,6 +22,14 @@ type Blueprint struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
 }
 
+type Change struct {
+	Commit    string    `json:"commit"`
+	Message   string    `json:"message"`
+	Revision  *string   `json:"revision"`
+	Timestamp string    `json:"timestamp"`
+	Blueprint Blueprint `json:"-"`
+}
+
 // A Package specifies an RPM package.
 type Package struct {
 	Name    string `json:"name"`
@@ -42,10 +50,10 @@ func (b *Blueprint) GetKernelCustomization() *KernelCustomization {
 }
 
 func (p Package) ToNameVersion() string {
-       // Omit version to prevent all packages with prefix of name to be installed
-       if p.Version == "*" {
-               return p.Name
-       }
+	// Omit version to prevent all packages with prefix of name to be installed
+	if p.Version == "*" {
+		return p.Name
+	}
 
-       return p.Name + "-" + p.Version
+	return p.Name + "-" + p.Version
 }
