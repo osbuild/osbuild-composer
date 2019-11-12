@@ -3,6 +3,8 @@
 package store
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -25,10 +27,11 @@ import (
 // A Store contains all the persistent state of osbuild-composer, and is serialized
 // on every change, and deserialized on start.
 type Store struct {
-	Blueprints map[string]blueprint.Blueprint `json:"blueprints"`
-	Workspace  map[string]blueprint.Blueprint `json:"workspace"`
-	Composes   map[uuid.UUID]Compose          `json:"composes"`
-	Sources    map[string]SourceConfig        `json:"sources"`
+	Blueprints        map[string]blueprint.Blueprint         `json:"blueprints"`
+	Workspace         map[string]blueprint.Blueprint         `json:"workspace"`
+	Composes          map[uuid.UUID]Compose                  `json:"composes"`
+	Sources           map[string]SourceConfig                `json:"sources"`
+	BlueprintsChanges map[string]map[string]blueprint.Change `json:"changes"`
 
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan Job
@@ -141,6 +144,9 @@ func New(stateFile *string) *Store {
 	}
 	if s.Sources == nil {
 		s.Sources = make(map[string]SourceConfig)
+	}
+	if s.BlueprintsChanges == nil {
+		s.BlueprintsChanges = make(map[string]map[string]blueprint.Change)
 	}
 	s.pendingJobs = make(chan Job, 200)
 
@@ -364,7 +370,27 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 
 func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
 	s.change(func() error {
+		hash := sha1.New()
+		// Hash timestamp to create unique hash
+		hash.Write([]byte(time.Now().String()))
+		// Get hash as a byte slice
+		commitBytes := hash.Sum(nil)
+		// Get hash as a hex string
+		commit := hex.EncodeToString(commitBytes)
+		message := "Recipe " + bp.Name + ", version " + bp.Version + " saved."
+		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
+		change := blueprint.Change{
+			Commit:    commit,
+			Message:   message,
+			Timestamp: timestamp,
+			Blueprint: bp,
+		}
+
 		delete(s.Workspace, bp.Name)
+		if s.BlueprintsChanges[bp.Name] == nil {
+			s.BlueprintsChanges[bp.Name] = make(map[string]blueprint.Change)
+		}
+		s.BlueprintsChanges[bp.Name][commit] = change
 		s.Blueprints[bp.Name] = bp
 		return nil
 	})
