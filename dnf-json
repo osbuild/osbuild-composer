@@ -5,6 +5,8 @@ import dnf
 import json
 import sys
 
+DNF_ERROR_EXIT_CODE = 10
+
 
 def timestamp_to_rfc3339(timestamp):
     d = datetime.datetime.utcfromtimestamp(package.buildtime)
@@ -39,6 +41,11 @@ def create_base(repos):
     return base
 
 
+def exit_with_dnf_error(kind: str, reason: str):
+    json.dump({"kind": kind, "reason": reason}, sys.stdout)
+    sys.exit(DNF_ERROR_EXIT_CODE)
+
+
 call = json.load(sys.stdin)
 command = call["command"]
 arguments = call.get("arguments", {})
@@ -63,8 +70,21 @@ if command == "dump":
 
 elif command == "depsolve":
     base = create_base(arguments.get("repos", {}))
-    base.install_specs(arguments["package-specs"])
-    base.resolve()
+    errors = []
+    for pkgspec in arguments["package-specs"]:
+        try:
+            base.install_specs([pkgspec])
+        except dnf.exceptions.MarkingError as e:
+            errors.append((pkgspec, str(e)))
+    if errors:
+        formatted_errors = ", ".join((f"{package} ({err})" for package, err in errors))
+        exit_with_dnf_error("MarkingError", f"The following package(s) had problems: {formatted_errors}")
+
+    try:
+        base.resolve()
+    except dnf.exceptions.DepsolveError as e:
+        exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
+
     packages = []
     for package in base.transaction.install_set:
         packages.append({
