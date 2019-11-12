@@ -71,14 +71,11 @@ if command == "dump":
 elif command == "depsolve":
     base = create_base(arguments.get("repos", {}))
     errors = []
-    for pkgspec in arguments["package-specs"]:
-        try:
-            base.install_specs([pkgspec])
-        except dnf.exceptions.MarkingError as e:
-            errors.append((pkgspec, str(e)))
-    if errors:
-        formatted_errors = ", ".join((f"{package} ({err})" for package, err in errors))
-        exit_with_dnf_error("MarkingError", f"The following package(s) had problems: {formatted_errors}")
+
+    try:
+        base.install_specs(arguments["package-specs"])
+    except dnf.exceptions.MarkingErrors as e:
+        exit_with_dnf_error("MarkingErrors", f"Error occurred when marking packages for installation: {e}")
 
     try:
         base.resolve()

@@ -422,3 +422,21 @@ func TestSourcesDelete(t *testing.T) {
 		sendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 	}
 }
+
+func TestProjectsDepsolve(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.Fixture
+		Path           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{rpmmd_mock.NonExistingPackage, "/api/v0/projects/depsolve/fash", http.StatusBadRequest, `{"status":false,"errors":[{"id":"PROJECTS_ERROR","msg":"BadRequest: DNF error occured: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish", http.StatusOK, `{"projects":[{"name":"libgpg-error","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"libsemanage","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}`},
+		{rpmmd_mock.BadDepsolve, "/api/v0/projects/depsolve/go2rpm", http.StatusBadRequest, `{"status":false,"errors":[{"id":"PROJECTS_ERROR","msg":"BadRequest: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
+	}
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI(c.Fixture)
+		testRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
