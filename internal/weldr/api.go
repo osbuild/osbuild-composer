@@ -24,6 +24,7 @@ import (
 type API struct {
 	store *store.Store
 
+	rpmmd    rpmmd.RPMMD
 	repo     rpmmd.RepoConfig
 	packages rpmmd.PackageList
 
@@ -31,11 +32,12 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
 		store:    store,
+		rpmmd:    rpmmd,
 		repo:     repo,
 		packages: packages,
 		logger:   logger,
@@ -466,7 +468,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		}
 
 		if modulesRequested {
-			project.Dependencies, _ = rpmmd.Depsolve([]string{pkg.Name}, []rpmmd.RepoConfig{api.repo})
+			project.Dependencies, _ = api.rpmmd.Depsolve([]string{pkg.Name}, []rpmmd.RepoConfig{api.repo})
 		}
 
 		projects = append(projects, project)
@@ -609,7 +611,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 				specs[i] += "-*-*.*"
 			}
 		}
-		dependencies, _ := rpmmd.Depsolve(specs, []rpmmd.RepoConfig{api.repo})
+		dependencies, _ := api.rpmmd.Depsolve(specs, []rpmmd.RepoConfig{api.repo})
 
 		blueprints = append(blueprints, entry{blueprint, dependencies})
 	}
