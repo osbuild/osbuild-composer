@@ -39,6 +39,11 @@ type PackageSpec struct {
 	Arch    string `json:"arch,omitempty"`
 }
 
+type RPMMD interface {
+	FetchPackageList(repos []RepoConfig) (PackageList, error)
+	Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error)
+}
+
 func runDNF(command string, arguments interface{}, result interface{}) error {
 	var call = struct {
 		Command   string      `json:"command"`
@@ -80,7 +85,13 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 	return cmd.Wait()
 }
 
-func FetchPackageList(repos []RepoConfig) (PackageList, error) {
+type rpmmdImpl struct{}
+
+func NewRPMMD() RPMMD {
+	return &rpmmdImpl{}
+}
+
+func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, error) {
 	var arguments = struct {
 		Repos []RepoConfig `json:"repos"`
 	}{repos}
@@ -92,7 +103,7 @@ func FetchPackageList(repos []RepoConfig) (PackageList, error) {
 	return packages, err
 }
 
-func Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error) {
+func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error) {
 	var arguments = struct {
 		PackageSpecs []string     `json:"package-specs"`
 		Repos        []RepoConfig `json:"repos"`

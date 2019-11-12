@@ -38,7 +38,9 @@ func main() {
 		Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
 	}
 
-	packages, err := rpmmd.FetchPackageList([]rpmmd.RepoConfig{repo})
+	rpm := rpmmd.NewRPMMD()
+
+	packages, err := rpm.FetchPackageList([]rpmmd.RepoConfig{repo})
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +58,7 @@ func main() {
 	store := store.New(&stateFile)
 
 	jobAPI := jobqueue.New(logger, store)
-	weldrAPI := weldr.New(repo, packages, logger, store)
+	weldrAPI := weldr.New(rpm, repo, packages, logger, store)
 
 	go jobAPI.Serve(jobListener)
 	weldrAPI.Serve(weldrListener)
