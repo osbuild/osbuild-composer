@@ -64,6 +64,7 @@ func New(repo rpmmd.RepoConfig, packages rpmmd.PackageList, logger *log.Logger, 
 	api.router.GET("/api/v0/blueprints/info/*blueprints", api.blueprintsInfoHandler)
 	api.router.GET("/api/v0/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
 	api.router.GET("/api/v0/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
+	api.router.GET("/api/v0/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
 	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
 	api.router.POST("/api/v0/blueprints/workspace", api.blueprintsWorkspaceHandler)
 	api.router.DELETE("/api/v0/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
@@ -704,6 +705,73 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	json.NewEncoder(writer).Encode(reply{diffs})
+}
+
+func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	type change struct {
+		Changes []blueprint.Change `json:"changes"`
+		Name    string             `json:"name"`
+		Total   int                `json:"total"`
+	}
+
+	type reply struct {
+		BlueprintsChanges []change        `json:"blueprints"`
+		Errors            []responseError `json:"errors"`
+		Limit             uint            `json:"limit"`
+		Offset            uint            `json:"offset"`
+	}
+
+	names := strings.Split(params.ByName("blueprints"), ",")
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
+		return
+	}
+
+	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "BadLimitOrOffset",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	allChanges := []change{}
+	errors := []responseError{}
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
+		bpChanges := api.store.GetBlueprintChanges(name)
+		if bpChanges != nil {
+			change := change{
+				Changes: bpChanges,
+				Name:    name,
+				Total:   len(bpChanges),
+			}
+			allChanges = append(allChanges, change)
+		} else {
+			error := responseError{
+				ID:  "UnknownBlueprint",
+				Msg: name,
+			}
+			errors = append(errors, error)
+		}
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		BlueprintsChanges: allChanges,
+		Errors:            errors,
+		Offset:            offset,
+		Limit:             limit,
+	})
 }
 
 func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
