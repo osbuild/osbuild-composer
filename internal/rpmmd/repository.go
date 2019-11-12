@@ -2,6 +2,8 @@ package rpmmd
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
@@ -44,6 +46,15 @@ type RPMMD interface {
 	Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error)
 }
 
+type DNFError struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+func (err *DNFError) Error() string {
+	return fmt.Sprintf("DNF error occured: %s: %s", err.Kind, err.Reason)
+}
+
 func runDNF(command string, arguments interface{}, result interface{}) error {
 	var call = struct {
 		Command   string      `json:"command"`
@@ -77,12 +88,31 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 	}
 	stdin.Close()
 
-	err = json.NewDecoder(stdout).Decode(result)
+	output, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		return err
 	}
 
-	return cmd.Wait()
+	err = cmd.Wait()
+
+	const DnfErrorExitCode = 10
+	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() == DnfErrorExitCode {
+		var dnfError DNFError
+		err = json.Unmarshal(output, &dnfError)
+		if err != nil {
+			return err
+		}
+
+		return &dnfError
+	}
+
+	err = json.Unmarshal(output, result)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type rpmmdImpl struct{}
