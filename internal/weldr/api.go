@@ -55,6 +55,8 @@ func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, packages rpmmd.PackageList, l
 	api.router.POST("/api/v0/projects/source/new", api.sourceNewHandler)
 	api.router.DELETE("/api/v0/projects/source/delete/*source", api.sourceDeleteHandler)
 
+	api.router.GET("/api/v0/projects/depsolve/:projects", api.projectsDepsolveHandler)
+
 	api.router.GET("/api/v0/modules/list", api.modulesListAllHandler)
 	api.router.GET("/api/v0/modules/list/:modules", api.modulesListHandler)
 
@@ -479,6 +481,29 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	} else {
 		json.NewEncoder(writer).Encode(projectsReply{projects})
 	}
+}
+
+func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	type reply struct {
+		Projects []rpmmd.PackageSpec `json:"projects"`
+	}
+
+	names := strings.Split(params.ByName("projects"), ",")
+
+	packages, err := api.rpmmd.Depsolve(names, []rpmmd.RepoConfig{api.repo})
+
+	if err != nil {
+		errors := responseError{
+			ID:  "PROJECTS_ERROR",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		Projects: packages,
+	})
 }
 
 func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
