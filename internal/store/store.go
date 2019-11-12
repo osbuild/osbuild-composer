@@ -368,6 +368,19 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 	return true
 }
 
+func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var changes []blueprint.Change
+
+	for _, change := range s.BlueprintsChanges[name] {
+		changes = append(changes, change)
+	}
+
+	return changes
+}
+
 func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
 	s.change(func() error {
 		hash := sha1.New()
