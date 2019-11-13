@@ -368,6 +368,17 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 	return true
 }
 
+func (s *Store) GetBlueprintChange(name string, commit string) *blueprint.Change {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	change, ok := s.BlueprintsChanges[name][commit]
+	if !ok {
+		return nil
+	}
+	return &change
+}
+
 func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -381,7 +392,7 @@ func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 	return changes
 }
 
-func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
+func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
 	s.change(func() error {
 		hash := sha1.New()
 		// Hash timestamp to create unique hash
@@ -390,11 +401,10 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint) {
 		commitBytes := hash.Sum(nil)
 		// Get hash as a hex string
 		commit := hex.EncodeToString(commitBytes)
-		message := "Recipe " + bp.Name + ", version " + bp.Version + " saved."
 		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
 		change := blueprint.Change{
 			Commit:    commit,
-			Message:   message,
+			Message:   commitMsg,
 			Timestamp: timestamp,
 			Blueprint: bp,
 		}
