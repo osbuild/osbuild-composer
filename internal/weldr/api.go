@@ -70,6 +70,7 @@ func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *st
 	api.router.GET("/api/v0/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
 	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
 	api.router.POST("/api/v0/blueprints/workspace", api.blueprintsWorkspaceHandler)
+	api.router.POST("/api/v0/blueprints/undo/:blueprint/:commit", api.blueprintUndoHandler)
 	api.router.DELETE("/api/v0/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
 	api.router.DELETE("/api/v0/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
@@ -877,7 +878,8 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	api.store.PushBlueprint(blueprint)
+	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
+	api.store.PushBlueprint(blueprint, commitMsg)
 
 	statusResponseOK(writer)
 }
@@ -906,6 +908,16 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 
 	api.store.PushBlueprintToWorkspace(blueprint)
 
+	statusResponseOK(writer)
+}
+
+func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	name := params.ByName("blueprint")
+	commit := params.ByName("commit")
+	bpChange := api.store.GetBlueprintChange(name, commit)
+	bp := bpChange.Blueprint
+	commitMsg := name + ".toml reverted to commit " + commit
+	api.store.PushBlueprint(bp, commitMsg)
 	statusResponseOK(writer)
 }
 
