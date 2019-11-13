@@ -115,7 +115,6 @@ func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body s
 
 	if resp.StatusCode != expectedStatus {
 		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, resp.StatusCode)
-		return
 	}
 
 	replyJSON, err := ioutil.ReadAll(resp.Body)
