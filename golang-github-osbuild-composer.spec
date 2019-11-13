@@ -11,8 +11,8 @@ As such, it is a drop-in replacement.
 }
 
 Name:           %{goname}
-Release:        1%{?dist}
-Summary:        An image building service based on osbuild.
+Release:        2%{?dist}
+Summary:        An image building service based on osbuild
 
 # Upstream license specification: Apache-2.0
 License:        ASL 2.0
@@ -67,14 +67,13 @@ install -m 0755 -vd                                         %{buildroot}%{_local
 %files
 %license LICENSE
 %doc README.md
-%{_libexecdir}/osbuild-composer
-%{_libexecdir}/osbuild-composer/osbuild-composer
-%{_libexecdir}/osbuild-composer/osbuild-worker
-%{_libexecdir}/osbuild-composer/dnf-json
+%{_libexecdir}/osbuild-composer/
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
 
 %changelog
+* Wed Nov 13 15:14:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 2-2
+- Fix specfile according to packaging guidelines.
 * Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 2-1
 - First release.
 
