@@ -9,6 +9,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gobwas/glob"
+
 	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
@@ -35,12 +37,59 @@ type Package struct {
 	License     string
 }
 
+func (pkg Package) ToPackageBuild() PackageBuild {
+	return PackageBuild{
+		Arch:      pkg.Arch,
+		BuildTime: pkg.BuildTime,
+		Epoch:     pkg.Epoch,
+		Release:   pkg.Release,
+		Source: PackageSource{
+			License: pkg.License,
+			Version: pkg.Version,
+		},
+	}
+}
+
+func (pkg Package) ToPackageInfo() PackageInfo {
+	return PackageInfo{
+		Name:         pkg.Name,
+		Summary:      pkg.Summary,
+		Description:  pkg.Description,
+		Homepage:     pkg.URL,
+		Builds:       []PackageBuild{pkg.ToPackageBuild()},
+		Dependencies: nil,
+	}
+}
+
 type PackageSpec struct {
 	Name    string `json:"name"`
 	Epoch   uint   `json:"epoch"`
 	Version string `json:"version,omitempty"`
 	Release string `json:"release,omitempty"`
 	Arch    string `json:"arch,omitempty"`
+}
+
+type PackageSource struct {
+	License string `json:"license"`
+	Version string `json:"version"`
+}
+
+type PackageBuild struct {
+	Arch      string        `json:"arch"`
+	BuildTime time.Time     `json:"build_time"`
+	Epoch     uint          `json:"epoch"`
+	Release   string        `json:"release"`
+	Source    PackageSource `json:"source"`
+}
+
+type PackageInfo struct {
+	Name         string         `json:"name"`
+	Summary      string         `json:"summary"`
+	Description  string         `json:"description"`
+	Homepage     string         `json:"homepage"`
+	UpstreamVCS  string         `json:"upstream_vcs"`
+	Builds       []PackageBuild `json:"builds"`
+	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
 }
 
 type RPMMD interface {
@@ -145,21 +194,61 @@ func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, e
 	return dependencies, err
 }
 
-func (packages PackageList) Search(name string) (int, int) {
-	first := sort.Search(len(packages), func(i int) bool {
-		return packages[i].Name >= name
+func (packages PackageList) Search(globPatterns ...string) (PackageList, error) {
+	var globs []glob.Glob
+
+	for _, globPattern := range globPatterns {
+		g, err := glob.Compile(globPattern)
+		if err != nil {
+			return nil, err
+		}
+
+		globs = append(globs, g)
+	}
+
+	var foundPackages PackageList
+
+	for _, pkg := range packages {
+		for _, g := range globs {
+			if g.Match(pkg.Name) {
+				foundPackages = append(foundPackages, pkg)
+				break
+			}
+		}
+	}
+
+	sort.Slice(packages, func(i, j int) bool {
+		return packages[i].Name < packages[j].Name
 	})
 
-	if first == len(packages) || packages[first].Name != name {
-		return first, 0
+	return foundPackages, nil
+}
+
+func (packages PackageList) ToPackageInfos() []PackageInfo {
+	resultsNames := make(map[string]int)
+	var results []PackageInfo
+
+	for _, pkg := range packages {
+		if index, ok := resultsNames[pkg.Name]; ok {
+			foundPkg := &results[index]
+
+			foundPkg.Builds = append(foundPkg.Builds, pkg.ToPackageBuild())
+		} else {
+			newIndex := len(results)
+			resultsNames[pkg.Name] = newIndex
+
+			packageInfo := pkg.ToPackageInfo()
+
+			results = append(results, packageInfo)
+		}
 	}
 
-	last := first + 1
-	for last < len(packages) && packages[last].Name == name {
-		last++
-	}
+	return results
+}
 
-	return first, last - first
+func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig) (err error) {
+	pkg.Dependencies, err = rpmmd.Depsolve([]string{pkg.Name}, repos)
+	return
 }
 
 func SourceToRepo(source store.SourceConfig) RepoConfig {

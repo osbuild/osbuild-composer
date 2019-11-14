@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -55,11 +54,15 @@ func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *st
 
 	api.router.GET("/api/v0/projects/depsolve/:projects", api.projectsDepsolveHandler)
 
-	api.router.GET("/api/v0/modules/list", api.modulesListAllHandler)
-	api.router.GET("/api/v0/modules/list/:modules", api.modulesListHandler)
+	api.router.GET("/api/v0/modules/list", api.modulesListHandler)
+	api.router.GET("/api/v0/modules/list/*modules", api.modulesListHandler)
+	api.router.GET("/api/v0/projects/list", api.projectsListHandler)
+	api.router.GET("/api/v0/projects/list/", api.projectsListHandler)
 
 	// these are the same, except that modules/info also includes dependencies
+	api.router.GET("/api/v0/modules/info", api.modulesInfoHandler)
 	api.router.GET("/api/v0/modules/info/*modules", api.modulesInfoHandler)
+	api.router.GET("/api/v0/projects/info", api.modulesInfoHandler)
 	api.router.GET("/api/v0/projects/info/*modules", api.modulesInfoHandler)
 
 	api.router.GET("/api/v0/blueprints/list", api.blueprintsListHandler)
@@ -288,67 +291,17 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 	statusResponseOK(writer)
 }
 
-type modulesListModule struct {
-	Name      string `json:"name"`
-	GroupType string `json:"group_type"`
-}
-
-type modulesListReply struct {
-	Total   uint                `json:"total"`
-	Offset  uint                `json:"offset"`
-	Limit   uint                `json:"limit"`
-	Modules []modulesListModule `json:"modules"`
-}
-
-func (api *API) modulesListAllHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
-	if err != nil {
-		errors := responseError{
-			ID:  "BadLimitOrOffset",
-			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	var repos []rpmmd.RepoConfig
-	repos = append(repos, api.repo)
-	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, rpmmd.SourceToRepo(source))
-	}
-
-	packages, err := api.rpmmd.FetchPackageList(repos)
-	if err != nil {
-		errors := responseError{
-			ID:  "ModulesError",
-			Msg: fmt.Sprintf("msg: %s", err.Error()),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	total := uint(len(packages))
-	start := min(offset, total)
-	n := min(limit, total-start)
-
-	modules := make([]modulesListModule, n)
-	for i := uint(0); i < n; i++ {
-		modules[i] = modulesListModule{packages[start+i].Name, "rpm"}
-	}
-
-	json.NewEncoder(writer).Encode(modulesListReply{
-		Total:   total,
-		Offset:  offset,
-		Limit:   limit,
-		Modules: modules,
-	})
-}
-
 func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	names := strings.Split(params.ByName("modules"), ",")
-	if names[0] == "" || names[0] == "*" {
-		api.modulesListAllHandler(writer, request, params)
-		return
+	type module struct {
+		Name      string `json:"name"`
+		GroupType string `json:"group_type"`
+	}
+
+	type reply struct {
+		Total   uint     `json:"total"`
+		Offset  uint     `json:"offset"`
+		Limit   uint     `json:"limit"`
+		Modules []module `json:"modules"`
 	}
 
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
@@ -362,13 +315,10 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	var repos []rpmmd.RepoConfig
-	repos = append(repos, api.repo)
-	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, rpmmd.SourceToRepo(source))
-	}
+	modulesParam := params.ByName("modules")
 
-	packages, err := api.rpmmd.FetchPackageList(repos)
+	availablePackages, err := api.fetchPackageList()
+
 	if err != nil {
 		errors := responseError{
 			ID:  "ModulesError",
@@ -378,156 +328,193 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	// we don't support glob-matching, but cockpit-composer surrounds some
-	// queries with asterisks; this is crude, but solves that case
-	for i := range names {
-		names[i] = strings.ReplaceAll(names[i], "*", "")
-	}
+	var packages rpmmd.PackageList
+	if modulesParam != "" && modulesParam != "/" {
+		// we have modules for search
 
-	modules := make([]modulesListModule, 0)
-	total := uint(0)
-	end := offset + limit
-	for i, name := range names {
-		for _, pkg := range packages {
-			if strings.Contains(pkg.Name, name) {
-				total++
-				if total > offset && total < end {
-					modules = append(modules, modulesListModule{pkg.Name, "rpm"})
-					// this removes names that have been found from the list of names
-					if len(names) < i-1 {
-						names = append(names[:i], names[i+1:]...)
-					} else {
-						names = names[:i]
-					}
-				}
-			}
-		}
-	}
+		// remove leading /
+		modulesParam = modulesParam[1:]
 
-	// if a name remains in the list it was not found
-	if len(names) > 0 {
-		errors := responseError{
-			ID:  "UnknownModule",
-			Msg: fmt.Sprintf("one of the requested modules does not exist: ['%s']", names[0]),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
+		names := strings.Split(modulesParam, ",")
 
-	json.NewEncoder(writer).Encode(modulesListReply{
-		Total:   total,
-		Offset:  offset,
-		Limit:   limit,
-		Modules: modules,
-	})
-}
+		packages, err = availablePackages.Search(names...)
 
-func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	type source struct {
-		License string `json:"license"`
-		Version string `json:"version"`
-	}
-	type build struct {
-		Arch      string    `json:"arch"`
-		BuildTime time.Time `json:"build_time"`
-		Epoch     uint      `json:"epoch"`
-		Release   string    `json:"release"`
-		Source    source    `json:"source"`
-	}
-	type project struct {
-		Name         string              `json:"name"`
-		Summary      string              `json:"summary"`
-		Description  string              `json:"description"`
-		Homepage     string              `json:"homepage"`
-		Builds       []build             `json:"builds"`
-		Dependencies []rpmmd.PackageSpec `json:"dependencies,omitempty"`
-	}
-	type projectsReply struct {
-		Projects []project `json:"projects"`
-	}
-	type modulesReply struct {
-		Modules []project `json:"modules"`
-	}
-
-	// handle both projects/info and modules/info, the latter includes dependencies
-	modulesRequested := strings.HasPrefix(request.URL.Path, "/api/v0/modules")
-
-	names := strings.Split(params.ByName("modules"), ",")
-	if names[0] == "/" {
-		errors := responseError{
-			Code: http.StatusNotFound,
-			ID:   "HTTPError",
-			Msg:  "Not Found",
-		}
-		statusResponseError(writer, http.StatusNotFound, errors)
-		return
-	}
-
-	var repos []rpmmd.RepoConfig
-	repos = append(repos, api.repo)
-	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, rpmmd.SourceToRepo(source))
-	}
-
-	packages, err := api.rpmmd.FetchPackageList(repos)
-	if err != nil {
-		errors := responseError{
-			ID:  "ModulesError",
-			Msg: fmt.Sprintf("msg: %s", err.Error()),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	projects := make([]project, 0)
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
-
-		first, n := packages.Search(name)
-		if n == 0 {
+		if err != nil {
 			errors := responseError{
-				ID:  "UnknownModule",
-				Msg: fmt.Sprintf("one of the requested modules does not exist: %s", name),
+				ID:  "ModulesError",
+				Msg: fmt.Sprintf("Wrong glob pattern: %s", err.Error()),
 			}
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
 
-		// get basic info from the first package, but collect build
-		// information from all that have the same name
-		pkg := packages[first]
-		project := project{
-			Name:        pkg.Name,
-			Summary:     pkg.Summary,
-			Description: pkg.Description,
-			Homepage:    pkg.URL,
+		if len(packages) == 0 {
+			errors := responseError{
+				ID:  "UnknownModule",
+				Msg: "No packages have been found.",
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
 		}
+	} else {
+		// just return all available packages
+		packages = availablePackages
+	}
 
-		project.Builds = make([]build, n)
-		for i, pkg := range packages[first : first+n] {
-			project.Builds[i] = build{
-				Arch:      pkg.Arch,
-				BuildTime: pkg.BuildTime,
-				Epoch:     pkg.Epoch,
-				Release:   pkg.Release,
-				Source:    source{pkg.License, pkg.Version},
+	packageInfos := packages.ToPackageInfos()
+
+	total := uint(len(packageInfos))
+	start := min(offset, total)
+	n := min(limit, total-start)
+
+	modules := make([]module, n)
+	for i := uint(0); i < n; i++ {
+		modules[i] = module{packageInfos[start+i].Name, "rpm"}
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		Total:   total,
+		Offset:  offset,
+		Limit:   limit,
+		Modules: modules,
+	})
+}
+
+func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	type reply struct {
+		Total    uint                `json:"total"`
+		Offset   uint                `json:"offset"`
+		Limit    uint                `json:"limit"`
+		Projects []rpmmd.PackageInfo `json:"projects"`
+	}
+
+	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "BadLimitOrOffset",
+			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	availablePackages, err := api.fetchPackageList()
+
+	if err != nil {
+		errors := responseError{
+			ID:  "ProjectsError",
+			Msg: fmt.Sprintf("msg: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packageInfos := availablePackages.ToPackageInfos()
+
+	total := uint(len(packageInfos))
+	start := min(offset, total)
+	n := min(limit, total-start)
+
+	packages := make([]rpmmd.PackageInfo, n)
+	for i := uint(0); i < n; i++ {
+		packages[i] = packageInfos[start+i]
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		Total:    total,
+		Offset:   offset,
+		Limit:    limit,
+		Projects: packages,
+	})
+}
+
+func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	type projectsReply struct {
+		Projects []rpmmd.PackageInfo `json:"projects"`
+	}
+	type modulesReply struct {
+		Modules []rpmmd.PackageInfo `json:"modules"`
+	}
+
+	// handle both projects/info and modules/info, the latter includes dependencies
+	modulesRequested := strings.HasPrefix(request.URL.Path, "/api/v0/modules")
+
+	var errorId, unknownErrorId string
+	if modulesRequested {
+		errorId = "ModulesError"
+		unknownErrorId = "UnknownModule"
+	} else {
+		errorId = "ProjectsError"
+		unknownErrorId = "UnknownProject"
+	}
+
+	modules := params.ByName("modules")
+
+	if modules == "" || modules == "/" {
+		errors := responseError{
+			ID:  unknownErrorId,
+			Msg: "No packages specified.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// remove leading /
+	modules = modules[1:]
+
+	names := strings.Split(modules, ",")
+
+	availablePackages, err := api.fetchPackageList()
+
+	if err != nil {
+		errors := responseError{
+			ID:  "ModulesError",
+			Msg: fmt.Sprintf("msg: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	foundPackages, err := availablePackages.Search(names...)
+
+	if err != nil {
+		errors := responseError{
+			ID:  errorId,
+			Msg: fmt.Sprintf("Wrong glob pattern: %s", err.Error()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	if len(foundPackages) == 0 {
+		errors := responseError{
+			ID:  unknownErrorId,
+			Msg: "No packages have been found.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packageInfos := foundPackages.ToPackageInfos()
+
+	if modulesRequested {
+		for i, _ := range packageInfos {
+			err := packageInfos[i].FillDependencies(api.rpmmd, []rpmmd.RepoConfig{api.repo})
+			if err != nil {
+				errors := responseError{
+					ID:  errorId,
+					Msg: fmt.Sprintf("Cannot depsolve package %s: %s", packageInfos[i].Name, err.Error()),
+				}
+				statusResponseError(writer, http.StatusBadRequest, errors)
+				return
 			}
 		}
-
-		if modulesRequested {
-			project.Dependencies, _ = api.rpmmd.Depsolve([]string{pkg.Name}, repos)
-		}
-
-		projects = append(projects, project)
 	}
 
 	if modulesRequested {
-		json.NewEncoder(writer).Encode(modulesReply{projects})
+		json.NewEncoder(writer).Encode(modulesReply{packageInfos})
 	} else {
-		json.NewEncoder(writer).Encode(projectsReply{projects})
+		json.NewEncoder(writer).Encode(projectsReply{packageInfos})
 	}
 }
 
@@ -1111,4 +1098,14 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 	reply.Failed = make([]interface{}, 0)
 
 	json.NewEncoder(writer).Encode(reply)
+}
+
+func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
+	var repos []rpmmd.RepoConfig
+	repos = append(repos, api.repo)
+	for _, source := range api.store.GetAllSources() {
+		repos = append(repos, rpmmd.SourceToRepo(source))
+	}
+
+	return api.rpmmd.FetchPackageList(repos)
 }
