@@ -24,9 +24,8 @@ import (
 type API struct {
 	store *store.Store
 
-	rpmmd    rpmmd.RPMMD
-	repo     rpmmd.RepoConfig
-	packages rpmmd.PackageList
+	rpmmd rpmmd.RPMMD
+	repo  rpmmd.RepoConfig
 
 	logger *log.Logger
 	router *httprouter.Router
