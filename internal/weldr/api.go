@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -66,6 +67,7 @@ func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *st
 	api.router.GET("/api/v0/blueprints/list", api.blueprintsListHandler)
 	api.router.GET("/api/v0/blueprints/info/*blueprints", api.blueprintsInfoHandler)
 	api.router.GET("/api/v0/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
+	api.router.GET("/api/v0/blueprints/freeze/*blueprints", api.blueprintsFreezeHandler)
 	api.router.GET("/api/v0/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
 	api.router.GET("/api/v0/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
 	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
@@ -699,6 +701,83 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
 		Errors:     []responseError{},
+	})
+}
+
+func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	type blueprintFrozen struct {
+		Blueprint blueprint.Blueprint `json:"blueprint"`
+	}
+
+	type reply struct {
+		Blueprints []blueprintFrozen `json:"blueprints"`
+		Errors     []responseError   `json:"errors"`
+	}
+
+	names := strings.Split(params.ByName("blueprints"), ",")
+	if names[0] == "/" {
+		errors := responseError{
+			Code: http.StatusNotFound,
+			ID:   "HTTPError",
+			Msg:  "Not Found",
+		}
+		statusResponseError(writer, http.StatusNotFound, errors)
+		return
+	}
+
+	blueprints := []blueprintFrozen{}
+	errors := []responseError{}
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
+		var blueprint blueprint.Blueprint
+		var changed bool
+		if !api.store.GetBlueprint(name, &blueprint, &changed) {
+			err := responseError{
+				ID:  "UnknownBlueprint",
+				Msg: fmt.Sprintf("%s: blueprint_not_found", name),
+			}
+			errors = append(errors, err)
+			return
+		}
+
+		specs := make([]string, len(blueprint.Packages))
+		for i, pkg := range blueprint.Packages {
+			specs[i] = pkg.Name
+			// If a package has version "*" the package name suffix must be equal to "-*-*.*"
+			// Using just "-*" would find any other package containing the package name
+			if pkg.Version != "" && pkg.Version != "*" {
+				specs[i] += "-" + pkg.Version
+			} else if pkg.Version == "*" {
+				specs[i] += "-*-*.*"
+			}
+		}
+
+		var repos []rpmmd.RepoConfig
+		repos = append(repos, api.repo)
+		for _, source := range api.store.GetAllSources() {
+			repos = append(repos, rpmmd.SourceToRepo(source))
+		}
+
+		dependencies, _ := api.rpmmd.Depsolve(specs, repos)
+
+		for pkgIndex, pkg := range blueprint.Packages {
+			i := sort.Search(len(dependencies), func(i int) bool {
+				return dependencies[i].Name >= pkg.Name
+			})
+			if i < len(dependencies) && dependencies[i].Name == pkg.Name {
+				blueprint.Packages[pkgIndex].Version = dependencies[i].Version + "-" + dependencies[i].Release + "." + dependencies[i].Arch
+			}
+		}
+
+		blueprints = append(blueprints, blueprintFrozen{blueprint})
+	}
+
+	json.NewEncoder(writer).Encode(reply{
+		Blueprints: blueprints,
+		Errors:     errors,
 	})
 }
 
