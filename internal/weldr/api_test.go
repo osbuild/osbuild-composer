@@ -309,7 +309,7 @@ func TestBlueprintsDelete(t *testing.T) {
 }
 
 func TestBlueprintsChanges(t *testing.T) {
-	api := weldr.New(repo, packages, nil, store.New(nil))
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
