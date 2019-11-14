@@ -250,6 +250,24 @@ func TestBlueprintsInfo(t *testing.T) {
 	}
 }
 
+func TestBlueprintsFreeze(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.Fixture
+		Path           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.0","packages":[{"name":"libsemanage","version":"2.9-1.fc30.x86_64"}],"modules":[],"groups":[]}}],"errors":[]}`},
+	}
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI(c.Fixture)
+		sendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"libsemanage","version":"*"}],"version":"0.0.0"}`)
+		testRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+		sendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
+}
+
 func TestBlueprintsDiff(t *testing.T) {
 	var cases = []struct {
 		Method         string
