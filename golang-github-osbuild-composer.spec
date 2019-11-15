@@ -1,6 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        2
+Version:        3
 
 %gometa
 
@@ -11,7 +11,7 @@ As such, it is a drop-in replacement.
 }
 
 Name:           %{goname}
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        An image building service based on osbuild
 
 # Upstream license specification: Apache-2.0
@@ -24,6 +24,7 @@ BuildRequires:  systemd
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
+BuildRequires:  golang(github.com/gobwas/glob)
 
 Requires: systemd
 Requires: osbuild
@@ -72,6 +73,8 @@ install -m 0755 -vd                                         %{buildroot}%{_local
 %{_sysusersdir}/osbuild-composer.conf
 
 %changelog
+* Fri Nov 15 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 3-1
+- New upstream release.
 * Wed Nov 13 15:14:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 2-2
 - Fix specfile according to packaging guidelines.
 * Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 2-1
