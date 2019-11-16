@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
-
-	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type RepoConfig struct {
@@ -249,21 +247,4 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig) (err error) {
 	pkg.Dependencies, err = rpmmd.Depsolve([]string{pkg.Name}, repos)
 	return
-}
-
-func SourceToRepo(source store.SourceConfig) RepoConfig {
-	var repo RepoConfig
-
-	repo.Name = source.Name
-	repo.Id = source.Name
-
-	if source.Type == "yum-baseurl" {
-		repo.BaseURL = source.URL
-	} else if source.Type == "yum-metalink" {
-		repo.Metalink = source.URL
-	} else if source.Type == "yum-mirrorlist" {
-		repo.MirrorList = source.URL
-	}
-
-	return repo
 }

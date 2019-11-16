@@ -677,7 +677,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		var repos []rpmmd.RepoConfig
 		repos = append(repos, api.repo)
 		for _, source := range api.store.GetAllSources() {
-			repos = append(repos, rpmmd.SourceToRepo(source))
+			repos = append(repos, source.RepoConfig())
 		}
 
 		dependencies, _ := api.rpmmd.Depsolve(specs, repos)
@@ -745,7 +745,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		var repos []rpmmd.RepoConfig
 		repos = append(repos, api.repo)
 		for _, source := range api.store.GetAllSources() {
-			repos = append(repos, rpmmd.SourceToRepo(source))
+			repos = append(repos, source.RepoConfig())
 		}
 
 		dependencies, _ := api.rpmmd.Depsolve(specs, repos)
@@ -1183,7 +1183,7 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	var repos []rpmmd.RepoConfig
 	repos = append(repos, api.repo)
 	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, rpmmd.SourceToRepo(source))
+		repos = append(repos, source.RepoConfig())
 	}
 
 	return api.rpmmd.FetchPackageList(repos)

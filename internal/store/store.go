@@ -16,6 +16,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -603,4 +604,21 @@ func (s *Store) GetAllSources() map[string]SourceConfig {
 	}
 
 	return sources
+}
+
+func (s *SourceConfig) RepoConfig() rpmmd.RepoConfig {
+	var repo rpmmd.RepoConfig
+
+	repo.Name = s.Name
+	repo.Id = s.Name
+
+	if s.Type == "yum-baseurl" {
+		repo.BaseURL = s.URL
+	} else if s.Type == "yum-metalink" {
+		repo.Metalink = s.URL
+	} else if s.Type == "yum-mirrorlist" {
+		repo.MirrorList = s.URL
+	}
+
+	return repo
 }
