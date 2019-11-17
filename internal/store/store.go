@@ -606,6 +606,28 @@ func (s *Store) GetAllSources() map[string]SourceConfig {
 	return sources
 }
 
+func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
+	sc := SourceConfig{
+		Name:     repo.Id,
+		CheckGPG: true,
+		CheckSSL: true,
+		System:   system,
+	}
+
+	if repo.BaseURL != "" {
+		sc.URL = repo.BaseURL
+		sc.Type = "yum-baseurl"
+	} else if repo.Metalink != "" {
+		sc.URL = repo.Metalink
+		sc.Type = "yum-metalink"
+	} else if repo.MirrorList != "" {
+		sc.URL = repo.MirrorList
+		sc.Type = "yum-mirrorlist"
+	}
+
+	return sc
+}
+
 func (s *SourceConfig) RepoConfig() rpmmd.RepoConfig {
 	var repo rpmmd.RepoConfig
 
