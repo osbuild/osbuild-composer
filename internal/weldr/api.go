@@ -210,24 +210,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		}
 		// check if the source is in the base repo
 		if name == api.repo.Id || name == "*" {
-			cfg := store.SourceConfig{
-				Name:     api.repo.Id,
-				CheckGPG: true,
-				CheckSSL: true,
-				System:   true,
-			}
-
-			if api.repo.BaseURL != "" {
-				cfg.URL = api.repo.BaseURL
-				cfg.Type = "yum-baseurl"
-			} else if api.repo.Metalink != "" {
-				cfg.URL = api.repo.Metalink
-				cfg.Type = "yum-metalink"
-			} else if api.repo.MirrorList != "" {
-				cfg.URL = api.repo.MirrorList
-				cfg.Type = "yum-mirrorlist"
-			}
-			sources[cfg.Name] = cfg
+			sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
 		// check if the source is in the store
 		} else if source := api.store.GetSource(name); source != nil {
 			sources[source.Name] = *source
