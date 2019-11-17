@@ -176,8 +176,8 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/projects/source/info", http.StatusNotFound, ``},
 		{"/api/v0/projects/source/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/projects/source/info/foo", http.StatusOK, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"sources":{}}`},
-		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"Test":{"name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
-		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"Test":{"name":"Test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"name":"test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"name":"test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":0,"offset":0,"limit":0,"blueprints":[]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},

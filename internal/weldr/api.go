@@ -211,7 +211,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		// check if the source is in the base repo
 		if name == api.repo.Id || name == "*" {
 			cfg := store.SourceConfig{
-				Name:     api.repo.Name,
+				Name:     api.repo.Id,
 				CheckGPG: true,
 				CheckSSL: true,
 				System:   true,
@@ -228,7 +228,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 				cfg.Type = "yum-mirrorlist"
 			}
 			sources[cfg.Name] = cfg
-			// check if the source is in the store
+		// check if the source is in the store
 		} else if source := api.store.GetSource(name); source != nil {
 			sources[source.Name] = *source
 		} else {
