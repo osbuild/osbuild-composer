@@ -49,7 +49,8 @@ func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *st
 
 	api.router.GET("/api/status", api.statusHandler)
 	api.router.GET("/api/v0/projects/source/list", api.sourceListHandler)
-	api.router.GET("/api/v0/projects/source/info/*sources", api.sourceInfoHandler)
+	api.router.GET("/api/v0/projects/source/info/", api.sourceEmptyInfoHandler)
+	api.router.GET("/api/v0/projects/source/info/:sources", api.sourceInfoHandler)
 	api.router.POST("/api/v0/projects/source/new", api.sourceNewHandler)
 	api.router.DELETE("/api/v0/projects/source/delete/*source", api.sourceDeleteHandler)
 
@@ -177,6 +178,15 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	})
 }
 
+func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	errors := responseError{
+		Code: http.StatusNotFound,
+		ID:   "HTTPError",
+		Msg:  "Not Found",
+	}
+	statusResponseError(writer, http.StatusNotFound, errors)
+}
+
 func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	// weldr uses a slightly different format than dnf to store repository
 	// configuration
@@ -187,23 +197,9 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	names := strings.Split(params.ByName("sources"), ",")
 
-	if names[0] == "/" {
-		errors := responseError{
-			Code: http.StatusNotFound,
-			ID:   "HTTPError",
-			Msg:  "Not Found",
-		}
-		statusResponseError(writer, http.StatusNotFound, errors)
-		return
-	}
-
 	sources := map[string]store.SourceConfig{}
 	errors := []responseError{}
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
+	for _, name := range names {
 		// if name is "*" we want all sources from the store and the base repo
 		if name == "*" {
 			sources = api.store.GetAllSources()
