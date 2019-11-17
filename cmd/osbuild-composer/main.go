@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -32,13 +33,8 @@ func main() {
 	weldrListener := listeners[0]
 	jobListener := listeners[1]
 
-	repo := rpmmd.RepoConfig{
-		Id:       "fedora",
-		Name:     "Fedora 30",
-		Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
-	}
-
 	rpm := rpmmd.NewRPMMD()
+	distribution := distro.New("")
 
 	var logger *log.Logger
 	if verbose {
@@ -53,7 +49,7 @@ func main() {
 	store := store.New(&stateFile)
 
 	jobAPI := jobqueue.New(logger, store)
-	weldrAPI := weldr.New(rpm, repo, logger, store)
+	weldrAPI := weldr.New(rpm, distribution, logger, store)
 
 	go jobAPI.Serve(jobListener)
 	weldrAPI.Serve(weldrListener)

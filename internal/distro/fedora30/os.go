@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type Fedora30 struct {
@@ -32,6 +33,16 @@ func init() {
 			"vmdk":             &vmdkOutput{},
 		},
 	})
+}
+
+func (f *Fedora30) Repositories() []rpmmd.RepoConfig {
+	return []rpmmd.RepoConfig{
+		{
+			Id:       "fedora",
+			Name:     "Fedora 30",
+			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
+		},
+	}
 }
 
 // ListOutputFormats returns a sorted list of the supported output formats
