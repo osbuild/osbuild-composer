@@ -195,27 +195,30 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		Errors  []responseError               `json:"errors"`
 	}
 
-	names := strings.Split(params.ByName("sources"), ",")
+	names := params.ByName("sources")
 
 	sources := map[string]store.SourceConfig{}
 	errors := []responseError{}
-	for _, name := range names {
-		// if name is "*" we want all sources from the store and the base repo
-		if name == "*" {
-			sources = api.store.GetAllSources()
-		}
-		// check if the source is in the base repo
-		if name == api.repo.Id || name == "*" {
-			sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
-		// check if the source is in the store
-		} else if source := api.store.GetSource(name); source != nil {
-			sources[source.Name] = *source
-		} else {
-			error := responseError{
-				ID:  "UnknownSource",
-				Msg: fmt.Sprintf("%s is not a valid source", name),
+
+	// if names is "*" we want all sources
+	if names == "*" {
+		sources = api.store.GetAllSources()
+		sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
+	} else {
+		for _, name := range strings.Split(names, ",") {
+			// check if the source is in the base repo
+			if name == api.repo.Id {
+				sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
+			// check if the source is in the store
+			} else if source := api.store.GetSource(name); source != nil {
+				sources[source.Name] = *source
+			} else {
+				error := responseError{
+					ID:  "UnknownSource",
+					Msg: fmt.Sprintf("%s is not a valid source", name),
+				}
+				errors = append(errors, error)
 			}
-			errors = append(errors, error)
 		}
 	}
 
