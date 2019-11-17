@@ -17,16 +17,12 @@ import (
 	"time"
 
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
-)
 
-var repo = rpmmd.RepoConfig{
-	Id:      "test",
-	Name:    "Test",
-	BaseURL: "http://example.com/test/os",
-}
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/test"
+)
 
 func externalRequest(method, path, body string) *http.Response {
 	client := http.Client{
@@ -159,8 +155,9 @@ func testRoute(t *testing.T, api *weldr.API, external bool, method, path, body s
 func createWeldrAPI(fixture rpmmd_mock.Fixture) (*weldr.API, *store.Store) {
 	s := store.New(nil)
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
+	d := distro.New("test")
 
-	return weldr.New(rpm, repo, nil, s), s
+	return weldr.New(rpm, d, nil, s), s
 }
 
 func TestBasic(t *testing.T) {

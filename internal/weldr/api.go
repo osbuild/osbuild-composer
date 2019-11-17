@@ -25,19 +25,19 @@ type API struct {
 	store *store.Store
 
 	rpmmd rpmmd.RPMMD
-	repo  rpmmd.RepoConfig
+	distro distro.Distro
 
 	logger *log.Logger
 	router *httprouter.Router
 }
 
-func New(rpmmd rpmmd.RPMMD, repo rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, distro distro.Distro, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
 		store:  store,
 		rpmmd:  rpmmd,
-		repo:   repo,
+		distro: distro,
 		logger: logger,
 	}
 
@@ -171,7 +171,10 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	names := api.store.ListSources()
-	names = append(names, api.repo.Id)
+
+	for _, repo := range api.distro.Repositories() {
+		names = append(names, repo.Id)
+	}
 
 	json.NewEncoder(writer).Encode(reply{
 		Sources: names,
@@ -203,14 +206,25 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	// if names is "*" we want all sources
 	if names == "*" {
 		sources = api.store.GetAllSources()
-		sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
+		for _, repo := range api.distro.Repositories() {
+			sources[repo.Id] = store.NewSourceConfig(repo, true)
+		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
-			// check if the source is in the base repo
-			if name == api.repo.Id {
-				sources[api.repo.Id] = store.NewSourceConfig(api.repo, true)
+			// check if the source is one of the base repos
+			found := false
+			for _, repo := range api.distro.Repositories() {
+				if name == repo.Id {
+					sources[repo.Id] = store.NewSourceConfig(repo, true)
+					found = true
+					break
+				}
+			}
+			if found {
+				continue
+			}
 			// check if the source is in the store
-			} else if source := api.store.GetSource(name); source != nil {
+			if source := api.store.GetSource(name); source != nil {
 				sources[source.Name] = *source
 			} else {
 				error := responseError{
@@ -483,7 +497,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	if modulesRequested {
 		for i, _ := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, []rpmmd.RepoConfig{api.repo})
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.distro.Repositories())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -509,7 +523,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, err := api.rpmmd.Depsolve(names, []rpmmd.RepoConfig{api.repo})
+	packages, err := api.rpmmd.Depsolve(names, api.distro.Repositories())
 
 	if err != nil {
 		errors := responseError{
@@ -657,7 +671,9 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		}
 
 		var repos []rpmmd.RepoConfig
-		repos = append(repos, api.repo)
+		for _, repo := range api.distro.Repositories() {
+			repos = append(repos, repo)
+		}
 		for _, source := range api.store.GetAllSources() {
 			repos = append(repos, source.RepoConfig())
 		}
@@ -725,7 +741,9 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		}
 
 		var repos []rpmmd.RepoConfig
-		repos = append(repos, api.repo)
+		for _, repo := range api.distro.Repositories() {
+			repos = append(repos, repo)
+		}
 		for _, source := range api.store.GetAllSources() {
 			repos = append(repos, source.RepoConfig())
 		}
@@ -1163,7 +1181,9 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	var repos []rpmmd.RepoConfig
-	repos = append(repos, api.repo)
+	for _, repo := range api.distro.Repositories() {
+		repos = append(repos, repo)
+	}
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}

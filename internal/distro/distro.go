@@ -10,9 +10,14 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type Distro interface {
+	// Returns a list of repositories from which this distribution gets its
+	// content.
+	Repositories() []rpmmd.RepoConfig
+
 	// Returns a sorted list of the output formats this distro supports.
 	ListOutputFormats() []string
 
