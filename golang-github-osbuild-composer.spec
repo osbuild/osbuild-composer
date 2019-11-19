@@ -21,6 +21,7 @@ Source0:        %{gosource}
 
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  systemd
+BuildRequires:  golang(github.com/aws/aws-sdk-go)
 BuildRequires:  golang-github-azure-storage-blob-devel
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/google/uuid)

@@ -21,8 +21,8 @@ type output interface {
 
 func init() {
 	distro.Register("fedora-30", &Fedora30{
-		outputs: map[string]output {
-			"ami": &amiOutput{},
+		outputs: map[string]output{
+			"ami":              &amiOutput{},
 			"ext4-filesystem":  &ext4Output{},
 			"live-iso":         &liveIsoOutput{},
 			"partitioned-disk": &diskOutput{},
