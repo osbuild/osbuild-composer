@@ -3,3 +3,4 @@ __pycache__
 /osbuild-composer
 /osbuild-worker
 /osbuild-pipeline
+/osbuild-upload-azure

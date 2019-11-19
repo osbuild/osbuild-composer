@@ -3,6 +3,7 @@ build:
 	go build -o osbuild-composer ./cmd/osbuild-composer/
 	go build -o osbuild-worker ./cmd/osbuild-worker/
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
+	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
 
 .PHONY: install
 install:
