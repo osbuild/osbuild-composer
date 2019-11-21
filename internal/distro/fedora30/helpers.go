@@ -181,7 +181,9 @@ func addF30QemuAssembler(p *pipeline.Pipeline, format string, filename string) {
 			Filename:           filename,
 			PTUUID:             "0x14fc63d2",
 			RootFilesystemUUDI: id,
-			Size:               3221225472,
+			// Azure requires this size to be a multiple of 1MB. If you change this, make sure
+			// the size still fulfills this requirement to prevent regressions.
+			Size: 3222274048,
 		})
 }
 
@@ -201,6 +203,6 @@ func addF30RawFSAssembler(p *pipeline.Pipeline, filename string) {
 		&pipeline.RawFSAssemblerOptions{
 			Filename:           filename,
 			RootFilesystemUUDI: id,
-			Size:               3221225472,
+			Size:               3222274048,
 		})
 }
