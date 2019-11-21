@@ -29,7 +29,7 @@ func (t *vhdOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error
 	addF30GRUB2Stage(p, b.GetKernelCustomization())
 	addF30FixBlsStage(p)
 	addF30SELinuxStage(p)
-	addF30QemuAssembler(p, "qcow2", t.getName())
+	addF30QemuAssembler(p, "vpc", t.getName())
 
 	if b.Customizations != nil {
 		err := customizeAll(p, b.Customizations)
