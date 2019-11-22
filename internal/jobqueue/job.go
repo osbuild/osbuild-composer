@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -75,6 +76,21 @@ func (job *Job) Run() error {
 				panic(err)
 			}
 		case *target.AWSTargetOptions:
+			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = a.Upload("/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/image.ami", options.Bucket, options.Key)
+			if err != nil {
+				panic(err)
+			}
+
+			/* TODO: communicate back the AMI */
+			_, err = a.Register(result.OutputID, options.Bucket, options.Key)
+			if err != nil {
+				panic(err)
+			}
 		case *target.AzureTargetOptions:
 		default:
 			panic("foo")
