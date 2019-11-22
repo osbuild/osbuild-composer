@@ -27,6 +27,10 @@ func (target *Target) UnmarshalJSON(data []byte) error {
 	}
 	var options TargetOptions
 	switch rawTarget.Name {
+	case "org.osbuild.azure":
+		options = new(AzureTargetOptions)
+	case "org.osbuild.aws":
+		options = new(AWSTargetOptions)
 	case "org.osbuild.local":
 		options = new(LocalTargetOptions)
 	default:

@@ -74,6 +74,8 @@ func (job *Job) Run() error {
 			if err != nil {
 				panic(err)
 			}
+		case *target.AWSTargetOptions:
+		case *target.AzureTargetOptions:
 		default:
 			panic("foo")
 		}

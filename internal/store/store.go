@@ -444,7 +444,11 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 
 func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) error {
 	targets := []*target.Target{
-		target.NewLocalTarget(target.NewLocalTargetOptions("/var/lib/osbuild-composer/outputs/" + composeID.String())),
+		target.NewLocalTarget(
+			&target.LocalTargetOptions{
+				Location: "/var/lib/osbuild-composer/outputs/" + composeID.String(),
+			},
+		),
 	}
 	d := distro.New("")
 	pipeline, err := d.Pipeline(bp, composeType)
