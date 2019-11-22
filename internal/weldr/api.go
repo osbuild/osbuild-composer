@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -24,7 +25,7 @@ import (
 type API struct {
 	store *store.Store
 
-	rpmmd rpmmd.RPMMD
+	rpmmd  rpmmd.RPMMD
 	distro distro.Distro
 
 	logger *log.Logger
@@ -48,44 +49,56 @@ func New(rpmmd rpmmd.RPMMD, distro distro.Distro, logger *log.Logger, store *sto
 	api.router.NotFound = http.HandlerFunc(notFoundHandler)
 
 	api.router.GET("/api/status", api.statusHandler)
-	api.router.GET("/api/v0/projects/source/list", api.sourceListHandler)
-	api.router.GET("/api/v0/projects/source/info/", api.sourceEmptyInfoHandler)
-	api.router.GET("/api/v0/projects/source/info/:sources", api.sourceInfoHandler)
-	api.router.POST("/api/v0/projects/source/new", api.sourceNewHandler)
-	api.router.DELETE("/api/v0/projects/source/delete/*source", api.sourceDeleteHandler)
+	api.router.GET("/api/v:version/projects/source/list", api.sourceListHandler)
+	api.router.GET("/api/v:version/projects/source/info/", api.sourceEmptyInfoHandler)
+	api.router.GET("/api/v:version/projects/source/info/:sources", api.sourceInfoHandler)
+	api.router.POST("/api/v:version/projects/source/new", api.sourceNewHandler)
+	api.router.DELETE("/api/v:version/projects/source/delete/*source", api.sourceDeleteHandler)
 
-	api.router.GET("/api/v0/projects/depsolve/:projects", api.projectsDepsolveHandler)
+	api.router.GET("/api/v:version/projects/depsolve/:projects", api.projectsDepsolveHandler)
 
-	api.router.GET("/api/v0/modules/list", api.modulesListHandler)
-	api.router.GET("/api/v0/modules/list/*modules", api.modulesListHandler)
-	api.router.GET("/api/v0/projects/list", api.projectsListHandler)
-	api.router.GET("/api/v0/projects/list/", api.projectsListHandler)
+	api.router.GET("/api/v:version/modules/list", api.modulesListHandler)
+	api.router.GET("/api/v:version/modules/list/*modules", api.modulesListHandler)
+	api.router.GET("/api/v:version/projects/list", api.projectsListHandler)
+	api.router.GET("/api/v:version/projects/list/", api.projectsListHandler)
 
 	// these are the same, except that modules/info also includes dependencies
-	api.router.GET("/api/v0/modules/info", api.modulesInfoHandler)
-	api.router.GET("/api/v0/modules/info/*modules", api.modulesInfoHandler)
-	api.router.GET("/api/v0/projects/info", api.modulesInfoHandler)
-	api.router.GET("/api/v0/projects/info/*modules", api.modulesInfoHandler)
+	api.router.GET("/api/v:version/modules/info", api.modulesInfoHandler)
+	api.router.GET("/api/v:version/modules/info/*modules", api.modulesInfoHandler)
+	api.router.GET("/api/v:version/projects/info", api.modulesInfoHandler)
+	api.router.GET("/api/v:version/projects/info/*modules", api.modulesInfoHandler)
 
-	api.router.GET("/api/v0/blueprints/list", api.blueprintsListHandler)
-	api.router.GET("/api/v0/blueprints/info/*blueprints", api.blueprintsInfoHandler)
-	api.router.GET("/api/v0/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
-	api.router.GET("/api/v0/blueprints/freeze/*blueprints", api.blueprintsFreezeHandler)
-	api.router.GET("/api/v0/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
-	api.router.GET("/api/v0/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
-	api.router.POST("/api/v0/blueprints/new", api.blueprintsNewHandler)
-	api.router.POST("/api/v0/blueprints/workspace", api.blueprintsWorkspaceHandler)
-	api.router.POST("/api/v0/blueprints/undo/:blueprint/:commit", api.blueprintUndoHandler)
-	api.router.DELETE("/api/v0/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
-	api.router.DELETE("/api/v0/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
+	api.router.GET("/api/v:version/blueprints/list", api.blueprintsListHandler)
+	api.router.GET("/api/v:version/blueprints/info/*blueprints", api.blueprintsInfoHandler)
+	api.router.GET("/api/v:version/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
+	api.router.GET("/api/v:version/blueprints/freeze/*blueprints", api.blueprintsFreezeHandler)
+	api.router.GET("/api/v:version/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
+	api.router.GET("/api/v:version/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
+	api.router.POST("/api/v:version/blueprints/new", api.blueprintsNewHandler)
+	api.router.POST("/api/v:version/blueprints/workspace", api.blueprintsWorkspaceHandler)
+	api.router.POST("/api/v:version/blueprints/undo/:blueprint/:commit", api.blueprintUndoHandler)
+	api.router.DELETE("/api/v:version/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
+	api.router.DELETE("/api/v:version/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
-	api.router.POST("/api/v0/compose", api.composeHandler)
-	api.router.GET("/api/v0/compose/types", api.composeTypesHandler)
-	api.router.GET("/api/v0/compose/queue", api.composeQueueHandler)
-	api.router.GET("/api/v0/compose/status/:uuids", api.composeStatusHandler)
-	api.router.GET("/api/v0/compose/finished", api.composeFinishedHandler)
-	api.router.GET("/api/v0/compose/failed", api.composeFailedHandler)
-	api.router.GET("/api/v0/compose/image/:uuid", api.composeImageHandler)
+	api.router.POST("/api/v:version/compose", api.composeHandler)
+	api.router.GET("/api/v:version/compose/types", api.composeTypesHandler)
+	api.router.GET("/api/v:version/compose/queue", api.composeQueueHandler)
+	api.router.GET("/api/v:version/compose/status/:uuids", api.composeStatusHandler)
+	api.router.GET("/api/v:version/compose/info/:uuid", api.composeInfoHandler)
+	api.router.GET("/api/v:version/compose/finished", api.composeFinishedHandler)
+	api.router.GET("/api/v:version/compose/failed", api.composeFailedHandler)
+	api.router.GET("/api/v:version/compose/image/:uuid", api.composeImageHandler)
+	api.router.POST("/api/v:version/compose/uploads/schedule/:uuid", api.uploadsScheduleHandler)
+
+	api.router.DELETE("/api/v:version/upload/delete/:uuid", api.uploadsDeleteHandler)
+	api.router.GET("/api/v:version/upload/info/:uuid", api.uploadsInfoHandler)
+	api.router.GET("/api/v:version/upload/log/:uuid", api.uploadsLogHandler)
+	api.router.POST("/api/v:version/upload/reset/:uuid", api.uploadsResetHandler)
+	api.router.DELETE("/api/v:version/upload/cancel/:uuid", api.uploadsCancelHandler)
+
+	api.router.GET("/api/v:version/upload/providers", api.providersHandler)
+	api.router.POST("/api/v:version/upload/providers/save", api.providersSaveHandler)
+	api.router.DELETE("/api/v:version/upload/providers/delete/:provider/:profile", api.providersDeleteHandler)
 
 	return api
 }
@@ -110,12 +123,31 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	api.router.ServeHTTP(writer, request)
 }
 
+func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
+	versionString := params.ByName("version")
+
+	version, err := strconv.ParseUint(versionString, 10, 0)
+
+	var MaxApiVersion uint = 1
+
+	if err != nil || uint(version) < minVersion || uint(version) > MaxApiVersion {
+		notFoundHandler(writer, nil)
+		return false
+	}
+
+	return true
+}
+
 func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusMethodNotAllowed)
 }
 
 func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
+}
+
+func notImplementedHandler(writer http.ResponseWriter, httpRequest *http.Request, _ httprouter.Params) {
+	writer.WriteHeader(http.StatusNotImplemented)
 }
 
 func statusResponseOK(writer http.ResponseWriter) {
@@ -165,7 +197,11 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 	})
 }
 
-func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type reply struct {
 		Sources []string `json:"sources"`
 	}
@@ -182,6 +218,10 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 }
 
 func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	errors := responseError{
 		Code: http.StatusNotFound,
 		ID:   "HTTPError",
@@ -191,6 +231,10 @@ func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http
 }
 
 func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	// weldr uses a slightly different format than dnf to store repository
 	// configuration
 	type reply struct {
@@ -242,7 +286,11 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	})
 }
 
-func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		errors := responseError{
@@ -271,6 +319,10 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 }
 
 func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	name := strings.Split(params.ByName("source"), ",")
 
 	if name[0] == "/" {
@@ -290,6 +342,10 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type module struct {
 		Name      string `json:"name"`
 		GroupType string `json:"group_type"`
@@ -378,7 +434,11 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 	})
 }
 
-func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type reply struct {
 		Total    uint                `json:"total"`
 		Offset   uint                `json:"offset"`
@@ -427,6 +487,10 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type projectsReply struct {
 		Projects []rpmmd.PackageInfo `json:"projects"`
 	}
@@ -517,6 +581,10 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 }
 
 func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type reply struct {
 		Projects []rpmmd.PackageSpec `json:"projects"`
 	}
@@ -539,7 +607,11 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	})
 }
 
-func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type reply struct {
 		Total      uint     `json:"total"`
 		Offset     uint     `json:"offset"`
@@ -571,6 +643,10 @@ func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.
 }
 
 func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type change struct {
 		Changed bool   `json:"changed"`
 		Name    string `json:"name"`
@@ -622,6 +698,10 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 }
 
 func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type entry struct {
 		Blueprint    blueprint.Blueprint `json:"blueprint"`
 		Dependencies []rpmmd.PackageSpec `json:"dependencies"`
@@ -690,6 +770,10 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 }
 
 func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type blueprintFrozen struct {
 		Blueprint blueprint.Blueprint `json:"blueprint"`
 	}
@@ -769,6 +853,10 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 }
 
 func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type pack struct {
 		Package blueprint.Package `json:"Package"`
 	}
@@ -855,6 +943,10 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 }
 
 func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	type change struct {
 		Changes []blueprint.Change `json:"changes"`
 		Name    string             `json:"name"`
@@ -921,7 +1013,11 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 	})
 }
 
-func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		errors := responseError{
@@ -949,7 +1045,11 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
-func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		errors := responseError{
@@ -977,6 +1077,10 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 }
 
 func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	name := params.ByName("blueprint")
 	commit := params.ByName("commit")
 	bpChange := api.store.GetBlueprintChange(name, commit)
@@ -987,18 +1091,30 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	api.store.DeleteBlueprint(params.ByName("blueprint"))
 	statusResponseOK(writer)
 }
 
 func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint"))
 	statusResponseOK(writer)
 }
 
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
-func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Request, _ httprouter.Params) {
+func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
 		BlueprintName string `json:"blueprint_name"`
@@ -1010,7 +1126,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 		Status  bool      `json:"status"`
 	}
 
-	contentType := httpRequest.Header["Content-Type"]
+	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		errors := responseError{
 			ID:  "MissingPost",
@@ -1021,7 +1137,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	}
 
 	var cr ComposeRequest
-	err := json.NewDecoder(httpRequest.Body).Decode(&cr)
+	err := json.NewDecoder(request.Body).Decode(&cr)
 	if err != nil {
 		errors := responseError{
 			Code: http.StatusNotFound,
@@ -1067,7 +1183,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, httpRequest *http.Req
 	json.NewEncoder(writer).Encode(reply)
 }
 
-func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
 	type composeType struct {
 		Name    string `json:"name"`
 		Enabled bool   `json:"enabled"`
@@ -1085,7 +1204,11 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	json.NewEncoder(writer).Encode(reply)
 }
 
-func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	var reply struct {
 		New []*store.ComposeEntry `json:"new"`
 		Run []*store.ComposeEntry `json:"run"`
@@ -1107,6 +1230,10 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	var reply struct {
 		UUIDs []*store.ComposeEntry `json:"uuids"`
 	}
@@ -1130,7 +1257,20 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	json.NewEncoder(writer).Encode(reply)
 }
 
+func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	// TODO: implement this route for v0 and v1 (they differ)
+	notImplementedHandler(writer, request, params)
+}
+
 func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
 	uuidString := params.ByName("uuid")
 	uuid, err := uuid.Parse(uuidString)
 	if err != nil {
@@ -1159,7 +1299,11 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	io.Copy(writer, image.File)
 }
 
-func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	var reply struct {
 		Finished []interface{} `json:"finished"`
 	}
@@ -1169,7 +1313,11 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 	json.NewEncoder(writer).Encode(reply)
 }
 
-func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+		return
+	}
+
 	var reply struct {
 		Failed []interface{} `json:"failed"`
 	}
@@ -1189,4 +1337,85 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	}
 
 	return api.rpmmd.FetchPackageList(repos)
+}
+
+func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) uploadsDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) uploadsInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) uploadsLogHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) uploadsResetHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) uploadsCancelHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) providersHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) providersSaveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) providersDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	// TODO: implement this route (it is v1 only)
+	notImplementedHandler(writer, request, params)
 }
