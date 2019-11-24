@@ -30,7 +30,7 @@ func (t *amiOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error
 	addF30FSTabStage(p)
 	addF30GRUB2Stage(p, nil)
 	addF30SELinuxStage(p)
-	addF30QemuAssembler(p, "qcow2", t.getName())
+	addF30QemuAssembler(p, "raw", t.getName())
 
 	if b.Customizations != nil {
 		err := customizeAll(p, b.Customizations)
@@ -46,5 +46,5 @@ func (t *amiOutput) getName() string {
 }
 
 func (t *amiOutput) getMime() string {
-	return "application/x-qemu-disk"
+	return "application/octet-stream"
 }
