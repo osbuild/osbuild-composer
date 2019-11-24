@@ -436,6 +436,7 @@
         "bootable": true,
         "fstype": "ext4",
         "label": null,
+        "partuuid": "14fc63d2-01",
         "size": 4293918720,
         "start": 1048576,
         "type": "83",
