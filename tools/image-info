@@ -64,8 +64,9 @@ def read_partition(device, bootable, typ=None, start=0, size=0, type=None):
    return {
        "label": blkid.get("LABEL"), # doesn't exist for mbr
        "type": typ,
-       "uuid": blkid["UUID"],
-       "fstype": blkid["TYPE"],
+       "uuid": blkid.get("UUID"),
+       "partuuid": blkid.get("PARTUUID"),
+       "fstype": blkid.get("TYPE"),
        "bootable": bootable,
        "start": start,
        "size": size
@@ -167,9 +168,10 @@ with nbd_connect(image) as device:
 
     if report["partition-table"]:
         n_partitions = len(report["partitions"])
-        for n in range(1, n_partitions + 1):
-            with mount(device + f"p{n}") as tree:
-                append_filesystem(report, tree)
+        for n in range(n_partitions):
+            if report["partitions"][n]["fstype"]:
+                with mount(device + f"p{n + 1}") as tree:
+                    append_filesystem(report, tree)
     else:
         with mount(device) as tree:
             append_filesystem(report, tree)

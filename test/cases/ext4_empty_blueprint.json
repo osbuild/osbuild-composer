@@ -381,6 +381,7 @@
         "bootable": false,
         "fstype": "ext4",
         "label": null,
+        "partuuid": null,
         "size": 0,
         "start": 0,
         "type": null,
