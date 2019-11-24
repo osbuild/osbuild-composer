@@ -42,7 +42,7 @@ func TestFilenameFromType(t *testing.T) {
 			name:  "ami",
 			args:  args{"ami"},
 			want:  "image.ami",
-			want1: "application/x-qemu-disk",
+			want1: "application/octet-stream",
 		},
 		{
 			name:  "ext4",
