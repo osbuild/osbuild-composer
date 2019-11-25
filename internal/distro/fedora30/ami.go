@@ -30,9 +30,9 @@ func (t *amiOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error
 		return nil, err
 	}
 	setFilesystems(p)
-	setBootloader(p, "ro biosdevname=0 net.ifnames=0", b)
+	setBootloader(p, "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200", b)
 	setFirewall(p, nil, nil, b)
-	setServices(p, nil, nil, b)
+	setServices(p, []string{"cloud-init.service"}, nil, b)
 	setQemuAssembler(p, "raw", t.getName())
 
 	return p, nil
