@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree
 
 
 image = sys.argv[1]
@@ -44,8 +45,23 @@ def parse_environment_vars(s):
         line = line.strip()
         if not line:
             continue
-        key, value = line.split("=")
+        if line[0] is '#':
+            continue
+        key, value = line.split("=", 1)
         r[key] = value.strip('"')
+    return r
+
+
+def parse_unit_files(s, expected_state):
+    r = []
+    for line in s.split("\n")[1:]:
+        try:
+            unit, state = line.split()
+        except ValueError:
+            pass
+        if state != expected_state:
+            continue
+        r.append(unit)
     return r
 
 
@@ -131,6 +147,30 @@ def rpm_verify(tree):
     }
 
 
+def read_services(tree, state):
+    return subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
+
+
+def read_firewall_zone(tree):
+    try:
+        with open(f"{tree}/etc/firewalld/firewalld.conf") as f:
+            conf = parse_environment_vars(f.read())
+            default = conf["DefaultZone"]
+    except FileNotFoundError:
+        default = "public"
+
+    r = []
+    try:
+        root = xml.etree.ElementTree.parse(f"{tree}/etc/firewalld/zones/{default}.xml").getroot()
+    except FileNotFoundError:
+        root = xml.etree.ElementTree.parse(f"{tree}/usr/lib/firewalld/zones/{default}.xml").getroot()
+
+    for element in root.findall("service"):
+        r.append(element.get("name"))
+
+    return r
+
+
 def append_filesystem(report, tree):
     if os.path.exists(f"{tree}/etc/os-release"):
         report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
@@ -138,6 +178,25 @@ def append_filesystem(report, tree):
 
         with open(f"{tree}/etc/os-release") as f:
             report["os-release"] = parse_environment_vars(f.read())
+
+        report["services-enabled"] = read_services(tree, "enabled")
+        report["services-disabled"] = read_services(tree, "disabled")
+
+        try:
+            with open(f"{tree}/etc/hostname") as f:
+                report["hostname"] = f.read().strip()
+        except FileNotFoundError:
+            pass
+
+        try:
+            report["timezone"] = os.path.basename(os.readlink(f"{tree}/etc/localtime"))
+        except FileNotFoundError:
+            pass
+
+        try:
+            report["firewall-enabled"] = read_firewall_zone(tree)
+        except FileNotFoundError:
+            pass
 
         try:
             with open(f"{tree}/etc/fstab") as f:
@@ -153,10 +212,14 @@ def append_filesystem(report, tree):
 
         if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
             assert "bootmenu" not in report
+            with open(f"{tree}/boot/grub2/grubenv") as f:
+                report["boot-environment"] = parse_environment_vars(f.read())
             report["bootmenu"] = read_boot_entries(f"{tree}/boot")
 
     elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
         assert "bootmenu" not in report
+        with open(f"{tree}/grub2/grubenv") as f:
+            report["boot-environment"] = parse_environment_vars(f.read())
         report["bootmenu"] = read_boot_entries(tree)
 
 
