@@ -113,6 +113,11 @@
     }
   },
   "expected": {
+    "boot-environment": {
+      "GRUB2_BOOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+      "GRUB2_ROOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+      "kernelopts": "root=UUID=76a22bf4-f153-4541-b6c7-0332c0dfaeac ro biosdevname=0 net.ifnames=0"
+    },
     "bootloader": "grub",
     "bootmenu": [
       {
@@ -125,6 +130,11 @@
         "title": "Fedora (5.0.9-301.fc30.x86_64) 30 (Thirty)",
         "version": "5.0.9-301.fc30.x86_64"
       }
+    ],
+    "firewall-enabled": [
+      "ssh",
+      "mdns",
+      "dhcpv6-client"
     ],
     "fstab": [
       [
@@ -582,6 +592,77 @@
         "/etc/systemd/system/dbus-org.freedesktop.network1.service",
         "/etc/systemd/system/dbus-org.freedesktop.resolve1.service"
       ]
-    }
+    },
+    "services-disabled": [
+      "chrony-wait.service",
+      "console-getty.service",
+      "debug-shell.service",
+      "ebtables.service",
+      "nftables.service",
+      "nis-domainname.service",
+      "rdisc.service",
+      "serial-getty@.service",
+      "sshd-keygen@.service",
+      "systemd-boot-check-no-failures.service",
+      "systemd-bootchart.service",
+      "systemd-networkd-wait-online.service",
+      "systemd-networkd.service",
+      "systemd-resolved.service",
+      "systemd-time-wait-sync.service",
+      "systemd-timesyncd.service",
+      "tcsd.service",
+      "sshd.socket",
+      "sssd-autofs.socket",
+      "sssd-nss.socket",
+      "sssd-pac.socket",
+      "sssd-pam-priv.socket",
+      "sssd-pam.socket",
+      "sssd-ssh.socket",
+      "sssd-sudo.socket",
+      "systemd-networkd.socket",
+      "exit.target",
+      "halt.target",
+      "kexec.target",
+      "poweroff.target",
+      "remote-cryptsetup.target",
+      "runlevel0.target",
+      "chrony-dnssrv@.timer",
+      "fstrim.timer"
+    ],
+    "services-enabled": [
+      "auditd.service",
+      "autovt@.service",
+      "chronyd.service",
+      "dbus-broker.service",
+      "dbus-org.fedoraproject.FirewallD1.service",
+      "dbus-org.freedesktop.nm-dispatcher.service",
+      "dbus-org.freedesktop.timedate1.service",
+      "dbus.service",
+      "firewalld.service",
+      "getty@.service",
+      "messagebus.service",
+      "NetworkManager-dispatcher.service",
+      "NetworkManager-wait-online.service",
+      "NetworkManager.service",
+      "selinux-autorelabel-mark.service",
+      "sshd.service",
+      "sssd.service",
+      "timedatex.service",
+      "vgauthd.service",
+      "vmtoolsd-init.service",
+      "vmtoolsd.service",
+      "dbus.socket",
+      "sssd-kcm.socket",
+      "ctrl-alt-del.target",
+      "reboot.target",
+      "remote-fs.target",
+      "runlevel6.target",
+      "dnf-makecache.timer",
+      "unbound-anchor.timer",
+      "unbound-anchor.timer",
+      "unbound-anchor.timer",
+      "unbound-anchor.timer"
+    ],
+    "timezone": "UTC"
   }
 }
