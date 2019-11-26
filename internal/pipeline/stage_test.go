@@ -1,0 +1,240 @@
+package pipeline
+
+import (
+	"bytes"
+	"encoding/json"
+	"reflect"
+	"testing"
+)
+
+func TestStage_UnmarshalJSON(t *testing.T) {
+	type fields struct {
+		Name    string
+		Options StageOptions
+	}
+	type args struct {
+		data []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "invalid json",
+			args: args{
+				data: []byte(`{"name":"org.osbuild.foo","options":{"bar":null}`),
+			},
+			wantErr: true,
+		},
+		{
+			name: "unknown stage",
+			args: args{
+				data: []byte(`{"name":"org.osbuild.foo","options":{"bar":null}}`),
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing options",
+			args: args{
+				data: []byte(`{"name":"org.osbuild.locale"}`),
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing name",
+			args: args{
+				data: []byte(`{"foo":null,"options":{"bar":null}}`),
+			},
+			wantErr: true,
+		},
+		{
+			name: "chrony",
+			fields: fields{
+				Name:    "org.osbuild.chrony",
+				Options: &ChronyStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.chrony","options":{"timeservers":null}}`),
+			},
+		},
+		{
+			name: "dnf",
+			fields: fields{
+				Name:    "org.osbuild.dnf",
+				Options: &DNFStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.dnf","options":{"repos":null,"packages":null,"releasever":"","basearch":""}}`),
+			},
+		},
+		{
+			name: "firewall",
+			fields: fields{
+				Name:    "org.osbuild.firewall",
+				Options: &FirewallStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.firewall","options":{}}`),
+			},
+		},
+		{
+			name: "fix-bls",
+			fields: fields{
+				Name:    "org.osbuild.fix-bls",
+				Options: &FixBLSStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.fix-bls","options":{}}`),
+			},
+		},
+		{
+			name: "fstab",
+			fields: fields{
+				Name:    "org.osbuild.fstab",
+				Options: &FSTabStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.fstab","options":{"filesystems":null}}`),
+			},
+		},
+		{
+			name: "groups",
+			fields: fields{
+				Name:    "org.osbuild.groups",
+				Options: &GroupsStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.groups","options":{"groups":null}}`),
+			},
+		},
+		{
+			name: "grub2",
+			fields: fields{
+				Name:    "org.osbuild.grub2",
+				Options: &GRUB2StageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
+			},
+		},
+		{
+			name: "hostname",
+			fields: fields{
+				Name:    "org.osbuild.hostname",
+				Options: &HostnameStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.hostname","options":{"hostname":""}}`),
+			},
+		},
+		{
+			name: "keymap",
+			fields: fields{
+				Name:    "org.osbuild.keymap",
+				Options: &KeymapStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.keymap","options":{"keymap":""}}`),
+			},
+		},
+		{
+			name: "locale",
+			fields: fields{
+				Name:    "org.osbuild.locale",
+				Options: &LocaleStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.locale","options":{"language":""}}`),
+			},
+		},
+		{
+			name: "script",
+			fields: fields{
+				Name:    "org.osbuild.script",
+				Options: &ScriptStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.script","options":{"script":""}}`),
+			},
+		},
+		{
+			name: "selinux",
+			fields: fields{
+				Name:    "org.osbuild.selinux",
+				Options: &SELinuxStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.selinux","options":{"file_contexts":""}}`),
+			},
+		},
+		{
+			name: "systemd",
+			fields: fields{
+				Name:    "org.osbuild.systemd",
+				Options: &SystemdStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.systemd","options":{}}`),
+			},
+		},
+		{
+			name: "systemd-enabled",
+			fields: fields{
+				Name: "org.osbuild.systemd",
+				Options: &SystemdStageOptions{
+					EnabledServices: []string{"foo.service"},
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.systemd","options":{"enabled_services":["foo.service"]}}`),
+			},
+		},
+		{
+			name: "timezone",
+			fields: fields{
+				Name:    "org.osbuild.timezone",
+				Options: &TimezoneStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.timezone","options":{"zone":""}}`),
+			},
+		},
+		{
+			name: "users",
+			fields: fields{
+				Name:    "org.osbuild.users",
+				Options: &UsersStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.users","options":{"users":null}}`),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stage := &Stage{
+				Name:    tt.fields.Name,
+				Options: tt.fields.Options,
+			}
+			var gotStage Stage
+			if err := gotStage.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("Stage.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			gotBytes, err := json.Marshal(stage)
+			if err != nil {
+				t.Errorf("Could not marshal stage: %v", err)
+			}
+			if bytes.Compare(gotBytes, tt.args.data) != 0 {
+				t.Errorf("Expected `%v`, got `%v`", string(tt.args.data), string(gotBytes))
+			}
+			if !reflect.DeepEqual(&gotStage, stage) {
+				t.Errorf("got {%v, %v}, expected {%v, %v}", gotStage.Name, gotStage.Options, stage.Name, stage.Options)
+			}
+		})
+	}
+}
