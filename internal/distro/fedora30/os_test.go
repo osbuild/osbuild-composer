@@ -12,7 +12,6 @@ func TestListOutputFormats(t *testing.T) {
 	want := []string{
 		"ami",
 		"ext4-filesystem",
-		"live-iso",
 		"openstack",
 		"partitioned-disk",
 		"qcow2",
@@ -49,12 +48,6 @@ func TestFilenameFromType(t *testing.T) {
 			args:  args{"ext4-filesystem"},
 			want:  "filesystem.img",
 			want1: "application/octet-stream",
-		},
-		{
-			name:  "live-iso",
-			args:  args{"live-iso"},
-			want:  "image.iso",
-			want1: "application/x-iso9660-image",
 		},
 		{
 			name:  "openstack",
