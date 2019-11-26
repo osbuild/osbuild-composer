@@ -19,19 +19,16 @@ func (t *ext4Output) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, erro
 	excludedPackages := [...]string{
 		"dracut-config-rescue",
 	}
-	p := getCustomF30PackageSet(packages[:], excludedPackages[:], b)
-	addF30LocaleStage(p)
-	addF30GRUB2Stage(p, b.GetKernelCustomization())
-	addF30FixBlsStage(p)
-	addF30SELinuxStage(p)
-	addF30RawFSAssembler(p, t.getName())
-
-	if b.Customizations != nil {
-		err := customizeAll(p, b.Customizations)
-		if err != nil {
-			return nil, err
-		}
+	p := newF30Pipeline(packages[:], excludedPackages[:], b)
+	err := customizeAll(p, b.Customizations)
+	if err != nil {
+		return nil, err
 	}
+	setBootloader(p, "ro biosdevname=0 net.ifnames=0", b)
+	setFirewall(p, nil, nil, b)
+	setServices(p, nil, nil, b)
+	setRawFSAssembler(p, t.getName())
+
 	return p, nil
 }
 

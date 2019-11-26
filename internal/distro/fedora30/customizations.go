@@ -1,15 +1,19 @@
 package fedora30
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/crypt"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/crypt"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
 )
 
 func customizeAll(p *pipeline.Pipeline, c *blueprint.Customizations) error {
+	if c == nil {
+		c = &blueprint.Customizations{}
+	}
 	customizeHostname(p, c)
 	customizeGroup(p, c)
 	if err := customizeUserAndSSHKey(p, c); err != nil {
@@ -17,10 +21,8 @@ func customizeAll(p *pipeline.Pipeline, c *blueprint.Customizations) error {
 	}
 	customizeTimezone(p, c)
 	customizeNTPServers(p, c)
-	customizeLanguages(p, c)
+	customizeLocale(p, c)
 	customizeKeyboard(p, c)
-	customizeFirewall(p, c)
-	customizeServices(p, c)
 
 	return nil
 }
@@ -177,9 +179,14 @@ func customizeNTPServers(p *pipeline.Pipeline, c *blueprint.Customizations) {
 	)
 }
 
-func customizeLanguages(p *pipeline.Pipeline, c *blueprint.Customizations) {
-	if c.Locale == nil || len(c.Locale.Languages) == 0 {
-		return
+func customizeLocale(p *pipeline.Pipeline, c *blueprint.Customizations) {
+	locale := c.Locale
+	if locale == nil {
+		locale = &blueprint.LocaleCustomization{
+			Languages: []string{
+				"en_US",
+			},
+		}
 	}
 
 	// TODO: you can specify more languages in customization
@@ -190,7 +197,7 @@ func customizeLanguages(p *pipeline.Pipeline, c *blueprint.Customizations) {
 
 	p.AddStage(
 		pipeline.NewLocaleStage(&pipeline.LocaleStageOptions{
-			Language: c.Locale.Languages[0],
+			Language: locale.Languages[0],
 		}),
 	)
 }
@@ -203,40 +210,6 @@ func customizeKeyboard(p *pipeline.Pipeline, c *blueprint.Customizations) {
 	p.AddStage(
 		pipeline.NewKeymapStage(&pipeline.KeymapStageOptions{
 			Keymap: *c.Locale.Keyboard,
-		}),
-	)
-}
-
-func customizeFirewall(p *pipeline.Pipeline, c *blueprint.Customizations) {
-	if c.Firewall == nil {
-		return
-	}
-
-	var enabledServices, disabledServices []string
-
-	if c.Firewall.Services != nil {
-		enabledServices = c.Firewall.Services.Enabled
-		disabledServices = c.Firewall.Services.Disabled
-	}
-
-	p.AddStage(
-		pipeline.NewFirewallStage(&pipeline.FirewallStageOptions{
-			Ports:            c.Firewall.Ports,
-			EnabledServices:  enabledServices,
-			DisabledServices: disabledServices,
-		}),
-	)
-}
-
-func customizeServices(p *pipeline.Pipeline, c *blueprint.Customizations) {
-	if c.Services == nil {
-		return
-	}
-
-	p.AddStage(
-		pipeline.NewSystemdStage(&pipeline.SystemdStageOptions{
-			EnabledServices:  c.Services.Enabled,
-			DisabledServices: c.Services.Disabled,
 		}),
 	)
 }
