@@ -24,7 +24,6 @@ func init() {
 		outputs: map[string]output{
 			"ami":              &amiOutput{},
 			"ext4-filesystem":  &ext4Output{},
-			"live-iso":         &liveIsoOutput{},
 			"partitioned-disk": &diskOutput{},
 			"qcow2":            &qcow2Output{},
 			"openstack":        &openstackOutput{},
