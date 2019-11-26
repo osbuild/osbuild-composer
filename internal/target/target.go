@@ -6,8 +6,9 @@ import (
 )
 
 type Target struct {
-	Name    string        `json:"name"`
-	Options TargetOptions `json:"options"`
+	ImageName string        `json:"image_name"`
+	Name      string        `json:"name"`
+	Options   TargetOptions `json:"options"`
 }
 
 type TargetOptions interface {

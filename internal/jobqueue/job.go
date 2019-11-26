@@ -87,7 +87,7 @@ func (job *Job) Run() error {
 			}
 
 			/* TODO: communicate back the AMI */
-			_, err = a.Register(result.OutputID, options.Bucket, options.Key)
+			_, err = a.Register(t.ImageName, options.Bucket, options.Key)
 			if err != nil {
 				panic(err)
 			}
