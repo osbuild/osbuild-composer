@@ -74,21 +74,36 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string) error {
 	return nil
 }
 
+func handleJob(client *ComposerClient) {
+	fmt.Println("Waiting for a new job...")
+	job, err := client.AddJob()
+	if err != nil {
+		panic(err)
+	}
+
+	client.UpdateJob(job, "RUNNING")
+
+	fmt.Printf("Running job %s\n", job.ID.String())
+	err, errs := job.Run()
+	if err != nil {
+		client.UpdateJob(job, "FAILED")
+		return
+	}
+
+	for _, err := range errs {
+		if err != nil {
+			client.UpdateJob(job, "FAILED")
+			return
+		}
+	}
+
+	client.UpdateJob(job, "FINISHED")
+}
+
 func main() {
 	client := NewClient()
 
 	for {
-		fmt.Println("Waiting for a new job...")
-		job, err := client.AddJob()
-		if err != nil {
-			panic(err)
-		}
-
-		client.UpdateJob(job, "RUNNING")
-
-		fmt.Printf("Running job %s\n", job.ID.String())
-		job.Run()
-
-		client.UpdateJob(job, "FINISHED")
+		handleJob(client)
 	}
 }

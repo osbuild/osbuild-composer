@@ -2,6 +2,7 @@ package jobqueue
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -21,28 +22,28 @@ type JobStatus struct {
 	Status string `json:"status"`
 }
 
-func (job *Job) Run() error {
+func (job *Job) Run() (error, []error) {
 	cmd := exec.Command("osbuild", "--store", "/var/cache/osbuild-composer/store", "--json", "-")
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	err = json.NewEncoder(stdin).Encode(job.Pipeline)
 	if err != nil {
-		return err
+		return err, nil
 	}
 	stdin.Close()
 
@@ -52,20 +53,23 @@ func (job *Job) Run() error {
 	}
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		return err
+		return err, nil
 	}
+
+	var r []error
 
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
 			err = os.MkdirAll(options.Location, 0755)
 			if err != nil {
-				panic(err)
+				r = append(r, err)
+				continue
 			}
 
 			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/.", options.Location)
@@ -73,29 +77,34 @@ func (job *Job) Run() error {
 			cp.Stdout = os.Stdout
 			err = cp.Run()
 			if err != nil {
-				panic(err)
+				r = append(r, err)
+				continue
 			}
 		case *target.AWSTargetOptions:
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
-				panic(err)
+				r = append(r, err)
+				continue
 			}
 
 			_, err = a.Upload("/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/image.ami", options.Bucket, options.Key)
 			if err != nil {
-				panic(err)
+				r = append(r, err)
+				continue
 			}
 
 			/* TODO: communicate back the AMI */
 			_, err = a.Register(t.ImageName, options.Bucket, options.Key)
 			if err != nil {
-				panic(err)
+				r = append(r, err)
+				continue
 			}
 		case *target.AzureTargetOptions:
 		default:
-			panic("foo")
+			r = append(r, fmt.Errorf("invalid target type"))
 		}
+		r = append(r, nil)
 	}
 
-	return nil
+	return nil, r
 }
