@@ -49,6 +49,22 @@ func (b *Blueprint) GetKernelCustomization() *KernelCustomization {
 	return b.Customizations.Kernel
 }
 
+func (b *Blueprint) GetFirewallCustomization() *FirewallCustomization {
+	if b.Customizations == nil {
+		return nil
+	}
+
+	return b.Customizations.Firewall
+}
+
+func (b *Blueprint) GetServicesCustomization() *ServicesCustomization {
+	if b.Customizations == nil {
+		return nil
+	}
+
+	return b.Customizations.Services
+}
+
 func (p Package) ToNameVersion() string {
 	// Omit version to prevent all packages with prefix of name to be installed
 	if p.Version == "*" {

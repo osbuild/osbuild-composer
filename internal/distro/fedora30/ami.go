@@ -24,20 +24,17 @@ func (t *amiOutput) translate(b *blueprint.Blueprint) (*pipeline.Pipeline, error
 	excludedPackages := [...]string{
 		"dracut-config-rescue",
 	}
-	p := getCustomF30PackageSet(packages[:], excludedPackages[:], b)
-	addF30FixBlsStage(p)
-	addF30LocaleStage(p)
-	addF30FSTabStage(p)
-	addF30GRUB2Stage(p, nil)
-	addF30SELinuxStage(p)
-	addF30QemuAssembler(p, "raw", t.getName())
-
-	if b.Customizations != nil {
-		err := customizeAll(p, b.Customizations)
-		if err != nil {
-			return nil, err
-		}
+	p := newF30Pipeline(packages[:], excludedPackages[:], b)
+	err := customizeAll(p, b.Customizations)
+	if err != nil {
+		return nil, err
 	}
+	setFilesystems(p)
+	setBootloader(p, "ro biosdevname=0 net.ifnames=0", b)
+	setFirewall(p, nil, nil, b)
+	setServices(p, nil, nil, b)
+	setQemuAssembler(p, "raw", t.getName())
+
 	return p, nil
 }
 

@@ -61,6 +61,10 @@
         }
       },
       {
+        "name": "org.osbuild.fix-bls",
+        "options": {}
+      },
+      {
         "name": "org.osbuild.locale",
         "options": {
           "language": "en_US"
@@ -88,10 +92,6 @@
           "boot_fs_uuid": "00000000-0000-0000-0000-000000000000",
           "kernel_opts": "ro biosdevname=0 net.ifnames=0"
         }
-      },
-      {
-        "name": "org.osbuild.fix-bls",
-        "options": {}
       },
       {
         "name": "org.osbuild.selinux",

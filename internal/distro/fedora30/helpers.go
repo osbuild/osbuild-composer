@@ -62,35 +62,7 @@ func getF30BuildPipeline() *pipeline.Pipeline {
 	return p
 }
 
-func getF30Pipeline() *pipeline.Pipeline {
-	p := &pipeline.Pipeline{
-		BuildPipeline: getF30BuildPipeline(),
-	}
-	options := &pipeline.DNFStageOptions{
-		ReleaseVersion:   "30",
-		BaseArchitecture: "x86_64",
-	}
-	options.AddRepository(getF30Repository())
-	options.AddPackage("@Core")
-	options.AddPackage("chrony")
-	options.AddPackage("kernel")
-	options.AddPackage("selinux-policy-targeted")
-	options.AddPackage("grub2-pc")
-	options.AddPackage("spice-vdagent")
-	options.AddPackage("qemu-guest-agent")
-	options.AddPackage("xen-libs")
-	options.AddPackage("langpacks-en")
-	p.AddStage(pipeline.NewDNFStage(options))
-	p.AddStage(pipeline.NewFixBLSStage())
-	p.AddStage(pipeline.NewLocaleStage(
-		&pipeline.LocaleStageOptions{
-			Language: "en_US",
-		}))
-
-	return p
-}
-
-func getCustomF30PackageSet(packages []string, excludedPackages []string, blueprint *blueprint.Blueprint) *pipeline.Pipeline {
+func newF30Pipeline(packages []string, excludedPackages []string, blueprint *blueprint.Blueprint) *pipeline.Pipeline {
 	p := &pipeline.Pipeline{
 		BuildPipeline: getF30BuildPipeline(),
 	}
@@ -106,7 +78,6 @@ func getCustomF30PackageSet(packages []string, excludedPackages []string, bluepr
 		options.ExcludePackage(pkg)
 	}
 
-	// handle extra packages, modules (currently synonym to packages) and groups
 	for _, pkg := range blueprint.Packages {
 		options.AddPackage(pkg.ToNameVersion())
 	}
@@ -120,16 +91,20 @@ func getCustomF30PackageSet(packages []string, excludedPackages []string, bluepr
 	}
 
 	p.AddStage(pipeline.NewDNFStage(options))
+
+	/* grub2 mangles the BLS snippets, we must fix them manually */
+	p.AddStage(pipeline.NewFixBLSStage())
+
 	return p
 }
 
-func addF30GRUB2Stage(p *pipeline.Pipeline, kernelCustomization *blueprint.KernelCustomization) {
+func setBootloader(p *pipeline.Pipeline, kernelOptions string, blueprint *blueprint.Blueprint) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
 	}
-	kernelOptions := "ro biosdevname=0 net.ifnames=0"
 
+	kernelCustomization := blueprint.GetKernelCustomization()
 	if kernelCustomization != nil {
 		kernelOptions += " " + kernelCustomization.Append
 	}
@@ -142,7 +117,7 @@ func addF30GRUB2Stage(p *pipeline.Pipeline, kernelCustomization *blueprint.Kerne
 	))
 }
 
-func addF30FSTabStage(p *pipeline.Pipeline) {
+func setFilesystems(p *pipeline.Pipeline) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
@@ -152,25 +127,56 @@ func addF30FSTabStage(p *pipeline.Pipeline) {
 	p.AddStage(pipeline.NewFSTabStage(options))
 }
 
-func addF30SELinuxStage(p *pipeline.Pipeline) {
+func setFirewall(p *pipeline.Pipeline, enabledServices []string, disabledServices []string, b *blueprint.Blueprint) {
+	f := b.GetFirewallCustomization()
+	ports := []string{}
+
+	if f != nil {
+		if f.Services != nil {
+			enabledServices = append(enabledServices, f.Services.Enabled...)
+			disabledServices = append(disabledServices, f.Services.Disabled...)
+		}
+		ports = f.Ports
+	}
+
+	if len(enabledServices) == 0 && len(disabledServices) == 0 && len(ports) == 0 {
+		return
+	}
+
+	p.AddStage(
+		pipeline.NewFirewallStage(&pipeline.FirewallStageOptions{
+			Ports:            ports,
+			EnabledServices:  enabledServices,
+			DisabledServices: disabledServices,
+		}),
+	)
+}
+
+func setServices(p *pipeline.Pipeline, enabledServices []string, disabledServices []string, b *blueprint.Blueprint) {
+	s := b.GetServicesCustomization()
+
+	if s != nil {
+		enabledServices = append(enabledServices, s.Enabled...)
+		disabledServices = append(disabledServices, s.Enabled...)
+	}
+
+	if len(enabledServices) == 0 && len(disabledServices) == 0 {
+		return
+	}
+
+	p.AddStage(
+		pipeline.NewSystemdStage(&pipeline.SystemdStageOptions{
+			EnabledServices:  enabledServices,
+			DisabledServices: disabledServices,
+		}),
+	)
+}
+
+func setQemuAssembler(p *pipeline.Pipeline, format string, filename string) {
 	p.AddStage(pipeline.NewSELinuxStage(
 		&pipeline.SELinuxStageOptions{
 			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 		}))
-}
-
-func addF30LocaleStage(p *pipeline.Pipeline) {
-	p.AddStage(pipeline.NewLocaleStage(
-		&pipeline.LocaleStageOptions{
-			Language: "en_US",
-		}))
-}
-
-func addF30FixBlsStage(p *pipeline.Pipeline) {
-	p.AddStage(pipeline.NewFixBLSStage())
-}
-
-func addF30QemuAssembler(p *pipeline.Pipeline, format string, filename string) {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
@@ -187,14 +193,22 @@ func addF30QemuAssembler(p *pipeline.Pipeline, format string, filename string) {
 		})
 }
 
-func addF30TarAssembler(p *pipeline.Pipeline, filename, compression string) {
+func setTarAssembler(p *pipeline.Pipeline, filename, compression string) {
+	p.AddStage(pipeline.NewSELinuxStage(
+		&pipeline.SELinuxStageOptions{
+			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+		}))
 	p.Assembler = pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
 			Filename: filename,
 		})
 }
 
-func addF30RawFSAssembler(p *pipeline.Pipeline, filename string) {
+func setRawFSAssembler(p *pipeline.Pipeline, filename string) {
+	p.AddStage(pipeline.NewSELinuxStage(
+		&pipeline.SELinuxStageOptions{
+			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+		}))
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
