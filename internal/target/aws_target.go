@@ -11,8 +11,5 @@ type AWSTargetOptions struct {
 func (AWSTargetOptions) isTargetOptions() {}
 
 func NewAWSTarget(options *AWSTargetOptions) *Target {
-	return &Target{
-		Name:    "org.osbuild.aws",
-		Options: options,
-	}
+	return newTarget("org.osbuild.aws", options)
 }

@@ -7,8 +7,5 @@ type LocalTargetOptions struct {
 func (LocalTargetOptions) isTargetOptions() {}
 
 func NewLocalTarget(options *LocalTargetOptions) *Target {
-	return &Target{
-		Name:    "org.osbuild.local",
-		Options: options,
-	}
+	return newTarget("org.osbuild.local", options)
 }
