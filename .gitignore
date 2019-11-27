@@ -4,3 +4,4 @@ __pycache__
 /osbuild-worker
 /osbuild-pipeline
 /osbuild-upload-azure
+/osbuild-upload-aws

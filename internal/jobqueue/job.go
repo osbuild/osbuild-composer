@@ -6,9 +6,9 @@ import (
 	"os/exec"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
 
 type Job struct {

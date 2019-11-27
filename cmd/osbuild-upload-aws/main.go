@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/osbuild/osbuild-composer/internal/awsupload"
+	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
 
 func main() {
