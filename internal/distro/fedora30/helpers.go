@@ -63,9 +63,8 @@ func getF30BuildPipeline() *pipeline.Pipeline {
 }
 
 func newF30Pipeline(packages []string, excludedPackages []string, blueprint *blueprint.Blueprint) *pipeline.Pipeline {
-	p := &pipeline.Pipeline{
-		BuildPipeline: getF30BuildPipeline(),
-	}
+	p := &pipeline.Pipeline{}
+	p.SetBuild(getF30BuildPipeline(), "org.osbuild.fedora30")
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: "x86_64",

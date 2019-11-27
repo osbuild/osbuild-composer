@@ -18,11 +18,11 @@ matrix:
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run --image-info
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --image-info
     - language: python
       python: 3.7
       before_install: sudo apt-get install -y qemu-kvm
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_PIPELINE=test/build-from-yum.json" test/run --boot-test
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --boot-test
