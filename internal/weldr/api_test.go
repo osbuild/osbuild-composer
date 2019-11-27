@@ -9,7 +9,6 @@ import (
 	"time"
 
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 
@@ -17,12 +16,12 @@ import (
 	_ "github.com/osbuild/osbuild-composer/internal/distro/test"
 )
 
-func createWeldrAPI(fixture rpmmd_mock.Fixture) (*weldr.API, *store.Store) {
-	s := store.New(nil)
+func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) *weldr.API {
+	fixture := fixtureGenerator()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	d := distro.New("test")
 
-	return weldr.New(rpm, d, nil, s), s
+	return weldr.New(rpm, d, nil, fixture.Store)
 }
 
 func TestBasic(t *testing.T) {
@@ -41,13 +40,13 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/projects/source/info/test", http.StatusOK, `{"sources":{"test":{"name":"test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test":{"name":"test","type":"yum-baseurl","url":"http://example.com/test/os","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
-		{"/api/v0/blueprints/list", http.StatusOK, `{"total":0,"offset":0,"limit":0,"blueprints":[]}`},
+		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/blueprints/info/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"foo: "}],"status":false}`},
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -64,7 +63,7 @@ func TestBlueprintsNew(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -81,7 +80,7 @@ func TestBlueprintsWorkspace(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
@@ -102,7 +101,7 @@ func TestBlueprintsInfo(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test2","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
@@ -114,7 +113,7 @@ func TestBlueprintsInfo(t *testing.T) {
 
 func TestBlueprintsFreeze(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -123,7 +122,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
@@ -142,7 +141,7 @@ func TestBlueprintsDiff(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
@@ -162,7 +161,7 @@ func TestBlueprintsDelete(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test", ``)
@@ -170,7 +169,7 @@ func TestBlueprintsDelete(t *testing.T) {
 }
 
 func TestBlueprintsChanges(t *testing.T) {
-	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api := createWeldrAPI(rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
@@ -199,7 +198,7 @@ func TestCompose(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, c.External, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 		test.SendHTTP(api, c.External, "DELETE", "/api/v0/blueprints/delete/test", ``)
@@ -208,6 +207,7 @@ func TestCompose(t *testing.T) {
 
 func TestComposeQueue(t *testing.T) {
 	var cases = []struct {
+		Fixture        rpmmd_mock.FixtureGenerator
 		Method         string
 		Path           string
 		Body           string
@@ -215,7 +215,7 @@ func TestComposeQueue(t *testing.T) {
 		ExpectedJSON   string
 		IgnoreFields   []string
 	}{
-		{"GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`, []string{"id", "job_created", "job_started"}},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`, []string{"id", "job_created", "job_started"}},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -223,24 +223,8 @@ func TestComposeQueue(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, s := createWeldrAPI(rpmmd_mock.BaseFixture)
-		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
-		// create job and leave it waiting
-		test.SendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
-		// create job and leave it running
-		test.SendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
-		s.PopCompose()
-		// create job and mark it as finished
-		test.SendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
-		job := s.PopCompose()
-		s.UpdateCompose(job.ComposeID, "FINISHED")
-		// create job and mark it as failed
-		test.SendHTTP(api, false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`)
-		job = s.PopCompose()
-		s.UpdateCompose(job.ComposeID, "FAILED")
-
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
-		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
 }
 
@@ -257,7 +241,7 @@ func TestSourcesNew(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 	}
@@ -276,7 +260,7 @@ func TestSourcesDelete(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
@@ -285,7 +269,7 @@ func TestSourcesDelete(t *testing.T) {
 
 func TestProjectsDepsolve(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -296,14 +280,14 @@ func TestProjectsDepsolve(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestProjectsInfo(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -312,19 +296,19 @@ func TestProjectsInfo(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages specified."}]}`},
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/nonexistingpkg", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages have been found."}]}`},
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/*", http.StatusOK, `{"projects":[{"name":"package0","summary":"pkg0 sum","description":"pkg0 desc","homepage":"https://pkg0.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-01-03T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.1"}},{"arch":"x86_64","build_time":"2006-01-02T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.0"}}]},{"name":"package1","summary":"pkg1 sum","description":"pkg1 desc","homepage":"https://pkg1.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-02-02T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.0"}},{"arch":"x86_64","build_time":"2006-02-03T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.1"}}]},{"name":"package10","summary":"pkg10 sum","description":"pkg10 desc","homepage":"https://pkg10.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-11-02T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.0"}},{"arch":"x86_64","build_time":"2006-11-03T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.1"}}]},{"name":"package11","summary":"pkg11 sum","description":"pkg11 desc","homepage":"https://pkg11.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-12-03T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.1"}},{"arch":"x86_64","build_time":"2006-12-02T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.0"}}]},{"name":"package12","summary":"pkg12 sum","description":"pkg12 desc","homepage":"https://pkg12.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-01-02T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.0"}},{"arch":"x86_64","build_time":"2007-01-03T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.1"}}]},{"name":"package13","summary":"pkg13 sum","description":"pkg13 desc","homepage":"https://pkg13.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-02-02T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.0"}},{"arch":"x86_64","build_time":"2007-02-03T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.1"}}]},{"name":"package14","summary":"pkg14 sum","description":"pkg14 desc","homepage":"https://pkg14.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-03-03T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.1"}},{"arch":"x86_64","build_time":"2007-03-02T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.0"}}]},{"name":"package15","summary":"pkg15 sum","description":"pkg15 desc","homepage":"https://pkg15.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-04-03T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.1"}},{"arch":"x86_64","build_time":"2007-04-02T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.0"}}]},{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}]},{"name":"package17","summary":"pkg17 sum","description":"pkg17 desc","homepage":"https://pkg17.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-06-03T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.1"}},{"arch":"x86_64","build_time":"2007-06-02T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.0"}}]},{"name":"package18","summary":"pkg18 sum","description":"pkg18 desc","homepage":"https://pkg18.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-07-02T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.0"}},{"arch":"x86_64","build_time":"2007-07-03T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.1"}}]},{"name":"package19","summary":"pkg19 sum","description":"pkg19 desc","homepage":"https://pkg19.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-08-03T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.1"}},{"arch":"x86_64","build_time":"2007-08-02T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.0"}}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}},{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}},{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}}]},{"name":"package3","summary":"pkg3 sum","description":"pkg3 desc","homepage":"https://pkg3.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-04-03T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.1"}},{"arch":"x86_64","build_time":"2006-04-02T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.0"}}]},{"name":"package4","summary":"pkg4 sum","description":"pkg4 desc","homepage":"https://pkg4.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-05-03T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.1"}},{"arch":"x86_64","build_time":"2006-05-02T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.0"}}]},{"name":"package5","summary":"pkg5 sum","description":"pkg5 desc","homepage":"https://pkg5.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-06-03T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.1"}},{"arch":"x86_64","build_time":"2006-06-02T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.0"}}]},{"name":"package6","summary":"pkg6 sum","description":"pkg6 desc","homepage":"https://pkg6.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-07-02T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.0"}},{"arch":"x86_64","build_time":"2006-07-03T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.1"}}]},{"name":"package7","summary":"pkg7 sum","description":"pkg7 desc","homepage":"https://pkg7.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-08-02T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.0"}},{"arch":"x86_64","build_time":"2006-08-03T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.1"}}]},{"name":"package8","summary":"pkg8 sum","description":"pkg8 desc","homepage":"https://pkg8.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-09-03T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.1"}},{"arch":"x86_64","build_time":"2006-09-02T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.0"}}]},{"name":"package9","summary":"pkg9 sum","description":"pkg9 desc","homepage":"https://pkg9.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-10-02T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.0"}},{"arch":"x86_64","build_time":"2006-10-03T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.1"}}]}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package2*,package16", http.StatusOK, `{"projects":[{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}},{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}},{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}}]}]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package2*,package16", http.StatusOK, `{"projects":[{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}},{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}},{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}}]}]}`},
 		{rpmmd_mock.BadFetch, "/api/v0/projects/info/package2*,package16", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occured: FetchError: There was a problem when fetching packages."}]}`},
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestModulesInfo(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -334,19 +318,19 @@ func TestModulesInfo(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/nonexistingpkg", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages have been found."}]}`},
 		{rpmmd_mock.BadDepsolve, "/api/v0/modules/info/package1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"Cannot depsolve package package1: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
 		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/package2*,package16", http.StatusOK, `{"modules":[{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}},{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}},{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/*", http.StatusOK, `{"modules":[{"name":"package0","summary":"pkg0 sum","description":"pkg0 desc","homepage":"https://pkg0.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-01-02T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.0"}},{"arch":"x86_64","build_time":"2006-01-03T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package1","summary":"pkg1 sum","description":"pkg1 desc","homepage":"https://pkg1.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-02-02T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.0"}},{"arch":"x86_64","build_time":"2006-02-03T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package10","summary":"pkg10 sum","description":"pkg10 desc","homepage":"https://pkg10.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-11-03T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.1"}},{"arch":"x86_64","build_time":"2006-11-02T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package11","summary":"pkg11 sum","description":"pkg11 desc","homepage":"https://pkg11.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-12-03T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.1"}},{"arch":"x86_64","build_time":"2006-12-02T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package12","summary":"pkg12 sum","description":"pkg12 desc","homepage":"https://pkg12.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-01-02T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.0"}},{"arch":"x86_64","build_time":"2007-01-03T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package13","summary":"pkg13 sum","description":"pkg13 desc","homepage":"https://pkg13.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-02-02T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.0"}},{"arch":"x86_64","build_time":"2007-02-03T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package14","summary":"pkg14 sum","description":"pkg14 desc","homepage":"https://pkg14.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-03-03T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.1"}},{"arch":"x86_64","build_time":"2007-03-02T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package15","summary":"pkg15 sum","description":"pkg15 desc","homepage":"https://pkg15.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-04-03T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.1"}},{"arch":"x86_64","build_time":"2007-04-02T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package17","summary":"pkg17 sum","description":"pkg17 desc","homepage":"https://pkg17.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-06-03T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.1"}},{"arch":"x86_64","build_time":"2007-06-02T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package18","summary":"pkg18 sum","description":"pkg18 desc","homepage":"https://pkg18.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-07-02T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.0"}},{"arch":"x86_64","build_time":"2007-07-03T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package19","summary":"pkg19 sum","description":"pkg19 desc","homepage":"https://pkg19.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-08-02T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.0"}},{"arch":"x86_64","build_time":"2007-08-03T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}},{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}},{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package3","summary":"pkg3 sum","description":"pkg3 desc","homepage":"https://pkg3.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-04-03T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.1"}},{"arch":"x86_64","build_time":"2006-04-02T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package4","summary":"pkg4 sum","description":"pkg4 desc","homepage":"https://pkg4.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-05-03T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.1"}},{"arch":"x86_64","build_time":"2006-05-02T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package5","summary":"pkg5 sum","description":"pkg5 desc","homepage":"https://pkg5.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-06-02T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.0"}},{"arch":"x86_64","build_time":"2006-06-03T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package6","summary":"pkg6 sum","description":"pkg6 desc","homepage":"https://pkg6.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-07-02T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.0"}},{"arch":"x86_64","build_time":"2006-07-03T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package7","summary":"pkg7 sum","description":"pkg7 desc","homepage":"https://pkg7.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-08-03T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.1"}},{"arch":"x86_64","build_time":"2006-08-02T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package8","summary":"pkg8 sum","description":"pkg8 desc","homepage":"https://pkg8.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-09-03T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.1"}},{"arch":"x86_64","build_time":"2006-09-02T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package9","summary":"pkg9 sum","description":"pkg9 desc","homepage":"https://pkg9.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-10-03T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.1"}},{"arch":"x86_64","build_time":"2006-10-02T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/*", http.StatusOK, `{"modules":[{"name":"package0","summary":"pkg0 sum","description":"pkg0 desc","homepage":"https://pkg0.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-01-03T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.1"}},{"arch":"x86_64","build_time":"2006-01-02T15:04:05Z","epoch":0,"release":"0.fc30","source":{"license":"MIT","version":"0.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package1","summary":"pkg1 sum","description":"pkg1 desc","homepage":"https://pkg1.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-02-02T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.0"}},{"arch":"x86_64","build_time":"2006-02-03T15:04:05Z","epoch":0,"release":"1.fc30","source":{"license":"MIT","version":"1.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package10","summary":"pkg10 sum","description":"pkg10 desc","homepage":"https://pkg10.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-11-02T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.0"}},{"arch":"x86_64","build_time":"2006-11-03T15:04:05Z","epoch":0,"release":"10.fc30","source":{"license":"MIT","version":"10.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package11","summary":"pkg11 sum","description":"pkg11 desc","homepage":"https://pkg11.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-12-03T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.1"}},{"arch":"x86_64","build_time":"2006-12-02T15:04:05Z","epoch":0,"release":"11.fc30","source":{"license":"MIT","version":"11.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package12","summary":"pkg12 sum","description":"pkg12 desc","homepage":"https://pkg12.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-01-02T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.0"}},{"arch":"x86_64","build_time":"2007-01-03T15:04:05Z","epoch":0,"release":"12.fc30","source":{"license":"MIT","version":"12.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package13","summary":"pkg13 sum","description":"pkg13 desc","homepage":"https://pkg13.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-02-02T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.0"}},{"arch":"x86_64","build_time":"2007-02-03T15:04:05Z","epoch":0,"release":"13.fc30","source":{"license":"MIT","version":"13.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package14","summary":"pkg14 sum","description":"pkg14 desc","homepage":"https://pkg14.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-03-03T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.1"}},{"arch":"x86_64","build_time":"2007-03-02T15:04:05Z","epoch":0,"release":"14.fc30","source":{"license":"MIT","version":"14.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package15","summary":"pkg15 sum","description":"pkg15 desc","homepage":"https://pkg15.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-04-03T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.1"}},{"arch":"x86_64","build_time":"2007-04-02T15:04:05Z","epoch":0,"release":"15.fc30","source":{"license":"MIT","version":"15.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package16","summary":"pkg16 sum","description":"pkg16 desc","homepage":"https://pkg16.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-05-02T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.0"}},{"arch":"x86_64","build_time":"2007-05-03T15:04:05Z","epoch":0,"release":"16.fc30","source":{"license":"MIT","version":"16.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package17","summary":"pkg17 sum","description":"pkg17 desc","homepage":"https://pkg17.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-06-03T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.1"}},{"arch":"x86_64","build_time":"2007-06-02T15:04:05Z","epoch":0,"release":"17.fc30","source":{"license":"MIT","version":"17.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package18","summary":"pkg18 sum","description":"pkg18 desc","homepage":"https://pkg18.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-07-02T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.0"}},{"arch":"x86_64","build_time":"2007-07-03T15:04:05Z","epoch":0,"release":"18.fc30","source":{"license":"MIT","version":"18.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package19","summary":"pkg19 sum","description":"pkg19 desc","homepage":"https://pkg19.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-08-03T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.1"}},{"arch":"x86_64","build_time":"2007-08-02T15:04:05Z","epoch":0,"release":"19.fc30","source":{"license":"MIT","version":"19.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package2","summary":"pkg2 sum","description":"pkg2 desc","homepage":"https://pkg2.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-03-02T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.0"}},{"arch":"x86_64","build_time":"2006-03-03T15:04:05Z","epoch":0,"release":"2.fc30","source":{"license":"MIT","version":"2.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package20","summary":"pkg20 sum","description":"pkg20 desc","homepage":"https://pkg20.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-09-03T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.1"}},{"arch":"x86_64","build_time":"2007-09-02T15:04:05Z","epoch":0,"release":"20.fc30","source":{"license":"MIT","version":"20.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package21","summary":"pkg21 sum","description":"pkg21 desc","homepage":"https://pkg21.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2007-10-02T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.0"}},{"arch":"x86_64","build_time":"2007-10-03T15:04:05Z","epoch":0,"release":"21.fc30","source":{"license":"MIT","version":"21.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package3","summary":"pkg3 sum","description":"pkg3 desc","homepage":"https://pkg3.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-04-03T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.1"}},{"arch":"x86_64","build_time":"2006-04-02T15:04:05Z","epoch":0,"release":"3.fc30","source":{"license":"MIT","version":"3.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package4","summary":"pkg4 sum","description":"pkg4 desc","homepage":"https://pkg4.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-05-03T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.1"}},{"arch":"x86_64","build_time":"2006-05-02T15:04:05Z","epoch":0,"release":"4.fc30","source":{"license":"MIT","version":"4.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package5","summary":"pkg5 sum","description":"pkg5 desc","homepage":"https://pkg5.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-06-03T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.1"}},{"arch":"x86_64","build_time":"2006-06-02T15:04:05Z","epoch":0,"release":"5.fc30","source":{"license":"MIT","version":"5.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package6","summary":"pkg6 sum","description":"pkg6 desc","homepage":"https://pkg6.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-07-02T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.0"}},{"arch":"x86_64","build_time":"2006-07-03T15:04:05Z","epoch":0,"release":"6.fc30","source":{"license":"MIT","version":"6.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package7","summary":"pkg7 sum","description":"pkg7 desc","homepage":"https://pkg7.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-08-02T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.0"}},{"arch":"x86_64","build_time":"2006-08-03T15:04:05Z","epoch":0,"release":"7.fc30","source":{"license":"MIT","version":"7.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package8","summary":"pkg8 sum","description":"pkg8 desc","homepage":"https://pkg8.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-09-03T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.1"}},{"arch":"x86_64","build_time":"2006-09-02T15:04:05Z","epoch":0,"release":"8.fc30","source":{"license":"MIT","version":"8.0"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]},{"name":"package9","summary":"pkg9 sum","description":"pkg9 desc","homepage":"https://pkg9.example.com","upstream_vcs":"","builds":[{"arch":"x86_64","build_time":"2006-10-02T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.0"}},{"arch":"x86_64","build_time":"2006-10-03T15:04:05Z","epoch":0,"release":"9.fc30","source":{"license":"MIT","version":"9.1"}}],"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}]}`},
 		{rpmmd_mock.BadFetch, "/api/v0/modules/info/package2*,package16", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occured: FetchError: There was a problem when fetching packages."}]}`},
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestProjectsList(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -358,14 +342,14 @@ func TestProjectsList(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
 
 func TestModulesList(t *testing.T) {
 	var cases = []struct {
-		Fixture        rpmmd_mock.Fixture
+		Fixture        rpmmd_mock.FixtureGenerator
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
@@ -380,7 +364,7 @@ func TestModulesList(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
+		api := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
