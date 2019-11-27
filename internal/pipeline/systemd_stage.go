@@ -3,6 +3,7 @@ package pipeline
 type SystemdStageOptions struct {
 	EnabledServices  []string `json:"enabled_services,omitempty"`
 	DisabledServices []string `json:"disabled_services,omitempty"`
+	DefaultTarget    string   `json:"default_target,omitempty"`
 }
 
 func (SystemdStageOptions) isStageOptions() {}

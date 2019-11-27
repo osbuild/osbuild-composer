@@ -23,37 +23,91 @@ type output struct {
 	Packages         []string
 	ExcludedPackages []string
 	IncludeFSTab     bool
+	DefaultTarget    string
+	KernelOptions    string
 	Assembler        *pipeline.Assembler
 }
 
 func init() {
+	const GigaByte = 1024 * 1024 * 1024
+
 	r := RHEL82{
 		outputs: map[string]output{},
 	}
 
 	r.outputs["ami"] = output{
-		Name:     "image.ami",
-		MimeType: "application/x-qemu-disk",
+		Name:     "image.raw.xz",
+		MimeType: "application/octet-stream",
 		Packages: []string{
-			"@Core",
-			"chrony",
-			"kernel",
-			"selinux-policy-targeted",
-			"grub2-pc",
-			"dracut-config-generic",
-			"cloud-init",
 			"checkpolicy",
+			"chrony",
+			"cloud-init",
+			"cloud-init",
+			"cloud-utils-growpart",
+			"@core",
+			"dhcp-client",
+			"dracut-config-generic",
+			"gdisk",
+			"grub2",
+			"insights-client",
+			"kernel",
+			"langpacks-en",
 			"net-tools",
+			"NetworkManager",
+			"redhat-release",
+			"redhat-release-eula",
+			"rng-tools",
+			"rsync",
+			"selinux-policy-targeted",
+			"tar",
+			"yum-utils",
+
+			// TODO this doesn't exist in BaseOS or AppStream
+			// "rh-amazon-rhui-client",
 		},
 		ExcludedPackages: []string{
+			"aic94xx-firmware",
+			"alsa-firmware",
+			"alsa-lib",
+			"alsa-tools-firmware",
+			"biosdevname",
 			"dracut-config-rescue",
+			"firewalld",
+			"iprutils",
+			"ivtv-firmware",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6000g2b-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
+			"libertas-sd8686-firmware",
+			"libertas-sd8787-firmware",
+			"libertas-usb8388-firmware",
+			"plymouth",
+
+			// TODO this cannot be removed, because the kernel (?)
+			// depends on it. The ec2 kickstart force-removes it.
+			// "linux-firmware",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("raw", "image.ami"),
+		DefaultTarget: "multi-user.target",
+		IncludeFSTab:  true,
+		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz", 6 * GigaByte),
 	}
 
 	r.outputs["ext4-filesystem"] = output{
@@ -70,8 +124,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: false,
-		Assembler:    r.rawFSAssembler("filesystem.img"),
+		IncludeFSTab:  false,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.rawFSAssembler("filesystem.img"),
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -89,8 +144,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("raw", "disk.img"),
+		IncludeFSTab:  true,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.qemuAssembler("raw", "disk.img", 3*GigaByte),
 	}
 
 	r.outputs["qcow2"] = output{
@@ -112,8 +168,9 @@ func init() {
 			"gobject-introspection",
 			"plymouth",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("qcow2", "image.qcow2"),
+		IncludeFSTab:  true,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte),
 	}
 
 	r.outputs["openstack"] = output{
@@ -135,8 +192,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("qcow2", "image.qcow2"),
+		IncludeFSTab:  true,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte),
 	}
 
 	r.outputs["tar"] = output{
@@ -153,8 +211,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: false,
-		Assembler:    r.tarAssembler("root.tar.xz", "xz"),
+		IncludeFSTab:  false,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.tarAssembler("root.tar.xz", "xz"),
 	}
 
 	r.outputs["vhd"] = output{
@@ -175,8 +234,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("vhd", "image.vhd"),
+		IncludeFSTab:  true,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.qemuAssembler("vhd", "image.vhd", 3*GigaByte),
 	}
 
 	r.outputs["vmdk"] = output{
@@ -195,8 +255,9 @@ func init() {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab: true,
-		Assembler:    r.qemuAssembler("vmdk", "disk.vmdk"),
+		IncludeFSTab:  true,
+		KernelOptions: "ro net.ifnames=0",
+		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte),
 	}
 
 	distro.Register("rhel-8.2", &r)
@@ -207,14 +268,14 @@ func (r *RHEL82) Repositories() []rpmmd.RepoConfig {
 		{
 			Id:       "baseos",
 			Name:     "BaseOS",
-			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191117.n.0/compose/BaseOS/x86_64/os",
-			Checksum: "sha256:4699a755326e5af71cd069dc9d9289e7d0433ab0acc42ee33b93054fd0e980e7",
+			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191125.n.1/compose/BaseOS/x86_64/os",
+			Checksum: "sha256:30b905ab1538243de69e019573443b2a1e4edad7c1f7d32aa5a4fb014ff98060",
 		},
 		{
 			Id:       "appstream",
 			Name:     "AppStream",
-			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191117.n.0/compose/AppStream/x86_64/os",
-			Checksum: "sha256:212f10ee3fb8265f38837a1e867e4218556e9bc71fa1d38827a088413974a949",
+			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191125.n.1/compose/AppStream/x86_64/os",
+			Checksum: "sha256:afd86d5b664ec87e209c5ff3cf011bcc6a40578394191c1d889b4ead17a072ae",
 		},
 	}
 }
@@ -251,7 +312,12 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipelin
 	if output.IncludeFSTab {
 		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions()))
 	}
-	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(b.GetKernel())))
+
+	kernelOptions := output.KernelOptions
+	if kernel := b.GetKernel(); kernel != nil {
+		kernelOptions += " " + kernel.Append
+	}
+	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(kernelOptions)))
 
 	// TODO support setting all languages and install corresponding langpack-* package
 	language, keyboard := b.GetPrimaryLocale()
@@ -294,7 +360,7 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipelin
 	}
 
 	if services := b.GetServices(); services != nil {
-		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(services)))
+		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(services, output.DefaultTarget)))
 	}
 
 	if firewall := b.GetFirewall(); firewall != nil {
@@ -425,10 +491,11 @@ func (r *RHEL82) firewallStageOptions(firewall *blueprint.FirewallCustomization)
 	return &options
 }
 
-func (r *RHEL82) systemdStageOptions(s *blueprint.ServicesCustomization) *pipeline.SystemdStageOptions {
+func (r *RHEL82) systemdStageOptions(s *blueprint.ServicesCustomization, target string) *pipeline.SystemdStageOptions {
 	return &pipeline.SystemdStageOptions{
 		EnabledServices:  s.Enabled,
 		DisabledServices: s.Disabled,
+		DefaultTarget:    target,
 	}
 }
 
@@ -438,21 +505,15 @@ func (r *RHEL82) fsTabStageOptions() *pipeline.FSTabStageOptions {
 		panic("invalid UUID")
 	}
 	options := pipeline.FSTabStageOptions{}
-	options.AddFilesystem(id, "xfs", "/", "defaults", 1, 1)
+	options.AddFilesystem(id, "xfs", "/", "defaults", 0, 0)
 	return &options
 }
 
-func (r *RHEL82) grub2StageOptions(kernel *blueprint.KernelCustomization) *pipeline.GRUB2StageOptions {
+func (r *RHEL82) grub2StageOptions(kernelOptions string) *pipeline.GRUB2StageOptions {
 	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	if err != nil {
 		panic("invalid UUID")
 	}
-	kernelOptions := "ro biosdevname=0 net.ifnames=0"
-
-	if kernel != nil {
-		kernelOptions += " " + kernel.Append
-	}
-
 	return &pipeline.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
@@ -465,7 +526,7 @@ func (r *RHEL82) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 	}
 }
 
-func (r *RHEL82) qemuAssembler(format string, filename string) *pipeline.Assembler {
+func (r *RHEL82) qemuAssembler(format string, filename string, size uint64) *pipeline.Assembler {
 	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	if err != nil {
 		panic("invalid UUID")
@@ -476,7 +537,7 @@ func (r *RHEL82) qemuAssembler(format string, filename string) *pipeline.Assembl
 			Filename:           filename,
 			PTUUID:             "0x14fc63d2",
 			RootFilesystemUUDI: id,
-			Size:               3221225472,
+			Size:               size,
 			RootFilesystemType: "xfs",
 		})
 }
