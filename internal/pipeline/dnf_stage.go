@@ -13,6 +13,7 @@ type DNFStageOptions struct {
 	ExcludedPackages []string         `json:"exclude_packages,omitempty"`
 	ReleaseVersion   string           `json:"releasever"`
 	BaseArchitecture string           `json:"basearch"`
+	ModulePlatformId string		  `json:"module_platform_id,omitempty"`
 }
 
 func (DNFStageOptions) isStageOptions() {}

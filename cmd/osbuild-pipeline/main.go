@@ -10,13 +10,16 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
 func main() {
 	var format string
 	var blueprintArg string
+	var distroArg string
 	flag.StringVar(&format, "output-format", "qcow2", "output format")
 	flag.StringVar(&blueprintArg, "blueprint", "", "blueprint to translate")
+	flag.StringVar(&distroArg, "distro", "", "distribution to create")
 	flag.Parse()
 
 	blueprint := &blueprint.Blueprint{}
@@ -31,7 +34,7 @@ func main() {
 		}
 	}
 
-	d := distro.New("")
+	d := distro.New(distroArg)
 	pipeline, err := d.Pipeline(blueprint, format)
 	if err != nil {
 		panic(err.Error())
