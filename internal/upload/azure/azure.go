@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"net/url"
@@ -12,6 +13,14 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 )
+
+type errorString struct {
+	s string
+}
+
+func (e *errorString) Error() string {
+	return e.s
+}
 
 // Credentials contains credentials to connect to your account
 // It uses so called "Client credentials", see the official documentation for more information:
@@ -55,6 +64,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	if err != nil {
 		return err
 	}
+	defer imageFile.Close()
 
 	// Stat image to get the file size
 	stat, err := imageFile.Stat()
@@ -62,9 +72,24 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 		return err
 	}
 
+	// Hash the imageFile
+	imageFileHash := md5.New()
+	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
+		return err
+	}
+	// Move the cursor back to the start of the imageFile
+	if _, err := imageFile.Seek(0, 0); err != nil {
+		return err
+	}
+
 	// Create page blob URL. Page blob is required for VM images
 	blobURL := containerURL.NewPageBlobURL(metadata.ImageName)
 	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	if err != nil {
+		return err
+	}
+	// Wrong MD5 does not seem to have any impact on the upload
+	_, err = blobURL.SetHTTPHeaders(ctx, azblob.BlobHTTPHeaders{ContentMD5: imageFileHash.Sum(nil)}, azblob.BlobAccessConditions{})
 	if err != nil {
 		return err
 	}
@@ -110,11 +135,25 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 		}(counter, buffer, n)
 		counter++
 	}
+	// Wait for all gorutines to finish
 	wg.Wait()
+	// Check any errors during the transmission using a nonblocking read from the channel
 	select {
 	case err := <-errorInGorutine:
 		return err
 	default:
-		return nil
 	}
+	// Check properties, specifically MD5 sum of the blob
+	props, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	if err != nil {
+		return err
+	}
+	var blobChecksum []byte = props.ContentMD5()
+	var fileChecksum []byte = imageFileHash.Sum(nil)
+
+	if bytes.Compare(blobChecksum, fileChecksum) != 0 {
+		return &errorString{"error during image upload. the image seems to be corrupted"}
+	}
+
+	return nil
 }

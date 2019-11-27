@@ -35,7 +35,7 @@ func main() {
 
 	fmt.Println("Image to upload is:", fileName)
 
-	azure.UploadImage(azure.Credentials{
+	err := azure.UploadImage(azure.Credentials{
 		StorageAccount:   storageAccount,
 		StorageAccessKey: storageAccessKey,
 	}, azure.ImageMetadata{
@@ -43,4 +43,7 @@ func main() {
 		ContainerName: containerName,
 	}, fileName, threads)
 
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 }
