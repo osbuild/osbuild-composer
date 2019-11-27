@@ -14,6 +14,7 @@ type QEMUAssemblerOptions struct {
 	Filename           string    `json:"filename"`
 	PTUUID             string    `json:"ptuuid"`
 	RootFilesystemUUDI uuid.UUID `json:"root_fs_uuid"`
+	RootFilesystemType string    `json:"root_fs_type"`
 	Size               uint64    `json:"size"`
 }
 

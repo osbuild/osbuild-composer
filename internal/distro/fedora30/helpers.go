@@ -103,7 +103,7 @@ func setBootloader(p *pipeline.Pipeline, kernelOptions string, blueprint *bluepr
 		panic("invalid UUID")
 	}
 
-	kernelCustomization := blueprint.GetKernelCustomization()
+	kernelCustomization := blueprint.GetKernel()
 	if kernelCustomization != nil {
 		kernelOptions += " " + kernelCustomization.Append
 	}
@@ -127,7 +127,7 @@ func setFilesystems(p *pipeline.Pipeline) {
 }
 
 func setFirewall(p *pipeline.Pipeline, enabledServices []string, disabledServices []string, b *blueprint.Blueprint) {
-	f := b.GetFirewallCustomization()
+	f := b.GetFirewall()
 	ports := []string{}
 
 	if f != nil {
@@ -152,7 +152,7 @@ func setFirewall(p *pipeline.Pipeline, enabledServices []string, disabledService
 }
 
 func setServices(p *pipeline.Pipeline, enabledServices []string, disabledServices []string, b *blueprint.Blueprint) {
-	s := b.GetServicesCustomization()
+	s := b.GetServices()
 
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)

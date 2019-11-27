@@ -8,6 +8,7 @@ type RawFSAssemblerOptions struct {
 	Filename           string    `json:"filename"`
 	RootFilesystemUUDI uuid.UUID `json:"root_fs_uuid"`
 	Size               uint64    `json:"size"`
+	FilesystemType     string    `json:"fs_type,omitempty"`
 }
 
 func (RawFSAssemblerOptions) isAssemblerOptions() {}
