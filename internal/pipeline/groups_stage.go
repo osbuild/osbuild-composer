@@ -7,7 +7,8 @@ type GroupsStageOptions struct {
 func (GroupsStageOptions) isStageOptions() {}
 
 type GroupsStageOptionsGroup struct {
-	GID *string `json:"gid,omitempty"`
+	Name string  `json:"name"`
+	GID  *string `json:"gid,omitempty"`
 }
 
 func NewGroupsStage(options *GroupsStageOptions) *Stage {
