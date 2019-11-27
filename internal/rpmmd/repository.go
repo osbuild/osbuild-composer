@@ -19,6 +19,7 @@ type RepoConfig struct {
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`
 	Checksum   string `json:"checksum,omitempty"`
+	GPGKey     string `json:"gpgkey,omitempty"`
 }
 
 type PackageList []Package
