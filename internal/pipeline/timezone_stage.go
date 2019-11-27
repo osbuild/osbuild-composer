@@ -8,7 +8,7 @@ func (TimezoneStageOptions) isStageOptions() {}
 
 func NewTimezoneStage(options *TimezoneStageOptions) *Stage {
 	return &Stage{
-		Name:    "org.osbuild.users",
+		Name:    "org.osbuild.timezone",
 		Options: options,
 	}
 }
