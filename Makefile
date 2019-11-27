@@ -4,6 +4,7 @@ build:
 	go build -o osbuild-worker ./cmd/osbuild-worker/
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
+	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
 
 .PHONY: install
 install:
