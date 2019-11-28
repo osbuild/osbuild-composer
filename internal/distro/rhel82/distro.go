@@ -1,6 +1,7 @@
 package rhel82
 
 import (
+	"errors"
 	"sort"
 	"strconv"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -28,7 +28,7 @@ type output struct {
 	Assembler        *pipeline.Assembler
 }
 
-func init() {
+func New() *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
@@ -260,7 +260,7 @@ func init() {
 		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte),
 	}
 
-	distro.Register("rhel-8.2", &r)
+	return &r
 }
 
 func (r *RHEL82) Repositories() []rpmmd.RepoConfig {
@@ -293,13 +293,13 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	if output, exists := r.outputs[outputFormat]; exists {
 		return output.Name, output.MimeType, nil
 	}
-	return "", "", &distro.InvalidOutputFormatError{outputFormat}
+	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
 func (r *RHEL82) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
-		return nil, &distro.InvalidOutputFormatError{outputFormat}
+		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
 	p := &pipeline.Pipeline{}

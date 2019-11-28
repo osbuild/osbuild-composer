@@ -1,6 +1,8 @@
 package test
 
 import (
+	"errors"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
@@ -28,9 +30,9 @@ func (d *TestDistro) ListOutputFormats() []string {
 }
 
 func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, error) {
-	return "", "", &distro.InvalidOutputFormatError{outputFormat}
+	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
 func (d *TestDistro) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
-	return nil, &distro.InvalidOutputFormatError{outputFormat}
+	return nil, errors.New("invalid output format: " + outputFormat)
 }

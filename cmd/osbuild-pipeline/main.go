@@ -7,10 +7,7 @@ import (
 	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
 func main() {

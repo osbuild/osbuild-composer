@@ -11,6 +11,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
 type Distro interface {
@@ -22,27 +25,23 @@ type Distro interface {
 	ListOutputFormats() []string
 
 	// Returns the canonical filename and MIME type for a given output
-	// format
+	// format. `outputFormat` must be one returned by
 	FilenameFromType(outputFormat string) (string, string, error)
 
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
-	// given blueprint. `outputFormat` must be one returned by
-	// ListOutputFormats().
+	// given blueprint.
 	Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error)
 }
 
-// An InvalidOutputFormatError is returned when a requested output format is
-// not supported. The requested format is included as the error message.
-type InvalidOutputFormatError struct {
-	Format string
-}
+var registered map[string]Distro
 
-func (e *InvalidOutputFormatError) Error() string {
-	return e.Format
+func init() {
+	registered = map[string]Distro{
+		"fedora-30": fedora30.New(),
+		"rhel-8.2":    rhel82.New(),
+	}
 }
-
-var registered = map[string]Distro{}
 
 func New(name string) Distro {
 	if name == "" {

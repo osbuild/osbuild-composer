@@ -15,12 +15,10 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
-
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 
 	"github.com/google/uuid"
 )

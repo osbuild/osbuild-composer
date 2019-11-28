@@ -9,8 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
-
-	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 )
 
 func TestDistro_Pipeline(t *testing.T) {
