@@ -1195,8 +1195,7 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	d := distro.New("")
-	for _, format := range d.ListOutputFormats() {
+	for _, format := range api.distro.ListOutputFormats() {
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 

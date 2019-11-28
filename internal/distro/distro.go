@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -44,20 +43,9 @@ func init() {
 }
 
 func New(name string) Distro {
-	if name == "" {
-		distro, err := FromHost()
-		if err == nil {
-			return distro
-		} else {
-			log.Println("cannot detect distro from host: " + err.Error())
-			log.Println("falling back to 'fedora-30'")
-			return New("fedora-30")
-		}
-	}
-
 	distro, ok := registered[name]
 	if !ok {
-		panic("unknown distro: " + name)
+		return nil
 	}
 
 	return distro
@@ -77,11 +65,12 @@ func FromHost() (Distro, error) {
 
 	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
 
-	distro, ok := registered[name]
-	if !ok {
+	d := New(name)
+	if d == nil {
 		return nil, errors.New("unknown distro: " + name)
 	}
-	return distro, nil
+
+	return d, nil
 }
 
 func Register(name string, distro Distro) {

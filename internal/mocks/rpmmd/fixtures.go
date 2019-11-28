@@ -2,12 +2,14 @@ package rpmmd_mock
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/store"
 	"sort"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type FixtureGenerator func() Fixture
@@ -56,7 +58,8 @@ func createBaseStoreFixture() *store.Store {
 
 	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
 
-	s := store.New(nil)
+	d := distro.New("fedora-30")
+	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b
 	s.Composes = map[uuid.UUID]store.Compose{
