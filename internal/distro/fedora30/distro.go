@@ -343,6 +343,10 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipel
 	return p, nil
 }
 
+func (r *Fedora30) Runner() string {
+	return "org.osbuild.fedora30"
+}
+
 func (r *Fedora30) buildPipeline() *pipeline.Pipeline {
 	packages := []string{
 		"dnf",

@@ -373,6 +373,10 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipelin
 	return p, nil
 }
 
+func (r *RHEL82) Runner() string {
+	return "org.osbuild.rhel82"
+}
+
 func (r *RHEL82) buildPipeline() *pipeline.Pipeline {
 	packages := []string{
 		"dnf",

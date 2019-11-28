@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
@@ -74,7 +75,7 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string) error {
 	return nil
 }
 
-func handleJob(client *ComposerClient) {
+func handleJob(client *ComposerClient, distro distro.Distro) {
 	fmt.Println("Waiting for a new job...")
 	job, err := client.AddJob()
 	if err != nil {
@@ -84,7 +85,7 @@ func handleJob(client *ComposerClient) {
 	client.UpdateJob(job, "RUNNING")
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	err, errs := job.Run()
+	err, errs := job.Run(distro)
 	if err != nil {
 		client.UpdateJob(job, "FAILED")
 		return
@@ -101,9 +102,13 @@ func handleJob(client *ComposerClient) {
 }
 
 func main() {
-	client := NewClient()
+	distro, err := distro.FromHost()
+	if err != nil {
+		panic(err)
+	}
 
+	client := NewClient()
 	for {
-		handleJob(client)
+		handleJob(client, distro)
 	}
 }

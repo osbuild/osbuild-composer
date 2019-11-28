@@ -3,10 +3,12 @@ package jobqueue
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -22,8 +24,28 @@ type JobStatus struct {
 	Status string `json:"status"`
 }
 
-func (job *Job) Run() (error, []error) {
-	cmd := exec.Command("osbuild", "--store", "/var/cache/osbuild-composer/store", "--json", "-")
+func (job *Job) Run(d distro.Distro) (error, []error) {
+	build := pipeline.Build{
+		Runner: d.Runner(),
+	}
+
+	buildFile, err := ioutil.TempFile("", "osbuild-worker-build-env-*")
+	if err != nil {
+		return err, nil
+	}
+	defer os.Remove(buildFile.Name())
+
+	err = json.NewEncoder(buildFile).Encode(build)
+	if err != nil {
+		return err, nil
+	}
+
+	cmd := exec.Command(
+		"osbuild",
+		"--store", "/var/cache/osbuild-composer/store",
+		"--build-env", buildFile.Name(),
+		"--json", "-",
+	)
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()
