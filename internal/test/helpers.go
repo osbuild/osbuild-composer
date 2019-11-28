@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 type API interface {
@@ -137,8 +139,8 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 	dropFields(reply, ignoreFields...)
 	dropFields(expected, ignoreFields...)
 
-	if !reflect.DeepEqual(reply, expected) {
-		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON)
+	if diff := cmp.Diff(expected, reply); diff != "" {
+		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s\ndiff: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON, diff)
 		return
 	}
 }
