@@ -31,6 +31,8 @@ BuildRequires:  golang(github.com/gobwas/glob)
 Requires: systemd
 Requires: osbuild
 
+Provides: osbuild-composer
+
 %description
 %{common_description}
 
