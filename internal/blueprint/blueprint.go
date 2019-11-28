@@ -1,16 +1,6 @@
 // Package blueprint contains primitives for representing weldr blueprints
 package blueprint
 
-// An InvalidOutputFormatError is returned when a requested output format is
-// not supported. The requested format is included as the error message.
-type InvalidOutputFormatError struct {
-	message string
-}
-
-func (e *InvalidOutputFormatError) Error() string {
-	return e.message
-}
-
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
 	Name           string          `json:"name"`
