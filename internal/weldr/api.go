@@ -15,10 +15,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
-
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type API struct {
@@ -135,6 +135,18 @@ func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, 
 	}
 
 	return true
+}
+
+func isRequestVersionAtLeast(params httprouter.Params, minVersion uint) bool {
+	versionString := params.ByName("version")
+
+	version, err := strconv.ParseUint(versionString, 10, 0)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return uint(version) >= minVersion
 }
 
 func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) {
@@ -1110,15 +1122,16 @@ func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, requ
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
-		BlueprintName string `json:"blueprint_name"`
-		ComposeType   string `json:"compose_type"`
-		Branch        string `json:"branch"`
+		BlueprintName string         `json:"blueprint_name"`
+		ComposeType   string         `json:"compose_type"`
+		Branch        string         `json:"branch"`
+		Upload        *UploadRequest `json:"upload"`
 	}
 	type ComposeReply struct {
 		BuildID uuid.UUID `json:"build_id"`
@@ -1152,12 +1165,27 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Status:  true,
 	}
 
+	var uploadTarget *target.Target
+	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
+		uploadTarget, err = UploadRequestToTarget(*cr.Upload)
+
+		if err != nil {
+			errors := responseError{
+				ID:  "UploadError",
+				Msg: fmt.Sprintf("bad input format: %s", err.Error()),
+			}
+
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+	}
+
 	bp := blueprint.Blueprint{}
 	changed := false
 	found := api.store.GetBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
 
 	if found {
-		err := api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType)
+		err := api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
@@ -1183,7 +1211,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 }
 
 func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 	type composeType struct {
@@ -1203,24 +1231,22 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 
 	var reply struct {
-		New []*store.ComposeEntry `json:"new"`
-		Run []*store.ComposeEntry `json:"run"`
+		New []*ComposeEntry `json:"new"`
+		Run []*ComposeEntry `json:"run"`
 	}
 
-	reply.New = make([]*store.ComposeEntry, 0)
-	reply.Run = make([]*store.ComposeEntry, 0)
-
-	for _, entry := range api.store.ListQueue(nil) {
-		switch entry.QueueStatus {
+	composes := api.store.GetAllComposes()
+	for id, compose := range composes {
+		switch compose.QueueStatus {
 		case "WAITING":
-			reply.New = append(reply.New, entry)
+			reply.New = append(reply.New, composeToComposeEntry(id, compose, isRequestVersionAtLeast(params, 1)))
 		case "RUNNING":
-			reply.Run = append(reply.Run, entry)
+			reply.Run = append(reply.Run, composeToComposeEntry(id, compose, isRequestVersionAtLeast(params, 1)))
 		}
 	}
 
@@ -1229,12 +1255,12 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 
 func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	// TODO: lorax has some params: /api/v0/compose/status/<uuids>[?blueprint=<blueprint_name>&status=<compose_status>&type=<compose_type>]
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 
 	var reply struct {
-		UUIDs []*store.ComposeEntry `json:"uuids"`
+		UUIDs []*ComposeEntry `json:"uuids"`
 	}
 
 	uuidsParam := params.ByName("uuids")
@@ -1257,7 +1283,9 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 			uuids = append(uuids, id)
 		}
 	}
-	reply.UUIDs = api.store.ListQueue(uuids)
+	composes := api.store.GetAllComposes()
+
+	reply.UUIDs = composesToComposeEntries(composes, uuids, isRequestVersionAtLeast(params, 1))
 
 	json.NewEncoder(writer).Encode(reply)
 }
@@ -1305,29 +1333,41 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 
 	var reply struct {
-		Finished []interface{} `json:"finished"`
+		Finished []*ComposeEntry `json:"finished"`
 	}
 
-	reply.Finished = make([]interface{}, 0)
+	composes := api.store.GetAllComposes()
+	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
+		switch entry.QueueStatus {
+		case "FINISHED":
+			reply.Finished = append(reply.Finished, entry)
+		}
+	}
 
 	json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
+	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
 
 	var reply struct {
-		Failed []interface{} `json:"failed"`
+		Failed []*ComposeEntry `json:"failed"`
 	}
 
-	reply.Failed = make([]interface{}, 0)
+	composes := api.store.GetAllComposes()
+	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
+		switch entry.QueueStatus {
+		case "FAILED":
+			reply.Failed = append(reply.Failed, entry)
+		}
+	}
 
 	json.NewEncoder(writer).Encode(reply)
 }

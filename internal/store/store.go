@@ -220,95 +220,26 @@ func (s *Store) ListBlueprints() []string {
 	return names
 }
 
-type ComposeEntry struct {
-	ID          uuid.UUID `json:"id"`
-	Blueprint   string    `json:"blueprint"`
-	Version     string    `json:"version"`
-	ComposeType string    `json:"compose_type"`
-	ImageSize   int64     `json:"image_size"`
-	QueueStatus string    `json:"queue_status"`
-	JobCreated  float64   `json:"job_created"`
-	JobStarted  float64   `json:"job_started,omitempty"`
-	JobFinished float64   `json:"job_finished,omitempty"`
-}
-
-func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
+func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	newCompose := func(id uuid.UUID, compose Compose) *ComposeEntry {
-		switch compose.QueueStatus {
-		case "WAITING":
-			return &ComposeEntry{
-				ID:          id,
-				Blueprint:   compose.Blueprint.Name,
-				Version:     compose.Blueprint.Version,
-				ComposeType: compose.OutputType,
-				QueueStatus: compose.QueueStatus,
-				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
-			}
-		case "RUNNING":
-			return &ComposeEntry{
-				ID:          id,
-				Blueprint:   compose.Blueprint.Name,
-				Version:     compose.Blueprint.Version,
-				ComposeType: compose.OutputType,
-				QueueStatus: compose.QueueStatus,
-				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
-				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
-			}
-		case "FINISHED":
-			image, err := s.GetImage(id)
-			imageSize := int64(0)
-			if err == nil {
-				imageSize = image.Size
-			}
-			return &ComposeEntry{
-				ID:          id,
-				Blueprint:   compose.Blueprint.Name,
-				Version:     compose.Blueprint.Version,
-				ComposeType: compose.OutputType,
-				ImageSize:   imageSize,
-				QueueStatus: compose.QueueStatus,
-				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
-				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
-				JobFinished: float64(compose.JobFinished.UnixNano()) / 1000000000,
-			}
-		case "FAILED":
-			return &ComposeEntry{
-				ID:          id,
-				Blueprint:   compose.Blueprint.Name,
-				Version:     compose.Blueprint.Version,
-				ComposeType: compose.OutputType,
-				QueueStatus: compose.QueueStatus,
-				JobCreated:  float64(compose.JobCreated.UnixNano()) / 1000000000,
-				JobStarted:  float64(compose.JobStarted.UnixNano()) / 1000000000,
-				JobFinished: float64(compose.JobFinished.UnixNano()) / 1000000000,
-			}
-		default:
-			panic("invalid compose state")
-		}
-	}
+	composes := make(map[uuid.UUID]Compose)
 
-	var composes []*ComposeEntry
-	if uuids == nil {
-		composes = make([]*ComposeEntry, 0, len(s.Composes))
-		for id, compose := range s.Composes {
-			composes = append(composes, newCompose(id, compose))
-		}
-	} else {
-		composes = make([]*ComposeEntry, 0, len(uuids))
-		for _, id := range uuids {
-			if compose, exists := s.Composes[id]; exists {
-				composes = append(composes, newCompose(id, compose))
-			}
-		}
-	}
+	for id, compose := range s.Composes {
+		newCompose := compose
+		newCompose.Targets = []*target.Target{}
 
-	// make this function output more predictable
-	sort.Slice(composes, func(i, j int) bool {
-		return composes[i].ID.String() < composes[j].ID.String()
-	})
+		for _, t := range compose.Targets {
+			newTarget := *t
+			newCompose.Targets = append(newCompose.Targets, &newTarget)
+		}
+
+		newBlueprint := *compose.Blueprint
+		newCompose.Blueprint = &newBlueprint
+
+		composes[id] = newCompose
+	}
 
 	return composes
 }
@@ -448,7 +379,7 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string) error {
+func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string, uploadTarget *target.Target) error {
 	targets := []*target.Target{
 		target.NewLocalTarget(
 			&target.LocalTargetOptions{
@@ -456,6 +387,11 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 			},
 		),
 	}
+
+	if uploadTarget != nil {
+		targets = append(targets, uploadTarget)
+	}
+
 	pipeline, err := s.distro.Pipeline(bp, composeType)
 	if err != nil {
 		return err
@@ -488,6 +424,9 @@ func (s *Store) PopCompose() Job {
 		}
 		compose.JobStarted = time.Now()
 		compose.QueueStatus = "RUNNING"
+		for _, t := range compose.Targets {
+			t.Status = "RUNNING"
+		}
 		s.Composes[job.ComposeID] = compose
 		return nil
 	})
@@ -518,6 +457,9 @@ func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
 				return &NotRunningError{"compose was not running"}
 			}
 			compose.QueueStatus = status
+			for _, t := range compose.Targets {
+				t.Status = status
+			}
 			s.Composes[composeID] = compose
 		default:
 			return &InvalidRequestError{"invalid state transition"}
