@@ -36,3 +36,7 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 func (d *TestDistro) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
 	return nil, errors.New("invalid output format: " + outputFormat)
 }
+
+func (d *TestDistro) Runner() string {
+	return "org.osbuild.test"
+}
