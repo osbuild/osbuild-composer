@@ -41,11 +41,6 @@ func main() {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	err = os.MkdirAll("/var/lib/osbuild-composer", 0755)
-	if err != nil {
-		panic(err)
-	}
-
 	store := store.New(&stateFile)
 
 	jobAPI := jobqueue.New(logger, store)
