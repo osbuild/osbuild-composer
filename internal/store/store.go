@@ -305,6 +305,11 @@ func (s *Store) ListQueue(uuids []uuid.UUID) []*ComposeEntry {
 		}
 	}
 
+	// make this function output more predictable
+	sort.Slice(composes, func(i, j int) bool {
+		return composes[i].ID.String() < composes[j].ID.String()
+	})
+
 	return composes
 }
 
