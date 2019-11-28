@@ -1228,6 +1228,7 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	// TODO: lorax has some params: /api/v0/compose/status/<uuids>[?blueprint=<blueprint_name>&status=<compose_status>&type=<compose_type>]
 	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
 		return
 	}
@@ -1236,19 +1237,25 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		UUIDs []*store.ComposeEntry `json:"uuids"`
 	}
 
-	uuidStrings := strings.Split(params.ByName("uuids"), ",")
-	uuids := make([]uuid.UUID, len(uuidStrings))
-	for _, uuidString := range uuidStrings {
-		id, err := uuid.Parse(uuidString)
-		if err != nil {
-			errors := responseError{
-				ID:  "UnknownUUID",
-				Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+	uuidsParam := params.ByName("uuids")
+
+	var uuids []uuid.UUID
+
+	if uuidsParam != "*" {
+		uuidStrings := strings.Split(uuidsParam, ",")
+		uuids = make([]uuid.UUID, len(uuidStrings))
+		for _, uuidString := range uuidStrings {
+			id, err := uuid.Parse(uuidString)
+			if err != nil {
+				errors := responseError{
+					ID:  "UnknownUUID",
+					Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+				}
+				statusResponseError(writer, http.StatusBadRequest, errors)
+				return
 			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
+			uuids = append(uuids, id)
 		}
-		uuids = append(uuids, id)
 	}
 	reply.UUIDs = api.store.ListQueue(uuids)
 
