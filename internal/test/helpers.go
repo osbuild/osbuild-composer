@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 )
 
 type API interface {
@@ -143,4 +144,16 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s\ndiff: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON, diff)
 		return
 	}
+}
+
+func IgnoreDates() cmp.Option {
+	return cmp.Comparer(func(a, b time.Time) bool { return true })
+}
+
+func IgnoreUuids() cmp.Option {
+	return cmp.Comparer(func(a, b uuid.UUID) bool { return true })
+}
+
+func Ignore(what string) cmp.Option {
+	return cmp.FilterPath(func(p cmp.Path) bool { return p.String() == what }, cmp.Ignore())
 }
