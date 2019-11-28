@@ -27,6 +27,7 @@ BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
 BuildRequires:  golang(github.com/gobwas/glob)
+BuildRequires:  golang(github.com/google/go-cmp/cmp)
 
 Requires: systemd
 Requires: osbuild
