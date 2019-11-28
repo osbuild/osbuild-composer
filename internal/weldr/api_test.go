@@ -8,20 +8,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	_ "github.com/osbuild/osbuild-composer/internal/distro/test"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/test"
+	"github.com/google/go-cmp/cmp"
 )
 
-func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) *weldr.API {
+func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*weldr.API, *store.Store) {
 	fixture := fixtureGenerator()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	d := distro.New("test")
 
-	return weldr.New(rpm, d, nil, fixture.Store)
+	return weldr.New(rpm, d, nil, fixture.Store), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -46,7 +50,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -63,7 +67,7 @@ func TestBlueprintsNew(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -80,7 +84,7 @@ func TestBlueprintsWorkspace(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
@@ -101,7 +105,7 @@ func TestBlueprintsInfo(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test2","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
@@ -122,7 +126,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
@@ -141,7 +145,7 @@ func TestBlueprintsDiff(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
@@ -161,7 +165,7 @@ func TestBlueprintsDelete(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test", ``)
@@ -169,7 +173,7 @@ func TestBlueprintsDelete(t *testing.T) {
 }
 
 func TestBlueprintsChanges(t *testing.T) {
-	api := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
@@ -184,24 +188,121 @@ func TestBlueprintsChanges(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
+	expectedComposeLocal := &store.Compose{
+		QueueStatus: "WAITING",
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		OutputType: "tar",
+		Targets: []*target.Target{
+			{
+				Name:    "org.osbuild.local",
+				Created: time.Time{},
+				Status:  "WAITING",
+				Options: &target.LocalTargetOptions{},
+			},
+		},
+	}
+
+	expectedComposeLocalAndAws := &store.Compose{
+		QueueStatus: "WAITING",
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		OutputType: "tar",
+		Targets: []*target.Target{
+			{
+				Name:    "org.osbuild.local",
+				Status:  "WAITING",
+				Options: &target.LocalTargetOptions{},
+			},
+			{
+				Name:      "org.osbuild.aws",
+				Status:    "WAITING",
+				ImageName: "test_upload",
+				Options: &target.AWSTargetOptions{
+					Region:          "frankfurt",
+					AccessKeyID:     "accesskey",
+					SecretAccessKey: "secretkey",
+					Bucket:          "clay",
+					Key:             "imagekey",
+				},
+			},
+		},
+	}
+
 	var cases = []struct {
-		External       bool
+		External        bool
+		Method          string
+		Path            string
+		Body            string
+		ExpectedStatus  int
+		ExpectedJSON    string
+		ExpectedCompose *store.Compose
+		IgnoreFields    []string
+	}{
+		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, nil, []string{"build_id"}},
+		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`, http.StatusOK, `{"status": true}`, expectedComposeLocal, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"tar","branch":"master","upload":{"image_name":"test_upload","provider":"aws","settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}}`, http.StatusOK, `{"status": true}`, expectedComposeLocalAndAws, []string{"build_id"}},
+	}
+
+	for _, c := range cases {
+		api, s := createWeldrAPI(rpmmd_mock.NoComposesFixture)
+		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
+
+		if c.ExpectedStatus != http.StatusOK {
+			continue
+		}
+
+		if len(s.Composes) != 1 {
+			t.Fatalf("%s: bad compose count in store: %d", c.Path, len(s.Composes))
+		}
+
+		// I have no idea how to get the compose in better way
+		var compose store.Compose
+		for _, c := range s.Composes {
+			compose = c
+			break
+		}
+
+		if diff := cmp.Diff(compose, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
+			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
+		}
+
+	}
+}
+
+func TestComposeStatus(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.FixtureGenerator
 		Method         string
 		Path           string
 		Body           string
 		ExpectedStatus int
 		ExpectedJSON   string
-		IgnoreFields   []string
 	}{
-		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "tar","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, []string{"build_id"}},
-		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "tar","branch": "master"}`, http.StatusOK, `{"status": true}`, []string{"build_id"}},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/30000000-0000-0000-0000-000000000000,30000000-0000-0000-0000-000000000002", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/*", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000001","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING","job_created":1574857140,"job_started":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140},{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/status/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING","job_created":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+	}
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
-		test.SendHTTP(api, c.External, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
-		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
-		test.SendHTTP(api, c.External, "DELETE", "/api/v0/blueprints/delete/test", ``)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
 	}
 }
 
@@ -213,9 +314,9 @@ func TestComposeQueue(t *testing.T) {
 		Body           string
 		ExpectedStatus int
 		ExpectedJSON   string
-		IgnoreFields   []string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`, []string{"id", "job_created", "job_started"}},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING","uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -223,8 +324,54 @@ func TestComposeQueue(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
-		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
+	}
+}
+
+func TestComposeFinished(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.FixtureGenerator
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+	}
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
+	}
+}
+
+func TestComposeFailed(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.FixtureGenerator
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+	}
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
 	}
 }
 
@@ -241,7 +388,7 @@ func TestSourcesNew(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 	}
@@ -260,7 +407,7 @@ func TestSourcesDelete(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
@@ -280,7 +427,7 @@ func TestProjectsDepsolve(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -301,7 +448,7 @@ func TestProjectsInfo(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -323,7 +470,7 @@ func TestModulesInfo(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -342,7 +489,7 @@ func TestProjectsList(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -364,7 +511,7 @@ func TestModulesList(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := createWeldrAPI(c.Fixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type FixtureGenerator func() Fixture
@@ -54,49 +55,121 @@ func generatePackageList() rpmmd.PackageList {
 
 func createBaseStoreFixture() *store.Store {
 	var bName = "test"
-	var b = blueprint.Blueprint{Name: bName, Version: "0.0.0"}
+	var b = blueprint.Blueprint{
+		Name:           bName,
+		Version:        "0.0.0",
+		Packages:       []blueprint.Package{},
+		Modules:        []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Customizations: nil,
+	}
 
 	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
+
+
+	var localTarget = &target.Target{
+		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
+		Name:      "org.osbuild.local",
+		ImageName: "localimage",
+		Created:   date,
+		Status:    "WAITING",
+		Options: &target.LocalTargetOptions{
+			Location: "/tmp/localimage",
+		},
+	}
+
+	var awsTarget = &target.Target{
+		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
+		Name:      "org.osbuild.aws",
+		ImageName: "awsimage",
+		Created:   date,
+		Status:    "WAITING",
+		Options: &target.AWSTargetOptions{
+			Region:          "frankfurt",
+			AccessKeyID:     "accesskey",
+			SecretAccessKey: "secretkey",
+			Bucket:          "clay",
+			Key:             "imagekey",
+		},
+	}
 
 	d := distro.New("fedora-30")
 	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b
 	s.Composes = map[uuid.UUID]store.Compose{
-		uuid.MustParse("e65f76f8-b0d9-4974-9dd7-745ae80b4721"): store.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): store.Compose{
 			QueueStatus: "WAITING",
 			Blueprint:   &b,
 			OutputType:  "tar",
-			Targets:     nil,
+			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 		},
-		uuid.MustParse("e65f76f8-b0d9-4974-9dd7-745ae80b4722"): store.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): store.Compose{
 			QueueStatus: "RUNNING",
 			Blueprint:   &b,
 			OutputType:  "tar",
-			Targets:     nil,
+			Targets:     []*target.Target{localTarget},
 			JobCreated:  date,
 			JobStarted:  date,
 		},
-		uuid.MustParse("e65f76f8-b0d9-4974-9dd7-745ae80b4723"): store.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000002"): store.Compose{
 			QueueStatus: "FINISHED",
 			Blueprint:   &b,
 			OutputType:  "tar",
-			Targets:     nil,
+			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 			JobStarted:  date,
 			JobFinished: date,
 		},
-		uuid.MustParse("e65f76f8-b0d9-4974-9dd7-745ae80b4724"): store.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): store.Compose{
 			QueueStatus: "FAILED",
 			Blueprint:   &b,
 			OutputType:  "tar",
-			Targets:     nil,
+			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 			JobStarted:  date,
 			JobFinished: date,
 		},
 	}
+
+	return s
+}
+
+func createBaseDepsolveFixture() []rpmmd.PackageSpec {
+	return []rpmmd.PackageSpec{
+		{
+			Name:    "dep-package1",
+			Epoch:   0,
+			Version: "1.33",
+			Release: "2.fc30",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "dep-package2",
+			Epoch:   0,
+			Version: "2.9",
+			Release: "1.fc30",
+			Arch:    "x86_64",
+		},
+	}
+}
+
+func createStoreWithoutComposesFixture() *store.Store {
+	var bName = "test"
+	var b = blueprint.Blueprint{
+		Name:           bName,
+		Version:        "0.0.0",
+		Packages:       []blueprint.Package{},
+		Modules:        []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Customizations: nil,
+	}
+
+	d := distro.New("fedora-30")
+	s := store.New(nil, d)
+
+	s.Blueprints[bName] = b
 
 	return s
 }
@@ -108,25 +181,24 @@ func BaseFixture() Fixture {
 			nil,
 		},
 		depsolve{
-			[]rpmmd.PackageSpec{
-				{
-					Name:    "dep-package1",
-					Epoch:   0,
-					Version: "1.33",
-					Release: "2.fc30",
-					Arch:    "x86_64",
-				},
-				{
-					Name:    "dep-package2",
-					Epoch:   0,
-					Version: "2.9",
-					Release: "1.fc30",
-					Arch:    "x86_64",
-				},
-			},
+			createBaseDepsolveFixture(),
 			nil,
 		},
 		createBaseStoreFixture(),
+	}
+}
+
+func NoComposesFixture() Fixture {
+	return Fixture{
+		fetchPackageList{
+			generatePackageList(),
+			nil,
+		},
+		depsolve{
+			createBaseDepsolveFixture(),
+			nil,
+		},
+		createStoreWithoutComposesFixture(),
 	}
 }
 
