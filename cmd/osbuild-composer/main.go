@@ -34,14 +34,18 @@ func main() {
 	jobListener := listeners[1]
 
 	rpm := rpmmd.NewRPMMD()
-	distribution := distro.New("")
+
+	distribution, err := distro.FromHost()
+	if err != nil {
+		panic("cannot detect distro from host: " + err.Error())
+	}
 
 	var logger *log.Logger
 	if verbose {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	store := store.New(&stateFile)
+	store := store.New(&stateFile, distribution)
 
 	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(rpm, distribution, logger, store)

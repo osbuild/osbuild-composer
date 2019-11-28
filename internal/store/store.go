@@ -35,6 +35,7 @@ type Store struct {
 	mu           sync.RWMutex // protects all fields
 	pendingJobs  chan Job
 	stateChannel chan []byte
+	distro       distro.Distro
 }
 
 // A Compose represent the task of building one image. It contains all the information
@@ -105,7 +106,7 @@ func (e *InvalidRequestError) Error() string {
 	return e.message
 }
 
-func New(stateFile *string) *Store {
+func New(stateFile *string, distro distro.Distro) *Store {
 	var s Store
 
 	if stateFile != nil {
@@ -148,6 +149,8 @@ func New(stateFile *string) *Store {
 		s.BlueprintsChanges = make(map[string]map[string]blueprint.Change)
 	}
 	s.pendingJobs = make(chan Job, 200)
+
+	s.distro = distro
 
 	return &s
 }
@@ -448,8 +451,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 			},
 		),
 	}
-	d := distro.New("")
-	pipeline, err := d.Pipeline(bp, composeType)
+	pipeline, err := s.distro.Pipeline(bp, composeType)
 	if err != nil {
 		return err
 	}
@@ -527,8 +529,7 @@ func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
 		if compose.QueueStatus != "FINISHED" {
 			return nil, &InvalidRequestError{"compose was not finished"}
 		}
-		d := distro.New("")
-		name, mime, err := d.FilenameFromType(compose.OutputType)
+		name, mime, err := s.distro.FilenameFromType(compose.OutputType)
 		if err != nil {
 			panic("invalid output type")
 		}

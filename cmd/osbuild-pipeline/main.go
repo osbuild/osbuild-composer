@@ -32,6 +32,10 @@ func main() {
 	}
 
 	d := distro.New(distroArg)
+	if d == nil {
+		panic("unknown distro: " + distroArg)
+	}
+
 	pipeline, err := d.Pipeline(blueprint, format)
 	if err != nil {
 		panic(err.Error())
