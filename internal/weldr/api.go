@@ -19,7 +19,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/store"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 )
 
 type API struct {

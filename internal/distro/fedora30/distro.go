@@ -1,6 +1,7 @@
 package fedora30
 
 import (
+	"errors"
 	"sort"
 	"strconv"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -29,7 +29,7 @@ type output struct {
 	Assembler        *pipeline.Assembler
 }
 
-func init() {
+func New() *Fedora30 {
 	r := Fedora30{
 		outputs: map[string]output{},
 	}
@@ -212,7 +212,7 @@ func init() {
 		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk"),
 	}
 
-	distro.Register("fedora-30", &r)
+	return &r
 }
 
 func (r *Fedora30) Repositories() []rpmmd.RepoConfig {
@@ -268,13 +268,13 @@ func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error)
 	if output, exists := r.outputs[outputFormat]; exists {
 		return output.Name, output.MimeType, nil
 	}
-	return "", "", &distro.InvalidOutputFormatError{outputFormat}
+	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
 func (r *Fedora30) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
-		return nil, &distro.InvalidOutputFormatError{outputFormat}
+		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
 	p := &pipeline.Pipeline{}
