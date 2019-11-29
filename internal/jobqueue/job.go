@@ -109,6 +109,10 @@ func (job *Job) Run(d distro.Distro) (error, []error) {
 				continue
 			}
 
+			if options.Key == "" {
+				options.Key = job.ID.String()
+			}
+
 			_, err = a.Upload("/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/image.ami", options.Bucket, options.Key)
 			if err != nil {
 				r = append(r, err)
