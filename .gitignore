@@ -5,3 +5,6 @@ __pycache__
 /osbuild-pipeline
 /osbuild-upload-azure
 /osbuild-upload-aws
+
+/*.tar.gz
+/*.src.rpm
