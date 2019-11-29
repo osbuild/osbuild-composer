@@ -35,7 +35,7 @@ func New() *Fedora30 {
 	}
 
 	r.outputs["ami"] = output{
-		Name:     "image.ami",
+		Name:     "image.raw.xz",
 		MimeType: "application/octet-stream",
 		Packages: []string{
 			"@Core",
@@ -58,7 +58,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		IncludeFSTab:  true,
-		Assembler:     r.qemuAssembler("raw", "image.ami"),
+		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz"),
 	}
 
 	r.outputs["ext4-filesystem"] = output{
