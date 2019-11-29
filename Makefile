@@ -1,3 +1,6 @@
+PACKAGE_NAME = osbuild-composer
+VERSION = $(shell grep Version golang-github-osbuild-composer.spec | awk '{gsub(/[^0-9]/,"")}1')
+
 .PHONY: build
 build:
 	go build -o osbuild-composer ./cmd/osbuild-composer/
@@ -21,3 +24,33 @@ install:
 	systemctl daemon-reload
 	systemctl enable osbuild-composer.socket
 	systemctl enable osbuild-worker@1.service
+
+tarball:
+	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
+
+srpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball
+	/usr/bin/rpmbuild -bs \
+	  --define "_sourcedir $(CURDIR)" \
+	  --define "_srcrpmdir $(CURDIR)" \
+	  golang-github-$(PACKAGE_NAME).spec
+
+rpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball 
+	- rm -r "`pwd`/output"
+	mkdir -p "`pwd`/output"
+	mkdir -p "`pwd`/rpmbuild"
+	/usr/bin/rpmbuild -bb \
+	  --define "_sourcedir `pwd`" \
+	  --define "_specdir `pwd`" \
+	  --define "_builddir `pwd`/rpmbuild" \
+	  --define "_srcrpmdir `pwd`" \
+	  --define "_rpmdir `pwd`/output" \
+	  --define "_buildrootdir `pwd`/build" \
+	  golang-github-$(PACKAGE_NAME).spec
+	rm -r "`pwd`/rpmbuild"
+	rm -r "`pwd`/build"
+
+check-working-directory:
+	@if [ "`git status --porcelain --untracked-files=no | wc -l`" != "0" ]; then \
+	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
+	  exit 1; \
+	fi
