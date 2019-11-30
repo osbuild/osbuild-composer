@@ -126,6 +126,11 @@ def run_test(case, store):
         else:
             filename, _ = urllib.request.urlretrieve(case["url"])
 
+        fn, ex = os.path.splitext(filename)
+        if ex == ".xz":
+            with open(fn, "w") as f:
+                subprocess.run(["xz", "--decompress", "--stdout", filename], stdout=f)
+            filename = fn
         info = json.loads(subprocess.check_output(["tools/image-info", filename]))
         if info != case["expected"]:
             with temporary_json_file(case["expected"]) as a, temporary_json_file(info) as b:
