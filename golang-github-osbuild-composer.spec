@@ -1,6 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        3
+Version:        4
 
 %gometa
 
@@ -78,6 +78,8 @@ install -m 0755 -vd                                         %{buildroot}%{_local
 %{_sysusersdir}/osbuild-composer.conf
 
 %changelog
+* Sun Dec 1 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 4-1
+- New upstream release.
 * Fri Nov 15 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 3-1
 - New upstream release.
 * Wed Nov 13 15:14:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 2-2
