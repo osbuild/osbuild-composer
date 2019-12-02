@@ -1,8 +1,10 @@
 package weldr_test
 
 import (
+	"bytes"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strconv"
 	"testing"
@@ -17,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 
+	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -72,6 +75,29 @@ func TestBlueprintsNew(t *testing.T) {
 	}
 }
 
+func TestBlueprintsNewToml(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[packages]]
+name = "httpd"
+version = "2.4.*"`
+
+	req := httptest.NewRequest("POST",  "/api/v0/blueprints/new", bytes.NewReader([]byte(blueprint)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+}
+
 func TestBlueprintsWorkspace(t *testing.T) {
 	var cases = []struct {
 		Method         string
@@ -112,6 +138,42 @@ func TestBlueprintsInfo(t *testing.T) {
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test2", ``)
 		test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test1", ``)
+	}
+}
+
+func TestBlueprintsInfoToml(t *testing.T) {
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
+
+	req := httptest.NewRequest("GET",  "/api/v0/blueprints/info/test1?format=toml", nil)
+	recorder := httptest.NewRecorder()
+	api.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", resp.StatusCode)
+	}
+
+	var got blueprint.Blueprint
+	_, err := toml.DecodeReader(resp.Body, &got)
+	if err != nil {
+		t.Fatalf("error decoding toml file: %v", err)
+	}
+
+	t.Logf("%v", got)
+
+	expected := blueprint.Blueprint{
+		Name: "test1",
+		Description: "Test",
+		Version: "0.0.0",
+		Packages: []blueprint.Package{
+			{ "httpd", "2.4.*" },
+		},
+		Groups: []blueprint.Group{},
+		Modules: []blueprint.Package{},
+	}
+	if diff := cmp.Diff(got, expected); diff != "" {
+		t.Fatalf("received unexpected blueprint: %s", diff)
 	}
 }
 
