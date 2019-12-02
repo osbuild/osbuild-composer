@@ -2,15 +2,18 @@ package weldr
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
@@ -701,11 +704,44 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		changes = append(changes, change{changed, blueprint.Name})
 	}
 
-	json.NewEncoder(writer).Encode(reply{
-		Blueprints: blueprints,
-		Changes:    changes,
-		Errors:     []responseError{},
-	})
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	format := q.Get("format")
+	if format == "json" || format == "" {
+		json.NewEncoder(writer).Encode(reply{
+			Blueprints: blueprints,
+			Changes:    changes,
+			Errors:     []responseError{},
+		})
+	} else if format == "toml" {
+		// lorax concatenates multiple blueprints with `\n\n` here,
+		// which is never useful. Deviate by only returning the first
+		// blueprint.
+		if len(blueprints) > 1 {
+			errors := responseError{
+				ID:  "HTTPError",
+				Msg: "toml format only supported when requesting one blueprint",
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+		toml.NewEncoder(writer).Encode(blueprints[0])
+	} else {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid `format` parameter: %s", format),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 }
 
 func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1030,21 +1066,29 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
+	if len(contentType) != 1 {
 		errors := responseError{
 			ID:  "BlueprintsError",
-			Msg: "'blueprint must be json'",
+			Msg: "missing Content-Type header",
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var blueprint blueprint.Blueprint
-	err := json.NewDecoder(request.Body).Decode(&blueprint)
+	var err error
+	if contentType[0] == "application/json" {
+		err = json.NewDecoder(request.Body).Decode(&blueprint)
+	} else if contentType[0] == "text/x-toml" {
+		_, err = toml.DecodeReader(request.Body, &blueprint)
+	} else {
+		err = errors.New("blueprint must be in json or toml format")
+	}
+
 	if err != nil {
 		errors := responseError{
 			ID:  "BlueprintsError",
-			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand.",
+			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand: " + err.Error(),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
