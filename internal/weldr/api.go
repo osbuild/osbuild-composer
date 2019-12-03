@@ -1288,10 +1288,10 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	var reply struct {
+	reply := struct {
 		New []*ComposeEntry `json:"new"`
 		Run []*ComposeEntry `json:"run"`
-	}
+	}{[]*ComposeEntry{}, []*ComposeEntry{}}
 
 	composes := api.store.GetAllComposes()
 	for id, compose := range composes {
@@ -1390,9 +1390,9 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	var reply struct {
+	reply := struct {
 		Finished []*ComposeEntry `json:"finished"`
-	}
+	}{[]*ComposeEntry{}}
 
 	composes := api.store.GetAllComposes()
 	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
@@ -1410,9 +1410,9 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	var reply struct {
+	reply := struct {
 		Failed []*ComposeEntry `json:"failed"`
-	}
+	}{[]*ComposeEntry{}}
 
 	composes := api.store.GetAllComposes()
 	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {

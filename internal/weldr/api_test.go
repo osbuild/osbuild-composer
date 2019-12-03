@@ -85,7 +85,7 @@ version = "0.0.0"
 name = "httpd"
 version = "2.4.*"`
 
-	req := httptest.NewRequest("POST",  "/api/v0/blueprints/new", bytes.NewReader([]byte(blueprint)))
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/new", bytes.NewReader([]byte(blueprint)))
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
@@ -145,7 +145,7 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 
-	req := httptest.NewRequest("GET",  "/api/v0/blueprints/info/test1?format=toml", nil)
+	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/test1?format=toml", nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
 
@@ -163,13 +163,13 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	t.Logf("%v", got)
 
 	expected := blueprint.Blueprint{
-		Name: "test1",
+		Name:        "test1",
 		Description: "Test",
-		Version: "0.0.0",
+		Version:     "0.0.0",
 		Packages: []blueprint.Package{
-			{ "httpd", "2.4.*" },
+			{"httpd", "2.4.*"},
 		},
-		Groups: []blueprint.Group{},
+		Groups:  []blueprint.Group{},
 		Modules: []blueprint.Package{},
 	}
 	if diff := cmp.Diff(got, expected); diff != "" {
@@ -379,6 +379,7 @@ func TestComposeQueue(t *testing.T) {
 	}{
 		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"WAITING","uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"RUNNING"}]}`},
+		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[],"run":[]}`},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -386,7 +387,7 @@ func TestComposeQueue(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
 	}
 }
@@ -402,6 +403,7 @@ func TestComposeFinished(t *testing.T) {
 	}{
 		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[]}`},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -409,7 +411,7 @@ func TestComposeFinished(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
 	}
 }
@@ -425,6 +427,7 @@ func TestComposeFailed(t *testing.T) {
 	}{
 		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"tar","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[]}`},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -432,7 +435,7 @@ func TestComposeFailed(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api, _ := createWeldrAPI(c.Fixture)
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, "id", "job_created", "job_started")
 	}
 }
