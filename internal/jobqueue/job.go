@@ -8,36 +8,40 @@ import (
 	"os/exec"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
 
 type Job struct {
-	ID       uuid.UUID          `json:"id"`
-	Pipeline *pipeline.Pipeline `json:"pipeline"`
-	Targets  []*target.Target   `json:"targets"`
+	ID         uuid.UUID          `json:"id"`
+	Pipeline   *pipeline.Pipeline `json:"pipeline"`
+	Targets    []*target.Target   `json:"targets"`
+	OutputType string             `json:"output_type"`
 }
 
 type JobStatus struct {
-	Status string `json:"status"`
+	Status string       `json:"status"`
+	Image  *store.Image `json:"image"`
 }
 
-func (job *Job) Run(d distro.Distro) (error, []error) {
+func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
 	build := pipeline.Build{
 		Runner: d.Runner(),
 	}
 
 	buildFile, err := ioutil.TempFile("", "osbuild-worker-build-env-*")
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 	defer os.Remove(buildFile.Name())
 
 	err = json.NewEncoder(buildFile).Encode(build)
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	cmd := exec.Command(
@@ -50,22 +54,22 @@ func (job *Job) Run(d distro.Distro) (error, []error) {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	err = json.NewEncoder(stdin).Encode(job.Pipeline)
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 	stdin.Close()
 
@@ -75,13 +79,20 @@ func (job *Job) Run(d distro.Distro) (error, []error) {
 	}
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		return err, nil
+		return nil, err, nil
 	}
+
+	filename, mimeType, err := d.FilenameFromType(job.OutputType)
+	if err != nil {
+		return nil, err, nil
+	}
+
+	var image store.Image
 
 	var r []error
 
@@ -102,6 +113,25 @@ func (job *Job) Run(d distro.Distro) (error, []error) {
 				r = append(r, err)
 				continue
 			}
+
+			imagePath := options.Location + "/" + filename
+			file, err := os.Open(imagePath)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			fileStat, err := file.Stat()
+			if err != nil {
+				return nil, err, nil
+			}
+
+			image = store.Image{
+				Path: imagePath,
+				Mime: mimeType,
+				Size: fileStat.Size(),
+			}
+
 		case *target.AWSTargetOptions:
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
@@ -132,5 +162,5 @@ func (job *Job) Run(d distro.Distro) (error, []error) {
 		r = append(r, nil)
 	}
 
-	return nil, r
+	return &image, nil, r
 }

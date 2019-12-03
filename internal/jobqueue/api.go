@@ -93,12 +93,10 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	nextJob := api.store.PopCompose()
 
 	writer.WriteHeader(http.StatusCreated)
-	json.NewEncoder(writer).Encode(replyBody{nextJob.ComposeID, nextJob.Pipeline, nextJob.Targets})
+	json.NewEncoder(writer).Encode(replyBody{nextJob.ComposeID, nextJob.Pipeline, nextJob.Targets, nextJob.OutputType})
 }
 
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	type requestBody JobStatus
-
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		statusResponseError(writer, http.StatusUnsupportedMediaType)
@@ -111,14 +109,14 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	var body requestBody
+	var body JobStatus
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
 		return
 	}
 
-	err = api.store.UpdateCompose(id, body.Status)
+	err = api.store.UpdateCompose(id, body.Status, body.Image)
 	if err != nil {
 		switch err.(type) {
 		case *store.NotFoundError:
