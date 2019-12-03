@@ -51,19 +51,20 @@ type Compose struct {
 	JobCreated  time.Time            `json:"job_created"`
 	JobStarted  time.Time            `json:"job_started"`
 	JobFinished time.Time            `json:"job_finished"`
+	Image       *Image               `json:"image"`
 }
 
 // A Job contains the information about a compose a worker needs to process it.
 type Job struct {
-	ComposeID uuid.UUID
-	Pipeline  *pipeline.Pipeline
-	Targets   []*target.Target
+	ComposeID  uuid.UUID
+	Pipeline   *pipeline.Pipeline
+	Targets    []*target.Target
+	OutputType string
 }
 
 // An Image represents the image resulting from a compose.
 type Image struct {
-	File *os.File
-	Name string
+	Path string
 	Mime string
 	Size int64
 }
@@ -221,6 +222,14 @@ func (s *Store) ListBlueprints() []string {
 	sort.Strings(names)
 
 	return names
+}
+
+func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	compose, exists := s.Composes[id]
+	return compose, exists
 }
 
 func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
@@ -431,9 +440,10 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 		return nil
 	})
 	s.pendingJobs <- Job{
-		ComposeID: composeID,
-		Pipeline:  pipeline,
-		Targets:   targets,
+		ComposeID:  composeID,
+		Pipeline:   pipeline,
+		Targets:    targets,
+		OutputType: composeType,
 	}
 
 	return nil
@@ -457,7 +467,7 @@ func (s *Store) PopCompose() Job {
 	return job
 }
 
-func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
+func (s *Store) UpdateCompose(composeID uuid.UUID, status string, image *Image) error {
 	return s.change(func() error {
 		compose, exists := s.Composes[composeID]
 		if !exists {
@@ -484,50 +494,17 @@ func (s *Store) UpdateCompose(composeID uuid.UUID, status string) error {
 			for _, t := range compose.Targets {
 				t.Status = status
 			}
+
+			if status == "FINISHED" {
+				compose.Image = image
+			}
+
 			s.Composes[composeID] = compose
 		default:
 			return &InvalidRequestError{"invalid state transition"}
 		}
 		return nil
 	})
-}
-
-func (s *Store) GetImage(composeID uuid.UUID) (*Image, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if compose, exists := s.Composes[composeID]; exists {
-		if compose.QueueStatus != "FINISHED" {
-			return nil, &InvalidRequestError{"compose was not finished"}
-		}
-		name, mime, err := s.distro.FilenameFromType(compose.OutputType)
-		if err != nil {
-			panic("invalid output type")
-		}
-		for _, t := range compose.Targets {
-			switch options := t.Options.(type) {
-			case *target.LocalTargetOptions:
-				file, err := os.Open(options.Location + "/" + name)
-				if err == nil {
-					fileStat, err := file.Stat()
-					if err != nil {
-						return nil, &NotFoundError{"image info could not be found"}
-					}
-					size := fileStat.Size()
-
-					return &Image{
-						File: file,
-						Name: name,
-						Mime: mime,
-						Size: size,
-					}, nil
-				}
-			}
-		}
-		return nil, &NotFoundError{"image could not be found"}
-	}
-
-	return nil, &NotFoundError{"compose could not be found"}
 }
 
 func (s *Store) PushSource(source SourceConfig) {

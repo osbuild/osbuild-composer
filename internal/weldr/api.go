@@ -9,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -1370,21 +1372,51 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	image, err := api.store.GetImage(uuid)
-	if err != nil {
+	compose, exists := api.store.GetCompose(uuid)
+	if !exists {
 		errors := responseError{
 			ID:  "BuildMissingFile",
-			Msg: fmt.Sprintf("Build %s is missing image file %s", uuidString, image.Name),
+			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
-	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+image.Name)
-	writer.Header().Set("Content-Type", image.Mime)
-	writer.Header().Set("Content-Length", fmt.Sprintf("%d", image.Size))
+	if compose.QueueStatus != "FINISHED" {
+		errors := responseError{
+			ID:  "BuildInWrongState",
+			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, compose.QueueStatus),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 
-	io.Copy(writer, image.File)
+	if compose.Image == nil {
+		errors := responseError{
+			ID:  "BuildMissingFile",
+			Msg: fmt.Sprintf("Compose %s doesn't have an image assigned", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	imageName := filepath.Base(compose.Image.Path)
+
+	file, err := os.Open(compose.Image.Path)
+	if err != nil {
+		errors := responseError{
+			ID:  "BuildMissingFile",
+			Msg: fmt.Sprintf("Build %s is missing file %s!", uuidString, imageName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+imageName)
+	writer.Header().Set("Content-Type", compose.Image.Mime)
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", compose.Image.Size))
+
+	io.Copy(writer, file)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

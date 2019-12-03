@@ -11,6 +11,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type ComposerClient struct {
@@ -53,9 +54,9 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	return job, nil
 }
 
-func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string) error {
+func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string, image *store.Image) error {
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status})
+	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, image})
 	req, err := http.NewRequest("PATCH", "http://localhost/job-queue/v1/jobs/"+job.ID.String(), &b)
 	if err != nil {
 		return err
@@ -82,23 +83,23 @@ func handleJob(client *ComposerClient, distro distro.Distro) {
 		panic(err)
 	}
 
-	client.UpdateJob(job, "RUNNING")
+	client.UpdateJob(job, "RUNNING", nil)
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	err, errs := job.Run(distro)
+	image, err, errs := job.Run(distro)
 	if err != nil {
-		client.UpdateJob(job, "FAILED")
+		client.UpdateJob(job, "FAILED", nil)
 		return
 	}
 
 	for _, err := range errs {
 		if err != nil {
-			client.UpdateJob(job, "FAILED")
+			client.UpdateJob(job, "FAILED", nil)
 			return
 		}
 	}
 
-	client.UpdateJob(job, "FINISHED")
+	client.UpdateJob(job, "FINISHED", image)
 }
 
 func main() {

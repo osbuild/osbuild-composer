@@ -3,6 +3,7 @@ package weldr
 import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/store"
+	"log"
 	"sort"
 )
 
@@ -41,13 +42,13 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, includeUploads b
 		composeEntry.JobStarted = float64(compose.JobStarted.UnixNano()) / 1000000000
 
 	case "FINISHED":
-		//image, err := s.GetImage(id)
-		//imageSize := int64(0)
-		//if err == nil {
-		//	imageSize = image.Size
-		//}
-		// TODO: this is currently broken!
-		composeEntry.ImageSize = int64(0)
+		if compose.Image != nil {
+			composeEntry.ImageSize = compose.Image.Size
+		} else {
+			log.Printf("finished compose with id %s has nil image\n", id.String())
+			composeEntry.ImageSize = 0
+		}
+
 		composeEntry.JobCreated = float64(compose.JobCreated.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(compose.JobStarted.UnixNano()) / 1000000000
 		composeEntry.JobFinished = float64(compose.JobFinished.UnixNano()) / 1000000000
