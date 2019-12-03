@@ -805,7 +805,16 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			repos = append(repos, source.RepoConfig())
 		}
 
-		dependencies, _ := api.rpmmd.Depsolve(specs, repos)
+		dependencies, err := api.rpmmd.Depsolve(specs, repos)
+
+		if err != nil {
+			errors := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
 
 		blueprints = append(blueprints, entry{blueprint, dependencies})
 	}
