@@ -184,7 +184,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.0","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"}],"modules":[],"groups":[]}}],"errors":[]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"}],"modules":[],"groups":[]}}],"errors":[]}`},
 	}
 
 	for _, c := range cases {

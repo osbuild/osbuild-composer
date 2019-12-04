@@ -6,11 +6,14 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -330,6 +333,21 @@ func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 	return changes
 }
 
+func bumpVersion(str string) string {
+	v := [3]uint64{}
+	fields := strings.SplitN(str, ".", 3)
+	for i := 0; i < len(fields); i++ {
+		if n, err := strconv.ParseUint(fields[i], 10, 64); err == nil {
+			v[i] = n
+		} else {
+			// don't touch strings with invalid versions
+			return str
+		}
+	}
+
+	return fmt.Sprintf("%d.%d.%d", v[0], v[1], v[2] + 1)
+}
+
 func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
 	s.change(func() error {
 		hash := sha1.New()
@@ -352,6 +370,12 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
 			s.BlueprintsChanges[bp.Name] = make(map[string]blueprint.Change)
 		}
 		s.BlueprintsChanges[bp.Name][commit] = change
+
+		if old, ok := s.Blueprints[bp.Name]; ok {
+			if bp.Version == "" || bp.Version == old.Version {
+				bp.Version = bumpVersion(old.Version)
+			}
+		}
 		s.Blueprints[bp.Name] = bp
 		return nil
 	})
