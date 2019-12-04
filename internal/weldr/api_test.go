@@ -160,8 +160,6 @@ func TestBlueprintsInfoToml(t *testing.T) {
 		t.Fatalf("error decoding toml file: %v", err)
 	}
 
-	t.Logf("%v", got)
-
 	expected := blueprint.Blueprint{
 		Name:        "test1",
 		Description: "Test",
@@ -169,8 +167,6 @@ func TestBlueprintsInfoToml(t *testing.T) {
 		Packages: []blueprint.Package{
 			{"httpd", "2.4.*"},
 		},
-		Groups:  []blueprint.Group{},
-		Modules: []blueprint.Package{},
 	}
 	if diff := cmp.Diff(got, expected); diff != "" {
 		t.Fatalf("received unexpected blueprint: %s", diff)
