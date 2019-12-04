@@ -733,7 +733,9 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		toml.NewEncoder(writer).Encode(blueprints[0])
+		encoder := toml.NewEncoder(writer)
+		encoder.Indent = ""
+		encoder.Encode(blueprints[0])
 	} else {
 		errors := responseError{
 			ID:  "InvalidChars",
