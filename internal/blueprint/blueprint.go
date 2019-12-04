@@ -3,32 +3,35 @@ package blueprint
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name           string          `json:"name"`
-	Description    string          `json:"description"`
-	Version        string          `json:"version,omitempty"`
-	Packages       []Package       `json:"packages"`
-	Modules        []Package       `json:"modules"`
-	Groups         []Group         `json:"groups"`
-	Customizations *Customizations `json:"customizations,omitempty"`
+	Name        string    `json:"name" toml:"name"`
+	Description string    `json:"description" toml:"description"`
+	Version     string    `json:"version,omitempty" toml:"version,omitempty"`
+	Packages    []Package `json:"packages" toml:"packages"`
+
+	// skip "omitempty" for json, because cockpit-composer chokes when the keys are missing
+	Modules []Package `json:"modules" toml:"modules,omitempty"`
+	Groups  []Group   `json:"groups" toml:"groups,omitempty"`
+
+	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations,omitempty"`
 }
 
 type Change struct {
-	Commit    string    `json:"commit"`
-	Message   string    `json:"message"`
-	Revision  *string   `json:"revision"`
-	Timestamp string    `json:"timestamp"`
-	Blueprint Blueprint `json:"-"`
+	Commit    string    `json:"commit" toml:"commit"`
+	Message   string    `json:"message" toml:"message"`
+	Revision  *string   `json:"revision" toml:"revision"`
+	Timestamp string    `json:"timestamp" toml:"timestamp"`
+	Blueprint Blueprint `json:"-" toml:"-"`
 }
 
 // A Package specifies an RPM package.
 type Package struct {
-	Name    string `json:"name"`
-	Version string `json:"version,omitempty"`
+	Name    string `json:"name" toml:"name"`
+	Version string `json:"version,omitempty" toml:"version,omitempty"`
 }
 
 // A group specifies an package group.
 type Group struct {
-	Name string `json:"name"`
+	Name string `json:"name" toml:"name"`
 }
 
 // packages, modules, and groups all resolve to rpm packages right now. This
