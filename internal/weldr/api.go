@@ -692,9 +692,9 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		if i == 0 {
 			name = name[1:]
 		}
-		var blueprint blueprint.Blueprint
-		var changed bool
-		if !api.store.GetBlueprint(name, &blueprint, &changed) {
+
+		blueprint, changed := api.store.GetBlueprint(name)
+		if blueprint == nil {
 			errors := responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: ", name),
@@ -702,7 +702,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		blueprints = append(blueprints, blueprint)
+		blueprints = append(blueprints, *blueprint)
 		changes = append(changes, change{changed, blueprint.Name})
 	}
 
@@ -779,8 +779,8 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		if i == 0 {
 			name = name[1:]
 		}
-		var blueprint blueprint.Blueprint
-		if !api.store.GetBlueprint(name, &blueprint, nil) {
+		blueprint, _ := api.store.GetBlueprint(name)
+		if blueprint == nil {
 			errors := responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: blueprint not found", name),
@@ -820,7 +820,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			return
 		}
 
-		blueprints = append(blueprints, entry{blueprint, dependencies})
+		blueprints = append(blueprints, entry{*blueprint, dependencies})
 	}
 
 	json.NewEncoder(writer).Encode(reply{
@@ -861,9 +861,8 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		if i == 0 {
 			name = name[1:]
 		}
-		var blueprint blueprint.Blueprint
-		var changed bool
-		if !api.store.GetBlueprint(name, &blueprint, &changed) {
+		blueprint, _ := api.store.GetBlueprint(name)
+		if blueprint == nil {
 			err := responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: blueprint_not_found", name),
@@ -903,7 +902,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			}
 		}
 
-		blueprints = append(blueprints, blueprintFrozen{blueprint})
+		blueprints = append(blueprints, blueprintFrozen{*blueprint})
 	}
 
 	json.NewEncoder(writer).Encode(reply{
@@ -961,8 +960,9 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	// Fetch old and new blueprint details from store and return error if not found
-	var oldBlueprint, newBlueprint blueprint.Blueprint
-	if !api.store.GetBlueprintCommitted(name, &oldBlueprint) || !api.store.GetBlueprint(name, &newBlueprint, nil) {
+	oldBlueprint := api.store.GetBlueprintCommitted(name)
+	newBlueprint, _ := api.store.GetBlueprint(name)
+	if oldBlueprint == nil || newBlueprint == nil {
 		errors := responseError{
 			ID:  "UnknownBlueprint",
 			Msg: fmt.Sprintf("Unknown blueprint name: %s", name),
@@ -1237,12 +1237,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 	}
 
-	bp := blueprint.Blueprint{}
-	changed := false
-	found := api.store.GetBlueprint(cr.BlueprintName, &bp, &changed) // TODO: what to do with changed?
+	bp, _ := api.store.GetBlueprint(cr.BlueprintName)
 
-	if found {
-		err := api.store.PushCompose(reply.BuildID, &bp, cr.ComposeType, uploadTarget)
+	if bp != nil {
+		err := api.store.PushCompose(reply.BuildID, bp, cr.ComposeType, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
