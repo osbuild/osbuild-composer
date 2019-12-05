@@ -1350,8 +1350,54 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	// TODO: implement this route for v0 and v1 (they differ)
-	notImplementedHandler(writer, request, params)
+	uuidString := params.ByName("uuid")
+	id, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	compose, exists := api.store.GetCompose(id)
+
+	if !exists {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	var reply struct {
+		ID          uuid.UUID            `json:"id"`
+		Config      string               `json:"config"`    // anaconda config, let's ignore this field
+		Blueprint   *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
+		Commit      string               `json:"commit"`    // empty for now
+		Deps        []string             `json:"deps"`      // empty for now
+		ComposeType string               `json:"compose_type"`
+		QueueStatus string               `json:"queue_status"`
+		ImageSize   int64                `json:"image_size"`
+		Uploads     []UploadResponse     `json:"uploads,omitempty"`
+	}
+
+	reply.ID = id
+	reply.Blueprint = compose.Blueprint
+	reply.Deps = []string{}
+	reply.ComposeType = compose.OutputType
+	reply.QueueStatus = compose.QueueStatus
+	if compose.Image != nil {
+		reply.ImageSize = compose.Image.Size
+	}
+
+	if isRequestVersionAtLeast(params, 1) {
+		reply.Uploads = TargetsToUploadResponses(compose.Targets)
+	}
+
+	json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
