@@ -1237,7 +1237,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 	}
 
-	bp, _ := api.store.GetBlueprint(cr.BlueprintName)
+	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 
 	if bp != nil {
 		err := api.store.PushCompose(reply.BuildID, bp, cr.ComposeType, uploadTarget)
