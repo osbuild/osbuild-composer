@@ -256,17 +256,16 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) GetBlueprint(name string, bp *blueprint.Blueprint, changed *bool) bool {
+func (s *Store) GetBlueprint(name string) (*blueprint.Blueprint, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var inWorkspace bool
-	*bp, inWorkspace = s.Workspace[name]
+	bp, inWorkspace := s.Workspace[name]
 	if !inWorkspace {
 		var ok bool
-		*bp, ok = s.Blueprints[name]
+		bp, ok = s.Blueprints[name]
 		if !ok {
-			return false
+			return nil, false
 		}
 	}
 
@@ -284,21 +283,16 @@ func (s *Store) GetBlueprint(name string, bp *blueprint.Blueprint, changed *bool
 		bp.Version = "0.0.0"
 	}
 
-	if changed != nil {
-		*changed = inWorkspace
-	}
-
-	return true
+	return &bp, inWorkspace
 }
 
-func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool {
+func (s *Store) GetBlueprintCommitted(name string) *blueprint.Blueprint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var ok bool
-	*bp, ok = s.Blueprints[name]
+	bp, ok := s.Blueprints[name]
 	if !ok {
-		return false
+		return nil
 	}
 
 	// cockpit-composer cannot deal with missing "packages" or "modules"
@@ -315,7 +309,7 @@ func (s *Store) GetBlueprintCommitted(name string, bp *blueprint.Blueprint) bool
 		bp.Version = "0.0.0"
 	}
 
-	return true
+	return &bp
 }
 
 func (s *Store) GetBlueprintChange(name string, commit string) *blueprint.Change {
@@ -354,7 +348,7 @@ func bumpVersion(str string) string {
 		}
 	}
 
-	return fmt.Sprintf("%d.%d.%d", v[0], v[1], v[2] + 1)
+	return fmt.Sprintf("%d.%d.%d", v[0], v[1], v[2]+1)
 }
 
 func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
