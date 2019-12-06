@@ -21,6 +21,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*weldr.API, *store.Store) {
@@ -337,6 +338,41 @@ func TestCompose(t *testing.T) {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
 
+	}
+}
+
+func TestComposeDelete(t *testing.T) {
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	var cases = []struct {
+		Path               string
+		ExpectedJSON       string
+		ExpectedIDsInStore []string
+	}{
+		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000002", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000002","status":true}],"errors":[]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000003"}},
+		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000002,30000000-0000-0000-0000-000000000003", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000002","status":true},{"uuid":"30000000-0000-0000-0000-000000000003","status":true}],"errors":[]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001"}},
+		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000003,30000000-0000-0000-0000-000000000000", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000003","status":true},{"uuid":"30000000-0000-0000-0000-000000000000","status":true}],"errors":[{"id":"BuildInWrongState","msg":"Compose 30000000-0000-0000-0000-000000000000 is not in FINISHED or FAILED."}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002"}},
+		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000003,30000000-0000-0000-0000", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000003","status":true},{"uuid":"00000000-0000-0000-0000-000000000000","status":true}],"errors":[{"id":"UnknownUUID","msg":"30000000-0000-0000-0000 is not a valid uuid"},{"id":"UnknownUUID","msg":"compose 00000000-0000-0000-0000-000000000000 doesn't exist"}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002"}},
+		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000003,42000000-0000-0000-0000-000000000000", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000003","status":true},{"uuid":"42000000-0000-0000-0000-000000000000","status":true}],"errors":[{"id":"UnknownUUID","msg":"compose 42000000-0000-0000-0000-000000000000 doesn't exist"}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002"}},
+	}
+
+	for _, c := range cases {
+		api, s := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, "DELETE", c.Path, "", http.StatusOK, c.ExpectedJSON)
+
+		idsInStore := []string{}
+
+		for id, _ := range s.Composes {
+			idsInStore = append(idsInStore, id.String())
+		}
+
+		diff := cmp.Diff(idsInStore, c.ExpectedIDsInStore, cmpopts.SortSlices(func(a, b string) bool { return a < b }))
+
+		if diff != "" {
+			t.Errorf("%s: composes in store are different, expected: %v, got: %v, diff:\n%s", c.Path, c.ExpectedIDsInStore, idsInStore, diff)
+		}
 	}
 }
 

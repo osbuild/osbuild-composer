@@ -85,6 +85,7 @@ func New(rpmmd rpmmd.RPMMD, distro distro.Distro, logger *log.Logger, store *sto
 	api.router.DELETE("/api/v:version/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
 	api.router.POST("/api/v:version/compose", api.composeHandler)
+	api.router.DELETE("/api/v:version/compose/delete/:uuids", api.composeDeleteHandler)
 	api.router.GET("/api/v:version/compose/types", api.composeTypesHandler)
 	api.router.GET("/api/v:version/compose/queue", api.composeQueueHandler)
 	api.router.GET("/api/v:version/compose/status/:uuids", api.composeStatusHandler)
@@ -1261,6 +1262,68 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
+
+	json.NewEncoder(writer).Encode(reply)
+}
+
+func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	type composeDeleteStatus struct {
+		UUID   uuid.UUID `json:"uuid"`
+		Status bool      `json:"status"`
+	}
+
+	type composeDeleteError struct {
+		ID  string `json:"id"`
+		Msg string `json:"msg"`
+	}
+
+	uuidsParam := params.ByName("uuids")
+
+	results := []composeDeleteStatus{}
+	errors := []composeDeleteError{}
+	uuidStrings := strings.Split(uuidsParam, ",")
+	for _, uuidString := range uuidStrings {
+		id, err := uuid.Parse(uuidString)
+		if err != nil {
+			errors = append(errors, composeDeleteError{
+				"UnknownUUID",
+				fmt.Sprintf("%s is not a valid uuid", uuidString),
+			})
+		}
+
+		err = api.store.DeleteCompose(id)
+
+		if err != nil {
+			switch err.(type) {
+			case *store.NotFoundError:
+				errors = append(errors, composeDeleteError{
+					"UnknownUUID",
+					fmt.Sprintf("compose %s doesn't exist", id),
+				})
+			case *store.InvalidRequestError:
+				errors = append(errors, composeDeleteError{
+					"BuildInWrongState",
+					err.Error(),
+				})
+			default:
+				errors = append(errors, composeDeleteError{
+					"ComposeError",
+					fmt.Sprintf("%s: %s", id, err.Error()),
+				})
+			}
+		}
+
+		results = append(results, composeDeleteStatus{id, true})
+	}
+
+	reply := struct {
+		UUIDs  []composeDeleteStatus `json:"uuids"`
+		Errors []composeDeleteError  `json:"errors"`
+	}{results, errors}
 
 	json.NewEncoder(writer).Encode(reply)
 }

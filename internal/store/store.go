@@ -443,6 +443,29 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 	return nil
 }
 
+func (s *Store) DeleteCompose(id uuid.UUID) error {
+	return s.change(func() error {
+		compose, exists := s.Composes[id]
+
+		if !exists {
+			return &NotFoundError{}
+		}
+
+		if compose.QueueStatus != "FINISHED" && compose.QueueStatus != "FAILED" {
+			return &InvalidRequestError{fmt.Sprintf("Compose %s is not in FINISHED or FAILED.", id)}
+		}
+
+		delete(s.Composes, id)
+
+		var err error
+		if compose.Image != nil {
+			err = os.Remove(compose.Image.Path)
+		}
+
+		return err
+	})
+}
+
 func (s *Store) PopCompose() Job {
 	job := <-s.pendingJobs
 	s.change(func() error {
