@@ -1,6 +1,7 @@
 package weldr
 
 import (
+	"archive/tar"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -92,6 +93,7 @@ func New(rpmmd rpmmd.RPMMD, distro distro.Distro, logger *log.Logger, store *sto
 	api.router.GET("/api/v:version/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v:version/compose/failed", api.composeFailedHandler)
 	api.router.GET("/api/v:version/compose/image/:uuid", api.composeImageHandler)
+	api.router.GET("/api/v:version/compose/logs/:uuid", api.composeLogsHandler)
 	api.router.POST("/api/v:version/compose/uploads/schedule/:uuid", api.uploadsScheduleHandler)
 
 	api.router.DELETE("/api/v:version/upload/delete/:uuid", api.uploadsDeleteHandler)
@@ -1461,6 +1463,59 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	writer.Header().Set("Content-Length", fmt.Sprintf("%d", compose.Image.Size))
 
 	io.Copy(writer, file)
+}
+
+func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	uuidString := params.ByName("uuid")
+	id, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	compose, exists := api.store.GetCompose(id)
+	if !exists {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	if compose.QueueStatus != "FINISHED" && compose.QueueStatus != "FAILED" {
+		errors := responseError{
+			ID:  "BuildInWrongState",
+			Msg: fmt.Sprintf("Build %s not in FINISHED or FAILED state.", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-logs.tar")
+	writer.Header().Set("Content-Type", "application/x-tar")
+
+	tw := tar.NewWriter(writer)
+
+	// TODO: return real log from osbuild
+	fileContents := []byte("SUCCESS\n")
+
+	header := &tar.Header{
+		Name: "logs/osbuild.log",
+		Mode: 0644,
+		Size: int64(len(fileContents)),
+	}
+
+	tw.WriteHeader(header)
+	tw.Write(fileContents)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

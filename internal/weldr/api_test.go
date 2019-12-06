@@ -1,7 +1,9 @@
 package weldr_test
 
 import (
+	"archive/tar"
 	"bytes"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -386,6 +388,73 @@ func TestComposeInfo(t *testing.T) {
 	for _, c := range cases {
 		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestComposeLogs(t *testing.T) {
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	var successCases = []struct {
+		Path                       string
+		ExpectedContentDisposition string
+		ExpectedContentType        string
+		ExpectedFileName           string
+		ExpectedFileContent        string
+	}{
+		{"/api/v0/compose/logs/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-logs.tar", "application/x-tar", "logs/osbuild.log", "SUCCESS\n"},
+		{"/api/v1/compose/logs/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-logs.tar", "application/x-tar", "logs/osbuild.log", "SUCCESS\n"},
+	}
+
+	for _, c := range successCases {
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+
+		response := test.SendHTTP(api, false, "GET", c.Path, "")
+		if response.Header.Get("content-disposition") != c.ExpectedContentDisposition {
+			t.Errorf("%s: expected content-disposition: %s, but got: %s", c.Path, c.ExpectedContentDisposition, response.Header.Get("content-disposition"))
+		}
+
+		if response.Header.Get("content-type") != c.ExpectedContentType {
+			t.Errorf("%s: expected content-type: %s, but got: %s", c.Path, c.ExpectedContentType, response.Header.Get("content-type"))
+		}
+
+		tr := tar.NewReader(response.Body)
+		h, err := tr.Next()
+
+		if err != nil {
+			t.Errorf("untarring failed with error: %s", err.Error())
+		}
+
+		if h.Name != c.ExpectedFileName {
+			t.Errorf("%s: expected log content: %s, but got: %s", c.Path, c.ExpectedFileName, h.Name)
+		}
+
+		var buffer bytes.Buffer
+
+		io.Copy(&buffer, tr)
+
+		if buffer.String() != c.ExpectedFileContent {
+			t.Errorf("%s: expected log content: %s, but got: %s", c.Path, c.ExpectedFileContent, buffer.String())
+		}
+	}
+
+	var failureCases = []struct {
+		Path         string
+		ExpectedJSON string
+	}{
+		{"/api/v1/compose/logs/30000000-0000-0000-0000", `{"status":false,"errors":[{"id":"UnknownUUID","msg":"30000000-0000-0000-0000 is not a valid build uuid"}]}`},
+		{"/api/v1/compose/logs/42000000-0000-0000-0000-000000000000", `{"status":false,"errors":[{"id":"UnknownUUID","msg":"Compose 42000000-0000-0000-0000-000000000000 doesn't exist"}]}`},
+		{"/api/v1/compose/logs/30000000-0000-0000-0000-000000000000", `{"status":false,"errors":[{"id":"BuildInWrongState","msg":"Build 30000000-0000-0000-0000-000000000000 not in FINISHED or FAILED state."}]}`},
+	}
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	for _, c := range failureCases {
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, "GET", c.Path, "", http.StatusBadRequest, c.ExpectedJSON)
 	}
 }
 
