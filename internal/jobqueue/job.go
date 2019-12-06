@@ -99,10 +99,13 @@ func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/.", options.Location)
-			cp.Stderr = os.Stderr
-			cp.Stdout = os.Stdout
-			err = cp.Run()
+			err = runCommand("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/.", options.Location)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = runCommand("chown", "-R", "_osbuild-composer:_osbuild-composer", options.Location)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -157,4 +160,11 @@ func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
 	}
 
 	return &image, nil, r
+}
+
+func runCommand(command string, params ...string) error {
+	cp := exec.Command(command, params...)
+	cp.Stderr = os.Stderr
+	cp.Stdout = os.Stdout
+	return cp.Run()
 }
