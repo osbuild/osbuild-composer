@@ -170,6 +170,8 @@ func TestBlueprintsInfoToml(t *testing.T) {
 		Packages: []blueprint.Package{
 			{"httpd", "2.4.*"},
 		},
+		Groups:  []blueprint.Group{},
+		Modules: []blueprint.Package{},
 	}
 	if diff := cmp.Diff(got, expected); diff != "" {
 		t.Fatalf("received unexpected blueprint: %s", diff)
