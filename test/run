@@ -203,7 +203,7 @@ def run_ssh_test(private_key):
            "-i", private_key,
            "-o", "StrictHostKeyChecking=no",
            "redhat@localhost",
-           "systemctl is-system-running"]
+           "systemctl is-system-running --wait"]
     for _ in range(20):
         try:
             print("attempting ssh connection")
