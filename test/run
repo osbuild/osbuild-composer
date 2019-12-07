@@ -87,21 +87,34 @@ def create_ssh_keys():
 
 @contextlib.contextmanager
 def qemu_boot_image(image_file):
-    # run in background
-    cmd = ["qemu-system-x86_64",
-           "-m", "2048",
-           "-snapshot",
-           "-accel", "accel=kvm:hvf:tcg",
-           "-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
-           "-nographic",
-           image_file
-           ]
-    print(f"running qemu command: {' '.join(cmd)}")
-    vm = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        yield None
-    finally:
-        vm.kill()
+    with tempfile.TemporaryDirectory() as dir:
+        # Create an ISO that cloud-init can consume with userdata.
+        subprocess.run(["genisoimage",
+                        "-quiet",
+                        "-input-charset", "utf-8",
+                        "-output", f"{dir}/cloudinit.iso",
+                        "-volid", "cidata",
+                        "-joliet",
+                        "-rock",
+                        f"{TEST_DIR}/cloud-init/user-data",
+                        f"{TEST_DIR}/cloud-init/meta-data"],
+                        check=True)
+        # run in background
+        cmd = ["qemu-system-x86_64",
+               "-m", "2048",
+               "-snapshot",
+               "-accel", "accel=kvm:hvf:tcg",
+               "-cdrom", f"{dir}/cloudinit.iso",
+               "-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
+               "-nographic",
+               image_file
+               ]
+        print(f"running qemu command: {' '.join(cmd)}")
+        vm = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            yield None
+        finally:
+            vm.kill()
 
 
 @contextlib.contextmanager
