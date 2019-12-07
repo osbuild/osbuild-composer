@@ -2,6 +2,7 @@
 
 import argparse
 import contextlib
+import ctypes
 import glob
 import json
 import os
@@ -15,7 +16,37 @@ import urllib.request
 
 from typing import Dict, Any, Union, Tuple
 
+
+
+
 TEST_DIR = os.path.dirname(__file__)
+
+
+def errcheck(ret, func, args):
+    if ret == -1:
+        e = ctypes.get_errno()
+        raise OSError(e, os.strerror(e))
+
+
+CLONE_NEWNET = 0x40000000
+libc = ctypes.CDLL('libc.so.6', use_errno=True)
+libc.setns.errcheck = errcheck
+
+
+@contextlib.contextmanager
+def netns():
+    # Grab a reference to the current namespace.
+    with open("/proc/self/ns/net") as oldnet:
+        # Create a new namespace and enter it.
+        libc.unshare(CLONE_NEWNET)
+        # Up the loopback device in the new namespace.
+        subprocess.run(["ip", "link", "set", "up", "dev", "lo"], check=True)
+        try:
+            yield
+        finally:
+            # Revert to the old namespace, dropping our
+            # reference to the new one.
+            libc.setns(oldnet.fileno(), CLONE_NEWNET)
 
 
 @contextlib.contextmanager
@@ -75,7 +106,7 @@ def qemu_boot_image(image_file):
 
 @contextlib.contextmanager
 def nspawn_boot_container(image_file):
-    cmd = ["systemd-nspawn", "--boot", "-M", "boottest", "--image", image_file]
+    cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", "boottest", "--image", image_file]
     print(f"running nspawn command: {' '.join(cmd)}")
     container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -88,7 +119,7 @@ def nspawn_boot_container(image_file):
 def nspawn_extract_container(image_file):
     with tempfile.TemporaryDirectory() as dir:
         subprocess.run(["tar", "xf", image_file], cwd=dir)
-        cmd = ["systemd-nspawn", "--boot", "-M", "boottest", "--directory", "."]
+        cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", "boottest", "--directory", "."]
         print(f"running nspawn command: {' '.join(cmd)}")
         container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dir)
         try:
@@ -211,20 +242,21 @@ def main():
                         print("starting osbuild")
                         _, output_id = run_osbuild(pl_dict, store)
                         print("osbuild success")
-                        if test_type == "qemu":
-                            with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
-                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
-                                    failed = True
-                        elif test_type == "nspawn":
-                            with nspawn_boot_container(f"{store}/refs/{output_id}/{image_fname}"):
-                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
-                                    failed = True
-                        elif test_type == "nspawn-extract":
-                            with nspawn_extract_container(f"{store}/refs/{output_id}/{image_fname}"):
-                                if run_ssh_test(f"{keydir}/id_rsa") == 1:
-                                    failed = True
-                        else:
-                            print("unknown test type")
+                        with netns():
+                            if test_type == "qemu":
+                                with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
+                                    if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                        failed = True
+                            elif test_type == "nspawn":
+                                with nspawn_boot_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                    if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                        failed = True
+                            elif test_type == "nspawn-extract":
+                                with nspawn_extract_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                    if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                        failed = True
+                            else:
+                                print("unknown test type")
 
         return 1 if failed else 0
 
