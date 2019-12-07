@@ -130,8 +130,8 @@ def qemu_extract_boot_image(image_file):
 
 
 @contextlib.contextmanager
-def nspawn_boot_container(image_file):
-    cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", "boottest", "--image", image_file]
+def nspawn_boot_container(image_file, name):
+    cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", name, "--image", image_file]
     print(f"running nspawn command: {' '.join(cmd)}")
     container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -141,10 +141,10 @@ def nspawn_boot_container(image_file):
 
 
 @contextlib.contextmanager
-def nspawn_extract_container(image_file):
+def nspawn_extract_container(image_file, name):
     with tempfile.TemporaryDirectory() as dir:
         subprocess.run(["tar", "xf", image_file], cwd=dir)
-        cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", "boottest", "--directory", "."]
+        cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", name, "--directory", "."]
         print(f"running nspawn command: {' '.join(cmd)}")
         container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dir)
         try:
@@ -276,11 +276,11 @@ def main():
                                     if run_ssh_test(f"{keydir}/id_rsa") == 1:
                                         failed = True
                             elif test_type == "nspawn":
-                                with nspawn_boot_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                with nspawn_boot_container(f"{store}/refs/{output_id}/{image_fname}", output_id):
                                     if run_ssh_test(f"{keydir}/id_rsa") == 1:
                                         failed = True
                             elif test_type == "nspawn-extract":
-                                with nspawn_extract_container(f"{store}/refs/{output_id}/{image_fname}"):
+                                with nspawn_extract_container(f"{store}/refs/{output_id}/{image_fname}", output_id):
                                     if run_ssh_test(f"{keydir}/id_rsa") == 1:
                                         failed = True
                             else:
