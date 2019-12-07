@@ -2,6 +2,7 @@
 
 import datetime
 import dnf
+import hashlib
 import json
 import sys
 
@@ -24,7 +25,7 @@ def dnfrepo(desc, parent_conf=None):
     elif "metalink" in desc:
         repo.metalink = desc["metalink"]
     elif "mirrorlist" in desc:
-        repo.metalink = desc["mirrorlist"]
+        repo.mirrorlist = desc["mirrorlist"]
     else:
         assert False
 
@@ -44,6 +45,30 @@ def create_base(repos):
 def exit_with_dnf_error(kind: str, reason: str):
     json.dump({"kind": kind, "reason": reason}, sys.stdout)
     sys.exit(DNF_ERROR_EXIT_CODE)
+
+
+def repo_checksums(base):
+    checksums = {}
+    for repo in base.repos.iter_enabled():
+        # Uses the same algorithm as libdnf to find cache dir:
+        #   https://github.com/rpm-software-management/libdnf/blob/master/libdnf/repo/Repo.cpp#L1288
+        if repo.metalink:
+            url = repo.metalink
+        elif repo.mirrorlist:
+            url = repo.mirrorlist
+        elif repo.baseurl:
+            url = repo.baseurl[0]
+        else:
+            assert False
+
+        digest = hashlib.sha256(url.encode()).hexdigest()[:16]
+
+        with open(f"{base.conf.cachedir}/{repo.id}-{digest}/repodata/repomd.xml", "rb") as f:
+            repomd = f.read()
+
+        checksums[repo.id] = "sha256:" + hashlib.sha256(repomd).hexdigest()
+
+    return checksums
 
 
 call = json.load(sys.stdin)
@@ -66,7 +91,10 @@ if command == "dump":
             "buildtime": timestamp_to_rfc3339(package.buildtime),
             "license": package.license
         })
-    json.dump(packages, sys.stdout)
+    json.dump({
+        "checksums": repo_checksums(base),
+        "packages": packages
+    }, sys.stdout)
 
 elif command == "depsolve":
     base = create_base(arguments.get("repos", {}))
@@ -82,13 +110,16 @@ elif command == "depsolve":
     except dnf.exceptions.DepsolveError as e:
         exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
 
-    packages = []
+    dependencies = []
     for package in base.transaction.install_set:
-        packages.append({
+        dependencies.append({
             "name": package.name,
             "epoch": package.epoch,
             "version": package.version,
             "release": package.release,
             "arch": package.arch
         })
-    json.dump(packages, sys.stdout)
+    json.dump({
+        "checksums": repo_checksums(base),
+        "dependencies": dependencies
+    }, sys.stdout)

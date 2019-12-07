@@ -269,13 +269,11 @@ func (r *RHEL82) Repositories() []rpmmd.RepoConfig {
 			Id:       "baseos",
 			Name:     "BaseOS",
 			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191125.n.1/compose/BaseOS/x86_64/os",
-			Checksum: "sha256:30b905ab1538243de69e019573443b2a1e4edad7c1f7d32aa5a4fb014ff98060",
 		},
 		{
 			Id:       "appstream",
 			Name:     "AppStream",
 			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191125.n.1/compose/AppStream/x86_64/os",
-			Checksum: "sha256:afd86d5b664ec87e209c5ff3cf011bcc6a40578394191c1d889b4ead17a072ae",
 		},
 	}
 }
@@ -296,17 +294,17 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *RHEL82) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *RHEL82) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
 	p := &pipeline.Pipeline{}
-	p.SetBuild(r.buildPipeline(), "org.osbuild.rhel82")
+	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.rhel82")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(packages, output.ExcludedPackages)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	if output.IncludeFSTab {
@@ -377,7 +375,7 @@ func (r *RHEL82) Runner() string {
 	return "org.osbuild.rhel82"
 }
 
-func (r *RHEL82) buildPipeline() *pipeline.Pipeline {
+func (r *RHEL82) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
 		"dracut-config-generic",
@@ -392,11 +390,11 @@ func (r *RHEL82) buildPipeline() *pipeline.Pipeline {
 		"xfsprogs",
 	}
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, nil)))
 	return p
 }
 
-func (r *RHEL82) dnfStageOptions(packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *RHEL82) dnfStageOptions(checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "8",
 		BaseArchitecture: "x86_64",
@@ -407,7 +405,7 @@ func (r *RHEL82) dnfStageOptions(packages, excludedPackages []string) *pipeline.
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,
 			MirrorList: repo.MirrorList,
-			Checksum:   repo.Checksum,
+			Checksum:   checksums[repo.Id],
 		})
 	}
 

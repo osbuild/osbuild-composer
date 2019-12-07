@@ -610,7 +610,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, err := api.rpmmd.Depsolve(names, api.distro.Repositories())
+	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories())
 
 	if err != nil {
 		errors := responseError{
@@ -792,27 +792,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			return
 		}
 
-		specs := make([]string, len(blueprint.Packages))
-		for i, pkg := range blueprint.Packages {
-			specs[i] = pkg.Name
-			// If a package has version "*" the package name suffix must be equal to "-*-*.*"
-			// Using just "-*" would find any other package containing the package name
-			if pkg.Version != "" && pkg.Version != "*" {
-				specs[i] += "-" + pkg.Version
-			} else if pkg.Version == "*" {
-				specs[i] += "-*-*.*"
-			}
-		}
-
-		var repos []rpmmd.RepoConfig
-		for _, repo := range api.distro.Repositories() {
-			repos = append(repos, repo)
-		}
-		for _, source := range api.store.GetAllSources() {
-			repos = append(repos, source.RepoConfig())
-		}
-
-		dependencies, err := api.rpmmd.Depsolve(specs, repos)
+		dependencies, _, err := api.depsolveBlueprint(blueprint)
 
 		if err != nil {
 			errors := responseError{
@@ -866,35 +846,23 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		}
 		blueprint, _ := api.store.GetBlueprint(name)
 		if blueprint == nil {
-			err := responseError{
+			rerr := responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: blueprint_not_found", name),
 			}
-			errors = append(errors, err)
-			return
+			errors = append(errors, rerr)
+			break
 		}
 
-		specs := make([]string, len(blueprint.Packages))
-		for i, pkg := range blueprint.Packages {
-			specs[i] = pkg.Name
-			// If a package has version "*" the package name suffix must be equal to "-*-*.*"
-			// Using just "-*" would find any other package containing the package name
-			if pkg.Version != "" && pkg.Version != "*" {
-				specs[i] += "-" + pkg.Version
-			} else if pkg.Version == "*" {
-				specs[i] += "-*-*.*"
+		dependencies, _, err := api.depsolveBlueprint(blueprint)
+		if err != nil {
+			rerr := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
 			}
+			errors = append(errors, rerr)
+			break
 		}
-
-		var repos []rpmmd.RepoConfig
-		for _, repo := range api.distro.Repositories() {
-			repos = append(repos, repo)
-		}
-		for _, source := range api.store.GetAllSources() {
-			repos = append(repos, source.RepoConfig())
-		}
-
-		dependencies, _ := api.rpmmd.Depsolve(specs, repos)
 
 		for pkgIndex, pkg := range blueprint.Packages {
 			i := sort.Search(len(dependencies), func(i int) bool {
@@ -1243,7 +1211,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 
 	if bp != nil {
-		err := api.store.PushCompose(reply.BuildID, bp, cr.ComposeType, uploadTarget)
+		_, checksums, err := api.depsolveBlueprint(bp)
+		if err != nil {
+			errors := responseError{
+				ID:  "DepsolveError",
+				Msg: err.Error(),
+			}
+			statusResponseError(writer, http.StatusInternalServerError, errors)
+			return
+		}
+
+		err = api.store.PushCompose(reply.BuildID, bp, checksums, cr.ComposeType, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
@@ -1630,7 +1608,32 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 		repos = append(repos, source.RepoConfig())
 	}
 
-	return api.rpmmd.FetchPackageList(repos)
+	packages, _, err := api.rpmmd.FetchPackageList(repos)
+	return packages, err
+}
+
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, map[string]string, error) {
+	specs := make([]string, len(bp.Packages))
+	for i, pkg := range bp.Packages {
+		specs[i] = pkg.Name
+		// If a package has version "*" the package name suffix must be equal to "-*-*.*"
+		// Using just "-*" would find any other package containing the package name
+		if pkg.Version != "" && pkg.Version != "*" {
+			specs[i] += "-" + pkg.Version
+		} else if pkg.Version == "*" {
+			specs[i] += "-*-*.*"
+		}
+	}
+
+	var repos []rpmmd.RepoConfig
+	for _, repo := range api.distro.Repositories() {
+		repos = append(repos, repo)
+	}
+	for _, source := range api.store.GetAllSources() {
+		repos = append(repos, source.RepoConfig())
+	}
+
+	return api.rpmmd.Depsolve(specs, repos)
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

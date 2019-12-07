@@ -221,7 +221,6 @@ func (r *Fedora30) Repositories() []rpmmd.RepoConfig {
 			Id:       "fedora",
 			Name:     "Fedora 30",
 			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
-			Checksum: "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97",
 			GPGKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBFturGcBEACv0xBo91V2n0uEC2vh69ywCiSyvUgN/AQH8EZpCVtM7NyjKgKm
@@ -271,17 +270,17 @@ func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error)
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *Fedora30) Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *Fedora30) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
 	p := &pipeline.Pipeline{}
-	p.SetBuild(r.buildPipeline(), "org.osbuild.fedora30")
+	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.fedora30")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(packages, output.ExcludedPackages)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -347,7 +346,7 @@ func (r *Fedora30) Runner() string {
 	return "org.osbuild.fedora30"
 }
 
-func (r *Fedora30) buildPipeline() *pipeline.Pipeline {
+func (r *Fedora30) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
 		"e2fsprogs",
@@ -358,11 +357,11 @@ func (r *Fedora30) buildPipeline() *pipeline.Pipeline {
 		"tar",
 	}
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, nil)))
 	return p
 }
 
-func (r *Fedora30) dnfStageOptions(packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *Fedora30) dnfStageOptions(checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: "x86_64",
@@ -372,8 +371,8 @@ func (r *Fedora30) dnfStageOptions(packages, excludedPackages []string) *pipelin
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,
 			MirrorList: repo.MirrorList,
-			Checksum:   repo.Checksum,
 			GPGKey:     repo.GPGKey,
+			Checksum:   checksums[repo.Id],
 		})
 	}
 

@@ -18,7 +18,6 @@ type RepoConfig struct {
 	BaseURL    string `json:"baseurl,omitempty"`
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`
-	Checksum   string `json:"checksum,omitempty"`
 	GPGKey     string `json:"gpgkey,omitempty"`
 }
 
@@ -93,8 +92,8 @@ type PackageInfo struct {
 }
 
 type RPMMD interface {
-	FetchPackageList(repos []RepoConfig) (PackageList, error)
-	Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error)
+	FetchPackageList(repos []RepoConfig) (PackageList, map[string]string, error)
+	Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, map[string]string, error)
 }
 
 type DNFError struct {
@@ -172,26 +171,32 @@ func NewRPMMD() RPMMD {
 	return &rpmmdImpl{}
 }
 
-func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, error) {
+func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, map[string]string, error) {
 	var arguments = struct {
 		Repos []RepoConfig `json:"repos"`
 	}{repos}
-	var packages PackageList
-	err := runDNF("dump", arguments, &packages)
-	sort.Slice(packages, func(i, j int) bool {
-		return packages[i].Name < packages[j].Name
+	var reply struct {
+		Checksums map[string]string `json:"checksums"`
+		Packages  PackageList       `json:"packages"`
+	}
+	err := runDNF("dump", arguments, &reply)
+	sort.Slice(reply.Packages, func(i, j int) bool {
+		return reply.Packages[i].Name < reply.Packages[j].Name
 	})
-	return packages, err
+	return reply.Packages, reply.Checksums, err
 }
 
-func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, error) {
+func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, map[string]string, error) {
 	var arguments = struct {
 		PackageSpecs []string     `json:"package-specs"`
 		Repos        []RepoConfig `json:"repos"`
 	}{specs, repos}
-	var dependencies []PackageSpec
-	err := runDNF("depsolve", arguments, &dependencies)
-	return dependencies, err
+	var reply struct {
+		Checksums    map[string]string `json:"checksums"`
+		Dependencies []PackageSpec     `json:"dependencies"`
+	}
+	err := runDNF("depsolve", arguments, &reply)
+	return reply.Dependencies, reply.Checksums, err
 }
 
 func (packages PackageList) Search(globPatterns ...string) (PackageList, error) {
@@ -247,6 +252,6 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 }
 
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig) (err error) {
-	pkg.Dependencies, err = rpmmd.Depsolve([]string{pkg.Name}, repos)
+	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, repos)
 	return
 }

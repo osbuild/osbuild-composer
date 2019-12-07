@@ -21,6 +21,7 @@ func TestDistro_Pipeline(t *testing.T) {
 		type compose struct {
 			Distro       string               `json:"distro"`
 			OutputFormat string               `json:"output-format"`
+			Checksums    map[string]string    `json:"checksums"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		var tt struct {
@@ -45,7 +46,7 @@ func TestDistro_Pipeline(t *testing.T) {
 				t.Errorf("unknown distro: %v", tt.Compose.Distro)
 				return
 			}
-			got, err := d.Pipeline(tt.Compose.Blueprint, tt.Compose.OutputFormat)
+			got, err := d.Pipeline(tt.Compose.Blueprint, tt.Compose.Checksums, tt.Compose.OutputFormat)
 			if (err != nil) != (tt.Pipeline == nil) {
 				t.Errorf("distro.Pipeline() error = %v", err)
 				return

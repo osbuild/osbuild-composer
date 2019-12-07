@@ -178,10 +178,12 @@ func BaseFixture() Fixture {
 	return Fixture{
 		fetchPackageList{
 			generatePackageList(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		depsolve{
 			createBaseDepsolveFixture(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		createBaseStoreFixture(),
@@ -192,10 +194,12 @@ func NoComposesFixture() Fixture {
 	return Fixture{
 		fetchPackageList{
 			generatePackageList(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		depsolve{
 			createBaseDepsolveFixture(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		createStoreWithoutComposesFixture(),
@@ -206,9 +210,11 @@ func NonExistingPackage() Fixture {
 	return Fixture{
 		fetchPackageList{
 			generatePackageList(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		depsolve{
+			nil,
 			nil,
 			&rpmmd.DNFError{
 				Kind:   "MarkingErrors",
@@ -223,9 +229,11 @@ func BadDepsolve() Fixture {
 	return Fixture{
 		fetchPackageList{
 			generatePackageList(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
 		depsolve{
+			nil,
 			nil,
 			&rpmmd.DNFError{
 				Kind:   "DepsolveError",
@@ -240,12 +248,14 @@ func BadFetch() Fixture {
 	return Fixture{
 		fetchPackageList{
 			ret: nil,
+			checksums: nil,
 			err: &rpmmd.DNFError{
 				Kind:   "FetchError",
 				Reason: "There was a problem when fetching packages.",
 			},
 		},
 		depsolve{
+			nil,
 			nil,
 			&rpmmd.DNFError{
 				Kind:   "DepsolveError",
