@@ -220,7 +220,7 @@ func (r *Fedora30) Repositories() []rpmmd.RepoConfig {
 		{
 			Id:       "fedora",
 			Name:     "Fedora 30",
-			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
 			Checksum: "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97",
 			GPGKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
