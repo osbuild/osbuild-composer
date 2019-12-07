@@ -121,12 +121,6 @@
         }
       },
       {
-        "name": "org.osbuild.script",
-        "options": {
-          "script": "sed -i 's|#Port 22|Port 1022|' /etc/ssh/sshd_config; sed -i 's|#ListenAddress 0.0.0.0|ListenAddress 127.0.0.1|' /etc/ssh/sshd_config"
-        }
-      },
-      {
         "name": "org.osbuild.systemd",
         "options": {
           "enabled_services": [
