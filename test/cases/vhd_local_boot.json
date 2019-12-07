@@ -1,9 +1,11 @@
 {
   "boot-test": {
+    "type": "qemu"
+  },
+  "compose": {
     "output-format": "vhd",
     "filename": "image.vhd",
-    "boot-type": "qemu",
-    "blueprint": {
+    "blueprint-draft": {
       "name": "vhd-boot-test",
       "description": "Image for boot test",
       "packages": [],

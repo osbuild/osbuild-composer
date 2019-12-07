@@ -1,9 +1,11 @@
 {
   "boot-test": {
+    "type": "nspawn-extract"
+  },
+  "compose": {
     "output-format": "tar",
     "filename": "root.tar.xz",
-    "boot-type": "nspawn-extract",
-    "blueprint": {
+    "blueprint-draft": {
       "name": "tar-boot-test",
       "description": "Image for boot test",
       "packages": [],

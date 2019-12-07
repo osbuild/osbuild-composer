@@ -1,9 +1,12 @@
 {
   "boot-test": {
+    "type": "nspawn"
+  },
+  "compose": {
+    "distro": "fedora-30",
     "output-format": "ext4",
     "filename": "filesystem.img",
-    "boot-type": "nspawn",
-    "blueprint": {
+    "blueprint-draft": {
       "name": "ext4-boot-test",
       "description": "Image for boot test",
       "packages": [],

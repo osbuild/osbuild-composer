@@ -194,7 +194,7 @@ def get_local_boot_test_case(fname: str) -> Union[Tuple[str, str, Dict[Any, Any]
         return None
 
     pipeline_dict = test_case_dict["pipeline"]
-    return test_case_dict["boot-test"]["boot-type"], test_case_dict["boot-test"]["filename"], pipeline_dict
+    return test_case_dict["boot-test"]["type"], test_case_dict["compose"]["filename"], pipeline_dict
 
 
 def run_ssh_test(private_key):

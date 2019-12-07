@@ -1,9 +1,11 @@
 {
   "boot-test": {
+    "type": "qemu"
+  },
+  "compose": {
     "output-format": "vmdk",
     "filename": "disk.vmdk",
-    "boot-type": "qemu",
-    "blueprint": {
+    "blueprint-draft": {
       "name": "vmdk-boot-test",
       "description": "Image for boot test",
       "packages": [],
