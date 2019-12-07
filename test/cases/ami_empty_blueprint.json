@@ -1,4 +1,7 @@
 {
+  "boot-test": {
+    "type": "qemu-extract"
+  },
   "compose": {
     "distro": "fedora-30",
     "filename": "image.raw.xz",
