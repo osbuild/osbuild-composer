@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func main() {
@@ -36,7 +37,25 @@ func main() {
 		panic("unknown distro: " + distroArg)
 	}
 
-	pipeline, err := d.Pipeline(blueprint, format)
+	packages := make([]string, len(blueprint.Packages))
+	for i, pkg := range blueprint.Packages {
+		packages[i] = pkg.Name
+		// If a package has version "*" the package name suffix must be equal to "-*-*.*"
+		// Using just "-*" would find any other package containing the package name
+		if pkg.Version != "" && pkg.Version != "*" {
+			packages[i] += "-" + pkg.Version
+		} else if pkg.Version == "*" {
+			packages[i] += "-*-*.*"
+		}
+	}
+
+	rpmmd := rpmmd.NewRPMMD()
+	_, checksums, err := rpmmd.Depsolve(packages, d.Repositories())
+	if err != nil {
+		panic(err.Error())
+	}
+
+	pipeline, err := d.Pipeline(blueprint, checksums, format)
 	if err != nil {
 		panic(err.Error())
 	}

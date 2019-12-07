@@ -30,7 +30,7 @@ type Distro interface {
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.
-	Pipeline(b *blueprint.Blueprint, outputFormat string) (*pipeline.Pipeline, error)
+	Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error)
 
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string

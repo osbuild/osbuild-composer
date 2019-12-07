@@ -415,7 +415,7 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	})
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string, uploadTarget *target.Target) error {
+func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checksums map[string]string, composeType string, uploadTarget *target.Target) error {
 	targets := []*target.Target{}
 
 	if s.stateDir != nil {
@@ -430,7 +430,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, compos
 		targets = append(targets, uploadTarget)
 	}
 
-	pipeline, err := s.distro.Pipeline(bp, composeType)
+	pipeline, err := s.distro.Pipeline(bp, checksums, composeType)
 	if err != nil {
 		return err
 	}
