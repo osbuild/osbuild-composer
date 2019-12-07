@@ -1,9 +1,12 @@
 {
   "boot-test": {
+    "type": "qemu"
+  },
+  "compose": {
+    "distro": "fedora-30",
     "output-format": "openstack",
     "filename": "image.qcow2",
-    "boot-type": "qemu",
-    "blueprint": {
+    "blueprint-draft": {
       "name": "openstack-boot-test",
       "description": "Image for boot test",
       "packages": [],
