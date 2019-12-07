@@ -17,6 +17,7 @@ require (
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1
 	github.com/julienschmidt/httprouter v1.2.0
+	github.com/kolo/xmlrpc v0.0.0-20190909154602-56d5ec7c422e
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
