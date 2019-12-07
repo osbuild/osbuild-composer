@@ -92,7 +92,7 @@ def qemu_boot_image(image_file):
            "-m", "2048",
            "-snapshot",
            "-accel", "accel=kvm:hvf:tcg",
-           "-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::1022-:22",
+           "-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
            "-nographic",
            image_file
            ]
@@ -186,7 +186,7 @@ def get_local_boot_test_case(fname: str) -> Union[Tuple[str, str, Dict[Any, Any]
 
 def run_ssh_test(private_key):
     cmd = ["ssh",
-           "-p", "1022",
+           "-p", "22",
            "-i", private_key,
            "-o", "StrictHostKeyChecking=no",
            "redhat@localhost",
