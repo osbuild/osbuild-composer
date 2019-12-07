@@ -1415,12 +1415,16 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
+	type Dependencies struct {
+		Packages []map[string]interface{} `json:"packages"`
+	}
+
 	var reply struct {
 		ID          uuid.UUID            `json:"id"`
 		Config      string               `json:"config"`    // anaconda config, let's ignore this field
 		Blueprint   *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
 		Commit      string               `json:"commit"`    // empty for now
-		Deps        []string             `json:"deps"`      // empty for now
+		Deps        Dependencies         `json:"deps"`      // empty for now
 		ComposeType string               `json:"compose_type"`
 		QueueStatus string               `json:"queue_status"`
 		ImageSize   int64                `json:"image_size"`
@@ -1429,7 +1433,9 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	reply.ID = id
 	reply.Blueprint = compose.Blueprint
-	reply.Deps = []string{}
+	reply.Deps = Dependencies{
+		Packages: make([]map[string]interface{}, 0),
+	}
 	reply.ComposeType = compose.OutputType
 	reply.QueueStatus = compose.QueueStatus
 	if compose.Image != nil {
