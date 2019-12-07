@@ -100,6 +100,8 @@ github.com/google/uuid
 github.com/jmespath/go-jmespath
 # github.com/julienschmidt/httprouter v1.2.0
 github.com/julienschmidt/httprouter
+# github.com/kolo/xmlrpc v0.0.0-20190909154602-56d5ec7c422e
+github.com/kolo/xmlrpc
 # github.com/mattn/go-ieproxy v0.0.0-20190610004146-91bb50d98149
 github.com/mattn/go-ieproxy
 # github.com/mitchellh/go-homedir v1.1.0
