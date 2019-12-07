@@ -3,15 +3,12 @@ package blueprint
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name        string    `json:"name" toml:"name"`
-	Description string    `json:"description" toml:"description"`
-	Version     string    `json:"version,omitempty" toml:"version,omitempty"`
-	Packages    []Package `json:"packages" toml:"packages"`
-
-	// skip "omitempty" for json, because cockpit-composer chokes when the keys are missing
-	Modules []Package `json:"modules" toml:"modules,omitempty"`
-	Groups  []Group   `json:"groups" toml:"groups,omitempty"`
-
+	Name           string          `json:"name" toml:"name"`
+	Description    string          `json:"description" toml:"description"`
+	Version        string          `json:"version,omitempty" toml:"version,omitempty"`
+	Packages       []Package       `json:"packages" toml:"packages"`
+	Modules        []Package       `json:"modules" toml:"modules"`
+	Groups         []Group         `json:"groups" toml:"groups"`
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations,omitempty"`
 }
 
