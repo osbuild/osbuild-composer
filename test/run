@@ -204,16 +204,16 @@ def run_ssh_test(private_key):
            "-o", "StrictHostKeyChecking=no",
            "redhat@localhost",
            "systemctl is-system-running"]
-    for _ in range(40):
+    for _ in range(20):
         try:
+            print("attempting ssh connection")
             # Run the process with check=False because it returns non-zero return code for "degraded"
             sp = subprocess.run(cmd, timeout=120, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if sp.returncode == 255:
                 raise subprocess.CalledProcessError(sp.returncode, cmd)
             output = sp.stdout.decode('utf-8').strip()
-            print(output)
             if output == "running":
-                print("ssh test success")
+                print("ssh test passed")
                 return 0
             elif output == "degraded":
                 print("ssh test passed, but the system is degraded")
@@ -224,8 +224,7 @@ def run_ssh_test(private_key):
         except subprocess.TimeoutExpired:
             print("ssh timeout expired")
         except subprocess.CalledProcessError as e:
-            print(f"ssh error: {e}")
-            time.sleep(20)
+            time.sleep(10)
 
     print("ssh test failure")
     return 1
