@@ -118,6 +118,18 @@ def qemu_boot_image(image_file):
 
 
 @contextlib.contextmanager
+def qemu_extract_boot_image(image_file):
+    with tempfile.TemporaryDirectory() as dir:
+        basename = os.path.basename(image_file)
+        uncompressed, _ = os.path.splitext(basename)
+        print(f"uncompressing {image_file} to {dir}/{uncompressed}")
+        subprocess.run(["cp", "-a", image_file, f"{dir}/"], check=True)
+        subprocess.run(["unxz", f"{dir}/{basename}"])
+        with qemu_boot_image(f"{dir}/{uncompressed}"):
+            yield
+
+
+@contextlib.contextmanager
 def nspawn_boot_container(image_file):
     cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", "boottest", "--image", image_file]
     print(f"running nspawn command: {' '.join(cmd)}")
@@ -257,6 +269,10 @@ def main():
                         with netns():
                             if test_type == "qemu":
                                 with qemu_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
+                                    if run_ssh_test(f"{keydir}/id_rsa") == 1:
+                                        failed = True
+                            elif test_type == "qemu-extract":
+                                with qemu_extract_boot_image(f"{store}/refs/{output_id}/{image_fname}"):
                                     if run_ssh_test(f"{keydir}/id_rsa") == 1:
                                         failed = True
                             elif test_type == "nspawn":
