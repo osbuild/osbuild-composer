@@ -42,7 +42,7 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 	}
 }
 
-func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string) (*pipeline.Pipeline, error) {
+func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
 	if outputFormat == "test_output" && outputArch == "test_arch" {
 		return &pipeline.Pipeline{}, nil
 	} else {

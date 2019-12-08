@@ -36,12 +36,15 @@ type output struct {
 	DisabledServices []string
 	KernelOptions    string
 	Bootable         bool
-	Assembler        func(uefi bool) *pipeline.Assembler
+	DefaultSize      uint64
+	Assembler        func(uefi bool, size uint64) *pipeline.Assembler
 }
 
 const Name = "fedora-30"
 
 func New(confPaths []string) *Fedora30 {
+	const GigaByte = 1024 * 1024 * 1024
+
 	r := Fedora30{
 		arches:  map[string]arch{},
 		outputs: map[string]output{},
@@ -110,7 +113,10 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw.xz", "image.raw.xz", uefi) },
+		DefaultSize:   6 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
+		},
 	}
 
 	r.outputs["ext4-filesystem"] = output{
@@ -129,7 +135,8 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img") },
+		DefaultSize:   2 * GigaByte,
+		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img", size) },
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -148,7 +155,10 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw", "disk.img", uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("raw", "disk.img", uefi, size)
+		},
 	}
 
 	r.outputs["qcow2"] = output{
@@ -172,7 +182,10 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		},
 	}
 
 	r.outputs["openstack"] = output{
@@ -195,7 +208,10 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		},
 	}
 
 	r.outputs["tar"] = output{
@@ -214,7 +230,8 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		DefaultSize:   2 * GigaByte,
+		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.outputs["vhd"] = output{
@@ -248,7 +265,10 @@ func New(confPaths []string) *Fedora30 {
 		// These kernel parameters are required by Azure documentation
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "disk.vhd", uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
+		},
 	}
 
 	r.outputs["vmdk"] = output{
@@ -268,7 +288,10 @@ func New(confPaths []string) *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vmdk", "disk.vmdk", uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+		},
 	}
 
 	return &r
@@ -298,7 +321,7 @@ func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error)
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -373,7 +396,11 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	}
 
 	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
-	p.Assembler = output.Assembler(arch.UEFI)
+
+	if size == 0 {
+		size = output.DefaultSize
+	}
+	p.Assembler = output.Assembler(arch.UEFI, size)
 
 	return p, nil
 }
@@ -552,14 +579,14 @@ func (r *Fedora30) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 	}
 }
 
-func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool) *pipeline.Assembler {
+func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size uint64) *pipeline.Assembler {
 	var options pipeline.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
 		options = pipeline.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     3222274048,
+			Size:     size,
 			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
 			PTType:   "gpt",
 			Partitions: []pipeline.QEMUPartition{
@@ -588,7 +615,7 @@ func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool) *pip
 		options = pipeline.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     3222274048,
+			Size:     size,
 			PTUUID:   "0x14fc63d2",
 			PTType:   "mbr",
 			Partitions: []pipeline.QEMUPartition{
@@ -615,7 +642,7 @@ func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assemble
 		})
 }
 
-func (r *Fedora30) rawFSAssembler(filename string) *pipeline.Assembler {
+func (r *Fedora30) rawFSAssembler(filename string, size uint64) *pipeline.Assembler {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
@@ -624,6 +651,6 @@ func (r *Fedora30) rawFSAssembler(filename string) *pipeline.Assembler {
 		&pipeline.RawFSAssemblerOptions{
 			Filename:           filename,
 			RootFilesystemUUDI: id,
-			Size:               3222274048,
+			Size:               size,
 		})
 }

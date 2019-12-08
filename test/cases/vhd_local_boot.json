@@ -168,7 +168,7 @@
       "options": {
         "format": "qcow2",
         "filename": "disk.vhd",
-        "size": 3222274048,
+        "size": 2147483648,
         "ptuuid": "0x14fc63d2",
         "pttype": "mbr",
         "partitions": [

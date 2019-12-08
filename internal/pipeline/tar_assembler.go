@@ -6,6 +6,7 @@ package pipeline
 // compression type, and stores the output with the given filename.
 type TarAssemblerOptions struct {
 	Filename    string `json:"filename"`
+	Size        uint64 `json:"size"`
 	Compression string `json:"compression,omitempty"`
 }
 
@@ -13,9 +14,10 @@ func (TarAssemblerOptions) isAssemblerOptions() {}
 
 // NewTarAssemblerOptions creates a new TarAssemblerOptions object, with the
 // mandatory options set.
-func NewTarAssemblerOptions(filename string) *TarAssemblerOptions {
+func NewTarAssemblerOptions(filename string, size uint64) *TarAssemblerOptions {
 	return &TarAssemblerOptions{
 		Filename: filename,
+		Size:     size,
 	}
 }
 
