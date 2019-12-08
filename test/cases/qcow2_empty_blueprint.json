@@ -119,7 +119,7 @@
       }
     }
   },
-  "expected": {
+  "image-info": {
     "boot-environment": {
       "GRUB2_BOOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
       "GRUB2_ROOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",

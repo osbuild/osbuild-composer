@@ -188,8 +188,8 @@ def run_test(case, store):
                 subprocess.run(["xz", "--decompress", "--stdout", filename], stdout=f)
             filename = fn
         info = json.loads(subprocess.check_output(["tools/image-info", filename]))
-        if info != case["expected"]:
-            with temporary_json_file(case["expected"]) as a, temporary_json_file(info) as b:
+        if info != case["image-info"]:
+            with temporary_json_file(case["image-info"]) as a, temporary_json_file(info) as b:
                 subprocess.run(["diff", "--unified", "--color", "--label", "expected", a, "--label", "got", b], check=False)
             return False
     except KeyError:
@@ -202,11 +202,11 @@ def get_local_boot_test_case(fname: str) -> Union[Tuple[str, str, Dict[Any, Any]
     with open(fname, "r") as fd:
         test_case_dict = json.load(fd)
 
-    if "boot-test" not in test_case_dict:
+    if "boot" not in test_case_dict:
         return None
 
     pipeline_dict = test_case_dict["pipeline"]
-    return test_case_dict["boot-test"]["type"], test_case_dict["compose"]["filename"], pipeline_dict
+    return test_case_dict["boot"]["type"], test_case_dict["compose"]["filename"], pipeline_dict
 
 
 def run_ssh_test(private_key):

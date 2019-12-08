@@ -1,5 +1,5 @@
 {
-  "boot-test": {
+  "boot": {
     "type": "qemu"
   },
   "compose": {
