@@ -30,6 +30,16 @@ def nbd_connect(image):
 
 
 @contextlib.contextmanager
+def mount_at(device, mountpoint, options=[]):
+    opts = ",".join(["ro"] + options)
+    subprocess.run(["mount", "-o", opts, device, mountpoint], check=True)
+    try:
+        yield mountpoint
+    finally:
+        subprocess.run(["umount", "--lazy", mountpoint], check=True)
+
+
+@contextlib.contextmanager
 def mount(device):
     with tempfile.TemporaryDirectory() as mountpoint:
         subprocess.run(["mount", "-o", "ro", device, mountpoint], check=True)
@@ -221,6 +231,19 @@ def append_filesystem(report, tree):
         with open(f"{tree}/grub2/grubenv") as f:
             report["boot-environment"] = parse_environment_vars(f.read())
         report["bootmenu"] = read_boot_entries(tree)
+    elif len(glob.glob(f"{tree}/EFI")):
+        print("EFI partition", file=sys.stderr)
+
+
+def partition_is_esp(partition):
+    return partition["type"] == "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+
+
+def find_esp(partitions):
+    for i, p in enumerate(partitions):
+        if partition_is_esp(p):
+            return p, i
+    return None, 0
 
 
 report = {}
@@ -230,11 +253,16 @@ with nbd_connect(image) as device:
     report["partition-table"], report["partition-table-id"], report["partitions"] = read_partition_table(device)
 
     if report["partition-table"]:
+        esp, esp_id = find_esp(report["partitions"])
         n_partitions = len(report["partitions"])
         for n in range(n_partitions):
             if report["partitions"][n]["fstype"]:
                 with mount(device + f"p{n + 1}") as tree:
-                    append_filesystem(report, tree)
+                    if esp and os.path.exists(f"{tree}/boot/efi"):
+                        with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
+                            append_filesystem(report, tree)
+                    else:
+                        append_filesystem(report, tree)
     else:
         with mount(device) as tree:
             append_filesystem(report, tree)
