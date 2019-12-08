@@ -24,11 +24,11 @@ func main() {
 	if blueprintArg != "" {
 		file, err := ioutil.ReadFile(blueprintArg)
 		if err != nil {
-			panic("Colud not find blueprint")
+			panic("Could not find blueprint: " + err.Error())
 		}
 		err = json.Unmarshal([]byte(file), &blueprint)
 		if err != nil {
-			panic("Colud not parse blueprint")
+			panic("Could not parse blueprint: " + err.Error())
 		}
 	}
 
