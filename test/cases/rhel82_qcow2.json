@@ -185,7 +185,7 @@
       "options": {
         "format": "qcow2",
         "filename": "disk.qcow2",
-        "size": 3221225472,
+        "size": 2147483648,
         "ptuuid": "0x14fc63d2",
         "pttype": "mbr",
         "partitions": [

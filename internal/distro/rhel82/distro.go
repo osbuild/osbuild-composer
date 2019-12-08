@@ -37,7 +37,8 @@ type output struct {
 	Bootable         bool
 	DefaultTarget    string
 	KernelOptions    string
-	Assembler        func(uefi bool) *pipeline.Assembler
+	DefaultSize      uint64
+	Assembler        func(uefi bool, size uint64) *pipeline.Assembler
 }
 
 const Name = "rhel-8.2"
@@ -161,8 +162,9 @@ func New(confPaths []string) *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		Bootable:      true,
 		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		Assembler: func(uefi bool) *pipeline.Assembler {
-			return r.qemuAssembler("raw.xz", "image.raw.xz", 6*GigaByte, uefi)
+		DefaultSize:   6 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
 		},
 	}
 
@@ -187,7 +189,8 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img") },
+		DefaultSize:   2 * GigaByte,
+		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img", size) },
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -211,7 +214,10 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw", "disk.img", 3*GigaByte, uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("raw", "disk.img", uefi, size)
+		},
 	}
 
 	r.outputs["qcow2"] = output{
@@ -292,7 +298,10 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte, uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		},
 	}
 
 	r.outputs["openstack"] = output{
@@ -319,7 +328,10 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte, uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		},
 	}
 
 	r.outputs["tar"] = output{
@@ -343,7 +355,7 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.outputs["vhd"] = output{
@@ -383,7 +395,10 @@ func New(confPaths []string) *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		Bootable:      true,
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "disk.vhd", 3*GigaByte, uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
+		},
 	}
 
 	r.outputs["vmdk"] = output{
@@ -408,7 +423,10 @@ func New(confPaths []string) *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte, uefi) },
+		DefaultSize:   2 * GigaByte,
+		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+		},
 	}
 
 	return &r
@@ -438,7 +456,7 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -518,7 +536,11 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 	}
 
 	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
-	p.Assembler = output.Assembler(arch.UEFI)
+
+	if size == 0 {
+		size = output.DefaultSize
+	}
+	p.Assembler = output.Assembler(arch.UEFI, size)
 
 	return p, nil
 }
@@ -696,7 +718,7 @@ func (r *RHEL82) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 	}
 }
 
-func (r *RHEL82) qemuAssembler(format string, filename string, size uint64, uefi bool) *pipeline.Assembler {
+func (r *RHEL82) qemuAssembler(format string, filename string, uefi bool, size uint64) *pipeline.Assembler {
 	var options pipeline.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
@@ -759,7 +781,7 @@ func (r *RHEL82) tarAssembler(filename, compression string) *pipeline.Assembler 
 		})
 }
 
-func (r *RHEL82) rawFSAssembler(filename string) *pipeline.Assembler {
+func (r *RHEL82) rawFSAssembler(filename string, size uint64) *pipeline.Assembler {
 	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	if err != nil {
 		panic("invalid UUID")
@@ -768,7 +790,7 @@ func (r *RHEL82) rawFSAssembler(filename string) *pipeline.Assembler {
 		&pipeline.RawFSAssemblerOptions{
 			Filename:           filename,
 			RootFilesystemUUDI: id,
-			Size:               3221225472,
+			Size:               size,
 			FilesystemType:     "xfs",
 		})
 }

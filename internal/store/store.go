@@ -463,7 +463,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		repos = append(repos, source.RepoConfig())
 	}
 
-	pipeline, err := s.distro.Pipeline(bp, repos, checksums, arch, composeType)
+	pipeline, err := s.distro.Pipeline(bp, repos, checksums, arch, composeType, 0)
 	if err != nil {
 		return err
 	}
