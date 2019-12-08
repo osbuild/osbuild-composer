@@ -172,15 +172,12 @@ def run_osbuild(pipeline, store):
 
 def run_test(case, store):
     try:
-        if "compose" not in case:
-            print("skipping this test case")
+        if "pipeline" not in case:
+            print("skipping this test case, no pipeline given")
             return True
 
-        if "pipeline" in case:
-            _, output_id = run_osbuild(case["pipeline"], store)
-            filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
-        else:
-            filename, _ = urllib.request.urlretrieve(case["url"])
+        _, output_id = run_osbuild(case["pipeline"], store)
+        filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
 
         fn, ex = os.path.splitext(filename)
         if ex == ".xz":
