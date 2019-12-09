@@ -63,7 +63,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "qcow2",
 			args:  args{"qcow2"},
-			want:  "image.qcow2",
+			want:  "disk.qcow2",
 			want1: "application/x-qemu-disk",
 		},
 		{
