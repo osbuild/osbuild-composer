@@ -99,12 +99,6 @@ func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			err = os.MkdirAll(options.Location, 0755)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
 			cp := exec.Command("cp", "-a", "-L", "/var/cache/osbuild-composer/store/refs/"+result.OutputID+"/.", options.Location)
 			cp.Stderr = os.Stderr
 			cp.Stdout = os.Stdout
