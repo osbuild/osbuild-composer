@@ -6,6 +6,7 @@ addons:
       - qemu-utils
       - yum
       - gnupg2
+      - dracut-core # image-info needs /usr/lib/dracut/skipcpio
 matrix:
   include:
     - name: unit-tests

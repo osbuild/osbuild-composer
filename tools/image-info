@@ -75,8 +75,8 @@ def parse_unit_files(s, expected_state):
     return r
 
 
-def subprocess_check_output(argv, parse_fn=None):
-    output = subprocess.check_output(argv, encoding="utf-8")
+def subprocess_check_output(argv, parse_fn=None, stdin=None, encoding="utf-8"):
+    output = subprocess.check_output(argv, encoding=encoding, stdin=stdin)
     return parse_fn(output) if parse_fn else output
 
 
@@ -180,6 +180,116 @@ def read_firewall_zone(tree):
 
     return r
 
+def skipcpio(fd):
+    cpio_end = b"TRAILER!!!"
+    cpio_len = len(cpio_end)
+    pos = 0
+    while True:
+        os.lseek(fd, pos, os.SEEK_SET)
+        data = os.read(fd, 2*cpio_len)
+        if data == b'':
+            # end of file, cpio_end not found, cat it all
+            pos = 0
+            break
+        r = data.find(cpio_end)
+        if r != -1:
+            pos += r + cpio_len
+            break  # found the end!
+        pos += cpio_len
+    os.lseek(fd, pos, os.SEEK_SET)
+    if pos == 0:
+        return pos
+    # skip zeros
+    n = 2*cpio_len
+    while True:
+        data = os.read(fd, n)
+        if data == b'':
+            os.lseek(fd, pos, os.SEEK_SET)
+            return 0
+        for i, x in enumerate(data):
+            if x != 0:
+                pos += i
+                os.lseek(fd, pos, os.SEEK_SET)
+                return pos
+        pos += len(data)
+    return pos
+
+
+def read_header(fd, n=6):
+    pos = os.lseek(fd, 0, os.SEEK_CUR)
+    hdr = os.read(fd, n)
+    pos = os.lseek(fd, pos, os.SEEK_SET)
+    return hdr
+
+
+def is_kmod(f: str):
+    return f.endswith(".ko") or f.endswith(".ko.xz")
+
+
+def read_initrd(path):
+    name = os.path.basename(path)
+    if name == "initrd":
+        # in the unlikely event that we actually have a fully compliant BLS entry
+        # a la /6a9857a393724b7a981ebb5b8495b9ea/3.8.0-2.fc19.x86_64/initrd
+        name = os.path.basename(os.path.dirname(path))
+    image = os.open(path, os.O_RDONLY)
+    hdr = read_header(image)
+    early_cpio = False
+    pos = 0
+    if hdr.startswith(b'\x71\xc7') or hdr == b'070701':
+        print("Checking for early cpio")
+        cmd = f"cpio --extract --quiet --to-stdout -- 'early_cpio'"
+        data = subprocess_check_output(["/bin/sh", "-c", cmd], stdin=image, encoding=None).strip()
+        early_cpio = data == b'1'
+    if early_cpio:
+        pos = skipcpio(image)
+        print(f"Second cpio at {pos}")
+    hdr = read_header(image)
+    if hdr.startswith(b'\x1f\x8b'):
+        cat = "zcat --"
+        compression = "gzip"
+    elif hdr.startswith(b'BZh'):
+        cat = "bzcat --"
+        compression = "bz"
+    elif hdr.startswith(b'\x71\xc7') or hdr == b'070701':
+        cat = "cat --"
+        compression = "ascii"
+    elif hdr.startswith(b'\x02\x21'):
+        cat = "lz4 -d -c"
+        compression = "lz4"
+    elif hdr.startswith(b'\x89LZO\0'):
+        cat = "lzop -d -c"
+        compression = "lzop"
+    elif hdr.startswith(b'\x28\xB5\x2F\xFD'):
+        cat = "zstd -d -c"
+        compression = "zstd"
+    else:
+        cat = "xzcat --single-stream --"
+        compression = "xz"
+
+    cmd = f"{cat} | cpio -it --no-absolute-filename"
+    data = subprocess_check_output(["/bin/sh", "-c", cmd], stdin=image, encoding=None)
+    filelist = data.decode('utf-8').strip().split('\n')
+    kmods = sorted([os.path.basename(f) for f in filelist if is_kmod(f)])
+    return {name: {"early_cpio": early_cpio, "compression": compression, "kmods": kmods}}
+
+
+def read_initrds(bootmenu, tree):
+    tree = os.path.normpath(tree)
+    res = []
+    for entry in report["bootmenu"]:
+        if "initrd" not in entry:
+            continue
+        path = entry["initrd"]
+        if path.find("rescue") != -1:
+            continue  # Skip the rescue kernel, somehow the path is messed up
+        # some (not ours) images have '/boot/initramfs-4.18.0-160.el8.x86_64.img $tuned_initrd'
+        path = path.split(' ', 1)[0]
+        print(f"initrd at {path}")
+        info = read_initrd(f"{tree}/{path}")
+        res.append(info)
+    return sorted(res)
+
 
 def append_filesystem(report, tree):
     if os.path.exists(f"{tree}/etc/os-release"):
@@ -225,12 +335,15 @@ def append_filesystem(report, tree):
             with open(f"{tree}/boot/grub2/grubenv") as f:
                 report["boot-environment"] = parse_environment_vars(f.read())
             report["bootmenu"] = read_boot_entries(f"{tree}/boot")
-
+        if len(report["bootmenu"]):
+            report["initrd"] = read_initrds(report["bootmenu"], tree)
     elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
         assert "bootmenu" not in report
         with open(f"{tree}/grub2/grubenv") as f:
             report["boot-environment"] = parse_environment_vars(f.read())
         report["bootmenu"] = read_boot_entries(tree)
+        if len(report["bootmenu"]):
+            report["initrd"] = read_initrds(report["bootmenu"], tree)
     elif len(glob.glob(f"{tree}/EFI")):
         print("EFI partition", file=sys.stderr)
 
