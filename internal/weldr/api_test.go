@@ -259,14 +259,7 @@ func TestCompose(t *testing.T) {
 			Customizations: nil,
 		},
 		OutputType: "tar",
-		Targets: []*target.Target{
-			{
-				Name:    "org.osbuild.local",
-				Created: time.Time{},
-				Status:  "WAITING",
-				Options: &target.LocalTargetOptions{},
-			},
-		},
+		Targets:    []*target.Target{},
 	}
 
 	expectedComposeLocalAndAws := &store.Compose{
@@ -281,11 +274,6 @@ func TestCompose(t *testing.T) {
 		},
 		OutputType: "tar",
 		Targets: []*target.Target{
-			{
-				Name:    "org.osbuild.local",
-				Status:  "WAITING",
-				Options: &target.LocalTargetOptions{},
-			},
 			{
 				Name:      "org.osbuild.aws",
 				Status:    "WAITING",

@@ -39,6 +39,7 @@ type Store struct {
 	pendingJobs  chan Job
 	stateChannel chan []byte
 	distro       distro.Distro
+	stateDir     *string
 }
 
 // A Compose represent the task of building one image. It contains all the information
@@ -110,12 +111,19 @@ func (e *InvalidRequestError) Error() string {
 	return e.message
 }
 
-func New(stateFile *string, distro distro.Distro) *Store {
+func New(stateDir *string, distro distro.Distro) *Store {
 	var s Store
 
-	if stateFile != nil {
-		state, err := ioutil.ReadFile(*stateFile)
-		if state != nil {
+	if stateDir != nil {
+		err := os.Mkdir(*stateDir+"/"+"outputs", 0755)
+		if err != nil && !os.IsExist(err) {
+			log.Fatalf("cannot create output directory")
+		}
+
+		stateFile := *stateDir + "/state.json"
+		state, err := ioutil.ReadFile(stateFile)
+
+		if err == nil {
 			err := json.Unmarshal(state, &s)
 			if err != nil {
 				log.Fatalf("invalid initial state: %v", err)
@@ -128,7 +136,7 @@ func New(stateFile *string, distro distro.Distro) *Store {
 
 		go func() {
 			for {
-				err := writeFileAtomically(*stateFile, <-s.stateChannel, 0755)
+				err := writeFileAtomically(stateFile, <-s.stateChannel, 0755)
 				if err != nil {
 					log.Fatalf("cannot write state: %v", err)
 				}
@@ -155,6 +163,7 @@ func New(stateFile *string, distro distro.Distro) *Store {
 	s.pendingJobs = make(chan Job, 200)
 
 	s.distro = distro
+	s.stateDir = stateDir
 
 	return &s
 }
@@ -407,12 +416,14 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, composeType string, uploadTarget *target.Target) error {
-	targets := []*target.Target{
-		target.NewLocalTarget(
+	targets := []*target.Target{}
+
+	if s.stateDir != nil {
+		targets = append(targets, target.NewLocalTarget(
 			&target.LocalTargetOptions{
-				Location: "/var/lib/osbuild-composer/outputs/" + composeID.String(),
+				Location: *s.stateDir + "/outputs/" + composeID.String(),
 			},
-		),
+		))
 	}
 
 	if uploadTarget != nil {

@@ -19,7 +19,7 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
 
-	stateFile := "/var/lib/osbuild-composer/state.json"
+	stateDir := "/var/lib/osbuild-composer"
 
 	listeners, err := activation.Listeners()
 	if err != nil {
@@ -45,7 +45,7 @@ func main() {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	store := store.New(&stateFile, distribution)
+	store := store.New(&stateDir, distribution)
 
 	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(rpm, distribution, logger, store)
