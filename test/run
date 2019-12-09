@@ -227,6 +227,7 @@ def run_test(case, private_key, store):
 def main():
     parser = argparse.ArgumentParser(description='Run test cases.')
     parser.add_argument('--cases', type=str, nargs='*', help='Limit tests to given cases.')
+    parser.add_argument('--distros', type=str, nargs='*', help='Limit tests to given distros.')
     arg = parser.parse_args()
 
     failed = False
@@ -236,6 +237,10 @@ def main():
         for filename in arg.cases if arg.cases else glob.glob(f"{TEST_DIR}/cases/*.json"):
             with open(filename) as f:
                 case = json.load(f)
+
+            if arg.distros:
+                if case["compose"]["distro"] not in arg.distros:
+                    continue
 
             print(f"RUNNING: {filename}")
             if run_test(case, private_key, store):

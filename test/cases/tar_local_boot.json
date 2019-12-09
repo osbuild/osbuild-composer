@@ -4,6 +4,7 @@
   },
   "compose": {
     "output-format": "tar",
+    "distro": "fedora-30",
     "filename": "root.tar.xz",
     "blueprint-draft": {
       "name": "tar-boot-test",
