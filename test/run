@@ -231,14 +231,17 @@ def main():
 
     failed = False
     with osbuild_test_store() as store:
+        print(f"OSBUILD_TEST_STORE={store}")
         private_key = f"{TEST_DIR}/keyring/id_rsa"
         for filename in arg.cases if arg.cases else glob.glob(f"{TEST_DIR}/cases/*.json"):
-            name = os.path.basename(filename)[:-5]
             with open(filename) as f:
                 case = json.load(f)
 
-            print(f"{name}")
-            if not run_test(case, private_key, store):
+            print(f"RUNNING: {filename}")
+            if run_test(case, private_key, store):
+                print(f"SUCCESS")
+                print()
+            else:
                 print(f"FAIL")
                 print()
                 failed = True
