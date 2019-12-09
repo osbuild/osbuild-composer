@@ -101,7 +101,7 @@ func New() *Fedora30 {
 	}
 
 	r.outputs["qcow2"] = output{
-		Name:     "image.qcow2",
+		Name:     "disk.qcow2",
 		MimeType: "application/x-qemu-disk",
 		Packages: []string{
 			"kernel-core",
@@ -122,7 +122,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		IncludeFSTab:  true,
-		Assembler:     r.qemuAssembler("qcow2", "image.qcow2"),
+		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2"),
 	}
 
 	r.outputs["openstack"] = output{

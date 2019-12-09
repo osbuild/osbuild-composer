@@ -150,7 +150,7 @@ func New() *RHEL82 {
 	}
 
 	r.outputs["qcow2"] = output{
-		Name:     "image.qcow2",
+		Name:     "disk.qcow2",
 		MimeType: "application/x-qemu-disk",
 		Packages: []string{
 			"kernel-core",
@@ -170,7 +170,7 @@ func New() *RHEL82 {
 		},
 		IncludeFSTab:  true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte),
+		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte),
 	}
 
 	r.outputs["openstack"] = output{
