@@ -248,6 +248,25 @@ func TestBlueprintsChanges(t *testing.T) {
 	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/"+id, ``)
 }
 
+func TestBlueprintsDepsolve(t *testing.T) {
+	var cases = []struct {
+		Fixture        rpmmd_mock.FixtureGenerator
+		ExpectedStatus int
+		ExpectedJSON   string
+	}{
+		{rpmmd_mock.BaseFixture, http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"*"}],"groups":[],"modules":[]},"dependencies":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}],"errors":[]}`},
+		{rpmmd_mock.NonExistingPackage, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"test: DNF error occured: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`},
+		{rpmmd_mock.BadDepsolve, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"test: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
+	}
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI(c.Fixture)
+		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"version":"0.0.0"}`)
+		test.TestRoute(t, api, false, "GET", "/api/v0/blueprints/depsolve/test", ``, c.ExpectedStatus, c.ExpectedJSON)
+		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
+	}
+}
+
 func TestCompose(t *testing.T) {
 	expectedComposeLocal := &store.Compose{
 		QueueStatus: "WAITING",
