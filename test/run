@@ -53,7 +53,7 @@ def netns():
 def osbuild_test_store():
     store = os.getenv("OSBUILD_TEST_STORE")
     if store:
-        yield store
+        yield os.path.abspath(store)
     else:
         with tempfile.TemporaryDirectory(dir="/var/tmp", prefix="osbuild-composer-test-") as store:
             yield store
