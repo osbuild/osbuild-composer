@@ -2,6 +2,7 @@
 Description=OSBuild Composer
 After=multi-user.target
 Requires=osbuild-composer.socket
+Wants=osbuild-worker@1.service
 
 [Service]
 Type=simple
