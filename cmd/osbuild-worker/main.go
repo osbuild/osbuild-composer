@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 
@@ -76,40 +77,42 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string, image *stor
 	return nil
 }
 
-func handleJob(client *ComposerClient, distro distro.Distro) {
+func handleJob(client *ComposerClient, distro distro.Distro) error {
 	fmt.Println("Waiting for a new job...")
 	job, err := client.AddJob()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	client.UpdateJob(job, "RUNNING", nil)
+	err = client.UpdateJob(job, "RUNNING", nil)
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Running job %s\n", job.ID.String())
 	image, err, errs := job.Run(distro)
 	if err != nil {
-		client.UpdateJob(job, "FAILED", nil)
-		return
+		return client.UpdateJob(job, "FAILED", nil)
 	}
 
 	for _, err := range errs {
 		if err != nil {
-			client.UpdateJob(job, "FAILED", nil)
-			return
+			return client.UpdateJob(job, "FAILED", nil)
 		}
 	}
 
-	client.UpdateJob(job, "FINISHED", image)
+	return client.UpdateJob(job, "FINISHED", image)
 }
 
 func main() {
 	distro, err := distro.FromHost()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Could not determine distro from host: " + err.Error())
 	}
 
 	client := NewClient()
 	for {
-		handleJob(client, distro)
+		err = handleJob(client, distro)
+		log.Fatalf("Failed to handle job: " + err.Error())
 	}
 }
