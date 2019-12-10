@@ -4,6 +4,7 @@
   },
   "compose": {
     "distro": "fedora-30",
+    "arch": "x86_64",
     "output-format": "ext4",
     "filename": "filesystem.img",
     "blueprint-draft": {
