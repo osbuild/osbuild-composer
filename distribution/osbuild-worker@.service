@@ -1,5 +1,6 @@
 [Unit]
 Description=OSBuild Composer Worker (%i)
+Requires=osbuild-composer.socket
 After=multi-user.target osbuild-composer.socket
 
 [Service]
