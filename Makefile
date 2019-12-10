@@ -22,8 +22,6 @@ install:
 	cp distribution/*.service /etc/systemd/system/
 	cp distribution/*.socket /etc/systemd/system/
 	systemctl daemon-reload
-	systemctl enable osbuild-composer.socket
-	systemctl enable osbuild-worker@1.service
 
 tarball:
 	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
