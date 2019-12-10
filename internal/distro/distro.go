@@ -30,7 +30,7 @@ type Distro interface {
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.
-	Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error)
+	Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error)
 
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string
@@ -41,7 +41,7 @@ var registered map[string]Distro
 func init() {
 	registered = map[string]Distro{
 		"fedora-30": fedora30.New(),
-		"rhel-8.2":    rhel82.New(),
+		"rhel-8.2":  rhel82.New(),
 	}
 }
 
@@ -100,10 +100,10 @@ func readOSRelease(r io.Reader) (map[string]string, error) {
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
 		if value[0] == '"' {
-			if len(value) < 2 || value[len(value) - 1] != '"' {
+			if len(value) < 2 || value[len(value)-1] != '"' {
 				return nil, errors.New("readOSRelease: invalid input")
 			}
-			value = value[1:len(value) - 1]
+			value = value[1 : len(value)-1]
 		}
 
 		osrelease[key] = value

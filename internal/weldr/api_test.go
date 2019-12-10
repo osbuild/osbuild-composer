@@ -31,7 +31,7 @@ func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*weldr.API, *
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	d := distro.New("test")
 
-	return weldr.New(rpm, d, nil, fixture.Store), fixture.Store
+	return weldr.New(rpm, "x86_64", d, nil, fixture.Store), fixture.Store
 }
 
 func TestBasic(t *testing.T) {

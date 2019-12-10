@@ -14,9 +14,11 @@ import (
 func main() {
 	var format string
 	var blueprintArg string
+	var archArg string
 	var distroArg string
-	flag.StringVar(&format, "output-format", "qcow2", "output format")
+	flag.StringVar(&format, "output-format", "", "output format")
 	flag.StringVar(&blueprintArg, "blueprint", "", "blueprint to translate")
+	flag.StringVar(&archArg, "arch", "", "architecture to create image for")
 	flag.StringVar(&distroArg, "distro", "", "distribution to create")
 	flag.Parse()
 
@@ -55,7 +57,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	pipeline, err := d.Pipeline(blueprint, checksums, format)
+	pipeline, err := d.Pipeline(blueprint, checksums, archArg, format)
 	if err != nil {
 		panic(err.Error())
 	}
