@@ -31,18 +31,20 @@ type API struct {
 	store *store.Store
 
 	rpmmd  rpmmd.RPMMD
+	arch   string
 	distro distro.Distro
 
 	logger *log.Logger
 	router *httprouter.Router
 }
 
-func New(rpmmd rpmmd.RPMMD, distro distro.Distro, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
 		store:  store,
 		rpmmd:  rpmmd,
+		arch:   arch,
 		distro: distro,
 		logger: logger,
 	}
@@ -1221,7 +1223,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(reply.BuildID, bp, checksums, cr.ComposeType, uploadTarget)
+		err = api.store.PushCompose(reply.BuildID, bp, checksums, api.arch, cr.ComposeType, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out

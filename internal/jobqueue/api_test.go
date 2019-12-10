@@ -43,7 +43,7 @@ func TestCreate(t *testing.T) {
 	store := store.New(nil, distro.New("fedora-30"))
 	api := jobqueue.New(nil, store)
 
-	err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"fedora": "test:foo"}, "tar", nil)
+	err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"fedora": "test:foo"}, "x86_64", "tar", nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -58,7 +58,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
-		err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"fedora": "test:foo"}, "tar", nil)
+		err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"fedora": "test:foo"}, "x86_64", "tar", nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}

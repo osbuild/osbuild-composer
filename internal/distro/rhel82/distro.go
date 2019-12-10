@@ -107,7 +107,7 @@ func New() *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		IncludeFSTab:  true,
 		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz", 6 * GigaByte),
+		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz", 6*GigaByte),
 	}
 
 	r.outputs["ext4-filesystem"] = output{
@@ -294,10 +294,14 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *RHEL82) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *RHEL82) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
+	}
+
+	if outputArchitecture != "x86_64" {
+		return nil, errors.New("invalid output architecture: " + outputArchitecture)
 	}
 
 	p := &pipeline.Pipeline{}

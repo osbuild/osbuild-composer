@@ -270,10 +270,14 @@ func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error)
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *Fedora30) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *Fedora30) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
+	}
+
+	if outputArchitecture != "x86_64" {
+		return nil, errors.New("invalid output architecture: " + outputArchitecture)
 	}
 
 	p := &pipeline.Pipeline{}
