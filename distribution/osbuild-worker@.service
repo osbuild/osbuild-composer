@@ -11,5 +11,4 @@ Restart=on-failure
 RestartSec=10s
 
 [Install]
-DefaultInstance=1
-WantedBy=multi-user.target
+WantedBy=osbuild-composer.service
