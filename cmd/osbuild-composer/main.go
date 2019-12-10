@@ -38,11 +38,11 @@ func main() {
 
 	listeners, err := activation.Listeners()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
 	if len(listeners) != 2 {
-		panic("Unexpected number of sockets. Composer require 2 of them.")
+		log.Fatalf("Unexpected number of listening sockets (%d), expected 2", len(listeners))
 	}
 
 	weldrListener := listeners[0]
@@ -52,7 +52,7 @@ func main() {
 
 	distribution, err := distro.FromHost()
 	if err != nil {
-		panic("cannot detect distro from host: " + err.Error())
+		log.Fatalf("Could not determine distro from host: " + err.Error())
 	}
 
 	var logger *log.Logger
