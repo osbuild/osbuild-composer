@@ -227,6 +227,7 @@ def run_test(case, private_key, store):
 def main():
     parser = argparse.ArgumentParser(description='Run test cases.')
     parser.add_argument('--cases', type=str, nargs='*', help='Limit tests to given cases.')
+    parser.add_argument('--arches', type=str, nargs='*', help='Limit tests to given architectures.')
     parser.add_argument('--distros', type=str, nargs='*', help='Limit tests to given distros.')
     arg = parser.parse_args()
 
@@ -240,6 +241,10 @@ def main():
 
             if arg.distros:
                 if case["compose"]["distro"] not in arg.distros:
+                    continue
+
+            if arg.arches:
+                if case["compose"]["arch"] not in arg.arches:
                     continue
 
             print(f"RUNNING: {filename}")

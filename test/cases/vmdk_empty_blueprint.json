@@ -1,6 +1,7 @@
 {
   "compose": {
     "distro": "fedora-30",
+    "arch": "x86_64",
     "output-format": "vmdk",
     "filename": "disk.vmdk",
     "blueprint": {}

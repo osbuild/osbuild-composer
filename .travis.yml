@@ -14,18 +14,47 @@ matrix:
       env: GO111MODULE=on # needed even for Go 1.12
       script: go test -v ./...
     - name: image-test-empty-blueprint
+      arch: amd64
       language: python
       python: 3.7
       before_install: sudo apt-get install -y qemu-kvm genisoimage
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --cases test/cases/*_empty_blueprint.json
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --cases test/cases/*_empty_blueprint.json
     - name: image-test-local-boot
+      arch: amd64
       language: python
       python: 3.7
       before_install: sudo apt-get install -y qemu-kvm genisoimage
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --cases test/cases/*_local_boot.json
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --cases test/cases/*_local_boot.json
+    - name: image-test
+      arch: arm64
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches aarch64
+    - name: image-test
+      arch: ppc64le
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches ppc64le
+    - name: image-test
+      arch: s390x
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches s390x
