@@ -9,6 +9,25 @@ addons:
 matrix:
   include:
     - name: unit-tests
+      arch: amd64
+      language: go
+      go: 1.12.x
+      env: GO111MODULE=on # needed even for Go 1.12
+      script: go test -v ./...
+    - name: unit-tests
+      arch: arm64
+      language: go
+      go: 1.12.x
+      env: GO111MODULE=on # needed even for Go 1.12
+      script: go test -v ./...
+    - name: unit-tests
+      arch: ppc64le
+      language: go
+      go: 1.12.x
+      env: GO111MODULE=on # needed even for Go 1.12
+      script: go test -v ./...
+    - name: unit-tests
+      arch: s390x
       language: go
       go: 1.12.x
       env: GO111MODULE=on # needed even for Go 1.12
