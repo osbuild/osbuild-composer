@@ -53,6 +53,7 @@
               ],
               "packages": [
                 "dnf",
+                "dosfstools",
                 "e2fsprogs",
                 "grub2-pc",
                 "policycoreutils",
