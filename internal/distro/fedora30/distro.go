@@ -22,6 +22,7 @@ type arch struct {
 	Name               string
 	BootloaderPackages []string
 	BuildPackages      []string
+	UEFI               bool
 }
 
 type output struct {
@@ -33,7 +34,7 @@ type output struct {
 	DisabledServices []string
 	KernelOptions    string
 	Bootable         bool
-	Assembler        *pipeline.Assembler
+	Assembler        func(uefi bool) *pipeline.Assembler
 }
 
 func New() *Fedora30 {
@@ -75,7 +76,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw.xz", "image.raw.xz", uefi) },
 	}
 
 	r.outputs["ext4-filesystem"] = output{
@@ -94,7 +95,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
-		Assembler:     r.rawFSAssembler("filesystem.img"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img") },
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -113,7 +114,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("raw", "disk.img"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw", "disk.img", uefi) },
 	}
 
 	r.outputs["qcow2"] = output{
@@ -137,7 +138,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", uefi) },
 	}
 
 	r.outputs["openstack"] = output{
@@ -160,7 +161,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("qcow2", "image.qcow2"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "image.qcow2", uefi) },
 	}
 
 	r.outputs["tar"] = output{
@@ -179,7 +180,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
-		Assembler:     r.tarAssembler("root.tar.xz", "xz"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.outputs["vhd"] = output{
@@ -201,7 +202,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("vpc", "image.vhd"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "image.vhd", uefi) },
 	}
 
 	r.outputs["vmdk"] = output{
@@ -221,7 +222,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vmdk", "disk.vmdk", uefi) },
 	}
 
 	return &r
@@ -344,9 +345,9 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	}
 
 	if output.Bootable {
-		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions()))
+		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
 	}
-	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel())))
+	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel(), arch.UEFI)))
 
 	if services := b.GetServices(); services != nil || output.EnabledServices != nil {
 		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services)))
@@ -357,7 +358,7 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	}
 
 	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
-	p.Assembler = output.Assembler
+	p.Assembler = output.Assembler(arch.UEFI)
 
 	return p, nil
 }
@@ -369,6 +370,7 @@ func (r *Fedora30) Runner() string {
 func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
+		"dosfstools",
 		"e2fsprogs",
 		"policycoreutils",
 		"qemu-img",
@@ -495,13 +497,16 @@ func (r *Fedora30) systemdStageOptions(enabledServices, disabledServices []strin
 	}
 }
 
-func (r *Fedora30) fsTabStageOptions() *pipeline.FSTabStageOptions {
+func (r *Fedora30) fsTabStageOptions(uefi bool) *pipeline.FSTabStageOptions {
 	options := pipeline.FSTabStageOptions{}
 	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
+	if uefi {
+		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
+	}
 	return &options
 }
 
-func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization) *pipeline.GRUB2StageOptions {
+func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *pipeline.GRUB2StageOptions {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
@@ -511,10 +516,18 @@ func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.Ker
 		kernelOptions += " " + kernel.Append
 	}
 
+	var uefiOptions *pipeline.GRUB2UEFI
+	if uefi {
+		uefiOptions = &pipeline.GRUB2UEFI{
+			Vendor: "fedora",
+		}
+	}
+
 	return &pipeline.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
-		Legacy:             true,
+		Legacy:             !uefi,
+		UEFI:               uefiOptions,
 	}
 }
 
@@ -524,9 +537,40 @@ func (r *Fedora30) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 	}
 }
 
-func (r *Fedora30) qemuAssembler(format string, filename string) *pipeline.Assembler {
-	return pipeline.NewQEMUAssembler(
-		&pipeline.QEMUAssemblerOptions{
+func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool) *pipeline.Assembler {
+	var options pipeline.QEMUAssemblerOptions
+	if uefi {
+		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
+		options = pipeline.QEMUAssemblerOptions{
+			Format:   format,
+			Filename: filename,
+			Size:     3222274048,
+			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
+			PTType:   "gpt",
+			Partitions: []pipeline.QEMUPartition{
+				{
+					Start: 2048,
+					Size:  972800,
+					Type:  &fstype,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "vfat",
+						UUID:       "46BB-8120",
+						Label:      "EFI System Partition",
+						Mountpoint: "/boot/efi",
+					},
+				},
+				{
+					Start: 976896,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "ext4",
+						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+						Mountpoint: "/",
+					},
+				},
+			},
+		}
+	} else {
+		options = pipeline.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
 			Size:     3222274048,
@@ -543,8 +587,9 @@ func (r *Fedora30) qemuAssembler(format string, filename string) *pipeline.Assem
 					},
 				},
 			},
-		},
-	)
+		}
+	}
+	return pipeline.NewQEMUAssembler(&options)
 }
 
 func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assembler {
