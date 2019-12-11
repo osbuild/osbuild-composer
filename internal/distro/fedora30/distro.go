@@ -495,12 +495,8 @@ func (r *Fedora30) systemdStageOptions(enabledServices, disabledServices []strin
 }
 
 func (r *Fedora30) fsTabStageOptions() *pipeline.FSTabStageOptions {
-	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-	if err != nil {
-		panic("invalid UUID")
-	}
 	options := pipeline.FSTabStageOptions{}
-	options.AddFilesystem(id, "ext4", "/", "defaults", 1, 1)
+	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
 	return &options
 }
 

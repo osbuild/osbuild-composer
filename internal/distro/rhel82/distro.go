@@ -577,12 +577,8 @@ func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string,
 }
 
 func (r *RHEL82) fsTabStageOptions() *pipeline.FSTabStageOptions {
-	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
-	if err != nil {
-		panic("invalid UUID")
-	}
 	options := pipeline.FSTabStageOptions{}
-	options.AddFilesystem(id, "xfs", "/", "defaults", 0, 0)
+	options.AddFilesystem("0bd700f8-090f-4556-b797-b340297ea1bd", "xfs", "/", "defaults", 0, 0)
 	return &options
 }
 
