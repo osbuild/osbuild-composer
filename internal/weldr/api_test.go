@@ -592,6 +592,29 @@ func TestSourcesNew(t *testing.T) {
 	}
 }
 
+func TestSourcesNewToml(t *testing.T) {
+	source := `
+name = "fish"
+url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
+type = "yum-baseurl"
+check_ssl = false
+check_gpg = false
+`
+	req := httptest.NewRequest("POST", "/api/v0/projects/source/new", bytes.NewReader([]byte(source)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+
+	test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
+}
+
 func TestSourcesDelete(t *testing.T) {
 	var cases = []struct {
 		Method         string
