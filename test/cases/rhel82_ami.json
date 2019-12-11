@@ -77,7 +77,7 @@
             "dhcp-client",
             "dracut-config-generic",
             "gdisk",
-            "grub2",
+            "grub2-pc",
             "insights-client",
             "kernel",
             "langpacks-en",

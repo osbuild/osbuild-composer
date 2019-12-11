@@ -15,7 +15,7 @@ func init() {
 	distro.Register("test", &TestDistro{})
 }
 
-func (d *TestDistro) Repositories() []rpmmd.RepoConfig {
+func (d *TestDistro) Repositories(arch string) []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
 			Id:      "test",

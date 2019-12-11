@@ -52,7 +52,7 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD()
-	_, checksums, err := rpmmd.Depsolve(packages, d.Repositories())
+	_, checksums, err := rpmmd.Depsolve(packages, d.Repositories(archArg))
 	if err != nil {
 		panic(err.Error())
 	}

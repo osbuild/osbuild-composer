@@ -14,7 +14,14 @@ import (
 )
 
 type Fedora30 struct {
+	arches  map[string]arch
 	outputs map[string]output
+}
+
+type arch struct {
+	Name               string
+	BootloaderPackages []string
+	BuildPackages      []string
 }
 
 type output struct {
@@ -25,13 +32,24 @@ type output struct {
 	EnabledServices  []string
 	DisabledServices []string
 	KernelOptions    string
-	IncludeFSTab     bool
+	Bootable         bool
 	Assembler        *pipeline.Assembler
 }
 
 func New() *Fedora30 {
 	r := Fedora30{
+		arches:  map[string]arch{},
 		outputs: map[string]output{},
+	}
+
+	r.arches["x86_64"] = arch{
+		Name: "x86_64",
+		BootloaderPackages: []string{
+			"grub2-pc",
+		},
+		BuildPackages: []string{
+			"grub2-pc",
+		},
 	}
 
 	r.outputs["ami"] = output{
@@ -42,7 +60,6 @@ func New() *Fedora30 {
 			"chrony",
 			"kernel",
 			"selinux-policy-targeted",
-			"grub2-pc",
 			"langpacks-en",
 			"libxcrypt-compat",
 			"xfsprogs",
@@ -57,7 +74,7 @@ func New() *Fedora30 {
 			"cloud-init.service",
 		},
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz"),
 	}
 
@@ -76,7 +93,7 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  false,
+		Bootable:      false,
 		Assembler:     r.rawFSAssembler("filesystem.img"),
 	}
 
@@ -87,7 +104,6 @@ func New() *Fedora30 {
 			"@core",
 			"chrony",
 			"firewalld",
-			"grub2-pc",
 			"kernel",
 			"langpacks-en",
 			"selinux-policy-targeted",
@@ -96,7 +112,7 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("raw", "disk.img"),
 	}
 
@@ -110,7 +126,6 @@ func New() *Fedora30 {
 			"polkit",
 			"systemd-udev",
 			"selinux-policy-targeted",
-			"grub2-pc",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -121,7 +136,7 @@ func New() *Fedora30 {
 			"plymouth",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2"),
 	}
 
@@ -133,7 +148,6 @@ func New() *Fedora30 {
 			"chrony",
 			"kernel",
 			"selinux-policy-targeted",
-			"grub2-pc",
 			"spice-vdagent",
 			"qemu-guest-agent",
 			"xen-libs",
@@ -145,7 +159,7 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("qcow2", "image.qcow2"),
 	}
 
@@ -164,7 +178,7 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  false,
+		Bootable:      false,
 		Assembler:     r.tarAssembler("root.tar.xz", "xz"),
 	}
 
@@ -176,7 +190,6 @@ func New() *Fedora30 {
 			"chrony",
 			"kernel",
 			"selinux-policy-targeted",
-			"grub2-pc",
 			"langpacks-en",
 			"net-tools",
 			"ntfsprogs",
@@ -187,7 +200,7 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("vpc", "image.vhd"),
 	}
 
@@ -198,7 +211,6 @@ func New() *Fedora30 {
 			"@core",
 			"chrony",
 			"firewalld",
-			"grub2-pc",
 			"kernel",
 			"langpacks-en",
 			"open-vm-tools",
@@ -208,19 +220,19 @@ func New() *Fedora30 {
 			"dracut-config-rescue",
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk"),
 	}
 
 	return &r
 }
 
-func (r *Fedora30) Repositories() []rpmmd.RepoConfig {
+func (r *Fedora30) Repositories(arch string) []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
 			Id:       "fedora",
 			Name:     "Fedora 30",
-			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
+			Metalink: "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=" + arch,
 			GPGKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBFturGcBEACv0xBo91V2n0uEC2vh69ywCiSyvUgN/AQH8EZpCVtM7NyjKgKm
@@ -276,15 +288,19 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
-	if outputArchitecture != "x86_64" {
-		return nil, errors.New("invalid output architecture: " + outputArchitecture)
+	arch, exists := r.arches[outputArchitecture]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + outputArchitecture)
 	}
 
 	p := &pipeline.Pipeline{}
-	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.fedora30")
+	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.fedora30")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(additionalRepos, checksums, packages, output.ExcludedPackages)))
+	if output.Bootable {
+		packages = append(packages, arch.BootloaderPackages...)
+	}
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -327,7 +343,7 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		p.AddStage(pipeline.NewGroupsStage(r.groupStageOptions(groups)))
 	}
 
-	if output.IncludeFSTab {
+	if output.Bootable {
 		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions()))
 	}
 	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel())))
@@ -350,28 +366,28 @@ func (r *Fedora30) Runner() string {
 	return "org.osbuild.fedora30"
 }
 
-func (r *Fedora30) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
+func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
 		"e2fsprogs",
 		"policycoreutils",
 		"qemu-img",
 		"systemd",
-		"grub2-pc",
 		"tar",
 	}
+	packages = append(packages, arch.BuildPackages...)
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(nil, checksums, packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
 	return p
 }
 
-func (r *Fedora30) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "30",
-		BaseArchitecture: "x86_64",
+		BaseArchitecture: arch.Name,
 	}
 
-	for _, repo := range append(r.Repositories(), additionalRepos...) {
+	for _, repo := range append(r.Repositories(arch.Name), additionalRepos...) {
 		options.AddRepository(&pipeline.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,

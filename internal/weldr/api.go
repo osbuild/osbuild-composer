@@ -229,7 +229,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 
 	names := api.store.ListSources()
 
-	for _, repo := range api.distro.Repositories() {
+	for _, repo := range api.distro.Repositories(api.arch) {
 		names = append(names, repo.Id)
 	}
 
@@ -271,14 +271,14 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	// if names is "*" we want all sources
 	if names == "*" {
 		sources = api.store.GetAllSources()
-		for _, repo := range api.distro.Repositories() {
+		for _, repo := range api.distro.Repositories(api.arch) {
 			sources[repo.Id] = store.NewSourceConfig(repo, true)
 		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
 			found := false
-			for _, repo := range api.distro.Repositories() {
+			for _, repo := range api.distro.Repositories(api.arch) {
 				if name == repo.Id {
 					sources[repo.Id] = store.NewSourceConfig(repo, true)
 					found = true
@@ -614,7 +614,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	if modulesRequested {
 		for i, _ := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.distro.Repositories())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.distro.Repositories(api.arch))
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -644,7 +644,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories())
+	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories(api.arch))
 
 	if err != nil {
 		errors := responseError{
@@ -1641,7 +1641,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	var repos []rpmmd.RepoConfig
-	for _, repo := range api.distro.Repositories() {
+	for _, repo := range api.distro.Repositories(api.arch) {
 		repos = append(repos, repo)
 	}
 	for _, source := range api.store.GetAllSources() {
@@ -1666,7 +1666,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec,
 	}
 
 	var repos []rpmmd.RepoConfig
-	for _, repo := range api.distro.Repositories() {
+	for _, repo := range api.distro.Repositories(api.arch) {
 		repos = append(repos, repo)
 	}
 	for _, source := range api.store.GetAllSources() {

@@ -18,7 +18,7 @@ import (
 type Distro interface {
 	// Returns a list of repositories from which this distribution gets its
 	// content.
-	Repositories() []rpmmd.RepoConfig
+	Repositories(arch string) []rpmmd.RepoConfig
 
 	// Returns a sorted list of the output formats this distro supports.
 	ListOutputFormats() []string

@@ -14,7 +14,14 @@ import (
 )
 
 type RHEL82 struct {
+	arches  map[string]arch
 	outputs map[string]output
+}
+
+type arch struct {
+	Name               string
+	BootloaderPackages []string
+	BuildPackages      []string
 }
 
 type output struct {
@@ -24,7 +31,7 @@ type output struct {
 	ExcludedPackages []string
 	EnabledServices  []string
 	DisabledServices []string
-	IncludeFSTab     bool
+	Bootable         bool
 	DefaultTarget    string
 	KernelOptions    string
 	Assembler        *pipeline.Assembler
@@ -34,7 +41,18 @@ func New() *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
+		arches:  map[string]arch{},
 		outputs: map[string]output{},
+	}
+
+	r.arches["x86_64"] = arch{
+		Name: "x86_64",
+		BootloaderPackages: []string{
+			"grub2-pc",
+		},
+		BuildPackages: []string{
+			"grub2-pc",
+		},
 	}
 
 	r.outputs["ami"] = output{
@@ -50,7 +68,6 @@ func New() *RHEL82 {
 			"dhcp-client",
 			"dracut-config-generic",
 			"gdisk",
-			"grub2",
 			"insights-client",
 			"kernel",
 			"langpacks-en",
@@ -107,7 +124,7 @@ func New() *RHEL82 {
 			"timedatex",
 		},
 		DefaultTarget: "multi-user.target",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz", 6*GigaByte),
 	}
@@ -131,7 +148,7 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab:  false,
+		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.rawFSAssembler("filesystem.img"),
 	}
@@ -144,7 +161,6 @@ func New() *RHEL82 {
 			"chrony",
 			"dracut-config-generic",
 			"firewalld",
-			"grub2-pc",
 			"kernel",
 			"langpacks-en",
 			"selinux-policy-targeted",
@@ -156,7 +172,7 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.qemuAssembler("raw", "disk.img", 3*GigaByte),
 	}
@@ -171,7 +187,6 @@ func New() *RHEL82 {
 			"polkit",
 			"systemd-udev",
 			"selinux-policy-targeted",
-			"grub2-pc",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -185,7 +200,7 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte),
 	}
@@ -196,7 +211,6 @@ func New() *RHEL82 {
 		Packages: []string{
 			// Defaults
 			"@Core",
-			"grub2-pc",
 			"langpacks-en",
 
 			// Don't run dracut in host-only mode, in order to pull in
@@ -213,7 +227,7 @@ func New() *RHEL82 {
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte),
 	}
@@ -237,7 +251,7 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab:  false,
+		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.tarAssembler("root.tar.xz", "xz"),
 	}
@@ -248,7 +262,6 @@ func New() *RHEL82 {
 		Packages: []string{
 			// Defaults
 			"@Core",
-			"grub2-pc",
 			"langpacks-en",
 
 			// Don't run dracut in host-only mode, in order to pull in
@@ -278,7 +291,7 @@ func New() *RHEL82 {
 			"waagent",
 		},
 		DefaultTarget: "multi-user.target",
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Assembler:     r.qemuAssembler("vpc", "image.vhd", 3*GigaByte),
 	}
@@ -291,7 +304,6 @@ func New() *RHEL82 {
 			"chrony",
 			"dracut-config-generic",
 			"firewalld",
-			"grub2-pc",
 			"kernel",
 			"langpacks-en",
 			"open-vm-tools",
@@ -304,7 +316,7 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		IncludeFSTab:  true,
+		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte),
 	}
@@ -312,17 +324,17 @@ func New() *RHEL82 {
 	return &r
 }
 
-func (r *RHEL82) Repositories() []rpmmd.RepoConfig {
+func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
 			Id:      "baseos",
 			Name:    "BaseOS",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/x86_64/os",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/" + arch + "/os",
 		},
 		{
 			Id:      "appstream",
 			Name:    "AppStream",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/x86_64/os",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/" + arch + "/os",
 		},
 	}
 }
@@ -349,18 +361,22 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 		return nil, errors.New("invalid output format: " + outputFormat)
 	}
 
-	if outputArchitecture != "x86_64" {
-		return nil, errors.New("invalid output architecture: " + outputArchitecture)
+	arch, exists := r.arches[outputArchitecture]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + outputArchitecture)
 	}
 
 	p := &pipeline.Pipeline{}
-	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.rhel82")
+	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.rhel82")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(additionalRepos, checksums, packages, output.ExcludedPackages)))
+	if output.Bootable {
+		packages = append(packages, arch.BootloaderPackages...)
+	}
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
-	if output.IncludeFSTab {
+	if output.Bootable {
 		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions()))
 	}
 
@@ -428,13 +444,12 @@ func (r *RHEL82) Runner() string {
 	return "org.osbuild.rhel82"
 }
 
-func (r *RHEL82) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
+func (r *RHEL82) buildPipeline(arch arch, checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
 		"dracut-config-generic",
 		"e2fsprogs",
 		"glibc",
-		"grub2-pc",
 		"policycoreutils",
 		"python36",
 		"qemu-img",
@@ -442,18 +457,19 @@ func (r *RHEL82) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
 		"tar",
 		"xfsprogs",
 	}
+	packages = append(packages, arch.BuildPackages...)
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(nil, checksums, packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
 	return p
 }
 
-func (r *RHEL82) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *RHEL82) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "8",
-		BaseArchitecture: "x86_64",
+		BaseArchitecture: arch.Name,
 		ModulePlatformId: "platform:el8",
 	}
-	for _, repo := range append(r.Repositories(), additionalRepos...) {
+	for _, repo := range append(r.Repositories(arch.Name), additionalRepos...) {
 		options.AddRepository(&pipeline.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,
