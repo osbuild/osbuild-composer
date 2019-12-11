@@ -53,6 +53,18 @@ func New() *Fedora30 {
 		},
 	}
 
+	r.arches["aarch64"] = arch{
+		Name: "aarch64",
+		BootloaderPackages: []string{
+			"dracut-config-generic",
+			"efibootmgr",
+			"grub2-efi-aa64",
+			"grub2-tools",
+			"shim-aa64",
+		},
+		UEFI: true,
+	}
+
 	r.outputs["ami"] = output{
 		Name:     "image.raw.xz",
 		MimeType: "application/octet-stream",
