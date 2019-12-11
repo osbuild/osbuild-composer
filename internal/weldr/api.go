@@ -301,10 +301,34 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 		}
 	}
 
-	json.NewEncoder(writer).Encode(reply{
-		Sources: sources,
-		Errors:  errors,
-	})
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	format := q.Get("format")
+	if format == "json" || format == "" {
+		json.NewEncoder(writer).Encode(reply{
+			Sources: sources,
+			Errors:  errors,
+		})
+	} else if format == "toml" {
+		encoder := toml.NewEncoder(writer)
+		encoder.Indent = ""
+		encoder.Encode(sources)
+	} else {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid format parameter: %s", format),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 }
 
 func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -754,7 +778,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	} else {
 		errors := responseError{
 			ID:  "InvalidChars",
-			Msg: fmt.Sprintf("invalid `format` parameter: %s", format),
+			Msg: fmt.Sprintf("invalid format parameter: %s", format),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
