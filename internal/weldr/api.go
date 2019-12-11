@@ -313,17 +313,25 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 	}
 
 	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
+	if len(contentType) == 0 {
 		errors := responseError{
 			ID:  "HTTPError",
-			Msg: "Internal Server Error",
+			Msg: "malformed Content-Type header",
 		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var source store.SourceConfig
-	err := json.NewDecoder(request.Body).Decode(&source)
+	var err error
+	if contentType[0] == "application/json" {
+		err = json.NewDecoder(request.Body).Decode(&source)
+	} else if contentType[0] == "text/x-toml" {
+		_, err = toml.DecodeReader(request.Body, &source)
+	} else {
+		err = errors.New("blueprint must be in json or toml format")
+	}
+
 	if err != nil {
 		errors := responseError{
 			Code: http.StatusBadRequest,
@@ -1052,7 +1060,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 {
+	if len(contentType) == 0 {
 		errors := responseError{
 			ID:  "BlueprintsError",
 			Msg: "missing Content-Type header",
