@@ -44,9 +44,15 @@ func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
 		return nil, err, nil
 	}
 
+	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
+	if err != nil {
+		return nil, err, nil
+	}
+	defer os.RemoveAll(tmpStore)
+
 	cmd := exec.Command(
 		"osbuild",
-		"--store", "/var/cache/osbuild-composer/store",
+		"--store", tmpStore,
 		"--build-env", buildFile.Name(),
 		"--json", "-",
 	)
