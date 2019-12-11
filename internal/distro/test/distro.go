@@ -33,7 +33,7 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (d *TestDistro) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArch, outputFormat string) (*pipeline.Pipeline, error) {
+func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string) (*pipeline.Pipeline, error) {
 	return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
 }
 

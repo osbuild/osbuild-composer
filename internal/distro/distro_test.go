@@ -47,7 +47,7 @@ func TestDistro_Pipeline(t *testing.T) {
 				t.Errorf("unknown distro: %v", tt.Compose.Distro)
 				return
 			}
-			got, err := d.Pipeline(tt.Compose.Blueprint, tt.Compose.Checksums, tt.Compose.Arch, tt.Compose.OutputFormat)
+			got, err := d.Pipeline(tt.Compose.Blueprint, nil, tt.Compose.Checksums, tt.Compose.Arch, tt.Compose.OutputFormat)
 			if (err != nil) != (tt.Pipeline == nil) {
 				t.Errorf("distro.Pipeline() error = %v", err)
 				return
