@@ -615,6 +615,46 @@ check_gpg = false
 	test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 }
 
+func TestSourcesInfo(t *testing.T) {
+	sourceStr := `{"name":"fish","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":false,"check_ssl":false,"system":false}`
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=son", ``, 400, `{"status":false,"errors":[{"id":"InvalidChars","msg":"invalid format parameter: son"}]}`)
+}
+
+func TestSourcesInfoToml(t *testing.T) {
+	sourceStr := `{"name":"fish","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":false,"check_ssl":false,"system":false}`
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
+
+	req := httptest.NewRequest("GET", "/api/v0/projects/source/info/fish?format=toml", nil)
+	recorder := httptest.NewRecorder()
+	api.ServeHTTP(recorder, req)
+	resp := recorder.Result()
+
+	var sources map[string]store.SourceConfig
+	_, err := toml.DecodeReader(resp.Body, &sources)
+	if err != nil {
+		t.Fatalf("error decoding toml file: %v", err)
+	}
+
+	expected := map[string]store.SourceConfig{
+		"fish": {
+			Name: "fish",
+			Type: "yum-baseurl",
+			URL:  "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/",
+		},
+	}
+
+	if diff := cmp.Diff(sources, expected); diff != "" {
+		t.Fatalf("received unexpected source: %s", diff)
+	}
+}
+
 func TestSourcesDelete(t *testing.T) {
 	var cases = []struct {
 		Method         string
