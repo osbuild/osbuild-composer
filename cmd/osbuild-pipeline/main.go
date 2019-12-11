@@ -57,7 +57,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	pipeline, err := d.Pipeline(blueprint, checksums, archArg, format)
+	pipeline, err := d.Pipeline(blueprint, nil, checksums, archArg, format)
 	if err != nil {
 		panic(err.Error())
 	}

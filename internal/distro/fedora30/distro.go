@@ -270,7 +270,7 @@ func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error)
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *Fedora30) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -284,7 +284,7 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, checksums map[string]string,
 	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.fedora30")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, output.ExcludedPackages)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(additionalRepos, checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -361,16 +361,17 @@ func (r *Fedora30) buildPipeline(checksums map[string]string) *pipeline.Pipeline
 		"tar",
 	}
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(nil, checksums, packages, nil)))
 	return p
 }
 
-func (r *Fedora30) dnfStageOptions(checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *Fedora30) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: "x86_64",
 	}
-	for _, repo := range r.Repositories() {
+
+	for _, repo := range append(r.Repositories(), additionalRepos...) {
 		options.AddRepository(&pipeline.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,

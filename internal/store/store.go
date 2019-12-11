@@ -430,7 +430,12 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		targets = append(targets, uploadTarget)
 	}
 
-	pipeline, err := s.distro.Pipeline(bp, checksums, arch, composeType)
+	repos := []rpmmd.RepoConfig{}
+	for _, source := range s.Sources {
+		repos = append(repos, source.RepoConfig())
+	}
+
+	pipeline, err := s.distro.Pipeline(bp, repos, checksums, arch, composeType)
 	if err != nil {
 		return err
 	}

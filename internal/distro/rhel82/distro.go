@@ -294,7 +294,7 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *RHEL82) Pipeline(b *blueprint.Blueprint, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
+func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -308,7 +308,7 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, checksums map[string]string, o
 	p.SetBuild(r.buildPipeline(checksums), "org.osbuild.rhel82")
 
 	packages := append(output.Packages, b.GetPackages()...)
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, output.ExcludedPackages)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(additionalRepos, checksums, packages, output.ExcludedPackages)))
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	if output.IncludeFSTab {
@@ -394,17 +394,17 @@ func (r *RHEL82) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
 		"xfsprogs",
 	}
 	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(checksums, packages, nil)))
+	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(nil, checksums, packages, nil)))
 	return p
 }
 
-func (r *RHEL82) dnfStageOptions(checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
+func (r *RHEL82) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "8",
 		BaseArchitecture: "x86_64",
 		ModulePlatformId: "platform:el8",
 	}
-	for _, repo := range r.Repositories() {
+	for _, repo := range append(r.Repositories(), additionalRepos...) {
 		options.AddRepository(&pipeline.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,
