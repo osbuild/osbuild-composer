@@ -41,9 +41,8 @@ Provides: osbuild-composer
 %goprep
 
 %build
-for cmd in cmd/* ; do
-  %gobuild -o _bin/$(basename $cmd) %{goipath}/$cmd
-done
+%gobuild -o _bin/osbuild-composer %{goipath}/osbuild-composer
+%gobuild -o _bin/osbuild-worker %{goipath}/osbuild-worker
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
