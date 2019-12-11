@@ -29,10 +29,10 @@
               "packages": [
                 "dnf",
                 "e2fsprogs",
+                "grub2-pc",
                 "policycoreutils",
                 "qemu-img",
                 "systemd",
-                "grub2-pc",
                 "tar"
               ],
               "releasever": "30",
@@ -56,16 +56,16 @@
           ],
           "packages": [
             "@Core",
+            "checkpolicy",
             "chrony",
-            "kernel",
-            "selinux-policy-targeted",
+            "cloud-init",
             "grub2-pc",
+            "kernel",
             "langpacks-en",
             "libxcrypt-compat",
-            "xfsprogs",
-            "cloud-init",
-            "checkpolicy",
-            "net-tools"
+            "net-tools",
+            "selinux-policy-targeted",
+            "xfsprogs"
           ],
           "exclude_packages": [
             "dracut-config-rescue"

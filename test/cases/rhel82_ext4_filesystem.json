@@ -73,13 +73,13 @@
             }
           ],
           "packages": [
-            "policycoreutils",
-            "selinux-policy-targeted",
-            "kernel",
-            "firewalld",
             "chrony",
             "dracut-config-generic",
-            "langpacks-en"
+            "firewalld",
+            "kernel",
+            "langpacks-en",
+            "policycoreutils",
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
             "dracut-config-rescue",

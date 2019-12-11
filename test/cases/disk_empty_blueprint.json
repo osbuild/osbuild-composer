@@ -26,10 +26,10 @@
               "packages": [
                 "dnf",
                 "e2fsprogs",
+                "grub2-pc",
                 "policycoreutils",
                 "qemu-img",
                 "systemd",
-                "grub2-pc",
                 "tar"
               ],
               "releasever": "30",
