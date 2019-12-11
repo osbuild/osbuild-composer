@@ -54,10 +54,10 @@
               "packages": [
                 "dnf",
                 "e2fsprogs",
+                "grub2-pc",
                 "policycoreutils",
                 "qemu-img",
                 "systemd",
-                "grub2-pc",
                 "tar"
               ],
               "releasever": "30",
@@ -80,13 +80,13 @@
             }
           ],
           "packages": [
-            "policycoreutils",
-            "selinux-policy-targeted",
-            "kernel",
-            "firewalld",
             "chrony",
+            "firewalld",
+            "kernel",
             "langpacks-en",
-            "openssh-server"
+            "openssh-server",
+            "policycoreutils",
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
             "dracut-config-rescue"

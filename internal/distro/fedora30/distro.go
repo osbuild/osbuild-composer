@@ -381,10 +381,12 @@ func (r *Fedora30) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums
 		})
 	}
 
+	sort.Strings(packages)
 	for _, pkg := range packages {
 		options.AddPackage(pkg)
 	}
 
+	sort.Strings(excludedPackages)
 	for _, pkg := range excludedPackages {
 		options.ExcludePackage(pkg)
 	}
@@ -526,7 +528,7 @@ func (r *Fedora30) qemuAssembler(format string, filename string) *pipeline.Assem
 func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assembler {
 	return pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
-			Filename: filename,
+			Filename:    filename,
 			Compression: compression,
 		})
 }

@@ -79,15 +79,15 @@
             }
           ],
           "packages": [
-            "kernel-core",
             "chrony",
             "dracut-config-generic",
-            "polkit",
-            "systemd-udev",
-            "selinux-policy-targeted",
             "grub2-pc",
+            "kernel-core",
             "langpacks-en",
-            "openssh-server"
+            "openssh-server",
+            "polkit",
+            "selinux-policy-targeted",
+            "systemd-udev"
           ],
           "exclude_packages": [
             "dracut-config-rescue",

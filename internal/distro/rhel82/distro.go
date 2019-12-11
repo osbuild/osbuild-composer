@@ -462,10 +462,12 @@ func (r *RHEL82) dnfStageOptions(additionalRepos []rpmmd.RepoConfig, checksums m
 		})
 	}
 
+	sort.Strings(packages)
 	for _, pkg := range packages {
 		options.AddPackage(pkg)
 	}
 
+	sort.Strings(excludedPackages)
 	for _, pkg := range excludedPackages {
 		options.ExcludePackage(pkg)
 	}

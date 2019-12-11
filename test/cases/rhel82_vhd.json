@@ -68,18 +68,18 @@
           ],
           "packages": [
             "@Core",
-            "grub2-pc",
-            "langpacks-en",
-            "dracut-config-generic",
-            "kernel",
-            "selinux-policy-targeted",
-            "chrony",
             "WALinuxAgent",
-            "python3",
-            "net-tools",
+            "chrony",
             "cloud-init",
             "cloud-utils-growpart",
-            "gdisk"
+            "dracut-config-generic",
+            "gdisk",
+            "grub2-pc",
+            "kernel",
+            "langpacks-en",
+            "net-tools",
+            "python3",
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
             "dracut-config-rescue",

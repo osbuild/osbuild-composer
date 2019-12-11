@@ -26,10 +26,10 @@
               "packages": [
                 "dnf",
                 "e2fsprogs",
+                "grub2-pc",
                 "policycoreutils",
                 "qemu-img",
                 "systemd",
-                "grub2-pc",
                 "tar"
               ],
               "releasever": "30",
@@ -53,15 +53,15 @@
           ],
           "packages": [
             "@Core",
+            "WALinuxAgent",
             "chrony",
-            "kernel",
-            "selinux-policy-targeted",
             "grub2-pc",
+            "kernel",
             "langpacks-en",
+            "libxcrypt-compat",
             "net-tools",
             "ntfsprogs",
-            "WALinuxAgent",
-            "libxcrypt-compat"
+            "selinux-policy-targeted"
           ],
           "exclude_packages": [
             "dracut-config-rescue"

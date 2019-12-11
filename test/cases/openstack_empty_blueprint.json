@@ -26,10 +26,10 @@
               "packages": [
                 "dnf",
                 "e2fsprogs",
+                "grub2-pc",
                 "policycoreutils",
                 "qemu-img",
                 "systemd",
-                "grub2-pc",
                 "tar"
               ],
               "releasever": "30",
@@ -54,15 +54,15 @@
           "packages": [
             "@Core",
             "chrony",
-            "kernel",
-            "selinux-policy-targeted",
-            "grub2-pc",
-            "spice-vdagent",
-            "qemu-guest-agent",
-            "xen-libs",
-            "langpacks-en",
             "cloud-init",
-            "libdrm"
+            "grub2-pc",
+            "kernel",
+            "langpacks-en",
+            "libdrm",
+            "qemu-guest-agent",
+            "selinux-policy-targeted",
+            "spice-vdagent",
+            "xen-libs"
           ],
           "exclude_packages": [
             "dracut-config-rescue"
