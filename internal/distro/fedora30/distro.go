@@ -523,18 +523,26 @@ func (r *Fedora30) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 }
 
 func (r *Fedora30) qemuAssembler(format string, filename string) *pipeline.Assembler {
-	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-	if err != nil {
-		panic("invalid UUID")
-	}
 	return pipeline.NewQEMUAssembler(
 		&pipeline.QEMUAssemblerOptions{
-			Format:             format,
-			Filename:           filename,
-			PTUUID:             "0x14fc63d2",
-			RootFilesystemUUDI: id,
-			Size:               3222274048,
-		})
+			Format:   format,
+			Filename: filename,
+			Size:     3222274048,
+			PTUUID:   "0x14fc63d2",
+			PTType:   "mbr",
+			Partitions: []pipeline.QEMUPartition{
+				{
+					Start:    2048,
+					Bootable: true,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "ext4",
+						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+						Mountpoint: "/",
+					},
+				},
+			},
+		},
+	)
 }
 
 func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assembler {

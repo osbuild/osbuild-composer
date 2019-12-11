@@ -600,19 +600,26 @@ func (r *RHEL82) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 }
 
 func (r *RHEL82) qemuAssembler(format string, filename string, size uint64) *pipeline.Assembler {
-	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
-	if err != nil {
-		panic("invalid UUID")
-	}
 	return pipeline.NewQEMUAssembler(
 		&pipeline.QEMUAssemblerOptions{
-			Format:             format,
-			Filename:           filename,
-			PTUUID:             "0x14fc63d2",
-			RootFilesystemUUDI: id,
-			Size:               size,
-			RootFilesystemType: "xfs",
-		})
+			Format:   format,
+			Filename: filename,
+			Size:     size,
+			PTUUID:   "0x14fc63d2",
+			PTType:   "mbr",
+			Partitions: []pipeline.QEMUPartition{
+				{
+					Start:    2048,
+					Bootable: true,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "xfs",
+						UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
+						Mountpoint: "/",
+					},
+				},
+			},
+		},
+	)
 }
 
 func (r *RHEL82) tarAssembler(filename, compression string) *pipeline.Assembler {

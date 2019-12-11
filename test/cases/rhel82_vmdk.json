@@ -148,10 +148,20 @@
       "options": {
         "format": "vmdk",
         "filename": "disk.vmdk",
+        "size": 3221225472,
         "ptuuid": "0x14fc63d2",
-        "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-        "root_fs_type": "xfs",
-        "size": 3221225472
+        "pttype": "mbr",
+        "partitions": [
+          {
+            "start": 2048,
+            "bootable": true,
+            "filesystem": {
+              "type": "xfs",
+              "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
+              "mountpoint": "/"
+            }
+          }
+        ]
       }
     }
   }

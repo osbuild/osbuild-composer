@@ -4,33 +4,35 @@ import "github.com/google/uuid"
 
 // QEMUAssemblerOptions desrcibe how to assemble a tree into an image using qemu.
 //
-// The assembler creates an image of a the given size, adds a GRUB2 bootloader
-// and a DOS partition table to it with the given PTUUID containing one ext4
-// root partition with the given filesystem UUID and installs the filesystem
-// tree into it. Finally, the image is converted into the target format and
-// stored with the given filename.
+// The assembler creates an image of the given size, adds a GRUB2 bootloader
+// and if necessary and a partition table to it with the given PTUUID
+// containing the indicated partitions. Finally, the image is converted into
+// the target format and stored with the given filename.
 type QEMUAssemblerOptions struct {
-	Format             string    `json:"format"`
-	Filename           string    `json:"filename"`
-	PTUUID             string    `json:"ptuuid"`
-	RootFilesystemUUDI uuid.UUID `json:"root_fs_uuid"`
-	RootFilesystemType string    `json:"root_fs_type"`
-	Size               uint64    `json:"size"`
+	Format     string          `json:"format"`
+	Filename   string          `json:"filename"`
+	Size       uint64          `json:"size"`
+	PTUUID     string          `json:"ptuuid"`
+	PTType     string          `json:"pttype"`
+	Partitions []QEMUPartition `json:"partitions"`
+}
+
+type QEMUPartition struct {
+	Start      uint64         `json:"start"`
+	Size       uint64         `json:"size,omitempty"`
+	Type       *uuid.UUID     `json:"type,omitempty"`
+	Bootable   bool           `json:"bootable,omitempty"`
+	Filesystem QEMUFilesystem `json:"filesystem"`
+}
+
+type QEMUFilesystem struct {
+	Type       string `json:"type"`
+	UUID       string `json:"uuid"`
+	Label      string `json:"label,omitempty"`
+	Mountpoint string `json:"mountpoint"`
 }
 
 func (QEMUAssemblerOptions) isAssemblerOptions() {}
-
-// NewQEMUAssemblerOptions creates a now QEMUAssemblerOptions object, with all the mandatory
-// fields set.
-func NewQEMUAssemblerOptions(format string, ptUUID string, filename string, rootFilesystemUUID uuid.UUID, size uint64) *QEMUAssemblerOptions {
-	return &QEMUAssemblerOptions{
-		Format:             format,
-		PTUUID:             ptUUID,
-		Filename:           filename,
-		RootFilesystemUUDI: rootFilesystemUUID,
-		Size:               size,
-	}
-}
 
 // NewQEMUAssembler creates a new QEMU Assembler object.
 func NewQEMUAssembler(options *QEMUAssemblerOptions) *Assembler {
