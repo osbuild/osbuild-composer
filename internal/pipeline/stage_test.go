@@ -121,7 +121,22 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false}}`),
+			},
+		},
+		{
+			name: "grub2-uefi",
+			fields: fields{
+				Name: "org.osbuild.grub2",
+				Options: &GRUB2StageOptions{
+					RootFilesystemUUID: null_uuid,
+					UEFI: &GRUB2UEFI{
+						Vendor: "vendor",
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false,"uefi":{"vendor":"vendor"}}}`),
 			},
 		},
 		{
@@ -134,7 +149,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false}}`),
 			},
 		},
 		{

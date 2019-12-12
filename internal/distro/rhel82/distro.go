@@ -590,6 +590,7 @@ func (r *RHEL82) grub2StageOptions(kernelOptions string) *pipeline.GRUB2StageOpt
 	return &pipeline.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
+		Legacy:             true,
 	}
 }
 
