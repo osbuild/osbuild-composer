@@ -11,9 +11,9 @@ import "github.com/google/uuid"
 // Note that it is the role of an assembler to install any necessary
 // bootloaders that are stored in the image outside of any filesystem.
 type GRUB2StageOptions struct {
-	RootFilesystemUUID uuid.UUID `json:"root_fs_uuid"`
-	BootFilesystemUUID uuid.UUID `json:"boot_fs_uuid,omitempty"`
-	KernelOptions      string    `json:"kernel_opts,omitempty"`
+	RootFilesystemUUID uuid.UUID  `json:"root_fs_uuid"`
+	BootFilesystemUUID *uuid.UUID `json:"boot_fs_uuid,omitempty"`
+	KernelOptions      string     `json:"kernel_opts,omitempty"`
 }
 
 func (GRUB2StageOptions) isStageOptions() {}
@@ -42,7 +42,7 @@ func (options *GRUB2StageOptions) SetRootFilesystemUUID(u uuid.UUID) {
 
 // SetBootFilesystemUUID sets the UUID of the filesystem containing /boot.
 func (options *GRUB2StageOptions) SetBootFilesystemUUID(u uuid.UUID) {
-	options.BootFilesystemUUID = u
+	options.BootFilesystemUUID = &u
 }
 
 // SetKernelOptions sets the kernel options that should be passed at boot.
