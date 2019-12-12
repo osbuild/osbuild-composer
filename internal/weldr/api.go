@@ -198,7 +198,7 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...respons
 
 func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type reply struct {
-		API           uint     `json:"api"`
+		API           string   `json:"api"`
 		DBSupported   bool     `json:"db_supported"`
 		DBVersion     string   `json:"db_version"`
 		SchemaVersion string   `json:"schema_version"`
@@ -208,7 +208,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 	}
 
 	json.NewEncoder(writer).Encode(reply{
-		API:           1,
+		API:           "1",
 		DBSupported:   true,
 		DBVersion:     "0",
 		SchemaVersion: "0",
