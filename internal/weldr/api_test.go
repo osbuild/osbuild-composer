@@ -40,7 +40,7 @@ func TestBasic(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{"/api/status", http.StatusOK, `{"api":1,"db_supported":true,"db_version":"0","schema_version":"0","backend":"osbuild-composer","build":"devel","messages":[]}`},
+		{"/api/status", http.StatusOK, `{"api":"1","db_supported":true,"db_version":"0","schema_version":"0","backend":"osbuild-composer","build":"devel","messages":[]}`},
 
 		{"/api/v0/projects/source/list", http.StatusOK, `{"sources":["test"]}`},
 
