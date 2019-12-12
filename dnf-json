@@ -29,6 +29,9 @@ def dnfrepo(desc, parent_conf=None):
     else:
         assert False
 
+    if desc.get("ignoressl", False):
+        repo.sslverify = False
+
     return repo
 
 
