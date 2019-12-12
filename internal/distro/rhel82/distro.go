@@ -220,23 +220,38 @@ func New() *RHEL82 {
 		Name:     "image.vhd",
 		MimeType: "application/x-vhd",
 		Packages: []string{
+			// Defaults
 			"@Core",
-			"chrony",
-			"kernel",
-			"selinux-policy-targeted",
 			"grub2-pc",
 			"langpacks-en",
-			"net-tools",
-			"ntfsprogs",
+
+			// Don't run dracut in host-only mode, in order to pull in
+			// the hv_vmbus, hv_netvsc and hv_storvsc modules into the initrd.
+			"dracut-config-generic",
+
+			// From the lorax kickstart
+			"kernel",
+			"selinux-policy-targeted",
+			"chrony",
+			// TODO enable and/or configure WAAgent correctly
 			"WALinuxAgent",
-			"libxcrypt-compat",
+			"python3",
+			"net-tools",
+			"cloud-init",
+			"cloud-utils-growpart",
+			"gdisk",
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
+		DefaultTarget: "multi-user.target",
 		IncludeFSTab:  true,
-		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("vhd", "image.vhd", 3*GigaByte),
+		KernelOptions: "no_timer_check console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 net.ifnames=0",
+		Assembler:     r.qemuAssembler("vpc", "image.vhd", 3*GigaByte),
 	}
 
 	r.outputs["vmdk"] = output{
