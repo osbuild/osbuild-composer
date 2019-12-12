@@ -513,6 +513,7 @@ func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.Ker
 	return &pipeline.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
+		Legacy:             true,
 	}
 }
 

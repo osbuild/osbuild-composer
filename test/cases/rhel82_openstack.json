@@ -106,7 +106,8 @@
         "name": "org.osbuild.grub2",
         "options": {
           "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-          "kernel_opts": "ro net.ifnames=0"
+          "kernel_opts": "ro net.ifnames=0",
+          "legacy": true
         }
       },
       {
