@@ -385,6 +385,7 @@ func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig
 	options := &pipeline.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: arch.Name,
+		ModulePlatformId: "platform:f30",
 	}
 
 	for _, repo := range append(r.Repositories(arch.Name), additionalRepos...) {
