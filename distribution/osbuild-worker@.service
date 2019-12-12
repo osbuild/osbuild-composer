@@ -10,6 +10,8 @@ ExecStart=/usr/libexec/osbuild-composer/osbuild-worker -C /var/lib/osbuild
 CacheDirectory=osbuild-composer
 Restart=on-failure
 RestartSec=10s
+CPUSchedulingPolicy=batch
+IOSchedulingClass=idle
 
 [Install]
 WantedBy=osbuild-composer.service
