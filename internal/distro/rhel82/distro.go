@@ -22,6 +22,8 @@ type output struct {
 	MimeType         string
 	Packages         []string
 	ExcludedPackages []string
+	EnabledServices  []string
+	DisabledServices []string
 	IncludeFSTab     bool
 	DefaultTarget    string
 	KernelOptions    string
@@ -248,9 +250,13 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
+		EnabledServices: []string{
+			"sshd",
+			"waagent", // needed to run in Azure
+		},
 		DefaultTarget: "multi-user.target",
 		IncludeFSTab:  true,
-		KernelOptions: "no_timer_check console=ttyS0,115200n8 earlyprintk=ttyS0,115200 rootdelay=300 net.ifnames=0",
+		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Assembler:     r.qemuAssembler("vpc", "image.vhd", 3*GigaByte),
 	}
 
@@ -281,14 +287,14 @@ func New() *RHEL82 {
 func (r *RHEL82) Repositories() []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
-			Id:       "baseos",
-			Name:     "BaseOS",
-			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8/compose/BaseOS/x86_64/os",
+			Id:      "baseos",
+			Name:    "BaseOS",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8/compose/BaseOS/x86_64/os",
 		},
 		{
-			Id:       "appstream",
-			Name:     "AppStream",
-			BaseURL:  "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8/compose/AppStream/x86_64/os",
+			Id:      "appstream",
+			Name:    "AppStream",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8/compose/AppStream/x86_64/os",
 		},
 	}
 }
@@ -376,8 +382,8 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 		p.AddStage(pipeline.NewGroupsStage(r.groupStageOptions(groups)))
 	}
 
-	if services := b.GetServices(); services != nil {
-		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(services, output.DefaultTarget)))
+	if services := b.GetServices(); services != nil || output.EnabledServices != nil {
+		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services, output.DefaultTarget)))
 	}
 
 	if firewall := b.GetFirewall(); firewall != nil {
@@ -512,10 +518,14 @@ func (r *RHEL82) firewallStageOptions(firewall *blueprint.FirewallCustomization)
 	return &options
 }
 
-func (r *RHEL82) systemdStageOptions(s *blueprint.ServicesCustomization, target string) *pipeline.SystemdStageOptions {
+func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *pipeline.SystemdStageOptions {
+	if s != nil {
+		enabledServices = append(enabledServices, s.Enabled...)
+		enabledServices = append(disabledServices, s.Disabled...)
+	}
 	return &pipeline.SystemdStageOptions{
-		EnabledServices:  s.Enabled,
-		DisabledServices: s.Disabled,
+		EnabledServices:  enabledServices,
+		DisabledServices: disabledServices,
 		DefaultTarget:    target,
 	}
 }
