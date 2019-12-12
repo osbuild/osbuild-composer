@@ -148,7 +148,6 @@
         "name": "org.osbuild.grub2",
         "options": {
           "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-          "boot_fs_uuid": "00000000-0000-0000-0000-000000000000",
           "kernel_opts": "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"
         }
       },

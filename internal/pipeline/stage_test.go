@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestStage_UnmarshalJSON(t *testing.T) {
+	null_uuid := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	type fields struct {
 		Name    string
 		Options StageOptions
@@ -112,8 +115,23 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 		{
 			name: "grub2",
 			fields: fields{
-				Name:    "org.osbuild.grub2",
-				Options: &GRUB2StageOptions{},
+				Name: "org.osbuild.grub2",
+				Options: &GRUB2StageOptions{
+					RootFilesystemUUID: null_uuid,
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
+			},
+		},
+		{
+			name: "grub2-separate-boot",
+			fields: fields{
+				Name: "org.osbuild.grub2",
+				Options: &GRUB2StageOptions{
+					RootFilesystemUUID: null_uuid,
+					BootFilesystemUUID: &null_uuid,
+				},
 			},
 			args: args{
 				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
