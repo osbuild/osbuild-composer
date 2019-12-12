@@ -33,7 +33,8 @@
                 "tar"
               ],
               "releasever": "30",
-              "basearch": "x86_64"
+              "basearch": "x86_64",
+              "module_platform_id": "platform:f30"
             }
           }
         ]
@@ -64,7 +65,8 @@
             "dracut-config-rescue"
           ],
           "releasever": "30",
-          "basearch": "x86_64"
+          "basearch": "x86_64",
+          "module_platform_id": "platform:f30"
         }
       },
       {

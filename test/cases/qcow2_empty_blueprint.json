@@ -33,7 +33,8 @@
                 "tar"
               ],
               "releasever": "30",
-              "basearch": "x86_64"
+              "basearch": "x86_64",
+              "module_platform_id": "platform:f30"
             }
           }
         ]
@@ -69,7 +70,8 @@
             "plymouth"
           ],
           "releasever": "30",
-          "basearch": "x86_64"
+          "basearch": "x86_64",
+          "module_platform_id": "platform:f30"
         }
       },
       {
