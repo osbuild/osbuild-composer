@@ -179,17 +179,21 @@ func New() *RHEL82 {
 		Name:     "image.qcow2",
 		MimeType: "application/x-qemu-disk",
 		Packages: []string{
+			// Defaults
 			"@Core",
-			"chrony",
+			"grub2-pc",
+			"langpacks-en",
+
+			// Don't run dracut in host-only mode, in order to pull in
+			// the hv_vmbus, hv_netvsc and hv_storvsc modules into the initrd.
+			"dracut-config-generic",
+
+			// From the lorax kickstart
 			"kernel",
 			"selinux-policy-targeted",
-			"grub2-pc",
-			"spice-vdagent",
-			"qemu-guest-agent",
-			"xen-libs",
-			"langpacks-en",
 			"cloud-init",
-			"libdrm",
+			"qemu-guest-agent",
+			"spice-vdagent",
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
