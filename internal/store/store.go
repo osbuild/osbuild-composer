@@ -594,7 +594,7 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
 		Name:     repo.Id,
 		CheckGPG: true,
-		CheckSSL: true,
+		CheckSSL: !repo.IgnoreSSL,
 		System:   system,
 	}
 
@@ -617,6 +617,7 @@ func (s *SourceConfig) RepoConfig() rpmmd.RepoConfig {
 
 	repo.Name = s.Name
 	repo.Id = s.Name
+	repo.IgnoreSSL = !s.CheckSSL
 
 	if s.Type == "yum-baseurl" {
 		repo.BaseURL = s.URL
