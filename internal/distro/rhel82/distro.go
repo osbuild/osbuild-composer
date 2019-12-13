@@ -121,6 +121,7 @@ func New() *RHEL82 {
 			"kernel",
 			"firewalld",
 			"chrony",
+			"dracut-config-generic",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -141,6 +142,7 @@ func New() *RHEL82 {
 		Packages: []string{
 			"@core",
 			"chrony",
+			"dracut-config-generic",
 			"firewalld",
 			"grub2-pc",
 			"kernel",
@@ -165,6 +167,7 @@ func New() *RHEL82 {
 		Packages: []string{
 			"kernel-core",
 			"chrony",
+			"dracut-config-generic",
 			"polkit",
 			"systemd-udev",
 			"selinux-policy-targeted",
@@ -224,6 +227,7 @@ func New() *RHEL82 {
 			"kernel",
 			"firewalld",
 			"chrony",
+			"dracut-config-generic",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -285,6 +289,7 @@ func New() *RHEL82 {
 		Packages: []string{
 			"@core",
 			"chrony",
+			"dracut-config-generic",
 			"firewalld",
 			"grub2-pc",
 			"kernel",
