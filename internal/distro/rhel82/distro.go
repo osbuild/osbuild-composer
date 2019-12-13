@@ -22,6 +22,7 @@ type arch struct {
 	Name               string
 	BootloaderPackages []string
 	BuildPackages      []string
+	UEFI               bool
 }
 
 type output struct {
@@ -34,7 +35,7 @@ type output struct {
 	Bootable         bool
 	DefaultTarget    string
 	KernelOptions    string
-	Assembler        *pipeline.Assembler
+	Assembler        func(uefi bool) *pipeline.Assembler
 }
 
 func New() *RHEL82 {
@@ -126,7 +127,9 @@ func New() *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		Bootable:      true,
 		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		Assembler:     r.qemuAssembler("raw.xz", "image.raw.xz", 6*GigaByte),
+		Assembler: func(uefi bool) *pipeline.Assembler {
+			return r.qemuAssembler("raw.xz", "image.raw.xz", 6*GigaByte, uefi)
+		},
 	}
 
 	r.outputs["ext4-filesystem"] = output{
@@ -150,7 +153,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.rawFSAssembler("filesystem.img"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img") },
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -174,7 +177,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("raw", "disk.img", 3*GigaByte),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("raw", "disk.img", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["qcow2"] = output{
@@ -202,7 +205,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["openstack"] = output{
@@ -229,7 +232,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["tar"] = output{
@@ -253,7 +256,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.tarAssembler("root.tar.xz", "xz"),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.outputs["vhd"] = output{
@@ -293,7 +296,7 @@ func New() *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		Bootable:      true,
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		Assembler:     r.qemuAssembler("vpc", "image.vhd", 3*GigaByte),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "image.vhd", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["vmdk"] = output{
@@ -318,7 +321,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte),
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vmdk", "disk.vmdk", 3*GigaByte, uefi) },
 	}
 
 	return &r
@@ -377,14 +380,14 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 	p.AddStage(pipeline.NewFixBLSStage())
 
 	if output.Bootable {
-		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions()))
+		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
 	}
 
 	kernelOptions := output.KernelOptions
 	if kernel := b.GetKernel(); kernel != nil {
 		kernelOptions += " " + kernel.Append
 	}
-	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(kernelOptions)))
+	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(kernelOptions, arch.UEFI)))
 
 	// TODO support setting all languages and install corresponding langpack-* package
 	language, keyboard := b.GetPrimaryLocale()
@@ -435,7 +438,7 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 	}
 
 	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
-	p.Assembler = output.Assembler
+	p.Assembler = output.Assembler(arch.UEFI)
 
 	return p, nil
 }
@@ -447,6 +450,7 @@ func (r *RHEL82) Runner() string {
 func (r *RHEL82) buildPipeline(arch arch, checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
+		"dosfstools",
 		"dracut-config-generic",
 		"e2fsprogs",
 		"glibc",
@@ -576,21 +580,33 @@ func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string,
 	}
 }
 
-func (r *RHEL82) fsTabStageOptions() *pipeline.FSTabStageOptions {
+func (r *RHEL82) fsTabStageOptions(uefi bool) *pipeline.FSTabStageOptions {
 	options := pipeline.FSTabStageOptions{}
 	options.AddFilesystem("0bd700f8-090f-4556-b797-b340297ea1bd", "xfs", "/", "defaults", 0, 0)
+	if uefi {
+		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
+	}
 	return &options
 }
 
-func (r *RHEL82) grub2StageOptions(kernelOptions string) *pipeline.GRUB2StageOptions {
+func (r *RHEL82) grub2StageOptions(kernelOptions string, uefi bool) *pipeline.GRUB2StageOptions {
 	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	if err != nil {
 		panic("invalid UUID")
 	}
+
+	var uefiOptions *pipeline.GRUB2UEFI
+	if uefi {
+		uefiOptions = &pipeline.GRUB2UEFI{
+			Vendor: "redhat",
+		}
+	}
+
 	return &pipeline.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
-		Legacy:             true,
+		Legacy:             !uefi,
+		UEFI:               uefiOptions,
 	}
 }
 
@@ -600,9 +616,40 @@ func (r *RHEL82) selinuxStageOptions() *pipeline.SELinuxStageOptions {
 	}
 }
 
-func (r *RHEL82) qemuAssembler(format string, filename string, size uint64) *pipeline.Assembler {
-	return pipeline.NewQEMUAssembler(
-		&pipeline.QEMUAssemblerOptions{
+func (r *RHEL82) qemuAssembler(format string, filename string, size uint64, uefi bool) *pipeline.Assembler {
+	var options pipeline.QEMUAssemblerOptions
+	if uefi {
+		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
+		options = pipeline.QEMUAssemblerOptions{
+			Format:   format,
+			Filename: filename,
+			Size:     size,
+			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
+			PTType:   "gpt",
+			Partitions: []pipeline.QEMUPartition{
+				{
+					Start: 2048,
+					Size:  972800,
+					Type:  &fstype,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "vfat",
+						UUID:       "46BB-8120",
+						Label:      "EFI System Partition",
+						Mountpoint: "/boot/efi",
+					},
+				},
+				{
+					Start: 976896,
+					Filesystem: pipeline.QEMUFilesystem{
+						Type:       "xfs",
+						UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
+						Mountpoint: "/",
+					},
+				},
+			},
+		}
+	} else {
+		options = pipeline.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
 			Size:     size,
@@ -619,8 +666,9 @@ func (r *RHEL82) qemuAssembler(format string, filename string, size uint64) *pip
 					},
 				},
 			},
-		},
-	)
+		}
+	}
+	return pipeline.NewQEMUAssembler(&options)
 }
 
 func (r *RHEL82) tarAssembler(filename, compression string) *pipeline.Assembler {

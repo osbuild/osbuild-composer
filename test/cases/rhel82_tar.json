@@ -38,6 +38,7 @@
               ],
               "packages": [
                 "dnf",
+                "dosfstools",
                 "dracut-config-generic",
                 "e2fsprogs",
                 "glibc",
