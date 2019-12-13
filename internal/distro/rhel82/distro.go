@@ -239,7 +239,6 @@ func New() *RHEL82 {
 			"kernel",
 			"selinux-policy-targeted",
 			"chrony",
-			// TODO enable and/or configure WAAgent correctly
 			"WALinuxAgent",
 			"python3",
 			"net-tools",
@@ -256,7 +255,7 @@ func New() *RHEL82 {
 		},
 		EnabledServices: []string{
 			"sshd",
-			"waagent", // needed to run in Azure
+			"waagent",
 		},
 		DefaultTarget: "multi-user.target",
 		IncludeFSTab:  true,
