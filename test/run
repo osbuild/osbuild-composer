@@ -149,7 +149,7 @@ def run_ssh_test(private_key):
            "-i", private_key,
            "-o", "StrictHostKeyChecking=no",
            "redhat@localhost",
-           "systemctl is-system-running --wait"]
+           "systemctl --wait is-system-running"]
     for _ in range(20):
         try:
             print("attempting ssh connection")
@@ -164,6 +164,8 @@ def run_ssh_test(private_key):
             elif output == "degraded":
                 print("ssh test passed, but the system is degraded")
                 return 0
+            elif output == "starting":
+                time.sleep(10)
             else:
                 print(f"ssh test failed, system status is: {output}")
                 return 1
