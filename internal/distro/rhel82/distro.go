@@ -125,6 +125,10 @@ func New() *RHEL82 {
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
 		IncludeFSTab:  false,
 		KernelOptions: "ro net.ifnames=0",
@@ -145,6 +149,10 @@ func New() *RHEL82 {
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
 		IncludeFSTab:  true,
 		KernelOptions: "ro net.ifnames=0",
@@ -169,6 +177,10 @@ func New() *RHEL82 {
 			"firewalld",
 			"gobject-introspection",
 			"plymouth",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
 		IncludeFSTab:  true,
 		KernelOptions: "ro net.ifnames=0",
@@ -216,6 +228,10 @@ func New() *RHEL82 {
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
 		IncludeFSTab:  false,
 		KernelOptions: "ro net.ifnames=0",
@@ -278,6 +294,10 @@ func New() *RHEL82 {
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
+
+			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
+			// https://errata.devel.redhat.com/advisory/47339 lands
+			"timedatex",
 		},
 		IncludeFSTab:  true,
 		KernelOptions: "ro net.ifnames=0",
@@ -579,7 +599,7 @@ func (r *RHEL82) qemuAssembler(format string, filename string, size uint64) *pip
 func (r *RHEL82) tarAssembler(filename, compression string) *pipeline.Assembler {
 	return pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
-			Filename: filename,
+			Filename:    filename,
 			Compression: compression,
 		})
 }
