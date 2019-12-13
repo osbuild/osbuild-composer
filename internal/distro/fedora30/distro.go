@@ -527,6 +527,7 @@ func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assemble
 	return pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
 			Filename: filename,
+			Compression: compression,
 		})
 }
 
