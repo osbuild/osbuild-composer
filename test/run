@@ -160,22 +160,22 @@ def run_ssh_test(private_key):
             output = sp.stdout.decode('utf-8').strip()
             if output == "running":
                 print("ssh test passed")
-                return 0
+                return True
             elif output == "degraded":
                 print("ssh test passed, but the system is degraded")
-                return 0
+                return True
             elif output == "starting":
                 time.sleep(10)
             else:
                 print(f"ssh test failed, system status is: {output}")
-                return 1
+                return False
         except subprocess.TimeoutExpired:
             print("ssh timeout expired")
         except subprocess.CalledProcessError as e:
             time.sleep(10)
 
     print("ssh test failure")
-    return 1
+    return False
 
 
 def run_test(case, private_key, store):
@@ -205,23 +205,19 @@ def run_test(case, private_key, store):
         with netns():
             if case["boot"]["type"] == "qemu":
                 with qemu_boot_image(filename):
-                    if run_ssh_test(private_key) == 1:
-                        failed = True
+                    return run_ssh_test(private_key)
             elif case["boot"]["type"] == "qemu-extract":
                 with qemu_boot_image(filename):
-                    if run_ssh_test(private_key) == 1:
-                        failed = True
+                    return run_ssh_test(private_key)
             elif case["boot"]["type"] == "nspawn":
                 with nspawn_boot_image(filename, output_id):
-                    if run_ssh_test(private_key) == 1:
-                        failed = True
+                    return run_ssh_test(private_key)
             elif case["boot"]["type"] == "nspawn-extract":
                 with nspawn_boot_archive(filename, output_id):
-                    if run_ssh_test(private_key) == 1:
-                        failed = True
+                    return run_ssh_test(private_key)
             else:
                 print("unknown test type")
-                failed = True
+                return False
 
     return True
 
