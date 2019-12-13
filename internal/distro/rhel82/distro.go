@@ -581,6 +581,7 @@ func (r *RHEL82) tarAssembler(filename, compression string) *pipeline.Assembler 
 	return pipeline.NewTarAssembler(
 		&pipeline.TarAssemblerOptions{
 			Filename: filename,
+			Compression: compression,
 		})
 }
 
