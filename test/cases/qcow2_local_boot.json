@@ -53,6 +53,7 @@
               ],
               "packages": [
                 "dnf",
+                "dracut-config-generic",
                 "e2fsprogs",
                 "policycoreutils",
                 "qemu-img",
@@ -83,6 +84,7 @@
             "kernel-core",
             "@Fedora Cloud Server",
             "chrony",
+            "dracut-config-generic",
             "polkit",
             "systemd-udev",
             "selinux-policy-targeted",

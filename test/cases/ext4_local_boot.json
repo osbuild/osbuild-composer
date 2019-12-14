@@ -53,6 +53,7 @@
               ],
               "packages": [
                 "dnf",
+                "dracut-config-generic",
                 "e2fsprogs",
                 "policycoreutils",
                 "qemu-img",
@@ -85,6 +86,7 @@
             "kernel",
             "firewalld",
             "chrony",
+            "dracut-config-generic",
             "langpacks-en",
             "openssh-server"
           ],

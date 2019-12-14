@@ -40,6 +40,7 @@ func New() *Fedora30 {
 		Packages: []string{
 			"@Core",
 			"chrony",
+			"dracut-config-generic",
 			"kernel",
 			"selinux-policy-targeted",
 			"grub2-pc",
@@ -70,6 +71,7 @@ func New() *Fedora30 {
 			"kernel",
 			"firewalld",
 			"chrony",
+			"dracut-config-generic",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -86,6 +88,7 @@ func New() *Fedora30 {
 		Packages: []string{
 			"@core",
 			"chrony",
+			"dracut-config-generic",
 			"firewalld",
 			"grub2-pc",
 			"kernel",
@@ -107,6 +110,7 @@ func New() *Fedora30 {
 			"kernel-core",
 			"@Fedora Cloud Server",
 			"chrony",
+			"dracut-config-generic",
 			"polkit",
 			"systemd-udev",
 			"selinux-policy-targeted",
@@ -131,6 +135,7 @@ func New() *Fedora30 {
 		Packages: []string{
 			"@Core",
 			"chrony",
+			"dracut-config-generic",
 			"kernel",
 			"selinux-policy-targeted",
 			"grub2-pc",
@@ -158,6 +163,7 @@ func New() *Fedora30 {
 			"kernel",
 			"firewalld",
 			"chrony",
+			"dracut-config-generic",
 			"langpacks-en",
 		},
 		ExcludedPackages: []string{
@@ -174,6 +180,7 @@ func New() *Fedora30 {
 		Packages: []string{
 			"@Core",
 			"chrony",
+			"dracut-config-generic",
 			"kernel",
 			"selinux-policy-targeted",
 			"grub2-pc",
@@ -197,6 +204,7 @@ func New() *Fedora30 {
 		Packages: []string{
 			"@core",
 			"chrony",
+			"dracut-config-generic",
 			"firewalld",
 			"grub2-pc",
 			"kernel",
@@ -353,6 +361,7 @@ func (r *Fedora30) Runner() string {
 func (r *Fedora30) buildPipeline(checksums map[string]string) *pipeline.Pipeline {
 	packages := []string{
 		"dnf",
+		"dracut-config-generic",
 		"e2fsprogs",
 		"policycoreutils",
 		"qemu-img",

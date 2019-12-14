@@ -53,6 +53,7 @@
               ],
               "packages": [
                 "dnf",
+                "dracut-config-generic",
                 "e2fsprogs",
                 "policycoreutils",
                 "qemu-img",
@@ -82,6 +83,7 @@
           "packages": [
             "@Core",
             "chrony",
+            "dracut-config-generic",
             "kernel",
             "selinux-policy-targeted",
             "grub2-pc",

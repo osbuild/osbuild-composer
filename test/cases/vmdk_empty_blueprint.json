@@ -25,6 +25,7 @@
               ],
               "packages": [
                 "dnf",
+                "dracut-config-generic",
                 "e2fsprogs",
                 "policycoreutils",
                 "qemu-img",
@@ -54,6 +55,7 @@
           "packages": [
             "@core",
             "chrony",
+            "dracut-config-generic",
             "firewalld",
             "grub2-pc",
             "kernel",
