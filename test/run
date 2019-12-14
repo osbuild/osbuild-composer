@@ -116,10 +116,12 @@ def nspawn_boot_image(image_file, name):
 @contextlib.contextmanager
 def nspawn_boot_archive(image_file, name):
     with tempfile.TemporaryDirectory(dir="/var/tmp") as dir:
-        subprocess.run(["tar", "xf", image_file], cwd=dir)
-        cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", name, "--directory", "."]
+        cmd = ["tar", "xf", image_file]
+        print(f"extracting image: {' '.join(cmd)}")
+        subprocess.run(cmd, cmd=dir)
+        cmd = ["systemd-nspawn", "--boot", "--register=no", "-M", name, "--directory", dir]
         print(f"running nspawn command: {' '.join(cmd)}")
-        container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dir)
+        container = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             yield None
         finally:
@@ -135,12 +137,9 @@ def run_osbuild(pipeline, store):
         osbuild_cmd.append(os.path.abspath(build_env))
 
     result = dict()
-    try:
-        result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(pipeline)))
-    except subprocess.CalledProcessError as err:
-        print(err.output)
+    result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(pipeline)))
 
-    return result["tree_id"], result["output_id"]
+    return result.get("output_id")
 
 
 def run_ssh_test(private_key):
@@ -183,7 +182,18 @@ def run_test(case, private_key, store):
         print("skipping this test case, no pipeline given")
         return True
 
-    _, output_id = run_osbuild(case["pipeline"], store)
+    try:
+        output_id = run_osbuild(case["pipeline"], store)
+    except subprocess.CalledProcessError as err:
+        print(err.output)
+        return False
+
+    if output_id == None:
+        print(f"osbuild did not produce an image")
+        return False
+
+    print(f"osbuild successfully built pipeline {output_id}")
+
     filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
 
     fn, ex = os.path.splitext(filename)
