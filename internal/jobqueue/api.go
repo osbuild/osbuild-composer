@@ -75,7 +75,6 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	type requestBody struct {
 	}
-	type replyBody Job
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
@@ -93,7 +92,13 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	nextJob := api.store.PopCompose()
 
 	writer.WriteHeader(http.StatusCreated)
-	json.NewEncoder(writer).Encode(replyBody{nextJob.ComposeID, nextJob.Pipeline, nextJob.Targets, nextJob.OutputType})
+	json.NewEncoder(writer).Encode(Job{
+		ID: nextJob.ComposeID,
+		Distro: nextJob.Distro,
+		Pipeline: nextJob.Pipeline,
+		Targets: nextJob.Targets,
+		OutputType: nextJob.OutputType,
+	})
 }
 
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
