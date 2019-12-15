@@ -47,12 +47,12 @@ func (job *Job) Run() (*store.Image, error, []error) {
 
 	err = json.NewEncoder(buildFile).Encode(build)
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error encoding build environment: %v", err), nil
 	}
 
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error setting up osbuild store: %v", err), nil
 	}
 	defer os.RemoveAll(tmpStore)
 
@@ -66,22 +66,22 @@ func (job *Job) Run() (*store.Image, error, []error) {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err), nil
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error setting up stdout for osbuild: %v", err), nil
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error starting osbuild: %v", err), nil
 	}
 
 	err = json.NewEncoder(stdin).Encode(job.Pipeline)
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err), nil
 	}
 	stdin.Close()
 
@@ -95,14 +95,14 @@ func (job *Job) Run() (*store.Image, error, []error) {
 	}
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("error decoding osbuild output: %#v", err), nil
 	}
 
 	cmdError := cmd.Wait()
 
 	filename, mimeType, err := d.FilenameFromType(job.OutputType)
 	if err != nil {
-		return nil, err, nil
+		return nil, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err), nil
 	}
 
 	var image store.Image
