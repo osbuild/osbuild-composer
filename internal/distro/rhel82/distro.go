@@ -38,6 +38,8 @@ type output struct {
 	Assembler        func(uefi bool) *pipeline.Assembler
 }
 
+const Name = "rhel-8.2"
+
 func New() *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
@@ -390,6 +392,10 @@ func New() *RHEL82 {
 	}
 
 	return &r
+}
+
+func (r *RHEL82) Name() string {
+	return Name
 }
 
 func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
