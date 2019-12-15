@@ -86,18 +86,19 @@ func (job *Job) Run() (*store.Image, error, []error) {
 	stdin.Close()
 
 	var result struct {
-		TreeID   string `json:"tree_id"`
-		OutputID string `json:"output_id"`
+		TreeID    string           `json:"tree_id"`
+		OutputID  string           `json:"output_id"`
+		Build     *json.RawMessage `json:"build,omitempty"`
+		Stages    *json.RawMessage `json:"stages,omitempty"`
+		Assembler *json.RawMessage `json:"assembler,omitempty"`
+		Success   *json.RawMessage `json:"success,omitempty"`
 	}
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
 		return nil, err, nil
 	}
 
-	err = cmd.Wait()
-	if err != nil {
-		return nil, err, nil
-	}
+	cmdError := cmd.Wait()
 
 	filename, mimeType, err := d.FilenameFromType(job.OutputType)
 	if err != nil {
@@ -111,6 +112,28 @@ func (job *Job) Run() (*store.Image, error, []error) {
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
+			err := os.MkdirAll(options.Location, 0755)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			jobFile, err := os.Create(options.Location + "/result.json")
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = json.NewEncoder(jobFile).Encode(result)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			if cmdError != nil {
+				continue
+			}
+
 			err = runCommand("cp", "-a", "-L", tmpStore+"/refs/"+result.OutputID+"/.", options.Location)
 			if err != nil {
 				r = append(r, err)
@@ -142,6 +165,10 @@ func (job *Job) Run() (*store.Image, error, []error) {
 			}
 
 		case *target.AWSTargetOptions:
+			if cmdError != nil {
+				continue
+			}
+
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
 				r = append(r, err)
@@ -169,6 +196,10 @@ func (job *Job) Run() (*store.Image, error, []error) {
 			r = append(r, fmt.Errorf("invalid target type"))
 		}
 		r = append(r, nil)
+	}
+
+	if cmdError != nil {
+		return nil, cmdError, nil
 	}
 
 	return &image, nil, r
