@@ -11,8 +11,14 @@ import (
 
 type TestDistro struct{}
 
+const Name = "test"
+
 func init() {
-	distro.Register("test", &TestDistro{})
+	distro.Register(Name, &TestDistro{})
+}
+
+func (d *TestDistro) Name() string {
+	return Name
 }
 
 func (d *TestDistro) Repositories(arch string) []rpmmd.RepoConfig {

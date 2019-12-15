@@ -37,6 +37,8 @@ type output struct {
 	Assembler        func(uefi bool) *pipeline.Assembler
 }
 
+const Name = "fedora-30"
+
 func New() *Fedora30 {
 	r := Fedora30{
 		arches:  map[string]arch{},
@@ -238,6 +240,10 @@ func New() *Fedora30 {
 	}
 
 	return &r
+}
+
+func (r *Fedora30) Name() string {
+	return Name
 }
 
 func (r *Fedora30) Repositories(arch string) []rpmmd.RepoConfig {

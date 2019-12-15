@@ -16,6 +16,10 @@ import (
 )
 
 type Distro interface {
+	// Returns the name of the distro. This is the same name that was
+	// passed to New().
+	Name() string
+
 	// Returns a list of repositories from which this distribution gets its
 	// content.
 	Repositories(arch string) []rpmmd.RepoConfig
@@ -40,8 +44,8 @@ var registered map[string]Distro
 
 func init() {
 	registered = map[string]Distro{
-		"fedora-30": fedora30.New(),
-		"rhel-8.2":  rhel82.New(),
+		fedora30.Name: fedora30.New(),
+		rhel82.Name:   rhel82.New(),
 	}
 }
 
