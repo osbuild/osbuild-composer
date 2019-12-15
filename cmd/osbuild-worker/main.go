@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/store"
 )
@@ -77,7 +76,7 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status string, image *stor
 	return nil
 }
 
-func handleJob(client *ComposerClient, distro distro.Distro) error {
+func handleJob(client *ComposerClient) error {
 	fmt.Println("Waiting for a new job...")
 	job, err := client.AddJob()
 	if err != nil {
@@ -90,7 +89,7 @@ func handleJob(client *ComposerClient, distro distro.Distro) error {
 	}
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	image, err, errs := job.Run(distro)
+	image, err, errs := job.Run()
 	if err != nil {
 		return client.UpdateJob(job, "FAILED", nil)
 	}
@@ -105,14 +104,9 @@ func handleJob(client *ComposerClient, distro distro.Distro) error {
 }
 
 func main() {
-	distro, err := distro.FromHost()
-	if err != nil {
-		log.Fatalf("Could not determine distro from host: " + err.Error())
-	}
-
 	client := NewClient()
 	for {
-		if err := handleJob(client, distro); err != nil {
+		if err := handleJob(client); err != nil {
 			log.Fatalf("Failed to handle job: " + err.Error())
 		}
 	}

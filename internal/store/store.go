@@ -58,6 +58,7 @@ type Compose struct {
 // A Job contains the information about a compose a worker needs to process it.
 type Job struct {
 	ComposeID  uuid.UUID
+	Distro     string
 	Pipeline   *pipeline.Pipeline
 	Targets    []*target.Target
 	OutputType string
@@ -451,6 +452,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 	})
 	s.pendingJobs <- Job{
 		ComposeID:  composeID,
+		Distro:     s.distro.Name(),
 		Pipeline:   pipeline,
 		Targets:    targets,
 		OutputType: composeType,

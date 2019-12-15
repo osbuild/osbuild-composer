@@ -18,6 +18,7 @@ import (
 
 type Job struct {
 	ID         uuid.UUID          `json:"id"`
+	Distro     string             `json:"distro"`
 	Pipeline   *pipeline.Pipeline `json:"pipeline"`
 	Targets    []*target.Target   `json:"targets"`
 	OutputType string             `json:"output_type"`
@@ -28,7 +29,12 @@ type JobStatus struct {
 	Image  *store.Image `json:"image"`
 }
 
-func (job *Job) Run(d distro.Distro) (*store.Image, error, []error) {
+func (job *Job) Run() (*store.Image, error, []error) {
+	d := distro.New(job.Distro)
+	if d == nil {
+		return nil, fmt.Errorf("unknown distro: %s", job.Distro), nil
+	}
+
 	build := pipeline.Build{
 		Runner: d.Runner(),
 	}
