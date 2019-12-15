@@ -91,11 +91,13 @@ func handleJob(client *ComposerClient) error {
 	fmt.Printf("Running job %s\n", job.ID.String())
 	image, err, errs := job.Run()
 	if err != nil {
+		log.Printf("  Job failed: %v", err)
 		return client.UpdateJob(job, "FAILED", nil)
 	}
 
 	for _, err := range errs {
 		if err != nil {
+			log.Printf("  Job target error: %v", err)
 			return client.UpdateJob(job, "FAILED", nil)
 		}
 	}
