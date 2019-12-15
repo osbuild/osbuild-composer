@@ -112,7 +112,8 @@ func main() {
 
 	client := NewClient()
 	for {
-		err = handleJob(client, distro)
-		log.Fatalf("Failed to handle job: " + err.Error())
+		if err := handleJob(client, distro); err != nil {
+			log.Fatalf("Failed to handle job: " + err.Error())
+		}
 	}
 }
