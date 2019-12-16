@@ -61,7 +61,10 @@
             "net-tools",
             "ntfsprogs",
             "WALinuxAgent",
-            "libxcrypt-compat"
+            "libxcrypt-compat",
+            "initscripts",
+            "glibc-all-langpacks",
+            "dracut-config-generic"
           ],
           "exclude_packages": [
             "dracut-config-rescue"
@@ -100,7 +103,20 @@
         "options": {
           "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
           "boot_fs_uuid": "00000000-0000-0000-0000-000000000000",
-          "kernel_opts": "ro biosdevname=0 net.ifnames=0"
+          "kernel_opts": "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0"
+        }
+      },
+      {
+        "name": "org.osbuild.systemd",
+        "options": {
+          "enabled_services": [
+            "sshd",
+            "waagent"
+          ],
+          "disabled_services": [
+            "proc-sys-fs-binfmt_misc.mount",
+            "loadmodules.service"
+          ]
         }
       },
       {
@@ -125,7 +141,7 @@
     "boot-environment": {
       "GRUB2_BOOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
       "GRUB2_ROOT_FS_UUID": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-      "kernelopts": "root=UUID=76a22bf4-f153-4541-b6c7-0332c0dfaeac ro biosdevname=0 net.ifnames=0"
+      "kernelopts": "root=UUID=76a22bf4-f153-4541-b6c7-0332c0dfaeac ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0"
     },
     "bootloader": "grub",
     "bootmenu": [
@@ -261,6 +277,7 @@
       "dnf-plugins-core-4.0.6-1.fc30.noarch",
       "dnf-yum-4.2.2-2.fc30.noarch",
       "dracut-049-26.git20181204.fc30.x86_64",
+      "dracut-config-generic-049-26.git20181204.fc30.x86_64",
       "e2fsprogs-1.44.6-1.fc30.x86_64",
       "e2fsprogs-libs-1.44.6-1.fc30.x86_64",
       "ebtables-2.0.10-31.fc30.x86_64",
@@ -290,6 +307,7 @@
       "gettext-libs-0.19.8.1-18.fc30.x86_64",
       "glib2-2.60.1-2.fc30.x86_64",
       "glibc-2.29-9.fc30.x86_64",
+      "glibc-all-langpacks-2.29-9.fc30.x86_64",
       "glibc-common-2.29-9.fc30.x86_64",
       "glibc-langpack-en-2.29-9.fc30.x86_64",
       "gmp-6.1.2-10.fc30.x86_64",
@@ -312,6 +330,7 @@
       "hardlink-1.3-8.fc30.x86_64",
       "hostname-3.20-8.fc30.x86_64",
       "ima-evm-utils-1.1-5.fc30.x86_64",
+      "initscripts-10.01-2.fc30.x86_64",
       "ipcalc-0.2.5-2.fc30.x86_64",
       "iproute-5.0.0-2.fc30.x86_64",
       "iproute-tc-5.0.0-2.fc30.x86_64",
@@ -599,6 +618,7 @@
       "console-getty.service",
       "debug-shell.service",
       "ebtables.service",
+      "loadmodules.service",
       "nftables.service",
       "nis-domainname.service",
       "rdisc.service",
@@ -612,7 +632,6 @@
       "systemd-time-wait-sync.service",
       "systemd-timesyncd.service",
       "tcsd.service",
-      "waagent.service",
       "sshd.socket",
       "sssd-autofs.socket",
       "sssd-nss.socket",
@@ -642,6 +661,7 @@
       "dbus.service",
       "firewalld.service",
       "getty@.service",
+      "import-state.service",
       "messagebus.service",
       "NetworkManager-dispatcher.service",
       "NetworkManager-wait-online.service",
@@ -650,6 +670,7 @@
       "sshd.service",
       "sssd.service",
       "timedatex.service",
+      "waagent.service",
       "dbus.socket",
       "sssd-kcm.socket",
       "ctrl-alt-del.target",
