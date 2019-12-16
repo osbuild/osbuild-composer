@@ -6,7 +6,7 @@
     "distro": "fedora-30",
     "arch": "x86_64",
     "output-format": "openstack",
-    "filename": "image.qcow2",
+    "filename": "disk.qcow2",
     "blueprint-draft": {
       "name": "openstack-boot-test",
       "description": "Image for boot test",
@@ -168,7 +168,7 @@
       "name": "org.osbuild.qemu",
       "options": {
         "format": "qcow2",
-        "filename": "image.qcow2",
+        "filename": "disk.qcow2",
         "size": 3222274048,
         "ptuuid": "0x14fc63d2",
         "pttype": "mbr",

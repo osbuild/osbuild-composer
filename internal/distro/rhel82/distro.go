@@ -276,7 +276,7 @@ func New() *RHEL82 {
 	}
 
 	r.outputs["openstack"] = output{
-		Name:     "image.qcow2",
+		Name:     "disk.qcow2",
 		MimeType: "application/x-qemu-disk",
 		Packages: []string{
 			// Defaults
@@ -299,7 +299,7 @@ func New() *RHEL82 {
 		},
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "image.qcow2", 3*GigaByte, uefi) },
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["tar"] = output{
@@ -327,7 +327,7 @@ func New() *RHEL82 {
 	}
 
 	r.outputs["vhd"] = output{
-		Name:     "image.vhd",
+		Name:     "disk.vhd",
 		MimeType: "application/x-vhd",
 		Packages: []string{
 			// Defaults
@@ -363,7 +363,7 @@ func New() *RHEL82 {
 		DefaultTarget: "multi-user.target",
 		Bootable:      true,
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "image.vhd", 3*GigaByte, uefi) },
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "disk.vhd", 3*GigaByte, uefi) },
 	}
 
 	r.outputs["vmdk"] = output{

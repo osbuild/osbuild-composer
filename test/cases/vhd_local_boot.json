@@ -6,7 +6,7 @@
     "distro": "fedora-30",
     "arch": "x86_64",
     "output-format": "vhd",
-    "filename": "image.vhd",
+    "filename": "disk.vhd",
     "blueprint-draft": {
       "name": "vhd-boot-test",
       "description": "Image for boot test",
@@ -167,7 +167,7 @@
       "name": "org.osbuild.qemu",
       "options": {
         "format": "qcow2",
-        "filename": "image.vhd",
+        "filename": "disk.vhd",
         "size": 3222274048,
         "ptuuid": "0x14fc63d2",
         "pttype": "mbr",

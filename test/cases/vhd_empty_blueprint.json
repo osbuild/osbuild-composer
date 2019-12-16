@@ -6,7 +6,7 @@
       "fedora": "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
     },
     "output-format": "vhd",
-    "filename": "image.vhd",
+    "filename": "disk.vhd",
     "blueprint": {}
   },
   "pipeline": {
@@ -117,7 +117,7 @@
       "name": "org.osbuild.qemu",
       "options": {
         "format": "vpc",
-        "filename": "image.vhd",
+        "filename": "disk.vhd",
         "size": 3222274048,
         "ptuuid": "0x14fc63d2",
         "pttype": "mbr",
