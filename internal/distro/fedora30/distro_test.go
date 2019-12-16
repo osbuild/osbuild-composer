@@ -51,7 +51,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "openstack",
 			args:  args{"openstack"},
-			want:  "image.qcow2",
+			want:  "disk.qcow2",
 			want1: "application/x-qemu-disk",
 		},
 		{
@@ -75,7 +75,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "vhd",
 			args:  args{"vhd"},
-			want:  "image.vhd",
+			want:  "disk.vhd",
 			want1: "application/x-vhd",
 		},
 		{

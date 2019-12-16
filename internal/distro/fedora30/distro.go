@@ -156,7 +156,7 @@ func New() *Fedora30 {
 	}
 
 	r.outputs["openstack"] = output{
-		Name:     "image.qcow2",
+		Name:     "disk.qcow2",
 		MimeType: "application/x-qemu-disk",
 		Packages: []string{
 			"@Core",
@@ -175,7 +175,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "image.qcow2", uefi) },
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("qcow2", "disk.qcow2", uefi) },
 	}
 
 	r.outputs["tar"] = output{
@@ -198,7 +198,7 @@ func New() *Fedora30 {
 	}
 
 	r.outputs["vhd"] = output{
-		Name:     "image.vhd",
+		Name:     "disk.vhd",
 		MimeType: "application/x-vhd",
 		Packages: []string{
 			"@Core",
@@ -216,7 +216,7 @@ func New() *Fedora30 {
 		},
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
-		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "image.vhd", uefi) },
+		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "disk.vhd", uefi) },
 	}
 
 	r.outputs["vmdk"] = output{
