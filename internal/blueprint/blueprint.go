@@ -42,7 +42,7 @@ func (b *Blueprint) GetPackages() []string {
 		packages = append(packages, pkg.ToNameVersion())
 	}
 	for _, group := range b.Groups {
-		packages = append(packages, group.Name)
+		packages = append(packages, "@"+group.Name)
 	}
 	return packages
 }
