@@ -345,6 +345,13 @@ func TestCompose(t *testing.T) {
 			break
 		}
 
+		if compose.Pipeline == nil {
+			t.Fatalf("%s: the compose in the store did not contain a blueprint", c.Path)
+		} else {
+			// TODO: find some (reasonable) way to verify the contents of the pipeline
+			compose.Pipeline = nil
+		}
+
 		if diff := cmp.Diff(compose, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
