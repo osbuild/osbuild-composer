@@ -33,11 +33,11 @@
             "options": {
               "repos": [
                 {
-                  "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/x86_64/os",
+                  "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
                   "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
                 },
                 {
-                  "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/x86_64/os",
+                  "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
                   "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
                 }
               ],
@@ -70,11 +70,11 @@
         "options": {
           "repos": [
             {
-              "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/x86_64/os",
+              "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
               "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
             },
             {
-              "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/x86_64/os",
+              "baseurl": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
               "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
             }
           ],

@@ -2,6 +2,7 @@ package rhel82
 
 import (
 	"errors"
+	"log"
 	"sort"
 	"strconv"
 
@@ -23,6 +24,7 @@ type arch struct {
 	BootloaderPackages []string
 	BuildPackages      []string
 	UEFI               bool
+	Repositories       []rpmmd.RepoConfig
 }
 
 type output struct {
@@ -40,7 +42,7 @@ type output struct {
 
 const Name = "rhel-8.2"
 
-func New() *RHEL82 {
+func New(confPaths []string) *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
@@ -48,26 +50,44 @@ func New() *RHEL82 {
 		outputs: map[string]output{},
 	}
 
-	r.arches["x86_64"] = arch{
-		Name: "x86_64",
-		BootloaderPackages: []string{
-			"grub2-pc",
-		},
-		BuildPackages: []string{
-			"grub2-pc",
-		},
+	repoMap, err := rpmmd.LoadRepositories(confPaths, Name)
+	if err != nil {
+		log.Printf("Could not load repository data for %s: %s", Name, err.Error())
+		return nil
 	}
 
-	r.arches["aarch64"] = arch{
-		Name: "aarch64",
-		BootloaderPackages: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"grub2-tools",
-			"shim-aa64",
-		},
-		UEFI: true,
+	repos, exists := repoMap["x86_64"]
+	if !exists {
+		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", Name, err.Error())
+	} else {
+		r.arches["x86_64"] = arch{
+			Name: "x86_64",
+			BootloaderPackages: []string{
+				"grub2-pc",
+			},
+			BuildPackages: []string{
+				"grub2-pc",
+			},
+			Repositories: repos,
+		}
+	}
+
+	repos, exists = repoMap["aarch64"]
+	if !exists {
+		log.Printf("Could not load architecture-specific repository data for aarch64 (%s): %s", Name, err.Error())
+	} else {
+		r.arches["aarch64"] = arch{
+			Name: "aarch64",
+			BootloaderPackages: []string{
+				"dracut-config-generic",
+				"efibootmgr",
+				"grub2-efi-aa64",
+				"grub2-tools",
+				"shim-aa64",
+			},
+			UEFI:         true,
+			Repositories: repos,
+		}
 	}
 
 	r.outputs["ami"] = output{
@@ -399,18 +419,7 @@ func (r *RHEL82) Name() string {
 }
 
 func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
-	return []rpmmd.RepoConfig{
-		{
-			Id:      "baseos",
-			Name:    "BaseOS",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/" + arch + "/os",
-		},
-		{
-			Id:      "appstream",
-			Name:    "AppStream",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/" + arch + "/os",
-		},
-	}
+	return r.arches[arch].Repositories
 }
 
 func (r *RHEL82) ListOutputFormats() []string {
@@ -544,7 +553,7 @@ func (r *RHEL82) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, 
 		BaseArchitecture: arch.Name,
 		ModulePlatformId: "platform:el8",
 	}
-	for _, repo := range append(r.Repositories(arch.Name), additionalRepos...) {
+	for _, repo := range append(arch.Repositories, additionalRepos...) {
 		options.AddRepository(&pipeline.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,

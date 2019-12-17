@@ -42,7 +42,7 @@ func TestDistro_Pipeline(t *testing.T) {
 			continue
 		}
 		t.Run(tt.Compose.OutputFormat, func(t *testing.T) {
-			distros := distro.NewRegistry()
+			distros := distro.NewRegistry([]string{"../.."})
 			d := distros.GetDistro(tt.Compose.Distro)
 			if d == nil {
 				t.Errorf("unknown distro: %v", tt.Compose.Distro)
