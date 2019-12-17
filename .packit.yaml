@@ -29,3 +29,6 @@ jobs:
     trigger: release
     metadata:
       dist-git-branch: f31
+actions:
+  # workaround for https://github.com/packit-service/packit/issues/641
+  fix-spec-file: make fix-spec

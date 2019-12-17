@@ -52,3 +52,8 @@ check-working-directory:
 	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
 	  exit 1; \
 	fi
+
+# workaround for https://github.com/packit-service/packit/issues/641
+fix-spec:
+	sed -i "s/\(Version:\s*\)[0-9]\+/\\1$(PACKIT_PROJECT_VERSION)/" golang-github-osbuild-composer.spec
+	sed -i "s/\(Source0:\s*\).\+/\\1$(PACKIT_PROJECT_ARCHIVE)/" golang-github-osbuild-composer.spec
