@@ -352,6 +352,44 @@ func TestCompose(t *testing.T) {
 	}
 }
 
+func TestComposeCancel(t *testing.T) {
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	var cases = []struct {
+		Path               string
+		ExpectedJSON       string
+		ExpectedIDsInStore []string
+	}{
+		{"/api/v0/compose/cancel/30000000-0000-0000-0000-000000000000", `{"uuid":"30000000-0000-0000-0000-000000000000","status":true}`, []string{"30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+		{"/api/v0/compose/cancel/30000000-0000-0000-0000-000000000001", `{"uuid":"30000000-0000-0000-0000-000000000001","status":true}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+
+		{"/api/v0/compose/cancel/30000000-0000-0000-0000-000000000002", `{"errors":[{"id":"BuildInWrongState","msg":"Compose 30000000-0000-0000-0000-000000000002 is not in WAITING or RUNNING."}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+		{"/api/v0/compose/cancel/30000000-0000-0000-0000-000000000003", `{"errors":[{"id":"BuildInWrongState","msg":"Compose 30000000-0000-0000-0000-000000000003 is not in WAITING or RUNNING."}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+
+		{"/api/v0/compose/cancel/42000000-0000-0000-0000-000000000000", `{"errors":[{"id":"UnknownUUID","msg":"compose 42000000-0000-0000-0000-000000000000 doesn't exist"}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+		{"/api/v0/compose/cancel/30000000-0000-0000-0000", `{"errors":[{"id":"UnknownUUID","msg":"30000000-0000-0000-0000 is not a valid uuid"}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000003"}},
+	}
+
+	for _, c := range cases {
+		api, s := createWeldrAPI(rpmmd_mock.BaseFixture)
+		test.TestRoute(t, api, false, "DELETE", c.Path, "", http.StatusOK, c.ExpectedJSON)
+
+		idsInStore := []string{}
+
+		for id, _ := range s.Composes {
+			idsInStore = append(idsInStore, id.String())
+		}
+
+		diff := cmp.Diff(idsInStore, c.ExpectedIDsInStore, cmpopts.SortSlices(func(a, b string) bool { return a < b }))
+
+		if diff != "" {
+			t.Errorf("%s: composes in store are different, expected: %v, got: %v, diff:\n%s", c.Path, c.ExpectedIDsInStore, idsInStore, diff)
+		}
+	}
+}
+
 func TestComposeDelete(t *testing.T) {
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
 		t.Skip("This test is for internal testing only")
@@ -622,8 +660,8 @@ func TestSourcesInfo(t *testing.T) {
 
 	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
-	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
-	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
 	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=son", ``, 400, `{"status":false,"errors":[{"id":"InvalidChars","msg":"invalid format parameter: son"}]}`)
 }
 

@@ -88,6 +88,7 @@ func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logge
 	api.router.DELETE("/api/v:version/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
 	api.router.POST("/api/v:version/compose", api.composeHandler)
+	api.router.DELETE("/api/v:version/compose/cancel/:uuid", api.composeCancelHandler)
 	api.router.DELETE("/api/v:version/compose/delete/:uuids", api.composeDeleteHandler)
 	api.router.GET("/api/v:version/compose/types", api.composeTypesHandler)
 	api.router.GET("/api/v:version/compose/queue", api.composeQueueHandler)
@@ -1278,6 +1279,68 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	json.NewEncoder(writer).Encode(reply)
+}
+
+func (api *API) composeCancelHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	type composeCancelStatus struct {
+		UUID   uuid.UUID `json:"uuid"`
+		Status bool      `json:"status"`
+	}
+
+	type composeCancelError struct {
+		ID  string `json:"id"`
+		Msg string `json:"msg"`
+	}
+
+	uuidString := params.ByName("uuid")
+
+	errors := []composeCancelError{}
+
+	id, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors = append(errors, composeCancelError{
+			"UnknownUUID",
+			fmt.Sprintf("%s is not a valid uuid", uuidString),
+		})
+	} else {
+		err = api.store.CancelCompose(id)
+		if err != nil {
+			switch err.(type) {
+			case *store.NotFoundError:
+				errors = append(errors, composeCancelError{
+					"UnknownUUID",
+					fmt.Sprintf("compose %s doesn't exist", id),
+				})
+			case *store.InvalidRequestError:
+				errors = append(errors, composeCancelError{
+					"BuildInWrongState",
+					err.Error(),
+				})
+			default:
+				errors = append(errors, composeCancelError{
+					"ComposeError",
+					fmt.Sprintf("%s: %s", id, err.Error()),
+				})
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		reply := struct {
+			Errors []composeCancelError `json:"errors"`
+		}{errors}
+		json.NewEncoder(writer).Encode(reply)
+	} else {
+		reply := composeCancelStatus{
+			UUID:   id,
+			Status: true,
+		}
+		json.NewEncoder(writer).Encode(reply)
+	}
 }
 
 func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

@@ -461,6 +461,24 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 	return nil
 }
 
+func (s *Store) CancelCompose(id uuid.UUID) error {
+	return s.change(func() error {
+		compose, exists := s.Composes[id]
+
+		if !exists {
+			return &NotFoundError{}
+		}
+
+		if compose.QueueStatus != "WAITING" && compose.QueueStatus != "RUNNING" {
+			return &InvalidRequestError{fmt.Sprintf("Compose %s is not in WAITING or RUNNING.", id)}
+		}
+
+		delete(s.Composes, id)
+
+		return nil
+	})
+}
+
 func (s *Store) DeleteCompose(id uuid.UUID) error {
 	return s.change(func() error {
 		compose, exists := s.Composes[id]
