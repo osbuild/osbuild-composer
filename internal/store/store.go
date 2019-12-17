@@ -48,6 +48,7 @@ type Compose struct {
 	QueueStatus string               `json:"queue_status"`
 	Blueprint   *blueprint.Blueprint `json:"blueprint"`
 	OutputType  string               `json:"output-type"`
+	Pipeline    *pipeline.Pipeline   `json:"pipeline"`
 	Targets     []*target.Target     `json:"targets"`
 	JobCreated  time.Time            `json:"job_created"`
 	JobStarted  time.Time            `json:"job_started"`
@@ -145,6 +146,10 @@ func New(stateDir *string, distro distro.Distro) *Store {
 		}()
 	}
 
+	s.pendingJobs = make(chan Job, 200)
+	s.distro = distro
+	s.stateDir = stateDir
+
 	if s.Blueprints == nil {
 		s.Blueprints = make(map[string]blueprint.Blueprint)
 	}
@@ -152,8 +157,25 @@ func New(stateDir *string, distro distro.Distro) *Store {
 		s.Workspace = make(map[string]blueprint.Blueprint)
 	}
 	if s.Composes == nil {
-		// TODO: push waiting/running composes to workers again
 		s.Composes = make(map[uuid.UUID]Compose)
+	} else {
+		for composeID, compose := range s.Composes {
+			switch compose.QueueStatus {
+			case "RUNNING":
+				// We do not support resuming an in-flight build
+				compose.QueueStatus = "FAILED"
+				s.Composes[composeID] = compose
+			case "WAITING":
+				// Push waiting composes back into the pending jobs queue
+				s.pendingJobs <- Job{
+					ComposeID:  composeID,
+					Distro:     s.distro.Name(),
+					Pipeline:   compose.Pipeline,
+					Targets:    compose.Targets,
+					OutputType: compose.OutputType,
+				}
+			}
+		}
 	}
 	if s.Sources == nil {
 		s.Sources = make(map[string]SourceConfig)
@@ -161,10 +183,6 @@ func New(stateDir *string, distro distro.Distro) *Store {
 	if s.BlueprintsChanges == nil {
 		s.BlueprintsChanges = make(map[string]map[string]blueprint.Change)
 	}
-	s.pendingJobs = make(chan Job, 200)
-
-	s.distro = distro
-	s.stateDir = stateDir
 
 	return &s
 }
@@ -444,6 +462,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		s.Composes[composeID] = Compose{
 			QueueStatus: "WAITING",
 			Blueprint:   bp,
+			Pipeline:    pipeline,
 			OutputType:  composeType,
 			Targets:     targets,
 			JobCreated:  time.Now(),
