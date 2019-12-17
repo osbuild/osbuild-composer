@@ -30,7 +30,7 @@ type JobStatus struct {
 }
 
 func (job *Job) Run() (*store.Image, error, []error) {
-	distros := distro.NewRegistry()
+	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
 		return nil, fmt.Errorf("unknown distro: %s", job.Distro), nil

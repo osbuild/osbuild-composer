@@ -106,6 +106,31 @@ func (err *DNFError) Error() string {
 	return fmt.Sprintf("DNF error occured: %s: %s", err.Kind, err.Reason)
 }
 
+func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
+	var f *os.File
+	var err error
+	path := "/repositories/" + distro + ".json"
+
+	for _, confPath := range confPaths {
+		f, err = os.Open(confPath + path)
+		if err == nil {
+			break
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+	defer f.Close()
+
+	var repos map[string][]RepoConfig
+
+	err = json.NewDecoder(f).Decode(&repos)
+	if err != nil {
+		return nil, err
+	}
+
+	return repos, nil
+}
+
 func runDNF(command string, arguments interface{}, result interface{}) error {
 	var call = struct {
 		Command   string      `json:"command"`

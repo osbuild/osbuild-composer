@@ -70,6 +70,9 @@ install -m 0755 -vd                                         %{buildroot}%{_libex
 install -m 0755 -vp _bin/*                                  %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
 
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
+install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
 
@@ -100,6 +103,7 @@ export GOPATH=$PWD/_build:%{gopath}
 %license LICENSE
 %doc README.md
 %{_libexecdir}/osbuild-composer/
+%{_datadir}/osbuild-composer/
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
 

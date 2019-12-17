@@ -15,6 +15,8 @@ install:
 	cp osbuild-composer /usr/libexec/osbuild-composer/
 	cp osbuild-worker /usr/libexec/osbuild-composer/
 	cp dnf-json /usr/libexec/osbuild-composer/
+	- mkdir -p /usr/share/osbuild-composer/repositories
+	cp repositories/* /usr/share/osbuild-composer/repositories
 	- mkdir -p /etc/sysusers.d/
 	cp distribution/osbuild-composer.conf /etc/sysusers.d/
 	systemd-sysusers osbuild-composer.conf
