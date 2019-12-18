@@ -252,38 +252,6 @@ func (s *Store) ListBlueprints() []string {
 	return names
 }
 
-func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	compose, exists := s.Composes[id]
-	return compose, exists
-}
-
-func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	composes := make(map[uuid.UUID]Compose)
-
-	for id, compose := range s.Composes {
-		newCompose := compose
-		newCompose.Targets = []*target.Target{}
-
-		for _, t := range compose.Targets {
-			newTarget := *t
-			newCompose.Targets = append(newCompose.Targets, &newTarget)
-		}
-
-		newBlueprint := *compose.Blueprint
-		newCompose.Blueprint = &newBlueprint
-
-		composes[id] = newCompose
-	}
-
-	return composes
-}
-
 func (s *Store) GetBlueprint(name string) (*blueprint.Blueprint, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -432,6 +400,38 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 		delete(s.Workspace, name)
 		return nil
 	})
+}
+
+func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	compose, exists := s.Composes[id]
+	return compose, exists
+}
+
+func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	composes := make(map[uuid.UUID]Compose)
+
+	for id, compose := range s.Composes {
+		newCompose := compose
+		newCompose.Targets = []*target.Target{}
+
+		for _, t := range compose.Targets {
+			newTarget := *t
+			newCompose.Targets = append(newCompose.Targets, &newTarget)
+		}
+
+		newBlueprint := *compose.Blueprint
+		newCompose.Blueprint = &newBlueprint
+
+		composes[id] = newCompose
+	}
+
+	return composes
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checksums map[string]string, arch, composeType string, uploadTarget *target.Target) error {
