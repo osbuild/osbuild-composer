@@ -146,6 +146,25 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 	}
 }
 
+func TestNonJsonRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedResponse string) {
+	response := SendHTTP(api, external, method, path, body)
+
+	if response.StatusCode != expectedStatus {
+		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, response.StatusCode)
+	}
+
+	responseBodyBytes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		t.Errorf("%s: could not read response body: %v", path, err)
+	}
+
+	responseBody := string(responseBodyBytes)
+
+	if responseBody != expectedResponse {
+		t.Errorf("%s: expected response \"%s\", but got \"%s\"", path, expectedResponse, responseBody)
+	}
+}
+
 func IgnoreDates() cmp.Option {
 	return cmp.Comparer(func(a, b time.Time) bool { return true })
 }
