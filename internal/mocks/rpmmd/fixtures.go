@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	test_distro "github.com/osbuild/osbuild-composer/internal/distro/test"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -92,8 +92,7 @@ func createBaseStoreFixture() *store.Store {
 		},
 	}
 
-	distros := distro.NewRegistry()
-	d := distros.GetDistro("fedora-30")
+	d := test_distro.New()
 	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b
@@ -101,14 +100,14 @@ func createBaseStoreFixture() *store.Store {
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): store.Compose{
 			QueueStatus: "WAITING",
 			Blueprint:   &b,
-			OutputType:  "tar",
+			OutputType:  "test_output",
 			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): store.Compose{
 			QueueStatus: "RUNNING",
 			Blueprint:   &b,
-			OutputType:  "tar",
+			OutputType:  "test_output",
 			Targets:     []*target.Target{localTarget},
 			JobCreated:  date,
 			JobStarted:  date,
@@ -116,7 +115,7 @@ func createBaseStoreFixture() *store.Store {
 		uuid.MustParse("30000000-0000-0000-0000-000000000002"): store.Compose{
 			QueueStatus: "FINISHED",
 			Blueprint:   &b,
-			OutputType:  "tar",
+			OutputType:  "test_output",
 			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 			JobStarted:  date,
@@ -125,7 +124,7 @@ func createBaseStoreFixture() *store.Store {
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): store.Compose{
 			QueueStatus: "FAILED",
 			Blueprint:   &b,
-			OutputType:  "tar",
+			OutputType:  "test_output",
 			Targets:     []*target.Target{localTarget, awsTarget},
 			JobCreated:  date,
 			JobStarted:  date,
@@ -166,8 +165,7 @@ func createStoreWithoutComposesFixture() *store.Store {
 		Customizations: nil,
 	}
 
-	distros := distro.NewRegistry()
-	d := distros.GetDistro("fedora-30")
+	d := test_distro.New()
 	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b

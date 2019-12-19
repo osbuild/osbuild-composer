@@ -10,7 +10,7 @@ import (
 
 type TestDistro struct{}
 
-const Name = "test"
+const Name = "test-distro"
 
 func New() *TestDistro {
 	return &TestDistro{}
@@ -23,23 +23,31 @@ func (d *TestDistro) Name() string {
 func (d *TestDistro) Repositories(arch string) []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
-			Id:      "test",
-			Name:    "Test",
-			BaseURL: "http://example.com/test/os",
+			Id:      "test-id",
+			Name:    "Test Name",
+			BaseURL: "http://example.com/test/os/" + arch,
 		},
 	}
 }
 
 func (d *TestDistro) ListOutputFormats() []string {
-	return []string{}
+	return []string{"test_format"}
 }
 
 func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, error) {
-	return "", "", errors.New("invalid output format: " + outputFormat)
+	if outputFormat == "test_format" {
+		return "test.img", "application/x-test", nil
+	} else {
+		return "", "", errors.New("invalid output format: " + outputFormat)
+	}
 }
 
 func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string) (*pipeline.Pipeline, error) {
-	return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
+	if outputFormat == "test_output" && outputArch == "test_arch" {
+		return &pipeline.Pipeline{}, nil
+	} else {
+		return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
+	}
 }
 
 func (d *TestDistro) Runner() string {
