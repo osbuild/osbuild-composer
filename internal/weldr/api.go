@@ -2,6 +2,7 @@ package weldr
 
 import (
 	"archive/tar"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1581,22 +1582,47 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
+	resultReader, err := api.store.GetComposeResult(id)
+
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeError",
+			Msg: fmt.Sprintf("Opening log for compose %s failed", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	var result ComposeResult
+	err = json.NewDecoder(resultReader).Decode(&result)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeError",
+			Msg: fmt.Sprintf("Parsing log for compose %s failed", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	resultReader.Close()
+
 	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-logs.tar")
 	writer.Header().Set("Content-Type", "application/x-tar")
 
 	tw := tar.NewWriter(writer)
 
-	// TODO: return real log from osbuild
-	fileContents := []byte("SUCCESS\n")
+	// tar format needs to contain file size before the actual file content, therefore the intermediate buffer
+	var fileContents bytes.Buffer
+	result.WriteLog(&fileContents)
 
 	header := &tar.Header{
 		Name: "logs/osbuild.log",
 		Mode: 0644,
-		Size: int64(len(fileContents)),
+		Size: int64(fileContents.Len()),
 	}
 
 	tw.WriteHeader(header)
-	tw.Write(fileContents)
+	io.Copy(tw, &fileContents)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

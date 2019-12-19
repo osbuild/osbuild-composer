@@ -3,10 +3,12 @@
 package store
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -432,6 +434,13 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	}
 
 	return composes
+}
+
+func (s *Store) GetComposeResult(id uuid.UUID) (io.ReadCloser, error) {
+	if s.stateDir == nil {
+		return ioutil.NopCloser(bytes.NewBuffer([]byte("{}"))), nil
+	}
+	return os.Open(*s.stateDir + "/outputs/" + id.String() + "/result.json")
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checksums map[string]string, arch, composeType string, uploadTarget *target.Target) error {
