@@ -98,6 +98,7 @@ func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logge
 	api.router.GET("/api/v:version/compose/failed", api.composeFailedHandler)
 	api.router.GET("/api/v:version/compose/image/:uuid", api.composeImageHandler)
 	api.router.GET("/api/v:version/compose/logs/:uuid", api.composeLogsHandler)
+	api.router.GET("/api/v:version/compose/log/:uuid", api.composeLogHandler)
 	api.router.POST("/api/v:version/compose/uploads/schedule/:uuid", api.uploadsScheduleHandler)
 
 	api.router.DELETE("/api/v:version/upload/delete/:uuid", api.uploadsDeleteHandler)
@@ -1623,6 +1624,75 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 
 	tw.WriteHeader(header)
 	io.Copy(tw, &fileContents)
+	tw.Close()
+}
+
+func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	// TODO: implement size param
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	uuidString := params.ByName("uuid")
+	id, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	compose, exists := api.store.GetCompose(id)
+	if !exists {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	if compose.QueueStatus == "WAITING" {
+		errors := responseError{
+			ID:  "BuildInWrongState",
+			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
+		}
+		statusResponseError(writer, http.StatusOK, errors) // weirdly, Lorax returns 200 in this case
+		return
+	}
+
+	if compose.QueueStatus == "RUNNING" {
+		fmt.Fprintf(writer, "Running...\n")
+		return
+	}
+
+	resultReader, err := api.store.GetComposeResult(id)
+
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeError",
+			Msg: fmt.Sprintf("Opening log for compose %s failed", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	var result ComposeResult
+	err = json.NewDecoder(resultReader).Decode(&result)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeError",
+			Msg: fmt.Sprintf("Parsing log for compose %s failed", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	resultReader.Close()
+
+	result.WriteLog(writer)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
