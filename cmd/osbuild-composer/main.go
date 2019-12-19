@@ -49,8 +49,9 @@ func main() {
 	jobListener := listeners[1]
 
 	rpm := rpmmd.NewRPMMD()
+	distros := distro.NewRegistry()
 
-	distribution, err := distro.FromHost()
+	distribution, err := distros.FromHost()
 	if err != nil {
 		log.Fatalf("Could not determine distro from host: " + err.Error())
 	}

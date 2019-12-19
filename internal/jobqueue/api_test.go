@@ -32,7 +32,9 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := jobqueue.New(nil, store.New(nil, distro.New("fedora-30")))
+		distros := distro.NewRegistry()
+		distro := distros.GetDistro("fedora-30")
+		api := jobqueue.New(nil, store.New(nil, distro))
 
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
@@ -40,7 +42,9 @@ func TestBasic(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	store := store.New(nil, distro.New("fedora-30"))
+	distros := distro.NewRegistry()
+	distro := distros.GetDistro("fedora-30")
+	store := store.New(nil, distro)
 	api := jobqueue.New(nil, store)
 
 	err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"fedora": "test:foo"}, "x86_64", "tar", nil)
@@ -54,7 +58,9 @@ func TestCreate(t *testing.T) {
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	store := store.New(nil, distro.New("fedora-30"))
+	distros := distro.NewRegistry()
+	distro := distros.GetDistro("fedora-30")
+	store := store.New(nil, distro)
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
