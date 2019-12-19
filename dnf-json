@@ -4,6 +4,7 @@ import datetime
 import dnf
 import hashlib
 import json
+import shutil
 import sys
 
 DNF_ERROR_EXIT_CODE = 10
@@ -35,8 +36,11 @@ def dnfrepo(desc, parent_conf=None):
     return repo
 
 
-def create_base(repos):
+def create_base(repos, clean=False):
     base = dnf.Base()
+
+    if clean:
+        shutil.rmtree(base.conf.cachedir, ignore_errors=True)
 
     for repo in repos:
         base.repos.add(dnfrepo(repo, base.conf))
@@ -79,7 +83,7 @@ command = call["command"]
 arguments = call.get("arguments", {})
 
 if command == "dump":
-    base = create_base(arguments.get("repos", {}))
+    base = create_base(arguments.get("repos", {}), arguments.get("clean", False))
     packages = []
     for package in base.sack.query().available():
         packages.append({
@@ -100,7 +104,7 @@ if command == "dump":
     }, sys.stdout)
 
 elif command == "depsolve":
-    base = create_base(arguments.get("repos", {}))
+    base = create_base(arguments.get("repos", {}), arguments.get("clean", False))
     errors = []
 
     try:

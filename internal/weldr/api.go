@@ -644,7 +644,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories(api.arch))
+	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories(api.arch), false)
 
 	if err != nil {
 		errors := responseError{
@@ -826,7 +826,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			return
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint)
+		dependencies, _, err := api.depsolveBlueprint(blueprint, false)
 
 		if err != nil {
 			errors := responseError{
@@ -888,7 +888,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint)
+		dependencies, _, err := api.depsolveBlueprint(blueprint, false)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1245,7 +1245,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 
 	if bp != nil {
-		_, checksums, err := api.depsolveBlueprint(bp)
+		_, checksums, err := api.depsolveBlueprint(bp, true)
 		if err != nil {
 			errors := responseError{
 				ID:  "DepsolveError",
@@ -1652,7 +1652,7 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	return packages, err
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, map[string]string, error) {
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
 	specs := make([]string, len(bp.Packages))
 	for i, pkg := range bp.Packages {
 		specs[i] = pkg.Name
@@ -1673,7 +1673,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec,
 		repos = append(repos, source.RepoConfig())
 	}
 
-	return api.rpmmd.Depsolve(specs, repos)
+	return api.rpmmd.Depsolve(specs, repos, clean)
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
