@@ -463,6 +463,10 @@ func TestComposeLogs(t *testing.T) {
 		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 
 		response := test.SendHTTP(api, false, "GET", c.Path, "")
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("%s: expected status code: %d, but got: %d", c.Path, 200, response.StatusCode)
+		}
+
 		if response.Header.Get("content-disposition") != c.ExpectedContentDisposition {
 			t.Errorf("%s: expected content-disposition: %s, but got: %s", c.Path, c.ExpectedContentDisposition, response.Header.Get("content-disposition"))
 		}
@@ -629,8 +633,8 @@ func TestSourcesInfo(t *testing.T) {
 
 	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
-	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
-	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":` + sourceStr + `},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
 	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=son", ``, 400, `{"status":false,"errors":[{"id":"InvalidChars","msg":"invalid format parameter: son"}]}`)
 }
 
