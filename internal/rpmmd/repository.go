@@ -94,7 +94,7 @@ type PackageInfo struct {
 
 type RPMMD interface {
 	FetchPackageList(repos []RepoConfig) (PackageList, map[string]string, error)
-	Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, map[string]string, error)
+	Depsolve(specs []string, repos []RepoConfig, clean bool) ([]PackageSpec, map[string]string, error)
 }
 
 type DNFError struct {
@@ -187,11 +187,12 @@ func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, map[string]
 	return reply.Packages, reply.Checksums, err
 }
 
-func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig) ([]PackageSpec, map[string]string, error) {
+func (*rpmmdImpl) Depsolve(specs []string, repos []RepoConfig, clean bool) ([]PackageSpec, map[string]string, error) {
 	var arguments = struct {
 		PackageSpecs []string     `json:"package-specs"`
 		Repos        []RepoConfig `json:"repos"`
-	}{specs, repos}
+		Clean        bool         `json:"clean,omitempty"`
+	}{specs, repos, clean}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
@@ -253,6 +254,6 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 }
 
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig) (err error) {
-	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, repos)
+	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, repos, false)
 	return
 }
