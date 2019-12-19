@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -13,8 +12,8 @@ type TestDistro struct{}
 
 const Name = "test"
 
-func init() {
-	distro.Register(Name, &TestDistro{})
+func New() *TestDistro {
+	return &TestDistro{}
 }
 
 func (d *TestDistro) Name() string {

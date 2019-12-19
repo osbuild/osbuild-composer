@@ -66,7 +66,6 @@ func createBaseStoreFixture() *store.Store {
 
 	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
 
-
 	var localTarget = &target.Target{
 		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
 		Name:      "org.osbuild.local",
@@ -93,7 +92,8 @@ func createBaseStoreFixture() *store.Store {
 		},
 	}
 
-	d := distro.New("fedora-30")
+	distros := distro.NewRegistry()
+	d := distros.GetDistro("fedora-30")
 	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b
@@ -166,7 +166,8 @@ func createStoreWithoutComposesFixture() *store.Store {
 		Customizations: nil,
 	}
 
-	d := distro.New("fedora-30")
+	distros := distro.NewRegistry()
+	d := distros.GetDistro("fedora-30")
 	s := store.New(nil, d)
 
 	s.Blueprints[bName] = b
@@ -247,7 +248,7 @@ func BadDepsolve() Fixture {
 func BadFetch() Fixture {
 	return Fixture{
 		fetchPackageList{
-			ret: nil,
+			ret:       nil,
 			checksums: nil,
 			err: &rpmmd.DNFError{
 				Kind:   "FetchError",

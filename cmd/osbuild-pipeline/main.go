@@ -34,7 +34,8 @@ func main() {
 		}
 	}
 
-	d := distro.New(distroArg)
+	distros := distro.NewRegistry()
+	d := distros.GetDistro(distroArg)
 	if d == nil {
 		panic("unknown distro: " + distroArg)
 	}

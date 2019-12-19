@@ -30,7 +30,8 @@ type JobStatus struct {
 }
 
 func (job *Job) Run() (*store.Image, error, []error) {
-	d := distro.New(job.Distro)
+	distros := distro.NewRegistry()
+	d := distros.GetDistro(job.Distro)
 	if d == nil {
 		return nil, fmt.Errorf("unknown distro: %s", job.Distro), nil
 	}

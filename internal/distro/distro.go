@@ -40,17 +40,29 @@ type Distro interface {
 	Runner() string
 }
 
-var registered map[string]Distro
-
-func init() {
-	registered = map[string]Distro{
-		fedora30.Name: fedora30.New(),
-		rhel82.Name:   rhel82.New(),
-	}
+type Registry struct {
+	distros map[string]Distro
 }
 
-func New(name string) Distro {
-	distro, ok := registered[name]
+func NewRegistry() *Registry {
+	distros := &Registry{
+		distros: make(map[string]Distro),
+	}
+	distros.register(fedora30.New())
+	distros.register(rhel82.New())
+	return distros
+}
+
+func (r *Registry) register(distro Distro) {
+	name := distro.Name()
+	if _, exists := r.distros[name]; exists {
+		panic("a distro with this name already exists: " + name)
+	}
+	r.distros[name] = distro
+}
+
+func (r *Registry) GetDistro(name string) Distro {
+	distro, ok := r.distros[name]
 	if !ok {
 		return nil
 	}
@@ -58,7 +70,7 @@ func New(name string) Distro {
 	return distro
 }
 
-func FromHost() (Distro, error) {
+func (r *Registry) FromHost() (Distro, error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
 		return nil, err
@@ -72,19 +84,12 @@ func FromHost() (Distro, error) {
 
 	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
 
-	d := New(name)
+	d := r.GetDistro(name)
 	if d == nil {
 		return nil, errors.New("unknown distro: " + name)
 	}
 
 	return d, nil
-}
-
-func Register(name string, distro Distro) {
-	if _, exists := registered[name]; exists {
-		panic("a distro with this name already exists: " + name)
-	}
-	registered[name] = distro
 }
 
 func readOSRelease(r io.Reader) (map[string]string, error) {
