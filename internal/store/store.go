@@ -119,7 +119,7 @@ func New(stateDir *string, distro distro.Distro) *Store {
 	var s Store
 
 	if stateDir != nil {
-		err := os.Mkdir(*stateDir+"/"+"outputs", 0755)
+		err := os.Mkdir(*stateDir+"/"+"outputs", 0700)
 		if err != nil && !os.IsExist(err) {
 			log.Fatalf("cannot create output directory")
 		}
@@ -140,7 +140,7 @@ func New(stateDir *string, distro distro.Distro) *Store {
 
 		go func() {
 			for {
-				err := writeFileAtomically(stateFile, <-s.stateChannel, 0755)
+				err := writeFileAtomically(stateFile, <-s.stateChannel, 0600)
 				if err != nil {
 					log.Fatalf("cannot write state: %v", err)
 				}
