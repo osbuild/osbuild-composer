@@ -64,11 +64,16 @@ export GOFLAGS=-mod=vendor
 %endif
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
+%gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
-install -m 0755 -vp _bin/*                                  %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-composer                   %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-worker                     %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
+
+install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
+install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
 install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
@@ -106,6 +111,17 @@ export GOPATH=$PWD/_build:%{gopath}
 %{_datadir}/osbuild-composer/
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
+
+%package tests
+Summary:	Integration tests
+Requires: 	osbuild-composer
+Requires: 	composer-cli
+
+%description tests
+Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
+
+%files tests
+%{_libexecdir}/tests/osbuild-composer/osbuild-tests
 
 %changelog
 * Sun Dec 1 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 4-1
