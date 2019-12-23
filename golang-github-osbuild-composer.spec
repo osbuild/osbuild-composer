@@ -33,6 +33,7 @@ Requires: systemd
 Requires: osbuild
 
 Provides: osbuild-composer
+Provides: lorax-composer
 
 %description
 %{common_description}
