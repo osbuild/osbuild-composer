@@ -210,11 +210,23 @@ func New() *Fedora30 {
 			"ntfsprogs",
 			"WALinuxAgent",
 			"libxcrypt-compat",
+			"initscripts",
+			"glibc-all-langpacks",
+			"dracut-config-generic",
 		},
 		ExcludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		KernelOptions: "ro biosdevname=0 net.ifnames=0",
+		EnabledServices: []string{
+			"sshd",
+			"waagent", // needed to run in Azure
+		},
+		DisabledServices: []string{
+			"proc-sys-fs-binfmt_misc.mount",
+			"loadmodules.service",
+		},
+		// These kernel parameters are required by Azure documentation
+		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Bootable:      true,
 		Assembler:     func(uefi bool) *pipeline.Assembler { return r.qemuAssembler("vpc", "disk.vhd", uefi) },
 	}
