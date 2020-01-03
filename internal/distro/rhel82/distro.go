@@ -403,12 +403,12 @@ func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
 		{
 			Id:      "baseos",
 			Name:    "BaseOS",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/BaseOS/" + arch + "/os",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20200103.n.0/compose/BaseOS/" + arch + "/os",
 		},
 		{
 			Id:      "appstream",
 			Name:    "AppStream",
-			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20191213.n.1/compose/AppStream/" + arch + "/os",
+			BaseURL: "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/RHEL-8.2.0-20200103.n.0/compose/AppStream/" + arch + "/os",
 		},
 	}
 }
