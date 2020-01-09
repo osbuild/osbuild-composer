@@ -82,7 +82,12 @@ func (r *Registry) FromHost() (Distro, error) {
 		return nil, err
 	}
 
-	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
+	name := osrelease["ID"]
+	if name == "fedora" {
+		name = name + "-30"
+	} else {
+		name = name + "-" + osrelease["VERSION_ID"]
+	}
 
 	d := r.GetDistro(name)
 	if d == nil {
