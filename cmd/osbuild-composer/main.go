@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
@@ -41,8 +42,8 @@ func main() {
 		log.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
-	if len(listeners) != 2 {
-		log.Fatalf("Unexpected number of listening sockets (%d), expected 2", len(listeners))
+	if len(listeners) != 2 || len(listeners) != 3 {
+		log.Fatalf("Unexpected number of listening sockets (%d), expected 2 or 3", len(listeners))
 	}
 
 	weldrListener := listeners[0]
@@ -67,5 +68,13 @@ func main() {
 	weldrAPI := weldr.New(rpm, currentArch(), distribution, logger, store)
 
 	go jobAPI.Serve(jobListener)
+
+	// Optionally run RCM API as well as Weldr API
+	if len(listeners) == 3 {
+		rcmListener := listeners[2]
+		rcmAPI := rcm.New(logger, store)
+		go rcmAPI.Serve(rcmListener)
+	}
+
 	weldrAPI.Serve(weldrListener)
 }
