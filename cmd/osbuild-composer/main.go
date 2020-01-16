@@ -42,7 +42,7 @@ func main() {
 		log.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
-	if len(listeners) != 2 || len(listeners) != 3 {
+	if len(listeners) != 2 && len(listeners) != 3 {
 		log.Fatalf("Unexpected number of listening sockets (%d), expected 2 or 3", len(listeners))
 	}
 
