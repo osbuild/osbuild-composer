@@ -27,15 +27,18 @@ install:
 	cp distribution/*.socket /etc/systemd/system/
 	systemctl daemon-reload
 
+.PHONY: tarball
 tarball:
 	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
 
+.PHONY: srpm
 srpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball
 	/usr/bin/rpmbuild -bs \
 	  --define "_sourcedir $(CURDIR)" \
 	  --define "_srcrpmdir $(CURDIR)" \
 	  golang-github-$(PACKAGE_NAME).spec
 
+.PHONY: rpm
 rpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball 
 	- rm -r "`pwd`/output"
 	mkdir -p "`pwd`/output"
@@ -51,6 +54,7 @@ rpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball
 	rm -r "`pwd`/rpmbuild"
 	rm -r "`pwd`/build"
 
+.PHONY: check-working-directory
 check-working-directory:
 	@if [ "`git status --porcelain --untracked-files=no | wc -l`" != "0" ]; then \
 	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
