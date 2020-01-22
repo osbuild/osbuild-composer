@@ -3,10 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -15,19 +19,80 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
+const RemoteWorkerPort = 8700
+
 type ComposerClient struct {
-	client *http.Client
+	client   *http.Client
+	hostname string
 }
 
-func NewClient() *ComposerClient {
+type connectionConfig struct {
+	CACertFile     string
+	ClientKeyFile  string
+	ClientCertFile string
+}
+
+func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
+	caCertPEM, err := ioutil.ReadFile(config.CACertFile)
+	if err != nil {
+		return nil, err
+	}
+
+	roots := x509.NewCertPool()
+	ok := roots.AppendCertsFromPEM(caCertPEM)
+	if !ok {
+		return nil, errors.New("failed to append root certificate")
+	}
+
+	cert, err := tls.LoadX509KeyPair(config.ClientCertFile, config.ClientKeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.Config{
+		RootCAs:      roots,
+		Certificates: []tls.Certificate{cert},
+	}, nil
+}
+
+func newConnection(remoteAddress string) (net.Conn, error) {
+	if remoteAddress != "" {
+		conf, err := createTLSConfig(&connectionConfig{
+			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
+			ClientKeyFile:  "/etc/osbuild-composer/worker-key.pem",
+			ClientCertFile: "/etc/osbuild-composer/worker-crt.pem",
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		address := fmt.Sprintf("%s:%d", remoteAddress, RemoteWorkerPort)
+
+		return tls.Dial("tcp", address, conf)
+	}
+
+	// plain non-encrypted connection
+	return net.Dial("unix", "/run/osbuild-composer/job.socket")
+
+}
+
+func NewClient(remoteAddress string) *ComposerClient {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("unix", "/run/osbuild-composer/job.socket")
+				return newConnection(remoteAddress)
 			},
 		},
 	}
-	return &ComposerClient{client}
+	hostname := remoteAddress
+
+	// in case of unix domain socket, use localhost as hostname
+	if hostname == "" {
+		hostname = "localhost"
+	}
+
+	return &ComposerClient{client, hostname}
 }
 
 func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
@@ -36,14 +101,16 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 
 	var b bytes.Buffer
 	json.NewEncoder(&b).Encode(request{})
-	response, err := c.client.Post("http://localhost/job-queue/v1/jobs", "application/json", &b)
+	response, err := c.client.Post(c.createURL("/job-queue/v1/jobs"), "application/json", &b)
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New("couldn't create job")
+		rawR, _ := ioutil.ReadAll(response.Body)
+		r := string(rawR)
+		return nil, errors.New(fmt.Sprintf("couldn't create job, got %d: %s", response.StatusCode, r))
 	}
 
 	job := &jobqueue.Job{}
@@ -58,7 +125,8 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildState, result *common.ComposeResult) error {
 	var b bytes.Buffer
 	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, result})
-	url := fmt.Sprintf("http://localhost/job-queue/v1/jobs/%s/builds/%d", job.ID.String(), job.ImageBuildID)
+	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ID.String(), job.ImageBuildID)
+	url := c.createURL(urlPath)
 	req, err := http.NewRequest("PATCH", url, &b)
 	if err != nil {
 		return err
@@ -86,6 +154,10 @@ func (c *ComposerClient) UploadImage(job *jobqueue.Job, reader io.Reader) error 
 	return err
 }
 
+func (c *ComposerClient) createURL(path string) string {
+	return "http://" + c.hostname + path
+}
+
 func handleJob(client *ComposerClient) error {
 	fmt.Println("Waiting for a new job...")
 	job, err := client.AddJob()
@@ -109,7 +181,11 @@ func handleJob(client *ComposerClient) error {
 }
 
 func main() {
-	client := NewClient()
+	var remoteAddress string
+	flag.StringVar(&remoteAddress, "remote", "", "Connect to a remote composer using the specified address")
+	flag.Parse()
+
+	client := NewClient(remoteAddress)
 	for {
 		if err := handleJob(client); err != nil {
 			log.Fatalf("Failed to handle job: " + err.Error())
