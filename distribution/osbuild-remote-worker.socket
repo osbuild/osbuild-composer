@@ -1,0 +1,9 @@
+[Unit]
+Description=OSBuild Composer API sockets
+
+[Socket]
+Service=osbuild-composer.service
+ListenStream=8700
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=OSBuild Composer Remote Worker (%i)
+After=multi-user.target
+
+[Service]
+Type=simple
+PrivateTmp=true
+ExecStart=/usr/libexec/osbuild-composer/osbuild-worker --remote %i
+CacheDirectory=osbuild-composer
+Restart=on-failure
+RestartSec=10s
+CPUSchedulingPolicy=batch
+IOSchedulingClass=idle
