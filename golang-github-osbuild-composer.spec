@@ -35,6 +35,7 @@ BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
 %endif
 
+Requires: golang-github-osbuild-composer-worker
 Requires: systemd
 Requires: osbuild>=7
 
@@ -98,18 +99,19 @@ export GOPATH=$PWD/_build:%{gopath}
 %endif
 
 %post
-%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
+%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
 
 %preun
-%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
+%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
 
 %postun
-%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-worker@.service
+%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
 
 %files
 %license LICENSE
 %doc README.md
-%{_libexecdir}/osbuild-composer/
+%{_libexecdir}/osbuild-composer/osbuild-composer
+%{_libexecdir}/osbuild-composer/dnf-json
 %{_datadir}/osbuild-composer/
 %{_unitdir}/*.{service,socket}
 %{_sysusersdir}/osbuild-composer.conf
@@ -126,6 +128,26 @@ Integration tests to be run on a pristine-dedicated system to test the osbuild-c
 %files tests
 %{_libexecdir}/tests/osbuild-composer/osbuild-tests
 %{_libexecdir}/tests/osbuild-composer/osbuild-dnf-json-tests
+
+%package worker
+Summary:	The worker for osbuild-composer
+Requires:   systemd
+Requires:   osbuild
+
+%description worker
+The worker for osbuild-composer
+
+%files worker
+%{_libexecdir}/osbuild-composer/osbuild-worker
+
+%post worker
+%systemd_post osbuild-worker@.service osbuild-remote-worker@.service
+
+%preun worker
+%systemd_preun osbuild-worker@.service osbuild-remote-worker@.service
+
+%postun worker
+%systemd_postun_with_restart osbuild-worker@.service osbuild-remote-worker@.service
 
 %changelog
 * Sun Dec 1 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 4-1
