@@ -119,6 +119,13 @@ func (job *Job) Run() (*store.Image, error, []error) {
 				continue
 			}
 
+			// Make sure the directory ownership is correct, even if there are errors later
+			err = runCommand("chown", "_osbuild-composer:_osbuild-composer", options.Location)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
 			jobFile, err := os.Create(options.Location + "/result.json")
 			if err != nil {
 				r = append(r, err)
