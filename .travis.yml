@@ -13,19 +13,22 @@ matrix:
       language: go
       go: 1.12.x
       env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
+      before_install: go get github.com/mattn/goveralls
+      script: $GOPATH/bin/goveralls -show -v -service=travis-ci
     - name: unit-tests
       arch: arm64
       language: go
       go: 1.12.x
       env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
+      before_install: go get github.com/mattn/goveralls
+      script: $GOPATH/bin/goveralls -show -v -service=travis-ci
     - name: unit-tests
       arch: s390x
       language: go
       go: 1.12.x
       env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
+      before_install: go get github.com/mattn/goveralls
+      script: $GOPATH/bin/goveralls -show -v -service=travis-ci
     - name: image-test-empty-blueprint
       arch: amd64
       language: python
