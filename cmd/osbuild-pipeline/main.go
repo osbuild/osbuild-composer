@@ -34,7 +34,7 @@ func main() {
 		}
 	}
 
-	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+	distros := distro.NewRegistry([]string{"."})
 	d := distros.GetDistro(distroArg)
 	if d == nil {
 		panic("unknown distro: " + distroArg)
