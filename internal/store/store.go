@@ -59,6 +59,7 @@ type Compose struct {
 	JobStarted  time.Time            `json:"job_started"`
 	JobFinished time.Time            `json:"job_finished"`
 	Image       *Image               `json:"image"`
+	Size        uint64               `json:"size"`
 }
 
 // A Job contains the information about a compose a worker needs to process it.
@@ -495,6 +496,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 			OutputType:  composeType,
 			Targets:     targets,
 			JobCreated:  time.Now(),
+			Size:        size,
 		}
 		return nil
 	})
