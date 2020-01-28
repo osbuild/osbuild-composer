@@ -1,0 +1,12 @@
+name: test
+on: pull_request
+jobs:
+  build_rpm:
+    name: Build RPM
+    runs_on: [self-hosted, build-machine]
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - run: ls
+
+
