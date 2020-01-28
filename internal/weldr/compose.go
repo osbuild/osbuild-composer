@@ -12,7 +12,7 @@ type ComposeEntry struct {
 	Blueprint   string           `json:"blueprint"`
 	Version     string           `json:"version"`
 	ComposeType string           `json:"compose_type"`
-	ImageSize   int64            `json:"image_size"`
+	ImageSize   uint64           `json:"image_size"`
 	QueueStatus string           `json:"queue_status"`
 	JobCreated  float64          `json:"job_created"`
 	JobStarted  float64          `json:"job_started,omitempty"`
@@ -43,7 +43,7 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, includeUploads b
 
 	case "FINISHED":
 		if compose.Image != nil {
-			composeEntry.ImageSize = compose.Image.Size
+			composeEntry.ImageSize = compose.Size
 		} else {
 			log.Printf("finished compose with id %s has nil image\n", id.String())
 			composeEntry.ImageSize = 0
