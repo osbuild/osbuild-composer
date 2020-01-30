@@ -37,6 +37,23 @@ func marshalHelper(input int, mapping map[string]int, errorMessage string) ([]by
 	return nil, &CustomJsonConversionError{fmt.Sprintf("%d %s", input, errorMessage)}
 }
 
+func listHelper(mapping map[string]int) []string {
+	ret := make([]string, 0)
+	for k,_ := range mapping {
+		ret = append(ret, k)
+	}
+	return ret
+}
+
+func existsHelper(mapping map[string]int, testedValue string) bool {
+	for k, _ := range mapping {
+		if k == testedValue {
+			return true
+		}
+	}
+	return false
+}
+
 // Architecture represents one of the supported CPU architectures available for images
 // produced by osbuild-composer. It is represented as an integer because if it
 // was a string it would unmarshal from JSON just fine even in case that the architecture
@@ -70,6 +87,14 @@ func getArchMapping() map[string]int {
 		"s390x":   int(S390x),
 	}
 	return mapping
+}
+
+func ListArchitectures() []string {
+	return listHelper(getArchMapping())
+}
+
+func ArchitectureExists(testedArch string) bool {
+	return existsHelper(getArchMapping(), testedArch)
 }
 
 // UnmarshalJSON is a custom unmarshaling function to limit the set of allowed values
@@ -151,6 +176,15 @@ func getDistributionMapping() map[string]int {
 		"rhel-8.2":  int(RHEL82),
 	}
 	return mapping
+}
+
+
+func ListDistributions() []string {
+	return listHelper(getDistributionMapping())
+}
+
+func DistributionExists(testedDistro string) bool {
+	return existsHelper(getDistributionMapping(), testedDistro)
 }
 
 func (distro Distribution) UnmarshalJSON(data []byte) error {

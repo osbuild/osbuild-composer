@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"io/ioutil"
 	"os"
 
@@ -12,15 +14,41 @@ import (
 )
 
 func main() {
-	var format string
+	var imageType string
 	var blueprintArg string
 	var archArg string
 	var distroArg string
-	flag.StringVar(&format, "output-format", "", "output format")
-	flag.StringVar(&blueprintArg, "blueprint", "", "blueprint to translate")
-	flag.StringVar(&archArg, "arch", "", "architecture to create image for")
-	flag.StringVar(&distroArg, "distro", "", "distribution to create")
+	flag.StringVar(&imageType, "image-type", "", "image type, e.g. qcow2 or ami")
+	flag.StringVar(&blueprintArg, "blueprint", "", "path to a JSON file containing a blueprint to translate")
+	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
+	flag.StringVar(&distroArg, "distro", "", "distribution to create, e.g. fedora-30")
 	flag.Parse()
+
+	// Print help usage if one of the required arguments wasn't provided
+	if imageType == "" || blueprintArg == "" || archArg == "" || distroArg == "" {
+		flag.Usage()
+		return
+	}
+	
+	// Validate architecture
+	if !common.ArchitectureExists(archArg) {
+		_, _ = fmt.Fprintf(os.Stderr, "The provided architecture (%s) is not supported. Use one of these:\n", archArg)
+		for _, arch := range common.ListArchitectures() {
+			_, _ = fmt.Fprintln(os.Stderr, " *", arch)
+		}
+		return
+	}
+
+	// Validate distribution
+	if !common.DistributionExists(distroArg) {
+		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution (%s) is not supported. Use one of these:\n", distroArg)
+		for _, distro := range common.ListDistributions() {
+			_, _ = fmt.Fprintln(os.Stderr, " *", distro)
+		}
+		return
+	}
+	
+	// Validate image type
 
 	blueprint := &blueprint.Blueprint{}
 	if blueprintArg != "" {
@@ -58,7 +86,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	pipeline, err := d.Pipeline(blueprint, nil, checksums, archArg, format, 0)
+	pipeline, err := d.Pipeline(blueprint, nil, checksums, archArg, imageType, 0)
 	if err != nil {
 		panic(err.Error())
 	}
