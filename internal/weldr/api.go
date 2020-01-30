@@ -898,8 +898,8 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		if i == 0 {
 			name = name[1:]
 		}
-		blueprint, _ := api.store.GetBlueprint(name)
-		if blueprint == nil {
+		bp, _ := api.store.GetBlueprint(name)
+		if bp == nil {
 			rerr := responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: blueprint_not_found", name),
@@ -907,8 +907,18 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			errors = append(errors, rerr)
 			break
 		}
+		// Make a copy of the blueprint since we will be replacing the version globs
+		blueprint, err := bp.DeepCopy()
+		if err != nil {
+			rerr := responseError{
+				ID:  "BlueprintDeepCopyError",
+				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
+			}
+			errors = append(errors, rerr)
+			break
+		}
 
-		dependencies, _, _, err := api.depsolveBlueprint(blueprint, "", api.arch, false)
+		dependencies, _, _, err := api.depsolveBlueprint(&blueprint, "", api.arch, false)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -941,7 +951,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			errors = append(errors, rerr)
 			break
 		}
-		blueprints = append(blueprints, blueprintFrozen{*blueprint})
+		blueprints = append(blueprints, blueprintFrozen{blueprint})
 	}
 
 	json.NewEncoder(writer).Encode(reply{
