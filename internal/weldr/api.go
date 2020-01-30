@@ -22,6 +22,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -1249,7 +1250,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 
 	size := cr.Size
-	
+
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
 	if cr.ComposeType == "vhd" && size%MegaByte != 0 {
 		size = (size/MegaByte + 1) * MegaByte
@@ -1603,7 +1604,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	var result ComposeResult
+	var result common.ComposeResult
 	err = json.NewDecoder(resultReader).Decode(&result)
 	if err != nil {
 		errors := responseError{
@@ -1623,7 +1624,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 
 	// tar format needs to contain file size before the actual file content, therefore the intermediate buffer
 	var fileContents bytes.Buffer
-	result.WriteLog(&fileContents)
+	result.Write(&fileContents)
 
 	header := &tar.Header{
 		Name: "logs/osbuild.log",
@@ -1688,7 +1689,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	var result ComposeResult
+	var result common.ComposeResult
 	err = json.NewDecoder(resultReader).Decode(&result)
 	if err != nil {
 		errors := responseError{
@@ -1701,7 +1702,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 
 	resultReader.Close()
 
-	result.WriteLog(writer)
+	result.Write(writer)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
