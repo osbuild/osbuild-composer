@@ -327,20 +327,38 @@ func TestBlueprintsChanges(t *testing.T) {
 	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/"+id, ``)
 }
 
+func TestGetPkgNameGlob(t *testing.T) {
+	var cases = []struct {
+		pkg    blueprint.Package
+		result string
+	}{
+		{blueprint.Package{Name: "dep-package1", Version: "*"}, "dep-package1-*-*.*"},
+		{blueprint.Package{Name: "dep-package2", Version: "1.23"}, "dep-package2-1.23"},
+		{blueprint.Package{Name: "dep-package3", Version: ""}, "dep-package3"},
+	}
+
+	for _, c := range cases {
+		result := getPkgNameGlob(c.pkg)
+		if result != c.result {
+			t.Fatalf("getPkgNameGlob failed: %s != %s", result, c.result)
+		}
+	}
+}
+
 func TestBlueprintsDepsolve(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"*"}],"groups":[],"modules":[]},"dependencies":[{"name":"dep-package3","epoch":0,"version":"3.0.3","release":"1.fc30","arch":"x86_64"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}],"errors":[]}`},
+		{rpmmd_mock.BaseFixture, http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"*"}],"groups":[],"modules":[{"name":"dep-package3","version":"*"}]},"dependencies":[{"name":"dep-package3","epoch":0,"version":"3.0.3","release":"1.fc30","arch":"x86_64"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64"}]}],"errors":[]}`},
 		{rpmmd_mock.NonExistingPackage, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"test: DNF error occured: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`},
 		{rpmmd_mock.BadDepsolve, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"test: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
 	}
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(c.Fixture)
-		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"version":"0.0.0"}`)
+		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"modules":[{"name":"dep-package3","version":"*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, false, "GET", "/api/v0/blueprints/depsolve/test", ``, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}

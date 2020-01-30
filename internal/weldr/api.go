@@ -1829,6 +1829,17 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	return packages, err
 }
 
+func getPkgNameGlob(pkg blueprint.Package) string {
+	// If a package has version "*" the package name suffix must be equal to "-*-*.*"
+	// Using just "-*" would find any other package containing the package name
+	if pkg.Version == "*" {
+		return fmt.Sprintf("%s-*-*.*", pkg.Name)
+	} else if pkg.Version != "" {
+		return fmt.Sprintf("%s-%s", pkg.Name, pkg.Version)
+	}
+	return pkg.Name
+}
+
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string, clean bool) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, map[string]string, error) {
 	var repos []rpmmd.RepoConfig
 	for _, repo := range api.distro.Repositories(api.arch) {
@@ -1837,16 +1848,12 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
-	specs := make([]string, len(bp.Packages))
-	for i, pkg := range bp.Packages {
-		specs[i] = pkg.Name
-		// If a package has version "*" the package name suffix must be equal to "-*-*.*"
-		// Using just "-*" would find any other package containing the package name
-		if pkg.Version != "" && pkg.Version != "*" {
-			specs[i] += "-" + pkg.Version
-		} else if pkg.Version == "*" {
-			specs[i] += "-*-*.*"
-		}
+	var specs []string
+	for _, pkg := range bp.Packages {
+		specs = append(specs, getPkgNameGlob(pkg))
+	}
+	for _, mod := range bp.Modules {
+		specs = append(specs, getPkgNameGlob(mod))
 	}
 	excludeSpecs := []string{}
 	if outputType != "" {
