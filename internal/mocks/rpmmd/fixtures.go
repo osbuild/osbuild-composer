@@ -156,6 +156,13 @@ func createBaseStoreFixture() *store.Store {
 func createBaseDepsolveFixture() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{
 		{
+			Name:    "dep-package3",
+			Epoch:   0,
+			Version: "3.0.3",
+			Release: "1.fc30",
+			Arch:    "x86_64",
+		},
+		{
 			Name:    "dep-package1",
 			Epoch:   0,
 			Version: "1.33",
