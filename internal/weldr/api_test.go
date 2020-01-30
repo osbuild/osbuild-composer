@@ -1,4 +1,4 @@
-package weldr_test
+package weldr
 
 import (
 	"archive/tar"
@@ -18,21 +18,21 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
-	"github.com/osbuild/osbuild-composer/internal/weldr"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*weldr.API, *store.Store) {
+func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.Store) {
 	fixture := fixtureGenerator()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	d := test_distro.New()
 
-	return weldr.New(rpm, "x86_64", d, nil, fixture.Store), fixture.Store
+	return New(rpm, "x86_64", d, nil, fixture.Store), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -202,6 +202,59 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	}
 }
 
+func TestSetPkgEVRA(t *testing.T) {
+
+	// Sorted list of dependencies
+	deps := []rpmmd.PackageSpec{
+		{
+			Name:    "dep-package1",
+			Epoch:   0,
+			Version: "1.33",
+			Release: "2.fc30",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "dep-package2",
+			Epoch:   0,
+			Version: "2.9",
+			Release: "1.fc30",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "dep-package3",
+			Epoch:   0,
+			Version: "3.0.3",
+			Release: "1.fc30",
+			Arch:    "x86_64",
+		},
+	}
+	pkgs := []blueprint.Package{
+		{Name: "dep-package1", Version: "*"},
+		{Name: "dep-package2", Version: "*"},
+	}
+	// Replace globs with dependencies
+	err := setPkgEVRA(deps, pkgs)
+	if err != nil {
+		t.Fatalf("setPkgEVRA failed: %s", err.Error())
+	}
+	if pkgs[0].Version != "1.33-2.fc30.x86_64" {
+		t.Fatalf("setPkgEVRA Unexpected pkg version")
+	}
+	if pkgs[1].Version != "2.9-1.fc30.x86_64" {
+		t.Fatalf("setPkgEVRA Unexpected pkg version")
+	}
+
+	// Test that a missing package in deps returns an error
+	pkgs = []blueprint.Package{
+		{Name: "dep-package1", Version: "*"},
+		{Name: "dep-package0", Version: "*"},
+	}
+	err = setPkgEVRA(deps, pkgs)
+	if err == nil || err.Error() != "dep-package0 missing from depsolve results" {
+		t.Fatalf("setPkgEVRA missing package failed to return error")
+	}
+}
+
 func TestBlueprintsFreeze(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
@@ -209,12 +262,12 @@ func TestBlueprintsFreeze(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"3.0.3-1.fc30.x86_64"}],"modules":[],"groups":[]}}],"errors":[]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}}],"errors":[]}`},
 	}
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(c.Fixture)
-		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}],"version":"0.0.0"}`)
+		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
