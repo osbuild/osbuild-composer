@@ -898,8 +898,13 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			errors = append(errors, rerr)
 			break
 		}
+		// Sort dependencies by Name (names should be unique so no need to sort by EVRA)
+		sort.Slice(dependencies, func(i, j int) bool {
+			return dependencies[i].Name < dependencies[j].Name
+		})
 
 		for pkgIndex, pkg := range blueprint.Packages {
+			// sort.Search requires the input to be sorted
 			i := sort.Search(len(dependencies), func(i int) bool {
 				return dependencies[i].Name >= pkg.Name
 			})
