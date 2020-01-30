@@ -1,4 +1,4 @@
-package weldr
+package common
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ type ComposeResult struct {
 	Success bool `json:"success"`
 }
 
-func (cr *ComposeResult) WriteLog(writer io.Writer) {
+func (cr *ComposeResult) Write(writer io.Writer) {
 	if cr.Build == nil && len(cr.Stages) == 0 && cr.Assembler == nil {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
 	}
