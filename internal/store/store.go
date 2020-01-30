@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -459,9 +460,16 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 	targets := []*target.Target{}
 
 	if s.stateDir != nil {
+		outputDir := *s.stateDir + "/outputs/" + composeID.String()
+
+		err := os.MkdirAll(outputDir, 0755)
+		if err != nil {
+			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
+		}
+
 		targets = append(targets, target.NewLocalTarget(
 			&target.LocalTargetOptions{
-				Location: *s.stateDir + "/outputs/" + composeID.String(),
+				Location: outputDir,
 			},
 		))
 	}
@@ -542,7 +550,7 @@ func (s *Store) PopCompose() Job {
 	return job
 }
 
-func (s *Store) UpdateCompose(composeID uuid.UUID, status string, image *Image) error {
+func (s *Store) UpdateCompose(composeID uuid.UUID, status string, image *Image, result *common.ComposeResult) error {
 	return s.change(func() error {
 		compose, exists := s.Composes[composeID]
 		if !exists {
@@ -551,6 +559,18 @@ func (s *Store) UpdateCompose(composeID uuid.UUID, status string, image *Image) 
 		if compose.QueueStatus == "WAITING" {
 			return &NotPendingError{"compose has not been popped"}
 		}
+
+		// write result into file
+		if s.stateDir != nil && result != nil {
+			f, err := os.Create(*s.stateDir + "/outputs/" + composeID.String() + "/result.json")
+
+			if err != nil {
+				return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
+			}
+
+			json.NewEncoder(f).Encode(result)
+		}
+
 		switch status {
 		case "RUNNING":
 			switch compose.QueueStatus {

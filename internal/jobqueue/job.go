@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -25,15 +26,16 @@ type Job struct {
 }
 
 type JobStatus struct {
-	Status string       `json:"status"`
-	Image  *store.Image `json:"image"`
+	Status string                `json:"status"`
+	Image  *store.Image          `json:"image"`
+	Result *common.ComposeResult `json:"result"`
 }
 
-func (job *Job) Run() (*store.Image, error, []error) {
+func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
 	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
-		return nil, fmt.Errorf("unknown distro: %s", job.Distro), nil
+		return nil, nil, fmt.Errorf("unknown distro: %s", job.Distro), nil
 	}
 
 	build := pipeline.Build{
@@ -42,18 +44,18 @@ func (job *Job) Run() (*store.Image, error, []error) {
 
 	buildFile, err := ioutil.TempFile("", "osbuild-worker-build-env-*")
 	if err != nil {
-		return nil, err, nil
+		return nil, nil, err, nil
 	}
 	defer os.Remove(buildFile.Name())
 
 	err = json.NewEncoder(buildFile).Encode(build)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding build environment: %v", err), nil
+		return nil, nil, fmt.Errorf("error encoding build environment: %v", err), nil
 	}
 
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
-		return nil, fmt.Errorf("error setting up osbuild store: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up osbuild store: %v", err), nil
 	}
 	defer os.RemoveAll(tmpStore)
 
@@ -67,43 +69,39 @@ func (job *Job) Run() (*store.Image, error, []error) {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up stdin for osbuild: %v", err), nil
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, fmt.Errorf("error setting up stdout for osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up stdout for osbuild: %v", err), nil
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, fmt.Errorf("error starting osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error starting osbuild: %v", err), nil
 	}
 
 	err = json.NewEncoder(stdin).Encode(job.Pipeline)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err), nil
+		return nil, nil, fmt.Errorf("error encoding osbuild pipeline: %v", err), nil
 	}
 	stdin.Close()
 
-	var result struct {
-		TreeID    string           `json:"tree_id"`
-		OutputID  string           `json:"output_id"`
-		Build     *json.RawMessage `json:"build,omitempty"`
-		Stages    *json.RawMessage `json:"stages,omitempty"`
-		Assembler *json.RawMessage `json:"assembler,omitempty"`
-		Success   *json.RawMessage `json:"success,omitempty"`
-	}
+	var result common.ComposeResult
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %#v", err), nil
+		return nil, nil, fmt.Errorf("error decoding osbuild output: %#v", err), nil
 	}
 
-	cmdError := cmd.Wait()
+	err = cmd.Wait()
+	if err != nil {
+		return nil, &result, err, nil
+	}
 
 	filename, mimeType, err := d.FilenameFromType(job.OutputType)
 	if err != nil {
-		return nil, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err), nil
+		return nil, &result, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err), nil
 	}
 
 	var image store.Image
@@ -113,34 +111,6 @@ func (job *Job) Run() (*store.Image, error, []error) {
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			err := os.MkdirAll(options.Location, 0755)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			// Make sure the directory ownership is correct, even if there are errors later
-			err = runCommand("chown", "_osbuild-composer:_osbuild-composer", options.Location)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			jobFile, err := os.Create(options.Location + "/result.json")
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			err = json.NewEncoder(jobFile).Encode(result)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			if cmdError != nil {
-				continue
-			}
 
 			err = runCommand("cp", "-a", "-L", tmpStore+"/refs/"+result.OutputID+"/.", options.Location)
 			if err != nil {
@@ -163,7 +133,7 @@ func (job *Job) Run() (*store.Image, error, []error) {
 
 			fileStat, err := file.Stat()
 			if err != nil {
-				return nil, err, nil
+				return nil, &result, err, nil
 			}
 
 			image = store.Image{
@@ -173,9 +143,6 @@ func (job *Job) Run() (*store.Image, error, []error) {
 			}
 
 		case *target.AWSTargetOptions:
-			if cmdError != nil {
-				continue
-			}
 
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
@@ -206,11 +173,7 @@ func (job *Job) Run() (*store.Image, error, []error) {
 		r = append(r, nil)
 	}
 
-	if cmdError != nil {
-		return nil, cmdError, nil
-	}
-
-	return &image, nil, r
+	return &image, &result, nil, r
 }
 
 func runCommand(command string, params ...string) error {

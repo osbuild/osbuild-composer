@@ -93,10 +93,10 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 
 	writer.WriteHeader(http.StatusCreated)
 	json.NewEncoder(writer).Encode(Job{
-		ID: nextJob.ComposeID,
-		Distro: nextJob.Distro,
-		Pipeline: nextJob.Pipeline,
-		Targets: nextJob.Targets,
+		ID:         nextJob.ComposeID,
+		Distro:     nextJob.Distro,
+		Pipeline:   nextJob.Pipeline,
+		Targets:    nextJob.Targets,
 		OutputType: nextJob.OutputType,
 	})
 }
@@ -121,7 +121,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = api.store.UpdateCompose(id, body.Status, body.Image)
+	err = api.store.UpdateCompose(id, body.Status, body.Image, body.Result)
 	if err != nil {
 		switch err.(type) {
 		case *store.NotFoundError:
