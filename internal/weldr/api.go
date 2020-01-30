@@ -847,6 +847,25 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	})
 }
 
+// setPkgEVRA replaces the version globs in the blueprint with their EVRA values from the dependencies
+//
+// The dependencies must be pre-sorted for this function to work properly
+// It will return an error if it cannot find a package in the dependencies
+func setPkgEVRA(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) error {
+	for pkgIndex, pkg := range packages {
+		i := sort.Search(len(dependencies), func(i int) bool {
+			return dependencies[i].Name >= pkg.Name
+		})
+		if i < len(dependencies) && dependencies[i].Name == pkg.Name {
+			packages[pkgIndex].Version = dependencies[i].Version + "-" + dependencies[i].Release + "." + dependencies[i].Arch
+		} else {
+			// Packages should not be missing from the depsolve results
+			return fmt.Errorf("%s missing from depsolve results", pkg.Name)
+		}
+	}
+	return nil
+}
+
 func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	if !verifyRequestVersion(writer, params, 0) {
 		return
@@ -903,16 +922,25 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			return dependencies[i].Name < dependencies[j].Name
 		})
 
-		for pkgIndex, pkg := range blueprint.Packages {
-			// sort.Search requires the input to be sorted
-			i := sort.Search(len(dependencies), func(i int) bool {
-				return dependencies[i].Name >= pkg.Name
-			})
-			if i < len(dependencies) && dependencies[i].Name == pkg.Name {
-				blueprint.Packages[pkgIndex].Version = dependencies[i].Version + "-" + dependencies[i].Release + "." + dependencies[i].Arch
+		err = setPkgEVRA(dependencies, blueprint.Packages)
+		if err != nil {
+			rerr := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
 			}
+			errors = append(errors, rerr)
+			break
 		}
 
+		err = setPkgEVRA(dependencies, blueprint.Modules)
+		if err != nil {
+			rerr := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
+			}
+			errors = append(errors, rerr)
+			break
+		}
 		blueprints = append(blueprints, blueprintFrozen{*blueprint})
 	}
 
