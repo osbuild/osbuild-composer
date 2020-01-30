@@ -1,6 +1,10 @@
 // Package blueprint contains primitives for representing weldr blueprints
 package blueprint
 
+import (
+	"encoding/json"
+)
+
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
 	Name           string          `json:"name" toml:"name"`
@@ -29,6 +33,22 @@ type Package struct {
 // A group specifies an package group.
 type Group struct {
 	Name string `json:"name" toml:"name"`
+}
+
+// DeepCopy returns a deep copy of the blueprint
+// This uses json.Marshal and Unmarshal which are not very efficient
+func (b *Blueprint) DeepCopy() (Blueprint, error) {
+	bpJSON, err := json.Marshal(b)
+	if err != nil {
+		return Blueprint{}, err
+	}
+
+	var bp Blueprint
+	err = json.Unmarshal(bpJSON, &bp)
+	if err != nil {
+		return Blueprint{}, err
+	}
+	return bp, nil
 }
 
 // packages, modules, and groups all resolve to rpm packages right now. This
