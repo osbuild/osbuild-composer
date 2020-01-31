@@ -4,9 +4,11 @@ package store
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -223,6 +225,19 @@ func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
 	return nil
 }
 
+func randomSHA1String() (string, error) {
+	hash := sha1.New()
+	data := make([]byte, 20)
+	n, err := rand.Read(data)
+	if err != nil {
+		return "", err
+	} else if n != 20 {
+		return "", errors.New("randomSHA1String: short read from rand")
+	}
+	hash.Write(data)
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
 func (s *Store) change(f func() error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -351,13 +366,10 @@ func bumpVersion(str string) string {
 
 func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
 	s.change(func() error {
-		hash := sha1.New()
-		// Hash timestamp to create unique hash
-		hash.Write([]byte(time.Now().String()))
-		// Get hash as a byte slice
-		commitBytes := hash.Sum(nil)
-		// Get hash as a hex string
-		commit := hex.EncodeToString(commitBytes)
+		commit, err := randomSHA1String()
+		if err != nil {
+			return err
+		}
 		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
 		change := blueprint.Change{
 			Commit:    commit,
