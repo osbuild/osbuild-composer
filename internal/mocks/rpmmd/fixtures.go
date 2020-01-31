@@ -157,7 +157,7 @@ func createBaseDepsolveFixture() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{
 		{
 			Name:    "dep-package3",
-			Epoch:   0,
+			Epoch:   7,
 			Version: "3.0.3",
 			Release: "1.fc30",
 			Arch:    "x86_64",

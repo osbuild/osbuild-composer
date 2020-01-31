@@ -857,7 +857,11 @@ func setPkgEVRA(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) 
 			return dependencies[i].Name >= pkg.Name
 		})
 		if i < len(dependencies) && dependencies[i].Name == pkg.Name {
-			packages[pkgIndex].Version = dependencies[i].Version + "-" + dependencies[i].Release + "." + dependencies[i].Arch
+			if dependencies[i].Epoch == 0 {
+				packages[pkgIndex].Version = fmt.Sprintf("%s-%s.%s", dependencies[i].Version, dependencies[i].Release, dependencies[i].Arch)
+			} else {
+				packages[pkgIndex].Version = fmt.Sprintf("%d:%s-%s.%s", dependencies[i].Epoch, dependencies[i].Version, dependencies[i].Release, dependencies[i].Arch)
+			}
 		} else {
 			// Packages should not be missing from the depsolve results
 			return fmt.Errorf("%s missing from depsolve results", pkg.Name)
