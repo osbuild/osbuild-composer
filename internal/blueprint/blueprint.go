@@ -3,6 +3,9 @@ package blueprint
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"github.com/coreos/go-semver/semver"
 )
 
 // A Blueprint is a high-level description of an image.
@@ -49,6 +52,39 @@ func (b *Blueprint) DeepCopy() (Blueprint, error) {
 		return Blueprint{}, err
 	}
 	return bp, nil
+}
+
+// Initialize ensures that the blueprint has sane defaults for any missing fields
+func (b *Blueprint) Initialize() error {
+	if b.Packages == nil {
+		b.Packages = []Package{}
+	}
+	if b.Modules == nil {
+		b.Modules = []Package{}
+	}
+	if b.Groups == nil {
+		b.Groups = []Group{}
+	}
+	// Return an error if the version is not valid
+	_, err := semver.NewVersion(b.Version)
+	if err != nil {
+		return fmt.Errorf("Invalid 'version', must use Semantic Versioning: %s", err.Error())
+	}
+	return nil
+}
+
+// BumpVersion increments the previous blueprint's version
+// If the old version string is not vaild semver it will use the new version as-is
+// This assumes that the new blueprint's version has already been validated via Initialize
+func (b *Blueprint) BumpVersion(old string) {
+	var ver *semver.Version
+	ver, err := semver.NewVersion(old)
+	if err != nil {
+		return
+	}
+
+	ver.BumpPatch()
+	b.Version = ver.String()
 }
 
 // packages, modules, and groups all resolve to rpm packages right now. This
