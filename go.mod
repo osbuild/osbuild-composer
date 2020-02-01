@@ -7,6 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.8.2 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/aws/aws-sdk-go v1.25.37
+	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.3.1

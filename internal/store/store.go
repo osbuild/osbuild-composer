@@ -17,8 +17,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -293,20 +291,6 @@ func (s *Store) GetBlueprint(name string) (*blueprint.Blueprint, bool) {
 		}
 	}
 
-	// cockpit-composer cannot deal with missing "packages" or "modules"
-	if bp.Packages == nil {
-		bp.Packages = []blueprint.Package{}
-	}
-	if bp.Modules == nil {
-		bp.Modules = []blueprint.Package{}
-	}
-	if bp.Groups == nil {
-		bp.Groups = []blueprint.Group{}
-	}
-	if bp.Version == "" {
-		bp.Version = "0.0.0"
-	}
-
 	return &bp, inWorkspace
 }
 
@@ -317,20 +301,6 @@ func (s *Store) GetBlueprintCommitted(name string) *blueprint.Blueprint {
 	bp, ok := s.Blueprints[name]
 	if !ok {
 		return nil
-	}
-
-	// cockpit-composer cannot deal with missing "packages" or "modules"
-	if bp.Packages == nil {
-		bp.Packages = []blueprint.Package{}
-	}
-	if bp.Modules == nil {
-		bp.Modules = []blueprint.Package{}
-	}
-	if bp.Groups == nil {
-		bp.Groups = []blueprint.Group{}
-	}
-	if bp.Version == "" {
-		bp.Version = "0.0.0"
 	}
 
 	return &bp
@@ -360,27 +330,19 @@ func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 	return changes
 }
 
-func bumpVersion(str string) string {
-	v := [3]uint64{}
-	fields := strings.SplitN(str, ".", 3)
-	for i := 0; i < len(fields); i++ {
-		if n, err := strconv.ParseUint(fields[i], 10, 64); err == nil {
-			v[i] = n
-		} else {
-			// don't touch strings with invalid versions
-			return str
-		}
-	}
-
-	return fmt.Sprintf("%d.%d.%d", v[0], v[1], v[2]+1)
-}
-
 func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 	return s.change(func() error {
 		commit, err := randomSHA1String()
 		if err != nil {
 			return err
 		}
+
+		// Make sure the blueprint has default values and that the version is valid
+		err = bp.Initialize()
+		if err != nil {
+			return err
+		}
+
 		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
 		change := blueprint.Change{
 			Commit:    commit,
@@ -397,7 +359,7 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 
 		if old, ok := s.Blueprints[bp.Name]; ok {
 			if bp.Version == "" || bp.Version == old.Version {
-				bp.Version = bumpVersion(old.Version)
+				bp.BumpVersion(old.Version)
 			}
 		}
 		s.Blueprints[bp.Name] = bp
@@ -407,6 +369,12 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 
 func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
 	return s.change(func() error {
+		// Make sure the blueprint has default values and that the version is valid
+		err := bp.Initialize()
+		if err != nil {
+			return err
+		}
+
 		s.Workspace[bp.Name] = bp
 		return nil
 	})
