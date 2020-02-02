@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type SystemdStageOptions struct {
 	EnabledServices  []string `json:"enabled_services,omitempty"`

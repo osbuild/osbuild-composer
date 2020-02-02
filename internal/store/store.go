@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"io"
 	"io/ioutil"
 	"log"
@@ -22,10 +21,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
@@ -54,7 +55,7 @@ type Job struct {
 	ComposeID    uuid.UUID
 	ImageBuildID int
 	Distro       string
-	Pipeline     *pipeline.Pipeline
+	Pipeline     *osbuild.Pipeline
 	Targets      []*target.Target
 	ImageType    string
 }

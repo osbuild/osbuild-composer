@@ -3,13 +3,14 @@ package distro
 import (
 	"bufio"
 	"errors"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
@@ -42,7 +43,7 @@ type Distro interface {
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.
-	Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*pipeline.Pipeline, error)
+	Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error)
 
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string

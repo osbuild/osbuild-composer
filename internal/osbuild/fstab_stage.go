@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // The FSTabStageOptions describe the content of the /etc/fstab file.
 //

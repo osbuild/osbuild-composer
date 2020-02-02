@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // TarAssemblerOptions desrcibe how to assemble a tree into a tar ball.
 //

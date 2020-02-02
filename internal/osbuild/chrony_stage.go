@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type ChronyStageOptions struct {
 	Timeservers []string `json:"timeservers"`

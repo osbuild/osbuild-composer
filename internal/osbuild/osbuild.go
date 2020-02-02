@@ -1,6 +1,6 @@
-// Package pipeline provides primitives for representing and (un)marshalling
-// OSBuild pipelines.
-package pipeline
+// Package osbuild provides primitives for representing and (un)marshalling
+// OSBuild types.
+package osbuild
 
 // A Pipeline represents an OSBuild pipeline
 type Pipeline struct {
@@ -25,7 +25,7 @@ type Build struct {
 func (p *Pipeline) SetBuild(pipeline *Pipeline, runner string) {
 	p.Build = &Build{
 		Pipeline: pipeline,
-		Runner: runner,
+		Runner:   runner,
 	}
 }
 

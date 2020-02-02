@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // The ScriptStageOptions specifies a custom script to run in the image
 type ScriptStageOptions struct {

@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // The DNFStageOptions describe the operations of the DNF stage.
 //
@@ -13,7 +13,7 @@ type DNFStageOptions struct {
 	ExcludedPackages []string         `json:"exclude_packages,omitempty"`
 	ReleaseVersion   string           `json:"releasever"`
 	BaseArchitecture string           `json:"basearch"`
-	ModulePlatformId string		  `json:"module_platform_id,omitempty"`
+	ModulePlatformId string           `json:"module_platform_id,omitempty"`
 }
 
 func (DNFStageOptions) isStageOptions() {}

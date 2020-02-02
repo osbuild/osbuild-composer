@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 import "github.com/google/uuid"
 

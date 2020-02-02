@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type FirewallStageOptions struct {
 	Ports            []string `json:"ports,omitempty"`

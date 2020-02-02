@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // The LocaleStageOptions describes the image's locale.
 //

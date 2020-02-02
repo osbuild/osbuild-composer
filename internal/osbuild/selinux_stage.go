@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // The SELinuxStageOptions describe how to apply selinux labels.
 //

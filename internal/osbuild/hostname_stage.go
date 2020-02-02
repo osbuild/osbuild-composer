@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type HostnameStageOptions struct {
 	Hostname string `json:"hostname"`
