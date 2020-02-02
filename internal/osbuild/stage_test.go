@@ -10,7 +10,7 @@ import (
 )
 
 func TestStage_UnmarshalJSON(t *testing.T) {
-	null_uuid := uuid.MustParse("00000000-0000-0000-0000-000000000000")
+	nullUUID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	type fields struct {
 		Name    string
 		Options StageOptions
@@ -117,7 +117,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Name: "org.osbuild.grub2",
 				Options: &GRUB2StageOptions{
-					RootFilesystemUUID: null_uuid,
+					RootFilesystemUUID: nullUUID,
 				},
 			},
 			args: args{
@@ -129,7 +129,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Name: "org.osbuild.grub2",
 				Options: &GRUB2StageOptions{
-					RootFilesystemUUID: null_uuid,
+					RootFilesystemUUID: nullUUID,
 					UEFI: &GRUB2UEFI{
 						Vendor: "vendor",
 					},
@@ -144,8 +144,8 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Name: "org.osbuild.grub2",
 				Options: &GRUB2StageOptions{
-					RootFilesystemUUID: null_uuid,
-					BootFilesystemUUID: &null_uuid,
+					RootFilesystemUUID: nullUUID,
+					BootFilesystemUUID: &nullUUID,
 				},
 			},
 			args: args{
@@ -180,6 +180,29 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 			args: args{
 				data: []byte(`{"name":"org.osbuild.locale","options":{"language":""}}`),
+			},
+		},
+		{
+			name: "rpm-empty",
+			fields: fields{
+				Name:    "org.osbuild.rpm",
+				Options: &RPMStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.rpm","options":{"packages":null}}`),
+			},
+		},
+		{
+			name: "rpm",
+			fields: fields{
+				Name: "org.osbuild.rpm",
+				Options: &RPMStageOptions{
+					GPGKeys:  []string{"key1", "key2"},
+					Packages: []string{"checksum1", "checksum2"},
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.rpm","options":{"gpgkeys":["key1","key2"],"packages":["checksum1","checksum2"]}}`),
 			},
 		},
 		{
