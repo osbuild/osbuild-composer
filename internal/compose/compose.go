@@ -3,11 +3,12 @@
 package compose
 
 import (
+	"time"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
-	"time"
 )
 
 type StateTransitionError struct {
@@ -31,7 +32,7 @@ type ImageBuild struct {
 	Distro      common.Distribution    `json:"distro"`
 	QueueStatus common.ImageBuildState `json:"queue_status"`
 	ImageType   common.ImageType       `json:"image_type"`
-	Pipeline    *pipeline.Pipeline     `json:"pipeline"`
+	Pipeline    *osbuild.Pipeline      `json:"pipeline"`
 	Targets     []*target.Target       `json:"targets"`
 	JobCreated  time.Time              `json:"job_created"`
 	JobStarted  time.Time              `json:"job_started"`
@@ -47,7 +48,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		imageCopy := *ib.Image
 		newImagePtr = &imageCopy
 	}
-	var newPipelinePtr *pipeline.Pipeline = nil
+	var newPipelinePtr *osbuild.Pipeline = nil
 	if ib.Pipeline != nil {
 		pipelineCopy := *ib.Pipeline
 		newPipelinePtr = &pipelineCopy

@@ -2,9 +2,10 @@ package fedoratest
 
 import (
 	"errors"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -48,9 +49,9 @@ func (r *FedoraTestDistro) GetSizeForOutputType(outputFormat string, size uint64
 	return 0
 }
 
-func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
+func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "qcow2" && outputArch == "x86_64" {
-		return &pipeline.Pipeline{}, nil
+		return &osbuild.Pipeline{}, nil
 	} else {
 		return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
 	}
@@ -59,4 +60,3 @@ func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rp
 func (d *FedoraTestDistro) Runner() string {
 	return "org.osbuild.test"
 }
-

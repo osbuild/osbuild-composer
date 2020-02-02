@@ -2,16 +2,17 @@ package fedora30
 
 import (
 	"errors"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"log"
 	"sort"
 	"strconv"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -38,7 +39,7 @@ type output struct {
 	KernelOptions    string
 	Bootable         bool
 	DefaultSize      uint64
-	Assembler        func(uefi bool, size uint64) *pipeline.Assembler
+	Assembler        func(uefi bool, size uint64) *osbuild.Assembler
 }
 
 const Distro = common.Fedora30
@@ -115,7 +116,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		Bootable:      true,
 		DefaultSize:   6 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
 		},
 	}
@@ -137,7 +138,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
 		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.rawFSAssembler("filesystem.img", size) },
+		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -157,7 +158,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("raw", "disk.img", uefi, size)
 		},
 	}
@@ -184,7 +185,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
@@ -210,7 +211,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
@@ -232,7 +233,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
 		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *pipeline.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.outputs["vhd"] = output{
@@ -267,7 +268,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
 		},
 	}
@@ -290,7 +291,7 @@ func New(confPaths []string) *Fedora30 {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *pipeline.Assembler {
+		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
 		},
 	}
@@ -342,7 +343,7 @@ func (r *Fedora30) GetSizeForOutputType(outputFormat string, size uint64) uint64
 	return size
 }
 
-func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
+func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -353,42 +354,42 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		return nil, errors.New("invalid architecture: " + outputArchitecture)
 	}
 
-	p := &pipeline.Pipeline{}
+	p := &osbuild.Pipeline{}
 	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.fedora30")
 
 	packages := append(output.Packages, b.GetPackages()...)
 	if output.Bootable {
 		packages = append(packages, arch.BootloaderPackages...)
 	}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, output.ExcludedPackages)))
-	p.AddStage(pipeline.NewFixBLSStage())
+	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, output.ExcludedPackages)))
+	p.AddStage(osbuild.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
 	language, keyboard := b.GetPrimaryLocale()
 
 	if language != nil {
-		p.AddStage(pipeline.NewLocaleStage(&pipeline.LocaleStageOptions{*language}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{*language}))
 	} else {
-		p.AddStage(pipeline.NewLocaleStage(&pipeline.LocaleStageOptions{"en_US"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{"en_US"}))
 	}
 
 	if keyboard != nil {
-		p.AddStage(pipeline.NewKeymapStage(&pipeline.KeymapStageOptions{*keyboard}))
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{*keyboard}))
 	}
 
 	if hostname := b.GetHostname(); hostname != nil {
-		p.AddStage(pipeline.NewHostnameStage(&pipeline.HostnameStageOptions{*hostname}))
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{*hostname}))
 	}
 
 	timezone, ntpServers := b.GetTimezoneSettings()
 
 	// TODO install chrony when this is set?
 	if timezone != nil {
-		p.AddStage(pipeline.NewTimezoneStage(&pipeline.TimezoneStageOptions{*timezone}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{*timezone}))
 	}
 
 	if len(ntpServers) > 0 {
-		p.AddStage(pipeline.NewChronyStage(&pipeline.ChronyStageOptions{ntpServers}))
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{ntpServers}))
 	}
 
 	if users := b.GetUsers(); len(users) > 0 {
@@ -396,27 +397,27 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		if err != nil {
 			return nil, err
 		}
-		p.AddStage(pipeline.NewUsersStage(options))
+		p.AddStage(osbuild.NewUsersStage(options))
 	}
 
 	if groups := b.GetGroups(); len(groups) > 0 {
-		p.AddStage(pipeline.NewGroupsStage(r.groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(r.groupStageOptions(groups)))
 	}
 
 	if output.Bootable {
-		p.AddStage(pipeline.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
+		p.AddStage(osbuild.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
 	}
-	p.AddStage(pipeline.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel(), arch.UEFI)))
+	p.AddStage(osbuild.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel(), arch.UEFI)))
 
 	if services := b.GetServices(); services != nil || output.EnabledServices != nil {
-		p.AddStage(pipeline.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services)))
+		p.AddStage(osbuild.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services)))
 	}
 
 	if firewall := b.GetFirewall(); firewall != nil {
-		p.AddStage(pipeline.NewFirewallStage(r.firewallStageOptions(firewall)))
+		p.AddStage(osbuild.NewFirewallStage(r.firewallStageOptions(firewall)))
 	}
 
-	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
+	p.AddStage(osbuild.NewSELinuxStage(r.selinuxStageOptions()))
 
 	p.Assembler = output.Assembler(arch.UEFI, size)
 
@@ -427,7 +428,7 @@ func (r *Fedora30) Runner() string {
 	return "org.osbuild.fedora30"
 }
 
-func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *pipeline.Pipeline {
+func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *osbuild.Pipeline {
 	packages := []string{
 		"dnf",
 		"dosfstools",
@@ -438,20 +439,20 @@ func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *pipeli
 		"tar",
 	}
 	packages = append(packages, arch.BuildPackages...)
-	p := &pipeline.Pipeline{}
-	p.AddStage(pipeline.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
+	p := &osbuild.Pipeline{}
+	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
 	return p
 }
 
-func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *pipeline.DNFStageOptions {
-	options := &pipeline.DNFStageOptions{
+func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *osbuild.DNFStageOptions {
+	options := &osbuild.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: arch.Name,
 		ModulePlatformId: "platform:f30",
 	}
 
 	for _, repo := range append(arch.Repositories, additionalRepos...) {
-		options.AddRepository(&pipeline.DNFRepository{
+		options.AddRepository(&osbuild.DNFRepository{
 			BaseURL:    repo.BaseURL,
 			MetaLink:   repo.Metalink,
 			MirrorList: repo.MirrorList,
@@ -473,9 +474,9 @@ func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig
 	return options
 }
 
-func (r *Fedora30) userStageOptions(users []blueprint.UserCustomization) (*pipeline.UsersStageOptions, error) {
-	options := pipeline.UsersStageOptions{
-		Users: make(map[string]pipeline.UsersStageOptionsUser),
+func (r *Fedora30) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+	options := osbuild.UsersStageOptions{
+		Users: make(map[string]osbuild.UsersStageOptionsUser),
 	}
 
 	for _, c := range users {
@@ -488,7 +489,7 @@ func (r *Fedora30) userStageOptions(users []blueprint.UserCustomization) (*pipel
 			c.Password = &cryptedPassword
 		}
 
-		user := pipeline.UsersStageOptionsUser{
+		user := osbuild.UsersStageOptionsUser{
 			Groups:      c.Groups,
 			Description: c.Description,
 			Home:        c.Home,
@@ -513,13 +514,13 @@ func (r *Fedora30) userStageOptions(users []blueprint.UserCustomization) (*pipel
 	return &options, nil
 }
 
-func (r *Fedora30) groupStageOptions(groups []blueprint.GroupCustomization) *pipeline.GroupsStageOptions {
-	options := pipeline.GroupsStageOptions{
-		Groups: map[string]pipeline.GroupsStageOptionsGroup{},
+func (r *Fedora30) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+	options := osbuild.GroupsStageOptions{
+		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
 	}
 
 	for _, group := range groups {
-		groupData := pipeline.GroupsStageOptionsGroup{
+		groupData := osbuild.GroupsStageOptionsGroup{
 			Name: group.Name,
 		}
 		if group.GID != nil {
@@ -533,8 +534,8 @@ func (r *Fedora30) groupStageOptions(groups []blueprint.GroupCustomization) *pip
 	return &options
 }
 
-func (r *Fedora30) firewallStageOptions(firewall *blueprint.FirewallCustomization) *pipeline.FirewallStageOptions {
-	options := pipeline.FirewallStageOptions{
+func (r *Fedora30) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
+	options := osbuild.FirewallStageOptions{
 		Ports: firewall.Ports,
 	}
 
@@ -546,19 +547,19 @@ func (r *Fedora30) firewallStageOptions(firewall *blueprint.FirewallCustomizatio
 	return &options
 }
 
-func (r *Fedora30) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *pipeline.SystemdStageOptions {
+func (r *Fedora30) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *osbuild.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
 		enabledServices = append(disabledServices, s.Disabled...)
 	}
-	return &pipeline.SystemdStageOptions{
+	return &osbuild.SystemdStageOptions{
 		EnabledServices:  enabledServices,
 		DisabledServices: disabledServices,
 	}
 }
 
-func (r *Fedora30) fsTabStageOptions(uefi bool) *pipeline.FSTabStageOptions {
-	options := pipeline.FSTabStageOptions{}
+func (r *Fedora30) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+	options := osbuild.FSTabStageOptions{}
 	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
 	if uefi {
 		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
@@ -566,7 +567,7 @@ func (r *Fedora30) fsTabStageOptions(uefi bool) *pipeline.FSTabStageOptions {
 	return &options
 }
 
-func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *pipeline.GRUB2StageOptions {
+func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
@@ -576,14 +577,14 @@ func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.Ker
 		kernelOptions += " " + kernel.Append
 	}
 
-	var uefiOptions *pipeline.GRUB2UEFI
+	var uefiOptions *osbuild.GRUB2UEFI
 	if uefi {
-		uefiOptions = &pipeline.GRUB2UEFI{
+		uefiOptions = &osbuild.GRUB2UEFI{
 			Vendor: "fedora",
 		}
 	}
 
-	return &pipeline.GRUB2StageOptions{
+	return &osbuild.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
 		Legacy:             !uefi,
@@ -591,28 +592,28 @@ func (r *Fedora30) grub2StageOptions(kernelOptions string, kernel *blueprint.Ker
 	}
 }
 
-func (r *Fedora30) selinuxStageOptions() *pipeline.SELinuxStageOptions {
-	return &pipeline.SELinuxStageOptions{
+func (r *Fedora30) selinuxStageOptions() *osbuild.SELinuxStageOptions {
+	return &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}
 }
 
-func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size uint64) *pipeline.Assembler {
-	var options pipeline.QEMUAssemblerOptions
+func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
+	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
-		options = pipeline.QEMUAssemblerOptions{
+		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
 			Size:     size,
 			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
 			PTType:   "gpt",
-			Partitions: []pipeline.QEMUPartition{
+			Partitions: []osbuild.QEMUPartition{
 				{
 					Start: 2048,
 					Size:  972800,
 					Type:  &fstype,
-					Filesystem: pipeline.QEMUFilesystem{
+					Filesystem: osbuild.QEMUFilesystem{
 						Type:       "vfat",
 						UUID:       "46BB-8120",
 						Label:      "EFI System Partition",
@@ -621,7 +622,7 @@ func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size
 				},
 				{
 					Start: 976896,
-					Filesystem: pipeline.QEMUFilesystem{
+					Filesystem: osbuild.QEMUFilesystem{
 						Type:       "ext4",
 						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
 						Mountpoint: "/",
@@ -630,17 +631,17 @@ func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size
 			},
 		}
 	} else {
-		options = pipeline.QEMUAssemblerOptions{
+		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
 			Size:     size,
 			PTUUID:   "0x14fc63d2",
 			PTType:   "mbr",
-			Partitions: []pipeline.QEMUPartition{
+			Partitions: []osbuild.QEMUPartition{
 				{
 					Start:    2048,
 					Bootable: true,
-					Filesystem: pipeline.QEMUFilesystem{
+					Filesystem: osbuild.QEMUFilesystem{
 						Type:       "ext4",
 						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
 						Mountpoint: "/",
@@ -649,24 +650,24 @@ func (r *Fedora30) qemuAssembler(format string, filename string, uefi bool, size
 			},
 		}
 	}
-	return pipeline.NewQEMUAssembler(&options)
+	return osbuild.NewQEMUAssembler(&options)
 }
 
-func (r *Fedora30) tarAssembler(filename, compression string) *pipeline.Assembler {
-	return pipeline.NewTarAssembler(
-		&pipeline.TarAssemblerOptions{
+func (r *Fedora30) tarAssembler(filename, compression string) *osbuild.Assembler {
+	return osbuild.NewTarAssembler(
+		&osbuild.TarAssemblerOptions{
 			Filename:    filename,
 			Compression: compression,
 		})
 }
 
-func (r *Fedora30) rawFSAssembler(filename string, size uint64) *pipeline.Assembler {
+func (r *Fedora30) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
 	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	if err != nil {
 		panic("invalid UUID")
 	}
-	return pipeline.NewRawFSAssembler(
-		&pipeline.RawFSAssemblerOptions{
+	return osbuild.NewRawFSAssembler(
+		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
 			RootFilesystemUUDI: id,
 			Size:               size,

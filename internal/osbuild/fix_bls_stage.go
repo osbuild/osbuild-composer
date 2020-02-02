@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 // A FixBLSStageOptions struct is empty, as the stage takes no options.
 //

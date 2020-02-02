@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type KeymapStageOptions struct {
 	Keymap string `json:"keymap"`

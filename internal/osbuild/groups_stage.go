@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type GroupsStageOptions struct {
 	Groups map[string]GroupsStageOptionsGroup `json:"groups"`

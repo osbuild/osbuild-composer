@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type UsersStageOptions struct {
 	Users map[string]UsersStageOptionsUser `json:"users"`

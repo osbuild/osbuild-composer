@@ -8,7 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/pipeline"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 func TestDistro_Pipeline(t *testing.T) {
@@ -26,8 +26,8 @@ func TestDistro_Pipeline(t *testing.T) {
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		var tt struct {
-			Compose  *compose           `json:"compose"`
-			Pipeline *pipeline.Pipeline `json:"pipeline,omitempty"`
+			Compose  *compose          `json:"compose"`
+			Pipeline *osbuild.Pipeline `json:"pipeline,omitempty"`
 		}
 		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
 		if err != nil {

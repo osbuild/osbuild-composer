@@ -1,4 +1,4 @@
-package pipeline
+package osbuild
 
 type TimezoneStageOptions struct {
 	Zone string `json:"zone"`
