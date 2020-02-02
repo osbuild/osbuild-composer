@@ -62,11 +62,13 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 }
 
 type PackageSpec struct {
-	Name    string `json:"name"`
-	Epoch   uint   `json:"epoch"`
-	Version string `json:"version,omitempty"`
-	Release string `json:"release,omitempty"`
-	Arch    string `json:"arch,omitempty"`
+	Name           string `json:"name"`
+	Epoch          uint   `json:"epoch"`
+	Version        string `json:"version,omitempty"`
+	Release        string `json:"release,omitempty"`
+	Arch           string `json:"arch,omitempty"`
+	RemoteLocation string `json:"remote_location,omitempty"`
+	Checksum       string `json:"checksum,omitempty"`
 }
 
 type PackageSource struct {
