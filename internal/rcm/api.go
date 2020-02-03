@@ -81,7 +81,6 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 	type Repository struct {
 		URL      string `json:"url"`
-		Checksum string `json:"checksum"`
 	}
 
 	// JSON structure expected from the client
@@ -122,7 +121,8 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 			errors = append(errors, "input must specify repositories")
 		}
 		errorReason.Error = strings.Join(errors, ", ")
-		json.NewEncoder(writer).Encode(errorReason)
+		// TODO: handle error
+		_ = json.NewEncoder(writer).Encode(errorReason)
 		return
 	}
 
@@ -136,7 +136,8 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		}
 		writer.WriteHeader(http.StatusInternalServerError)
 		errorReason.Error = "failed to push compose: " + err.Error()
-		json.NewEncoder(writer).Encode(errorReason)
+		// TODO: handle error
+		_ = json.NewEncoder(writer).Encode(errorReason)
 		return
 	}
 
@@ -145,7 +146,8 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		UUID uuid.UUID `json:"compose_id"`
 	}
 	reply.UUID = composeUUID
-	json.NewEncoder(writer).Encode(reply)
+	// TODO: handle error
+	_ = json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) status(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -159,7 +161,8 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		errorReason.Error = "Malformed UUID"
-		json.NewEncoder(writer).Encode(errorReason)
+		// TODO: handle error
+		_ = json.NewEncoder(writer).Encode(errorReason)
 		return
 	}
 
@@ -168,7 +171,8 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	if !exists {
 		writer.WriteHeader(http.StatusBadRequest)
 		errorReason.Error = "Compose UUID does not exist"
-		json.NewEncoder(writer).Encode(errorReason)
+		// TODO: handle error
+		_ = json.NewEncoder(writer).Encode(errorReason)
 		return
 	}
 
@@ -178,6 +182,7 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	}
 
 	// TODO: return per-job status like Koji does (requires changes in the store)
-	reply.Status = compose.QueueStatus
-	json.NewEncoder(writer).Encode(reply)
+	reply.Status = compose.GetState().ToString()
+	// TODO: handle error
+	_ = json.NewEncoder(writer).Encode(reply)
 }
