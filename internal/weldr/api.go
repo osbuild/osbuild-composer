@@ -1265,7 +1265,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	if bp != nil {
-		_, _, checksums, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch, true)
+		packages, buildPackages, checksums, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch, true)
 		if err != nil {
 			errors := responseError{
 				ID:  "DepsolveError",
@@ -1275,7 +1275,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(reply.BuildID, bp, checksums, api.arch, cr.ComposeType, size, uploadTarget)
+		err = api.store.PushCompose(reply.BuildID, bp, packages, buildPackages, checksums, api.arch, cr.ComposeType, size, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out

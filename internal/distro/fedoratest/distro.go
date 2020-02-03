@@ -63,7 +63,7 @@ func (d *FedoraTestDistro) BuildPackages(outputArchitecture string) ([]string, e
 	return nil, nil
 }
 
-func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, buildPackages, basePackages []rpmmd.PackageSpec, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "qcow2" && outputArch == "x86_64" {
 		return &osbuild.Pipeline{}, nil
 	} else {
