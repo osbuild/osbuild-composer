@@ -506,7 +506,7 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checksums map[string]string, arch, composeType string, size uint64, uploadTarget *target.Target) error {
+func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packages, buildPackages []rpmmd.PackageSpec, checksums map[string]string, arch, composeType string, size uint64, uploadTarget *target.Target) error {
 	targets := []*target.Target{}
 
 	// Compatibility layer for image types in Weldr API v0
@@ -539,7 +539,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		repos = append(repos, source.RepoConfig())
 	}
 
-	pipelineStruct, err := s.distro.Pipeline(bp, repos, checksums, arch, composeType, size)
+	pipelineStruct, err := s.distro.Pipeline(bp, repos, packages, buildPackages, checksums, arch, composeType, size)
 	if err != nil {
 		return err
 	}
@@ -608,7 +608,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, arch, imgTypeCompatStr, 0)
+		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, nil, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}

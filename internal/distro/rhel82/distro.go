@@ -525,7 +525,7 @@ func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
