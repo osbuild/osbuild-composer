@@ -374,9 +374,8 @@ func bumpVersion(str string) string {
 	return fmt.Sprintf("%d.%d.%d", v[0], v[1], v[2]+1)
 }
 
-func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
-	// FIXME: handle or comment this possible error
-	_ = s.change(func() error {
+func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
+	return s.change(func() error {
 		commit, err := randomSHA1String()
 		if err != nil {
 			return err
@@ -405,9 +404,8 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) {
 	})
 }
 
-func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) {
-	// FIXME: handle or comment this possible error
-	_ = s.change(func() error {
+func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
+	return s.change(func() error {
 		s.Workspace[bp.Name] = bp
 		return nil
 	})
