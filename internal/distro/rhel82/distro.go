@@ -17,8 +17,9 @@ import (
 )
 
 type RHEL82 struct {
-	arches  map[string]arch
-	outputs map[string]output
+	arches        map[string]arch
+	outputs       map[string]output
+	buildPackages []string
 }
 
 type arch struct {
@@ -52,6 +53,19 @@ func New(confPaths []string) *RHEL82 {
 	r := RHEL82{
 		arches:  map[string]arch{},
 		outputs: map[string]output{},
+		buildPackages: []string{
+			"dnf",
+			"dosfstools",
+			"dracut-config-generic",
+			"e2fsprogs",
+			"glibc",
+			"policycoreutils",
+			"python36",
+			"qemu-img",
+			"systemd",
+			"tar",
+			"xfsprogs",
+		},
 	}
 
 	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
@@ -502,6 +516,15 @@ func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([
 	return packages, output.ExcludedPackages, nil
 }
 
+func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
+	arch, exists := r.arches[outputArchitecture]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + outputArchitecture)
+	}
+
+	return append(r.buildPackages, arch.BuildPackages...), nil
+}
+
 func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
@@ -594,20 +617,11 @@ func (r *RHEL82) Runner() string {
 }
 
 func (r *RHEL82) buildPipeline(arch arch, checksums map[string]string) *osbuild.Pipeline {
-	packages := []string{
-		"dnf",
-		"dosfstools",
-		"dracut-config-generic",
-		"e2fsprogs",
-		"glibc",
-		"policycoreutils",
-		"python36",
-		"qemu-img",
-		"systemd",
-		"tar",
-		"xfsprogs",
+	packages, err := r.BuildPackages(arch.Name)
+	if err != nil {
+		panic("impossibly invalid arch")
 	}
-	packages = append(packages, arch.BuildPackages...)
+
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
 	return p

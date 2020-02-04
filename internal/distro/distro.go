@@ -47,6 +47,9 @@ type Distro interface {
 	// Returns the base packages for a given output type and architecture
 	BasePackages(outputFormat, outputArchitecture string) ([]string, []string, error)
 
+	// Returns the build packages for a given output architecture
+	BuildPackages(outputArchitecture string) ([]string, error)
+
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.
