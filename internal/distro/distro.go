@@ -44,6 +44,9 @@ type Distro interface {
 	// is 0 the default value for the format will be returned.
 	GetSizeForOutputType(outputFormat string, size uint64) uint64
 
+	// Returns the base packages for a given output type and architecture
+	BasePackages(outputFormat, outputArchitecture string) ([]string, []string, error)
+
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.

@@ -47,6 +47,10 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
+func (d *TestDistro) BasePackages(outputFormat, outputArchitecture string) ([]string, []string, error) {
+	return nil, nil, nil
+}
+
 func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "test_output" && outputArch == "test_arch" {
 		return &osbuild.Pipeline{}, nil

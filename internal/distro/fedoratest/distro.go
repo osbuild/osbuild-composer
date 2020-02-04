@@ -55,6 +55,10 @@ func (r *FedoraTestDistro) GetSizeForOutputType(outputFormat string, size uint64
 	return 0
 }
 
+func (d *FedoraTestDistro) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
+	return nil, nil, nil
+}
+
 func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "qcow2" && outputArch == "x86_64" {
 		return &osbuild.Pipeline{}, nil
