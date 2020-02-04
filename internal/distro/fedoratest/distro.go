@@ -11,6 +11,8 @@ import (
 
 type FedoraTestDistro struct{}
 
+const ModulePlatformID = "platform:f30"
+
 func New() *FedoraTestDistro {
 	return &FedoraTestDistro{}
 }
@@ -21,6 +23,10 @@ func (d *FedoraTestDistro) Name() string {
 
 func (d *FedoraTestDistro) Distribution() common.Distribution {
 	return common.Fedora30
+}
+
+func (d *FedoraTestDistro) ModulePlatformID() string {
+	return ModulePlatformID
 }
 
 func (d *FedoraTestDistro) Repositories(arch string) []rpmmd.RepoConfig {
