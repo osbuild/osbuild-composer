@@ -483,6 +483,25 @@ func (r *RHEL82) GetSizeForOutputType(outputFormat string, size uint64) uint64 {
 	return size
 }
 
+func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
+	output, exists := r.outputs[outputFormat]
+	if !exists {
+		return nil, nil, errors.New("invalid output format: " + outputFormat)
+	}
+
+	packages := output.Packages
+	if output.Bootable {
+		arch, exists := r.arches[outputArchitecture]
+		if !exists {
+			return nil, nil, errors.New("invalid architecture: " + outputArchitecture)
+		}
+
+		packages = append(packages, arch.BootloaderPackages...)
+	}
+
+	return packages, output.ExcludedPackages, nil
+}
+
 func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
@@ -497,11 +516,12 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 	p := &osbuild.Pipeline{}
 	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.rhel82")
 
-	packages := append(output.Packages, b.GetPackages()...)
-	if output.Bootable {
-		packages = append(packages, arch.BootloaderPackages...)
+	packages, excludedPackages, err := r.BasePackages(outputFormat, outputArchitecture)
+	if err != nil {
+		return nil, err
 	}
-	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, output.ExcludedPackages)))
+	packages = append(packages, b.GetPackages()...)
+	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, excludedPackages)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	if output.Bootable {
