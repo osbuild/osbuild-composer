@@ -29,7 +29,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	
+
 	// Validate architecture
 	if !common.ArchitectureExists(archArg) {
 		_, _ = fmt.Fprintf(os.Stderr, "The provided architecture (%s) is not supported. Use one of these:\n", archArg)
@@ -47,7 +47,7 @@ func main() {
 		}
 		return
 	}
-	
+
 	// Validate image type
 
 	blueprint := &blueprint.Blueprint{}
@@ -81,7 +81,7 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD()
-	_, checksums, err := rpmmd.Depsolve(packages, d.Repositories(archArg), true)
+	_, checksums, err := rpmmd.Depsolve(packages, nil, d.Repositories(archArg), true)
 	if err != nil {
 		panic(err.Error())
 	}

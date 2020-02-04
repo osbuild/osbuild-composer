@@ -645,7 +645,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, api.distro.Repositories(api.arch), false)
+	packages, _, err := api.rpmmd.Depsolve(names, nil, api.distro.Repositories(api.arch), false)
 
 	if err != nil {
 		errors := responseError{
@@ -1817,7 +1817,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, clean bool) ([]rpmmd.
 		repos = append(repos, source.RepoConfig())
 	}
 
-	return api.rpmmd.Depsolve(specs, repos, clean)
+	return api.rpmmd.Depsolve(specs, nil, repos, clean)
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
