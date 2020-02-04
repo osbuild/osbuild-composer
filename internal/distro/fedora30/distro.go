@@ -17,8 +17,9 @@ import (
 )
 
 type Fedora30 struct {
-	arches  map[string]arch
-	outputs map[string]output
+	arches        map[string]arch
+	outputs       map[string]output
+	buildPackages []string
 }
 
 type arch struct {
@@ -51,6 +52,15 @@ func New(confPaths []string) *Fedora30 {
 	r := Fedora30{
 		arches:  map[string]arch{},
 		outputs: map[string]output{},
+		buildPackages: []string{
+			"dnf",
+			"dosfstools",
+			"e2fsprogs",
+			"policycoreutils",
+			"qemu-img",
+			"systemd",
+			"tar",
+		},
 	}
 
 	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
@@ -367,6 +377,15 @@ func (r *Fedora30) BasePackages(outputFormat string, outputArchitecture string) 
 	return packages, output.ExcludedPackages, nil
 }
 
+func (r *Fedora30) BuildPackages(outputArchitecture string) ([]string, error) {
+	arch, exists := r.arches[outputArchitecture]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + outputArchitecture)
+	}
+
+	return append(r.buildPackages, arch.BuildPackages...), nil
+}
+
 func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
@@ -455,16 +474,11 @@ func (r *Fedora30) Runner() string {
 }
 
 func (r *Fedora30) buildPipeline(arch arch, checksums map[string]string) *osbuild.Pipeline {
-	packages := []string{
-		"dnf",
-		"dosfstools",
-		"e2fsprogs",
-		"policycoreutils",
-		"qemu-img",
-		"systemd",
-		"tar",
+	packages, err := r.BuildPackages(arch.Name)
+	if err != nil {
+		panic("impossibly invalid arch")
 	}
-	packages = append(packages, arch.BuildPackages...)
+
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
 	return p
