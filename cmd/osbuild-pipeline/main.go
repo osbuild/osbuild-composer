@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"io/ioutil"
 	"os"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -80,10 +81,25 @@ func main() {
 		}
 	}
 
-	rpmmd := rpmmd.NewRPMMD()
-	_, checksums, err := rpmmd.Depsolve(packages, nil, d.Repositories(archArg), d.ModulePlatformID(), true)
+	pkgs, exclude_pkgs, err := d.BasePackages(imageType, archArg)
 	if err != nil {
-		panic(err.Error())
+		panic("could not get base packages: " + err.Error())
+	}
+	packages = append(pkgs, packages...)
+
+	rpmmd := rpmmd.NewRPMMD()
+	_, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, d.Repositories(archArg), d.ModulePlatformID(), false)
+	if err != nil {
+		panic("Could not depsolve: " + err.Error())
+	}
+
+	buildPkgs, err := d.BuildPackages(archArg)
+	if err != nil {
+		panic("Could not get build packages: " + err.Error())
+	}
+	_, _, err = rpmmd.Depsolve(buildPkgs, nil, d.Repositories(archArg), d.ModulePlatformID(), false)
+	if err != nil {
+		panic("Could not depsolve build packages: " + err.Error())
 	}
 
 	pipeline, err := d.Pipeline(blueprint, nil, checksums, archArg, imageType, 0)
