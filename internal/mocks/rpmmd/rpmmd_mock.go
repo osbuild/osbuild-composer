@@ -30,10 +30,10 @@ func NewRPMMDMock(fixture Fixture) rpmmd.RPMMD {
 	return &rpmmdMock{Fixture: fixture}
 }
 
-func (r *rpmmdMock) FetchPackageList(repos []rpmmd.RepoConfig) (rpmmd.PackageList, map[string]string, error) {
+func (r *rpmmdMock) FetchPackageList(repos []rpmmd.RepoConfig, modulePlatformID string) (rpmmd.PackageList, map[string]string, error) {
 	return r.Fixture.fetchPackageList.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.fetchPackageList.err
 }
 
-func (r *rpmmdMock) Depsolve(specs, excludeSpecs []string, repos []rpmmd.RepoConfig, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
+func (r *rpmmdMock) Depsolve(specs, excludeSpecs []string, repos []rpmmd.RepoConfig, modulePlatformID string, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
 	return r.Fixture.depsolve.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.depsolve.err
 }

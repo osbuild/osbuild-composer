@@ -81,7 +81,7 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD()
-	_, checksums, err := rpmmd.Depsolve(packages, nil, d.Repositories(archArg), true)
+	_, checksums, err := rpmmd.Depsolve(packages, nil, d.Repositories(archArg), d.ModulePlatformID(), true)
 	if err != nil {
 		panic(err.Error())
 	}

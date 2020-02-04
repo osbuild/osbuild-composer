@@ -95,8 +95,8 @@ type PackageInfo struct {
 }
 
 type RPMMD interface {
-	FetchPackageList(repos []RepoConfig) (PackageList, map[string]string, error)
-	Depsolve(specs, excludeSpecs []string, repos []RepoConfig, clean bool) ([]PackageSpec, map[string]string, error)
+	FetchPackageList(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error)
+	Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error)
 }
 
 type DNFError struct {
@@ -199,10 +199,11 @@ func NewRPMMD() RPMMD {
 	return &rpmmdImpl{}
 }
 
-func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, map[string]string, error) {
+func (*rpmmdImpl) FetchPackageList(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
 	var arguments = struct {
-		Repos []RepoConfig `json:"repos"`
-	}{repos}
+		Repos            []RepoConfig `json:"repos"`
+		ModulePlatformID string       `json:"module_platform_id"`
+	}{repos, modulePlatformID}
 	var reply struct {
 		Checksums map[string]string `json:"checksums"`
 		Packages  PackageList       `json:"packages"`
@@ -214,13 +215,14 @@ func (*rpmmdImpl) FetchPackageList(repos []RepoConfig) (PackageList, map[string]
 	return reply.Packages, reply.Checksums, err
 }
 
-func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, clean bool) ([]PackageSpec, map[string]string, error) {
+func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error) {
 	var arguments = struct {
-		PackageSpecs []string     `json:"package-specs"`
-		ExcludSpecs  []string     `json:"exclude-specs"`
-		Repos        []RepoConfig `json:"repos"`
-		Clean        bool         `json:"clean,omitempty"`
-	}{specs, excludeSpecs, repos, clean}
+		PackageSpecs     []string     `json:"package-specs"`
+		ExcludSpecs      []string     `json:"exclude-specs"`
+		Repos            []RepoConfig `json:"repos"`
+		ModulePlatformID string       `json:"module_platform_id"`
+		Clean            bool         `json:"clean,omitempty"`
+	}{specs, excludeSpecs, repos, modulePlatformID, clean}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
@@ -281,7 +283,7 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 	return results
 }
 
-func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig) (err error) {
-	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, nil, repos, false)
+func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID string) (err error) {
+	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, nil, repos, modulePlatformID, false)
 	return
 }
