@@ -44,6 +44,7 @@ type output struct {
 }
 
 const Distro = common.RHEL82
+const ModulePlatformID = "platform:el8"
 
 func New(confPaths []string) *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
@@ -446,6 +447,10 @@ func (r *RHEL82) Distribution() common.Distribution {
 	return Distro
 }
 
+func (r *RHEL82) ModulePlatformID() string {
+	return ModulePlatformID
+}
+
 func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
 	return r.arches[arch].Repositories
 }
@@ -592,7 +597,7 @@ func (r *RHEL82) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, 
 	options := &osbuild.DNFStageOptions{
 		ReleaseVersion:   "8",
 		BaseArchitecture: arch.Name,
-		ModulePlatformId: "platform:el8",
+		ModulePlatformId: ModulePlatformID,
 	}
 	for _, repo := range append(arch.Repositories, additionalRepos...) {
 		options.AddRepository(&osbuild.DNFRepository{

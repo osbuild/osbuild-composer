@@ -43,6 +43,7 @@ type output struct {
 }
 
 const Distro = common.Fedora30
+const ModulePlatformID = "platform:f30"
 
 func New(confPaths []string) *Fedora30 {
 	const GigaByte = 1024 * 1024 * 1024
@@ -311,6 +312,10 @@ func (r *Fedora30) Distribution() common.Distribution {
 	return Distro
 }
 
+func (r *Fedora30) ModulePlatformID() string {
+	return ModulePlatformID
+}
+
 func (r *Fedora30) Repositories(arch string) []rpmmd.RepoConfig {
 	return r.arches[arch].Repositories
 }
@@ -448,7 +453,7 @@ func (r *Fedora30) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig
 	options := &osbuild.DNFStageOptions{
 		ReleaseVersion:   "30",
 		BaseArchitecture: arch.Name,
-		ModulePlatformId: "platform:f30",
+		ModulePlatformId: ModulePlatformID,
 	}
 
 	for _, repo := range append(arch.Repositories, additionalRepos...) {
