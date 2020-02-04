@@ -90,17 +90,10 @@ func handleJob(client *ComposerClient) error {
 	}
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	image, result, err, errs := job.Run()
+	image, result, err := job.Run()
 	if err != nil {
 		log.Printf("  Job failed: %v", err)
 		return client.UpdateJob(job, "FAILED", nil, result)
-	}
-
-	for _, err := range errs {
-		if err != nil {
-			log.Printf("  Job target error: %v", err)
-			return client.UpdateJob(job, "FAILED", nil, result)
-		}
 	}
 
 	return client.UpdateJob(job, "FINISHED", image, result)
