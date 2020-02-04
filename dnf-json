@@ -7,6 +7,7 @@ import hawkey
 import json
 import shutil
 import sys
+import tempfile
 
 DNF_ERROR_EXIT_CODE = 10
 
@@ -37,8 +38,13 @@ def dnfrepo(desc, parent_conf=None):
     return repo
 
 
-def create_base(repos, clean=False):
+def create_base(repos, module_platform_id, persistdir, cachedir, clean=False):
     base = dnf.Base()
+    base.conf.module_platform_id = module_platform_id
+    base.conf.config_file_path = "/dev/null"
+    base.conf.persistdir = persistdir
+    if cachedir:
+        base.conf.cachedir = cachedir
 
     if clean:
         shutil.rmtree(base.conf.cachedir, ignore_errors=True)
@@ -81,55 +87,60 @@ def repo_checksums(base):
 
 call = json.load(sys.stdin)
 command = call["command"]
-arguments = call.get("arguments", {})
+arguments = call["arguments"]
+repos = arguments.get("repos", {})
+clean = arguments.get("clean", False)
+cachedir = arguments.get("cachedir", None)
+module_platform_id = arguments["module_platform_id"]
 
-if command == "dump":
-    base = create_base(arguments.get("repos", {}), arguments.get("clean", False))
-    packages = []
-    for package in base.sack.query().available():
-        packages.append({
-            "name": package.name,
-            "summary": package.summary,
-            "description": package.description,
-            "url": package.url,
-            "epoch": package.epoch,
-            "version": package.version,
-            "release": package.release,
-            "arch": package.arch,
-            "buildtime": timestamp_to_rfc3339(package.buildtime),
-            "license": package.license
-        })
-    json.dump({
-        "checksums": repo_checksums(base),
-        "packages": packages
-    }, sys.stdout)
+with tempfile.TemporaryDirectory() as persistdir:
+    base = create_base(repos, module_platform_id, persistdir, cachedir, clean)
 
-elif command == "depsolve":
-    base = create_base(arguments.get("repos", {}), arguments.get("clean", False))
-    errors = []
+    if command == "dump":
+        packages = []
+        for package in base.sack.query().available():
+            packages.append({
+                "name": package.name,
+                "summary": package.summary,
+                "description": package.description,
+                "url": package.url,
+                "epoch": package.epoch,
+                "version": package.version,
+                "release": package.release,
+                "arch": package.arch,
+                "buildtime": timestamp_to_rfc3339(package.buildtime),
+                "license": package.license
+            })
+        json.dump({
+            "checksums": repo_checksums(base),
+            "packages": packages
+        }, sys.stdout)
 
-    try:
-        base.install_specs(arguments["package-specs"], exclude=arguments.get("exclude-specs", []))
-    except dnf.exceptions.MarkingErrors as e:
-        exit_with_dnf_error("MarkingErrors", f"Error occurred when marking packages for installation: {e}")
+    elif command == "depsolve":
+        errors = []
 
-    try:
-        base.resolve()
-    except dnf.exceptions.DepsolveError as e:
-        exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
+        try:
+            base.install_specs(arguments["package-specs"], exclude=arguments.get("exclude-specs", []))
+        except dnf.exceptions.MarkingErrors as e:
+            exit_with_dnf_error("MarkingErrors", f"Error occurred when marking packages for installation: {e}")
 
-    dependencies = []
-    for package in base.transaction.install_set:
-        dependencies.append({
-            "name": package.name,
-            "epoch": package.epoch,
-            "version": package.version,
-            "release": package.release,
-            "arch": package.arch,
-            "remote_location": package.remote_location(),
-            "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
-        })
-    json.dump({
-        "checksums": repo_checksums(base),
-        "dependencies": dependencies
-    }, sys.stdout)
+        try:
+            base.resolve()
+        except dnf.exceptions.DepsolveError as e:
+            exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
+
+        dependencies = []
+        for package in base.transaction.install_set:
+            dependencies.append({
+                "name": package.name,
+                "epoch": package.epoch,
+                "version": package.version,
+                "release": package.release,
+                "arch": package.arch,
+                "remote_location": package.remote_location(),
+                "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
+            })
+        json.dump({
+            "checksums": repo_checksums(base),
+            "dependencies": dependencies
+        }, sys.stdout)
