@@ -109,7 +109,7 @@ elif command == "depsolve":
     errors = []
 
     try:
-        base.install_specs(arguments["package-specs"])
+        base.install_specs(arguments["package-specs"], exclude=arguments.get("exclude-specs", []))
     except dnf.exceptions.MarkingErrors as e:
         exit_with_dnf_error("MarkingErrors", f"Error occurred when marking packages for installation: {e}")
 

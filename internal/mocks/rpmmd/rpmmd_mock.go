@@ -6,14 +6,14 @@ import (
 )
 
 type fetchPackageList struct {
-	ret rpmmd.PackageList
+	ret       rpmmd.PackageList
 	checksums map[string]string
-	err error
+	err       error
 }
 type depsolve struct {
-	ret []rpmmd.PackageSpec
+	ret       []rpmmd.PackageSpec
 	checksums map[string]string
-	err error
+	err       error
 }
 
 type Fixture struct {
@@ -34,6 +34,6 @@ func (r *rpmmdMock) FetchPackageList(repos []rpmmd.RepoConfig) (rpmmd.PackageLis
 	return r.Fixture.fetchPackageList.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.fetchPackageList.err
 }
 
-func (r *rpmmdMock) Depsolve(specs []string, repos []rpmmd.RepoConfig, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
+func (r *rpmmdMock) Depsolve(specs, excludeSpecs []string, repos []rpmmd.RepoConfig, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
 	return r.Fixture.depsolve.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.depsolve.err
 }
