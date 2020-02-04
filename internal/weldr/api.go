@@ -1161,7 +1161,15 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
-	api.store.PushBlueprint(blueprint, commitMsg)
+	err = api.store.PushBlueprint(blueprint, commitMsg)
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 
 	statusResponseOK(writer)
 }
@@ -1200,7 +1208,15 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		return
 	}
 
-	api.store.PushBlueprintToWorkspace(blueprint)
+	err = api.store.PushBlueprintToWorkspace(blueprint)
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 
 	statusResponseOK(writer)
 }
