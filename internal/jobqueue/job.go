@@ -31,11 +31,25 @@ type JobStatus struct {
 	Result *common.ComposeResult `json:"result"`
 }
 
-func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
+type TargetsError struct {
+	Errors []error
+}
+
+func (e *TargetsError) Error() string {
+	errString := fmt.Sprintf("%d target(s) errored:\n", len(e.Errors))
+
+	for _, err := range e.Errors {
+		errString += err.Error() + "\n"
+	}
+
+	return errString
+}
+
+func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
-		return nil, nil, fmt.Errorf("unknown distro: %s", job.Distro), nil
+		return nil, nil, fmt.Errorf("unknown distro: %s", job.Distro)
 	}
 
 	build := pipeline.Build{
@@ -44,18 +58,18 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
 
 	buildFile, err := ioutil.TempFile("", "osbuild-worker-build-env-*")
 	if err != nil {
-		return nil, nil, err, nil
+		return nil, nil, err
 	}
 	defer os.Remove(buildFile.Name())
 
 	err = json.NewEncoder(buildFile).Encode(build)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error encoding build environment: %v", err), nil
+		return nil, nil, fmt.Errorf("error encoding build environment: %v", err)
 	}
 
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
-		return nil, nil, fmt.Errorf("error setting up osbuild store: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up osbuild store: %v", err)
 	}
 	defer os.RemoveAll(tmpStore)
 
@@ -69,39 +83,39 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, nil, fmt.Errorf("error setting up stdin for osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, nil, fmt.Errorf("error setting up stdout for osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error setting up stdout for osbuild: %v", err)
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, nil, fmt.Errorf("error starting osbuild: %v", err), nil
+		return nil, nil, fmt.Errorf("error starting osbuild: %v", err)
 	}
 
 	err = json.NewEncoder(stdin).Encode(job.Pipeline)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error encoding osbuild pipeline: %v", err), nil
+		return nil, nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
 	}
 	stdin.Close()
 
 	var result common.ComposeResult
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding osbuild output: %#v", err), nil
+		return nil, nil, fmt.Errorf("error decoding osbuild output: %#v", err)
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		return nil, &result, err, nil
+		return nil, &result, err
 	}
 
 	filename, mimeType, err := d.FilenameFromType(job.OutputType)
 	if err != nil {
-		return nil, &result, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err), nil
+		return nil, &result, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err)
 	}
 
 	var image store.Image
@@ -133,7 +147,7 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
 
 			fileStat, err := file.Stat()
 			if err != nil {
-				return nil, &result, err, nil
+				return nil, &result, err
 			}
 
 			image = store.Image{
@@ -170,10 +184,13 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error, []error) {
 		default:
 			r = append(r, fmt.Errorf("invalid target type"))
 		}
-		r = append(r, nil)
 	}
 
-	return &image, &result, nil, r
+	if len(r) > 0 {
+		return nil, &result, &TargetsError{r}
+	}
+
+	return &image, &result, nil
 }
 
 func runCommand(command string, params ...string) error {
