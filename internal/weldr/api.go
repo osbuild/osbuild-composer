@@ -1127,21 +1127,29 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 	}
 
 	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
+	if len(contentType) == 0 {
 		errors := responseError{
 			ID:  "BlueprintsError",
-			Msg: "'blueprint must be json'",
+			Msg: "missing Content-Type header",
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	var blueprint blueprint.Blueprint
-	err := json.NewDecoder(request.Body).Decode(&blueprint)
+	var err error
+	if contentType[0] == "application/json" {
+		err = json.NewDecoder(request.Body).Decode(&blueprint)
+	} else if contentType[0] == "text/x-toml" {
+		_, err = toml.DecodeReader(request.Body, &blueprint)
+	} else {
+		err = errors.New("blueprint must be in json or toml format")
+	}
+
 	if err != nil {
 		errors := responseError{
 			ID:  "BlueprintsError",
-			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand.",
+			Msg: "400 Bad Request: The browser (or proxy) sent a request that this server could not understand: " + err.Error(),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
