@@ -484,6 +484,8 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		repos = append(repos, source.RepoConfig())
 	}
 
+	size = s.distro.GetSizeForOutputType(composeType, size)
+
 	pipeline, err := s.distro.Pipeline(bp, repos, checksums, arch, composeType, size)
 	if err != nil {
 		return err

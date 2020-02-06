@@ -42,6 +42,10 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 	}
 }
 
+func (r *TestDistro) GetSizeForOutputType(outputFormat string, size uint64) uint64 {
+	return 0
+}
+
 func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArch, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
 	if outputFormat == "test_output" && outputArch == "test_arch" {
 		return &pipeline.Pipeline{}, nil
