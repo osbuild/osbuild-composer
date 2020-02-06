@@ -101,7 +101,7 @@ version = "2.4.*"`
 	}
 }
 
-func TestBlueprintsWorkspace(t *testing.T) {
+func TestBlueprintsWorkspaceJSON(t *testing.T) {
 	var cases = []struct {
 		Method         string
 		Path           string
@@ -116,6 +116,29 @@ func TestBlueprintsWorkspace(t *testing.T) {
 		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestBlueprintsWorkspaceTOML(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[packages]]
+name = "httpd"
+version = "2.4.*"`
+
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/workspace", bytes.NewReader([]byte(blueprint)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", r.StatusCode)
 	}
 }
 
