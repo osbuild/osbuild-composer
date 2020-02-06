@@ -456,6 +456,18 @@ func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
+func (r *RHEL82) GetSizeForOutputType(outputFormat string, size uint64) uint64 {
+	const MegaByte = 1024 * 1024
+	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
+	if outputFormat == "vhd" && size%MegaByte != 0 {
+		size = (size/MegaByte + 1) * MegaByte
+	}
+	if size == 0 {
+		size = r.outputs[outputFormat].DefaultSize
+	}
+	return size
+}
+
 func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*pipeline.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
@@ -537,9 +549,6 @@ func (r *RHEL82) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 
 	p.AddStage(pipeline.NewSELinuxStage(r.selinuxStageOptions()))
 
-	if size == 0 {
-		size = output.DefaultSize
-	}
 	p.Assembler = output.Assembler(arch.UEFI, size)
 
 	return p, nil

@@ -31,6 +31,10 @@ type Distro interface {
 	// format. `outputFormat` must be one returned by
 	FilenameFromType(outputFormat string) (string, string, error)
 
+	// Returns the proper image size for a given output format. If the size
+	// is 0 the default value for the format will be returned.
+	GetSizeForOutputType(outputFormat string, size uint64) uint64
+
 	// Returns an osbuild pipeline that generates an image in the given
 	// output format with all packages and customizations specified in the
 	// given blueprint.
