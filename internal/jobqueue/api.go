@@ -33,6 +33,7 @@ func New(logger *log.Logger, store *store.Store) *API {
 
 	api.router.POST("/job-queue/v1/jobs", api.addJobHandler)
 	api.router.PATCH("/job-queue/v1/jobs/:job_id/builds/:build_id", api.updateJobHandler)
+	api.router.POST("/job-queue/v1/jobs/:job_id/builds/:build_id/image", api.addJobImageHandler)
 
 	return api
 }
@@ -151,5 +152,36 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		}
 		return
 	}
+	statusResponseOK(writer)
+}
+
+func (api *API) addJobImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	id, err := uuid.Parse(params.ByName("job_id"))
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid compose id: "+err.Error())
+		return
+	}
+
+	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
+
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid build id: "+err.Error())
+		return
+	}
+
+	err = api.store.AddImageToImageUpload(id, imageBuildId, request.Body)
+
+	if err != nil {
+		switch err.(type) {
+		case *store.NotFoundError:
+			statusResponseError(writer, http.StatusNotFound, err.Error())
+		case *store.NoLocalTargetError:
+			statusResponseError(writer, http.StatusBadRequest, err.Error())
+		default:
+			statusResponseError(writer, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
 	statusResponseOK(writer)
 }
