@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // CustomJsonConversionError is thrown when parsing strings into enumerations
@@ -316,9 +318,10 @@ type ImageRequest struct {
 
 // ComposeRequest is used to submit a new compose to the store
 type ComposeRequest struct {
-	BlueprintName   string         `json:"blueprint_name"`
-	ComposeID       uuid.UUID      `json:"uuid"`
-	Distro          Distribution   `json:"distro"`
-	Arch            Architecture   `json:"arch"`
-	RequestedImages []ImageRequest `json:"requested_images"`
+	Blueprint       blueprint.Blueprint `json:"blueprint"`
+	ComposeID       uuid.UUID           `json:"uuid"`
+	Distro          Distribution        `json:"distro"`
+	Arch            Architecture        `json:"arch"`
+	Repositories    []rpmmd.RepoConfig  `json:"repositories"`
+	RequestedImages []ImageRequest      `json:"requested_images"`
 }
