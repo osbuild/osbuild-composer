@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/compose"
-	"log"
 	"sort"
 )
 
@@ -13,7 +12,7 @@ type ComposeEntry struct {
 	Blueprint   string                 `json:"blueprint"`
 	Version     string                 `json:"version"`
 	ComposeType common.ImageType       `json:"compose_type"`
-	ImageSize   uint64                 `json:"image_size"`
+	ImageSize   uint64                 `json:"image_size"` // This is user-provided image size, not actual file size
 	QueueStatus common.ImageBuildState `json:"queue_status"`
 	JobCreated  float64                `json:"job_created"`
 	JobStarted  float64                `json:"job_started,omitempty"`
@@ -43,13 +42,7 @@ func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads
 		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
 
 	case common.IBFinished:
-		if compose.ImageBuilds[0].Image != nil {
-			composeEntry.ImageSize = compose.ImageBuilds[0].Size
-		} else {
-			log.Printf("finished compose with id %s has nil image\n", id.String())
-			composeEntry.ImageSize = 0
-		}
-
+		composeEntry.ImageSize = compose.ImageBuilds[0].Size
 		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
 		composeEntry.JobFinished = float64(compose.ImageBuilds[0].JobFinished.UnixNano()) / 1000000000
