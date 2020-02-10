@@ -2,12 +2,15 @@ package rpmmd_mock
 
 import (
 	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"sort"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/test"
+	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -71,7 +74,7 @@ func createBaseStoreFixture() *store.Store {
 		Name:      "org.osbuild.local",
 		ImageName: "localimage",
 		Created:   date,
-		Status:    "WAITING",
+		Status:    common.IBWaiting,
 		Options: &target.LocalTargetOptions{
 			Location: "/tmp/localimage",
 		},
@@ -82,7 +85,7 @@ func createBaseStoreFixture() *store.Store {
 		Name:      "org.osbuild.aws",
 		ImageName: "awsimage",
 		Created:   date,
-		Status:    "WAITING",
+		Status:    common.IBWaiting,
 		Options: &target.AWSTargetOptions{
 			Region:          "frankfurt",
 			AccessKeyID:     "accesskey",
@@ -93,42 +96,59 @@ func createBaseStoreFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	s := store.New(nil, d)
+	r := distro.NewRegistry([]string{"."})
+	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b
-	s.Composes = map[uuid.UUID]store.Compose{
-		uuid.MustParse("30000000-0000-0000-0000-000000000000"): store.Compose{
-			QueueStatus: "WAITING",
-			Blueprint:   &b,
-			OutputType:  "test_output",
-			Targets:     []*target.Target{localTarget, awsTarget},
-			JobCreated:  date,
+	s.Composes = map[uuid.UUID]compose.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): compose.Compose{
+			Blueprint: &b,
+			ImageBuilds: []compose.ImageBuild{
+				{
+					QueueStatus: common.IBWaiting,
+					ImageType:   common.Qcow2Generic,
+					Targets:     []*target.Target{localTarget, awsTarget},
+					JobCreated:  date,
+				},
+			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000001"): store.Compose{
-			QueueStatus: "RUNNING",
-			Blueprint:   &b,
-			OutputType:  "test_output",
-			Targets:     []*target.Target{localTarget},
-			JobCreated:  date,
-			JobStarted:  date,
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): compose.Compose{
+			Blueprint: &b,
+			ImageBuilds: []compose.ImageBuild{
+				{
+					QueueStatus: common.IBRunning,
+					ImageType:   common.Qcow2Generic,
+					Targets:     []*target.Target{localTarget},
+					JobCreated:  date,
+					JobStarted:  date,
+				},
+			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000002"): store.Compose{
-			QueueStatus: "FINISHED",
-			Blueprint:   &b,
-			OutputType:  "test_output",
-			Targets:     []*target.Target{localTarget, awsTarget},
-			JobCreated:  date,
-			JobStarted:  date,
-			JobFinished: date,
+		uuid.MustParse("30000000-0000-0000-0000-000000000002"): compose.Compose{
+			Blueprint: &b,
+			ImageBuilds: []compose.ImageBuild{
+				{
+					QueueStatus: common.IBFinished,
+					ImageType:   common.Qcow2Generic,
+					Targets:     []*target.Target{localTarget, awsTarget},
+					JobCreated:  date,
+					JobStarted:  date,
+					JobFinished: date,
+				},
+			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000003"): store.Compose{
-			QueueStatus: "FAILED",
-			Blueprint:   &b,
-			OutputType:  "test_output",
-			Targets:     []*target.Target{localTarget, awsTarget},
-			JobCreated:  date,
-			JobStarted:  date,
-			JobFinished: date,
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): compose.Compose{
+			Blueprint: &b,
+			ImageBuilds: []compose.ImageBuild{
+				{
+					QueueStatus: common.IBFailed,
+					ImageType:   common.Qcow2Generic,
+					Targets:     []*target.Target{localTarget, awsTarget},
+					JobCreated:  date,
+					JobStarted:  date,
+					JobFinished: date,
+				},
+			},
 		},
 	}
 
@@ -166,7 +186,8 @@ func createStoreWithoutComposesFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	s := store.New(nil, d)
+	r := distro.NewRegistry([]string{"."})
+	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b
 

@@ -3,6 +3,9 @@ package weldr_test
 import (
 	"archive/tar"
 	"bytes"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"io"
 	"math/rand"
 	"net/http"
@@ -13,11 +16,9 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	_ "github.com/osbuild/osbuild-composer/internal/distro/test"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/test"
+	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 
@@ -31,7 +32,7 @@ func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*weldr.API, *
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	d := test_distro.New()
 
-	return weldr.New(rpm, "test_arch", d, nil, fixture.Store), fixture.Store
+	return weldr.New(rpm, "x86_64", d, nil, fixture.Store), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -47,8 +48,8 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/projects/source/info", http.StatusNotFound, ``},
 		{"/api/v0/projects/source/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/projects/source/info/foo", http.StatusOK, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"sources":{}}`},
-		{"/api/v0/projects/source/info/test-id", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/test_arch","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
-		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/test_arch","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/test-id", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
@@ -293,8 +294,7 @@ func TestBlueprintsDepsolve(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	expectedComposeLocal := &store.Compose{
-		QueueStatus: "WAITING",
+	expectedComposeLocal := &compose.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -303,31 +303,40 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		OutputType: "test_output",
-		Targets:    []*target.Target{},
-	}
-	expectedComposeLocalAndAws := &store.Compose{
-		QueueStatus: "WAITING",
-		Blueprint: &blueprint.Blueprint{
-			Name:           "test",
-			Version:        "0.0.0",
-			Packages:       []blueprint.Package{},
-			Modules:        []blueprint.Package{},
-			Groups:         []blueprint.Group{},
-			Customizations: nil,
-		},
-		OutputType: "test_output",
-		Targets: []*target.Target{
+		ImageBuilds: []compose.ImageBuild{
 			{
-				Name:      "org.osbuild.aws",
-				Status:    "WAITING",
-				ImageName: "test_upload",
-				Options: &target.AWSTargetOptions{
-					Region:          "frankfurt",
-					AccessKeyID:     "accesskey",
-					SecretAccessKey: "secretkey",
-					Bucket:          "clay",
-					Key:             "imagekey",
+				QueueStatus: common.IBWaiting,
+				ImageType:   common.Qcow2Generic,
+				Targets:     []*target.Target{},
+			},
+		},
+	}
+	expectedComposeLocalAndAws := &compose.Compose{
+	Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuilds: []compose.ImageBuild{
+			{
+				QueueStatus: common.IBWaiting,
+				ImageType:   common.Qcow2Generic,
+				Targets: []*target.Target{
+					{
+						Name:      "org.osbuild.aws",
+						Status:    common.IBWaiting,
+						ImageName: "test_upload",
+						Options: &target.AWSTargetOptions{
+							Region:          "frankfurt",
+							AccessKeyID:     "accesskey",
+							SecretAccessKey: "secretkey",
+							Bucket:          "clay",
+							Key:             "imagekey",
+						},
+					},
 				},
 			},
 		},
@@ -340,12 +349,12 @@ func TestCompose(t *testing.T) {
 		Body            string
 		ExpectedStatus  int
 		ExpectedJSON    string
-		ExpectedCompose *store.Compose
+		ExpectedCompose *compose.Compose
 		IgnoreFields    []string
 	}{
-		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "test_output","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, nil, []string{"build_id"}},
-		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "test_output","branch": "master"}`, http.StatusOK, `{"status": true}`, expectedComposeLocal, []string{"build_id"}},
-		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"test_output","branch":"master","upload":{"image_name":"test_upload","provider":"aws","settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}}`, http.StatusOK, `{"status": true}`, expectedComposeLocalAndAws, []string{"build_id"}},
+		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "qcow2","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, nil, []string{"build_id"}},
+		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "qcow2","branch": "master"}`, http.StatusOK, `{"status": true}`, expectedComposeLocal, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","upload":{"image_name":"test_upload","provider":"aws","settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}}`, http.StatusOK, `{"status": true}`, expectedComposeLocalAndAws, []string{"build_id"}},
 	}
 
 	for _, c := range cases {
@@ -361,20 +370,20 @@ func TestCompose(t *testing.T) {
 		}
 
 		// I have no idea how to get the compose in better way
-		var compose store.Compose
+		var composeStruct compose.Compose
 		for _, c := range s.Composes {
-			compose = c
+			composeStruct = c
 			break
 		}
 
-		if compose.Pipeline == nil {
+		if composeStruct.ImageBuilds[0].Pipeline == nil {
 			t.Fatalf("%s: the compose in the store did not contain a blueprint", c.Path)
 		} else {
 			// TODO: find some (reasonable) way to verify the contents of the pipeline
-			compose.Pipeline = nil
+			composeStruct.ImageBuilds[0].Pipeline = nil
 		}
 
-		if diff := cmp.Diff(compose, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
+		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
 
@@ -425,9 +434,9 @@ func TestComposeStatus(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/30000000-0000-0000-0000-000000000000,30000000-0000-0000-0000-000000000002", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/*", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000001","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"RUNNING","job_created":1574857140,"job_started":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140},{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/status/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"WAITING","job_created":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/30000000-0000-0000-0000-000000000000,30000000-0000-0000-0000-000000000002", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/status/*", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"WAITING","job_created":1574857140},{"id":"30000000-0000-0000-0000-000000000001","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"RUNNING","job_created":1574857140,"job_started":1574857140},{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140},{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/status/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"uuids":[{"id":"30000000-0000-0000-0000-000000000000","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"WAITING","job_created":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
 	}
 
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
@@ -449,8 +458,8 @@ func TestComposeInfo(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"test_output","queue_status":"WAITING","image_size":0}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"test_output","queue_status":"WAITING","image_size":0,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"qcow2","queue_status":"WAITING","image_size":0}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, `{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"qcow2","queue_status":"WAITING","image_size":0,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownUUID","msg":"30000000-0000-0000-0000 is not a valid build uuid"}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/42000000-0000-0000-0000-000000000000", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownUUID","msg":"42000000-0000-0000-0000-000000000000 is not a valid build uuid"}]}`},
 	}
@@ -571,8 +580,8 @@ func TestComposeQueue(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"RUNNING"}]}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"WAITING","uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"RUNNING"}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"WAITING"}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"RUNNING"}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/queue", ``, http.StatusOK, `{"new":[{"blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"WAITING","uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}],"run":[{"blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"RUNNING"}]}`},
 		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/queue", ``, http.StatusOK, `{"new":[],"run":[]}`},
 	}
 
@@ -595,8 +604,8 @@ func TestComposeFinished(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/finished", ``, http.StatusOK, `{"finished":[{"id":"30000000-0000-0000-0000-000000000002","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FINISHED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
 		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/finished", ``, http.StatusOK, `{"finished":[]}`},
 	}
 
@@ -619,8 +628,8 @@ func TestComposeFailed(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"test_output","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140}]}`},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/failed", ``, http.StatusOK, `{"failed":[{"id":"30000000-0000-0000-0000-000000000003","blueprint":"test","version":"0.0.0","compose_type":"qcow2","image_size":0,"queue_status":"FAILED","job_created":1574857140,"job_started":1574857140,"job_finished":1574857140,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}]}]}`},
 		{rpmmd_mock.NoComposesFixture, "GET", "/api/v0/compose/failed", ``, http.StatusOK, `{"failed":[]}`},
 	}
 
