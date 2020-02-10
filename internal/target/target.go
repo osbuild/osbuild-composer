@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"time"
 )
 
 type Target struct {
-	Uuid      uuid.UUID     `json:"uuid"`
-	ImageName string        `json:"image_name"`
-	Name      string        `json:"name"`
-	Created   time.Time     `json:"created"`
-	Status    string        `json:"status"`
-	Options   TargetOptions `json:"options"`
+	Uuid      uuid.UUID              `json:"uuid"`
+	ImageName string                 `json:"image_name"`
+	Name      string                 `json:"name"`
+	Created   time.Time              `json:"created"`
+	Status    common.ImageBuildState `json:"status"`
+	Options   TargetOptions          `json:"options"`
 }
 
 func newTarget(name string, options TargetOptions) *Target {
@@ -21,7 +22,7 @@ func newTarget(name string, options TargetOptions) *Target {
 		Uuid:    uuid.New(),
 		Name:    name,
 		Created: time.Now(),
-		Status:  "WAITING",
+		Status:  common.IBWaiting,
 		Options: options,
 	}
 }
@@ -31,12 +32,12 @@ type TargetOptions interface {
 }
 
 type rawTarget struct {
-	Uuid      uuid.UUID       `json:"uuid"`
-	ImageName string          `json:"image_name"`
-	Name      string          `json:"name"`
-	Created   time.Time       `json:"created"`
-	Status    string          `json:"status"`
-	Options   json.RawMessage `json:"options"`
+	Uuid      uuid.UUID              `json:"uuid"`
+	ImageName string                 `json:"image_name"`
+	Name      string                 `json:"name"`
+	Created   time.Time              `json:"created"`
+	Status    common.ImageBuildState `json:"status"`
+	Options   json.RawMessage        `json:"options"`
 }
 
 func (target *Target) UnmarshalJSON(data []byte) error {
