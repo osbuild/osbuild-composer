@@ -11,10 +11,14 @@ type CustomJsonConversionError struct {
 	reason string
 }
 
+// Error returns the error as a string
 func (err *CustomJsonConversionError) Error() string {
 	return err.reason
 }
 
+// Since Go has no generics, this is the only way to write common code for all the types present in this package.
+// It uses weakly typed maps to convert between strings and integers which are then wrapped into type aliases.
+// Specific implementations are bellow each type.
 func unmarshalHelper(data []byte, jsonError, typeConversionError string, mapping map[string]int) (int, error) {
 	var stringInput string
 	err := json.Unmarshal(data, &stringInput)
@@ -28,6 +32,7 @@ func unmarshalHelper(data []byte, jsonError, typeConversionError string, mapping
 	return value, nil
 }
 
+// See unmarshalHelper for explanation
 func marshalHelper(input int, mapping map[string]int, errorMessage string) ([]byte, error) {
 	for k, v := range mapping {
 		if v == input {
@@ -37,14 +42,16 @@ func marshalHelper(input int, mapping map[string]int, errorMessage string) ([]by
 	return nil, &CustomJsonConversionError{fmt.Sprintf("%d %s", input, errorMessage)}
 }
 
+// See unmarshalHelper for introduction. This helper can create a list of possible values of a single type.
 func listHelper(mapping map[string]int) []string {
 	ret := make([]string, 0)
-	for k,_ := range mapping {
+	for k, _ := range mapping {
 		ret = append(ret, k)
 	}
 	return ret
 }
 
+// See unmarshalHelper for introduction. With this helper one can make sure a value exists in a set of existing values.
 func existsHelper(mapping map[string]int, testedValue string) bool {
 	for k, _ := range mapping {
 		if k == testedValue {
@@ -52,6 +59,22 @@ func existsHelper(mapping map[string]int, testedValue string) bool {
 		}
 	}
 	return false
+}
+
+// See unmarshalHelper for introduction. Converts between TypeAlias(int) and string
+func toStringHelper(mapping map[string]int, tag int) (string, bool) {
+	for k, v := range mapping {
+		if v == tag {
+			return k, true
+		}
+	}
+	return "", false
+}
+
+// See unmarshalHelper for introduction. Converts between string and TypeAlias(int)
+func fromStringHelper(mapping map[string]int, stringInput string) (int, bool) {
+	value, exists := mapping[stringInput]
+	return value, exists
 }
 
 // Architecture represents one of the supported CPU architectures available for images
@@ -113,6 +136,10 @@ func (arch Architecture) MarshalJSON() ([]byte, error) {
 	return marshalHelper(int(arch), getArchMapping(), "is not a valid architecture tag")
 }
 
+func (arch Architecture) ToString() (string, bool) {
+	return toStringHelper(getDistributionMapping(), int(arch))
+}
+
 type ImageType int
 
 // NOTE: If you want to add more constants here, don't forget to add a mapping below
@@ -126,21 +153,46 @@ const (
 	OpenStack
 	Qcow2Generic
 	Vmware
+	RawFilesystem
+	PartitionedDisk
+	TarArchive
 )
 
 // getArchMapping is a helper function that defines the conversion from JSON string value
 // to ImageType.
 func getImageTypeMapping() map[string]int {
 	mapping := map[string]int{
-		"Alibaba":      int(Alibaba),
-		"Azure":        int(Azure),
-		"AWS":          int(Aws),
-		"Google Cloud": int(GoogleCloud),
-		"Hyper-V":      int(HyperV),
-		"LiveISO":      int(LiveISO),
-		"OpenStack":    int(OpenStack),
-		"qcow2":        int(Qcow2Generic),
-		"VMWare":       int(Vmware),
+		"Alibaba":          int(Alibaba),
+		"Azure":            int(Azure),
+		"AWS":              int(Aws),
+		"Google-Cloud":     int(GoogleCloud),
+		"Hyper-V":          int(HyperV),
+		"LiveISO":          int(LiveISO),
+		"OpenStack":        int(OpenStack),
+		"qcow2":            int(Qcow2Generic),
+		"VMWare":           int(Vmware),
+		"Raw-filesystem":   int(RawFilesystem),
+		"Partitioned-disk": int(PartitionedDisk),
+		"Tar":              int(TarArchive),
+	}
+	return mapping
+}
+
+// TODO: check the mapping here:
+func getCompatImageTypeMapping() map[int]string {
+	mapping := map[int]string{
+		int(Alibaba):         "ami",
+		int(Azure):           "vhd",
+		int(Aws):             "ami",
+		int(GoogleCloud):     "ami",
+		int(HyperV):          "vhd",
+		int(LiveISO):         "liveiso",
+		int(OpenStack):       "openstack",
+		int(Qcow2Generic):    "qcow2",
+		int(Vmware):          "vmdk",
+		int(RawFilesystem):   "ext4-filesystem",
+		int(PartitionedDisk): "partitioned-disk",
+		int(TarArchive):      "tar",
 	}
 	return mapping
 }
@@ -156,6 +208,24 @@ func (imgType ImageType) UnmarshalJSON(data []byte) error {
 
 func (imgType ImageType) MarshalJSON() ([]byte, error) {
 	return marshalHelper(int(imgType), getImageTypeMapping(), "is not a valid image type tag")
+}
+
+func (imgType ImageType) ToCompatString() (string, bool) {
+	str, exists := getCompatImageTypeMapping()[int(imgType)]
+	return str, exists
+}
+
+func ImageTypeFromCompatString(input string) (ImageType, bool) {
+	for k, v := range getCompatImageTypeMapping() {
+		if v == input {
+			return ImageType(k), true
+		}
+	}
+	return ImageType(999), false
+}
+
+func (imgType ImageType) ToString() (string, bool) {
+	return toStringHelper(getImageTypeMapping(), int(imgType))
 }
 
 type Distribution int
@@ -178,7 +248,6 @@ func getDistributionMapping() map[string]int {
 	return mapping
 }
 
-
 func ListDistributions() []string {
 	return listHelper(getDistributionMapping())
 }
@@ -198,6 +267,15 @@ func (distro Distribution) UnmarshalJSON(data []byte) error {
 
 func (distro Distribution) MarshalJSON() ([]byte, error) {
 	return marshalHelper(int(distro), getDistributionMapping(), "is not a valid distribution tag")
+}
+
+func (distro Distribution) ToString() (string, bool) {
+	return toStringHelper(getDistributionMapping(), int(distro))
+}
+
+func DistributionFromString(distro string) (Distribution, bool) {
+	tag, exists := fromStringHelper(getDistributionMapping(), distro)
+	return Distribution(tag), exists
 }
 
 type UploadTarget int
