@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -77,6 +78,14 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildSt
 	return nil
 }
 
+func (c *ComposerClient) UploadImage(job *jobqueue.Job, reader io.Reader) error {
+	// content type doesn't really matter
+	url := fmt.Sprintf("http://localhost/job-queue/v1/jobs/%s/builds/%d/image", job.ID.String(), job.ImageBuildID)
+	_, err := c.client.Post(url, "application/octet-stream", reader)
+
+	return err
+}
+
 func handleJob(client *ComposerClient) error {
 	fmt.Println("Waiting for a new job...")
 	job, err := client.AddJob()
@@ -90,7 +99,7 @@ func handleJob(client *ComposerClient) error {
 	}
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	result, err := job.Run()
+	result, err := job.Run(client)
 	if err != nil {
 		log.Printf("  Job failed: %v", err)
 		return client.UpdateJob(job, common.IBFailed, result)

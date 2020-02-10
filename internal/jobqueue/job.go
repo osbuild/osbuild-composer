@@ -44,7 +44,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func (job *Job) Run() (*common.ComposeResult, error) {
+func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error) {
 	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
@@ -120,14 +120,19 @@ func (job *Job) Run() (*common.ComposeResult, error) {
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-
-			err = runCommand("cp", "-a", "-L", tmpStore+"/refs/"+result.OutputID+"/.", options.Location)
+			filename, _, err := d.FilenameFromType(job.OutputType)
 			if err != nil {
 				r = append(r, err)
 				continue
 			}
 
-			err = runCommand("chown", "-R", "_osbuild-composer:_osbuild-composer", options.Location)
+			f, err := os.Open(tmpStore + "/refs/" + result.OutputID + "/" + filename)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = uploader.UploadImage(job, f)
 			if err != nil {
 				r = append(r, err)
 				continue
