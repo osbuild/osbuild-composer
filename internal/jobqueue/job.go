@@ -3,6 +3,7 @@ package jobqueue
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/compose"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -12,23 +13,24 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/pipeline"
-	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
 
 type Job struct {
-	ID         uuid.UUID          `json:"id"`
-	Distro     string             `json:"distro"`
-	Pipeline   *pipeline.Pipeline `json:"pipeline"`
-	Targets    []*target.Target   `json:"targets"`
-	OutputType string             `json:"output_type"`
+	ID           uuid.UUID          `json:"id"`
+	ImageBuildID int                `json:"image_build_id"`
+	Distro       string             `json:"distro"`
+	Pipeline     *pipeline.Pipeline `json:"pipeline"`
+	Targets      []*target.Target   `json:"targets"`
+	OutputType   string             `json:"output_type"`
 }
 
 type JobStatus struct {
-	Status string                `json:"status"`
-	Image  *store.Image          `json:"image"`
-	Result *common.ComposeResult `json:"result"`
+	Status       common.ImageBuildState `json:"status"`
+	ImageBuildID int                    `json:"image_build_id"`
+	Image        *compose.Image         `json:"image"`
+	Result       *common.ComposeResult  `json:"result"`
 }
 
 type TargetsError struct {
@@ -45,7 +47,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
+func (job *Job) Run() (*compose.Image, *common.ComposeResult, error) {
 	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
@@ -60,6 +62,7 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	// FIXME: how to handle errors in defer?
 	defer os.Remove(buildFile.Name())
 
 	err = json.NewEncoder(buildFile).Encode(build)
@@ -71,6 +74,7 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("error setting up osbuild store: %v", err)
 	}
+	// FIXME: how to handle errors in defer?
 	defer os.RemoveAll(tmpStore)
 
 	cmd := exec.Command(
@@ -100,7 +104,8 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
 	}
-	stdin.Close()
+	// FIXME: handle or comment this possible error
+	_ = stdin.Close()
 
 	var result common.ComposeResult
 	err = json.NewDecoder(stdout).Decode(&result)
@@ -118,7 +123,7 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 		return nil, &result, fmt.Errorf("cannot fetch information about output type %s: %v", job.OutputType, err)
 	}
 
-	var image store.Image
+	var image compose.Image
 
 	var r []error
 
@@ -150,10 +155,10 @@ func (job *Job) Run() (*store.Image, *common.ComposeResult, error) {
 				return nil, &result, err
 			}
 
-			image = store.Image{
+			image = compose.Image{
 				Path: imagePath,
 				Mime: mimeType,
-				Size: fileStat.Size(),
+				Size: uint64(fileStat.Size()),
 			}
 
 		case *target.AWSTargetOptions:
