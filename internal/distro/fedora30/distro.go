@@ -2,6 +2,7 @@ package fedora30
 
 import (
 	"errors"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"log"
 	"sort"
 	"strconv"
@@ -40,7 +41,7 @@ type output struct {
 	Assembler        func(uefi bool, size uint64) *pipeline.Assembler
 }
 
-const Name = "fedora-30"
+const Distro = common.Fedora30
 
 func New(confPaths []string) *Fedora30 {
 	const GigaByte = 1024 * 1024 * 1024
@@ -50,15 +51,15 @@ func New(confPaths []string) *Fedora30 {
 		outputs: map[string]output{},
 	}
 
-	repoMap, err := rpmmd.LoadRepositories(confPaths, Name)
+	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
 	if err != nil {
-		log.Printf("Could not load repository data for %s: %s", Name, err.Error())
+		log.Printf("Could not load repository data for %s: %s", r.Name(), err.Error())
 		return nil
 	}
 
 	repos, exists := repoMap["x86_64"]
 	if !exists {
-		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", Name, err.Error())
+		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", r.Name(), err.Error())
 	} else {
 		r.arches["x86_64"] = arch{
 			Name: "x86_64",
@@ -74,7 +75,7 @@ func New(confPaths []string) *Fedora30 {
 
 	repos, exists = repoMap["aarch64"]
 	if !exists {
-		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", Name, err.Error())
+		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", r.Name(), err.Error())
 	} else {
 		r.arches["aarch64"] = arch{
 			Name: "aarch64",
@@ -298,7 +299,15 @@ func New(confPaths []string) *Fedora30 {
 }
 
 func (r *Fedora30) Name() string {
-	return Name
+	name, exists := Distro.ToString()
+	if !exists {
+		panic("Fatal error, hardcoded distro value in fedora30 package is not valid!")
+	}
+	return name
+}
+
+func (r *Fedora30) Distribution() common.Distribution {
+	return Distro
 }
 
 func (r *Fedora30) Repositories(arch string) []rpmmd.RepoConfig {
