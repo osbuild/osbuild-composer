@@ -3,6 +3,7 @@ package distro
 import (
 	"bufio"
 	"errors"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"io"
 	"os"
 	"strings"
@@ -19,6 +20,9 @@ type Distro interface {
 	// Returns the name of the distro. This is the same name that was
 	// passed to New().
 	Name() string
+
+	// Return strong-typed distribution
+	Distribution() common.Distribution
 
 	// Returns a list of repositories from which this distribution gets its
 	// content.
@@ -45,12 +49,12 @@ type Distro interface {
 }
 
 type Registry struct {
-	distros map[string]Distro
+	distros map[common.Distribution]Distro
 }
 
 func NewRegistry(confPaths []string) *Registry {
 	distros := &Registry{
-		distros: make(map[string]Distro),
+		distros: make(map[common.Distribution]Distro),
 	}
 	distros.register(fedora30.New(confPaths))
 	distros.register(rhel82.New(confPaths))
@@ -58,15 +62,19 @@ func NewRegistry(confPaths []string) *Registry {
 }
 
 func (r *Registry) register(distro Distro) {
-	name := distro.Name()
-	if _, exists := r.distros[name]; exists {
-		panic("a distro with this name already exists: " + name)
+	distroTag := distro.Distribution()
+	if _, exists := r.distros[distroTag]; exists {
+		panic("a distro with this name already exists: " + distro.Name())
 	}
-	r.distros[name] = distro
+	r.distros[distroTag] = distro
 }
 
 func (r *Registry) GetDistro(name string) Distro {
-	distro, ok := r.distros[name]
+	distroTag, exists := common.DistributionFromString(name)
+	if !exists {
+		return nil
+	}
+	distro, ok := r.distros[distroTag]
 	if !ok {
 		return nil
 	}
