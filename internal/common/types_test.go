@@ -3,23 +3,32 @@ package common
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"reflect"
 	"testing"
 )
 
 func TestJSONConversionsComposeRequest(t *testing.T) {
-	cases := []struct{
-		input string
+	cases := []struct {
+		input                    string
 		expectedConversionResult ComposeRequest
 	}{
 		// 1st case
 		{
 			`
 			{
-				"blueprint_name": "foo",
+				"blueprint": {
+					"name": "",
+					"description": "",
+					"packages": [],
+					"modules": [],
+					"groups": []
+				},
 				"uuid": "789b4d42-da1a-49c9-a20c-054da3bb6c82",
 				"distro": "fedora-31",
 				"arch": "x86_64",
+				"repositories": [],
 				"requested_images": [
 					{
 						"image_type": "AWS",
@@ -29,10 +38,19 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 			}
 			`,
 			ComposeRequest{
-				BlueprintName: "foo",
-				ComposeID:     uuid.UUID{},
-				Distro:        Fedora31,
-				Arch:          X86_64,
+				Blueprint: blueprint.Blueprint{
+					Name:           "",
+					Description:    "",
+					Version:        "",
+					Packages:       nil,
+					Modules:        nil,
+					Groups:         nil,
+					Customizations: nil,
+				},
+				ComposeID:    uuid.UUID{},
+				Distro:       Fedora31,
+				Arch:         X86_64,
+				Repositories: []rpmmd.RepoConfig{},
 				RequestedImages: []ImageRequest{{
 					ImgType:  Aws,
 					UpTarget: []UploadTarget{EC2},
@@ -43,10 +61,17 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 		{
 			`
 			{
-				"blueprint_name": "bar",
+				"blueprint": {
+					"name": "",
+					"description": "",
+					"packages": [],
+					"modules": [],
+					"groups": []
+				},
 				"uuid": "789b4d42-da1a-49c9-a20c-054da3bb6c82",
 				"distro": "rhel-8.2",
 				"arch": "aarch64",
+				"repositories": [],
 				"requested_images": [
 					{
 						"image_type": "Azure",
@@ -56,10 +81,19 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 			}
 			`,
 			ComposeRequest{
-				BlueprintName: "bar",
-				ComposeID:     uuid.UUID{},
-				Distro:        RHEL82,
-				Arch:          Aarch64,
+				Blueprint: blueprint.Blueprint{
+					Name:           "",
+					Description:    "",
+					Version:        "",
+					Packages:       nil,
+					Modules:        nil,
+					Groups:         nil,
+					Customizations: nil,
+				},
+				ComposeID:    uuid.UUID{},
+				Distro:       RHEL82,
+				Arch:         Aarch64,
+				Repositories: []rpmmd.RepoConfig{},
 				RequestedImages: []ImageRequest{{
 					ImgType:  Azure,
 					UpTarget: []UploadTarget{AzureStorage, EC2},
@@ -68,12 +102,12 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for n, c := range cases {
 		// Test unmashaling the JSON from the string above
 		var inputStringAsStruct *ComposeRequest
 		err := json.Unmarshal([]byte(c.input), &inputStringAsStruct)
 		if err != nil {
-			t.Fatal("Failed ot unmarshal ComposeRequest:", err)
+			t.Fatal("Failed to unmarshal ComposeRequest (", n, "):", err)
 		}
 		if reflect.DeepEqual(inputStringAsStruct, c.expectedConversionResult) {
 			t.Error("Unmarshaled compose request is not the one expected")
@@ -84,12 +118,12 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 		// compare the resulting structure with the input one
 		data, err := json.Marshal(c.expectedConversionResult)
 		if err != nil {
-			t.Fatal("Failed ot marshal ComposeRequest:", err)
+			t.Fatal("Failed to marshal ComposeRequest:", err)
 		}
 		var expectedResultAfterMarshaling *ComposeRequest
 		err = json.Unmarshal(data, &expectedResultAfterMarshaling)
 		if err != nil {
-			t.Fatal("Failed ot unmarshal ComposeRequest:", err, ", input:", string(data))
+			t.Fatal("Failed to unmarshal ComposeRequest:", err, ", input:", string(data))
 		}
 		if reflect.DeepEqual(expectedResultAfterMarshaling, c.expectedConversionResult) {
 			t.Error("Marshaled compose request is not the one expected")
@@ -97,5 +131,3 @@ func TestJSONConversionsComposeRequest(t *testing.T) {
 	}
 
 }
-
-
