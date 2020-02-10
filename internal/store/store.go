@@ -100,6 +100,14 @@ func (e *InvalidRequestError) Error() string {
 	return e.message
 }
 
+type NoLocalTargetError struct {
+	message string
+}
+
+func (e *NoLocalTargetError) Error() string {
+	return e.message
+}
+
 func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Registry) *Store {
 	var s Store
 
@@ -732,6 +740,42 @@ func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int,
 
 		return nil
 	})
+}
+
+func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, reader io.Reader) error {
+	currentCompose, exists := s.Composes[composeID]
+	if !exists {
+		return &NotFoundError{"compose does not exist"}
+	}
+
+	imageBuild := currentCompose.ImageBuilds[imageBuildID]
+	localTarget := imageBuild.GetLocalTarget()
+
+	if localTarget == nil {
+		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s and image build %d but it has no local target", composeID.String(), imageBuildID)}
+	}
+
+	imageType, _ := imageBuild.ImageType.ToCompatString()
+	filename, _, err := s.distro.FilenameFromType(imageType)
+
+	if err != nil {
+		return &InvalidRequestError{err.Error()}
+	}
+
+	path := fmt.Sprintf("%s/%s", localTarget.Location, filename)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(f, reader)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Store) PushSource(source SourceConfig) {
