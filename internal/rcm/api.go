@@ -129,12 +129,13 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
+	// TODO: replace this with generalized version of push compose
 	err = api.store.PushCompose(composeUUID, &blueprint.Blueprint{}, make(map[string]string), composeRequest.Architectures[0], composeRequest.ImageTypes[0], 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
 		}
-		writer.WriteHeader(http.StatusInternalServerError)
+		writer.WriteHeader(http.StatusBadRequest)
 		errorReason.Error = "failed to push compose: " + err.Error()
 		// TODO: handle error
 		_ = json.NewEncoder(writer).Encode(errorReason)
