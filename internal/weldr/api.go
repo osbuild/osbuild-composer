@@ -1522,9 +1522,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	// 1st build is considered
 	reply.ComposeType, _ = compose.ImageBuilds[0].ImageType.ToCompatString()
 	reply.QueueStatus = compose.GetState().ToString()
-	if compose.ImageBuilds[0].Image != nil {
-		reply.ImageSize = compose.ImageBuilds[0].Size
-	}
+	reply.ImageSize = compose.ImageBuilds[0].Size
 
 	if isRequestVersionAtLeast(params, 1) {
 		reply.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
