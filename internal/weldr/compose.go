@@ -2,61 +2,62 @@ package weldr
 
 import (
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/compose"
 	"log"
 	"sort"
 )
 
 type ComposeEntry struct {
-	ID          uuid.UUID        `json:"id"`
-	Blueprint   string           `json:"blueprint"`
-	Version     string           `json:"version"`
-	ComposeType string           `json:"compose_type"`
-	ImageSize   uint64           `json:"image_size"`
-	QueueStatus string           `json:"queue_status"`
-	JobCreated  float64          `json:"job_created"`
-	JobStarted  float64          `json:"job_started,omitempty"`
-	JobFinished float64          `json:"job_finished,omitempty"`
-	Uploads     []UploadResponse `json:"uploads,omitempty"`
+	ID          uuid.UUID              `json:"id"`
+	Blueprint   string                 `json:"blueprint"`
+	Version     string                 `json:"version"`
+	ComposeType common.ImageType       `json:"compose_type"`
+	ImageSize   uint64                 `json:"image_size"`
+	QueueStatus common.ImageBuildState `json:"queue_status"`
+	JobCreated  float64                `json:"job_created"`
+	JobStarted  float64                `json:"job_started,omitempty"`
+	JobFinished float64                `json:"job_finished,omitempty"`
+	Uploads     []UploadResponse       `json:"uploads,omitempty"`
 }
 
-func composeToComposeEntry(id uuid.UUID, compose store.Compose, includeUploads bool) *ComposeEntry {
+func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads bool) *ComposeEntry {
 	var composeEntry ComposeEntry
 
 	composeEntry.ID = id
 	composeEntry.Blueprint = compose.Blueprint.Name
 	composeEntry.Version = compose.Blueprint.Version
-	composeEntry.ComposeType = compose.OutputType
-	composeEntry.QueueStatus = compose.QueueStatus
+	composeEntry.ComposeType = compose.ImageBuilds[0].ImageType
+	composeEntry.QueueStatus = compose.ImageBuilds[0].QueueStatus
 
 	if includeUploads {
-		composeEntry.Uploads = TargetsToUploadResponses(compose.Targets)
+		composeEntry.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
-	switch compose.QueueStatus {
-	case "WAITING":
-		composeEntry.JobCreated = float64(compose.JobCreated.UnixNano()) / 1000000000
+	switch compose.ImageBuilds[0].QueueStatus {
+	case common.IBWaiting:
+		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
 
-	case "RUNNING":
-		composeEntry.JobCreated = float64(compose.JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.JobStarted.UnixNano()) / 1000000000
+	case common.IBRunning:
+		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
 
-	case "FINISHED":
-		if compose.Image != nil {
-			composeEntry.ImageSize = compose.Size
+	case common.IBFinished:
+		if compose.ImageBuilds[0].Image != nil {
+			composeEntry.ImageSize = compose.ImageBuilds[0].Size
 		} else {
 			log.Printf("finished compose with id %s has nil image\n", id.String())
 			composeEntry.ImageSize = 0
 		}
 
-		composeEntry.JobCreated = float64(compose.JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.JobStarted.UnixNano()) / 1000000000
-		composeEntry.JobFinished = float64(compose.JobFinished.UnixNano()) / 1000000000
+		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
+		composeEntry.JobFinished = float64(compose.ImageBuilds[0].JobFinished.UnixNano()) / 1000000000
 
-	case "FAILED":
-		composeEntry.JobCreated = float64(compose.JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.JobStarted.UnixNano()) / 1000000000
-		composeEntry.JobFinished = float64(compose.JobFinished.UnixNano()) / 1000000000
+	case common.IBFailed:
+		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
+		composeEntry.JobFinished = float64(compose.ImageBuilds[0].JobFinished.UnixNano()) / 1000000000
 	default:
 		panic("invalid compose state")
 	}
@@ -64,7 +65,7 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, includeUploads b
 	return &composeEntry
 }
 
-func composesToComposeEntries(composes map[uuid.UUID]store.Compose, uuids []uuid.UUID, includeUploads bool) []*ComposeEntry {
+func composesToComposeEntries(composes map[uuid.UUID]compose.Compose, uuids []uuid.UUID, includeUploads bool) []*ComposeEntry {
 	var composeEntries []*ComposeEntry
 	if uuids == nil {
 		composeEntries = make([]*ComposeEntry, 0, len(composes))

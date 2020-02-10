@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
-	"errors"
+	errors_package "errors"
 	"fmt"
 	"io"
 	"log"
@@ -356,7 +356,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 	} else if contentType[0] == "text/x-toml" {
 		_, err = toml.DecodeReader(request.Body, &source)
 	} else {
-		err = errors.New("blueprint must be in json or toml format")
+		err = errors_package.New("blueprint must be in json or toml format")
 	}
 
 	if err != nil {
@@ -1103,7 +1103,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	} else if contentType[0] == "text/x-toml" {
 		_, err = toml.DecodeReader(request.Body, &blueprint)
 	} else {
-		err = errors.New("blueprint must be in json or toml format")
+		err = errors_package.New("blueprint must be in json or toml format")
 	}
 
 	if err != nil {
@@ -1143,7 +1143,7 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 	} else if contentType[0] == "text/x-toml" {
 		_, err = toml.DecodeReader(request.Body, &blueprint)
 	} else {
-		err = errors.New("blueprint must be in json or toml format")
+		err = errors_package.New("blueprint must be in json or toml format")
 	}
 
 	if err != nil {
@@ -1211,6 +1211,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
+	const MegaByte = 1024 * 1024
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
@@ -1256,6 +1257,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 
+	size := cr.Size
+
+	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
+	if cr.ComposeType == "vhd" && size%MegaByte != 0 {
+		size = (size/MegaByte + 1) * MegaByte
+	}
+
 	if bp != nil {
 		_, checksums, err := api.depsolveBlueprint(bp, true)
 		if err != nil {
@@ -1267,7 +1275,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(reply.BuildID, bp, checksums, api.arch, cr.ComposeType, cr.Size, uploadTarget)
+		err = api.store.PushCompose(reply.BuildID, bp, checksums, api.arch, cr.ComposeType, size, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
@@ -1386,10 +1394,10 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 
 	composes := api.store.GetAllComposes()
 	for id, compose := range composes {
-		switch compose.QueueStatus {
-		case "WAITING":
+		switch compose.GetState() {
+		case common.CWaiting:
 			reply.New = append(reply.New, composeToComposeEntry(id, compose, isRequestVersionAtLeast(params, 1)))
-		case "RUNNING":
+		case common.CRunning:
 			reply.Run = append(reply.Run, composeToComposeEntry(id, compose, isRequestVersionAtLeast(params, 1)))
 		}
 	}
@@ -1428,7 +1436,6 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		}
 	}
 	composes := api.store.GetAllComposes()
-
 	reply.UUIDs = composesToComposeEntries(composes, uuids, isRequestVersionAtLeast(params, 1))
 
 	json.NewEncoder(writer).Encode(reply)
@@ -1482,14 +1489,16 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	reply.Deps = Dependencies{
 		Packages: make([]map[string]interface{}, 0),
 	}
-	reply.ComposeType = compose.OutputType
-	reply.QueueStatus = compose.QueueStatus
-	if compose.Image != nil {
-		reply.ImageSize = compose.Size
+	// Weldr API assumes only one image build per compose, that's why only the
+	// 1st build is considered
+	reply.ComposeType, _ = compose.ImageBuilds[0].ImageType.ToCompatString()
+	reply.QueueStatus = compose.GetState().ToString()
+	if compose.ImageBuilds[0].Image != nil {
+		reply.ImageSize = compose.ImageBuilds[0].Size
 	}
 
 	if isRequestVersionAtLeast(params, 1) {
-		reply.Uploads = TargetsToUploadResponses(compose.Targets)
+		reply.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
 	json.NewEncoder(writer).Encode(reply)
@@ -1521,16 +1530,16 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	if compose.QueueStatus != "FINISHED" {
+	if compose.GetState() != common.CFinished {
 		errors := responseError{
 			ID:  "BuildInWrongState",
-			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, compose.QueueStatus),
+			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, compose.GetState().ToString()),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
-	if compose.Image == nil {
+	if compose.ImageBuilds[0].Image == nil {
 		errors := responseError{
 			ID:  "BuildMissingFile",
 			Msg: fmt.Sprintf("Compose %s doesn't have an image assigned", uuidString),
@@ -1539,9 +1548,9 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	imageName := filepath.Base(compose.Image.Path)
+	imageName := filepath.Base(compose.ImageBuilds[0].Image.Path)
 
-	file, err := os.Open(compose.Image.Path)
+	file, err := os.Open(compose.ImageBuilds[0].Image.Path)
 	if err != nil {
 		errors := responseError{
 			ID:  "BuildMissingFile",
@@ -1552,8 +1561,8 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+imageName)
-	writer.Header().Set("Content-Type", compose.Image.Mime)
-	writer.Header().Set("Content-Length", fmt.Sprintf("%d", compose.Image.Size))
+	writer.Header().Set("Content-Type", compose.ImageBuilds[0].Image.Mime)
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", compose.ImageBuilds[0].Image.Size))
 
 	io.Copy(writer, file)
 }
@@ -1584,7 +1593,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	if compose.QueueStatus != "FINISHED" && compose.QueueStatus != "FAILED" {
+	if compose.GetState() != common.CFinished && compose.GetState() != common.CFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s not in FINISHED or FAILED state.", uuidString),
@@ -1664,7 +1673,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	if compose.QueueStatus == "WAITING" {
+	if compose.GetState() == common.CWaiting {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
@@ -1673,7 +1682,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	if compose.QueueStatus == "RUNNING" {
+	if compose.GetState() == common.CRunning {
 		fmt.Fprintf(writer, "Running...\n")
 		return
 	}
@@ -1717,7 +1726,7 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 	composes := api.store.GetAllComposes()
 	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
 		switch entry.QueueStatus {
-		case "FINISHED":
+		case common.IBFinished:
 			reply.Finished = append(reply.Finished, entry)
 		}
 	}
@@ -1737,7 +1746,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 	composes := api.store.GetAllComposes()
 	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
 		switch entry.QueueStatus {
-		case "FAILED":
+		case common.IBFailed:
 			reply.Failed = append(reply.Failed, entry)
 		}
 	}

@@ -3,6 +3,7 @@ package weldr
 import (
 	"encoding/json"
 	"errors"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,12 +11,12 @@ import (
 )
 
 type UploadResponse struct {
-	Uuid         uuid.UUID            `json:"uuid"`
-	Status       string               `json:"status"`
-	ProviderName string               `json:"provider_name"`
-	ImageName    string               `json:"image_name"`
-	CreationTime float64              `json:"creation_time"`
-	Settings     target.TargetOptions `json:"settings"`
+	Uuid         uuid.UUID              `json:"uuid"`
+	Status       common.ImageBuildState `json:"status"`
+	ProviderName string                 `json:"provider_name"`
+	ImageName    string                 `json:"image_name"`
+	CreationTime float64                `json:"creation_time"`
+	Settings     target.TargetOptions   `json:"settings"`
 }
 
 type UploadRequest struct {
@@ -103,7 +104,7 @@ func UploadRequestToTarget(u UploadRequest) (*target.Target, error) {
 	t.ImageName = u.ImageName
 	t.Options = u.Settings
 	t.Name = targetName
-	t.Status = "WAITING"
+	t.Status = common.IBWaiting
 	t.Created = time.Now()
 
 	return &t, nil
