@@ -70,6 +70,10 @@ func statusResponseOK(writer http.ResponseWriter) {
 
 func statusResponseError(writer http.ResponseWriter, code int, errors ...string) {
 	writer.WriteHeader(code)
+
+	for _, err := range errors {
+		writer.Write([]byte(err))
+	}
 }
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
