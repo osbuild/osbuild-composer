@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/test"
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -28,12 +29,13 @@ func TestBasic(t *testing.T) {
 		// Update job that does not exist, with invalid body
 		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest, ``},
 		// Update job that does not exist
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"RUNNING"}`, http.StatusNotFound, ``},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"image_build_id": 0, "status":"RUNNING"}`, http.StatusNotFound, ``},
 	}
 
 	for _, c := range cases {
-		distro := test_distro.New()
-		api := jobqueue.New(nil, store.New(nil, distro))
+		distroStruct := test_distro.New()
+		registry := distro.NewRegistry([]string{"."})
+		api := jobqueue.New(nil, store.New(nil, distroStruct, *registry))
 
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
@@ -41,27 +43,29 @@ func TestBasic(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	distro := test_distro.New()
-	store := store.New(nil, distro)
+	distroStruct := test_distro.New()
+	registry := distro.NewRegistry([]string{"."})
+	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 
-	err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"test-repo": "test:foo"}, "test_arch", "test_output", 0, nil)
+	err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"test-repo": "test:foo"}, "x86_64", "qcow2", 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
 
 	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"distro":"test-distro","id":"ffffffff-ffff-ffff-ffff-ffffffffffff","output_type":"test_output","pipeline":{},"targets":[]}`, "created", "uuid")
+		`{"distro":"fedora-30","id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"output_type":"qcow2","pipeline":{},"targets":[]}`, "created", "uuid")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	distro := test_distro.New()
-	store := store.New(nil, distro)
+	distroStruct := test_distro.New()
+	registry := distro.NewRegistry([]string{"."})
+	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
-		err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"test": "test:foo"}, "test_arch", "test_output", 0, nil)
+		err := store.PushCompose(id, &blueprint.Blueprint{}, map[string]string{"test": "test:foo"}, "x86_64", "qcow2", 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}
