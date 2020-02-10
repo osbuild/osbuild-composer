@@ -16,20 +16,20 @@ import (
 
 func TestBasic(t *testing.T) {
 	var cases = []struct {
-		Method         string
-		Path           string
-		Body           string
-		ExpectedStatus int
-		ExpectedJSON   string
+		Method           string
+		Path             string
+		Body             string
+		ExpectedStatus   int
+		ExpectedResponse string
 	}{
 		// Create job with invalid body
-		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest, ``},
+		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest, `invalid request: EOF`},
 		// Update job with invalid ID
-		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"RUNNING"}`, http.StatusBadRequest, ``},
+		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"RUNNING"}`, http.StatusBadRequest, `invalid compose id: invalid UUID length: 3`},
 		// Update job that does not exist, with invalid body
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest, ``},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest, `invalid status: EOF`},
 		// Update job that does not exist
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"image_build_id": 0, "status":"RUNNING"}`, http.StatusNotFound, ``},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"image_build_id": 0, "status":"RUNNING"}`, http.StatusNotFound, `compose does not exist`},
 	}
 
 	for _, c := range cases {
@@ -37,7 +37,7 @@ func TestBasic(t *testing.T) {
 		registry := distro.NewRegistry([]string{"."})
 		api := jobqueue.New(nil, store.New(nil, distroStruct, *registry))
 
-		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
+		test.TestNonJsonRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedResponse)
 	}
 }
 
@@ -57,7 +57,7 @@ func TestCreate(t *testing.T) {
 		`{"distro":"fedora-30","id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"output_type":"qcow2","pipeline":{},"targets":[]}`, "created", "uuid")
 }
 
-func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
+func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
 	registry := distro.NewRegistry([]string{"."})
@@ -77,38 +77,39 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 		}
 	}
 
-	test.TestRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+to+`"}`, expectedStatus, ``)
+	test.TestNonJsonRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+to+`"}`, expectedStatus, expectedResponse)
 }
 
 func TestUpdate(t *testing.T) {
 	var cases = []struct {
-		From           string
-		To             string
-		ExpectedStatus int
+		From             string
+		To               string
+		ExpectedStatus   int
+		ExpectedResponse string
 	}{
-		{"VOID", "WAITING", http.StatusNotFound},
-		{"VOID", "RUNNING", http.StatusNotFound},
-		{"VOID", "FINISHED", http.StatusNotFound},
-		{"VOID", "FAILED", http.StatusNotFound},
-		{"WAITING", "WAITING", http.StatusNotFound},
-		{"WAITING", "RUNNING", http.StatusNotFound},
-		{"WAITING", "FINISHED", http.StatusNotFound},
-		{"WAITING", "FAILED", http.StatusNotFound},
-		{"RUNNING", "WAITING", http.StatusBadRequest},
-		{"RUNNING", "RUNNING", http.StatusOK},
-		{"RUNNING", "FINISHED", http.StatusOK},
-		{"RUNNING", "FAILED", http.StatusOK},
-		{"FINISHED", "WAITING", http.StatusBadRequest},
-		{"FINISHED", "RUNNING", http.StatusBadRequest},
-		{"FINISHED", "FINISHED", http.StatusBadRequest},
-		{"FINISHED", "FAILED", http.StatusBadRequest},
-		{"FAILED", "WAITING", http.StatusBadRequest},
-		{"FAILED", "RUNNING", http.StatusBadRequest},
-		{"FAILED", "FINISHED", http.StatusBadRequest},
-		{"FAILED", "FAILED", http.StatusBadRequest},
+		{"VOID", "WAITING", http.StatusNotFound, "compose does not exist"},
+		{"VOID", "RUNNING", http.StatusNotFound, "compose does not exist"},
+		{"VOID", "FINISHED", http.StatusNotFound, "compose does not exist"},
+		{"VOID", "FAILED", http.StatusNotFound, "compose does not exist"},
+		{"WAITING", "WAITING", http.StatusNotFound, "compose has not been popped"},
+		{"WAITING", "RUNNING", http.StatusNotFound, "compose has not been popped"},
+		{"WAITING", "FINISHED", http.StatusNotFound, "compose has not been popped"},
+		{"WAITING", "FAILED", http.StatusNotFound, "compose has not been popped"},
+		{"RUNNING", "WAITING", http.StatusBadRequest, "invalid state transition: image build cannot be moved into waiting state"},
+		{"RUNNING", "RUNNING", http.StatusOK, ""},
+		{"RUNNING", "FINISHED", http.StatusOK, ""},
+		{"RUNNING", "FAILED", http.StatusOK, ""},
+		{"FINISHED", "WAITING", http.StatusBadRequest, "invalid state transition: image build cannot be moved into waiting state"},
+		{"FINISHED", "RUNNING", http.StatusBadRequest, "invalid state transition: only waiting image build can be transitioned into running state"},
+		{"FINISHED", "FINISHED", http.StatusBadRequest, "invalid state transition: only running image build can be transitioned into finished or failed state"},
+		{"FINISHED", "FAILED", http.StatusBadRequest, "invalid state transition: only running image build can be transitioned into finished or failed state"},
+		{"FAILED", "WAITING", http.StatusBadRequest, "invalid state transition: image build cannot be moved into waiting state"},
+		{"FAILED", "RUNNING", http.StatusBadRequest, "invalid state transition: only waiting image build can be transitioned into running state"},
+		{"FAILED", "FINISHED", http.StatusBadRequest, "invalid state transition: only running image build can be transitioned into finished or failed state"},
+		{"FAILED", "FAILED", http.StatusBadRequest, "invalid state transition: only running image build can be transitioned into finished or failed state"},
 	}
 
 	for _, c := range cases {
-		testUpdateTransition(t, c.From, c.To, c.ExpectedStatus)
+		testUpdateTransition(t, c.From, c.To, c.ExpectedStatus, c.ExpectedResponse)
 	}
 }
