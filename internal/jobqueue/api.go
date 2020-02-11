@@ -132,6 +132,8 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 			statusResponseError(writer, http.StatusBadRequest, err.Error())
 		case *store.InvalidRequestError:
 			statusResponseError(writer, http.StatusBadRequest, err.Error())
+		default:
+			statusResponseError(writer, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
