@@ -1436,6 +1436,35 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		}
 	}
 	composes := api.store.GetAllComposes()
+
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	filterBlueprint := q.Get("blueprint")
+	filterStatus := q.Get("status")
+	filterImageType := q.Get("type")
+
+	if filterBlueprint != "" || filterStatus != "" || filterImageType != "" {
+		for uuid, compose := range composes {
+			filterImageType, found := common.ImageTypeFromCompatString(filterImageType)
+
+			if filterBlueprint != "" && compose.Blueprint.Name != filterBlueprint {
+				delete(composes, uuid)
+			} else if filterStatus != "" && compose.ImageBuilds[0].QueueStatus.ToString() != filterStatus {
+				delete(composes, uuid)
+			} else if found && compose.ImageBuilds[0].ImageType != filterImageType {
+				delete(composes, uuid)
+			}
+		}
+	}
+
 	reply.UUIDs = composesToComposeEntries(composes, uuids, isRequestVersionAtLeast(params, 1))
 
 	json.NewEncoder(writer).Encode(reply)
