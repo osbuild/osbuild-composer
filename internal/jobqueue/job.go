@@ -26,9 +26,8 @@ type Job struct {
 }
 
 type JobStatus struct {
-	Status       common.ImageBuildState `json:"status"`
-	ImageBuildID int                    `json:"image_build_id"`
-	Result       *common.ComposeResult  `json:"result"`
+	Status common.ImageBuildState `json:"status"`
+	Result *common.ComposeResult  `json:"result"`
 }
 
 type TargetsError struct {

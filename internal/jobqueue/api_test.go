@@ -25,11 +25,11 @@ func TestBasic(t *testing.T) {
 		// Create job with invalid body
 		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest, `invalid request: EOF`},
 		// Update job with invalid ID
-		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"RUNNING"}`, http.StatusBadRequest, `invalid compose id: invalid UUID length: 3`},
+		{"PATCH", "/job-queue/v1/jobs/foo/builds/0", `{"status":"RUNNING"}`, http.StatusBadRequest, `invalid compose id: invalid UUID length: 3`},
 		// Update job that does not exist, with invalid body
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest, `invalid status: EOF`},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/builds/0", ``, http.StatusBadRequest, `invalid status: EOF`},
 		// Update job that does not exist
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"image_build_id": 0, "status":"RUNNING"}`, http.StatusNotFound, `compose does not exist`},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/builds/0", `{"status":"RUNNING"}`, http.StatusNotFound, `compose does not exist`},
 	}
 
 	for _, c := range cases {
@@ -72,12 +72,12 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, exp
 		if from != "WAITING" {
 			test.SendHTTP(api, false, "POST", "/job-queue/v1/jobs", `{}`)
 			if from != "RUNNING" {
-				test.SendHTTP(api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+from+`"}`)
+				test.SendHTTP(api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff/builds/0", `{"status":"`+from+`"}`)
 			}
 		}
 	}
 
-	test.TestNonJsonRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff", `{"status":"`+to+`"}`, expectedStatus, expectedResponse)
+	test.TestNonJsonRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff/builds/0", `{"status":"`+to+`"}`, expectedStatus, expectedResponse)
 }
 
 func TestUpdate(t *testing.T) {
