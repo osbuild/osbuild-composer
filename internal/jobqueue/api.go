@@ -94,12 +94,12 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	writer.WriteHeader(http.StatusCreated)
 	// FIXME: handle or comment this possible error
 	_ = json.NewEncoder(writer).Encode(Job{
-		ID: nextJob.ComposeID,
+		ID:           nextJob.ComposeID,
 		ImageBuildID: nextJob.ImageBuildID,
-		Distro: nextJob.Distro,
-		Pipeline: nextJob.Pipeline,
-		Targets: nextJob.Targets,
-		OutputType: nextJob.ImageType,
+		Distro:       nextJob.Distro,
+		Pipeline:     nextJob.Pipeline,
+		Targets:      nextJob.Targets,
+		OutputType:   nextJob.ImageType,
 	})
 }
 
@@ -123,7 +123,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = api.store.UpdateImageBuildInCompose(id, body.ImageBuildID, body.Status, body.Image, body.Result)
+	err = api.store.UpdateImageBuildInCompose(id, body.ImageBuildID, body.Status, body.Result)
 	if err != nil {
 		switch err.(type) {
 		case *store.NotFoundError:

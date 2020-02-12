@@ -71,6 +71,16 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 	}
 }
 
+func (ib *ImageBuild) GetLocalTarget() *target.LocalTargetOptions {
+	for _, t := range ib.Targets {
+		if localTarget, ok := t.Options.(*target.LocalTargetOptions); ok {
+			return localTarget
+		}
+	}
+
+	return nil
+}
+
 // A Compose represent the task of building a set of images from a single blueprint.
 // It contains all the information necessary to generate the inputs for the job, as
 // well as the job's state.

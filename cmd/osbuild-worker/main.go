@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"log"
 	"net"
 	"net/http"
@@ -55,9 +54,9 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	return job, nil
 }
 
-func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildState, image *compose.Image, result *common.ComposeResult) error {
+func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildState, result *common.ComposeResult) error {
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, job.ImageBuildID, image, result})
+	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, job.ImageBuildID, result})
 	req, err := http.NewRequest("PATCH", "http://localhost/job-queue/v1/jobs/"+job.ID.String(), &b)
 	if err != nil {
 		return err
@@ -84,19 +83,19 @@ func handleJob(client *ComposerClient) error {
 		return err
 	}
 
-	err = client.UpdateJob(job, common.IBRunning, nil, nil)
+	err = client.UpdateJob(job, common.IBRunning, nil)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Running job %s\n", job.ID.String())
-	image, result, err := job.Run()
+	result, err := job.Run()
 	if err != nil {
 		log.Printf("  Job failed: %v", err)
-		return client.UpdateJob(job, common.IBFailed, nil, result)
+		return client.UpdateJob(job, common.IBFailed, result)
 	}
 
-	return client.UpdateJob(job, common.IBFinished, image, result)
+	return client.UpdateJob(job, common.IBFinished, result)
 }
 
 func main() {

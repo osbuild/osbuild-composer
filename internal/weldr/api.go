@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -1566,18 +1565,31 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	if compose.ImageBuilds[0].Image == nil {
+	imageBuild := compose.ImageBuilds[0]
+	localTarget := imageBuild.GetLocalTarget()
+
+	if localTarget == nil {
 		errors := responseError{
-			ID:  "BuildMissingFile",
-			Msg: fmt.Sprintf("Compose %s doesn't have an image assigned", uuidString),
+			ID:  "BadCompose",
+			Msg: fmt.Sprintf("Compose %s is ill-formed: it doesn't contain LocalTarget", uuidString),
 		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
+		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
 	}
 
-	imageName := filepath.Base(compose.ImageBuilds[0].Image.Path)
+	imageType, _ := imageBuild.ImageType.ToCompatString()
+	imageName, imageMime, err := api.distro.FilenameFromType(imageType)
 
-	file, err := os.Open(compose.ImageBuilds[0].Image.Path)
+	if err != nil {
+		errors := responseError{
+			ID:  "BadCompose",
+			Msg: fmt.Sprintf("Compose %s is ill-formed: output type %v is invalid for distro %s", uuidString, imageBuild.ImageType, api.distro.Name()),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
+	file, err := os.Open(localTarget.Location + "/" + imageName)
 	if err != nil {
 		errors := responseError{
 			ID:  "BuildMissingFile",
@@ -1587,9 +1599,20 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
+	stat, err := file.Stat()
+
+	if err != nil {
+		errors := responseError{
+			ID:  "BuildStatFailed",
+			Msg: fmt.Sprintf("Cannot stat image for build %s!", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+imageName)
-	writer.Header().Set("Content-Type", compose.ImageBuilds[0].Image.Mime)
-	writer.Header().Set("Content-Length", fmt.Sprintf("%d", compose.ImageBuilds[0].Image.Size))
+	writer.Header().Set("Content-Type", imageMime)
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 
 	io.Copy(writer, file)
 }
