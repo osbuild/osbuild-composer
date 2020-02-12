@@ -683,7 +683,7 @@ func (s *Store) PopJob() Job {
 }
 
 // UpdateImageBuildInCompose sets the status and optionally also the final image.
-func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int, status common.ImageBuildState, image *compose.Image, result *common.ComposeResult) error {
+func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int, status common.ImageBuildState, result *common.ComposeResult) error {
 	return s.change(func() error {
 		// Check that the compose exists
 		currentCompose, exists := s.Composes[composeID]
@@ -717,9 +717,6 @@ func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int,
 		// In case the image build is done, store the time and possibly also the image
 		if status == common.IBFinished || status == common.IBFailed {
 			currentCompose.ImageBuilds[imageBuildID].JobFinished = time.Now()
-			if status == common.IBFinished {
-				currentCompose.ImageBuilds[imageBuildID].Image = image
-			}
 		}
 
 		s.Composes[composeID] = currentCompose
