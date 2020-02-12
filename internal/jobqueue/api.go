@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/store"
 
@@ -31,7 +32,7 @@ func New(logger *log.Logger, store *store.Store) *API {
 	api.router.NotFound = http.HandlerFunc(notFoundHandler)
 
 	api.router.POST("/job-queue/v1/jobs", api.addJobHandler)
-	api.router.PATCH("/job-queue/v1/jobs/:id", api.updateJobHandler)
+	api.router.PATCH("/job-queue/v1/jobs/:job_id/builds/:build_id", api.updateJobHandler)
 
 	return api
 }
@@ -114,9 +115,16 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	id, err := uuid.Parse(params.ByName("id"))
+	id, err := uuid.Parse(params.ByName("job_id"))
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid compose id: "+err.Error())
+		return
+	}
+
+	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
+
+	if err != nil {
+		statusResponseError(writer, http.StatusBadRequest, "invalid image build id: "+err.Error())
 		return
 	}
 
@@ -127,7 +135,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err = api.store.UpdateImageBuildInCompose(id, body.ImageBuildID, body.Status, body.Result)
+	err = api.store.UpdateImageBuildInCompose(id, imageBuildId, body.Status, body.Result)
 	if err != nil {
 		switch err.(type) {
 		case *store.NotFoundError:
