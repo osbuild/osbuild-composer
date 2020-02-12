@@ -312,7 +312,7 @@ func TestCompose(t *testing.T) {
 		},
 	}
 	expectedComposeLocalAndAws := &compose.Compose{
-	Blueprint: &blueprint.Blueprint{
+		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
