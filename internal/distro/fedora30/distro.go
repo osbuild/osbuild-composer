@@ -469,6 +469,10 @@ func (r *Fedora30) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	return p, nil
 }
 
+func (r *Fedora30) Sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
+	return &osbuild.Sources{}
+}
+
 func (r *Fedora30) Runner() string {
 	return "org.osbuild.fedora30"
 }

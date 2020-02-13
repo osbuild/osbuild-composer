@@ -71,6 +71,10 @@ func (d *FedoraTestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rp
 	}
 }
 
+func (r *FedoraTestDistro) Sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
+	return &osbuild.Sources{}
+}
+
 func (d *FedoraTestDistro) Runner() string {
 	return "org.osbuild.test"
 }
