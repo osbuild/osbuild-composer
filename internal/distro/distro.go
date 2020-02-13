@@ -55,6 +55,10 @@ type Distro interface {
 	// given blueprint.
 	Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error)
 
+	// Returns an osbuild sources object that is required for building the
+	// corresponding pipeline containing the given packages.
+	Sources(packages []rpmmd.PackageSpec) *osbuild.Sources
+
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string
 }

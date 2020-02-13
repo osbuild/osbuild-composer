@@ -63,6 +63,10 @@ func (d *TestDistro) Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Re
 	return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
 }
 
+func (d *TestDistro) Sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
+	return &osbuild.Sources{}
+}
+
 func (d *TestDistro) Runner() string {
 	return "org.osbuild.test"
 }
