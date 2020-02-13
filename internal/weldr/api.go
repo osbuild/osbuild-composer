@@ -1652,7 +1652,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	resultReader, err := api.store.GetComposeResult(id)
+	resultReader, err := api.store.GetImageBuildResult(id, 0)
 
 	if err != nil {
 		errors := responseError{
@@ -1737,7 +1737,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	resultReader, err := api.store.GetComposeResult(id)
+	resultReader, err := api.store.GetImageBuildResult(id, 0)
 
 	if err != nil {
 		errors := responseError{
