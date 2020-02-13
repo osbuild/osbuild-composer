@@ -75,9 +75,7 @@ func createBaseStoreFixture() *store.Store {
 		ImageName: "localimage",
 		Created:   date,
 		Status:    common.IBWaiting,
-		Options: &target.LocalTargetOptions{
-			Location: "/tmp/localimage",
-		},
+		Options:   &target.LocalTargetOptions{},
 	}
 
 	var awsTarget = &target.Target{
