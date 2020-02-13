@@ -139,7 +139,7 @@ func (arch Architecture) MarshalJSON() ([]byte, error) {
 }
 
 func (arch Architecture) ToString() (string, bool) {
-	return toStringHelper(getDistributionMapping(), int(arch))
+	return toStringHelper(getArchMapping(), int(arch))
 }
 
 type ImageType int
