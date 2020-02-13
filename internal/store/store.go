@@ -445,18 +445,20 @@ func (s *Store) GetAllComposes() map[uuid.UUID]compose.Compose {
 	return composes
 }
 
-func (s *Store) GetComposeResult(id uuid.UUID) (io.ReadCloser, error) {
+func (s *Store) GetImageBuildResult(composeId uuid.UUID, imageBuildId int) (io.ReadCloser, error) {
 	if s.stateDir == nil {
 		return ioutil.NopCloser(bytes.NewBuffer([]byte("{}"))), nil
 	}
-	return os.Open(*s.stateDir + "/outputs/" + id.String() + "/result.json")
+
+	return os.Open(s.getImageBuildDirectory(composeId, imageBuildId) + "/result.json")
 }
 
-func (s *Store) getImageLocationForLocalTarget(composeID uuid.UUID) string {
-	// This might result in conflicts because one compose can have multiple images, but (!) the Weldr API
-	// does not support multiple images per build and the RCM API does not support Local target, so it does
-	// not really matter any more.
-	return *s.stateDir + "/outputs/" + composeID.String()
+func (s *Store) getComposeDirectory(composeID uuid.UUID) string {
+	return fmt.Sprintf("%s/outputs/%s", *s.stateDir, composeID.String())
+}
+
+func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) string {
+	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checksums map[string]string, arch, composeType string, size uint64, uploadTarget *target.Target) error {
@@ -469,7 +471,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 	}
 
 	if s.stateDir != nil {
-		outputDir := s.getImageLocationForLocalTarget(composeID)
+		outputDir := s.getImageBuildDirectory(composeID, 0)
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
@@ -554,7 +556,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 		panic("Multiple image requests are not yet properly implemented")
 	}
 
-	for n, imageRequest := range request.RequestedImages {
+	for imageBuildID, imageRequest := range request.RequestedImages {
 		// TODO: handle custom upload targets
 		// TODO: this requires changes in the Compose Request struct
 		// TODO: implment support for no checksums
@@ -568,10 +570,17 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 			return err
 		}
 
+		if s.stateDir != nil {
+			err = os.MkdirAll(s.getImageBuildDirectory(request.ComposeID, imageBuildID), 0755)
+			if err != nil {
+				return err
+			}
+		}
+
 		// This will make the job submission atomic: either all of them or none of them
 		newJobs = append(newJobs, Job{
 			ComposeID:    request.ComposeID,
-			ImageBuildID: n,
+			ImageBuildID: imageBuildID,
 			Distro:       distroString,
 			Pipeline:     pipelineStruct,
 			Targets:      []*target.Target{},
@@ -633,7 +642,7 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 			// TODO: we need to rename the files as the compose will have multiple images
 			for _, imageBuild := range compose.ImageBuilds {
 				if imageBuild.QueueStatus == common.IBFinished || imageBuild.QueueStatus == common.IBFailed {
-					err = os.RemoveAll(s.getImageLocationForLocalTarget(id))
+					err = os.RemoveAll(s.getComposeDirectory(id))
 					if err != nil {
 						return err
 					}
@@ -697,7 +706,7 @@ func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int,
 
 		// write result into file
 		if s.stateDir != nil && result != nil {
-			f, err := os.Create(s.getImageLocationForLocalTarget(composeID) + "/result.json")
+			f, err := os.Create(s.getImageBuildDirectory(composeID, imageBuildID) + "/result.json")
 
 			if err != nil {
 				return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
