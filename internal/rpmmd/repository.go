@@ -108,6 +108,14 @@ func (err *DNFError) Error() string {
 	return fmt.Sprintf("DNF error occured: %s: %s", err.Kind, err.Reason)
 }
 
+type RepositoryError struct {
+	msg string
+}
+
+func (re *RepositoryError) Error() string {
+	return re.msg
+}
+
 func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
 	var f *os.File
 	var err error
@@ -286,4 +294,28 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID string) (err error) {
 	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, nil, repos, modulePlatformID, false)
 	return
+}
+
+// FetchChecksum returns a repository checksum for given repo config
+func (rc *RepoConfig) FetchChecksum() (string, error) {
+	command := "dump"
+	arguments := struct {
+		Repos []RepoConfig `json:"repos"`
+	}{
+		Repos: []RepoConfig{*rc},
+	}
+	output := struct {
+		Checksums map[string]string `json:"checksums"`
+		Packages  []Package         `json:"packages"`
+	}{}
+	err := runDNF(command, arguments, &output)
+	if err != nil {
+		return "", err
+	}
+	checksum, exists := output.Checksums[rc.Id]
+	if !exists {
+		// This should never happen unless there is a bug in dnf-json
+		return "", &RepositoryError{"fatal error, dnf-json did not return required checksum"}
+	}
+	return checksum, nil
 }
