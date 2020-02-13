@@ -4,6 +4,7 @@ package rcm
 
 import (
 	"encoding/json"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"log"
 	"net"
 	"net/http"
@@ -85,10 +86,10 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 	// JSON structure expected from the client
 	var composeRequest struct {
-		Distribution  string       `json:"distribution"`
-		ImageTypes    []string     `json:"image_types"`
-		Architectures []string     `json:"architectures"`
-		Repositories  []Repository `json:"repositories"`
+		Distribution  common.Distribution   `json:"distribution"`
+		ImageTypes    []common.ImageType    `json:"image_types"`
+		Architectures []common.Architecture `json:"architectures"`
+		Repositories  []Repository          `json:"repositories"`
 	}
 	// JSON structure with error message
 	var errorReason struct {
@@ -98,14 +99,11 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&composeRequest)
-	if err != nil || composeRequest.Distribution == "" || len(composeRequest.Architectures) == 0 || len(composeRequest.Repositories) == 0 {
+	if err != nil || len(composeRequest.Architectures) == 0 || len(composeRequest.Repositories) == 0 || len(composeRequest.ImageTypes) == 0 {
 		writer.WriteHeader(http.StatusBadRequest)
 		errors := []string{}
 		if err != nil {
 			errors = append(errors, err.Error())
-		}
-		if composeRequest.Distribution == "" {
-			errors = append(errors, "input must specify a distribution")
 		}
 		if len(composeRequest.ImageTypes) == 0 {
 			errors = append(errors, "input must specify an image type")
@@ -121,8 +119,11 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 			errors = append(errors, "input must specify repositories")
 		}
 		errorReason.Error = strings.Join(errors, ", ")
-		// TODO: handle error
-		_ = json.NewEncoder(writer).Encode(errorReason)
+		err = json.NewEncoder(writer).Encode(errorReason)
+		if err != nil {
+			// JSON encoding is clearly our fault.
+			panic("Failed to encode errors in RCM API. This is a bug.")
+		}
 		return
 	}
 
@@ -130,7 +131,9 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
 	// TODO: replace this with generalized version of push compose
-	err = api.store.PushCompose(composeUUID, &blueprint.Blueprint{}, nil, nil, make(map[string]string), composeRequest.Architectures[0], composeRequest.ImageTypes[0], 0, nil)
+	arch, _ := composeRequest.Architectures[0].ToString()
+	imgType, _ := composeRequest.ImageTypes[0].ToCompatString()
+	err = api.store.PushCompose(composeUUID, &blueprint.Blueprint{}, nil, nil, make(map[string]string), arch, imgType, 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
