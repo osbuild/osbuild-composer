@@ -124,12 +124,12 @@ func ArchitectureExists(testedArch string) bool {
 
 // UnmarshalJSON is a custom unmarshaling function to limit the set of allowed values
 // in case the input is JSON.
-func (arch Architecture) UnmarshalJSON(data []byte) error {
+func (arch *Architecture) UnmarshalJSON(data []byte) error {
 	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid architecture", getArchMapping())
 	if err != nil {
 		return err
 	}
-	arch = Architecture(value)
+	*arch = Architecture(value)
 	return nil
 }
 
@@ -199,12 +199,12 @@ func getCompatImageTypeMapping() map[int]string {
 	return mapping
 }
 
-func (imgType ImageType) UnmarshalJSON(data []byte) error {
+func (imgType *ImageType) UnmarshalJSON(data []byte) error {
 	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid image type", getImageTypeMapping())
 	if err != nil {
 		return err
 	}
-	imgType = ImageType(value)
+	*imgType = ImageType(value)
 	return nil
 }
 
@@ -260,12 +260,12 @@ func DistributionExists(testedDistro string) bool {
 	return existsHelper(getDistributionMapping(), testedDistro)
 }
 
-func (distro Distribution) UnmarshalJSON(data []byte) error {
+func (distro *Distribution) UnmarshalJSON(data []byte) error {
 	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid distribution", getDistributionMapping())
 	if err != nil {
 		return err
 	}
-	distro = Distribution(value)
+	*distro = Distribution(value)
 	return nil
 }
 
@@ -300,12 +300,12 @@ func getUploadTargetMapping() map[string]int {
 	return mapping
 }
 
-func (ut UploadTarget) UnmarshalJSON(data []byte) error {
+func (ut *UploadTarget) UnmarshalJSON(data []byte) error {
 	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid upload target", getUploadTargetMapping())
 	if err != nil {
 		return err
 	}
-	ut = UploadTarget(value)
+	*ut = UploadTarget(value)
 	return nil
 }
 
