@@ -65,6 +65,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 %gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
+%gobuild -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
@@ -74,6 +75,7 @@ install -m 0755 -vp dnf-json                                %{buildroot}%{_libex
 
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
 install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
@@ -116,12 +118,14 @@ export GOPATH=$PWD/_build:%{gopath}
 Summary:	Integration tests
 Requires: 	osbuild-composer
 Requires: 	composer-cli
+Requires:	createrepo_c
 
 %description tests
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
 
 %files tests
 %{_libexecdir}/tests/osbuild-composer/osbuild-tests
+%{_libexecdir}/tests/osbuild-composer/osbuild-dnf-json-tests
 
 %changelog
 * Sun Dec 1 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 4-1
