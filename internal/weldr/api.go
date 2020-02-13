@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -1566,17 +1565,6 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	imageBuild := compose.ImageBuilds[0]
-	localTarget := imageBuild.GetLocalTarget()
-
-	if localTarget == nil {
-		errors := responseError{
-			ID:  "BadCompose",
-			Msg: fmt.Sprintf("Compose %s is ill-formed: it doesn't contain LocalTarget", uuidString),
-		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-
 	imageType, _ := imageBuild.ImageType.ToCompatString()
 	imageName, imageMime, err := api.distro.FilenameFromType(imageType)
 
@@ -1589,7 +1577,9 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	file, err := os.Open(localTarget.Location + "/" + imageName)
+	reader, fileSize, err := api.store.GetImageBuildImage(uuid, 0)
+
+	// TODO: this might return misleading error
 	if err != nil {
 		errors := responseError{
 			ID:  "BuildMissingFile",
@@ -1599,22 +1589,11 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	stat, err := file.Stat()
-
-	if err != nil {
-		errors := responseError{
-			ID:  "BuildStatFailed",
-			Msg: fmt.Sprintf("Cannot stat image for build %s!", uuidString),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-"+imageName)
 	writer.Header().Set("Content-Type", imageMime)
-	writer.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	writer.Header().Set("Content-Length", fmt.Sprintf("%d", fileSize))
 
-	io.Copy(writer, file)
+	io.Copy(writer, reader)
 }
 
 func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

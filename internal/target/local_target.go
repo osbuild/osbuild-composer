@@ -1,7 +1,6 @@
 package target
 
 type LocalTargetOptions struct {
-	Location string `json:"location"`
 }
 
 func (LocalTargetOptions) isTargetOptions() {}

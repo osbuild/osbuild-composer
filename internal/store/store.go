@@ -461,6 +461,42 @@ func (s *Store) GetImageBuildResult(composeId uuid.UUID, imageBuildId int) (io.R
 	return os.Open(s.getImageBuildDirectory(composeId, imageBuildId) + "/result.json")
 }
 
+func (s *Store) GetImageBuildImage(composeId uuid.UUID, imageBuildId int) (io.ReadCloser, int64, error) {
+	c, ok := s.Composes[composeId]
+
+	if !ok {
+		return nil, 0, &NotFoundError{"compose does not exist"}
+	}
+
+	imageBuild := c.ImageBuilds[imageBuildId]
+	if !imageBuild.HasLocalTarget() {
+		return nil, 0, &NoLocalTargetError{"compose does not have local target"}
+	}
+
+	compatString, _ := imageBuild.ImageType.ToCompatString()
+	filename, _, err := s.distro.FilenameFromType(compatString)
+	if err != nil {
+		panic(err)
+	}
+
+	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeId, imageBuildId), filename)
+
+	f, err := os.Open(path)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	fileInfo, err := f.Stat()
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return f, fileInfo.Size(), err
+
+}
+
 func (s *Store) getComposeDirectory(composeID uuid.UUID) string {
 	return fmt.Sprintf("%s/outputs/%s", *s.stateDir, composeID.String())
 }
@@ -487,9 +523,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, checks
 		}
 
 		targets = append(targets, target.NewLocalTarget(
-			&target.LocalTargetOptions{
-				Location: outputDir,
-			},
+			&target.LocalTargetOptions{},
 		))
 	}
 
@@ -749,9 +783,7 @@ func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, rea
 	}
 
 	imageBuild := currentCompose.ImageBuilds[imageBuildID]
-	localTarget := imageBuild.GetLocalTarget()
-
-	if localTarget == nil {
+	if !imageBuild.HasLocalTarget() {
 		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s and image build %d but it has no local target", composeID.String(), imageBuildID)}
 	}
 
@@ -762,8 +794,8 @@ func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, rea
 		return &InvalidRequestError{err.Error()}
 	}
 
-	path := fmt.Sprintf("%s/%s", localTarget.Location, filename)
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeID, imageBuildID), filename)
+	f, err := os.Create(path)
 
 	if err != nil {
 		return err
