@@ -599,16 +599,25 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 		panic("Multiple image requests are not yet properly implemented")
 	}
 
+	// map( repo-id => checksum )
+	checksums := make(map[string]string)
+	for _, repo := range request.Repositories {
+		checksum, err := repo.FetchChecksum()
+		if err != nil {
+			return err
+		}
+		checksums[repo.Id] = checksum
+	}
+
 	for imageBuildID, imageRequest := range request.RequestedImages {
 		// TODO: handle custom upload targets
 		// TODO: this requires changes in the Compose Request struct
-		// TODO: implment support for no checksums
 		// This should never happen and once distro.Pipeline is refactored this check will go away
 		imgTypeCompatStr, exists := imageRequest.ImgType.ToCompatString()
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, nil, arch, imgTypeCompatStr, 0)
+		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, checksums, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}
