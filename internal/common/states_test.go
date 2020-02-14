@@ -9,16 +9,16 @@ import (
 func TestJSONConversions(t *testing.T) {
 	type TestJson struct {
 		Ibs ImageBuildState `json:"ibs"`
-		Cs ComposeState `json:"cs"`
+		Cs  ComposeState    `json:"cs"`
 	}
 	typedCases := []TestJson{
 		{
 			Ibs: IBWaiting,
-			Cs: CWaiting,
+			Cs:  CWaiting,
 		},
 		{
 			Ibs: IBRunning,
-			Cs: CFailed,
+			Cs:  CFailed,
 		},
 	}
 	strCases := []string{
@@ -55,5 +55,5 @@ func TestJSONConversions(t *testing.T) {
 			t.Error("Unmarshaled compose request is not the one expected")
 		}
 	}
-	
+
 }
