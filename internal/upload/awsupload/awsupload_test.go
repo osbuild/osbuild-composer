@@ -43,13 +43,17 @@ func generateRandomFile(pattern string, length int) (string, []byte, error) {
 	cmd := exec.Command("dd", "bs=1", countArg, "if=/dev/urandom", fmt.Sprintf("of=%s", fileName))
 	err = cmd.Run()
 
+	if err != nil {
+		return "", []byte{}, err
+	}
+
 	contents, err := ioutil.ReadAll(f)
 	if err != nil {
 		return "", []byte{}, err
 	}
 
 	if err := f.Close(); err != nil {
-		return ",", []byte{}, err
+		return "", []byte{}, err
 	}
 
 	return fileName, contents, err

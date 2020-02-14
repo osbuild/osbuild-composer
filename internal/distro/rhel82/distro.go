@@ -441,7 +441,6 @@ func (r *RHEL82) Name() string {
 	return name
 }
 
-
 func (r *RHEL82) Distribution() common.Distribution {
 	return Distro
 }
@@ -692,7 +691,7 @@ func (r *RHEL82) firewallStageOptions(firewall *blueprint.FirewallCustomization)
 func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *pipeline.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
-		enabledServices = append(disabledServices, s.Disabled...)
+		disabledServices = append(disabledServices, s.Disabled...)
 	}
 	return &pipeline.SystemdStageOptions{
 		EnabledServices:  enabledServices,
