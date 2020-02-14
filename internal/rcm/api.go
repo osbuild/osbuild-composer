@@ -4,7 +4,9 @@ package rcm
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"log"
 	"net"
 	"net/http"
@@ -127,13 +129,40 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
+	// Create repo configurations from the URLs in the request. Use made up repo id and name, because
+	// we don't want to bother clients of this API with details like this
+	repoConfigs := []rpmmd.RepoConfig{}
+	for n, repo := range composeRequest.Repositories {
+		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
+			Id:        fmt.Sprintf("repo-%d", n),
+			Name:      fmt.Sprintf("repo-%d", n),
+			BaseURL:   repo.URL,
+			IgnoreSSL: false,
+		})
+	}
+
+	// Image requests are derived from requested image types. All of them are uploaded to Koji, because
+	// this API is only for RCM.
+	requestedImages := []common.ImageRequest{}
+	for _, imgType := range composeRequest.ImageTypes {
+		requestedImages = append(requestedImages, common.ImageRequest{
+			ImgType: imgType,
+			// TODO: use koji upload type as soon as it is available
+			UpTarget: []common.UploadTarget{},
+		})
+	}
+
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
-	// TODO: replace this with generalized version of push compose
-	arch, _ := composeRequest.Architectures[0].ToString()
-	imgType, _ := composeRequest.ImageTypes[0].ToCompatString()
-	err = api.store.PushCompose(composeUUID, &blueprint.Blueprint{}, nil, nil, make(map[string]string), arch, imgType, 0, nil)
+	err = api.store.PushComposeRequest(common.ComposeRequest{
+		Blueprint:       blueprint.Blueprint{},
+		ComposeID:       composeUUID,
+		Distro:          composeRequest.Distribution,
+		Arch:            composeRequest.Architectures[0],
+		Repositories:    repoConfigs,
+		RequestedImages: requestedImages,
+	})
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
