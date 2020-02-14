@@ -80,7 +80,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	}
 
 	type Repository struct {
-		URL      string `json:"url"`
+		URL string `json:"url"`
 	}
 
 	// JSON structure expected from the client

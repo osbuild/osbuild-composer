@@ -6,8 +6,8 @@ import (
 )
 
 func TestGetState(t *testing.T) {
-	cases := []struct{
-		compose Compose
+	cases := []struct {
+		compose       Compose
 		expecedStatus common.ComposeState
 	}{
 		{
@@ -121,5 +121,5 @@ func TestGetState(t *testing.T) {
 		if got != wanted {
 			t.Error("Compose", n, "should be in", wanted.ToString(), "state, but it is:", got.ToString())
 		}
-	} 
+	}
 }
