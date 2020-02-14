@@ -8,6 +8,16 @@ addons:
       - gnupg2
 matrix:
   include:
+    - name: source-test
+      script:
+        - |
+          set -e
+          ./tools/prepare-source.sh
+          if [ ! $(git diff --quiet --exit-code) ]; then
+            echo
+            echo "Please include these changes in your branch: "
+            git diff
+          fi
     - name: unit-tests
       arch: amd64
       language: go
