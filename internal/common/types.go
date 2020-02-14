@@ -236,6 +236,7 @@ type Distribution int
 const (
 	Fedora30 Distribution = iota
 	Fedora31
+	Fedora32
 	RHEL82
 )
 
@@ -245,6 +246,7 @@ func getDistributionMapping() map[string]int {
 	mapping := map[string]int{
 		"fedora-30": int(Fedora30),
 		"fedora-31": int(Fedora31),
+		"fedora-32": int(Fedora32),
 		"rhel-8.2":  int(RHEL82),
 	}
 	return mapping
