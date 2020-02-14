@@ -132,6 +132,9 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 			},
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	snapshotId := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
 

@@ -549,7 +549,7 @@ func (r *Fedora30) firewallStageOptions(firewall *blueprint.FirewallCustomizatio
 func (r *Fedora30) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *pipeline.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
-		enabledServices = append(disabledServices, s.Disabled...)
+		disabledServices = append(disabledServices, s.Disabled...)
 	}
 	return &pipeline.SystemdStageOptions{
 		EnabledServices:  enabledServices,
