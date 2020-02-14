@@ -2,7 +2,6 @@ package rcm_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -43,7 +42,7 @@ func TestBasicRcmAPI(t *testing.T) {
 		{"GET", "/v1/compose", ``, "", http.StatusMethodNotAllowed, ``},
 		{"POST", "/v1/compose", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, ``},
 		{"POST", "/v1/compose", `{"status":"RUNNING"}`, "text/plain", http.StatusBadRequest, ``},
-		{"POST", "/v1/compose", `{"distribution": "fedora-30", "image_types": ["qcow2"], "architectures":["x86_64"], "repositories": [{"url": "aaa"}]}`, "application/json", http.StatusOK, `{"compose_id":".*"}`},
+		{"POST", "/v1/compose", `{"distribution": "fedora-30", "image_types": ["qcow2"], "architectures":["x86_64"], "repositories": []}`, "application/json", http.StatusBadRequest, ""},
 		{"POST", "/v1/compose/111-222-333", `{"status":"RUNNING"}`, "application/json", http.StatusMethodNotAllowed, ``},
 		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, `{"error_reason":"Compose UUID does not exist"}`},
 	}
