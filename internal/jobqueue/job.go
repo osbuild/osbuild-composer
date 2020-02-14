@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/google/uuid"
