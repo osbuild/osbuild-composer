@@ -3,24 +3,24 @@
         {
             "id": "baseos",
             "name": "BaseOS",
-            "BaseURL": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/aarch64/os"
+            "BaseURL": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/aarch64/os"
         },
         {
             "id": "appstream",
             "name": "AppStream",
-            "BaseURL": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/aarch64/os"
+            "BaseURL": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/aarch64/os"
         }
     ],
     "x86_64": [
         {
             "id": "baseos",
             "name": "BaseOS",
-            "BaseURL": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os"
+            "BaseURL": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os"
         },
         {
             "id": "appstream",
             "name": "AppStream",
-            "BaseURL": "http://download-ipv4.eng.brq.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os"
+            "BaseURL": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os"
         }
     ]
 }
