@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
@@ -72,6 +73,7 @@ func NewRegistry(confPaths []string) *Registry {
 		distros: make(map[common.Distribution]Distro),
 	}
 	distros.register(fedora30.New(confPaths))
+	distros.register(fedora31.New(confPaths))
 	distros.register(rhel82.New(confPaths))
 	return distros
 }
