@@ -47,6 +47,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 	}
 	// Create new image build struct
 	return ImageBuild{
+		Id:          ib.Id,
 		Distro:      ib.Distro,
 		QueueStatus: ib.QueueStatus,
 		ImageType:   ib.ImageType,
@@ -55,6 +56,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		JobCreated:  ib.JobCreated,
 		JobStarted:  ib.JobStarted,
 		JobFinished: ib.JobFinished,
+		Size:        ib.Size,
 	}
 }
 
