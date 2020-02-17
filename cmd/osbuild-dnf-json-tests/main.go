@@ -57,11 +57,12 @@ func TestFetchChecksum(quiet bool, dir string) {
 	if !quiet {
 		log.Println("Running TestFetchChecksum on:", dir)
 	}
-	c, err := repoCfg.FetchChecksum()
+	rpmMetadata := rpmmd.NewRPMMD()
+	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31")
 	if err != nil {
 		log.Panic("Failed to fetch checksum:", err)
 	}
-	if c == "" {
+	if c["repo"] == "" {
 		log.Panic("The checksum is empty")
 	}
 	if !quiet {

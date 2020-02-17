@@ -95,7 +95,13 @@ type PackageInfo struct {
 }
 
 type RPMMD interface {
-	FetchPackageList(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error)
+	// FetchMetadata returns all metadata about the repositories we use in the code. Specifically it is a
+	// list of packages and dictionary of checksums of the repositories.
+	FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error)
+
+	// Depsolve takes a list of required content (specs), explicitly unwanted content (excludeSpecs), list
+	// or repositories, and platform ID for modularity. It returns a list of all packages (with solved
+	// dependencies) that will be installed into the system.
 	Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error)
 }
 
@@ -207,7 +213,7 @@ func NewRPMMD() RPMMD {
 	return &rpmmdImpl{}
 }
 
-func (*rpmmdImpl) FetchPackageList(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
+func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
 	var arguments = struct {
 		Repos            []RepoConfig `json:"repos"`
 		ModulePlatformID string       `json:"module_platform_id"`
@@ -294,28 +300,4 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID string) (err error) {
 	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, nil, repos, modulePlatformID, false)
 	return
-}
-
-// FetchChecksum returns a repository checksum for given repo config
-func (rc *RepoConfig) FetchChecksum() (string, error) {
-	command := "dump"
-	arguments := struct {
-		Repos []RepoConfig `json:"repos"`
-	}{
-		Repos: []RepoConfig{*rc},
-	}
-	output := struct {
-		Checksums map[string]string `json:"checksums"`
-		Packages  []Package         `json:"packages"`
-	}{}
-	err := runDNF(command, arguments, &output)
-	if err != nil {
-		return "", err
-	}
-	checksum, exists := output.Checksums[rc.Id]
-	if !exists {
-		// This should never happen unless there is a bug in dnf-json
-		return "", &RepositoryError{"fatal error, dnf-json did not return required checksum"}
-	}
-	return checksum, nil
 }
