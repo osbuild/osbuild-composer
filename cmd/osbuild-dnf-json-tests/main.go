@@ -14,14 +14,16 @@ import (
 func main() {
 	// Tests that the package wrapping dnf-json works as expected
 	dir, err := setUpTemporaryRepository()
+	defer func(dir string) {
+		err := tearDownTemporaryRepository(dir)
+		if err != nil {
+			log.Print("Warning: failed to clean up temporary repository.")
+		}
+	}(dir)
 	if err != nil {
-		log.Fatal("Failed to set up temporary repository:", err)
+		log.Panic("Failed to set up temporary repository:", err)
 	}
 	TestFetchChecksum(false, dir)
-	err = tearDownTemporaryRepository(dir)
-	if err != nil {
-		log.Print("Warning: failed to clean up temporary repository.")
-	}
 }
 
 func setUpTemporaryRepository() (string, error) {
@@ -57,10 +59,12 @@ func TestFetchChecksum(quiet bool, dir string) {
 	}
 	c, err := repoCfg.FetchChecksum()
 	if err != nil {
-		log.Fatal("Failed to fetch checksum:", err)
+		log.Panic("Failed to fetch checksum:", err)
 	}
 	if c == "" {
-		log.Fatal("The checksum is empty")
+		log.Panic("The checksum is empty")
 	}
-	log.Println("SUCCESS")
+	if !quiet {
+		log.Println("TestFetchChecksum: SUCCESS")
+	}
 }
