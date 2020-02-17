@@ -19,13 +19,6 @@ func (ste *StateTransitionError) Error() string {
 	return ste.message
 }
 
-// Image represents the image resulting from a compose.
-type Image struct {
-	Path string
-	Mime string
-	Size uint64
-}
-
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
 	Id          int                    `json:"id"`
@@ -37,17 +30,11 @@ type ImageBuild struct {
 	JobCreated  time.Time              `json:"job_created"`
 	JobStarted  time.Time              `json:"job_started"`
 	JobFinished time.Time              `json:"job_finished"`
-	Image       *Image                 `json:"image"`
 	Size        uint64                 `json:"size"`
 }
 
 // DeepCopy creates a copy of the ImageBuild structure
 func (ib *ImageBuild) DeepCopy() ImageBuild {
-	var newImagePtr *Image = nil
-	if ib.Image != nil {
-		imageCopy := *ib.Image
-		newImagePtr = &imageCopy
-	}
 	var newPipelinePtr *osbuild.Pipeline = nil
 	if ib.Pipeline != nil {
 		pipelineCopy := *ib.Pipeline
@@ -68,7 +55,6 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		JobCreated:  ib.JobCreated,
 		JobStarted:  ib.JobStarted,
 		JobFinished: ib.JobFinished,
-		Image:       newImagePtr,
 	}
 }
 
