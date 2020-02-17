@@ -30,7 +30,7 @@ func NewRPMMDMock(fixture Fixture) rpmmd.RPMMD {
 	return &rpmmdMock{Fixture: fixture}
 }
 
-func (r *rpmmdMock) FetchPackageList(repos []rpmmd.RepoConfig, modulePlatformID string) (rpmmd.PackageList, map[string]string, error) {
+func (r *rpmmdMock) FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string) (rpmmd.PackageList, map[string]string, error) {
 	return r.Fixture.fetchPackageList.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.fetchPackageList.err
 }
 

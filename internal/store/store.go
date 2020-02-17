@@ -600,13 +600,10 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 	}
 
 	// map( repo-id => checksum )
-	checksums := make(map[string]string)
-	for _, repo := range request.Repositories {
-		checksum, err := repo.FetchChecksum()
-		if err != nil {
-			return err
-		}
-		checksums[repo.Id] = checksum
+	rpmMetadata := rpmmd.NewRPMMD()
+	_, checksums, err := rpmMetadata.FetchMetadata(request.Repositories, distroStruct.ModulePlatformID())
+	if err != nil {
+		return err
 	}
 
 	for imageBuildID, imageRequest := range request.RequestedImages {

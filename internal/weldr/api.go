@@ -1839,7 +1839,7 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 		repos = append(repos, source.RepoConfig())
 	}
 
-	packages, _, err := api.rpmmd.FetchPackageList(repos, api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID())
 	return packages, err
 }
 
