@@ -8,7 +8,8 @@ build:
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
-	go build -o osbuild-tests ./cmd/osbuild-tests
+	go build -o osbuild-tests ./cmd/osbuild-tests/
+	go build -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/
 
 .PHONY: install
 install:
