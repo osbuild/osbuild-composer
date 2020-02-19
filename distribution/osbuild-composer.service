@@ -7,6 +7,7 @@ Wants=osbuild-worker@1.service
 [Service]
 Type=simple
 ExecStart=/usr/libexec/osbuild-composer/osbuild-composer
+CacheDirectory=osbuild-composer
 StateDirectory=osbuild-composer
 WorkingDirectory=/usr/libexec/osbuild-composer/
 User=_osbuild-composer

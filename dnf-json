@@ -43,8 +43,7 @@ def create_base(repos, module_platform_id, persistdir, cachedir, clean=False):
     base.conf.module_platform_id = module_platform_id
     base.conf.config_file_path = "/dev/null"
     base.conf.persistdir = persistdir
-    if cachedir:
-        base.conf.cachedir = cachedir
+    base.conf.cachedir = cachedir
 
     if clean:
         shutil.rmtree(base.conf.cachedir, ignore_errors=True)
@@ -90,7 +89,7 @@ command = call["command"]
 arguments = call["arguments"]
 repos = arguments.get("repos", {})
 clean = arguments.get("clean", False)
-cachedir = arguments.get("cachedir", None)
+cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
