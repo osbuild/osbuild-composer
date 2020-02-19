@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/compose"
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	"sort"
 	"time"
 
@@ -94,7 +94,7 @@ func createBaseStoreFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	r := distro.NewRegistry([]string{"."})
+	r := distro_mock.NewRegistry()
 	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b
@@ -184,7 +184,7 @@ func createStoreWithoutComposesFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	r := distro.NewRegistry([]string{"."})
+	r := distro_mock.NewRegistry()
 	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b

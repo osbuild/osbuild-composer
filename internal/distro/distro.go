@@ -69,14 +69,33 @@ type Registry struct {
 	distros map[common.Distribution]Distro
 }
 
+func WithSingleDistro(dist Distro) *Registry {
+	reg := &Registry{
+		distros: make(map[common.Distribution]Distro),
+	}
+	reg.register(dist)
+	return reg
+}
+
 func NewRegistry(confPaths []string) *Registry {
 	distros := &Registry{
 		distros: make(map[common.Distribution]Distro),
 	}
-	distros.register(fedora30.New(confPaths))
-	distros.register(fedora31.New(confPaths))
-	distros.register(fedora32.New(confPaths))
-	distros.register(rhel82.New(confPaths))
+	f30 := fedora30.New(confPaths)
+	if f30 == nil {
+		panic("Attempt to register Fedora 30 failed")
+	}
+	distros.register(f30)
+	f31 := fedora31.New(confPaths)
+	if f31 == nil {
+		panic("Attempt to register Fedora 30 failed")
+	}
+	distros.register(f31)
+	el82 := rhel82.New(confPaths)
+	if el82 == nil {
+		panic("Attempt to register RHEL 8.2 failed")
+	}
+	distros.register(el82)
 	return distros
 }
 
