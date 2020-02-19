@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"time"
 
@@ -216,8 +217,9 @@ func NewRPMMD() RPMMD {
 func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
 	var arguments = struct {
 		Repos            []RepoConfig `json:"repos"`
+		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
-	}{repos, modulePlatformID}
+	}{repos, path.Join(os.Getenv("CACHE_DIRECTORY"), "rpmmd"), modulePlatformID}
 	var reply struct {
 		Checksums map[string]string `json:"checksums"`
 		Packages  PackageList       `json:"packages"`
@@ -234,9 +236,10 @@ func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, mod
 		PackageSpecs     []string     `json:"package-specs"`
 		ExcludSpecs      []string     `json:"exclude-specs"`
 		Repos            []RepoConfig `json:"repos"`
+		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
 		Clean            bool         `json:"clean,omitempty"`
-	}{specs, excludeSpecs, repos, modulePlatformID, clean}
+	}{specs, excludeSpecs, repos, path.Join(os.Getenv("CACHE_DIRECTORY"), "rpmmd"), modulePlatformID, clean}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
