@@ -88,9 +88,14 @@ func NewRegistry(confPaths []string) *Registry {
 	distros.register(f30)
 	f31 := fedora31.New(confPaths)
 	if f31 == nil {
-		panic("Attempt to register Fedora 30 failed")
+		panic("Attempt to register Fedora 31 failed")
 	}
 	distros.register(f31)
+	f32 := fedora32.New(confPaths)
+	if f32 == nil {
+		panic("Attempt to register Fedora 32 failed")
+	}
+	distros.register(f32)
 	el82 := rhel82.New(confPaths)
 	if el82 == nil {
 		panic("Attempt to register RHEL 8.2 failed")
