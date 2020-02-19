@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"github.com/osbuild/osbuild-composer/internal/store"
 )
@@ -48,7 +48,7 @@ func TestBasicRcmAPI(t *testing.T) {
 		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, `{"error_reason":"Compose UUID does not exist"}`},
 	}
 
-	registry := distro.NewRegistry([]string{"."})
+	registry := distro_mock.NewRegistry()
 	distroStruct := fedoratest.New()
 	api := rcm.New(nil, store.New(nil, distroStruct, *registry))
 
@@ -72,7 +72,7 @@ func TestBasicRcmAPI(t *testing.T) {
 
 func TestSubmitCompose(t *testing.T) {
 	// Test the most basic use case: Submit a new job and get its status.
-	registry := distro.NewRegistry([]string{"."})
+	registry := distro_mock.NewRegistry()
 	distroStruct := fedoratest.New()
 	api := rcm.New(nil, store.New(nil, distroStruct, *registry))
 
