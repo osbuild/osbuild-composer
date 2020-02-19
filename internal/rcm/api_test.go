@@ -2,14 +2,16 @@ package rcm_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
+	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"github.com/osbuild/osbuild-composer/internal/store"
 )
@@ -49,7 +51,7 @@ func TestBasicRcmAPI(t *testing.T) {
 
 	registry := distro_mock.NewRegistry()
 	distroStruct := fedoratest.New()
-	api := rcm.New(nil, store.New(nil, distroStruct, *registry))
+	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
 
 	for _, c := range cases {
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
@@ -71,9 +73,9 @@ func TestBasicRcmAPI(t *testing.T) {
 
 func TestSubmitCompose(t *testing.T) {
 	// Test the most basic use case: Submit a new job and get its status.
-	registry := distro_mock.NewRegistry()
 	distroStruct := fedoratest.New()
-	api := rcm.New(nil, store.New(nil, distroStruct, *registry))
+	registry := distro_mock.NewRegistry()
+	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`
@@ -92,7 +94,12 @@ func TestSubmitCompose(t *testing.T) {
 		{
 			"POST",
 			"/v1/compose",
-			`{"distribution": "fedora-30", "image_types": ["qcow2"], "architectures":["x86_64"], "repositories": [{"url": "aaa"}]}`,
+			`{"distribution": "fedora-30", 
+					"image_types": ["qcow2"], 
+					"architectures":["x86_64"], 
+					"repositories": [{
+						"url": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+					}]}`,
 			"application/json",
 		},
 	}
@@ -100,7 +107,6 @@ func TestSubmitCompose(t *testing.T) {
 	for n, c := range cases {
 		// Submit job
 		t.Logf("RCM API submit compose, case %d\n", n)
-		//resp := internalRequest(api, "POST", "/v1/compose", `{"distribution": "fedora-30", "image_types": ["test_output"], "architectures":["test_arch"], "repositories": [{"url": "aaa", "checksum": "bbb"}]}`, "application/json")
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
 		if resp.StatusCode != http.StatusOK {
 			t.Fatal("Failed to call /v1/compose, HTTP status code:", resp.StatusCode)

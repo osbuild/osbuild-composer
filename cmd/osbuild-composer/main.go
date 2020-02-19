@@ -72,7 +72,7 @@ func main() {
 	// Optionally run RCM API as well as Weldr API
 	if len(listeners) == 3 {
 		rcmListener := listeners[2]
-		rcmAPI := rcm.New(logger, store)
+		rcmAPI := rcm.New(logger, store, rpmmd.NewRPMMD())
 		go rcmAPI.Serve(rcmListener)
 	}
 
