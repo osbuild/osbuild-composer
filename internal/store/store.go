@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -586,7 +587,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 	}
 
 	distroStruct := s.distroRegistry.GetDistro(distroString)
-	if distroStruct == nil {
+	if distroStruct == nil || (reflect.ValueOf(distroStruct).Kind() == reflect.Ptr && reflect.ValueOf(distroStruct).IsNil()) {
 		panic("fatal error, distro should exist but it is not in the registry")
 	}
 
@@ -599,13 +600,6 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 		panic("Multiple image requests are not yet properly implemented")
 	}
 
-	// map( repo-id => checksum )
-	rpmMetadata := rpmmd.NewRPMMD()
-	_, checksums, err := rpmMetadata.FetchMetadata(request.Repositories, distroStruct.ModulePlatformID())
-	if err != nil {
-		return err
-	}
-
 	for imageBuildID, imageRequest := range request.RequestedImages {
 		// TODO: handle custom upload targets
 		// TODO: this requires changes in the Compose Request struct
@@ -614,7 +608,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, checksums, arch, imgTypeCompatStr, 0)
+		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, request.Checksums, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}

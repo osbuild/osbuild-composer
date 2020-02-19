@@ -23,14 +23,18 @@ type API struct {
 	logger *log.Logger
 	store  *store.Store
 	router *httprouter.Router
+	// rpmMetadata is an interface to dnf-json and we include it here so that we can
+	// mock it in the unit tests
+	rpmMetadata rpmmd.RPMMD
 }
 
 // New creates new RCM API
-func New(logger *log.Logger, store *store.Store) *API {
+func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD) *API {
 	api := &API{
-		logger: logger,
-		store:  store,
-		router: httprouter.New(),
+		logger:      logger,
+		store:       store,
+		router:      httprouter.New(),
+		rpmMetadata: rpmMetadata,
 	}
 
 	api.router.RedirectTrailingSlash = false
@@ -152,6 +156,25 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
+	modulePlatformID, err := composeRequest.Distribution.ModulePlatformID()
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte(err.Error()))
+		if err != nil {
+			panic("Failed to write response")
+		}
+	}
+
+	// map( repo-id => checksum )
+	_, checksums, err := api.rpmMetadata.FetchMetadata(repoConfigs, modulePlatformID)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte(err.Error()))
+		if err != nil {
+			panic("Failed to write response")
+		}
+	}
+
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
@@ -161,6 +184,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		Distro:          composeRequest.Distribution,
 		Arch:            composeRequest.Architectures[0],
 		Repositories:    repoConfigs,
+		Checksums:       checksums,
 		RequestedImages: requestedImages,
 	})
 	if err != nil {

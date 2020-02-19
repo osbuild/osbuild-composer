@@ -18,6 +18,16 @@ func (err *CustomJsonConversionError) Error() string {
 	return err.reason
 }
 
+// CustomTypeError is thrown when parsing strings into enumerations
+type CustomTypeError struct {
+	reason string
+}
+
+// Error returns the error as a string
+func (err *CustomTypeError) Error() string {
+	return err.reason
+}
+
 // Since Go has no generics, this is the only way to write common code for all the types present in this package.
 // It uses weakly typed maps to convert between strings and integers which are then wrapped into type aliases.
 // Specific implementations are bellow each type.
@@ -243,6 +253,7 @@ const (
 // getArchMapping is a helper function that defines the conversion from JSON string value
 // to Distribution.
 func getDistributionMapping() map[string]int {
+	// Don't forget to add module-platform-id mapping below
 	mapping := map[string]int{
 		"fedora-30": int(Fedora30),
 		"fedora-31": int(Fedora31),
@@ -250,6 +261,22 @@ func getDistributionMapping() map[string]int {
 		"rhel-8.2":  int(RHEL82),
 	}
 	return mapping
+}
+
+func (dist *Distribution) ModulePlatformID() (string, error) {
+	mapping := map[Distribution]string{
+		// TODO: this could be refactored so we don't have these strings hard coded in two places
+		Fedora30: "platform:f30",
+		Fedora31: "platform:f31",
+		Fedora32: "platform:f32",
+		RHEL82:   "platform:el8",
+	}
+	id, exists := mapping[*dist]
+	if !exists {
+		return "", &CustomTypeError{reason: "Distribution does not have a module platform ID assigned"}
+	} else {
+		return id, nil
+	}
 }
 
 func ListDistributions() []string {
@@ -325,5 +352,6 @@ type ComposeRequest struct {
 	Distro          Distribution        `json:"distro"`
 	Arch            Architecture        `json:"arch"`
 	Repositories    []rpmmd.RepoConfig  `json:"repositories"`
+	Checksums       map[string]string   `json:"checksums"`
 	RequestedImages []ImageRequest      `json:"requested_images"`
 }
