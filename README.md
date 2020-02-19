@@ -55,3 +55,8 @@ Please refer to the [lorax-composer](https://github.com/weldr/lorax)'s documenat
 ### Upload action
 * Each image can be, but does not have to be, uploaded to a remote location
 * One image can be uploaded to multiple locations
+
+
+## Testing
+
+See [test/README.md](test/README.md)
