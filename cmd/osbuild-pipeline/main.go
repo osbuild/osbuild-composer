@@ -102,7 +102,8 @@ func main() {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
 
-	pipeline, err := d.Pipeline(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, 0)
+	size := d.GetSizeForOutputType(imageType, 0)
+	pipeline, err := d.Pipeline(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
 	if err != nil {
 		panic(err.Error())
 	}
