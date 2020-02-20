@@ -37,7 +37,7 @@ BuildRequires:  golang(github.com/google/go-cmp/cmp)
 
 Requires: golang-github-osbuild-composer-worker
 Requires: systemd
-Requires: osbuild>=7
+Requires: osbuild >= 7
 
 Provides: osbuild-composer
 Provides: lorax-composer
