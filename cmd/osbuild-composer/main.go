@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
+	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
@@ -108,10 +108,19 @@ func main() {
 	go jobAPI.Serve(jobListener)
 
 	// Optionally run RCM API as well as Weldr API
-	if len(listeners) == 3 {
-		rcmListener := composerListeners[2]
-		rcmAPI := rcm.New(logger, store, rpmmd.NewRPMMD())
-		go rcmAPI.Serve(rcmListener)
+	if rcmApiListeners, exists := listeners["osbuild-rcm.socket"]; exists {
+		if len(rcmApiListeners) != 1 {
+			// Use Fatal to call os.Exit with non-zero return value
+			log.Fatal("The RCM API socket unit is misconfigured. It should contain only one socket.")
+		}
+		rcmListener := rcmApiListeners[0]
+		rcmAPI := rcm.New(logger, store, rpm)
+		go func() {
+			err := rcmAPI.Serve(rcmListener)
+			// If the RCM API fails, take down the whole process, not just a single gorutine
+			log.Fatal("RCM API failed: ", err)
+		}()
+
 	}
 
 	if remoteWorkerListeners, exists := listeners["osbuild-remote-worker.socket"]; exists {
