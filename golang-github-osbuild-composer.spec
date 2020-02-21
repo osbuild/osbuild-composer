@@ -113,8 +113,22 @@ export GOPATH=$PWD/_build:%{gopath}
 %{_libexecdir}/osbuild-composer/osbuild-composer
 %{_libexecdir}/osbuild-composer/dnf-json
 %{_datadir}/osbuild-composer/
-%{_unitdir}/*.{service,socket}
+%{_unitdir}/osbuild-composer.service
+%{_unitdir}/osbuild-composer.socket
+%{_unitdir}/osbuild-remote-worker@.service
+%{_unitdir}/osbuild-remote-worker.socket
+%{_unitdir}/osbuild-worker@.service
 %{_sysusersdir}/osbuild-composer.conf
+
+%package rcm
+Summary:	RCM-specific version of osbuild-composer
+Requires: 	osbuild-composer
+
+%description rcm
+RCM-specific version of osbuild-composer not intended for public usage.
+
+%files rcm
+%{_unitdir}/osbuild-rcm.socket
 
 %package tests
 Summary:	Integration tests
