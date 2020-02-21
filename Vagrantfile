@@ -25,7 +25,6 @@ Vagrant.configure("2") do |config|
   # :-O what the sed?!
   config.vm.provision "shell", inline: <<-SHELL
     dnf install /vagrant/output/x86_64/*.rpm -y && \
-    sed -i 's|31|30|' /etc/os-release && \
     systemctl start osbuild-composer.socket && \
     pushd /usr/libexec/osbuild-composer && \
     su vagrant -c /usr/libexec/tests/osbuild-composer/osbuild-tests
