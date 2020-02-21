@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cd /usr/libexec/osbuild-composer/ || exit
+
+results=
+
+for f in /usr/libexec/tests/osbuild-composer/*; do
+  testname="$(basename "$f")"
+  echo Running "$testname"
+  "$f"
+  result=$?
+  if [ $result -eq 0 ]; then
+    results="${results}[SUCCESS] $testname\n"
+  else
+    results="${results}[FAILURE] $testname\n"
+  fi
+done
+
+echo
+echo Test results overview:
+echo -en "$results"

@@ -83,3 +83,20 @@ check-working-directory:
 	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
 	  exit 1; \
 	fi
+
+.PHONY: vm-provision
+vm-provision:
+	vagrant destroy -f
+	tools/make-osbuild-rpm
+	vagrant up
+	rm -rf .build
+
+.PHONY: vm-install
+vm-install: rpm
+	vagrant rsync
+	vagrant ssh -c "sudo dnf remove -y golang-github-osbuild-composer*; sudo dnf install -y /vagrant/output/x86_64/*.rpm"
+
+.PHONY: vm-test
+vm-test:
+	vagrant rsync
+	vagrant ssh -c "sudo systemctl start osbuild-composer.socket && sudo /vagrant/tools/run-tests"

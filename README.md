@@ -60,3 +60,46 @@ Please refer to the [lorax-composer](https://github.com/weldr/lorax)'s documenat
 ## Testing
 
 See [test/README.md](test/README.md)
+
+## Running the development VM
+Unfortunately, you cannot run osbuild-composer in a container due to the fact that osbuild requires /dev to be able to create loop devices. Therefore, we have the following vm setup.
+
+
+### Prerequisites
+You need to have vagrant and rpm build tools installed:
+```
+sudo dnf install -y rpm-build 'dnf-command(builddep)' vagrant
+```
+
+Next, you need to install build dependencies of osbuild and osbuild-composer by running the following command inside the cloned osbuild-composer repository:
+
+```
+wget https://raw.githubusercontent.com/osbuild/osbuild-composer/master/golang-github-osbuild-composer.spec
+sudo dnf builddep -y osbuild.spec golang-github-osbuild-osbuild.composer.spec
+rm osbuild.spec
+```
+
+### Provisioning the VM
+The following command will provision a VM with osbuild and cockpit-composer installed. Cockpit-composer and its dependencies are installed from the repositories, osbuild is installed from rpms built on your local machine from the current master branch.
+```
+make vm-provision
+``` 
+
+*Note: This command will delete any previous vagrant VMs created in this directory.*
+
+### Installing osbuild-composer from source
+The following command will install osbuild-composer from your local git checkout. Firstly, rpms are locally built, then they are rsynced to the VM and finally they're installed in the VM.
+```
+make vm-install
+```
+
+### Running tests inside the VM
+After the VM is provisioned and osbuild-composer is installed, you can run the integration test suite using the following command:
+```
+make vm-test
+```
+### Accessing the VM
+You have two options to access the VM:
+
+1) Using ssh, just run `vagrant ssh`
+2) Using cockpit, go to http://localhost:9091 and log in as admin/foobar 
