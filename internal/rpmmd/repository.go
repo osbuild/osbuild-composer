@@ -136,6 +136,9 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 			return nil, err
 		}
 	}
+	if err != nil {
+		return nil, &RepositoryError{"LoadRepositories failed: none of the provided paths contain distro configuration"}
+	}
 	defer f.Close()
 
 	var repos map[string][]RepoConfig
