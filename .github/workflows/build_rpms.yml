@@ -1,0 +1,50 @@
+name: RPM Build
+
+on: [pull_request]
+
+jobs:
+  rpm_build:
+    name: "Build RPMs"
+    runs-on: ubuntu-latest
+    container: registry.gitlab.com/majorhayden/containers/rpm-builder:latest
+    steps:
+      - name: Prepare container
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y upgrade
+          dnf -y install dnf-plugins-core git make rpm-build
+          mkdir rpms
+
+      - uses: actions/checkout@v2
+
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+
+      - name: Install RPM build dependencies
+        run: |
+          dnf -y builddep \
+            osbuild-composer/golang-github-osbuild-composer.spec \
+            osbuild/osbuild.spec
+
+      - name: Build RPMs
+        run: |
+          pushd osbuild-composer
+            make rpm
+          popd
+          pushd osbuild
+            make rpm
+          popd
+          cp -av osbuild-composer/output/*/*.rpm rpms/
+          cp -av osbuild/output/*/*.rpm rpms/
+          date > rpms/timestamp.txt
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v1
+        with:
+          name: Packages
+          path: rpms/
