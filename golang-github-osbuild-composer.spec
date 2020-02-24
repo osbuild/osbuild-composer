@@ -68,6 +68,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 %gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 %gobuild -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
+%gobuild -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
@@ -78,9 +79,14 @@ install -m 0755 -vp dnf-json                                %{buildroot}%{_libex
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
 install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
+install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
 
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
@@ -141,8 +147,9 @@ Requires:	createrepo_c
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
 
 %files tests
-%{_libexecdir}/tests/osbuild-composer/osbuild-tests
-%{_libexecdir}/tests/osbuild-composer/osbuild-dnf-json-tests
+%{_libexecdir}/tests/osbuild-composer/*
+%{_datadir}/tests/osbuild-composer/*
+%{_libexecdir}/osbuild-composer/image-info
 
 %package worker
 Summary:	The worker for osbuild-composer
