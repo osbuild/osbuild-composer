@@ -60,7 +60,14 @@ func main() {
 	runComposerCLI(false, "status", "show")
 
 	// Full integration tests
+	testCompose("ami")
+	testCompose("ext4-filesystem")
+	testCompose("openstack")
+	testCompose("partitioned-disk")
 	testCompose("qcow2")
+	testCompose("tar")
+	testCompose("vhd")
+	testCompose("vmdk")
 }
 
 func testCompose(outputType string) {
