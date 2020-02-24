@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"runtime"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -18,20 +18,6 @@ import (
 
 	"github.com/coreos/go-systemd/activation"
 )
-
-func currentArch() string {
-	if runtime.GOARCH == "amd64" {
-		return "x86_64"
-	} else if runtime.GOARCH == "arm64" {
-		return "aarch64"
-	} else if runtime.GOARCH == "ppc64le" {
-		return "ppc64le"
-	} else if runtime.GOARCH == "s390x" {
-		return "s390x"
-	} else {
-		panic("unsupported architecture")
-	}
-}
 
 type connectionConfig struct {
 	CACertFile     string
@@ -103,7 +89,7 @@ func main() {
 	store := store.New(&stateDir, distribution, *distros)
 
 	jobAPI := jobqueue.New(logger, store)
-	weldrAPI := weldr.New(rpm, currentArch(), distribution, logger, store)
+	weldrAPI := weldr.New(rpm, common.CurrentArch(), distribution, logger, store)
 
 	go jobAPI.Serve(jobListener)
 
