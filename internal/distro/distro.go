@@ -126,18 +126,10 @@ func (r *Registry) GetDistro(name string) Distro {
 }
 
 func (r *Registry) FromHost() (Distro, error) {
-	f, err := os.Open("/etc/os-release")
+	name, err := GetHostDistroName()
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-
-	osrelease, err := readOSRelease(f)
-	if err != nil {
-		return nil, err
-	}
-
-	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
 
 	d := r.GetDistro(name)
 	if d == nil {
@@ -145,6 +137,21 @@ func (r *Registry) FromHost() (Distro, error) {
 	}
 
 	return d, nil
+}
+
+func GetHostDistroName() (string, error) {
+	f, err := os.Open("/etc/os-release")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	osrelease, err := readOSRelease(f)
+	if err != nil {
+		return "", err
+	}
+
+	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
+	return name, nil
 }
 
 func readOSRelease(r io.Reader) (map[string]string, error) {
