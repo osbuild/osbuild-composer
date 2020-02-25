@@ -22,7 +22,7 @@ type Blueprint struct {
 type Change struct {
 	Commit    string    `json:"commit" toml:"commit"`
 	Message   string    `json:"message" toml:"message"`
-	Revision  *string   `json:"revision" toml:"revision"`
+	Revision  *int      `json:"revision" toml:"revision"`
 	Timestamp string    `json:"timestamp" toml:"timestamp"`
 	Blueprint Blueprint `json:"-" toml:"-"`
 }
