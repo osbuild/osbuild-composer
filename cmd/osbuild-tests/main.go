@@ -207,7 +207,7 @@ func runComposerCLI(quiet bool, command ...string) json.RawMessage {
 	cmd := exec.Command("composer-cli", command...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("Colud not create command: " + err.Error())
+		log.Fatalf("Could not create command: " + err.Error())
 	}
 
 	if !quiet {
