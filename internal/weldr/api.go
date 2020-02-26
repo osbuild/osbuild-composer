@@ -1103,6 +1103,10 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 		}
 		bpChanges := api.store.GetBlueprintChanges(name)
 		if bpChanges != nil {
+			// Sort the changes by Timestamp, descending
+			sort.Slice(bpChanges, func(i, j int) bool {
+				return bpChanges[i].Timestamp > bpChanges[j].Timestamp
+			})
 			change := change{
 				Changes: bpChanges,
 				Name:    name,
