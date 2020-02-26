@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
@@ -96,6 +97,11 @@ func NewRegistry(confPaths []string) *Registry {
 		panic("Attempt to register Fedora 32 failed")
 	}
 	distros.register(f32)
+	el81 := rhel81.New(confPaths)
+	if el81 == nil {
+		panic("Attempt to register RHEL 8.1 failed")
+	}
+	distros.register(el81)
 	el82 := rhel82.New(confPaths)
 	if el82 == nil {
 		panic("Attempt to register RHEL 8.2 failed")

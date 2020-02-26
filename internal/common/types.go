@@ -247,6 +247,7 @@ const (
 	Fedora30 Distribution = iota
 	Fedora31
 	Fedora32
+	RHEL81
 	RHEL82
 )
 
@@ -258,6 +259,7 @@ func getDistributionMapping() map[string]int {
 		"fedora-30": int(Fedora30),
 		"fedora-31": int(Fedora31),
 		"fedora-32": int(Fedora32),
+		"rhel-8.1":  int(RHEL81),
 		"rhel-8.2":  int(RHEL82),
 	}
 	return mapping
@@ -269,6 +271,7 @@ func (dist *Distribution) ModulePlatformID() (string, error) {
 		Fedora30: "platform:f30",
 		Fedora31: "platform:f31",
 		Fedora32: "platform:f32",
+		RHEL81:   "platform:el8",
 		RHEL82:   "platform:el8",
 	}
 	id, exists := mapping[*dist]
