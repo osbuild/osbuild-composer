@@ -1878,7 +1878,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
-	var specs []string
+	var specs []string = []string{}
 	for _, pkg := range bp.Packages {
 		specs = append(specs, getPkgNameGlob(pkg))
 	}
