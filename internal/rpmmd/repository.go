@@ -218,11 +218,15 @@ func NewRPMMD() RPMMD {
 }
 
 func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
+	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
+	if !ok {
+		panic("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+	}
 	var arguments = struct {
 		Repos            []RepoConfig `json:"repos"`
 		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
-	}{repos, path.Join(os.Getenv("CACHE_DIRECTORY"), "rpmmd"), modulePlatformID}
+	}{repos, path.Join(cacheDirectory, "rpmmd"), modulePlatformID}
 	var reply struct {
 		Checksums map[string]string `json:"checksums"`
 		Packages  PackageList       `json:"packages"`
@@ -235,6 +239,10 @@ func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (Pa
 }
 
 func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error) {
+	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
+	if !ok {
+		panic("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+	}
 	var arguments = struct {
 		PackageSpecs     []string     `json:"package-specs"`
 		ExcludSpecs      []string     `json:"exclude-specs"`
@@ -242,7 +250,7 @@ func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, mod
 		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
 		Clean            bool         `json:"clean,omitempty"`
-	}{specs, excludeSpecs, repos, path.Join(os.Getenv("CACHE_DIRECTORY"), "rpmmd"), modulePlatformID, clean}
+	}{specs, excludeSpecs, repos, path.Join(cacheDirectory, "rpmmd"), modulePlatformID, clean}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
