@@ -9,6 +9,7 @@ build:
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
 	go build -o osbuild-tests ./cmd/osbuild-tests/
+	go build -o osbuild-weldr-tests ./cmd/osbuild-weldr-tests/
 	go build -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/
 
 .PHONY: install
