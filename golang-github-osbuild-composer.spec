@@ -67,6 +67,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 %gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
+%gobuild -o _bin/osbuild-weldr-tests %{goipath}/cmd/osbuild-weldr-tests
 %gobuild -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 %gobuild -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
@@ -78,6 +79,7 @@ install -m 0755 -vp dnf-json                                %{buildroot}%{_libex
 
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
