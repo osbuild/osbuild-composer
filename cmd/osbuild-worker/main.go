@@ -110,7 +110,7 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	if response.StatusCode != http.StatusCreated {
 		rawR, _ := ioutil.ReadAll(response.Body)
 		r := string(rawR)
-		return nil, errors.New(fmt.Sprintf("couldn't create job, got %d: %s", response.StatusCode, r))
+		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, r)
 	}
 
 	job := &jobqueue.Job{}
