@@ -86,7 +86,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			if err != nil {
 				t.Errorf("Could not marshal source: %v", err)
 			}
-			if bytes.Compare(gotBytes, tt.args.data) != 0 {
+			if !bytes.Equal(gotBytes, tt.args.data) {
 				t.Errorf("Expected '%v', got '%v'", string(tt.args.data), string(gotBytes))
 			}
 			if !reflect.DeepEqual(&gotSources, sources) {

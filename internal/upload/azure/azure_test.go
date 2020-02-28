@@ -110,7 +110,7 @@ func TestAzure_FileUpload(t *testing.T) {
 	_, _ = blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
 	_ = os.Remove(fileName)
 
-	if bytes.Compare(imageChecksum, blobChecksum[:]) != 0 {
+	if !bytes.Equal(imageChecksum, blobChecksum[:]) {
 		t.Fatalf("Checksums do not match! Local file: %x, cloud blob: %x", imageChecksum, blobChecksum[:])
 	}
 
