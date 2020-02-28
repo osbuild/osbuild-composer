@@ -205,7 +205,10 @@ func runComposerCLI(quiet bool, command ...string) json.RawMessage {
 		log.Printf("$ composer-cli %s\n", strings.Join(command, " "))
 	}
 
-	cmd.Start()
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("Could not start command: %v", err)
+	}
 
 	var result json.RawMessage
 

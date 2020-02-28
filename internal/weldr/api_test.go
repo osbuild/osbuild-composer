@@ -593,7 +593,10 @@ func TestComposeLogs(t *testing.T) {
 
 		var buffer bytes.Buffer
 
-		io.Copy(&buffer, tr)
+		_, err = io.Copy(&buffer, tr)
+		if err != nil {
+			t.Errorf("cannot copy untar result: %v", err)
+		}
 
 		if buffer.String() != c.ExpectedFileContent {
 			t.Errorf("%s: expected log content: %s, but got: %s", c.Path, c.ExpectedFileContent, buffer.String())

@@ -243,7 +243,10 @@ func randomSHA1String() (string, error) {
 	} else if n != 20 {
 		return "", errors.New("randomSHA1String: short read from rand")
 	}
-	hash.Write(data)
+	_, err = hash.Write(data)
+	if err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 

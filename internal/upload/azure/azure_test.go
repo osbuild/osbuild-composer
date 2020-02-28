@@ -59,10 +59,11 @@ func TestAzure_FileUpload(t *testing.T) {
 	handleErrors(t, err)
 
 	h := md5.New()
-	io.Copy(h, f)
+	_, err = io.Copy(h, f)
 	handleErrors(t, err)
 	imageChecksum := h.Sum(nil)
-	f.Close()
+	err = f.Close()
+	handleErrors(t, err)
 
 	credentials := Credentials{
 		StorageAccount:   storageAccount,
@@ -99,7 +100,8 @@ func TestAzure_FileUpload(t *testing.T) {
 	handleErrors(t, err)
 	blobData := &bytes.Buffer{}
 	reader := get.Body(azblob.RetryReaderOptions{})
-	blobData.ReadFrom(reader)
+	_, err = blobData.ReadFrom(reader)
+	handleErrors(t, err)
 	reader.Close() // The client must close the response body when finished with it
 	blobBytes := blobData.Bytes()
 	blobChecksum := md5.Sum(blobBytes)

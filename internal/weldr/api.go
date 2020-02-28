@@ -153,9 +153,7 @@ func isRequestVersionAtLeast(params httprouter.Params, minVersion uint) bool {
 
 	version, err := strconv.ParseUint(versionString, 10, 0)
 
-	if err != nil {
-		panic(err)
-	}
+	common.PanicOnError(err)
 
 	return uint(version) >= minVersion
 }
@@ -178,7 +176,8 @@ func statusResponseOK(writer http.ResponseWriter) {
 	}
 
 	writer.WriteHeader(http.StatusOK)
-	json.NewEncoder(writer).Encode(reply{true})
+	err := json.NewEncoder(writer).Encode(reply{true})
+	common.PanicOnError(err)
 }
 
 type responseError struct {
@@ -194,7 +193,8 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...respons
 	}
 
 	writer.WriteHeader(code)
-	json.NewEncoder(writer).Encode(reply{false, errors})
+	err := json.NewEncoder(writer).Encode(reply{false, errors})
+	common.PanicOnError(err)
 }
 
 func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -208,7 +208,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		Messages      []string `json:"messages"`
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err := json.NewEncoder(writer).Encode(reply{
 		API:           "1",
 		DBSupported:   true,
 		DBVersion:     "0",
@@ -217,6 +217,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		Build:         "devel",
 		Messages:      make([]string, 0),
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -234,9 +235,10 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 		names = append(names, repo.Id)
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err := json.NewEncoder(writer).Encode(reply{
 		Sources: names,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -314,14 +316,16 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	format := q.Get("format")
 	if format == "json" || format == "" {
-		json.NewEncoder(writer).Encode(reply{
+		err := json.NewEncoder(writer).Encode(reply{
 			Sources: sources,
 			Errors:  errors,
 		})
+		common.PanicOnError(err)
 	} else if format == "toml" {
 		encoder := toml.NewEncoder(writer)
 		encoder.Indent = ""
-		encoder.Encode(sources)
+		err := encoder.Encode(sources)
+		common.PanicOnError(err)
 	} else {
 		errors := responseError{
 			ID:  "InvalidChars",
@@ -480,12 +484,13 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		modules[i] = module{packageInfos[start+i].Name, "rpm"}
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err = json.NewEncoder(writer).Encode(reply{
 		Total:   total,
 		Offset:  offset,
 		Limit:   limit,
 		Modules: modules,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -532,12 +537,13 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		packages[i] = packageInfos[start+i]
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err = json.NewEncoder(writer).Encode(reply{
 		Total:    total,
 		Offset:   offset,
 		Limit:    limit,
 		Projects: packages,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -628,10 +634,11 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	if modulesRequested {
-		json.NewEncoder(writer).Encode(modulesReply{packageInfos})
+		err = json.NewEncoder(writer).Encode(modulesReply{packageInfos})
 	} else {
-		json.NewEncoder(writer).Encode(projectsReply{packageInfos})
+		err = json.NewEncoder(writer).Encode(projectsReply{packageInfos})
 	}
+	common.PanicOnError(err)
 }
 
 func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -656,9 +663,10 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err = json.NewEncoder(writer).Encode(reply{
 		Projects: packages,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -688,12 +696,13 @@ func (api *API) blueprintsListHandler(writer http.ResponseWriter, request *http.
 	offset = min(offset, total)
 	limit = min(limit, total-offset)
 
-	json.NewEncoder(writer).Encode(reply{
+	err = json.NewEncoder(writer).Encode(reply{
 		Total:      total,
 		Offset:     offset,
 		Limit:      limit,
 		Blueprints: names[offset : offset+limit],
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -756,11 +765,12 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 
 	format := q.Get("format")
 	if format == "json" || format == "" {
-		json.NewEncoder(writer).Encode(reply{
+		err := json.NewEncoder(writer).Encode(reply{
 			Blueprints: blueprints,
 			Changes:    changes,
 			Errors:     []responseError{},
 		})
+		common.PanicOnError(err)
 	} else if format == "toml" {
 		// lorax concatenates multiple blueprints with `\n\n` here,
 		// which is never useful. Deviate by only returning the first
@@ -775,7 +785,8 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		}
 		encoder := toml.NewEncoder(writer)
 		encoder.Indent = ""
-		encoder.Encode(blueprints[0])
+		err := encoder.Encode(blueprints[0])
+		common.PanicOnError(err)
 	} else {
 		errors := responseError{
 			ID:  "InvalidChars",
@@ -841,10 +852,11 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		blueprints = append(blueprints, entry{*blueprint, dependencies})
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err := json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
 		Errors:     []responseError{},
 	})
+	common.PanicOnError(err)
 }
 
 // setPkgEVRA replaces the version globs in the blueprint with their EVRA values from the dependencies
@@ -958,10 +970,11 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		blueprints = append(blueprints, blueprintFrozen{blueprint})
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err := json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
 		Errors:     errors,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1052,7 +1065,8 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 		diffs = append(diffs, diff{Old: &pack{oldPackage}, New: nil})
 	}
 
-	json.NewEncoder(writer).Encode(reply{diffs})
+	err := json.NewEncoder(writer).Encode(reply{diffs})
+	common.PanicOnError(err)
 }
 
 func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1118,12 +1132,13 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 		}
 	}
 
-	json.NewEncoder(writer).Encode(reply{
+	err = json.NewEncoder(writer).Encode(reply{
 		BlueprintsChanges: allChanges,
 		Errors:            errors,
 		Offset:            offset,
 		Limit:             limit,
 	})
+	common.PanicOnError(err)
 }
 
 func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1231,7 +1246,13 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 	bpChange := api.store.GetBlueprintChange(name, commit)
 	bp := bpChange.Blueprint
 	commitMsg := name + ".toml reverted to commit " + commit
-	api.store.PushBlueprint(bp, commitMsg)
+	err := api.store.PushBlueprint(bp, commitMsg)
+	if err != nil {
+		statusResponseError(writer, http.StatusInternalServerError, responseError{
+			ID:  "BlueprintError",
+			Msg: err.Error(),
+		})
+	}
 	statusResponseOK(writer)
 }
 
@@ -1358,7 +1379,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1420,7 +1442,8 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 		Errors []composeDeleteError  `json:"errors"`
 	}{results, errors}
 
-	json.NewEncoder(writer).Encode(reply)
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1440,7 +1463,8 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1463,7 +1487,8 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 		}
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1528,7 +1553,8 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 
 	reply.UUIDs = composesToComposeEntries(composes, uuids, isRequestVersionAtLeast(params, 1))
 
-	json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1589,7 +1615,8 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		reply.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1656,7 +1683,8 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	writer.Header().Set("Content-Type", imageMime)
 	writer.Header().Set("Content-Length", fmt.Sprintf("%d", fileSize))
 
-	io.Copy(writer, reader)
+	_, err = io.Copy(writer, reader)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1716,7 +1744,8 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	resultReader.Close()
+	err = resultReader.Close()
+	common.PanicOnError(err)
 
 	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-logs.tar")
 	writer.Header().Set("Content-Type", "application/x-tar")
@@ -1725,7 +1754,8 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 
 	// tar format needs to contain file size before the actual file content, therefore the intermediate buffer
 	var fileContents bytes.Buffer
-	result.Write(&fileContents)
+	err = result.Write(&fileContents)
+	common.PanicOnError(err)
 
 	header := &tar.Header{
 		Name: "logs/osbuild.log",
@@ -1733,9 +1763,14 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		Size: int64(fileContents.Len()),
 	}
 
-	tw.WriteHeader(header)
-	io.Copy(tw, &fileContents)
-	tw.Close()
+	err = tw.WriteHeader(header)
+	common.PanicOnError(err)
+
+	_, err = io.Copy(tw, &fileContents)
+	common.PanicOnError(err)
+
+	err = tw.Close()
+	common.PanicOnError(err)
 }
 
 func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1801,9 +1836,11 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	resultReader.Close()
+	err = resultReader.Close()
+	common.PanicOnError(err)
 
-	result.Write(writer)
+	err = result.Write(writer)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1823,7 +1860,8 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 		}
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1843,7 +1881,8 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 		}
 	}
 
-	json.NewEncoder(writer).Encode(reply)
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
@@ -1903,6 +1942,9 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 			return nil, nil, nil, err
 		}
 		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID(), false)
+		if err != nil {
+			return nil, nil, nil, err
+		}
 	}
 
 	return packages, buildPackages, checksums, err
