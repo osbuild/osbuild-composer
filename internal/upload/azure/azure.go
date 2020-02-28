@@ -151,7 +151,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	var blobChecksum []byte = props.ContentMD5()
 	var fileChecksum []byte = imageFileHash.Sum(nil)
 
-	if bytes.Compare(blobChecksum, fileChecksum) != 0 {
+	if !bytes.Equal(blobChecksum, fileChecksum) {
 		return &errorString{"error during image upload. the image seems to be corrupted"}
 	}
 
