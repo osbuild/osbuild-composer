@@ -78,7 +78,10 @@ func TestBumpVersion(t *testing.T) {
 
 	for _, c := range cases {
 		bp := c.NewBlueprint
-		bp.Initialize()
+		err := bp.Initialize()
+		if err != nil {
+			panic(err)
+		}
 
 		bp.BumpVersion(c.OldVersion)
 		if bp.Version != c.ExpectedVersion {

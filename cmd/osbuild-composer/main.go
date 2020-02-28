@@ -91,7 +91,10 @@ func main() {
 	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(rpm, common.CurrentArch(), distribution, logger, store)
 
-	go jobAPI.Serve(jobListener)
+	go func() {
+		err := jobAPI.Serve(jobListener)
+		common.PanicOnError(err)
+	}()
 
 	// Optionally run RCM API as well as Weldr API
 	if rcmApiListeners, exists := listeners["osbuild-rcm.socket"]; exists {
@@ -124,9 +127,16 @@ func main() {
 			}
 
 			listener := tls.NewListener(listener, tlsConfig)
-			go jobAPI.Serve(listener)
+			go func() {
+				err := jobAPI.Serve(listener)
+				common.PanicOnError(err)
+			}()
 		}
 	}
 
-	weldrAPI.Serve(weldrListener)
+	go func() {
+		err := weldrAPI.Serve(weldrListener)
+		common.PanicOnError(err)
+	}()
+
 }

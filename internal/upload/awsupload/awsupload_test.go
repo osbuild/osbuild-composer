@@ -109,10 +109,13 @@ func TestAWS_S3Upload(t *testing.T) {
 	// Delete the object from S3 after the test is finished
 	defer func() {
 		s := s3.New(sess)
-		s.DeleteObject(&s3.DeleteObjectInput{
+		_, err := s.DeleteObject(&s3.DeleteObjectInput{
 			Bucket: &bucket,
 			Key:    &s3Key,
 		})
+		if err != nil {
+			panic(err)
+		}
 	}()
 
 	// Set up temporary file for downloaded

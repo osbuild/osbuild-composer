@@ -34,7 +34,7 @@ type ComposeResult struct {
 	Success bool `json:"success"`
 }
 
-func (cr *ComposeResult) Write(writer io.Writer) {
+func (cr *ComposeResult) Write(writer io.Writer) error {
 	if cr.Build == nil && len(cr.Stages) == 0 && cr.Assembler == nil {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
 	}
@@ -46,7 +46,10 @@ func (cr *ComposeResult) Write(writer io.Writer) {
 			fmt.Fprintf(writer, "Stage %s\n", stage.Name)
 			enc := json.NewEncoder(writer)
 			enc.SetIndent("", "  ")
-			enc.Encode(stage.Options)
+			err := enc.Encode(stage.Options)
+			if err != nil {
+				return err
+			}
 			fmt.Fprintf(writer, "\nOutput:\n%s\n", stage.Output)
 		}
 	}
@@ -57,7 +60,10 @@ func (cr *ComposeResult) Write(writer io.Writer) {
 			fmt.Fprintf(writer, "Stage: %s\n", stage.Name)
 			enc := json.NewEncoder(writer)
 			enc.SetIndent("", "  ")
-			enc.Encode(stage.Options)
+			err := enc.Encode(stage.Options)
+			if err != nil {
+				return err
+			}
 			fmt.Fprintf(writer, "\nOutput:\n%s\n", stage.Output)
 		}
 	}
@@ -66,7 +72,12 @@ func (cr *ComposeResult) Write(writer io.Writer) {
 		fmt.Fprintf(writer, "Assembler %s:\n", cr.Assembler.Name)
 		enc := json.NewEncoder(writer)
 		enc.SetIndent("", "  ")
-		enc.Encode(cr.Assembler.Options)
+		err := enc.Encode(cr.Assembler.Options)
+		if err != nil {
+			return err
+		}
 		fmt.Fprintf(writer, "\nOutput:\n%s\n", cr.Assembler.Output)
 	}
+
+	return nil
 }

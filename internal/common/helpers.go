@@ -15,3 +15,9 @@ func CurrentArch() string {
 		panic("unsupported architecture")
 	}
 }
+
+func PanicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

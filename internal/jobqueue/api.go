@@ -74,7 +74,10 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 	writer.WriteHeader(code)
 
 	for _, err := range errors {
-		writer.Write([]byte(err))
+		_, e := writer.Write([]byte(err))
+		if e != nil {
+			panic(e)
+		}
 	}
 }
 

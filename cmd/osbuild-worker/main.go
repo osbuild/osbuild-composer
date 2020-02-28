@@ -100,7 +100,10 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	}
 
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(request{})
+	err := json.NewEncoder(&b).Encode(request{})
+	if err != nil {
+		return nil, err
+	}
 	response, err := c.client.Post(c.createURL("/job-queue/v1/jobs"), "application/json", &b)
 	if err != nil {
 		return nil, err
@@ -124,7 +127,10 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 
 func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildState, result *common.ComposeResult) error {
 	var b bytes.Buffer
-	json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, result})
+	err := json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, result})
+	if err != nil {
+		return err
+	}
 	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ID.String(), job.ImageBuildID)
 	url := c.createURL(urlPath)
 	req, err := http.NewRequest("PATCH", url, &b)
