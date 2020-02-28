@@ -1847,10 +1847,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	var repos []rpmmd.RepoConfig
-	for _, repo := range api.distro.Repositories(api.arch) {
-		repos = append(repos, repo)
-	}
+	repos := api.distro.Repositories(api.arch)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
@@ -1871,10 +1868,7 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 }
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string, clean bool) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, map[string]string, error) {
-	var repos []rpmmd.RepoConfig
-	for _, repo := range api.distro.Repositories(api.arch) {
-		repos = append(repos, repo)
-	}
+	repos := api.distro.Repositories(api.arch)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
