@@ -96,7 +96,7 @@ func startCompose(name, outputType string) uuid.UUID {
 	if err != nil {
 		log.Fatalf("Unexpected reply: " + err.Error())
 	}
-	if reply.Status != true {
+	if !reply.Status {
 		log.Fatalf("Unexpected status %v", reply.Status)
 	}
 
@@ -123,7 +123,7 @@ func deleteCompose(id uuid.UUID) {
 	if len(reply.IDs) != 1 {
 		log.Fatalf("Unexpected number of UUIDs returned: %d", len(reply.IDs))
 	}
-	if reply.IDs[0].Status != true {
+	if !reply.IDs[0].Status {
 		log.Fatalf("Unexpected status %v", reply.IDs[0].Status)
 	}
 }
@@ -174,7 +174,7 @@ func pushBlueprint(bp *blueprint.Blueprint) {
 	if err != nil {
 		log.Fatalf("Unexpected reply: " + err.Error())
 	}
-	if reply.Status != true {
+	if !reply.Status {
 		log.Fatalf("Unexpected status %v", reply.Status)
 	}
 }
@@ -188,7 +188,7 @@ func deleteBlueprint(bp *blueprint.Blueprint) {
 	if err != nil {
 		log.Fatalf("Unexpected reply: " + err.Error())
 	}
-	if reply.Status != true {
+	if !reply.Status {
 		log.Fatalf("Unexpected status %v", reply.Status)
 	}
 }
