@@ -175,10 +175,3 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 
 	return &result, nil
 }
-
-func runCommand(command string, params ...string) error {
-	cp := exec.Command(command, params...)
-	cp.Stderr = os.Stderr
-	cp.Stdout = os.Stdout
-	return cp.Run()
-}
