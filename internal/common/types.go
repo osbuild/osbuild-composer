@@ -57,7 +57,7 @@ func marshalHelper(input int, mapping map[string]int, errorMessage string) ([]by
 // See unmarshalHelper for introduction. This helper can create a list of possible values of a single type.
 func listHelper(mapping map[string]int) []string {
 	ret := make([]string, 0)
-	for k, _ := range mapping {
+	for k := range mapping {
 		ret = append(ret, k)
 	}
 	return ret
@@ -65,7 +65,7 @@ func listHelper(mapping map[string]int) []string {
 
 // See unmarshalHelper for introduction. With this helper one can make sure a value exists in a set of existing values.
 func existsHelper(mapping map[string]int, testedValue string) bool {
-	for k, _ := range mapping {
+	for k := range mapping {
 		if k == testedValue {
 			return true
 		}

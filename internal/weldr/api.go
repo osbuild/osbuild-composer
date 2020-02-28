@@ -614,7 +614,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	packageInfos := foundPackages.ToPackageInfos()
 
 	if modulesRequested {
-		for i, _ := range packageInfos {
+		for i := range packageInfos {
 			err := packageInfos[i].FillDependencies(api.rpmmd, api.distro.Repositories(api.arch), api.distro.ModulePlatformID())
 			if err != nil {
 				errors := responseError{

@@ -484,7 +484,7 @@ func TestComposeDelete(t *testing.T) {
 
 		idsInStore := []string{}
 
-		for id, _ := range s.Composes {
+		for id := range s.Composes {
 			idsInStore = append(idsInStore, id.String())
 		}
 
