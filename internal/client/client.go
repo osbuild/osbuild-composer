@@ -61,17 +61,17 @@ func (r *APIErrorMsg) String() string {
 	return fmt.Sprintf("%s: %s", r.ID, r.Msg)
 }
 
-// APIResponse is returned with status code 400 and may contain a list of errors
+// APIResponse is returned by some requests to indicate success or failure.
+// It is always returned when the status code is 400, indicating some kind of error with the request.
 // If Status is true the Errors list will not be included or will be empty.
 // When Status is false it will include at least one APIErrorMsg with details about the error.
-// It also implements the error interface so that it can be used in place of error
 type APIResponse struct {
 	Status bool          `json:"status"`
 	Errors []APIErrorMsg `json:"errors,omitempty"`
 }
 
-// Error returns the description of the first error
-func (r *APIResponse) Error() string {
+// String returns the description of the first error, if there is one
+func (r *APIResponse) String() string {
 	if len(r.Errors) == 0 {
 		return ""
 	}
@@ -86,83 +86,75 @@ func (r *APIResponse) AllErrors() (all []string) {
 	return all
 }
 
-// clientError converts an error into an APIResponse with ID set to ClientError
-// This is used to return golang function errors to callers of the client functions
-func clientError(err error) *APIResponse {
-	return &APIResponse{
-		Status: false,
-		Errors: []APIErrorMsg{{ID: "ClientError", Msg: err.Error()}},
-	}
-}
-
 // NewAPIResponse converts the response body to a status response
-func NewAPIResponse(body []byte) *APIResponse {
+func NewAPIResponse(body []byte) (*APIResponse, error) {
 	var status APIResponse
 	err := json.Unmarshal(body, &status)
 	if err != nil {
-		return clientError(err)
+		return nil, err
 	}
-	return &status
+	return &status, nil
 }
 
 // apiError converts an API error 400 JSON to a status response
 //
 // The response body should alway be of the form:
 //     {"status": false, "errors": [{"id": ERROR_ID, "msg": ERROR_MESSAGE}, ...]}
-func apiError(resp *http.Response) *APIResponse {
+func apiError(resp *http.Response) (*APIResponse, error) {
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return clientError(err)
+		return nil, err
 	}
 	return NewAPIResponse(body)
 }
 
 // GetRaw returns raw data from a GET request
-// Errors from the client and from the API are returned as an APIResponse
-func GetRaw(socket, method, path string) ([]byte, *APIResponse) {
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func GetRaw(socket, method, path string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, method, path, "", map[string]string{})
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
 	// Convert the API's JSON error response to an error type and return it
 	if resp.StatusCode == 400 {
-		return nil, apiError(resp)
+		apiResponse, err := apiError(resp)
+		return nil, apiResponse, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
-	return body, nil
+	return body, nil, nil
 }
 
 // GetJSONAll returns all JSON results from a GET request using offset/limit
 // This function makes 2 requests, the first with limit=0 to get the total number of results,
 // and then with limit=TOTAL to fetch all of the results.
 // The path passed to GetJSONAll should not include the limit or offset query parameters
-// Errors from the client and from the API are returned as an APIResponse
-func GetJSONAll(socket, path string) ([]byte, *APIResponse) {
-	body, err := GetRaw(socket, "GET", path+"?limit=0")
-	if err != nil {
-		return nil, err
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func GetJSONAll(socket, path string) ([]byte, *APIResponse, error) {
+	body, api, err := GetRaw(socket, "GET", path+"?limit=0")
+	if api != nil || err != nil {
+		return nil, api, err
 	}
 
 	// We just want the total
 	var j interface{}
-	jerr := json.Unmarshal(body, &j)
-	if jerr != nil {
-		return nil, clientError(jerr)
+	err = json.Unmarshal(body, &j)
+	if err != nil {
+		return nil, nil, err
 	}
 	m := j.(map[string]interface{})
 	var v interface{}
 	var ok bool
 	if v, ok = m["total"]; !ok {
-		return nil, clientError(errors.New("Response is missing the total value"))
+		return nil, nil, errors.New("Response is missing the total value")
 	}
 
 	switch total := v.(type) {
@@ -170,63 +162,65 @@ func GetJSONAll(socket, path string) ([]byte, *APIResponse) {
 		allResults := fmt.Sprintf("%s?limit=%v", path, total)
 		return GetRaw(socket, "GET", allResults)
 	}
-	return nil, clientError(errors.New("Response 'total' is wrong type"))
+	return nil, nil, errors.New("Response 'total' is not a float64")
 }
 
 // PostRaw sends a POST with raw data and returns the raw response body
-// Errors from the client and from the API are returned as an APIResponse
-func PostRaw(socket, path, body string, headers map[string]string) ([]byte, *APIResponse) {
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func PostRaw(socket, path, body string, headers map[string]string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, "POST", path, body, headers)
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
-	// Convert the API's JSON error response to an error type and return it
+	// Convert the API's JSON error response to an APIResponse
 	if resp.StatusCode == 400 {
-		return nil, apiError(resp)
+		apiResponse, err := apiError(resp)
+		return nil, apiResponse, err
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
-	return responseBody, nil
+	return responseBody, nil, nil
 }
 
 // PostTOML sends a POST with TOML data and the Content-Type header set to "text/x-toml"
-// It returns the raw response data or errors as an APIResponse
-func PostTOML(socket, path, body string) ([]byte, *APIResponse) {
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func PostTOML(socket, path, body string) ([]byte, *APIResponse, error) {
 	headers := map[string]string{"Content-Type": "text/x-toml"}
 	return PostRaw(socket, path, body, headers)
 }
 
 // PostJSON sends a POST with JSON data and the Content-Type header set to "application/json"
-// It returns the raw response data or errors as an APIResponse
-func PostJSON(socket, path, body string) ([]byte, *APIResponse) {
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func PostJSON(socket, path, body string) ([]byte, *APIResponse, error) {
 	headers := map[string]string{"Content-Type": "application/json"}
 	return PostRaw(socket, path, body, headers)
 }
 
 // DeleteRaw sends a DELETE request
-// It returns the raw response data or errors as an APIResponse
-func DeleteRaw(socket, path string) ([]byte, *APIResponse) {
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func DeleteRaw(socket, path string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, "DELETE", path, "", nil)
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
-	// Convert the API's JSON error response to an error type and return it
+	// Convert the API's JSON error response to an APIResponse
 	if resp.StatusCode == 400 {
-		return nil, apiError(resp)
+		apiResponse, err := apiError(resp)
+		return nil, apiResponse, err
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, clientError(err)
+		return nil, nil, err
 	}
 
-	return responseBody, nil
+	return responseBody, nil, nil
 }

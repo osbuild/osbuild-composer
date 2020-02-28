@@ -7,14 +7,14 @@ import (
 )
 
 // GetStatusV0 makes a GET request to /api/status and returns the v0 response as a StatusResponseV0
-func GetStatusV0(socket string) (reply StatusV0, err *APIResponse) {
-	body, err := GetRaw(socket, "GET", "/api/status")
+func GetStatusV0(socket string) (reply StatusV0, resp *APIResponse, err error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/status")
+	if resp != nil || err != nil {
+		return reply, resp, err
+	}
+	err = json.Unmarshal(body, &reply)
 	if err != nil {
-		return reply, err
+		return reply, nil, err
 	}
-	jerr := json.Unmarshal(body, &reply)
-	if jerr != nil {
-		return reply, clientError(jerr)
-	}
-	return reply, nil
+	return reply, nil, nil
 }

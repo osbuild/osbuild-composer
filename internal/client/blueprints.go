@@ -10,158 +10,158 @@ import (
 
 // PostTOMLBlueprintV0 sends a TOML blueprint string to the API
 // and returns an APIResponse
-func PostTOMLBlueprintV0(socket, blueprint string) *APIResponse {
-	body, err := PostTOML(socket, "/api/v0/blueprints/new", blueprint)
-	if err != nil {
-		return err
+func PostTOMLBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+	body, resp, err := PostTOML(socket, "/api/v0/blueprints/new", blueprint)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // PostTOMLWorkspaceV0 sends a TOML blueprint string to the API
 // and returns an APIResponse
-func PostTOMLWorkspaceV0(socket, blueprint string) *APIResponse {
-	body, err := PostTOML(socket, "/api/v0/blueprints/workspace", blueprint)
-	if err != nil {
-		return err
+func PostTOMLWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
+	body, resp, err := PostTOML(socket, "/api/v0/blueprints/workspace", blueprint)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // PostJSONBlueprintV0 sends a JSON blueprint string to the API
 // and returns an APIResponse
-func PostJSONBlueprintV0(socket, blueprint string) *APIResponse {
-	body, err := PostJSON(socket, "/api/v0/blueprints/new", blueprint)
-	if err != nil {
-		return err
+func PostJSONBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+	body, resp, err := PostJSON(socket, "/api/v0/blueprints/new", blueprint)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // PostJSONWorkspaceV0 sends a JSON blueprint string to the API
 // and returns an APIResponse
-func PostJSONWorkspaceV0(socket, blueprint string) *APIResponse {
-	body, err := PostJSON(socket, "/api/v0/blueprints/workspace", blueprint)
-	if err != nil {
-		return err
+func PostJSONWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
+	body, resp, err := PostJSON(socket, "/api/v0/blueprints/workspace", blueprint)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // DeleteBlueprintV0 deletes the named blueprint and returns an APIResponse
-func DeleteBlueprintV0(socket, bpName string) *APIResponse {
-	body, err := DeleteRaw(socket, "/api/v0/blueprints/delete/"+bpName)
-	if err != nil {
-		return err
+func DeleteBlueprintV0(socket, bpName string) (*APIResponse, error) {
+	body, resp, err := DeleteRaw(socket, "/api/v0/blueprints/delete/"+bpName)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // DeleteWorkspaceV0 deletes the named blueprint's workspace and returns an APIResponse
-func DeleteWorkspaceV0(socket, bpName string) *APIResponse {
-	body, err := DeleteRaw(socket, "/api/v0/blueprints/workspace/"+bpName)
-	if err != nil {
-		return err
+func DeleteWorkspaceV0(socket, bpName string) (*APIResponse, error) {
+	body, resp, err := DeleteRaw(socket, "/api/v0/blueprints/workspace/"+bpName)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // ListBlueprintsV0 returns a list of blueprint names
-func ListBlueprintsV0(socket string) ([]string, *APIResponse) {
-	body, err := GetJSONAll(socket, "/api/v0/blueprints/list")
+func ListBlueprintsV0(socket string) ([]string, *APIResponse, error) {
+	body, resp, err := GetJSONAll(socket, "/api/v0/blueprints/list")
+	if resp != nil || err != nil {
+		return nil, resp, err
+	}
+	var list BlueprintsListV0
+	err = json.Unmarshal(body, &list)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	var resp BlueprintsListV0
-	jerr := json.Unmarshal(body, &resp)
-	if jerr != nil {
-		return nil, clientError(err)
-	}
-	return resp.Blueprints, nil
+	return list.Blueprints, nil, nil
 }
 
 // GetBlueprintInfoTOMLV0 returns the requested blueprint as a TOML string
-func GetBlueprintInfoTOMLV0(socket, bpName string) (string, *APIResponse) {
-	body, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName+"?format=toml")
-	if err != nil {
-		return "", err
+func GetBlueprintInfoTOMLV0(socket, bpName string) (string, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName+"?format=toml")
+	if resp != nil || err != nil {
+		return "", resp, err
 	}
-	return string(body), nil
+	return string(body), nil, nil
 }
 
 // GetBlueprintsInfoJSONV0 returns the requested blueprints and their changed state
-func GetBlueprintsInfoJSONV0(socket, bpName string) (BlueprintsInfoV0, *APIResponse) {
-	body, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName)
+func GetBlueprintsInfoJSONV0(socket, bpName string) (BlueprintsInfoV0, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName)
+	if resp != nil || err != nil {
+		return BlueprintsInfoV0{}, resp, err
+	}
+	var info BlueprintsInfoV0
+	err = json.Unmarshal(body, &info)
 	if err != nil {
-		return BlueprintsInfoV0{}, err
+		return BlueprintsInfoV0{}, nil, err
 	}
-	var resp BlueprintsInfoV0
-	jerr := json.Unmarshal(body, &resp)
-	if jerr != nil {
-		return BlueprintsInfoV0{}, clientError(err)
-	}
-	return resp, nil
+	return info, nil, nil
 }
 
 // GetBlueprintsChangesV0 returns the changes to the listed blueprints
-func GetBlueprintsChangesV0(socket string, bpNames []string) (BlueprintsChangesV0, *APIResponse) {
+func GetBlueprintsChangesV0(socket string, bpNames []string) (BlueprintsChangesV0, *APIResponse, error) {
 	names := strings.Join(bpNames, ",")
-	body, err := GetRaw(socket, "GET", "/api/v0/blueprints/changes/"+names)
+	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/changes/"+names)
+	if resp != nil || err != nil {
+		return BlueprintsChangesV0{}, resp, err
+	}
+	var changes BlueprintsChangesV0
+	err = json.Unmarshal(body, &changes)
 	if err != nil {
-		return BlueprintsChangesV0{}, err
+		return BlueprintsChangesV0{}, nil, err
 	}
-	var resp BlueprintsChangesV0
-	jerr := json.Unmarshal(body, &resp)
-	if jerr != nil {
-		return BlueprintsChangesV0{}, clientError(err)
-	}
-	return resp, nil
+	return changes, nil, nil
 }
 
 // UndoBlueprintChangeV0 reverts a blueprint to a previous commit
-func UndoBlueprintChangeV0(socket, blueprint, commit string) *APIResponse {
+func UndoBlueprintChangeV0(socket, blueprint, commit string) (*APIResponse, error) {
 	request := fmt.Sprintf("/api/v0/blueprints/undo/%s/%s", blueprint, commit)
-	body, err := PostRaw(socket, request, "", nil)
-	if err != nil {
-		return err
+	body, resp, err := PostRaw(socket, request, "", nil)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // TagBlueprintV0 tags the current blueprint commit as a new revision
-func TagBlueprintV0(socket, blueprint string) *APIResponse {
-	body, err := PostRaw(socket, "/api/v0/blueprints/tag/"+blueprint, "", nil)
-	if err != nil {
-		return err
+func TagBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+	body, resp, err := PostRaw(socket, "/api/v0/blueprints/tag/"+blueprint, "", nil)
+	if resp != nil || err != nil {
+		return resp, err
 	}
 	return NewAPIResponse(body)
 }
 
 // DepsolveBlueprintV0 depsolves the listed blueprint
-func DepsolveBlueprintV0(socket, blueprint string) (BlueprintsDepsolveV0, *APIResponse) {
-	body, err := GetRaw(socket, "GET", "/api/v0/blueprints/depsolve/"+blueprint)
+func DepsolveBlueprintV0(socket, blueprint string) (BlueprintsDepsolveV0, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/depsolve/"+blueprint)
+	if resp != nil || err != nil {
+		return BlueprintsDepsolveV0{}, resp, err
+	}
+	var deps BlueprintsDepsolveV0
+	err = json.Unmarshal(body, &deps)
 	if err != nil {
-		return BlueprintsDepsolveV0{}, err
+		return BlueprintsDepsolveV0{}, nil, err
 	}
-	var resp BlueprintsDepsolveV0
-	jerr := json.Unmarshal(body, &resp)
-	if jerr != nil {
-		return BlueprintsDepsolveV0{}, clientError(err)
-	}
-	return resp, nil
+	return deps, nil, nil
 }
 
 // FreezeBlueprintV0 depsolves the listed blueprint and returns the blueprint with frozen package
 // versions
-func FreezeBlueprintV0(socket, blueprint string) (BlueprintsFreezeV0, *APIResponse) {
-	body, err := GetRaw(socket, "GET", "/api/v0/blueprints/freeze/"+blueprint)
+func FreezeBlueprintV0(socket, blueprint string) (BlueprintsFreezeV0, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/freeze/"+blueprint)
+	if resp != nil || err != nil {
+		return BlueprintsFreezeV0{}, resp, err
+	}
+	var frozen BlueprintsFreezeV0
+	err = json.Unmarshal(body, &frozen)
 	if err != nil {
-		return BlueprintsFreezeV0{}, err
+		return BlueprintsFreezeV0{}, nil, err
 	}
-	var resp BlueprintsFreezeV0
-	jerr := json.Unmarshal(body, &resp)
-	if jerr != nil {
-		return BlueprintsFreezeV0{}, clientError(err)
-	}
-	return resp, nil
+	return frozen, nil, nil
 }

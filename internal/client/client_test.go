@@ -3,7 +3,6 @@
 package client
 
 import (
-	"errors"
 	"io/ioutil"
 	"log"
 	"net"
@@ -41,15 +40,10 @@ func TestRequest(t *testing.T) {
 		t.Fatalf("Request bad route: %d != 404", resp.StatusCode)
 	}
 
-	// Test that apiError returns ClientError when trying to parse non-JSON response
-	aerr := apiError(resp)
-	if aerr.Status != false {
-		t.Fatalf("apiError of 404 status is != false: %#v", aerr)
-	}
-	if len(aerr.AllErrors()) < 1 {
-		t.Fatalf("apiError of 404 did not return error message: %#v", aerr)
-	} else if aerr.Errors[0].ID != "ClientError" {
-		t.Fatalf("apiError of 404 ID is not ClientError: %#v", aerr)
+	// Test that apiError returns an error when trying to parse non-JSON response
+	_, err = apiError(resp)
+	if err == nil {
+		t.Fatalf("apiError of a 404 response did not return an error")
 	}
 
 	// Make a request with a bad offset to trigger a JSON response with Status set to 400
@@ -71,8 +65,8 @@ func TestAPIErrorMsg(t *testing.T) {
 
 func TestAPIResponse(t *testing.T) {
 	resp := APIResponse{Status: true}
-	if resp.Error() != "" {
-		t.Fatalf("Empty APIResponse Errors doesn't return empty string: %v", resp.Error())
+	if resp.String() != "" {
+		t.Fatalf("Empty APIResponse Errors doesn't return empty string: %v", resp.String())
 	}
 
 	resp = APIResponse{Status: false,
@@ -80,7 +74,7 @@ func TestAPIResponse(t *testing.T) {
 			{ID: "ONE_ERROR", Msg: "First message"},
 			{ID: "TWO_ERROR", Msg: "Second message"}},
 	}
-	if diff := cmp.Diff(resp.Error(), "ONE_ERROR: First message"); diff != "" {
+	if diff := cmp.Diff(resp.String(), "ONE_ERROR: First message"); diff != "" {
 		t.Fatalf("APIResponse.Error: %s", diff)
 	}
 	if diff := cmp.Diff(resp.AllErrors(), []string{"ONE_ERROR: First message", "TWO_ERROR: Second message"}); diff != "" {
@@ -88,74 +82,75 @@ func TestAPIResponse(t *testing.T) {
 	}
 }
 
-func TestClientError(t *testing.T) {
-	err := errors.New("a local client error happened")
-	cerr := clientError(err)
-	if cerr.Status != false {
-		t.Fatal("clientError status != false")
-	}
-	if diff := cmp.Diff(cerr.Error(), "ClientError: a local client error happened"); diff != "" {
-		t.Fatalf("clientError message failed: %s", diff)
-	}
-}
-
 func TestGetRaw(t *testing.T) {
 	// Get raw data
-	b, err := GetRaw(socketPath, "GET", "/api/status")
+	b, resp, err := GetRaw(socketPath, "GET", "/api/status")
 	if err != nil {
-		t.Fatalf("GetRaw failed: %v", err)
+		t.Fatalf("GetRaw failed with a client error: %v", err)
+	}
+	if resp != nil {
+		t.Fatalf("GetRaw request failed: %v", err)
 	}
 	if len(b) == 0 {
 		t.Fatal("GetRaw returned an empty string")
 	}
 	// Get an API error
-	b, err = GetRaw(socketPath, "GET", "/api/v0/blueprints/list?offset=bad")
-	if err == nil {
-		t.Fatalf("GetRaw error request did not return an error: %v", b)
+	b, resp, err = GetRaw(socketPath, "GET", "/api/v0/blueprints/list?offset=bad")
+	if err != nil {
+		t.Fatalf("GetRaw bad request failed with a client error: %v", err)
 	}
-	if err.Status != false {
-		t.Fatalf("Status != false: %#v", err)
+	if resp == nil {
+		t.Fatalf("GetRaw bad request did not return an error: %v", b)
 	}
-	if len(err.AllErrors()) < 1 {
-		t.Fatalf("GetRaw error did not return error message: %#v", err)
-	} else if err.Errors[0].ID != "BadLimitOrOffset" {
-		t.Fatalf("GetRaw error ID is not BadLimitOrOffset: %#v", err)
+	if resp.Status != false {
+		t.Fatalf("Status != false: %#v", resp)
+	}
+	if len(resp.AllErrors()) < 1 {
+		t.Fatalf("GetRaw error did not return error message: %#v", resp)
+	} else if resp.Errors[0].ID != "BadLimitOrOffset" {
+		t.Fatalf("GetRaw error ID is not BadLimitOrOffset: %#v", resp)
 	}
 }
 
 func TestGetJSONAll(t *testing.T) {
 	// Get all the projects
-	b, err := GetJSONAll(socketPath, "/api/v0/projects/list")
+	b, resp, err := GetJSONAll(socketPath, "/api/v0/projects/list")
 	if err != nil {
-		t.Fatalf("GetJSONAll failed: %v", err)
+		t.Fatalf("GetJSONAll failed with a client error: %v", err)
+	}
+	if resp != nil {
+		t.Fatalf("GetJSONAll request failed: %v", resp)
 	}
 	if len(b) < 100 {
 		t.Fatalf("GetJSONAll response is too short: %#v", b)
 	}
 
 	// Run it on a route that doesn't support offset/limit
-	b, err = GetJSONAll(socketPath, "/api/status")
+	b, resp, err = GetJSONAll(socketPath, "/api/status")
 	if err == nil {
 		t.Fatalf("GetJSONAll bad route failed: %v", b)
 	}
-	if err.Error() != "ClientError: Response is missing the total value" {
-		t.Fatalf("GetJSONAll bad route has unexpected total value: %v", err)
+	if err.Error() != "Response is missing the total value" {
+		t.Fatalf("GetJSONAll bad route has unexpected total value: %v", resp)
 	}
 }
 
 func TestPostRaw(t *testing.T) {
 	// There are no routes that accept raw POST w/o Content-Type so this ends up testing the error path
-	b, err := PostRaw(socketPath, "/api/v0/blueprints/new", "nobody", nil)
-	if err == nil {
+	b, resp, err := PostRaw(socketPath, "/api/v0/blueprints/new", "nobody", nil)
+	if err != nil {
+		t.Fatalf("PostRaw bad request failed with a client error: %v", err)
+	}
+	if resp == nil {
 		t.Fatalf("PostRaw bad request did not return an error: %v", b)
 	}
-	if err.Status != false {
-		t.Fatalf("PostRaw bad request status != false: %#v", err)
+	if resp.Status != false {
+		t.Fatalf("PostRaw bad request status != false: %#v", resp)
 	}
-	if len(err.AllErrors()) < 1 {
-		t.Fatalf("GetRaw error did not return error message: %#v", err)
-	} else if err.Errors[0].ID != "BlueprintsError" {
-		t.Fatalf("GetRaw error ID is not BlueprintsError: %#v", err)
+	if len(resp.AllErrors()) < 1 {
+		t.Fatalf("GetRaw error did not return error message: %#v", resp)
+	} else if resp.Errors[0].ID != "BlueprintsError" {
+		t.Fatalf("GetRaw error ID is not BlueprintsError: %#v", resp)
 	}
 }
 
@@ -163,9 +158,12 @@ func TestPostTOML(t *testing.T) {
 	blueprint := `name = "test-blueprint"
 				  description = "TOML test blueprint"
 				  version = "0.0.1"`
-	b, err := PostTOML(socketPath, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostTOML(socketPath, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
-		t.Fatalf("PostTOML failed: %v", err)
+		t.Fatalf("PostTOML client failed: %v", err)
+	}
+	if resp != nil {
+		t.Fatalf("PostTOML request failed: %v", resp)
 	}
 	if !strings.Contains(string(b), "true") {
 		t.Fatalf("PostTOML failed: %#v", string(b))
@@ -176,9 +174,12 @@ func TestPostJSON(t *testing.T) {
 	blueprint := `{"name": "test-blueprint",
 				   "description": "JSON test blueprint",
 				   "version": "0.0.1"}`
-	b, err := PostJSON(socketPath, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostJSON(socketPath, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
-		t.Fatalf("PostJSON failed: %v", err)
+		t.Fatalf("PostJSON client failed: %v", err)
+	}
+	if resp != nil {
+		t.Fatalf("PostJSON request failed: %v", resp)
 	}
 	if !strings.Contains(string(b), "true") {
 		t.Fatalf("PostJSON failed: %#v", string(b))
