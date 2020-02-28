@@ -72,9 +72,13 @@ func (c *checkBlueprintsV0) CheckPostTOML() bool {
 		name="root"
 		password="qweqweqwe"
 		`
-	resp := client.PostTOMLBlueprintV0(c.socket, bp)
+	resp, err := client.PostTOMLBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -94,9 +98,13 @@ func (c *checkBlueprintsV0) CheckPostJSON() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -123,9 +131,13 @@ func (c *checkBlueprintsV0) CheckPostTOMLWS() bool {
 		name="root"
 		password="qweqweqwe"
 		`
-	resp := client.PostTOMLWorkspaceV0(c.socket, bp)
+	resp, err := client.PostTOMLWorkspaceV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -145,9 +157,13 @@ func (c *checkBlueprintsV0) CheckPostJSONWS() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp := client.PostJSONWorkspaceV0(c.socket, bp)
+	resp, err := client.PostJSONWorkspaceV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -168,16 +184,24 @@ func (c *checkBlueprintsV0) CheckDelete() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Delete the blueprint
-	resp = client.DeleteBlueprintV0(c.socket, "test-delete-blueprint-v0")
+	resp, err = client.DeleteBlueprintV0(c.socket, "test-delete-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
@@ -199,16 +223,24 @@ func (c *checkBlueprintsV0) CheckDeleteNewWS() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp := client.PostJSONWorkspaceV0(c.socket, bp)
+	resp, err := client.PostJSONWorkspaceV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Delete the blueprint
-	resp = client.DeleteWorkspaceV0(c.socket, "test-delete-new-blueprint-ws-v0")
+	resp, err = client.DeleteWorkspaceV0(c.socket, "test-delete-new-blueprint-ws-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
@@ -230,9 +262,13 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
@@ -246,16 +282,24 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp = client.PostJSONWorkspaceV0(c.socket, bp)
+	resp, err = client.PostJSONWorkspaceV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint, make sure it is the modified one and that changes = true
-	info, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-delete-blueprint-changes-ws-v0")
+	info, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-delete-blueprint-changes-ws-v0")
 	if err != nil {
-		log.Printf("FAIL: %s failed: %s", name, err)
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s BlueprintsInfo request failed: %s", name, api)
 		return false
 	}
 
@@ -290,16 +334,24 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 	}
 
 	// Delete the blueprint from the workspace
-	resp = client.DeleteWorkspaceV0(c.socket, "test-delete-blueprint-changes-ws-v0")
+	resp, err = client.DeleteWorkspaceV0(c.socket, "test-delete-blueprint-changes-ws-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint, make sure it is the un-modified one
-	info, err = client.GetBlueprintsInfoJSONV0(c.socket, "test-delete-blueprint-changes-ws-v0")
+	info, api, err = client.GetBlueprintsInfoJSONV0(c.socket, "test-delete-blueprint-changes-ws-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s BlueprintsInfo request failed: %s", name, api)
 		return false
 	}
 
@@ -359,17 +411,25 @@ func (c *checkBlueprintsV0) CheckList() bool {
 	}`}
 
 	for i := range bps {
-		resp := client.PostJSONBlueprintV0(c.socket, bps[i])
+		resp, err := client.PostJSONBlueprintV0(c.socket, bps[i])
+		if err != nil {
+			log.Printf("FAIL: %s failed with a client error: %s", name, err)
+			return false
+		}
 		if resp.Status != true {
-			log.Printf("FAIL: %s failed: %s", name, resp.Error())
+			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
 	}
 
 	// Get the list of blueprints
-	list, err := client.ListBlueprintsV0(c.socket)
+	list, api, err := client.ListBlueprintsV0(c.socket)
 	if err != nil {
-		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		log.Printf("FAIL: %s failed with a client error: %s", name, err.Error())
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s ListBlueprints failed: %s", name, api)
 		return false
 	}
 
@@ -398,16 +458,24 @@ func (c *checkBlueprintsV0) CheckGetTOML() bool {
 	}`
 
 	// Post a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get it as TOML
-	body, err := client.GetBlueprintInfoTOMLV0(c.socket, "test-get-blueprint-1-v0")
+	body, api, err := client.GetBlueprintInfoTOMLV0(c.socket, "test-get-blueprint-1-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintInfo failed: %s", name, api)
 		return false
 	}
 
@@ -440,16 +508,24 @@ func (c *checkBlueprintsV0) CheckGetJSON() bool {
 	}`
 
 	// Post a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint and its changed state
-	info, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-get-blueprint-2-v0")
+	info, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-get-blueprint-2-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsInfo failed: %s", name, api)
 		return false
 	}
 
@@ -495,9 +571,13 @@ func (c *checkBlueprintsV0) CheckBumpVersion() bool {
 	}`
 
 	// List blueprints
-	list, err := client.ListBlueprintsV0(c.socket)
+	list, api, err := client.ListBlueprintsV0(c.socket)
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s ListBlueprints failed: %s", name, api)
 		return false
 	}
 
@@ -505,31 +585,47 @@ func (c *checkBlueprintsV0) CheckBumpVersion() bool {
 	sorted := sort.StringSlice(list)
 	if isStringInSlice(sorted, "test-bump-blueprint-1-v0") {
 		// Delete this blueprint if it already exists
-		resp := client.DeleteBlueprintV0(c.socket, "test-bump-blueprint-1-v0")
+		resp, err := client.DeleteBlueprintV0(c.socket, "test-bump-blueprint-1-v0")
+		if err != nil {
+			log.Printf("FAIL: %s failed with a client error: %s", name, err)
+			return false
+		}
 		if resp.Status != true {
-			log.Printf("FAIL: %s failed: %s", name, resp.Error())
+			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
 	}
 
 	// Post a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Post a blueprint again to bump verion to 2.1.3
-	resp = client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err = client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint and its changed state
-	info, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-bump-blueprint-1-v0")
+	info, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-bump-blueprint-1-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsInfo failed: %s", name, api)
 		return false
 	}
 
@@ -582,17 +678,25 @@ func (c *checkBlueprintsV0) CheckBlueprintChangesV0() bool {
 
 	// Push 3 changes to the blueprint
 	for i := range bps {
-		resp := client.PostJSONBlueprintV0(c.socket, bps[i])
+		resp, err := client.PostJSONBlueprintV0(c.socket, bps[i])
+		if err != nil {
+			log.Printf("FAIL: %s failed with a client error: %s", name, err)
+			return false
+		}
 		if resp.Status != true {
-			log.Printf("FAIL: %s failed: %s", name, resp.Error())
+			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
 	}
 
 	// List the changes
-	changes, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-blueprint-changes-v0"})
+	changes, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-blueprint-changes-v0"})
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsChanges failed: %s", name, api)
 		return false
 	}
 
@@ -637,16 +741,24 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 	}`}
 
 	// Push original version of the blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bps[0])
+	resp, err := client.PostJSONBlueprintV0(c.socket, bps[0])
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the commit hash
-	changes, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-undo-blueprint-v0"})
+	changes, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-undo-blueprint-v0"})
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsChanges failed: %s", name, api)
 		return false
 	}
 
@@ -667,16 +779,24 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 	}
 
 	// Push the new version with wrong bash version
-	resp = client.PostJSONBlueprintV0(c.socket, bps[1])
+	resp, err = client.PostJSONBlueprintV0(c.socket, bps[1])
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint, confirm bash version is '0.5.*'
-	info, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-undo-blueprint-v0")
+	info, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-undo-blueprint-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsInfo failed: %s", name, api)
 		return false
 	}
 
@@ -698,16 +818,24 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 	}
 
 	// Revert the blueprint to the original version
-	resp = client.UndoBlueprintChangeV0(c.socket, "test-undo-blueprint-v0", commit)
+	resp, err = client.UndoBlueprintChangeV0(c.socket, "test-undo-blueprint-v0", commit)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
 
 	// Get the blueprint, confirm bash version is '*'
-	info, err = client.GetBlueprintsInfoJSONV0(c.socket, "test-undo-blueprint-v0")
+	info, api, err = client.GetBlueprintsInfoJSONV0(c.socket, "test-undo-blueprint-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsInfo failed: %s", name, api)
 		return false
 	}
 
@@ -756,23 +884,35 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 	}`}
 
 	// Push a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bps[0])
+	resp, err := client.PostJSONBlueprintV0(c.socket, bps[0])
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s POST failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
 
 	// Tag the blueprint
-	tagResp := client.TagBlueprintV0(c.socket, "test-tag-blueprint-v0")
+	tagResp, err := client.TagBlueprintV0(c.socket, "test-tag-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if tagResp.Status != true {
-		log.Printf("FAIL: %s Tag failed: %s", name, tagResp.Error())
+		log.Printf("FAIL: %s Tag failed: %s", name, tagResp)
 		return false
 	}
 
 	// Get changes, get the blueprint's revision
-	changes, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-tag-blueprint-v0"})
+	changes, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-tag-blueprint-v0"})
 	if err != nil {
-		log.Printf("FAIL: %s GET changes failed: %s", name, err)
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsChange failed: %s", name, api)
 		return false
 	}
 
@@ -793,23 +933,35 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 	}
 
 	// Push a new version of the blueprint
-	resp = client.PostJSONBlueprintV0(c.socket, bps[1])
+	resp, err = client.PostJSONBlueprintV0(c.socket, bps[1])
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s POST failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
 
 	// Tag the blueprint
-	tagResp = client.TagBlueprintV0(c.socket, "test-tag-blueprint-v0")
+	tagResp, err = client.TagBlueprintV0(c.socket, "test-tag-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if tagResp.Status != true {
-		log.Printf("FAIL: %s Tag failed: %s", name, tagResp.Error())
+		log.Printf("FAIL: %s Tag failed: %s", name, tagResp)
 		return false
 	}
 
 	// Get changes, confirm that Revision is revision +1
-	changes, err = client.GetBlueprintsChangesV0(c.socket, []string{"test-tag-blueprint-v0"})
+	changes, api, err = client.GetBlueprintsChangesV0(c.socket, []string{"test-tag-blueprint-v0"})
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s GetBlueprintsChanges failed: %s", name, api)
 		return false
 	}
 
@@ -846,16 +998,24 @@ func (c *checkBlueprintsV0) CheckBlueprintDepsolveV0() bool {
 	}`
 
 	// Push a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s POST failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
 
 	// Depsolve the blueprint
-	deps, err := client.DepsolveBlueprintV0(c.socket, "test-deps-blueprint-v0")
+	deps, api, err := client.DepsolveBlueprintV0(c.socket, "test-deps-blueprint-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s DepsolveBlueprint failed: %s", name, api)
 		return false
 	}
 
@@ -889,16 +1049,24 @@ func (c *checkBlueprintsV0) CheckBlueprintFreezeV0() bool {
 	}`
 
 	// Push a blueprint
-	resp := client.PostJSONBlueprintV0(c.socket, bp)
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
 	if resp.Status != true {
-		log.Printf("FAIL: %s POST failed: %s", name, resp.Error())
+		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
 
 	// Freeze the blueprint
-	frozen, err := client.FreezeBlueprintV0(c.socket, "test-freeze-blueprint-v0")
+	frozen, api, err := client.FreezeBlueprintV0(c.socket, "test-freeze-blueprint-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		return false
+	}
+	if api != nil {
+		log.Printf("FAIL: %s FreezeBlueprint failed: %s", name, api)
 		return false
 	}
 

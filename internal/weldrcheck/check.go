@@ -69,9 +69,14 @@ func Run(socket string) {
 		os.Exit(1)
 	}
 	// Does the server respond to /api/status?
-	status, err := client.GetStatusV0(socket)
+	status, resp, err := client.GetStatusV0(socket)
 	if err != nil {
-		log.Printf("ERROR: status request failed: %s", err)
+		log.Printf("ERROR: status request failed with client error: %s", err)
+		// If status check fails there is no point in continuing
+		os.Exit(1)
+	}
+	if resp != nil {
+		log.Printf("ERROR: status request failed: %v", resp)
 		// If status check fails there is no point in continuing
 		os.Exit(1)
 	}
