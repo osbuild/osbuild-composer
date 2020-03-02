@@ -74,51 +74,39 @@ func NewRegistry(distros ...Distro) *Registry {
 	reg := &Registry{
 		distros: make(map[common.Distribution]Distro),
 	}
-	for _, dist := range distros {
-		reg.register(dist)
+	for _, distro := range distros {
+		distroTag := distro.Distribution()
+		if _, exists := reg.distros[distroTag]; exists {
+			panic("a distro with this name already exists: " + distro.Name())
+		}
+		reg.distros[distroTag] = distro
 	}
 	return reg
 }
 
 // Create a new Registry containing all known distros.
 func NewDefaultRegistry(confPaths []string) *Registry {
-	distros := &Registry{
-		distros: make(map[common.Distribution]Distro),
-	}
 	f30 := fedora30.New(confPaths)
 	if f30 == nil {
 		panic("Attempt to register Fedora 30 failed")
 	}
-	distros.register(f30)
 	f31 := fedora31.New(confPaths)
 	if f31 == nil {
 		panic("Attempt to register Fedora 31 failed")
 	}
-	distros.register(f31)
 	f32 := fedora32.New(confPaths)
 	if f32 == nil {
 		panic("Attempt to register Fedora 32 failed")
 	}
-	distros.register(f32)
 	el81 := rhel81.New(confPaths)
 	if el81 == nil {
 		panic("Attempt to register RHEL 8.1 failed")
 	}
-	distros.register(el81)
 	el82 := rhel82.New(confPaths)
 	if el82 == nil {
 		panic("Attempt to register RHEL 8.2 failed")
 	}
-	distros.register(el82)
-	return distros
-}
-
-func (r *Registry) register(distro Distro) {
-	distroTag := distro.Distribution()
-	if _, exists := r.distros[distroTag]; exists {
-		panic("a distro with this name already exists: " + distro.Name())
-	}
-	r.distros[distroTag] = distro
+	return NewRegistry(f30, f31, f32, el81, el82)
 }
 
 func (r *Registry) GetDistro(name string) Distro {
