@@ -400,6 +400,44 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) {
 	})
 }
 
+// TagBlueprint will tag the most recent commit
+// It will return an error if the blueprint doesn't exist
+func (s *Store) TagBlueprint(name string) error {
+	return s.change(func() error {
+		_, ok := s.Blueprints[name]
+		if !ok {
+			return errors.New("Unknown blueprint")
+		}
+
+		// Get the latest revision for this blueprint, and the most recent commit
+		var revision int
+		var timestamp string
+		var commit blueprint.Change
+		for _, c := range s.BlueprintsChanges[name] {
+			if c.Revision != nil && *c.Revision > revision {
+				revision = *c.Revision
+			}
+			if c.Timestamp > timestamp {
+				timestamp = c.Timestamp
+				commit = c
+			}
+		}
+		if len(timestamp) == 0 {
+			return errors.New("No commits for blueprint")
+		}
+
+		// The most recent commit already has a revision, don't bump it
+		if commit.Revision != nil {
+			return nil
+		}
+		// Bump the revision (if there was none it will start at 1)
+		revision++
+		commit.Revision = &revision
+		s.BlueprintsChanges[name][commit.Commit] = commit
+		return nil
+	})
+}
+
 func (s *Store) GetCompose(id uuid.UUID) (compose.Compose, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
