@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 )
 
 func TestListOutputFormats(t *testing.T) {
@@ -19,8 +19,7 @@ func TestListOutputFormats(t *testing.T) {
 		"vmdk",
 	}
 
-	distros := distro.NewDefaultRegistry([]string{"../../../"})
-	f30 := distros.GetDistro("fedora-30")
+	f30 := fedora30.New([]string{"../../../"})
 	if got := f30.ListOutputFormats(); !reflect.DeepEqual(got, want) {
 		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
 	}
@@ -93,8 +92,7 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			distros := distro.NewDefaultRegistry([]string{"../../../"})
-			f30 := distros.GetDistro("fedora-30")
+			f30 := fedora30.New([]string{"../../../"})
 			got, got1, err := f30.FilenameFromType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilenameFromType() error = %v, wantErr %v", err, tt.wantErr)
