@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 
@@ -87,7 +88,12 @@ func main() {
 	}
 	packages = append(pkgs, packages...)
 
-	rpmmd := rpmmd.NewRPMMD()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic("os.UserHomeDir(): " + err.Error())
+	}
+
+	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
 	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, d.Repositories(archArg), d.ModulePlatformID(), false)
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
