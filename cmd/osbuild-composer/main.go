@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"io/ioutil"
 	"log"
+	"path"
 	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -73,7 +74,12 @@ func main() {
 	weldrListener := composerListeners[0]
 	jobListener := composerListeners[1]
 
-	rpm := rpmmd.NewRPMMD()
+	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
+	if !ok {
+		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+	}
+
+	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
 	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 
 	distribution, err := distros.FromHost()

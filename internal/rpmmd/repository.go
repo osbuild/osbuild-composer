@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"sort"
 	"time"
 
@@ -211,22 +210,22 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 	return nil
 }
 
-type rpmmdImpl struct{}
-
-func NewRPMMD() RPMMD {
-	return &rpmmdImpl{}
+type rpmmdImpl struct {
+	CacheDir string
 }
 
-func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
-	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
-	if !ok {
-		panic("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+func NewRPMMD(cacheDir string) RPMMD {
+	return &rpmmdImpl{
+		CacheDir: cacheDir,
 	}
+}
+
+func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (PackageList, map[string]string, error) {
 	var arguments = struct {
 		Repos            []RepoConfig `json:"repos"`
 		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
-	}{repos, path.Join(cacheDirectory, "rpmmd"), modulePlatformID}
+	}{repos, r.CacheDir, modulePlatformID}
 	var reply struct {
 		Checksums map[string]string `json:"checksums"`
 		Packages  PackageList       `json:"packages"`
@@ -238,11 +237,7 @@ func (*rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string) (Pa
 	return reply.Packages, reply.Checksums, err
 }
 
-func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error) {
-	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
-	if !ok {
-		panic("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
-	}
+func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID string, clean bool) ([]PackageSpec, map[string]string, error) {
 	var arguments = struct {
 		PackageSpecs     []string     `json:"package-specs"`
 		ExcludSpecs      []string     `json:"exclude-specs"`
@@ -250,7 +245,7 @@ func (*rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, mod
 		CacheDir         string       `json:"cachedir"`
 		ModulePlatformID string       `json:"module_platform_id"`
 		Clean            bool         `json:"clean,omitempty"`
-	}{specs, excludeSpecs, repos, path.Join(cacheDirectory, "rpmmd"), modulePlatformID, clean}
+	}{specs, excludeSpecs, repos, r.CacheDir, modulePlatformID, clean}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
