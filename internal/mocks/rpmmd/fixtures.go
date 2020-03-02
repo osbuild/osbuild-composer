@@ -94,7 +94,7 @@ func createBaseStoreFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	r := distro_mock.NewRegistry()
+	r := distro_mock.NewDefaultRegistry()
 	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b
@@ -191,7 +191,7 @@ func createStoreWithoutComposesFixture() *store.Store {
 	}
 
 	d := test_distro.New()
-	r := distro_mock.NewRegistry()
+	r := distro_mock.NewDefaultRegistry()
 	s := store.New(nil, d, *r)
 
 	s.Blueprints[bName] = b

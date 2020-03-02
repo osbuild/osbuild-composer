@@ -19,7 +19,7 @@ func TestListOutputFormats(t *testing.T) {
 		"vmdk",
 	}
 
-	distros := distro.NewRegistry([]string{"../../../"})
+	distros := distro.NewDefaultRegistry([]string{"../../../"})
 	f32 := distros.GetDistro("fedora-32")
 	if got := f32.ListOutputFormats(); !reflect.DeepEqual(got, want) {
 		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
@@ -93,7 +93,7 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			distros := distro.NewRegistry([]string{"../../../"})
+			distros := distro.NewDefaultRegistry([]string{"../../../"})
 			f32 := distros.GetDistro("fedora-32")
 			got, got1, err := f32.FilenameFromType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {

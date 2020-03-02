@@ -80,7 +80,7 @@ func main() {
 	}
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
-	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+	distros := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 
 	distribution, err := distros.FromHost()
 	if err != nil {

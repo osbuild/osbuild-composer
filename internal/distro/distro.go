@@ -70,15 +70,18 @@ type Registry struct {
 	distros map[common.Distribution]Distro
 }
 
-func WithSingleDistro(dist Distro) *Registry {
+func NewRegistry(distros ...Distro) *Registry {
 	reg := &Registry{
 		distros: make(map[common.Distribution]Distro),
 	}
-	reg.register(dist)
+	for _, dist := range distros {
+		reg.register(dist)
+	}
 	return reg
 }
 
-func NewRegistry(confPaths []string) *Registry {
+// Create a new Registry containing all known distros.
+func NewDefaultRegistry(confPaths []string) *Registry {
 	distros := &Registry{
 		distros: make(map[common.Distribution]Distro),
 	}

@@ -34,7 +34,7 @@ func TestBasic(t *testing.T) {
 
 	for _, c := range cases {
 		distroStruct := test_distro.New()
-		registry := distro_mock.NewRegistry()
+		registry := distro_mock.NewDefaultRegistry()
 		api := jobqueue.New(nil, store.New(nil, distroStruct, *registry))
 
 		test.TestNonJsonRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedResponse)
@@ -44,7 +44,7 @@ func TestBasic(t *testing.T) {
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry := distro_mock.NewRegistry()
+	registry := distro_mock.NewDefaultRegistry()
 	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 
@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry := distro_mock.NewRegistry()
+	registry := distro_mock.NewDefaultRegistry()
 	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 
