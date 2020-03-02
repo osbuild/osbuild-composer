@@ -129,7 +129,12 @@ with tempfile.TemporaryDirectory() as persistdir:
             exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
 
         dependencies = []
-        for package in base.transaction.install_set:
+        for tsi in base.transaction:
+            # avoid using the install_set() helper, as it does not guarantee a stable order
+            if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
+                continue
+            package = tsi.pkg
+
             dependencies.append({
                 "name": package.name,
                 "epoch": package.epoch,
