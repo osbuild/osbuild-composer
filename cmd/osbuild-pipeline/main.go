@@ -50,8 +50,6 @@ func main() {
 		return
 	}
 
-	// Validate image type
-
 	blueprint := &blueprint.Blueprint{}
 	if blueprintArg != "" {
 		file, err := ioutil.ReadFile(blueprintArg)
