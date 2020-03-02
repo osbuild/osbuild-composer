@@ -84,6 +84,7 @@ func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logge
 	api.router.POST("/api/v:version/blueprints/new", api.blueprintsNewHandler)
 	api.router.POST("/api/v:version/blueprints/workspace", api.blueprintsWorkspaceHandler)
 	api.router.POST("/api/v:version/blueprints/undo/:blueprint/:commit", api.blueprintUndoHandler)
+	api.router.POST("/api/v:version/blueprints/tag/:blueprint", api.blueprintsTagHandler)
 	api.router.DELETE("/api/v:version/blueprints/delete/:blueprint", api.blueprintDeleteHandler)
 	api.router.DELETE("/api/v:version/blueprints/workspace/:blueprint", api.blueprintDeleteWorkspaceHandler)
 
@@ -1275,6 +1276,24 @@ func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, requ
 	}
 
 	api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint"))
+	statusResponseOK(writer)
+}
+
+// blueprintsTagHandler tags the current blueprint commit as a new revision
+func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	err := api.store.TagBlueprint(params.ByName("blueprint"))
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 	statusResponseOK(writer)
 }
 
