@@ -46,7 +46,7 @@ func (e *TargetsError) Error() string {
 }
 
 func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error) {
-	distros := distro.NewRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+	distros := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 	d := distros.GetDistro(job.Distro)
 	if d == nil {
 		return nil, fmt.Errorf("unknown distro: %s", job.Distro)
