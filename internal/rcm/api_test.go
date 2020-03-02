@@ -49,7 +49,10 @@ func TestBasicRcmAPI(t *testing.T) {
 		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, `{"error_reason":"Compose UUID does not exist"}`},
 	}
 
-	registry := distro_mock.NewDefaultRegistry()
+	registry, err := distro_mock.NewDefaultRegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
 	distroStruct := fedoratest.New()
 	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
 
@@ -74,7 +77,10 @@ func TestBasicRcmAPI(t *testing.T) {
 func TestSubmitCompose(t *testing.T) {
 	// Test the most basic use case: Submit a new job and get its status.
 	distroStruct := fedoratest.New()
-	registry := distro_mock.NewDefaultRegistry()
+	registry, err := distro_mock.NewDefaultRegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
 	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
 
 	var submit_reply struct {

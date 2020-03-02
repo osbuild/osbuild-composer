@@ -3,6 +3,7 @@ package distro
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -70,41 +71,41 @@ type Registry struct {
 	distros map[common.Distribution]Distro
 }
 
-func NewRegistry(distros ...Distro) *Registry {
+func NewRegistry(distros ...Distro) (*Registry, error) {
 	reg := &Registry{
 		distros: make(map[common.Distribution]Distro),
 	}
 	for _, distro := range distros {
 		distroTag := distro.Distribution()
 		if _, exists := reg.distros[distroTag]; exists {
-			panic("a distro with this name already exists: " + distro.Name())
+			return nil, fmt.Errorf("NewRegistry: passed two distros with the same name: %s", distro.Name())
 		}
 		reg.distros[distroTag] = distro
 	}
-	return reg
+	return reg, nil
 }
 
 // Create a new Registry containing all known distros.
-func NewDefaultRegistry(confPaths []string) *Registry {
-	f30 := fedora30.New(confPaths)
-	if f30 == nil {
-		panic("Attempt to register Fedora 30 failed")
+func NewDefaultRegistry(confPaths []string) (*Registry, error) {
+	f30, err := fedora30.New(confPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading fedora30: %v", err)
 	}
-	f31 := fedora31.New(confPaths)
-	if f31 == nil {
-		panic("Attempt to register Fedora 31 failed")
+	f31, err := fedora31.New(confPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading fedora31: %v", err)
 	}
-	f32 := fedora32.New(confPaths)
-	if f32 == nil {
-		panic("Attempt to register Fedora 32 failed")
+	f32, err := fedora32.New(confPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading fedora32: %v", err)
 	}
-	el81 := rhel81.New(confPaths)
-	if el81 == nil {
-		panic("Attempt to register RHEL 8.1 failed")
+	el81, err := rhel81.New(confPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading rhel81: %v", err)
 	}
-	el82 := rhel82.New(confPaths)
-	if el82 == nil {
-		panic("Attempt to register RHEL 8.2 failed")
+	el82, err := rhel82.New(confPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading rhel82: %v", err)
 	}
 	return NewRegistry(f30, f31, f32, el81, el82)
 }

@@ -2,6 +2,7 @@ package fedora32
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
@@ -46,7 +47,7 @@ type output struct {
 const Distro = common.Fedora32
 const ModulePlatformID = "platform:f32"
 
-func New(confPaths []string) *Fedora32 {
+func New(confPaths []string) (*Fedora32, error) {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := Fedora32{
@@ -65,8 +66,7 @@ func New(confPaths []string) *Fedora32 {
 
 	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
 	if err != nil {
-		log.Printf("Could not load repository data for %s: %s", r.Name(), err.Error())
-		return nil
+		return nil, fmt.Errorf("Could not load repository data for %s: %s", r.Name(), err.Error())
 	}
 
 	repos, exists := repoMap["x86_64"]
@@ -307,7 +307,7 @@ func New(confPaths []string) *Fedora32 {
 		},
 	}
 
-	return &r
+	return &r, nil
 }
 
 func (r *Fedora32) Name() string {

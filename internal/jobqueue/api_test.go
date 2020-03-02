@@ -34,7 +34,10 @@ func TestBasic(t *testing.T) {
 
 	for _, c := range cases {
 		distroStruct := test_distro.New()
-		registry := distro_mock.NewDefaultRegistry()
+		registry, err := distro_mock.NewDefaultRegistry()
+		if err != nil {
+			t.Fatal(err)
+		}
 		api := jobqueue.New(nil, store.New(nil, distroStruct, *registry))
 
 		test.TestNonJsonRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedResponse)
@@ -44,11 +47,14 @@ func TestBasic(t *testing.T) {
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry := distro_mock.NewDefaultRegistry()
+	registry, err := distro_mock.NewDefaultRegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
 	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 
-	err := store.PushCompose(id, &blueprint.Blueprint{}, nil, nil, map[string]string{"test-repo": "test:foo"}, "x86_64", "qcow2", 0, nil)
+	err = store.PushCompose(id, &blueprint.Blueprint{}, nil, nil, map[string]string{"test-repo": "test:foo"}, "x86_64", "qcow2", 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -60,7 +66,10 @@ func TestCreate(t *testing.T) {
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry := distro_mock.NewDefaultRegistry()
+	registry, err := distro_mock.NewDefaultRegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
 	store := store.New(nil, distroStruct, *registry)
 	api := jobqueue.New(nil, store)
 

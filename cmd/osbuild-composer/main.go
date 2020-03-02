@@ -80,7 +80,11 @@ func main() {
 	}
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
-	distros := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+
+	distros, err := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+	if err != nil {
+		log.Fatalf("Error loading distros: %v", err)
+	}
 
 	distribution, err := distros.FromHost()
 	if err != nil {
