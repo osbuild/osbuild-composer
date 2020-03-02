@@ -122,9 +122,7 @@ export GOPATH=$PWD/_build:%{gopath}
 %{_datadir}/osbuild-composer/
 %{_unitdir}/osbuild-composer.service
 %{_unitdir}/osbuild-composer.socket
-%{_unitdir}/osbuild-remote-worker@.service
 %{_unitdir}/osbuild-remote-worker.socket
-%{_unitdir}/osbuild-worker@.service
 %{_sysusersdir}/osbuild-composer.conf
 
 %package rcm
@@ -161,6 +159,8 @@ The worker for osbuild-composer
 
 %files worker
 %{_libexecdir}/osbuild-composer/osbuild-worker
+%{_unitdir}/osbuild-worker@.service
+%{_unitdir}/osbuild-remote-worker@.service
 
 %post worker
 %systemd_post osbuild-worker@.service osbuild-remote-worker@.service
