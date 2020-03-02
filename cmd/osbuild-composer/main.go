@@ -134,9 +134,7 @@ func main() {
 		}
 	}
 
-	go func() {
-		err := weldrAPI.Serve(weldrListener)
-		common.PanicOnError(err)
-	}()
+	err = weldrAPI.Serve(weldrListener)
+	common.PanicOnError(err)
 
 }
