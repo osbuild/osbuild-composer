@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
 )
 
 func TestListOutputFormats(t *testing.T) {
@@ -19,9 +19,8 @@ func TestListOutputFormats(t *testing.T) {
 		"vmdk",
 	}
 
-	distros := distro.NewDefaultRegistry([]string{"../../../"})
-	rhel81 := distros.GetDistro("rhel-8.2")
-	if got := rhel81.ListOutputFormats(); !reflect.DeepEqual(got, want) {
+	el81 := rhel81.New([]string{"../../../"})
+	if got := el81.ListOutputFormats(); !reflect.DeepEqual(got, want) {
 		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
 	}
 }
@@ -93,9 +92,8 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			distros := distro.NewDefaultRegistry([]string{"../../../"})
-			rhel81 := distros.GetDistro("rhel-8.2")
-			got, got1, err := rhel81.FilenameFromType(tt.args.outputFormat)
+			el81 := rhel81.New([]string{"../../../"})
+			got, got1, err := el81.FilenameFromType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilenameFromType() error = %v, wantErr %v", err, tt.wantErr)
 				return
