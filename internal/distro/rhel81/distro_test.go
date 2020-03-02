@@ -19,7 +19,11 @@ func TestListOutputFormats(t *testing.T) {
 		"vmdk",
 	}
 
-	el81 := rhel81.New([]string{"../../../"})
+	el81, err := rhel81.New([]string{"../../../"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if got := el81.ListOutputFormats(); !reflect.DeepEqual(got, want) {
 		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
 	}
@@ -92,7 +96,10 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			el81 := rhel81.New([]string{"../../../"})
+			el81, err := rhel81.New([]string{"../../../"})
+			if err != nil {
+				t.Fatal(err)
+			}
 			got, got1, err := el81.FilenameFromType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilenameFromType() error = %v, wantErr %v", err, tt.wantErr)

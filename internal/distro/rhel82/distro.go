@@ -2,6 +2,7 @@ package rhel82
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
@@ -47,7 +48,7 @@ type output struct {
 const Distro = common.RHEL82
 const ModulePlatformID = "platform:el8"
 
-func New(confPaths []string) *RHEL82 {
+func New(confPaths []string) (*RHEL82, error) {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
@@ -70,8 +71,7 @@ func New(confPaths []string) *RHEL82 {
 
 	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
 	if err != nil {
-		log.Printf("Could not load repository data for %s: %s", r.Name(), err.Error())
-		return nil
+		return nil, fmt.Errorf("Could not load repository data for %s: %s", r.Name(), err.Error())
 	}
 
 	repos, exists := repoMap["x86_64"]
@@ -446,7 +446,7 @@ func New(confPaths []string) *RHEL82 {
 		},
 	}
 
-	return &r
+	return &r, nil
 }
 
 func (r *RHEL82) Name() string {
