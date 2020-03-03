@@ -178,7 +178,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
-	err = api.store.PushComposeRequest(common.ComposeRequest{
+	err = api.store.PushComposeRequest(store.ComposeRequest{
 		Blueprint:       blueprint.Blueprint{},
 		ComposeID:       composeUUID,
 		Distro:          composeRequest.Distribution,

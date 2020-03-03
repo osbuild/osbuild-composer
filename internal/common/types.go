@@ -3,9 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // CustomJsonConversionError is thrown when parsing strings into enumerations
@@ -338,15 +335,4 @@ func (ut UploadTarget) MarshalJSON() ([]byte, error) {
 type ImageRequest struct {
 	ImgType  ImageType      `json:"image_type"`
 	UpTarget []UploadTarget `json:"upload_targets"`
-}
-
-// ComposeRequest is used to submit a new compose to the store
-type ComposeRequest struct {
-	Blueprint       blueprint.Blueprint `json:"blueprint"`
-	ComposeID       uuid.UUID           `json:"uuid"`
-	Distro          Distribution        `json:"distro"`
-	Arch            Architecture        `json:"arch"`
-	Repositories    []rpmmd.RepoConfig  `json:"repositories"`
-	Checksums       map[string]string   `json:"checksums"`
-	RequestedImages []ImageRequest      `json:"requested_images"`
 }
