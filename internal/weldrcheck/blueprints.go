@@ -77,7 +77,7 @@ func (c *checkBlueprintsV0) CheckPostTOML() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -103,7 +103,7 @@ func (c *checkBlueprintsV0) CheckPostJSON() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -136,7 +136,7 @@ func (c *checkBlueprintsV0) CheckPostTOMLWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -162,7 +162,7 @@ func (c *checkBlueprintsV0) CheckPostJSONWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -189,7 +189,7 @@ func (c *checkBlueprintsV0) CheckDelete() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -200,7 +200,7 @@ func (c *checkBlueprintsV0) CheckDelete() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -228,7 +228,7 @@ func (c *checkBlueprintsV0) CheckDeleteNewWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -239,7 +239,7 @@ func (c *checkBlueprintsV0) CheckDeleteNewWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -267,7 +267,7 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -287,7 +287,7 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -323,7 +323,7 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		return false
 	}
 
-	if info.Changes[0].Changed != true {
+	if !info.Changes[0].Changed {
 		log.Printf("FAIL: %s failed: wrong change state returned (false)", name)
 		return false
 	}
@@ -339,7 +339,7 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -375,7 +375,7 @@ func (c *checkBlueprintsV0) CheckDeleteChangesWS() bool {
 		return false
 	}
 
-	if info.Changes[0].Changed != false {
+	if info.Changes[0].Changed {
 		log.Printf("FAIL: %s failed: wrong change state returned (true)", name)
 		return false
 	}
@@ -416,7 +416,7 @@ func (c *checkBlueprintsV0) CheckList() bool {
 			log.Printf("FAIL: %s failed with a client error: %s", name, err)
 			return false
 		}
-		if resp.Status != true {
+		if !resp.Status {
 			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
@@ -463,7 +463,7 @@ func (c *checkBlueprintsV0) CheckGetTOML() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -513,7 +513,7 @@ func (c *checkBlueprintsV0) CheckGetJSON() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -549,7 +549,7 @@ func (c *checkBlueprintsV0) CheckGetJSON() bool {
 		return false
 	}
 
-	if info.Changes[0].Changed != false {
+	if info.Changes[0].Changed {
 		log.Printf("FAIL: %s failed: unexpected changes", name)
 		return false
 	}
@@ -590,7 +590,7 @@ func (c *checkBlueprintsV0) CheckBumpVersion() bool {
 			log.Printf("FAIL: %s failed with a client error: %s", name, err)
 			return false
 		}
-		if resp.Status != true {
+		if !resp.Status {
 			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
@@ -602,7 +602,7 @@ func (c *checkBlueprintsV0) CheckBumpVersion() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -613,7 +613,7 @@ func (c *checkBlueprintsV0) CheckBumpVersion() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -683,7 +683,7 @@ func (c *checkBlueprintsV0) CheckBlueprintChangesV0() bool {
 			log.Printf("FAIL: %s failed with a client error: %s", name, err)
 			return false
 		}
-		if resp.Status != true {
+		if !resp.Status {
 			log.Printf("FAIL: %s failed: %s", name, resp)
 			return false
 		}
@@ -746,7 +746,7 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -784,7 +784,7 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -823,7 +823,7 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
 		return false
 	}
@@ -889,7 +889,7 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
@@ -900,7 +900,7 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if tagResp.Status != true {
+	if !tagResp.Status {
 		log.Printf("FAIL: %s Tag failed: %s", name, tagResp)
 		return false
 	}
@@ -938,7 +938,7 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
@@ -949,7 +949,7 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if tagResp.Status != true {
+	if !tagResp.Status {
 		log.Printf("FAIL: %s Tag failed: %s", name, tagResp)
 		return false
 	}
@@ -1003,7 +1003,7 @@ func (c *checkBlueprintsV0) CheckBlueprintDepsolveV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}
@@ -1054,7 +1054,7 @@ func (c *checkBlueprintsV0) CheckBlueprintFreezeV0() bool {
 		log.Printf("FAIL: %s failed with a client error: %s", name, err)
 		return false
 	}
-	if resp.Status != true {
+	if !resp.Status {
 		log.Printf("FAIL: %s POST failed: %s", name, resp)
 		return false
 	}

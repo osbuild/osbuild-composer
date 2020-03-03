@@ -210,7 +210,10 @@ func TestMain(m *testing.M) {
 	defer server.Close()
 
 	go func() {
-		server.Serve(ln)
+		err := server.Serve(ln)
+		if err != nil {
+			panic(err)
+		}
 	}()
 
 	// Run the tests
