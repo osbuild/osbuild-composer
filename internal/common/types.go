@@ -282,14 +282,6 @@ func (dist *Distribution) ModulePlatformID() (string, error) {
 	}
 }
 
-func ListDistributions() []string {
-	return listHelper(getDistributionMapping())
-}
-
-func DistributionExists(testedDistro string) bool {
-	return existsHelper(getDistributionMapping(), testedDistro)
-}
-
 func (distro *Distribution) UnmarshalJSON(data []byte) error {
 	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid distribution", getDistributionMapping())
 	if err != nil {

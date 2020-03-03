@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -121,6 +122,16 @@ func (r *Registry) GetDistro(name string) Distro {
 	}
 
 	return distro
+}
+
+// Returns the names of all distros in a Registry, sorted alphabetically.
+func (r *Registry) List() []string {
+	list := []string{}
+	for _, distro := range r.distros {
+		list = append(list, distro.Name())
+	}
+	sort.Strings(list)
+	return list
 }
 
 func (r *Registry) FromHost() (Distro, error) {
