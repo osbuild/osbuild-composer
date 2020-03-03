@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -66,5 +68,25 @@ func TestDistro_Pipeline(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Test that all distros are registered properly and that Registry.List() works.
+func TestDistro_RegistryList(t *testing.T) {
+	expected := []string{
+		"fedora-30",
+		"fedora-31",
+		"fedora-32",
+		"rhel-8.1",
+		"rhel-8.2",
+	}
+
+	distros, err := distro.NewDefaultRegistry([]string{"../.."})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(distros.List(), expected); diff != "" {
+		t.Errorf("unexpected list of distros: %v", diff)
 	}
 }
