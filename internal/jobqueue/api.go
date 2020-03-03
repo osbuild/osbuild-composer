@@ -106,7 +106,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 		ID:           nextJob.ComposeID,
 		ImageBuildID: nextJob.ImageBuildID,
 		Distro:       nextJob.Distro,
-		Pipeline:     nextJob.Pipeline,
+		Manifest:     nextJob.Manifest,
 		Targets:      nextJob.Targets,
 		OutputType:   nextJob.ImageType,
 	})

@@ -3,9 +3,6 @@ package weldr
 import (
 	"archive/tar"
 	"bytes"
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"io"
 	"math/rand"
 	"net/http"
@@ -14,6 +11,10 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
@@ -447,11 +448,11 @@ func TestCompose(t *testing.T) {
 			break
 		}
 
-		if composeStruct.ImageBuilds[0].Pipeline == nil {
+		if composeStruct.ImageBuilds[0].Manifest == nil {
 			t.Fatalf("%s: the compose in the store did not contain a blueprint", c.Path)
 		} else {
 			// TODO: find some (reasonable) way to verify the contents of the pipeline
-			composeStruct.ImageBuilds[0].Pipeline = nil
+			composeStruct.ImageBuilds[0].Manifest = nil
 		}
 
 		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {

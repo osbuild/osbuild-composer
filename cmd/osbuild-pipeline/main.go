@@ -113,14 +113,14 @@ func main() {
 	}
 
 	size := d.GetSizeForOutputType(imageType, 0)
-	pipeline, err := d.Pipeline(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
+	manifest, err := d.Manifest(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	bytes, err := json.Marshal(pipeline)
+	bytes, err := json.Marshal(manifest)
 	if err != nil {
-		panic("could not marshal pipeline into JSON")
+		panic("could not marshal manifest into JSON")
 	}
 
 	os.Stdout.Write(bytes)

@@ -54,7 +54,7 @@ type Job struct {
 	ComposeID    uuid.UUID
 	ImageBuildID int
 	Distro       string
-	Pipeline     *osbuild.Pipeline
+	Manifest     *osbuild.Manifest
 	Targets      []*target.Target
 	ImageType    string
 }
@@ -179,7 +179,7 @@ func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Reg
 						ComposeID:    composeID,
 						ImageBuildID: imgBuild.Id,
 						Distro:       distroStr,
-						Pipeline:     imgBuild.Pipeline,
+						Manifest:     imgBuild.Manifest,
 						Targets:      imgBuild.Targets,
 						ImageType:    imageTypeCompat,
 					}
@@ -509,7 +509,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 		repos = append(repos, source.RepoConfig())
 	}
 
-	pipelineStruct, err := s.distro.Pipeline(bp, repos, packages, buildPackages, checksums, arch, composeType, size)
+	manifestStruct, err := s.distro.Manifest(bp, repos, packages, buildPackages, checksums, arch, composeType, size)
 	if err != nil {
 		return err
 	}
@@ -520,7 +520,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 			ImageBuilds: []compose.ImageBuild{
 				{
 					QueueStatus: common.IBWaiting,
-					Pipeline:    pipelineStruct,
+					Manifest:    manifestStruct,
 					ImageType:   imageType,
 					Targets:     targets,
 					JobCreated:  time.Now(),
@@ -534,7 +534,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 		ComposeID:    composeID,
 		ImageBuildID: 0,
 		Distro:       s.distro.Name(),
-		Pipeline:     pipelineStruct,
+		Manifest:     manifestStruct,
 		Targets:      targets,
 		ImageType:    composeType,
 	}
@@ -545,7 +545,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 // PushComposeRequest is an alternative to PushCompose which does not assume a pre-defined distro, as such it is better
 // suited for RCM API and possible future API that would respect the fact that we can build any distro and any arch
 func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
-	// This should never happen and once distro.Pipeline is refactored this check will go away
+	// This should never happen and once distro.Manifest is refactored this check will go away
 	arch, exists := request.Arch.ToString()
 	if !exists {
 		panic("fatal error, arch should exist but it does not")
@@ -572,12 +572,12 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 	for imageBuildID, imageRequest := range request.RequestedImages {
 		// TODO: handle custom upload targets
 		// TODO: this requires changes in the Compose Request struct
-		// This should never happen and once distro.Pipeline is refactored this check will go away
+		// This should never happen and once distro.Manifest is refactored this check will go away
 		imgTypeCompatStr, exists := imageRequest.ImgType.ToCompatString()
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		pipelineStruct, err := distroStruct.Pipeline(&request.Blueprint, request.Repositories, nil, nil, request.Checksums, arch, imgTypeCompatStr, 0)
+		manifestStruct, err := distroStruct.Manifest(&request.Blueprint, request.Repositories, nil, nil, request.Checksums, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}
@@ -594,7 +594,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 			ComposeID:    request.ComposeID,
 			ImageBuildID: imageBuildID,
 			Distro:       distroString,
-			Pipeline:     pipelineStruct,
+			Manifest:     manifestStruct,
 			Targets:      []*target.Target{},
 			ImageType:    imgTypeCompatStr,
 		})
@@ -603,7 +603,7 @@ func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
 			Distro:      request.Distro,
 			QueueStatus: common.IBWaiting,
 			ImageType:   imageRequest.ImgType,
-			Pipeline:    pipelineStruct,
+			Manifest:    manifestStruct,
 			Targets:     []*target.Target{},
 			JobCreated:  time.Now(),
 		})

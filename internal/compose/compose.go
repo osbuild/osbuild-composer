@@ -25,7 +25,7 @@ type ImageBuild struct {
 	Distro      common.Distribution    `json:"distro"`
 	QueueStatus common.ImageBuildState `json:"queue_status"`
 	ImageType   common.ImageType       `json:"image_type"`
-	Pipeline    *osbuild.Pipeline      `json:"pipeline"`
+	Manifest    *osbuild.Manifest      `json:"manifest"`
 	Targets     []*target.Target       `json:"targets"`
 	JobCreated  time.Time              `json:"job_created"`
 	JobStarted  time.Time              `json:"job_started"`
@@ -35,10 +35,10 @@ type ImageBuild struct {
 
 // DeepCopy creates a copy of the ImageBuild structure
 func (ib *ImageBuild) DeepCopy() ImageBuild {
-	var newPipelinePtr *osbuild.Pipeline = nil
-	if ib.Pipeline != nil {
-		pipelineCopy := *ib.Pipeline
-		newPipelinePtr = &pipelineCopy
+	var newManifestPtr *osbuild.Manifest = nil
+	if ib.Manifest != nil {
+		manifestCopy := *ib.Manifest
+		newManifestPtr = &manifestCopy
 	}
 	var newTargets []*target.Target
 	for _, t := range ib.Targets {
@@ -51,7 +51,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		Distro:      ib.Distro,
 		QueueStatus: ib.QueueStatus,
 		ImageType:   ib.ImageType,
-		Pipeline:    newPipelinePtr,
+		Manifest:    newManifestPtr,
 		Targets:     newTargets,
 		JobCreated:  ib.JobCreated,
 		JobStarted:  ib.JobStarted,
