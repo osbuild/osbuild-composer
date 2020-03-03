@@ -21,7 +21,7 @@ type Job struct {
 	ID           uuid.UUID         `json:"id"`
 	ImageBuildID int               `json:"image_build_id"`
 	Distro       string            `json:"distro"`
-	Pipeline     *osbuild.Pipeline `json:"pipeline"`
+	Manifest     *osbuild.Manifest `json:"manifest"`
 	Targets      []*target.Target  `json:"targets"`
 	OutputType   string            `json:"output_type"`
 }
@@ -102,7 +102,7 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 		return nil, fmt.Errorf("error starting osbuild: %v", err)
 	}
 
-	err = json.NewEncoder(stdin).Encode(job.Pipeline)
+	err = json.NewEncoder(stdin).Encode(job.Manifest)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
 	}

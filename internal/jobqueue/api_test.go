@@ -1,9 +1,10 @@
 package jobqueue_test
 
 import (
-	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	"net/http"
 	"testing"
+
+	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
@@ -60,7 +61,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"distro":"fedora-30","id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"output_type":"qcow2","pipeline":{},"targets":[]}`, "created", "uuid")
+		`{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"distro":"fedora-30","manifest":{"sources":{},"pipeline":{}},"targets":[],"output_type":"qcow2"}`, "created", "uuid")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
