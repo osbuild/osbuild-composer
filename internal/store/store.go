@@ -29,6 +29,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/google/uuid"
 )
 
@@ -40,6 +41,7 @@ type Store struct {
 	Composes          map[uuid.UUID]compose.Compose          `json:"composes"`
 	Sources           map[string]SourceConfig                `json:"sources"`
 	BlueprintsChanges map[string]map[string]blueprint.Change `json:"changes"`
+	BlueprintsCommits map[string][]string                    `json:"commits"`
 
 	mu             sync.RWMutex // protects all fields
 	pendingJobs    chan Job
@@ -193,6 +195,49 @@ func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Reg
 	if s.BlueprintsChanges == nil {
 		s.BlueprintsChanges = make(map[string]map[string]blueprint.Change)
 	}
+	if s.BlueprintsCommits == nil {
+		s.BlueprintsCommits = make(map[string][]string)
+	}
+
+	// Populate BlueprintsCommits for existing blueprints without commit history
+	// BlueprintsCommits tracks the order of the commits in BlueprintsChanges,
+	// but may not be in-sync with BlueprintsChanges because it was added later.
+	// This will sort the existing commits by timestamp and version to update
+	// the store. BUT since the timestamp resolution is only 1s it is possible
+	// that the order may be slightly wrong.
+	for name := range s.BlueprintsChanges {
+		if len(s.BlueprintsChanges[name]) != len(s.BlueprintsCommits[name]) {
+			changes := make([]blueprint.Change, 0, len(s.BlueprintsChanges[name]))
+
+			for commit := range s.BlueprintsChanges[name] {
+				changes = append(changes, s.BlueprintsChanges[name][commit])
+			}
+
+			// Sort the changes by Timestamp then version, ascending
+			sort.Slice(changes, func(i, j int) bool {
+				if changes[i].Timestamp == changes[j].Timestamp {
+					vI, err := semver.NewVersion(changes[i].Blueprint.Version)
+					if err != nil {
+						vI = semver.New("0.0.0")
+					}
+					vJ, err := semver.NewVersion(changes[j].Blueprint.Version)
+					if err != nil {
+						vJ = semver.New("0.0.0")
+					}
+
+					return vI.LessThan(*vJ)
+				}
+				return changes[i].Timestamp < changes[j].Timestamp
+			})
+
+			commits := make([]string, 0, len(changes))
+			for _, c := range changes {
+				commits = append(commits, c.Commit)
+			}
+
+			s.BlueprintsCommits[name] = commits
+		}
+	}
 
 	return &s
 }
@@ -320,14 +365,15 @@ func (s *Store) GetBlueprintChange(name string, commit string) *blueprint.Change
 	return &change
 }
 
+// GetBlueprintChanges returns the list of changes, oldest first
 func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	var changes []blueprint.Change
 
-	for _, change := range s.BlueprintsChanges[name] {
-		changes = append(changes, change)
+	for _, commit := range s.BlueprintsCommits[name] {
+		changes = append(changes, s.BlueprintsChanges[name][commit])
 	}
 
 	return changes
@@ -359,6 +405,8 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 			s.BlueprintsChanges[bp.Name] = make(map[string]blueprint.Change)
 		}
 		s.BlueprintsChanges[bp.Name][commit] = change
+		// Keep track of the order of the commits
+		s.BlueprintsCommits[bp.Name] = append(s.BlueprintsCommits[bp.Name], commit)
 
 		if old, ok := s.Blueprints[bp.Name]; ok {
 			if bp.Version == "" || bp.Version == old.Version {
@@ -409,31 +457,32 @@ func (s *Store) TagBlueprint(name string) error {
 			return errors.New("Unknown blueprint")
 		}
 
-		// Get the latest revision for this blueprint, and the most recent commit
-		var revision int
-		var timestamp string
-		var commit blueprint.Change
-		for _, c := range s.BlueprintsChanges[name] {
-			if c.Revision != nil && *c.Revision > revision {
-				revision = *c.Revision
-			}
-			if c.Timestamp > timestamp {
-				timestamp = c.Timestamp
-				commit = c
-			}
-		}
-		if len(timestamp) == 0 {
+		if len(s.BlueprintsCommits[name]) == 0 {
 			return errors.New("No commits for blueprint")
 		}
 
-		// The most recent commit already has a revision, don't bump it
-		if commit.Revision != nil {
+		latest := s.BlueprintsCommits[name][len(s.BlueprintsCommits[name])-1]
+		// If the most recent commit already has a revision, don't bump it
+		if s.BlueprintsChanges[name][latest].Revision != nil {
 			return nil
 		}
+
+		// Get the latest revision for this blueprint
+		var revision int
+		var change blueprint.Change
+		for i := len(s.BlueprintsCommits[name]) - 1; i >= 0; i-- {
+			commit := s.BlueprintsCommits[name][i]
+			change = s.BlueprintsChanges[name][commit]
+			if change.Revision != nil && *change.Revision > revision {
+				revision = *change.Revision
+				break
+			}
+		}
+
 		// Bump the revision (if there was none it will start at 1)
 		revision++
-		commit.Revision = &revision
-		s.BlueprintsChanges[name][commit.Commit] = commit
+		change.Revision = &revision
+		s.BlueprintsChanges[name][latest] = change
 		return nil
 	})
 }
