@@ -64,6 +64,11 @@ type Distro interface {
 	// corresponding pipeline containing the given packages.
 	Sources(packages []rpmmd.PackageSpec) *osbuild.Sources
 
+	// Returns an osbuild manifest, containing the sources and pipeline necessary
+	// to generates an image in the given output format with all packages and
+	// customizations specified in the given blueprint.
+	Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error)
+
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string
 }
