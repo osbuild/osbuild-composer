@@ -2,6 +2,12 @@
 // OSBuild types.
 package osbuild
 
+// A Manifest represents an OSBuild source and pipeline manifest
+type Manifest struct {
+	Sources  Sources  `json:"sources"`
+	Pipeline Pipeline `json:"pipeline"`
+}
+
 // A Pipeline represents an OSBuild pipeline
 type Pipeline struct {
 	// The build environment which can run this pipeline
