@@ -1117,13 +1117,14 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 			name = name[1:]
 		}
 		bpChanges := api.store.GetBlueprintChanges(name)
+		// Reverse the changes, newest first
+		reversed := make([]blueprint.Change, 0, len(bpChanges))
+		for i := len(bpChanges) - 1; i >= 0; i-- {
+			reversed = append(reversed, bpChanges[i])
+		}
 		if bpChanges != nil {
-			// Sort the changes by Timestamp, descending
-			sort.Slice(bpChanges, func(i, j int) bool {
-				return bpChanges[i].Timestamp > bpChanges[j].Timestamp
-			})
 			change := change{
-				Changes: bpChanges,
+				Changes: reversed,
 				Name:    name,
 				Total:   len(bpChanges),
 			}
