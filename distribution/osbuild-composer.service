@@ -13,5 +13,8 @@ WorkingDirectory=/usr/libexec/osbuild-composer/
 User=_osbuild-composer
 Restart=on-failure
 
+# systemd >= 240 sets this, but osbuild-composer runs on earlier versions
+Environment="CACHE_DIRECTORY=/var/cache/osbuild-composer"
+
 [Install]
 WantedBy=multi-user.target
