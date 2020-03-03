@@ -70,6 +70,17 @@ type SourceConfig struct {
 	System   bool   `json:"system"`
 }
 
+// ComposeRequest is used to submit a new compose to the store
+type ComposeRequest struct {
+	Blueprint       blueprint.Blueprint
+	ComposeID       uuid.UUID
+	Distro          common.Distribution
+	Arch            common.Architecture
+	Repositories    []rpmmd.RepoConfig
+	Checksums       map[string]string
+	RequestedImages []common.ImageRequest
+}
+
 type NotFoundError struct {
 	message string
 }
@@ -645,7 +656,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 
 // PushComposeRequest is an alternative to PushCompose which does not assume a pre-defined distro, as such it is better
 // suited for RCM API and possible future API that would respect the fact that we can build any distro and any arch
-func (s *Store) PushComposeRequest(request common.ComposeRequest) error {
+func (s *Store) PushComposeRequest(request ComposeRequest) error {
 	// This should never happen and once distro.Manifest is refactored this check will go away
 	arch, exists := request.Arch.ToString()
 	if !exists {
