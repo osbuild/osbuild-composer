@@ -67,6 +67,18 @@ func (d *TestDistro) Sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	return &osbuild.Sources{}
 }
 
+func (r *TestDistro) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.Pipeline(b, additionalRepos, packageSpecs, buildPackageSpecs, checksums, outputArchitecture, outputFormat, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return &osbuild.Manifest{
+		Sources:  *r.Sources(append(packageSpecs, buildPackageSpecs...)),
+		Pipeline: *pipeline,
+	}, nil
+}
+
 func (d *TestDistro) Runner() string {
 	return "org.osbuild.test"
 }
