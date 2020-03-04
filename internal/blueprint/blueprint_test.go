@@ -42,7 +42,7 @@ func TestBlueprintInitialize(t *testing.T) {
 		NewBlueprint  Blueprint
 		ExpectedError bool
 	}{
-		{Blueprint{Name: "bp-test-1", Description: "Empty version", Version: ""}, true},
+		{Blueprint{Name: "bp-test-1", Description: "Empty version", Version: ""}, false},
 		{Blueprint{Name: "bp-test-2", Description: "Invalid version 1", Version: "0"}, true},
 		{Blueprint{Name: "bp-test-2", Description: "Invalid version 2", Version: "0.0"}, true},
 		{Blueprint{Name: "bp-test-3", Description: "Invalid version 3", Version: "0.0.0.0"}, true},

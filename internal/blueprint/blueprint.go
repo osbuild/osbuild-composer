@@ -65,6 +65,9 @@ func (b *Blueprint) Initialize() error {
 	if b.Groups == nil {
 		b.Groups = []Group{}
 	}
+	if b.Version == "" {
+		b.Version = "0.0.0"
+	}
 	// Return an error if the version is not valid
 	_, err := semver.NewVersion(b.Version)
 	if err != nil {
