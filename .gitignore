@@ -11,6 +11,4 @@ __pycache__
 /*.tar.gz
 /*.src.rpm
 
-/build
 /rpmbuild
-/output

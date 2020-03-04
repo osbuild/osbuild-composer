@@ -1,5 +1,5 @@
 PACKAGE_NAME = osbuild-composer
-VERSION = $(shell grep Version golang-github-osbuild-composer.spec | awk '{gsub(/[^0-9]/,"")}1')
+COMMIT=$(shell git rev-parse HEAD)
 
 .PHONY: build
 build:
@@ -51,36 +51,20 @@ worker-key-pair: ca
 	openssl req -new -sha256 -key /etc/osbuild-composer/worker-key.pem	-out /etc/osbuild-composer/worker-csr.pem -subj "/CN=localhost"
 	openssl x509 -req -in /etc/osbuild-composer/worker-csr.pem  -CA /etc/osbuild-composer/ca-crt.pem -CAkey /etc/osbuild-composer/ca-key.pem -CAcreateserial -out /etc/osbuild-composer/worker-crt.pem
 
-.PHONY: tarball
-tarball:
-	git archive --prefix=$(PACKAGE_NAME)-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
-
-.PHONY: srpm
-srpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball
-	/usr/bin/rpmbuild -bs \
-	  --define "_sourcedir $(CURDIR)" \
-	  --define "_srcrpmdir $(CURDIR)" \
-	  golang-github-$(PACKAGE_NAME).spec
-
 .PHONY: rpm
-rpm: golang-github-$(PACKAGE_NAME).spec check-working-directory tarball 
-	- rm -r "`pwd`/output"
-	mkdir -p "`pwd`/output"
-	mkdir -p "`pwd`/rpmbuild"
-	/usr/bin/rpmbuild -bb \
-	  --define "_sourcedir `pwd`" \
-	  --define "_specdir `pwd`" \
-	  --define "_builddir `pwd`/rpmbuild" \
-	  --define "_srcrpmdir `pwd`" \
-	  --define "_rpmdir `pwd`/output" \
-	  --define "_buildrootdir `pwd`/build" \
-	  golang-github-$(PACKAGE_NAME).spec
-	rm -r "`pwd`/rpmbuild"
-	rm -r "`pwd`/build"
+rpm:
+	mkdir -p $(CURDIR)/rpmbuild/SPECS $(CURDIR)/rpmbuild/SOURCES
 
-.PHONY: check-working-directory
-check-working-directory:
-	@if [ "`git status --porcelain --untracked-files=no | wc -l`" != "0" ]; then \
-	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
-	  exit 1; \
-	fi
+	echo "%global commit $(COMMIT)" | cat - golang-github-osbuild-composer.spec \
+		> rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+
+	git archive --prefix=$(PACKAGE_NAME)-$(COMMIT)/ --format=tar.gz HEAD \
+		> rpmbuild/SOURCES/$(PACKAGE_NAME)-$(COMMIT).tar.gz
+
+	rpmbuild -bs \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		rpmbuild/SPECS/golang-github-$(PACKAGE_NAME)-$(COMMIT).spec
+
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		rpmbuild/SPECS/golang-github-$(PACKAGE_NAME)-$(COMMIT).spec
