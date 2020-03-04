@@ -71,6 +71,7 @@ func TestBlueprintsNew(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
+		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
 	}
 
