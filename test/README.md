@@ -9,6 +9,8 @@ command line interface. Implementation is under `cmd/osbuild-tests/`.
 The easiest way to get started with integration testing from a git
 checkout is:
 
+* `dnf -y install rpm-build`
+* `dnf -y builddep golang-github-osbuild-composer.spec`
 * `make rpm` to build the software under test
 * `dnf install output/x86_64/golang-github-osbuild-composer-*.rpm` - this will
   install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
