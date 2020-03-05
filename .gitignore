@@ -2,6 +2,7 @@ __pycache__
 
 /osbuild-composer
 /osbuild-worker
+/osbuild-weldr-tests
 /osbuild-pipeline
 /osbuild-upload-azure
 /osbuild-upload-aws
