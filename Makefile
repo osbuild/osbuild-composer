@@ -50,20 +50,27 @@ worker-key-pair: ca
 	openssl req -new -sha256 -key /etc/osbuild-composer/worker-key.pem	-out /etc/osbuild-composer/worker-csr.pem -subj "/CN=localhost"
 	openssl x509 -req -in /etc/osbuild-composer/worker-csr.pem  -CA /etc/osbuild-composer/ca-crt.pem -CAkey /etc/osbuild-composer/ca-key.pem -CAcreateserial -out /etc/osbuild-composer/worker-crt.pem
 
-.PHONY: rpm
-rpm:
-	mkdir -p $(CURDIR)/rpmbuild/SPECS $(CURDIR)/rpmbuild/SOURCES
 
-	echo "%global commit $(COMMIT)" | cat - golang-github-osbuild-composer.spec \
-		> rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
 
-	git archive --prefix=osbuild-composer-$(COMMIT)/ --format=tar.gz HEAD \
-		> rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
+RPM_SPECFILE=rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
+$(RPM_SPECFILE):
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	echo "%global commit $(COMMIT)" | cat - golang-github-osbuild-composer.spec > $(RPM_SPECFILE)
+
+$(RPM_TARBALL):
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	git archive --prefix=osbuild-composer-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+.PHONY: srpm
+srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
-		rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+		$(RPM_SPECFILE)
 
+.PHONY: rpm
+rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
-		rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+		$(RPM_SPECFILE)
