@@ -1,3 +1,5 @@
+// +build integration
+
 // This package contains tests related to dnf-json and rpmmd package.
 package main
 
@@ -5,26 +7,11 @@ import (
 	"fmt"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
+	"testing"
 	"path"
 )
-
-func main() {
-	// Tests that the package wrapping dnf-json works as expected
-	dir, err := setUpTemporaryRepository()
-	defer func(dir string) {
-		err := tearDownTemporaryRepository(dir)
-		if err != nil {
-			log.Print("Warning: failed to clean up temporary repository.")
-		}
-	}(dir)
-	if err != nil {
-		log.Panic("Failed to set up temporary repository:", err)
-	}
-	TestFetchChecksum(false, dir)
-}
 
 func setUpTemporaryRepository() (string, error) {
 	dir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
@@ -47,25 +34,30 @@ func tearDownTemporaryRepository(dir string) error {
 	return os.RemoveAll(dir)
 }
 
-func TestFetchChecksum(quiet bool, dir string) {
+func TestFetchChecksum(t *testing.T) {
+	dir, err := setUpTemporaryRepository()
+	defer func(dir string) {
+		err := tearDownTemporaryRepository(dir)
+		if err != nil {
+			t.Errorf("Warning: failed to clean up temporary repository.")
+		}
+	}(dir)
+	if err != nil {
+		t.Errorf("Failed to set up temporary repository: %s", err)
+	}
+
 	repoCfg := rpmmd.RepoConfig{
 		Id:        "repo",
 		Name:      "repo",
 		BaseURL:   fmt.Sprintf("file://%s", dir),
 		IgnoreSSL: true,
 	}
-	if !quiet {
-		log.Println("Running TestFetchChecksum on:", dir)
-	}
 	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
 	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31")
 	if err != nil {
-		log.Panic("Failed to fetch checksum:", err)
+		t.Errorf("Failed to fetch checksum: %s", err)
 	}
 	if c["repo"] == "" {
-		log.Panic("The checksum is empty")
-	}
-	if !quiet {
-		log.Println("TestFetchChecksum: SUCCESS")
+		t.Errorf("The checksum is empty")
 	}
 }
