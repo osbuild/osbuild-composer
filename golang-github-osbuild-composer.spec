@@ -41,6 +41,7 @@ Requires: systemd
 Requires: osbuild >= 7
 
 Provides: osbuild-composer
+Provides: weldr
 
 %description
 %{common_description}
