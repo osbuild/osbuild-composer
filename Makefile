@@ -51,6 +51,17 @@ worker-key-pair: ca
 	openssl x509 -req -in /etc/osbuild-composer/worker-csr.pem  -CA /etc/osbuild-composer/ca-crt.pem -CAkey /etc/osbuild-composer/ca-key.pem -CAcreateserial -out /etc/osbuild-composer/worker-crt.pem
 
 
+#
+# Building packages
+#
+# The following rules build osbuild-composer packages from the current HEAD
+# commit, based on the spec file in this directory.  The resulting packages
+# have the commit hash in their version, so that they don't get overwritten
+# when calling `make rpm` again after switching to another branch.
+#
+# All resulting files (spec files, source rpms, rpms) are written into
+# ./rpmbuild, using rpmbuild's usual directory structure.
+#
 
 RPM_SPECFILE=rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
