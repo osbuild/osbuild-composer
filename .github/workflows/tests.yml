@@ -12,7 +12,7 @@ on:
 
 jobs:
   lint:
-    name: Lint
+    name: "🛃 Lint"
     runs-on: ubuntu-latest
     steps:
 
@@ -32,9 +32,7 @@ jobs:
         run: $(go env GOPATH)/bin/golangci-lint run
 
   rpm_build:
-    name: "RPM build"
-    needs:
-      - lint
+    name: "📦 RPM"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -43,54 +41,33 @@ jobs:
     container:
       image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
     steps:
-      - name: Prepare container
+      - name: "📥 Prepare container"
         run: |
           echo "fastestmirror=1" >> /etc/dnf/dnf.conf
           echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
           rm -fv /etc/yum.repos.d/fedora*modular*
           dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils rpm-build rpmdevtools
+          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
 
-      - name: Fetch .spec file
+      - name: "🗄️ Clone the repository"
+        uses: actions/checkout@v2
+
+      - name: "🛒 Install RPM build dependencies"
+        run: dnf -y builddep golang-github-osbuild-composer.spec
+
+      - name: "🛠️ Build RPMs"
         run: |
-          mkdir spec
-          # Fetch the spec file at the given commit, and prepend the commit sha to it
-          curl "https://raw.githubusercontent.com/osbuild/osbuild-composer/${GITHUB_SHA}/golang-github-osbuild-composer.spec" -o golang-github-osbuild-composer.spec
-          echo "%global commit ${GITHUB_SHA}" | cat - golang-github-osbuild-composer.spec > spec/golang-github-osbuild-composer.spec
+          mkdir rpms
+          make srpm
+          cp -av rpmbuild/SRPMS/*.rpm rpms/
+          make rpm
+          cp -av rpmbuild/RPMS/*/*.rpm rpms/
 
-      - name: Install RPM build dependencies
-        run: dnf -y builddep spec/golang-github-osbuild-composer.spec
-
-      - name: Fetch sources
-        run: |
-          mkdir sources
-          spectool -g spec/golang-github-osbuild-composer.spec -C sources/
-
-      - name: Build SRPM
-        run: |
-          mkdir srpms
-          rpmbuild -bs \
-            --define "_sourcedir sources" \
-            --define "_srcrpmdir srpms" \
-            spec/golang-github-osbuild-composer.spec
-
-      - name: Build RPMs
-        run: |
-          mkdir rpmbuild rpms build
-          rpmbuild -bb \
-            --define "_sourcedir `pwd`/sources" \
-            --define "_specdir `pwd`/spec" \
-            --define "_builddir `pwd`/rpmbuild" \
-            --define "_srcrpmdir `pwd`/srpms" \
-            --define "_rpmdir `pwd`/rpms" \
-            --define "_buildrootdir `pwd`/build" \
-            spec/golang-github-osbuild-composer.spec
-
-      - name: "Upload artifacts"
+      - name: "📤 Upload artifacts"
         uses: actions/upload-artifact@v1
         with:
           name: rpms
           path: rpms/
 
-      - name: Test RPM installation
-        run: dnf -y install $(ls rpms/*/*.rpm)
+      - name: "🔎 Test RPM installation"
+        run: dnf -y install $(ls rpms/*.x86_64.rpm)
