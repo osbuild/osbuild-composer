@@ -68,7 +68,7 @@ RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	echo "%global commit $(COMMIT)" | cat - golang-github-osbuild-composer.spec > $(RPM_SPECFILE)
+	(echo "%global commit $(COMMIT)"; git show HEAD:golang-github-osbuild-composer.spec) > $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
