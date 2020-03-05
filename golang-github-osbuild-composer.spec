@@ -1,4 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
+# workaround for https://pagure.io/go-rpm-macros/pull-request/23
+%define gotest_co(c:o:) GO111MODULE=off go test %{gotestflags} -ldflags "${LDFLAGS:-}%{?currentgoldflags} -extldflags '%{gotestextldflags}'" %{?**};
 
 Version:        7
 
@@ -68,7 +70,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 %gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 %gobuild -o _bin/osbuild-weldr-tests %{goipath}/cmd/osbuild-weldr-tests
-%gobuild -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
+%gotest_co -c -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 %gobuild -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 %install
