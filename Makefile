@@ -1,4 +1,3 @@
-PACKAGE_NAME = osbuild-composer
 COMMIT=$(shell git rev-parse HEAD)
 
 .PHONY: build
@@ -58,13 +57,13 @@ rpm:
 	echo "%global commit $(COMMIT)" | cat - golang-github-osbuild-composer.spec \
 		> rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
 
-	git archive --prefix=$(PACKAGE_NAME)-$(COMMIT)/ --format=tar.gz HEAD \
-		> rpmbuild/SOURCES/$(PACKAGE_NAME)-$(COMMIT).tar.gz
+	git archive --prefix=osbuild-composer-$(COMMIT)/ --format=tar.gz HEAD \
+		> rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
-		rpmbuild/SPECS/golang-github-$(PACKAGE_NAME)-$(COMMIT).spec
+		rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
 
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
-		rpmbuild/SPECS/golang-github-$(PACKAGE_NAME)-$(COMMIT).spec
+		rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
