@@ -71,6 +71,10 @@ func main() {
 }
 
 func testCompose(outputType string) {
+	tmpdir := NewTemporaryWorkDir("osbuild-tests-")
+	log.Println(tmpdir.Path)
+	defer tmpdir.Close()
+
 	bp := blueprint.Blueprint{
 		Name:        "empty",
 		Description: "Test empty blueprint in toml format",
@@ -256,4 +260,52 @@ func runComposerCLI(quiet bool, command ...string) json.RawMessage {
 	}
 
 	return result
+}
+
+type TemporaryWorkDir struct {
+	OldWorkDir string
+	Path       string
+}
+
+// Creates a new temporary directory based on pattern and changes the current
+// working directory to it.
+//
+// Example:
+//   d := NewTemporaryWorkDir("foo-*")
+//   defer d.Close()
+func NewTemporaryWorkDir(pattern string) TemporaryWorkDir {
+	var d TemporaryWorkDir
+	var err error
+
+	d.OldWorkDir, err = os.Getwd()
+	if err != nil {
+		log.Fatalf("os.GetWd: %v", err)
+	}
+
+	d.Path, err = ioutil.TempDir("", pattern)
+	if err != nil {
+		log.Fatalf("ioutil.TempDir: %v", err)
+	}
+
+	err = os.Chdir(d.Path)
+	if err != nil {
+		log.Fatalf("os.ChDir: %v", err)
+	}
+
+	return d
+}
+
+// Change back to the previous working directory and removes the temporary one.
+func (d *TemporaryWorkDir) Close() {
+	var err error
+
+	err = os.Chdir(d.OldWorkDir)
+	if err != nil {
+		log.Fatalf("os.ChDir: %v", err)
+	}
+
+	err = os.RemoveAll(d.Path)
+	if err != nil {
+		log.Fatalf("os.RemoveAll: %v", err)
+	}
 }
