@@ -10,6 +10,7 @@ build:
 	go build -o osbuild-tests ./cmd/osbuild-tests/
 	go build -o osbuild-weldr-tests ./cmd/osbuild-weldr-tests/
 	go build -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/
+	go build -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/
 
 .PHONY: install
 install:
