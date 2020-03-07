@@ -4,14 +4,11 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"time"
 )
 
 // Request handles sending the request, handling errors, returning the response
@@ -22,17 +19,7 @@ import (
 //
 // If it is successful a http.Response will be returned. If there is an error, the response will be
 // nil and error will be returned.
-func Request(socket, method, path, body string, headers map[string]string) (*http.Response, error) {
-	client := http.Client{
-		// TODO This may be too short/simple for downloading images
-		Timeout: 60 * time.Second,
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socket)
-			},
-		},
-	}
-
+func Request(socket *http.Client, method, path, body string, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest(method, "http://localhost"+path, bytes.NewReader([]byte(body)))
 	if err != nil {
 		return nil, err
@@ -42,7 +29,7 @@ func Request(socket, method, path, body string, headers map[string]string) (*htt
 		req.Header.Set(h, v)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := socket.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +99,7 @@ func apiError(resp *http.Response) (*APIResponse, error) {
 
 // GetRaw returns raw data from a GET request
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func GetRaw(socket, method, path string) ([]byte, *APIResponse, error) {
+func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, method, path, "", map[string]string{})
 	if err != nil {
 		return nil, nil, err
@@ -138,7 +125,7 @@ func GetRaw(socket, method, path string) ([]byte, *APIResponse, error) {
 // and then with limit=TOTAL to fetch all of the results.
 // The path passed to GetJSONAll should not include the limit or offset query parameters
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func GetJSONAll(socket, path string) ([]byte, *APIResponse, error) {
+func GetJSONAll(socket *http.Client, path string) ([]byte, *APIResponse, error) {
 	body, api, err := GetRaw(socket, "GET", path+"?limit=0")
 	if api != nil || err != nil {
 		return nil, api, err
@@ -167,7 +154,7 @@ func GetJSONAll(socket, path string) ([]byte, *APIResponse, error) {
 
 // PostRaw sends a POST with raw data and returns the raw response body
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func PostRaw(socket, path, body string, headers map[string]string) ([]byte, *APIResponse, error) {
+func PostRaw(socket *http.Client, path, body string, headers map[string]string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, "POST", path, body, headers)
 	if err != nil {
 		return nil, nil, err
@@ -190,21 +177,21 @@ func PostRaw(socket, path, body string, headers map[string]string) ([]byte, *API
 
 // PostTOML sends a POST with TOML data and the Content-Type header set to "text/x-toml"
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func PostTOML(socket, path, body string) ([]byte, *APIResponse, error) {
+func PostTOML(socket *http.Client, path, body string) ([]byte, *APIResponse, error) {
 	headers := map[string]string{"Content-Type": "text/x-toml"}
 	return PostRaw(socket, path, body, headers)
 }
 
 // PostJSON sends a POST with JSON data and the Content-Type header set to "application/json"
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func PostJSON(socket, path, body string) ([]byte, *APIResponse, error) {
+func PostJSON(socket *http.Client, path, body string) ([]byte, *APIResponse, error) {
 	headers := map[string]string{"Content-Type": "application/json"}
 	return PostRaw(socket, path, body, headers)
 }
 
 // DeleteRaw sends a DELETE request
 // Errors from the API are returned as an APIResponse, client errors are returned as error
-func DeleteRaw(socket, path string) ([]byte, *APIResponse, error) {
+func DeleteRaw(socket *http.Client, path string) ([]byte, *APIResponse, error) {
 	resp, err := Request(socket, "DELETE", path, "", nil)
 	if err != nil {
 		return nil, nil, err

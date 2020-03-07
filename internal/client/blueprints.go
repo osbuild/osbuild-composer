@@ -5,12 +5,13 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 )
 
 // PostTOMLBlueprintV0 sends a TOML blueprint string to the API
 // and returns an APIResponse
-func PostTOMLBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+func PostTOMLBlueprintV0(socket *http.Client, blueprint string) (*APIResponse, error) {
 	body, resp, err := PostTOML(socket, "/api/v0/blueprints/new", blueprint)
 	if resp != nil || err != nil {
 		return resp, err
@@ -20,7 +21,7 @@ func PostTOMLBlueprintV0(socket, blueprint string) (*APIResponse, error) {
 
 // PostTOMLWorkspaceV0 sends a TOML blueprint string to the API
 // and returns an APIResponse
-func PostTOMLWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
+func PostTOMLWorkspaceV0(socket *http.Client, blueprint string) (*APIResponse, error) {
 	body, resp, err := PostTOML(socket, "/api/v0/blueprints/workspace", blueprint)
 	if resp != nil || err != nil {
 		return resp, err
@@ -30,7 +31,7 @@ func PostTOMLWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
 
 // PostJSONBlueprintV0 sends a JSON blueprint string to the API
 // and returns an APIResponse
-func PostJSONBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+func PostJSONBlueprintV0(socket *http.Client, blueprint string) (*APIResponse, error) {
 	body, resp, err := PostJSON(socket, "/api/v0/blueprints/new", blueprint)
 	if resp != nil || err != nil {
 		return resp, err
@@ -40,7 +41,7 @@ func PostJSONBlueprintV0(socket, blueprint string) (*APIResponse, error) {
 
 // PostJSONWorkspaceV0 sends a JSON blueprint string to the API
 // and returns an APIResponse
-func PostJSONWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
+func PostJSONWorkspaceV0(socket *http.Client, blueprint string) (*APIResponse, error) {
 	body, resp, err := PostJSON(socket, "/api/v0/blueprints/workspace", blueprint)
 	if resp != nil || err != nil {
 		return resp, err
@@ -49,7 +50,7 @@ func PostJSONWorkspaceV0(socket, blueprint string) (*APIResponse, error) {
 }
 
 // DeleteBlueprintV0 deletes the named blueprint and returns an APIResponse
-func DeleteBlueprintV0(socket, bpName string) (*APIResponse, error) {
+func DeleteBlueprintV0(socket *http.Client, bpName string) (*APIResponse, error) {
 	body, resp, err := DeleteRaw(socket, "/api/v0/blueprints/delete/"+bpName)
 	if resp != nil || err != nil {
 		return resp, err
@@ -58,7 +59,7 @@ func DeleteBlueprintV0(socket, bpName string) (*APIResponse, error) {
 }
 
 // DeleteWorkspaceV0 deletes the named blueprint's workspace and returns an APIResponse
-func DeleteWorkspaceV0(socket, bpName string) (*APIResponse, error) {
+func DeleteWorkspaceV0(socket *http.Client, bpName string) (*APIResponse, error) {
 	body, resp, err := DeleteRaw(socket, "/api/v0/blueprints/workspace/"+bpName)
 	if resp != nil || err != nil {
 		return resp, err
@@ -67,7 +68,7 @@ func DeleteWorkspaceV0(socket, bpName string) (*APIResponse, error) {
 }
 
 // ListBlueprintsV0 returns a list of blueprint names
-func ListBlueprintsV0(socket string) ([]string, *APIResponse, error) {
+func ListBlueprintsV0(socket *http.Client) ([]string, *APIResponse, error) {
 	body, resp, err := GetJSONAll(socket, "/api/v0/blueprints/list")
 	if resp != nil || err != nil {
 		return nil, resp, err
@@ -81,7 +82,7 @@ func ListBlueprintsV0(socket string) ([]string, *APIResponse, error) {
 }
 
 // GetBlueprintInfoTOMLV0 returns the requested blueprint as a TOML string
-func GetBlueprintInfoTOMLV0(socket, bpName string) (string, *APIResponse, error) {
+func GetBlueprintInfoTOMLV0(socket *http.Client, bpName string) (string, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName+"?format=toml")
 	if resp != nil || err != nil {
 		return "", resp, err
@@ -90,7 +91,7 @@ func GetBlueprintInfoTOMLV0(socket, bpName string) (string, *APIResponse, error)
 }
 
 // GetBlueprintsInfoJSONV0 returns the requested blueprints and their changed state
-func GetBlueprintsInfoJSONV0(socket, bpName string) (BlueprintsInfoV0, *APIResponse, error) {
+func GetBlueprintsInfoJSONV0(socket *http.Client, bpName string) (BlueprintsInfoV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName)
 	if resp != nil || err != nil {
 		return BlueprintsInfoV0{}, resp, err
@@ -104,7 +105,7 @@ func GetBlueprintsInfoJSONV0(socket, bpName string) (BlueprintsInfoV0, *APIRespo
 }
 
 // GetBlueprintsChangesV0 returns the changes to the listed blueprints
-func GetBlueprintsChangesV0(socket string, bpNames []string) (BlueprintsChangesV0, *APIResponse, error) {
+func GetBlueprintsChangesV0(socket *http.Client, bpNames []string) (BlueprintsChangesV0, *APIResponse, error) {
 	names := strings.Join(bpNames, ",")
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/changes/"+names)
 	if resp != nil || err != nil {
@@ -119,7 +120,7 @@ func GetBlueprintsChangesV0(socket string, bpNames []string) (BlueprintsChangesV
 }
 
 // UndoBlueprintChangeV0 reverts a blueprint to a previous commit
-func UndoBlueprintChangeV0(socket, blueprint, commit string) (*APIResponse, error) {
+func UndoBlueprintChangeV0(socket *http.Client, blueprint, commit string) (*APIResponse, error) {
 	request := fmt.Sprintf("/api/v0/blueprints/undo/%s/%s", blueprint, commit)
 	body, resp, err := PostRaw(socket, request, "", nil)
 	if resp != nil || err != nil {
@@ -129,7 +130,7 @@ func UndoBlueprintChangeV0(socket, blueprint, commit string) (*APIResponse, erro
 }
 
 // TagBlueprintV0 tags the current blueprint commit as a new revision
-func TagBlueprintV0(socket, blueprint string) (*APIResponse, error) {
+func TagBlueprintV0(socket *http.Client, blueprint string) (*APIResponse, error) {
 	body, resp, err := PostRaw(socket, "/api/v0/blueprints/tag/"+blueprint, "", nil)
 	if resp != nil || err != nil {
 		return resp, err
@@ -138,7 +139,7 @@ func TagBlueprintV0(socket, blueprint string) (*APIResponse, error) {
 }
 
 // DepsolveBlueprintV0 depsolves the listed blueprint
-func DepsolveBlueprintV0(socket, blueprint string) (BlueprintsDepsolveV0, *APIResponse, error) {
+func DepsolveBlueprintV0(socket *http.Client, blueprint string) (BlueprintsDepsolveV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/depsolve/"+blueprint)
 	if resp != nil || err != nil {
 		return BlueprintsDepsolveV0{}, resp, err
@@ -153,7 +154,7 @@ func DepsolveBlueprintV0(socket, blueprint string) (BlueprintsDepsolveV0, *APIRe
 
 // FreezeBlueprintV0 depsolves the listed blueprint and returns the blueprint with frozen package
 // versions
-func FreezeBlueprintV0(socket, blueprint string) (BlueprintsFreezeV0, *APIResponse, error) {
+func FreezeBlueprintV0(socket *http.Client, blueprint string) (BlueprintsFreezeV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/freeze/"+blueprint)
 	if resp != nil || err != nil {
 		return BlueprintsFreezeV0{}, resp, err

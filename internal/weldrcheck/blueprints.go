@@ -4,6 +4,7 @@ package weldrcheck
 
 import (
 	"log"
+	"net/http"
 	"reflect"
 	"sort"
 	"strings"
@@ -14,7 +15,7 @@ import (
 )
 
 type checkBlueprintsV0 struct {
-	socket string
+	socket *http.Client
 }
 
 // Run will execute the API V0 Blueprint check functions

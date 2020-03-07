@@ -4,6 +4,7 @@ package weldrcheck
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -32,7 +33,7 @@ func isStringInSlice(slice []string, s string) bool {
 
 // Run the API V0 checks against the server
 // Return true if all the checks pass
-func runV0Checks(socket string) (pass bool) {
+func runV0Checks(socket *http.Client) (pass bool) {
 	pass = true
 
 	bpv0 := checkBlueprintsV0{socket}
@@ -47,7 +48,7 @@ func runV0Checks(socket string) (pass bool) {
 }
 
 // Run the V1 checks against the server
-func runV1Checks(socket string) (pass bool) {
+func runV1Checks(socket *http.Client) (pass bool) {
 	pass = true
 
 	if pass {
@@ -60,14 +61,9 @@ func runV1Checks(socket string) (pass bool) {
 
 // Run executes all of the weldr API checks against a running API server
 // This is designed to run against any WELDR API server, not just osbuild-composer
-func Run(socket string) {
-	log.Printf("Running API check on %s", socket)
+func Run(socket *http.Client) {
+	log.Print("Running API check")
 
-	// Does the socket exist?
-	if _, err := os.Stat(socket); os.IsNotExist(err) {
-		log.Printf("ERROR: API socket %s is missing", socket)
-		os.Exit(1)
-	}
 	// Does the server respond to /api/status?
 	status, resp, err := client.GetStatusV0(socket)
 	if err != nil {
