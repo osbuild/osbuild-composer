@@ -3,6 +3,7 @@
 package client
 
 import (
+	"context"
 	"io/ioutil"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
@@ -21,9 +23,12 @@ import (
 // socketPath is the path to the temporary unix domain socket
 var socketPath string
 
+// socket is the client connection to the server on socketPath
+var socket *http.Client
+
 func TestRequest(t *testing.T) {
 	// Make a request to the status route
-	resp, err := Request(socketPath, "GET", "/api/status", "", map[string]string{})
+	resp, err := Request(socket, "GET", "/api/status", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request good route failed: %v", err)
 	}
@@ -32,7 +37,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	// Make a request to a bad route
-	resp, err = Request(socketPath, "GET", "/invalidroute", "", map[string]string{})
+	resp, err = Request(socket, "GET", "/invalidroute", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request bad route failed: %v", err)
 	}
@@ -47,7 +52,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	// Make a request with a bad offset to trigger a JSON response with Status set to 400
-	resp, err = Request(socketPath, "GET", "/api/v0/blueprints/list?offset=bad", "", map[string]string{})
+	resp, err = Request(socket, "GET", "/api/v0/blueprints/list?offset=bad", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request bad offset failed: %v", err)
 	}
@@ -84,7 +89,7 @@ func TestAPIResponse(t *testing.T) {
 
 func TestGetRaw(t *testing.T) {
 	// Get raw data
-	b, resp, err := GetRaw(socketPath, "GET", "/api/status")
+	b, resp, err := GetRaw(socket, "GET", "/api/status")
 	if err != nil {
 		t.Fatalf("GetRaw failed with a client error: %v", err)
 	}
@@ -95,7 +100,7 @@ func TestGetRaw(t *testing.T) {
 		t.Fatal("GetRaw returned an empty string")
 	}
 	// Get an API error
-	b, resp, err = GetRaw(socketPath, "GET", "/api/v0/blueprints/list?offset=bad")
+	b, resp, err = GetRaw(socket, "GET", "/api/v0/blueprints/list?offset=bad")
 	if err != nil {
 		t.Fatalf("GetRaw bad request failed with a client error: %v", err)
 	}
@@ -114,7 +119,7 @@ func TestGetRaw(t *testing.T) {
 
 func TestGetJSONAll(t *testing.T) {
 	// Get all the projects
-	b, resp, err := GetJSONAll(socketPath, "/api/v0/projects/list")
+	b, resp, err := GetJSONAll(socket, "/api/v0/projects/list")
 	if err != nil {
 		t.Fatalf("GetJSONAll failed with a client error: %v", err)
 	}
@@ -126,7 +131,7 @@ func TestGetJSONAll(t *testing.T) {
 	}
 
 	// Run it on a route that doesn't support offset/limit
-	b, resp, err = GetJSONAll(socketPath, "/api/status")
+	b, resp, err = GetJSONAll(socket, "/api/status")
 	if err == nil {
 		t.Fatalf("GetJSONAll bad route failed: %v", b)
 	}
@@ -137,7 +142,7 @@ func TestGetJSONAll(t *testing.T) {
 
 func TestPostRaw(t *testing.T) {
 	// There are no routes that accept raw POST w/o Content-Type so this ends up testing the error path
-	b, resp, err := PostRaw(socketPath, "/api/v0/blueprints/new", "nobody", nil)
+	b, resp, err := PostRaw(socket, "/api/v0/blueprints/new", "nobody", nil)
 	if err != nil {
 		t.Fatalf("PostRaw bad request failed with a client error: %v", err)
 	}
@@ -158,7 +163,7 @@ func TestPostTOML(t *testing.T) {
 	blueprint := `name = "test-blueprint"
 				  description = "TOML test blueprint"
 				  version = "0.0.1"`
-	b, resp, err := PostTOML(socketPath, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostTOML(socket, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
 		t.Fatalf("PostTOML client failed: %v", err)
 	}
@@ -174,7 +179,7 @@ func TestPostJSON(t *testing.T) {
 	blueprint := `{"name": "test-blueprint",
 				   "description": "JSON test blueprint",
 				   "version": "0.0.1"}`
-	b, resp, err := PostJSON(socketPath, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostJSON(socket, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
 		t.Fatalf("PostJSON client failed: %v", err)
 	}
@@ -215,6 +220,16 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 	}()
+
+	// Setup client connection to socketPath
+	socket = &http.Client{
+		Timeout: 60 * time.Second,
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
 
 	// Run the tests
 	os.Exit(m.Run())
