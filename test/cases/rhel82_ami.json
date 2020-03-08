@@ -2,7 +2,7 @@
   "boot": {
     "type": "qemu-extract"
   },
-  "compose": {
+  "compose-request": {
     "distro": "rhel-8.2",
     "arch": "x86_64",
     "filename": "image.raw.xz",

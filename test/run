@@ -194,7 +194,7 @@ def run_test(case, private_key, store):
 
     print(f"osbuild successfully built pipeline {output_id}")
 
-    filename = os.path.join(store, "refs", output_id, case["compose"]["filename"])
+    filename = os.path.join(store, "refs", output_id, case["compose-request"]["filename"])
 
     fn, ex = os.path.splitext(filename)
     if ex == ".xz":
@@ -248,11 +248,11 @@ def main():
                 case = json.load(f)
 
             if arg.distros:
-                if case["compose"]["distro"] not in arg.distros:
+                if case["compose-request"]["distro"] not in arg.distros:
                     continue
 
             if arg.arches:
-                if case["compose"]["arch"] not in arg.arches:
+                if case["compose-request"]["arch"] not in arg.arches:
                     continue
 
             print(f"RUNNING: {filename}")
