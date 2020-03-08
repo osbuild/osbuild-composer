@@ -5,13 +5,15 @@
   "compose": {
     "distro": "rhel-8.2",
     "arch": "x86_64",
-    "checksums": {
-      "baseos": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1",
-      "appstream": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
-    },
     "filename": "disk.qcow2",
     "output-format": "openstack",
     "blueprint": {}
+  },
+  "rpmmd": {
+    "checksums": {
+      "baseos": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1",
+      "appstream": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
+    }
   },
   "pipeline": {
     "build": {
