@@ -14,7 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-func TestDistro_Pipeline(t *testing.T) {
+func TestDistro_Manifest(t *testing.T) {
 	pipelinePath := "../../test/cases/"
 	fileInfos, err := ioutil.ReadDir(pipelinePath)
 	if err != nil {
@@ -35,7 +35,7 @@ func TestDistro_Pipeline(t *testing.T) {
 		var tt struct {
 			ComposeRequest *composeRequest   `json:"compose-request"`
 			RpmMD          *rpmMD            `json:"rpmmd"`
-			Pipeline       *osbuild.Pipeline `json:"pipeline,omitempty"`
+			Manifest       *osbuild.Manifest `json:"manifest,omitempty"`
 		}
 		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
 		if err != nil {
@@ -60,7 +60,7 @@ func TestDistro_Pipeline(t *testing.T) {
 				return
 			}
 			size := d.GetSizeForOutputType(tt.ComposeRequest.OutputFormat, 0)
-			got, err := d.Pipeline(tt.ComposeRequest.Blueprint,
+			got, err := d.Manifest(tt.ComposeRequest.Blueprint,
 				nil,
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
@@ -68,15 +68,15 @@ func TestDistro_Pipeline(t *testing.T) {
 				tt.ComposeRequest.Arch,
 				tt.ComposeRequest.OutputFormat,
 				size)
-			if (err != nil) != (tt.Pipeline == nil) {
-				t.Errorf("distro.Pipeline() error = %v", err)
+			if (err != nil) != (tt.Manifest == nil) {
+				t.Errorf("distro.Manifest() error = %v", err)
 				return
 			}
-			if tt.Pipeline != nil {
-				if !reflect.DeepEqual(got, tt.Pipeline) {
+			if tt.Manifest != nil {
+				if !reflect.DeepEqual(got, tt.Manifest) {
 					// Without this the "difference" is just a list of pointers.
 					gotJson, _ := json.Marshal(got)
-					fileJson, _ := json.Marshal(tt.Pipeline)
+					fileJson, _ := json.Marshal(tt.Manifest)
 					t.Errorf("d.Pipeline() =\n%v,\nwant =\n%v", string(gotJson), string(fileJson))
 				}
 			}

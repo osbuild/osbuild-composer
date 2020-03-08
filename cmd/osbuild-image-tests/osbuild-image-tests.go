@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,6 +12,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 type testcaseStruct struct {
@@ -23,12 +24,12 @@ type testcaseStruct struct {
 		Arch     string
 		Filename string
 	}
-	Pipeline  json.RawMessage
+	Manifest  json.RawMessage
 	ImageInfo json.RawMessage `json:"image-info"`
 }
 
-// runOsbuild runs osbuild with the specified pipeline and store.
-func runOsbuild(pipeline []byte, store string) (string, error) {
+// runOsbuild runs osbuild with the specified manifest and store.
+func runOsbuild(manifest []byte, store string) (string, error) {
 	cmd := exec.Command(
 		"osbuild",
 		"--store", store,
@@ -37,7 +38,7 @@ func runOsbuild(pipeline []byte, store string) (string, error) {
 	)
 
 	cmd.Stderr = os.Stderr
-	cmd.Stdin = bytes.NewReader(pipeline)
+	cmd.Stdin = bytes.NewReader(manifest)
 	var outBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
 
@@ -155,7 +156,7 @@ func runTestcase(testcase testcaseStruct) error {
 		}
 	}()
 
-	outputID, err := runOsbuild(testcase.Pipeline, store)
+	outputID, err := runOsbuild(testcase.Manifest, store)
 	if err != nil {
 		return err
 	}

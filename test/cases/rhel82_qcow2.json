@@ -15,192 +15,195 @@
       "appstream": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
     }
   },
-  "pipeline": {
-    "build": {
-      "pipeline": {
-        "stages": [
-          {
-            "name": "org.osbuild.dnf",
-            "options": {
-              "repos": [
-                {
-                  "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
-                  "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
-                },
-                {
-                  "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
-                  "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
-                }
-              ],
-              "packages": [
-                "dnf",
-                "dosfstools",
-                "dracut-config-generic",
-                "e2fsprogs",
-                "glibc",
-                "grub2-pc",
-                "policycoreutils",
-                "python36",
-                "qemu-img",
-                "systemd",
-                "tar",
-                "xfsprogs"
-              ],
-              "releasever": "8",
-              "basearch": "x86_64",
-              "module_platform_id": "platform:el8"
+  "manifest": {
+    "sources": {},
+    "pipeline": {
+      "build": {
+        "pipeline": {
+          "stages": [
+            {
+              "name": "org.osbuild.dnf",
+              "options": {
+                "repos": [
+                  {
+                    "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
+                    "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
+                  },
+                  {
+                    "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
+                    "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
+                  }
+                ],
+                "packages": [
+                  "dnf",
+                  "dosfstools",
+                  "dracut-config-generic",
+                  "e2fsprogs",
+                  "glibc",
+                  "grub2-pc",
+                  "policycoreutils",
+                  "python36",
+                  "qemu-img",
+                  "systemd",
+                  "tar",
+                  "xfsprogs"
+                ],
+                "releasever": "8",
+                "basearch": "x86_64",
+                "module_platform_id": "platform:el8"
+              }
             }
+          ]
+        },
+        "runner": "org.osbuild.rhel82"
+      },
+      "stages": [
+        {
+          "name": "org.osbuild.dnf",
+          "options": {
+            "repos": [
+              {
+                "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
+                "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
+              },
+              {
+                "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
+                "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
+              }
+            ],
+            "packages": [
+              "@core",
+              "NetworkManager",
+              "chrony",
+              "cloud-init",
+              "cloud-utils-growpart",
+              "cockpit-system",
+              "cockpit-ws",
+              "dhcp-client",
+              "dnf",
+              "dnf-plugin-spacewalk",
+              "dnf-utils",
+              "dracut-config-generic",
+              "dracut-norescue",
+              "grub2-pc",
+              "insights-client",
+              "kernel",
+              "nfs-utils",
+              "python3-jsonschema",
+              "qemu-guest-agent",
+              "redhat-release",
+              "redhat-release-eula",
+              "rhn-client-tools",
+              "rhn-setup",
+              "rhnlib",
+              "rhnsd",
+              "rng-tools",
+              "rsync",
+              "subscription-manager-cockpit",
+              "tar",
+              "tcpdump",
+              "yum"
+            ],
+            "exclude_packages": [
+              "aic94xx-firmware",
+              "alsa-firmware",
+              "alsa-lib",
+              "alsa-tools-firmware",
+              "biosdevname",
+              "dracut-config-rescue",
+              "fedora-release",
+              "fedora-repos",
+              "firewalld",
+              "iprutils",
+              "ivtv-firmware",
+              "iwl100-firmware",
+              "iwl1000-firmware",
+              "iwl105-firmware",
+              "iwl135-firmware",
+              "iwl2000-firmware",
+              "iwl2030-firmware",
+              "iwl3160-firmware",
+              "iwl3945-firmware",
+              "iwl4965-firmware",
+              "iwl5000-firmware",
+              "iwl5150-firmware",
+              "iwl6000-firmware",
+              "iwl6000g2a-firmware",
+              "iwl6000g2b-firmware",
+              "iwl6050-firmware",
+              "iwl7260-firmware",
+              "langpacks-*",
+              "langpacks-en",
+              "langpacks-en",
+              "libertas-sd8686-firmware",
+              "libertas-sd8787-firmware",
+              "libertas-usb8388-firmware",
+              "plymouth",
+              "timedatex"
+            ],
+            "releasever": "8",
+            "basearch": "x86_64",
+            "module_platform_id": "platform:el8"
           }
-        ]
-      },
-      "runner": "org.osbuild.rhel82"
-    },
-    "stages": [
-      {
-        "name": "org.osbuild.dnf",
-        "options": {
-          "repos": [
-            {
-              "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/BaseOS/x86_64/os",
-              "checksum": "sha256:3ce6f4ffa7d05b81fec2ba5a1c4917b351231c3433f2f5eed86ed5f8f97168a1"
-            },
-            {
-              "baseurl": "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.2.0/compose/AppStream/x86_64/os",
-              "checksum": "sha256:662e1dc0e465dd5e8efec9f42ef24ac9fd8418294254c3c98ea0342d6e903aed"
-            }
-          ],
-          "packages": [
-            "@core",
-            "NetworkManager",
-            "chrony",
-            "cloud-init",
-            "cloud-utils-growpart",
-            "cockpit-system",
-            "cockpit-ws",
-            "dhcp-client",
-            "dnf",
-            "dnf-plugin-spacewalk",
-            "dnf-utils",
-            "dracut-config-generic",
-            "dracut-norescue",
-            "grub2-pc",
-            "insights-client",
-            "kernel",
-            "nfs-utils",
-            "python3-jsonschema",
-            "qemu-guest-agent",
-            "redhat-release",
-            "redhat-release-eula",
-            "rhn-client-tools",
-            "rhn-setup",
-            "rhnlib",
-            "rhnsd",
-            "rng-tools",
-            "rsync",
-            "subscription-manager-cockpit",
-            "tar",
-            "tcpdump",
-            "yum"
-          ],
-          "exclude_packages": [
-            "aic94xx-firmware",
-            "alsa-firmware",
-            "alsa-lib",
-            "alsa-tools-firmware",
-            "biosdevname",
-            "dracut-config-rescue",
-            "fedora-release",
-            "fedora-repos",
-            "firewalld",
-            "iprutils",
-            "ivtv-firmware",
-            "iwl100-firmware",
-            "iwl1000-firmware",
-            "iwl105-firmware",
-            "iwl135-firmware",
-            "iwl2000-firmware",
-            "iwl2030-firmware",
-            "iwl3160-firmware",
-            "iwl3945-firmware",
-            "iwl4965-firmware",
-            "iwl5000-firmware",
-            "iwl5150-firmware",
-            "iwl6000-firmware",
-            "iwl6000g2a-firmware",
-            "iwl6000g2b-firmware",
-            "iwl6050-firmware",
-            "iwl7260-firmware",
-            "langpacks-*",
-            "langpacks-en",
-            "langpacks-en",
-            "libertas-sd8686-firmware",
-            "libertas-sd8787-firmware",
-            "libertas-usb8388-firmware",
-            "plymouth",
-            "timedatex"
-          ],
-          "releasever": "8",
-          "basearch": "x86_64",
-          "module_platform_id": "platform:el8"
+        },
+        {
+          "name": "org.osbuild.fix-bls",
+          "options": {}
+        },
+        {
+          "name": "org.osbuild.fstab",
+          "options": {
+            "filesystems": [
+              {
+                "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
+                "vfs_type": "xfs",
+                "path": "/",
+                "options": "defaults"
+              }
+            ]
+          }
+        },
+        {
+          "name": "org.osbuild.grub2",
+          "options": {
+            "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
+            "kernel_opts": "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
+            "legacy": true
+          }
+        },
+        {
+          "name": "org.osbuild.locale",
+          "options": {
+            "language": "en_US"
+          }
+        },
+        {
+          "name": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+          }
         }
-      },
-      {
-        "name": "org.osbuild.fix-bls",
-        "options": {}
-      },
-      {
-        "name": "org.osbuild.fstab",
+      ],
+      "assembler": {
+        "name": "org.osbuild.qemu",
         "options": {
-          "filesystems": [
+          "format": "qcow2",
+          "filename": "disk.qcow2",
+          "size": 2147483648,
+          "ptuuid": "0x14fc63d2",
+          "pttype": "mbr",
+          "partitions": [
             {
-              "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-              "vfs_type": "xfs",
-              "path": "/",
-              "options": "defaults"
+              "start": 2048,
+              "bootable": true,
+              "filesystem": {
+                "type": "xfs",
+                "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
+                "mountpoint": "/"
+              }
             }
           ]
         }
-      },
-      {
-        "name": "org.osbuild.grub2",
-        "options": {
-          "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-          "kernel_opts": "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
-          "legacy": true
-        }
-      },
-      {
-        "name": "org.osbuild.locale",
-        "options": {
-          "language": "en_US"
-        }
-      },
-      {
-        "name": "org.osbuild.selinux",
-        "options": {
-          "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-        }
-      }
-    ],
-    "assembler": {
-      "name": "org.osbuild.qemu",
-      "options": {
-        "format": "qcow2",
-        "filename": "disk.qcow2",
-        "size": 2147483648,
-        "ptuuid": "0x14fc63d2",
-        "pttype": "mbr",
-        "partitions": [
-          {
-            "start": 2048,
-            "bootable": true,
-            "filesystem": {
-              "type": "xfs",
-              "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-              "mountpoint": "/"
-            }
-          }
-        ]
       }
     }
   },
