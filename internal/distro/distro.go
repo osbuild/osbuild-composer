@@ -55,15 +55,6 @@ type Distro interface {
 	// Returns the build packages for a given output architecture
 	BuildPackages(outputArchitecture string) ([]string, error)
 
-	// Returns an osbuild pipeline that generates an image in the given
-	// output format with all packages and customizations specified in the
-	// given blueprint.
-	Pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error)
-
-	// Returns an osbuild sources object that is required for building the
-	// corresponding pipeline containing the given packages.
-	Sources(packages []rpmmd.PackageSpec) *osbuild.Sources
-
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to generates an image in the given output format with all packages and
 	// customizations specified in the given blueprint.
