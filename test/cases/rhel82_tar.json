@@ -1,5 +1,5 @@
 {
-  "compose": {
+  "compose-request": {
     "output-format": "tar",
     "distro": "rhel-8.2",
     "arch": "x86_64",

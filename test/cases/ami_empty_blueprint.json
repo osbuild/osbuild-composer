@@ -2,7 +2,7 @@
   "boot": {
     "type": "qemu-extract"
   },
-  "compose": {
+  "compose-request": {
     "distro": "fedora-30",
     "arch": "x86_64",
     "filename": "image.raw.xz",

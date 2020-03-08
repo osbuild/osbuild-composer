@@ -2,7 +2,7 @@
   "boot": {
     "type": "nspawn-extract"
   },
-  "compose": {
+  "compose-request": {
     "output-format": "tar",
     "distro": "fedora-30",
     "arch": "x86_64",

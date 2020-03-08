@@ -21,7 +21,7 @@ func TestDistro_Pipeline(t *testing.T) {
 		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)
 	}
 	for _, fileInfo := range fileInfos {
-		type compose struct {
+		type composeRequest struct {
 			Distro       string               `json:"distro"`
 			Arch         string               `json:"arch"`
 			OutputFormat string               `json:"output-format"`
@@ -33,9 +33,9 @@ func TestDistro_Pipeline(t *testing.T) {
 			Checksums     map[string]string   `json:"checksums"`
 		}
 		var tt struct {
-			Compose  *compose          `json:"compose"`
-			RpmMD    *rpmMD            `json:"rpmmd"`
-			Pipeline *osbuild.Pipeline `json:"pipeline,omitempty"`
+			ComposeRequest *composeRequest   `json:"compose-request"`
+			RpmMD          *rpmMD            `json:"rpmmd"`
+			Pipeline       *osbuild.Pipeline `json:"pipeline,omitempty"`
 		}
 		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
 		if err != nil {
@@ -45,28 +45,28 @@ func TestDistro_Pipeline(t *testing.T) {
 		if err != nil {
 			t.Errorf("Colud not parse test-case '%s': %v", fileInfo.Name(), err)
 		}
-		if tt.Compose == nil || tt.Compose.Blueprint == nil {
+		if tt.ComposeRequest == nil || tt.ComposeRequest.Blueprint == nil {
 			t.Logf("Skipping '%s'.", fileInfo.Name())
 			continue
 		}
-		t.Run(tt.Compose.OutputFormat, func(t *testing.T) {
+		t.Run(tt.ComposeRequest.OutputFormat, func(t *testing.T) {
 			distros, err := distro.NewDefaultRegistry([]string{"../.."})
 			if err != nil {
 				t.Fatal(err)
 			}
-			d := distros.GetDistro(tt.Compose.Distro)
+			d := distros.GetDistro(tt.ComposeRequest.Distro)
 			if d == nil {
-				t.Errorf("unknown distro: %v", tt.Compose.Distro)
+				t.Errorf("unknown distro: %v", tt.ComposeRequest.Distro)
 				return
 			}
-			size := d.GetSizeForOutputType(tt.Compose.OutputFormat, 0)
-			got, err := d.Pipeline(tt.Compose.Blueprint,
+			size := d.GetSizeForOutputType(tt.ComposeRequest.OutputFormat, 0)
+			got, err := d.Pipeline(tt.ComposeRequest.Blueprint,
 				nil,
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
 				tt.RpmMD.Checksums,
-				tt.Compose.Arch,
-				tt.Compose.OutputFormat,
+				tt.ComposeRequest.Arch,
+				tt.ComposeRequest.OutputFormat,
 				size)
 			if (err != nil) != (tt.Pipeline == nil) {
 				t.Errorf("distro.Pipeline() error = %v", err)

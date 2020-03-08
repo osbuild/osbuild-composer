@@ -2,7 +2,7 @@
   "boot": {
     "type": "nspawn"
   },
-  "compose": {
+  "compose-request": {
     "distro": "fedora-30",
     "arch": "x86_64",
     "output-format": "partitioned-disk",
