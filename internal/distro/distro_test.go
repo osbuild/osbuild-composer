@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func TestDistro_Pipeline(t *testing.T) {
@@ -27,7 +28,9 @@ func TestDistro_Pipeline(t *testing.T) {
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		type rpmMD struct {
-			Checksums map[string]string `json:"checksums"`
+			BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
+			Packages      []rpmmd.PackageSpec `json:"packages"`
+			Checksums     map[string]string   `json:"checksums"`
 		}
 		var tt struct {
 			Compose  *compose          `json:"compose"`
@@ -57,7 +60,14 @@ func TestDistro_Pipeline(t *testing.T) {
 				return
 			}
 			size := d.GetSizeForOutputType(tt.Compose.OutputFormat, 0)
-			got, err := d.Pipeline(tt.Compose.Blueprint, nil, nil, nil, tt.RpmMD.Checksums, tt.Compose.Arch, tt.Compose.OutputFormat, size)
+			got, err := d.Pipeline(tt.Compose.Blueprint,
+				nil,
+				tt.RpmMD.Packages,
+				tt.RpmMD.BuildPackages,
+				tt.RpmMD.Checksums,
+				tt.Compose.Arch,
+				tt.Compose.OutputFormat,
+				size)
 			if (err != nil) != (tt.Pipeline == nil) {
 				t.Errorf("distro.Pipeline() error = %v", err)
 				return
