@@ -82,6 +82,11 @@ func testCompose(outputType string) {
 	pushBlueprint(&bp)
 	defer deleteBlueprint(&bp)
 
+	runComposerCLI(false, "blueprints", "save", "empty")
+	if _, err := os.Stat("empty.toml"); os.IsNotExist(err) {
+		log.Fatalf("empty.toml doesn not exist: %v", err)
+	}
+
 	uuid := startCompose("empty", outputType)
 	defer deleteCompose(uuid)
 	status := waitForCompose(uuid)
