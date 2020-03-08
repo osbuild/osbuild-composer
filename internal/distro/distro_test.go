@@ -39,11 +39,11 @@ func TestDistro_Pipeline(t *testing.T) {
 		}
 		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
 		if err != nil {
-			t.Errorf("Colud not read test-case '%s': %v", fileInfo.Name(), err)
+			t.Errorf("Could not read test-case '%s': %v", fileInfo.Name(), err)
 		}
 		err = json.Unmarshal([]byte(file), &tt)
 		if err != nil {
-			t.Errorf("Colud not parse test-case '%s': %v", fileInfo.Name(), err)
+			t.Errorf("Could not parse test-case '%s': %v", fileInfo.Name(), err)
 		}
 		if tt.ComposeRequest == nil || tt.ComposeRequest.Blueprint == nil {
 			t.Logf("Skipping '%s'.", fileInfo.Name())
