@@ -15,15 +15,23 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+type rpmMD struct {
+	BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
+	Packages      []rpmmd.PackageSpec `json:"packages"`
+	Checksums     map[string]string   `json:"checksums"`
+}
+
 func main() {
 	var imageType string
 	var blueprintArg string
 	var archArg string
 	var distroArg string
+	var rpmmdArg bool
 	flag.StringVar(&imageType, "image-type", "", "image type, e.g. qcow2 or ami")
 	flag.StringVar(&blueprintArg, "blueprint", "", "path to a JSON file containing a blueprint to translate")
 	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
 	flag.StringVar(&distroArg, "distro", "", "distribution to create, e.g. fedora-30")
+	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
 	flag.Parse()
 
 	// Print help usage if one of the required arguments wasn't provided
@@ -105,16 +113,28 @@ func main() {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
 
-	size := d.GetSizeForOutputType(imageType, 0)
-	manifest, err := d.Manifest(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
-	if err != nil {
-		panic(err.Error())
-	}
+	var bytes []byte
+	if rpmmdArg {
+		rpmMDInfo := rpmMD{
+			BuildPackages: buildPackageSpecs,
+			Packages:      packageSpecs,
+			Checksums:     checksums,
+		}
+		bytes, err = json.Marshal(rpmMDInfo)
+		if err != nil {
+			panic("could not marshal rpmmd struct into JSON")
+		}
+	} else {
+		size := d.GetSizeForOutputType(imageType, 0)
+		manifest, err := d.Manifest(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
+		if err != nil {
+			panic(err.Error())
+		}
 
-	bytes, err := json.Marshal(manifest)
-	if err != nil {
-		panic("could not marshal manifest into JSON")
+		bytes, err = json.Marshal(manifest)
+		if err != nil {
+			panic("could not marshal manifest into JSON")
+		}
 	}
-
 	os.Stdout.Write(bytes)
 }
