@@ -61,13 +61,6 @@ func main() {
 
 	// Full integration tests
 	testCompose("ami")
-	testCompose("ext4-filesystem")
-	testCompose("openstack")
-	testCompose("partitioned-disk")
-	testCompose("qcow2")
-	testCompose("tar")
-	testCompose("vhd")
-	testCompose("vmdk")
 }
 
 func testCompose(outputType string) {
@@ -93,6 +86,8 @@ func testCompose(outputType string) {
 	if status != "FINISHED" {
 		log.Fatalf("Unexpected compose result: %s", status)
 	}
+
+	runComposerCLI(false, "compose", "image", uuid.String())
 }
 
 func startCompose(name, outputType string) uuid.UUID {
