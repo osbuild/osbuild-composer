@@ -7,6 +7,8 @@ __pycache__
 /osbuild-upload-aws
 /osbuild-dnf-json-tests
 /osbuild-tests
+/osbuild-weldr-tests
+/osbuild-rcm-tests
 
 /*.tar.gz
 /*.src.rpm
