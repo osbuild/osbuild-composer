@@ -13,7 +13,8 @@ import (
 
 func main() {
 	failed := false
-	submit_body := `
+	// This is the first request the user sends to osbuild.
+	submitBody := `
 		{
 			"distribution": "fedora-31",
 		 	"image_types": ["qcow2"], 
@@ -23,15 +24,23 @@ func main() {
 			]
 		}
 	`
+	// This is what the user gets back.
+	var submitResponse struct {
+		UUID uuid.UUID `json:"compose_id"`
+	}
+	// Then it is possible to get the status on the /v1/compose/<UUID> endpoint.
+	// And finally this is the response from getting the status.
+	var statusResponse struct {
+		Status string `json:"status"`
+	}
+
+	// osbuild instance running on localhost
 	socket := "http://127.0.0.1:80/"
 	endpoint := "v1/compose"
 
 	// Case 1: POST request
 
-	resp, err := http.Post(socket + endpoint, "application/json", strings.NewReader(submit_body))
-	var reply struct {
-		UUID uuid.UUID `json:"compose_id"`
-	}
+	resp, err := http.Post(socket + endpoint, "application/json", strings.NewReader(submitBody))
 	if err != nil {
 		log.Fatal("Failed to submit a compose: ", err.Error())
 	}
@@ -39,20 +48,17 @@ func main() {
 		log.Print("Error: the ", endpoint, " returned non 200 status. Full response: ", resp)
 		failed = true
 	} else {
-		err = json.NewDecoder(resp.Body).Decode(&reply)
+		err = json.NewDecoder(resp.Body).Decode(&submitResponse)
 		if err != nil {
 			log.Fatal("Failed to decode JSON response from ", endpoint)
 		}
-		log.Print("Success: the ", endpoint, " returned compose UUID: ", reply.UUID)
+		log.Print("Success: the ", endpoint, " returned compose UUID: ", submitResponse.UUID)
 	}
 
 	// Case 2: GET status
 
-	statusEndpoint := endpoint + "/" + reply.UUID.String()
+	statusEndpoint := endpoint + "/" + submitResponse.UUID.String()
 	resp, err = http.Get(socket + statusEndpoint)
-	var status struct {
-		Status string `json:"status"`
-	}
 	if err != nil {
 		log.Fatal("Failed to get a status: ", err.Error())
 	}
@@ -60,13 +66,14 @@ func main() {
 		log.Print("Error: the ", endpoint, " returned non 200 status. Full response: ", resp)
 		failed = true
 	} else {
-		err = json.NewDecoder(resp.Body).Decode(&status)
+		err = json.NewDecoder(resp.Body).Decode(&statusResponse)
 		if err != nil {
 			log.Fatal("Failed to decode JSON response from ", endpoint)
 		}
-		log.Print("Success: the ", statusEndpoint, " returned status: ", status.Status)
+		log.Print("Success: the ", statusEndpoint, " returned status: ", statusResponse.Status)
 	}
 
+	// If anything failed return non-zero exit code.
 	if failed {
 		os.Exit(1)
 	}
