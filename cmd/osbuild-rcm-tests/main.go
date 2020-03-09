@@ -3,7 +3,8 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"os"
@@ -24,6 +25,9 @@ func main() {
 	`
 	socket := "http://127.0.0.1:80/"
 	endpoint := "v1/compose"
+
+	// Case 1: POST request
+
 	resp, err := http.Post(socket + endpoint, "application/json", strings.NewReader(submit_body))
 	if err != nil {
 		log.Fatal("Failed to submit a compose")
@@ -32,10 +36,17 @@ func main() {
 		log.Print("Error: the ", endpoint, " returned non 200 status. Full response: ", resp)
 		failed = true
 	} else {
-		buf := new(bytes.Buffer)
-		_, _ = buf.ReadFrom(resp.Body)
-		log.Print("Success: the ", endpoint, " returned: ", buf.String())
+		var reply struct {
+			UUID uuid.UUID `json:"compose_id"`
+		}
+		err = json.NewDecoder(resp.Body).Decode(&reply)
+		if err != nil {
+			log.Fatal("Failed to decode JSON response from ", endpoint)
+		}
+		log.Print("Success: the ", endpoint, " returned compose UUID: ", reply.UUID)
 	}
+
+
 	if failed {
 		os.Exit(1)
 	}
