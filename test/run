@@ -128,7 +128,7 @@ def nspawn_boot_archive(image_file, name):
             container.kill()
 
 
-def run_osbuild(pipeline, store):
+def run_osbuild(manifest, store):
     osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--libdir", ".", "--store", store, "-"]
 
     build_env = os.getenv("OSBUILD_TEST_BUILD_ENV", None)
@@ -137,7 +137,7 @@ def run_osbuild(pipeline, store):
         osbuild_cmd.append(os.path.abspath(build_env))
 
     result = dict()
-    result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(pipeline)))
+    result = json.loads(subprocess.check_output(osbuild_cmd, cwd="./osbuild", encoding="utf-8", input=json.dumps(manifest)))
 
     return result.get("output_id")
 
@@ -178,12 +178,12 @@ def run_ssh_test(private_key):
 
 
 def run_test(case, private_key, store):
-    if "pipeline" not in case:
-        print("skipping this test case, no pipeline given")
+    if "manifest" not in case:
+        print("skipping this test case, no manifest given")
         return True
 
     try:
-        output_id = run_osbuild(case["pipeline"], store)
+        output_id = run_osbuild(case["manifest"], store)
     except subprocess.CalledProcessError as err:
         print(err.output)
         return False
