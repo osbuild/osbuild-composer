@@ -17,6 +17,7 @@ matrix:
             echo
             echo "Please include these changes in your branch: "
             git diff
+            exit 1
           fi
     - name: unit-tests
       arch: amd64
