@@ -1,61 +1,28 @@
+// +build !debug
+
 package main
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"flag"
-	"github.com/osbuild/osbuild-composer/internal/rcm"
-	"io/ioutil"
-	"log"
-	"path"
-	"os"
-
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
+	"log"
+	"os"
 
 	"github.com/coreos/go-systemd/activation"
 )
 
-type connectionConfig struct {
-	CACertFile     string
-	ServerKeyFile  string
-	ServerCertFile string
-}
-
-func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
-	caCertPEM, err := ioutil.ReadFile(c.CACertFile)
-	if err != nil {
-		return nil, err
-	}
-
-	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM(caCertPEM)
-	if !ok {
-		panic("failed to parse root certificate")
-	}
-
-	cert, err := tls.LoadX509KeyPair(c.ServerCertFile, c.ServerKeyFile)
-	if err != nil {
-		return nil, err
-	}
-	return &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ClientCAs:    roots,
-	}, nil
-}
-
 func main() {
+	// Parse command line arguments
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
 
-	stateDir := "/var/lib/osbuild-composer"
-
+	// Set up sockets
 	listeners, err := activation.ListenersWithNames()
 	if err != nil {
 		log.Fatalf("Could not get listening sockets: " + err.Error())
@@ -70,32 +37,18 @@ func main() {
 	if len(composerListeners) != 2 && len(composerListeners) != 3 {
 		log.Fatalf("Unexpected number of listening sockets (%d), expected 2 or 3", len(composerListeners))
 	}
-
 	weldrListener := composerListeners[0]
 	jobListener := composerListeners[1]
 
-	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
-	if !ok {
-		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
-	}
-
-	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
-
-	distros, err := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
-	if err != nil {
-		log.Fatalf("Error loading distros: %v", err)
-	}
-
-	distribution, err := distros.FromHost()
-	if err != nil {
-		log.Fatalf("Could not determine distro from host: " + err.Error())
-	}
+	// Set up distribution
+	rpm, distribution, distros := createDistroConfiguration([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
 
 	var logger *log.Logger
 	if verbose {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
+	stateDir := "/var/lib/osbuild-composer"
 	store := store.New(&stateDir, distribution, *distros)
 
 	jobAPI := jobqueue.New(logger, store)
