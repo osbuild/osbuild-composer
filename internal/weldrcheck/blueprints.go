@@ -940,13 +940,17 @@ func (c *checkBlueprintsV0) CheckBlueprintChangesV0() bool {
 func (c *checkBlueprintsV0) CheckBlueprintNonChangesV0() bool {
 	name := "List non-existent blueprint changes"
 
-	_, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-non-blueprint-changes-v0"})
+	resp, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-non-blueprint-changes-v0"})
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
 		return false
 	}
-	if api == nil || api.Status {
-		log.Printf("FAIL: %s failed to return an error", name)
+	if api != nil {
+		log.Printf("FAIL: %s failed: %s", name, api)
+		return false
+	}
+	if len(resp.Errors) == 0 {
+		log.Printf("FAIL: %s failed with no error: %v", name, resp)
 		return false
 	}
 
@@ -1441,13 +1445,17 @@ func (c *checkBlueprintsV0) CheckBlueprintFreezeV0() bool {
 func (c *checkBlueprintsV0) CheckNonBlueprintFreezeV0() bool {
 	name := "Freeze a non-existent blueprint"
 
-	_, api, err := client.FreezeBlueprintV0(c.socket, "test-freeze-non-blueprint-v0")
+	resp, api, err := client.FreezeBlueprintV0(c.socket, "test-freeze-non-blueprint-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err.Error())
 		return false
 	}
-	if api == nil || api.Status {
-		log.Printf("FAIL: %s failed to return an error", name)
+	if api != nil {
+		log.Printf("FAIL: %s failed: %s", name, api)
+		return false
+	}
+	if len(resp.Errors) == 0 {
+		log.Printf("FAIL: %s failed with no error: %v", name, resp)
 		return false
 	}
 

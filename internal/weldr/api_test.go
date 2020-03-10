@@ -73,6 +73,8 @@ func TestBlueprintsNew(t *testing.T) {
 	}{
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
+		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages:}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: unexpected EOF"}]}`},
+		{"POST", "/api/v0/blueprints/new", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: EOF"}]}`},
 	}
 
 	for _, c := range cases {
@@ -104,6 +106,29 @@ version = "2.4.*"`
 	}
 }
 
+func TestBlueprintsInvalidToml(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[packages
+name = "httpd"
+version = "2.4.*"`
+
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/new", bytes.NewReader([]byte(blueprint)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusBadRequest {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+}
+
 func TestBlueprintsWorkspaceJSON(t *testing.T) {
 	var cases = []struct {
 		Method         string
@@ -113,11 +138,12 @@ func TestBlueprintsWorkspaceJSON(t *testing.T) {
 		ExpectedJSON   string
 	}{
 		{"POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
+		{"POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages:}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: unexpected EOF"}]}`},
+		{"POST", "/api/v0/blueprints/workspace", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: EOF"}]}`},
 	}
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
-		test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 		test.TestRoute(t, api, true, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
@@ -145,6 +171,29 @@ version = "2.4.*"`
 	}
 }
 
+func TestBlueprintsWorkspaceInvalidTOML(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[packages
+name = "httpd"
+version = "2.4.*"`
+
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/workspace", bytes.NewReader([]byte(blueprint)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusBadRequest {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+}
+
 func TestBlueprintsInfo(t *testing.T) {
 	var cases = []struct {
 		Method         string
@@ -157,6 +206,7 @@ func TestBlueprintsInfo(t *testing.T) {
 		"changes":[{"name":"test1","changed":false}], "errors":[]}`},
 		{"GET", "/api/v0/blueprints/info/test2", ``, http.StatusOK, `{"blueprints":[{"name":"test2","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test2","changed":true}], "errors":[]}`},
+		{"GET", "/api/v0/blueprints/info/test3-non", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"test3-non: "}]}`},
 	}
 
 	for _, c := range cases {
@@ -201,6 +251,18 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	}
 	if diff := cmp.Diff(got, expected); diff != "" {
 		t.Fatalf("received unexpected blueprint: %s", diff)
+	}
+}
+
+func TestNonExistentBlueprintsInfoToml(t *testing.T) {
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/test3-non?format=toml", nil)
+	recorder := httptest.NewRecorder()
+	api.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("unexpected status %v", resp.StatusCode)
 	}
 }
 
