@@ -178,10 +178,6 @@ def run_ssh_test(private_key):
 
 
 def run_test(case, private_key, store):
-    if "manifest" not in case:
-        print("skipping this test case, no manifest given")
-        return True
-
     try:
         output_id = run_osbuild(case["manifest"], store)
     except subprocess.CalledProcessError as err:
