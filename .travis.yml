@@ -8,34 +8,6 @@ addons:
       - gnupg2
 matrix:
   include:
-    - name: source-test
-      script:
-        - |
-          set -e
-          ./tools/prepare-source.sh
-          if [ ! $(git diff --quiet --exit-code) ]; then
-            echo
-            echo "Please include these changes in your branch: "
-            git diff
-          fi
-    - name: unit-tests
-      arch: amd64
-      language: go
-      go: 1.12.x
-      env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
-    - name: unit-tests
-      arch: arm64
-      language: go
-      go: 1.12.x
-      env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
-    - name: unit-tests
-      arch: s390x
-      language: go
-      go: 1.12.x
-      env: GO111MODULE=on # needed even for Go 1.12
-      script: go test -v ./...
     - name: image-test-empty-blueprint
       arch: amd64
       language: python
