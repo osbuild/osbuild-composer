@@ -86,6 +86,47 @@ func (c *checkBlueprintsV0) CheckPostTOML() bool {
 	return true
 }
 
+// POST an invalid TOML blueprint
+func (c *checkBlueprintsV0) CheckPostInvalidTOML() bool {
+	name := "POST of an invalid TOML blueprint"
+
+	bp := `
+		name="test-invalid-toml-blueprint-v0"
+		version="0.0.1"
+		[package
+		name="bash"
+		version="*"
+		`
+	resp, err := client.PostTOMLBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an empty TOML blueprint
+func (c *checkBlueprintsV0) CheckPostEmptyTOML() bool {
+	name := "POST of an empty TOML blueprint"
+
+	resp, err := client.PostTOMLBlueprintV0(c.socket, "")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // POST a new JSON blueprint
 func (c *checkBlueprintsV0) CheckPostJSON() bool {
 	name := "POST of a JSON blueprint"
@@ -106,6 +147,46 @@ func (c *checkBlueprintsV0) CheckPostJSON() bool {
 	}
 	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an invalid JSON blueprint
+func (c *checkBlueprintsV0) CheckPostInvalidJSON() bool {
+	name := "POST of an invalid JSON blueprint"
+
+	bp := `{
+		"name": "test-invalid-json-blueprint-v0",
+		"version": "0.0.1",
+		"modules": [{"name: "util-linux", "version": "*"}],
+	}`
+
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an empty JSON blueprint
+func (c *checkBlueprintsV0) CheckPostEmptyJSON() bool {
+	name := "POST of an empty JSON blueprint"
+
+	resp, err := client.PostJSONBlueprintV0(c.socket, "")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -145,6 +226,47 @@ func (c *checkBlueprintsV0) CheckPostTOMLWS() bool {
 	return true
 }
 
+// POST an invalid TOML blueprint to the workspace
+func (c *checkBlueprintsV0) CheckPostInvalidTOMLWS() bool {
+	name := "POST of an invalid TOML blueprint to workspace"
+
+	bp := `
+		name="test-invalid-toml-blueprint-ws-v0"
+		version="0.0.1"
+		[package
+		name="bash"
+		version="*"
+		`
+	resp, err := client.PostTOMLWorkspaceV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an empty TOML blueprint to the workspace
+func (c *checkBlueprintsV0) CheckPostEmptyTOMLWS() bool {
+	name := "POST of an empty TOML blueprint to workspace"
+
+	resp, err := client.PostTOMLWorkspaceV0(c.socket, "")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // POST a blueprint to the workspace as JSON
 func (c *checkBlueprintsV0) CheckPostJSONWS() bool {
 	name := "POST JSON blueprint to workspace"
@@ -165,6 +287,46 @@ func (c *checkBlueprintsV0) CheckPostJSONWS() bool {
 	}
 	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an invalid JSON blueprint to the workspace
+func (c *checkBlueprintsV0) CheckPostInvalidJSONWS() bool {
+	name := "POST of an invalid JSON blueprint to workspace"
+
+	bp := `{
+		"name": "test-invalid-json-blueprint-ws-v0",
+		"version": "0.0.1",
+		"modules": [{"name: "util-linux", "version": "*"}],
+	}`
+
+	resp, err := client.PostJSONBlueprintV0(c.socket, bp)
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// POST an empty JSON blueprint to the workspace
+func (c *checkBlueprintsV0) CheckPostEmptyJSONWS() bool {
+	name := "POST of an empty JSON blueprint to workspace"
+
+	resp, err := client.PostJSONBlueprintV0(c.socket, "")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
 		return false
 	}
 	log.Printf("OK: %s was successful", name)
@@ -203,6 +365,24 @@ func (c *checkBlueprintsV0) CheckDelete() bool {
 	}
 	if !resp.Status {
 		log.Printf("FAIL: %s failed: %s", name, resp)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// delete a non-existent blueprint
+func (c *checkBlueprintsV0) CheckDeleteNonBlueprint() bool {
+	name := "DELETE a non-existent blueprint"
+
+	resp, err := client.DeleteBlueprintV0(c.socket, "test-delete-non-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
 		return false
 	}
 
@@ -496,6 +676,24 @@ func (c *checkBlueprintsV0) CheckGetTOML() bool {
 	return true
 }
 
+// get non-existent blueprint contents as TOML
+func (c *checkBlueprintsV0) CheckGetNonTOML() bool {
+	name := "Get non-existent TOML Blueprint"
+
+	_, api, err := client.GetBlueprintInfoTOMLV0(c.socket, "test-get-non-blueprint-1-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api == nil || api.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // get blueprint contents as JSON
 func (c *checkBlueprintsV0) CheckGetJSON() bool {
 	name := "Get JSON Blueprint"
@@ -552,6 +750,24 @@ func (c *checkBlueprintsV0) CheckGetJSON() bool {
 
 	if info.Changes[0].Changed {
 		log.Printf("FAIL: %s failed: unexpected changes", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// get non-existent blueprint contents as JSON
+func (c *checkBlueprintsV0) CheckGetNonJSON() bool {
+	name := "Get non-existent JSON Blueprint"
+
+	_, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-get-non-blueprint-1-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api == nil || api.Status {
+		log.Printf("FAIL: %s did not return an error", name)
 		return false
 	}
 
@@ -720,6 +936,24 @@ func (c *checkBlueprintsV0) CheckBlueprintChangesV0() bool {
 	return true
 }
 
+// Get changes for a non-existent blueprint
+func (c *checkBlueprintsV0) CheckBlueprintNonChangesV0() bool {
+	name := "List non-existent blueprint changes"
+
+	_, api, err := client.GetBlueprintsChangesV0(c.socket, []string{"test-non-blueprint-changes-v0"})
+	if err != nil {
+		log.Printf("FAIL: %s failed: %s", name, err)
+		return false
+	}
+	if api == nil || api.Status {
+		log.Printf("FAIL: %s failed to return an error", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // Undo blueprint changes
 func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 	name := "Undo blueprint changes"
@@ -861,6 +1095,71 @@ func (c *checkBlueprintsV0) CheckUndoBlueprintV0() bool {
 	return true
 }
 
+// Undo non-existent commit blueprint changes
+func (c *checkBlueprintsV0) CheckUndoBlueprintNonCommitV0() bool {
+	name := "Undo blueprint non-existent commit"
+
+	bps := []string{`{
+		"name": "test-undo-blueprint-non-commit-v0",
+		"description": "CheckUndoBlueprintNonCommitV0",
+		"version": "0.0.5",
+		"packages": [{"name": "bash", "version": "*"}],
+		"modules": [{"name": "util-linux", "version": "*"}],
+		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
+	}`,
+		`{
+		"name": "test-undo-blueprint-non-commit-v0",
+		"description": "CheckUndoBlueprintNonCommitv0",
+		"version": "0.0.6",
+		"packages": [{"name": "bash", "version": "0.5.*"}],
+		"modules": [{"name": "util-linux", "version": "*"}],
+		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
+	}`}
+
+	for i := range bps {
+		resp, err := client.PostJSONBlueprintV0(c.socket, bps[i])
+		if err != nil {
+			log.Printf("FAIL: %s failed with a client error: %s", name, err)
+			return false
+		}
+		if !resp.Status {
+			log.Printf("FAIL: %s failed: %s", name, resp)
+			return false
+		}
+	}
+
+	resp, err := client.UndoBlueprintChangeV0(c.socket, "test-undo-blueprint-non-commit-v0", "FFFF")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// Undo non-existent blueprint changes
+func (c *checkBlueprintsV0) CheckUndoNonBlueprintV0() bool {
+	name := "Undo non-existent blueprint changes"
+
+	resp, err := client.UndoBlueprintChangeV0(c.socket, "test-undo-non-blueprint-v0", "FFFF")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if resp.Status {
+		log.Printf("FAIL: %s did not return an error", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // Tag a blueprint with a new revision
 // The blueprint revision tag cannot be reset, it always increments by one, and cannot be deleted.
 // So to test tagging we tag two blueprint changes and make sure the second is first +1
@@ -986,6 +1285,24 @@ func (c *checkBlueprintsV0) CheckBlueprintTagV0() bool {
 	return true
 }
 
+// Tag a non-existent blueprint
+func (c *checkBlueprintsV0) CheckNonBlueprintTagV0() bool {
+	name := "Tag a non-existent blueprint"
+
+	tagResp, err := client.TagBlueprintV0(c.socket, "test-tag-non-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed with a client error: %s", name, err)
+		return false
+	}
+	if tagResp.Status {
+		log.Printf("FAIL: %s failed to return an error", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
 // depsolve a blueprint with packages and modules
 func (c *checkBlueprintsV0) CheckBlueprintDepsolveV0() bool {
 	name := "Depsolve a blueprint"
@@ -1032,6 +1349,24 @@ func (c *checkBlueprintsV0) CheckBlueprintDepsolveV0() bool {
 
 	// TODO
 	// Get the bash and util-linux dependencies and make sure their versions are not *
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// depsolve a non-existent blueprint
+func (c *checkBlueprintsV0) CheckNonBlueprintDepsolveV0() bool {
+	name := "Depsolve a non-existent blueprint"
+
+	_, api, err := client.DepsolveBlueprintV0(c.socket, "test-deps-non-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		return false
+	}
+	if api == nil || api.Status {
+		log.Printf("FAIL: %s failed to return an error", name)
+		return false
+	}
 
 	log.Printf("OK: %s was successful", name)
 	return true
@@ -1095,6 +1430,24 @@ func (c *checkBlueprintsV0) CheckBlueprintFreezeV0() bool {
 	if frozen.Blueprints[0].Blueprint.Modules[0].Name != "util-linux" ||
 		frozen.Blueprints[0].Blueprint.Modules[0].Version == "*" {
 		log.Printf("FAIL: %s failed: Incorrect frozen modules", name)
+		return false
+	}
+
+	log.Printf("OK: %s was successful", name)
+	return true
+}
+
+// freeze a non-existent blueprint
+func (c *checkBlueprintsV0) CheckNonBlueprintFreezeV0() bool {
+	name := "Freeze a non-existent blueprint"
+
+	_, api, err := client.FreezeBlueprintV0(c.socket, "test-freeze-non-blueprint-v0")
+	if err != nil {
+		log.Printf("FAIL: %s failed: %s", name, err.Error())
+		return false
+	}
+	if api == nil || api.Status {
+		log.Printf("FAIL: %s failed to return an error", name)
 		return false
 	}
 
