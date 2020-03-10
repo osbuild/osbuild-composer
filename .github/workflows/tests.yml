@@ -12,7 +12,7 @@ on:
 
 jobs:
   lint:
-    name: "🛃 Lint"
+    name: "🛃 Checks"
     runs-on: ubuntu-latest
     steps:
 
@@ -42,6 +42,9 @@ jobs:
 
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run
+
+      - name: Run unit tests
+        run: go test -v ./...
 
   rpm_build:
     name: "📦 RPM"
