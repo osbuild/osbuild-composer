@@ -40,7 +40,7 @@ func main() {
 
 	// Case 1: POST request
 
-	resp, err := http.Post(socket + endpoint, "application/json", strings.NewReader(submitBody))
+	resp, err := http.Post(socket+endpoint, "application/json", strings.NewReader(submitBody))
 	if err != nil {
 		log.Fatal("Failed to submit a compose: ", err.Error())
 	}
