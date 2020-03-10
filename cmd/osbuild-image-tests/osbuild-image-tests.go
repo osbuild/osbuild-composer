@@ -19,11 +19,11 @@ import (
 )
 
 type testcaseStruct struct {
-	Compose struct {
+	ComposeRequest struct {
 		Distro   string
 		Arch     string
 		Filename string
-	}
+	} `json:"compose-request"`
 	Manifest  json.RawMessage
 	ImageInfo json.RawMessage `json:"image-info"`
 }
@@ -161,7 +161,7 @@ func runTestcase(testcase testcaseStruct) error {
 		return err
 	}
 
-	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.Compose.Filename)
+	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
 
 	// if the result is xz archive, extract it
 	base, ex := splitExtension(imagePath)
@@ -211,8 +211,8 @@ func runTests(cases []string) error {
 		}
 
 		currentArch := common.CurrentArch()
-		if testcase.Compose.Arch != currentArch {
-			log.Printf("%s: skipping, the required arch is %s, the current arch is %s", path, testcase.Compose.Arch, currentArch)
+		if testcase.ComposeRequest.Arch != currentArch {
+			log.Printf("%s: skipping, the required arch is %s, the current arch is %s", path, testcase.ComposeRequest.Arch, currentArch)
 			continue
 		}
 
@@ -226,8 +226,8 @@ func runTests(cases []string) error {
 			hostDistroName = "fedora-30"
 		}
 
-		if testcase.Compose.Distro != hostDistroName {
-			log.Printf("%s: skipping, the required distro is %s, the host distro is %s", path, testcase.Compose.Distro, hostDistroName)
+		if testcase.ComposeRequest.Distro != hostDistroName {
+			log.Printf("%s: skipping, the required distro is %s, the host distro is %s", path, testcase.ComposeRequest.Distro, hostDistroName)
 			continue
 		}
 
