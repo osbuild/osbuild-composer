@@ -15,6 +15,7 @@ Restart=on-failure
 
 # systemd >= 240 sets this, but osbuild-composer runs on earlier versions
 Environment="CACHE_DIRECTORY=/var/cache/osbuild-composer"
+Environment="STATE_DIRECTORY=/var/lib/osbuild-composer"
 
 [Install]
 WantedBy=multi-user.target

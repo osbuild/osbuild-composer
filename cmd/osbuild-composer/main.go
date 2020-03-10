@@ -54,7 +54,10 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
 
-	stateDir := "/var/lib/osbuild-composer"
+	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
+	if !ok {
+		log.Fatal("STATE_DIRECTORY is not set. Is the service file missing StateDirectory=?")
+	}
 
 	listeners, err := activation.ListenersWithNames()
 	if err != nil {
