@@ -7,8 +7,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"io/ioutil"
 	"log"
-	"path"
 	"os"
+	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
