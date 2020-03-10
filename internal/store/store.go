@@ -114,9 +114,9 @@ func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Reg
 	var s Store
 
 	if stateDir != nil {
-		err := os.Mkdir(*stateDir+"/"+"outputs", 0700)
+		err := os.Mkdir(filepath.Join(*stateDir, "outputs"), 0700)
 		if err != nil && !os.IsExist(err) {
-			log.Fatalf("cannot create output directory")
+			log.Fatal("cannot create output directory: ", err)
 		}
 
 		stateFile := *stateDir + "/state.json"
