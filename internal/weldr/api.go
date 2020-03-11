@@ -1249,15 +1249,26 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 
 	name := params.ByName("blueprint")
 	commit := params.ByName("commit")
-	bpChange := api.store.GetBlueprintChange(name, commit)
+	bpChange, err := api.store.GetBlueprintChange(name, commit)
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	bp := bpChange.Blueprint
 	commitMsg := name + ".toml reverted to commit " + commit
-	err := api.store.PushBlueprint(bp, commitMsg)
+	err = api.store.PushBlueprint(bp, commitMsg)
 	if err != nil {
-		statusResponseError(writer, http.StatusInternalServerError, responseError{
-			ID:  "BlueprintError",
+		errors := responseError{
+			ID:  "BlueprintsError",
 			Msg: err.Error(),
-		})
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
 	}
 	statusResponseOK(writer)
 }
