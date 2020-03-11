@@ -1162,6 +1162,15 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
+	if request.ContentLength == 0 {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "Missing blueprint",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	var blueprint blueprint.Blueprint
 	var err error
 	if contentType[0] == "application/json" {
@@ -1205,6 +1214,15 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		errors := responseError{
 			ID:  "BlueprintsError",
 			Msg: "missing Content-Type header",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	if request.ContentLength == 0 {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: "Missing blueprint",
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
