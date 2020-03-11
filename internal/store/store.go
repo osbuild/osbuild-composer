@@ -354,15 +354,20 @@ func (s *Store) GetBlueprintCommitted(name string) *blueprint.Blueprint {
 	return &bp
 }
 
-func (s *Store) GetBlueprintChange(name string, commit string) *blueprint.Change {
+// GetBlueprintChange returns a specific change to a blueprint
+// If the blueprint or change do not exist then an error is returned
+func (s *Store) GetBlueprintChange(name string, commit string) (*blueprint.Change, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	if _, ok := s.BlueprintsChanges[name]; !ok {
+		return nil, errors.New("Unknown blueprint")
+	}
 	change, ok := s.BlueprintsChanges[name][commit]
 	if !ok {
-		return nil
+		return nil, errors.New("Unknown commit")
 	}
-	return &change
+	return &change, nil
 }
 
 // GetBlueprintChanges returns the list of changes, oldest first
