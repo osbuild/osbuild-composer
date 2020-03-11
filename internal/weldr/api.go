@@ -828,6 +828,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	}
 
 	blueprints := []entry{}
+	blueprintsErrors := []responseError{}
 	for i, name := range names {
 		// remove leading / from first name
 		if i == 0 {
@@ -835,12 +836,11 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		}
 		blueprint, _ := api.store.GetBlueprint(name)
 		if blueprint == nil {
-			errors := responseError{
+			blueprintsErrors = append(blueprintsErrors, responseError{
 				ID:  "UnknownBlueprint",
 				Msg: fmt.Sprintf("%s: blueprint not found", name),
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
+			})
+			continue
 		}
 
 		dependencies, _, _, err := api.depsolveBlueprint(blueprint, "", api.arch, false)
@@ -859,7 +859,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 
 	err := json.NewEncoder(writer).Encode(reply{
 		Blueprints: blueprints,
-		Errors:     []responseError{},
+		Errors:     blueprintsErrors,
 	})
 	common.PanicOnError(err)
 }
