@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+
+import argparse
+import subprocess
+import json
+import tempfile
+import os
+import sys
+
+'''
+This script generates a json test case. It accepts a compose_request as input through standard input.
+
+{
+    "distro": "fedora-30",
+    "arch": "x86_64",
+    "output-format": "qcow2",
+    "filename": "disk.qcow2",
+    "blueprint": {}
+}
+
+It then outputs a json test case as standard output. 
+'''
+
+
+def run_osbuild(manifest, store):
+    osbuild_cmd = ["osbuild", "--store", store, "--json", "-"]
+    result = json.loads(subprocess.check_output(osbuild_cmd, encoding="utf-8", input=json.dumps(manifest)))
+    return result.get("output_id")
+
+
+def get_boot_method(output_format):
+    format_boot_dict = {
+        "partitioned-disk": "nspawn",
+        "ext4-filesystem": "nspawn",
+        "tar": "nspawn-extract",
+        "openstack": "qemu",
+        "qcow2": "qemu",
+        "vhd": "qemu",        
+        "vmdk": "qemu",
+        "ami": "qemu-extract",
+    }
+    return format_boot_dict[output_format]
+
+
+def main(compose_request, store):
+    boot = get_boot_method(compose_request["output-format"])
+    test_case = {
+        "boot": {
+            "type": boot
+        },
+        "compose-request": compose_request
+    }
+
+    blueprint = json.dumps(compose_request["blueprint"])
+
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["output-format"], "-"]
+    test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
+
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["output-format"], "-rpmmd", "-"]
+    rpmmd = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
+    test_case["rpmmd"] = {
+        "checksums": rpmmd["checksums"]
+    }
+
+    output_id = run_osbuild(test_case["manifest"], store)
+    image_file = os.path.join(store, "refs", output_id, compose_request["filename"])
+
+    if boot != "nspawn-extract":
+        # we don't yet support image-info on directory trees
+        if boot == "qemu-extract":
+            fn, ex = os.path.splitext(image_file)
+            if ex == ".xz":
+                with open(fn, "w") as f:
+                    subprocess.run(["xz", "--decompress", "--stdout", image_file], stdout=f)
+                image_file = fn
+        test_case["image-info"] = json.loads(subprocess.check_output(["tools/image-info", image_file]))
+
+    return test_case
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Generate test cases")
+    parser.add_argument("store", metavar="DIRECTORY", type=os.path.abspath, help="path to the osbuild store")
+    args = parser.parse_args()
+
+    compose_request = json.load(sys.stdin)
+    test_case = main(compose_request, args.store)
+    sys.stdout.write(json.dumps(test_case))
+    sys.exit()
