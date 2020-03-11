@@ -761,13 +761,17 @@ func (c *checkBlueprintsV0) CheckGetJSON() bool {
 func (c *checkBlueprintsV0) CheckGetNonJSON() bool {
 	name := "Get non-existent JSON Blueprint"
 
-	_, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-get-non-blueprint-1-v0")
+	resp, api, err := client.GetBlueprintsInfoJSONV0(c.socket, "test-get-non-blueprint-1-v0")
 	if err != nil {
 		log.Printf("FAIL: %s failed: %s", name, err)
 		return false
 	}
-	if api == nil || api.Status {
-		log.Printf("FAIL: %s did not return an error", name)
+	if api != nil {
+		log.Printf("FAIL: %s failed: %s", name, api)
+		return false
+	}
+	if len(resp.Errors) == 0 {
+		log.Printf("FAIL: %s failed with no error: %v", name, resp)
 		return false
 	}
 

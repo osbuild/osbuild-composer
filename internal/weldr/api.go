@@ -732,29 +732,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	blueprints := []blueprint.Blueprint{}
-	changes := []change{}
-
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
-
-		blueprint, changed := api.store.GetBlueprint(name)
-		if blueprint == nil {
-			errors := responseError{
-				ID:  "UnknownBlueprint",
-				Msg: fmt.Sprintf("%s: ", name),
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
-		}
-		blueprints = append(blueprints, *blueprint)
-		changes = append(changes, change{changed, blueprint.Name})
-	}
-
-	q, err := url.ParseQuery(request.URL.RawQuery)
+	query, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
 		errors := responseError{
 			ID:  "InvalidChars",
@@ -764,12 +742,34 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	format := q.Get("format")
+	blueprints := []blueprint.Blueprint{}
+	changes := []change{}
+	blueprintErrors := []responseError{}
+
+	for i, name := range names {
+		// remove leading / from first name
+		if i == 0 {
+			name = name[1:]
+		}
+
+		blueprint, changed := api.store.GetBlueprint(name)
+		if blueprint == nil {
+			blueprintErrors = append(blueprintErrors, responseError{
+				ID:  "UnknownBlueprint",
+				Msg: fmt.Sprintf("%s: ", name),
+			})
+			continue
+		}
+		blueprints = append(blueprints, *blueprint)
+		changes = append(changes, change{changed, blueprint.Name})
+	}
+
+	format := query.Get("format")
 	if format == "json" || format == "" {
 		err := json.NewEncoder(writer).Encode(reply{
 			Blueprints: blueprints,
 			Changes:    changes,
-			Errors:     []responseError{},
+			Errors:     blueprintErrors,
 		})
 		common.PanicOnError(err)
 	} else if format == "toml" {
@@ -782,6 +782,10 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 				Msg: "toml format only supported when requesting one blueprint",
 			}
 			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+		if len(blueprintErrors) > 0 {
+			statusResponseError(writer, http.StatusBadRequest, blueprintErrors...)
 			return
 		}
 		encoder := toml.NewEncoder(writer)

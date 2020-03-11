@@ -54,7 +54,7 @@ func TestBasic(t *testing.T) {
 
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
-		{"/api/v0/blueprints/info/foo", http.StatusBadRequest, `{"errors":[{"id":"UnknownBlueprint","msg":"foo: "}],"status":false}`},
+		{"/api/v0/blueprints/info/foo", http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"foo: "}]}`},
 	}
 
 	for _, c := range cases {
@@ -234,7 +234,7 @@ func TestBlueprintsInfo(t *testing.T) {
 		"changes":[{"name":"test1","changed":false}], "errors":[]}`},
 		{"GET", "/api/v0/blueprints/info/test2", ``, http.StatusOK, `{"blueprints":[{"name":"test2","description":"Test","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test2","changed":true}], "errors":[]}`},
-		{"GET", "/api/v0/blueprints/info/test3-non", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"test3-non: "}]}`},
+		{"GET", "/api/v0/blueprints/info/test3-non", ``, http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"test3-non: "}]}`},
 	}
 
 	for _, c := range cases {
