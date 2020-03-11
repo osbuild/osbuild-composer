@@ -366,6 +366,7 @@ func TestBlueprintsDelete(t *testing.T) {
 		ExpectedJSON   string
 	}{
 		{"DELETE", "/api/v0/blueprints/delete/test", ``, http.StatusOK, `{"status":true}`},
+		{"DELETE", "/api/v0/blueprints/delete/test3-non", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Unknown blueprint: test3-non"}]}`},
 	}
 
 	for _, c := range cases {

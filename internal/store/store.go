@@ -431,18 +431,27 @@ func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
 	})
 }
 
-func (s *Store) DeleteBlueprint(name string) {
-	// FIXME: handle or comment this possible error
-	_ = s.change(func() error {
+// DeleteBlueprint will remove the named blueprint from the store
+// if the blueprint does not exist it will return an error
+// The workspace copy is deleted unconditionally, it will not return an error if it does not exist.
+func (s *Store) DeleteBlueprint(name string) error {
+	return s.change(func() error {
 		delete(s.Workspace, name)
+		if _, ok := s.Blueprints[name]; !ok {
+			return fmt.Errorf("Unknown blueprint: %s", name)
+		}
 		delete(s.Blueprints, name)
 		return nil
 	})
 }
 
-func (s *Store) DeleteBlueprintFromWorkspace(name string) {
-	// FIXME: handle or comment this possible error
-	_ = s.change(func() error {
+// DeleteBlueprintFromWorkspace deletes the workspace copy of a blueprint
+// if the blueprint doesn't exist in the workspace it returns an error
+func (s *Store) DeleteBlueprintFromWorkspace(name string) error {
+	return s.change(func() error {
+		if _, ok := s.Workspace[name]; !ok {
+			return fmt.Errorf("Unknown blueprint: %s", name)
+		}
 		delete(s.Workspace, name)
 		return nil
 	})

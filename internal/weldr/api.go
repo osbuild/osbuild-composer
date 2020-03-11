@@ -1267,7 +1267,14 @@ func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	api.store.DeleteBlueprint(params.ByName("blueprint"))
+	if err := api.store.DeleteBlueprint(params.ByName("blueprint")); err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 	statusResponseOK(writer)
 }
 
@@ -1276,7 +1283,14 @@ func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, requ
 		return
 	}
 
-	api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint"))
+	if err := api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint")); err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 	statusResponseOK(writer)
 }
 
