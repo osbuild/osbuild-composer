@@ -74,7 +74,7 @@ func TestBlueprintsNew(t *testing.T) {
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages:}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: unexpected EOF"}]}`},
-		{"POST", "/api/v0/blueprints/new", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: EOF"}]}`},
+		{"POST", "/api/v0/blueprints/new", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Missing blueprint"}]}`},
 	}
 
 	for _, c := range cases {
@@ -102,6 +102,20 @@ version = "2.4.*"`
 
 	r := recorder.Result()
 	if r.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+}
+
+func TestBlueprintsEmptyToml(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/new", bytes.NewReader(nil))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusBadRequest {
 		t.Fatalf("unexpected status %v", r.StatusCode)
 	}
 }
@@ -139,7 +153,7 @@ func TestBlueprintsWorkspaceJSON(t *testing.T) {
 	}{
 		{"POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages":[{"name":"systemd","version":"123"}],"version":"0.0.0"}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/workspace", `{"name":"test","description":"Test","packages:}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: unexpected EOF"}]}`},
-		{"POST", "/api/v0/blueprints/workspace", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"400 Bad Request: The browser (or proxy) sent a request that this server could not understand: EOF"}]}`},
+		{"POST", "/api/v0/blueprints/workspace", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Missing blueprint"}]}`},
 	}
 
 	for _, c := range cases {
@@ -167,6 +181,20 @@ version = "2.4.*"`
 
 	r := recorder.Result()
 	if r.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status %v", r.StatusCode)
+	}
+}
+
+func TestBlueprintsWorkspaceEmptyTOML(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v0/blueprints/workspace", bytes.NewReader(nil))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	if r.StatusCode != http.StatusBadRequest {
 		t.Fatalf("unexpected status %v", r.StatusCode)
 	}
 }
