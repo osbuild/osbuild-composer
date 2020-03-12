@@ -6,11 +6,6 @@
     "filename": "disk.vmdk",
     "blueprint": {}
   },
-  "rpmmd": {
-    "checksums": {
-      "fedora": "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
-    }
-  },
   "manifest": {
     "sources": {},
     "pipeline": {
@@ -136,6 +131,11 @@
           ]
         }
       }
+    }
+  },
+  "rpmmd": {
+    "checksums": {
+      "fedora": "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
     }
   },
   "image-info": {
