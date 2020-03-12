@@ -10,11 +10,6 @@ import tempfile
 import xml.etree.ElementTree
 
 
-image = sys.argv[1]
-
-subprocess.run(["modprobe", "nbd"], check=True)
-
-
 @contextlib.contextmanager
 def nbd_connect(image):
     for device in glob.glob("/dev/nbd*"):
@@ -246,26 +241,32 @@ def find_esp(partitions):
     return None, 0
 
 
-report = {}
-with nbd_connect(image) as device:
-    report["image-format"] = read_image_format(image)
-    report["bootloader"] = read_bootloader_type(device)
-    report["partition-table"], report["partition-table-id"], report["partitions"] = read_partition_table(device)
+def main(image):
+    report = {}
+    with nbd_connect(image) as device:
+        report["image-format"] = read_image_format(image)
+        report["bootloader"] = read_bootloader_type(device)
+        report["partition-table"], report["partition-table-id"], report["partitions"] = read_partition_table(device)
 
-    if report["partition-table"]:
-        esp, esp_id = find_esp(report["partitions"])
-        n_partitions = len(report["partitions"])
-        for n in range(n_partitions):
-            if report["partitions"][n]["fstype"]:
-                with mount(device + f"p{n + 1}") as tree:
-                    if esp and os.path.exists(f"{tree}/boot/efi"):
-                        with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
+        if report["partition-table"]:
+            esp, esp_id = find_esp(report["partitions"])
+            n_partitions = len(report["partitions"])
+            for n in range(n_partitions):
+                if report["partitions"][n]["fstype"]:
+                    with mount(device + f"p{n + 1}") as tree:
+                        if esp and os.path.exists(f"{tree}/boot/efi"):
+                            with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
+                                append_filesystem(report, tree)
+                        else:
                             append_filesystem(report, tree)
-                    else:
-                        append_filesystem(report, tree)
-    else:
-        with mount(device) as tree:
-            append_filesystem(report, tree)
+        else:
+            with mount(device) as tree:
+                append_filesystem(report, tree)
 
+    return report
 
-json.dump(report, sys.stdout, sort_keys=True, indent=2)
+if __name__ == "__main__":
+    subprocess.run(["modprobe", "nbd"], check=True)
+
+    report = main(sys.argv[1])
+    json.dump(report, sys.stdout, sort_keys=True, indent=2)
