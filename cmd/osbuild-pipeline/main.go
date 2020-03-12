@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	// Print help usage if one of the required arguments wasn't provided
-	if imageType == "" || blueprintArg == "" || archArg == "" || distroArg == "" {
+	if imageType == "" || archArg == "" || distroArg == "" {
 		flag.Usage()
 		return
 	}
