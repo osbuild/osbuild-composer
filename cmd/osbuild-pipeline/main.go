@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -28,11 +29,13 @@ func main() {
 	var distroArg string
 	var rpmmdArg bool
 	flag.StringVar(&imageType, "image-type", "", "image type, e.g. qcow2 or ami")
-	flag.StringVar(&blueprintArg, "blueprint", "", "path to a JSON file containing a blueprint to translate")
 	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
 	flag.StringVar(&distroArg, "distro", "", "distribution to create, e.g. fedora-30")
 	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
 	flag.Parse()
+
+	// Path to blueprint or '-' for stdin
+	blueprintArg = flag.Arg(0)
 
 	// Print help usage if one of the required arguments wasn't provided
 	if imageType == "" || archArg == "" || distroArg == "" {
@@ -51,11 +54,21 @@ func main() {
 
 	blueprint := &blueprint.Blueprint{}
 	if blueprintArg != "" {
-		file, err := ioutil.ReadFile(blueprintArg)
-		if err != nil {
-			panic("Could not find blueprint: " + err.Error())
+		var reader io.Reader
+		if blueprintArg == "-" {
+			reader = os.Stdin
+		} else {
+			var err error
+			reader, err = os.Open(blueprintArg)
+			if err != nil {
+				panic("Could not open bluerpint: " + err.Error())
+			}
 		}
-		err = json.Unmarshal([]byte(file), &blueprint)
+		file, err := ioutil.ReadAll(reader)
+		if err != nil {
+			panic("Could not read blueprint: " + err.Error())
+		}
+		err = json.Unmarshal(file, &blueprint)
 		if err != nil {
 			panic("Could not parse blueprint: " + err.Error())
 		}
