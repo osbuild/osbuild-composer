@@ -8,7 +8,7 @@ addons:
       - gnupg2
 matrix:
   include:
-    - name: image-test-empty-blueprint
+    - name: fedora-30
       arch: amd64
       language: python
       python: 3.7
@@ -16,17 +16,8 @@ matrix:
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --cases test/cases/*_empty_blueprint.json
-    - name: image-test-local-boot
-      arch: amd64
-      language: python
-      python: 3.7
-      before_install: sudo apt-get install -y qemu-kvm genisoimage
-      script:
-        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
-        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --cases test/cases/*_local_boot.json
-    - name: image-test
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --distro fedora-30
+    - name: fedora-30
       arch: arm64
       language: python
       python: 3.7
@@ -34,8 +25,8 @@ matrix:
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches aarch64
-    - name: image-test
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches aarch64 --distro fedora-30
+    - name: fedora-30
       arch: s390x
       language: python
       python: 3.7
@@ -43,4 +34,58 @@ matrix:
       script:
         # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
         - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches s390x
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches s390x --distro fedora-30
+    - name: fedora-31
+      arch: amd64
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --distro fedora-31
+    - name: fedora-31
+      arch: arm64
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches aarch64 --distro fedora-31
+    - name: fedora-31
+      arch: s390x
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches s390x --distro fedora-31
+    - name: fedora-32
+      arch: amd64
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches x86_64 --distro fedora-32
+    - name: fedora-32
+      arch: arm64
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches aarch64 --distro fedora-32
+    - name: fedora-32
+      arch: s390x
+      language: python
+      python: 3.7
+      before_install: sudo apt-get install -y qemu-kvm genisoimage
+      script:
+        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" "OSBUILD_TEST_BUILD_ENV=test/f27-build-from-ubuntu1804.json" test/run --arches s390x --distro fedora-32
