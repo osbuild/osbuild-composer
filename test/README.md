@@ -1,5 +1,41 @@
 # osbuild-composer testing information
 
+Test binaries, regardless of their scope/type (e.g. unit, API, integration)
+must follow the syntax of the Go
+[testing package](https://golang.org/pkg/testing/), that is implement only
+`TestXxx` functions with their setup/teardown when necessary in a `yyy_test.go`
+file.
+
+Test scenario discovery, execution and reporting will be handled by `go test`.
+
+Some test files will be executed directly by `go test` during rpm build time
+and/or in CI. These are usually unit tests. Scenarios which require more complex
+setup, e.g. a running osbuild-composer are not intented to be executed directly
+by `go test` at build time. Instead they are intended to be executed as
+stand-alone test binaries on a clean system which has been configured in
+advance (because this is easier/more feasible). These stand-alone test binaries
+are also compiled via `go test -c -o` during rpm build or via `make build`.
+See *Integration testing* for more information.
+
+
+## Notes on asserts and comparing expected values
+
+When comparing for expected values in test functions you should use the
+[testify/assert](https://godoc.org/github.com/stretchr/testify/assert) or
+[testify/require](https://godoc.org/github.com/stretchr/testify/require)
+packages. Both of them provide an impressive array of assertions with the
+possibility to use formatted strings as error messages. For example:
+
+```
+assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
+```
+
+If you want to fail immediately, not doing any more of the asserts use the
+require package instead of the assert package, otherwise you'll end up with
+panics and nil pointer memory problems.
+
+Stand-alone test binaries also have the `-test.failfast` option.
+
 
 ## Integration testing
 
