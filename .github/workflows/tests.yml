@@ -28,10 +28,10 @@ jobs:
       - name: Check that source has been prepared
         run: |
           ./tools/prepare-source.sh
-          if ! git diff --quiet --exit-code ; then
+          if [ -n "$(git status --porcelain)" ]; then
             echo
             echo "Please include these changes in your branch: "
-            git diff
+            git status -vv
             exit "1"
           else
             exit "0"
