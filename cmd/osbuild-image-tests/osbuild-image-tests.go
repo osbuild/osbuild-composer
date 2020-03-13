@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,8 +13,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
@@ -26,6 +29,9 @@ type testcaseStruct struct {
 	} `json:"compose-request"`
 	Manifest  json.RawMessage
 	ImageInfo json.RawMessage `json:"image-info"`
+	Boot      *struct {
+		Type string
+	}
 }
 
 // runOsbuild runs osbuild with the specified manifest and store.
@@ -70,6 +76,8 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 // extractXZ extracts an xz archive, it's just a simple wrapper around unxz(1).
 func extractXZ(archivePath string) error {
 	cmd := exec.Command("unxz", archivePath)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("cannot extract xz archive: %v", err)
 	}
@@ -124,9 +132,111 @@ func testImageInfo(imagePath string, rawImageInfoExpected []byte) error {
 	return nil
 }
 
+type timeoutError struct{}
+
+func (*timeoutError) Error() string { return "" }
+
+// trySSHOnce tries to test the running image using ssh once
+// It returns timeoutError if ssh command returns 255, if it runs for more
+// that 10 seconds or if systemd-is-running returns starting.
+// It returns nil if systemd-is-running returns running or degraded.
+// It can also return other errors in other error cases.
+func trySSHOnce(ns netNS) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	cmd := ns.NamespacedCommandContext(
+		ctx,
+		"ssh",
+		"-p", "22",
+		"-i", "/usr/share/tests/osbuild-composer/keyring/id_rsa",
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"redhat@localhost",
+		"systemctl --wait is-system-running",
+	)
+	output, err := cmd.Output()
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return &timeoutError{}
+	}
+
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() == 255 {
+				return &timeoutError{}
+			}
+		} else {
+			return fmt.Errorf("ssh command failed from unknown reason: %v", err)
+		}
+	}
+
+	outputString := strings.TrimSpace(string(output))
+	switch outputString {
+	case "running":
+		return nil
+	case "degraded":
+		log.Print("ssh test passed, but the system is degraded")
+		return nil
+	case "starting":
+		return &timeoutError{}
+	default:
+		return fmt.Errorf("ssh test failed, system status is: %s", outputString)
+	}
+}
+
+// testSSH tests the running image using ssh.
+// It tries 20 attempts before giving up. If a major error occurs, it might
+// return earlier.
+func testSSH(ns netNS) error {
+	const attempts = 20
+	for i := 0; i < attempts; i++ {
+		err := trySSHOnce(ns)
+		if err == nil {
+			return nil
+		}
+		if _, ok := err.(*timeoutError); !ok {
+			return err
+		}
+
+		time.Sleep(10 * time.Second)
+	}
+
+	return fmt.Errorf("ssh test failure, %d attempts were made", attempts)
+}
+
+// testBoot tests if the image is able to successfully boot
+// Before the test it boots the image respecting the specified bootType.
+// The test passes if the function is able to connect to the image via ssh
+// in defined number of attempts and systemd-is-running returns running
+// or degraded status.
+func testBoot(imagePath string, bootType string, outputID string) error {
+	return withNetworkNamespace(func(ns netNS) error {
+		switch bootType {
+		case "qemu":
+			fallthrough
+		case "qemu-extract":
+			return withBootedQemuImage(imagePath, ns, func() error {
+				return testSSH(ns)
+			})
+		case "nspawn":
+			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
+				return testSSH(ns)
+			})
+		case "nspawn-extract":
+			return withExtractedTarArchive(imagePath, func(dir string) error {
+				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
+					return testSSH(ns)
+				})
+			})
+		default:
+			panic("unknown boot type!")
+		}
+	})
+}
+
 // testImage performs a series of tests specified in the testcase
 // on an image
-func testImage(testcase testcaseStruct, imagePath string) error {
+func testImage(testcase testcaseStruct, imagePath, outputID string) error {
 	if testcase.ImageInfo != nil {
 		log.Print("[image info sub-test] running")
 		err := testImageInfo(imagePath, testcase.ImageInfo)
@@ -137,6 +247,18 @@ func testImage(testcase testcaseStruct, imagePath string) error {
 		log.Print("[image info sub-test] succeeded")
 	} else {
 		log.Print("[image info sub-test] not defined, skipping")
+	}
+
+	if testcase.Boot != nil {
+		log.Print("[boot sub-test] running")
+		err := testBoot(imagePath, testcase.Boot.Type, outputID)
+		if err != nil {
+			log.Print("[boot sub-test] failed")
+			return err
+		}
+		log.Print("[boot sub-test] succeeded")
+	} else {
+		log.Print("[boot sub-test] not defined, skipping")
 	}
 
 	return nil
@@ -163,16 +285,19 @@ func runTestcase(testcase testcaseStruct) error {
 
 	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
 
-	// if the result is xz archive, extract it
+	// if the result is xz archive but not tar.xz archive, extract it
 	base, ex := splitExtension(imagePath)
 	if ex == ".xz" {
-		if err := extractXZ(imagePath); err != nil {
-			return err
+		_, ex = splitExtension(base)
+		if ex != ".tar" {
+			if err := extractXZ(imagePath); err != nil {
+				return err
+			}
+			imagePath = base
 		}
-		imagePath = base
 	}
 
-	return testImage(testcase, imagePath)
+	return testImage(testcase, imagePath, outputID)
 }
 
 // getAllCases returns paths to all testcases in the testcase directory
