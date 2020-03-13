@@ -1,18 +1,20 @@
 // osbuild-rcm-tests run tests against running osbuild-composer instance that was spawned using the
 // osbuild-rcm.socket unit. It defines the expected use cases of the RCM API.
+
+// +build integration
+
 package main
 
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	"log"
+	"github.com/stretchr/testify/require"
 	"net/http"
-	"os"
 	"strings"
+	"testing"
 )
 
-func main() {
-	failed := false
+func TestRCM(t *testing.T) {
 	// This is the first request the user sends to osbuild.
 	submitBody := `
 		{
@@ -41,40 +43,18 @@ func main() {
 	// Case 1: POST request
 
 	resp, err := http.Post(socket+endpoint, "application/json", strings.NewReader(submitBody))
-	if err != nil {
-		log.Fatal("Failed to submit a compose: ", err.Error())
-	}
-	if resp.StatusCode != 200 {
-		log.Print("Error: the ", endpoint, " returned non 200 status. Full response: ", resp)
-		failed = true
-	} else {
-		err = json.NewDecoder(resp.Body).Decode(&submitResponse)
-		if err != nil {
-			log.Fatal("Failed to decode JSON response from ", endpoint)
-		}
-		log.Print("Success: the ", endpoint, " returned compose UUID: ", submitResponse.UUID)
-	}
+	require.Nilf(t, err, "Failed to submit a compose: %v", err)
+	require.Equalf(t, resp.StatusCode, 200, "Error: the %v returned non 200 status. Full response: %v", endpoint, resp)
+	err = json.NewDecoder(resp.Body).Decode(&submitResponse)
+	require.Nilf(t, err, "Failed to decode JSON response from %v", endpoint)
 
 	// Case 2: GET status
 
 	statusEndpoint := endpoint + "/" + submitResponse.UUID.String()
 	resp, err = http.Get(socket + statusEndpoint)
-	if err != nil {
-		log.Fatal("Failed to get a status: ", err.Error())
-	}
-	if resp.StatusCode != 200 {
-		log.Print("Error: the ", endpoint, " returned non 200 status. Full response: ", resp)
-		failed = true
-	} else {
-		err = json.NewDecoder(resp.Body).Decode(&statusResponse)
-		if err != nil {
-			log.Fatal("Failed to decode JSON response from ", endpoint)
-		}
-		log.Print("Success: the ", statusEndpoint, " returned status: ", statusResponse.Status)
-	}
+	require.Nilf(t, err, "Failed to get a status: %v", err)
+	require.Equalf(t, resp.StatusCode, 200, "Error: the %v returned non 200 status. Full response: %v", endpoint, resp)
+	err = json.NewDecoder(resp.Body).Decode(&statusResponse)
+	require.Nilf(t, err, "Failed to decode JSON response from %v", endpoint)
 
-	// If anything failed return non-zero exit code.
-	if failed {
-		os.Exit(1)
-	}
 }
