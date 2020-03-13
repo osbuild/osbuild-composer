@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"github.com/stretchr/testify/assert"
 	"path"
 )
 
@@ -39,13 +40,9 @@ func TestFetchChecksum(t *testing.T) {
 	dir, err := setUpTemporaryRepository()
 	defer func(dir string) {
 		err := tearDownTemporaryRepository(dir)
-		if err != nil {
-			t.Errorf("Warning: failed to clean up temporary repository.")
-		}
+		assert.Nil(t, err, "Failed to clean up temporary repository.")
 	}(dir)
-	if err != nil {
-		t.Fatalf("Failed to set up temporary repository: %v", err)
-	}
+	assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
 
 	repoCfg := rpmmd.RepoConfig{
 		Id:        "repo",
@@ -55,10 +52,6 @@ func TestFetchChecksum(t *testing.T) {
 	}
 	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
 	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31")
-	if err != nil {
-		t.Fatalf("Failed to fetch checksum: %v", err)
-	}
-	if c["repo"] == "" {
-		t.Errorf("The checksum is empty")
-	}
+	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
+	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
 }
