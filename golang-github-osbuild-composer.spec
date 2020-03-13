@@ -68,7 +68,6 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 %gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 %gobuild -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
-%gobuild -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
 
 # Build test binaries with `go test -c`, so that they can take advantage of
 # golang's testing package. The golang rpm macros don't support building them
@@ -78,6 +77,7 @@ TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d '
 
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/weldrcheck/
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
