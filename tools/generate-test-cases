@@ -62,10 +62,10 @@ def main(compose_request, store):
         "checksums": rpmmd["checksums"]
     }
 
-    output_id = run_osbuild(test_case["manifest"], store)
-    image_file = os.path.join(store, "refs", output_id, compose_request["filename"])
-
     if boot != "nspawn-extract":
+        output_id = run_osbuild(test_case["manifest"], store)
+        image_file = os.path.join(store, "refs", output_id, compose_request["filename"])
+
         # we don't yet support image-info on directory trees
         if boot == "qemu-extract":
             fn, ex = os.path.splitext(image_file)
