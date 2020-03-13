@@ -96,6 +96,11 @@ install -m 0644 -vp repositories/*                          %{buildroot}%{_datad
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
 install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
+install -m 0600 -vp test/keyring/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
+install -m 0644 -vp test/cloud-init/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
 
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
@@ -149,13 +154,15 @@ Summary:	Integration tests
 Requires: 	osbuild-composer
 Requires: 	composer-cli
 Requires:	createrepo_c
+Requires:   genisoimage
+Requires:   qemu-kvm-core
 
 %description tests
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
 
 %files tests
-%{_libexecdir}/tests/osbuild-composer/*
-%{_datadir}/tests/osbuild-composer/*
+%{_libexecdir}/tests/osbuild-composer/
+%{_datadir}/tests/osbuild-composer/
 %{_libexecdir}/osbuild-composer/image-info
 
 %package worker
