@@ -1,0 +1,91 @@
+definitions:
+  UUID:
+    description: |-
+      A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC
+      4122.
+    items:
+      format: uint8
+      type: integer
+    type: array
+    x-go-package: github.com/google/uuid
+  errorReason:
+    description: errorReason represents the response in case of any error
+    properties:
+      error_reason:
+        description: a string describing what happened
+        type: string
+        x-go-name: Error
+    required:
+    - error_reason
+    type: object
+    x-go-package: github.com/osbuild/osbuild-composer/internal/rcm
+  statusReply:
+    description: statusReply represents the response when getting a status of a running
+      compose
+    properties:
+      status:
+        description: the status of running compose
+        type: string
+        x-go-name: Status
+    required:
+    - status
+    type: object
+    x-go-package: github.com/osbuild/osbuild-composer/internal/rcm
+  submitReply:
+    description: submitReply represents the response after submitting a compose
+    properties:
+      compose_id:
+        $ref: '#/definitions/UUID'
+    required:
+    - compose_id
+    type: object
+    x-go-package: github.com/osbuild/osbuild-composer/internal/rcm
+info:
+  description: It's primary use case is for the RCM team. As such it is driven solely
+    by their requirements.
+  title: RCM API for osbuild-composer
+  version: "1"
+paths:
+  /v1/compose:
+    post:
+      consumes:
+      - application/json
+      operationId: submit
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: submitReply
+          schema:
+            $ref: '#/definitions/submitReply'
+        default:
+          description: errorReason
+          schema:
+            $ref: '#/definitions/errorReason'
+      schemes:
+      - http
+      summary: Submit requests for composes.
+  /v1/compose/{uuid}:
+    get:
+      operationId: status
+      parameters:
+      - description: uuid to display status for
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: status of a running compose
+          schema:
+            items:
+              $ref: '#/definitions/statusReply'
+            type: object
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorReason'
+      summary: Check current status of a running compose.
+swagger: "2.0"

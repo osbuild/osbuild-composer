@@ -1,5 +1,10 @@
-// Package rcm provides alternative HTTP API to Weldr.
+// Package rcm RCM API for osbuild-composer
+//
 // It's primary use case is for the RCM team. As such it is driven solely by their requirements.
+//
+// Version: 1
+//
+// swagger:meta
 package rcm
 
 import (
@@ -28,6 +33,38 @@ type API struct {
 	rpmMetadata rpmmd.RPMMD
 }
 
+// submitReply represents the response after submitting a compose
+//
+// swagger:model
+type submitReply struct {
+	// the UUID of the compose
+	//
+	// In the future this will be replaced with Koji ID.
+	//
+	// required: true
+	UUID uuid.UUID `json:"compose_id"`
+}
+
+// statusReply represents the response when getting a status of a running compose
+//
+// swagger:model
+type statusReply struct {
+	// the status of running compose
+	//
+	// required: true
+	Status string `json:"status"`
+}
+
+// errorReason represents the response in case of any error
+//
+// swagger:model
+type errorReason struct {
+	// a string describing what happened
+	//
+	// required: true
+	Error string `json:"error_reason"`
+}
+
 // New creates new RCM API
 func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD) *API {
 	api := &API{
@@ -42,7 +79,47 @@ func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD) *API {
 	api.router.MethodNotAllowed = http.HandlerFunc(methodNotAllowedHandler)
 	api.router.NotFound = http.HandlerFunc(notFoundHandler)
 
+	// swagger:route POST /v1/compose submit
+	//
+	// Submit requests for composes.
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http
+	//
+	//     Responses:
+	//       default: errorReason
+	//       200: submitReply
 	api.router.POST("/v1/compose", api.submit)
+
+	// swagger:operation GET /v1/compose/{uuid} status
+	//
+	// Check current status of a running compose.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: uuid
+	//   in: path
+	//   description: uuid to display status for
+	//   required: true
+	//   type: string
+	// responses:
+	//   '200':
+	//     description: status of a running compose
+	//     schema:
+	//       type: object
+	//       items:
+	//         "$ref": "#/definitions/statusReply"
+	//   default:
+	//     description: unexpected error
+	//     schema:
+	//       "$ref": "#/definitions/errorReason"
 	api.router.GET("/v1/compose/:uuid", api.status)
 
 	return api
@@ -198,10 +275,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	// Create the response JSON structure
-	var reply struct {
-		UUID uuid.UUID `json:"compose_id"`
-	}
+	var reply submitReply
 	reply.UUID = composeUUID
 	// TODO: handle error
 	_ = json.NewEncoder(writer).Encode(reply)
@@ -209,9 +283,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 func (api *API) status(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	// JSON structure in case of error
-	var errorReason struct {
-		Error string `json:"error_reason"`
-	}
+	var errorReason errorReason
 	// Check that the input is a valid UUID
 	uuidParam := params.ByName("uuid")
 	id, err := uuid.Parse(uuidParam)
@@ -234,9 +306,7 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	}
 
 	// JSON structure with success response
-	var reply struct {
-		Status string `json:"status"`
-	}
+	var reply statusReply
 
 	// TODO: return per-job status like Koji does (requires changes in the store)
 	reply.Status = compose.GetState().ToString()

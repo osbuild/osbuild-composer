@@ -86,3 +86,7 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
+
+.PHONY: swagger-specs
+swagger-specs:
+	swagger generate spec --scan-models --output=docs/rcm-api.yaml
