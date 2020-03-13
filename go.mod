@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4 // indirect
 )
