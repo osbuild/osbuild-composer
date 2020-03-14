@@ -112,7 +112,7 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, d.Repositories(archArg), d.ModulePlatformID(), false)
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, d.Repositories(archArg), d.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
@@ -121,7 +121,7 @@ func main() {
 	if err != nil {
 		panic("Could not get build packages: " + err.Error())
 	}
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, d.Repositories(archArg), d.ModulePlatformID(), false)
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, d.Repositories(archArg), d.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}

@@ -38,15 +38,12 @@ def dnfrepo(desc, parent_conf=None):
     return repo
 
 
-def create_base(repos, module_platform_id, persistdir, cachedir, clean=False):
+def create_base(repos, module_platform_id, persistdir, cachedir):
     base = dnf.Base()
     base.conf.module_platform_id = module_platform_id
     base.conf.config_file_path = "/dev/null"
     base.conf.persistdir = persistdir
     base.conf.cachedir = cachedir
-
-    if clean:
-        shutil.rmtree(base.conf.cachedir, ignore_errors=True)
 
     for repo in repos:
         base.repos.add(dnfrepo(repo, base.conf))
@@ -88,12 +85,11 @@ call = json.load(sys.stdin)
 command = call["command"]
 arguments = call["arguments"]
 repos = arguments.get("repos", {})
-clean = arguments.get("clean", False)
 cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
-    base = create_base(repos, module_platform_id, persistdir, cachedir, clean)
+    base = create_base(repos, module_platform_id, persistdir, cachedir)
 
     if command == "dump":
         packages = []
