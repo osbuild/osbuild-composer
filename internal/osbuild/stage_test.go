@@ -63,16 +63,6 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "dnf",
-			fields: fields{
-				Name:    "org.osbuild.dnf",
-				Options: &DNFStageOptions{},
-			},
-			args: args{
-				data: []byte(`{"name":"org.osbuild.dnf","options":{"repos":null,"packages":null,"releasever":"","basearch":""}}`),
-			},
-		},
-		{
 			name: "firewall",
 			fields: fields{
 				Name:    "org.osbuild.firewall",

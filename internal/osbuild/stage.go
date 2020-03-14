@@ -35,8 +35,6 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	}
 	var options StageOptions
 	switch rawStage.Name {
-	case "org.osbuild.dnf":
-		options = new(DNFStageOptions)
 	case "org.osbuild.fix-bls":
 		// TODO: verify that we can unmarshall this also if "options" is omitted
 		options = new(FixBLSStageOptions)
