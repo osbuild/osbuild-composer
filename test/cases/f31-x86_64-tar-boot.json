@@ -1,0 +1,144 @@
+{
+  "boot": {
+    "type": "nspawn-extract"
+  },
+  "compose-request": {
+    "output-format": "tar",
+    "distro": "fedora-31",
+    "arch": "x86_64",
+    "filename": "root.tar.xz",
+    "blueprint": {
+      "name": "tar-boot-test",
+      "description": "Image for boot test",
+      "packages": [
+        {
+          "name": "openssh-server",
+          "version": "*"
+        }
+      ],
+      "modules": [],
+      "groups": [],
+      "customizations": {
+        "user": [
+          {
+            "name": "redhat",
+            "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+          }
+        ]
+      }
+    }
+  },
+  "manifest": {
+    "sources": {},
+    "pipeline": {
+      "build": {
+        "pipeline": {
+          "stages": [
+            {
+              "name": "org.osbuild.dnf",
+              "options": {
+                "repos": [
+                  {
+                    "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-31&arch=x86_64",
+                    "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFxq3QMBEADUhGfCfP1ijiggBuVbR/pBDSWMC3TWbfC8pt7fhZkYrilzfWUM\nfTsikPymSriScONXP6DNyZ5r7tgrIVdVrJvRIqIFRO0mufp9HyfWKDO//Ctyp7OQ\nzYw6NVthO/aWpyFfJpj6s4iZsYGqf9gByV8brBB8v8jEsCtVOj1BU3bMbLkMsRI9\n+WiLjDYyvopqNBQuIe8ogxSxpYdbUz6+jxzfvhRoBzWdjITd//Gjd90kkrBOMWkO\nLTqO133OD1WMT08G5NuQ4KhjYsVvSbBpfdkTcNuP8gBP9LxCQDc+e1eAhZ95g3qk\nXLeKEK9j+F+wuG/OrEAxBsscCxXRUB38QH6CFe3UxGoSMnBi+jEhicudo+ItpFOy\n7rPaYyRh4Pmu4QHcC83bNjp8NI6zTHrBmVuPqkxMn07GMAQav9ezBXj6umqTX4cU\ndsJUavJrJ3u7rT0lhBdiGrQ9zPbL07u2Kn+OXPAC3dKSf7G8TvwNAdry9esGSpi3\n8aa1myQYVZvAlsIBkbN3fb1wvDJE5czVhzwQ77V2t66jxeg0o9/2OZVH3CozD2Zj\nv28LHuW/jnQHtsQ0fUyQYRmHxNEVkW10GGM7fQwxzpxFFS1O/2XEnfMu7yBHZsgL\nSojfUct0FhLhEN/g/IINX9ZCVrzK5/De27CNjYE1cgYD/lTmQ0SyjfKVwwARAQAB\ntDFGZWRvcmEgKDMxKSA8ZmVkb3JhLTMxLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI+BBMBAgAoAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAUCXGrkTQUJ\nEs8P/QAKCRBQyzkLPDNZxBmDD/90IFwAfFcQq5ENl7/o2CYQ9k2adTHbV5RoIOWC\n/o9I5/btn1y8WDhPOUNmsgbUqRqz6srlVplg+LkpIj67PVLDBwpVbCJC8o1fztd2\nMryVqdvu562WVhUorII+iW7nfqD0yv55nH9b/JR1qloUa8LpeKw84JgvxF5wVfyR\nid1WjI0DBk2taFR4xCfU5Tb262fbdFj5iB9xskP7oNeS29+SfDjlnybtlFoqr9UA\nnY1uvhBPkGmj45SJkpfP+L+kGYXVaUd29M/q/Pt46X1KDvr6Z0l8bSUEk3zfcNdj\nuEhtHBqSy1UPPAikGX1Q5wGdu7R7+mv/ARqfI6OC44ipoOMNK1Aiu6+slbPYphwX\nighSz9yYuG0EdWt7akfKR0R04Kuej4LXLWcxTR4l8XDzThYgPP0g+z0XQJrAkVhi\nSrzICeC3K1GPSiUtNAxSTL+qWWgwvQyAPNoPV/OYmY+wUxUnKCZpEWPkL79lh6CM\nbJx/zlrOMzRumSzaOnKW9AOliviH4Rj89OmDifBEsQ0CewdHN9ly6g4ZFJJGYXJ5\nHTb5jdButTC3tDfvH8Z7dtXKdC4iqJCIxj698Xn8UjVefZQ2nbv5eXcZLfHtvbNB\nTTv1vvBV4G7aiHKYRSj7HmxhLBZC8Y/nmFAemOoOYDpR5eUmPmSbFayoLfRsFXmC\nHLs7cw==\n=6hRW\n-----END PGP PUBLIC KEY BLOCK-----\n",
+                    "checksum": "sha256:e39c033883bf8520576de0b0875b5c8cfc40d04f1a0aaf01f1edf57267807580"
+                  }
+                ],
+                "packages": [
+                  "dnf",
+                  "dosfstools",
+                  "e2fsprogs",
+                  "grub2-pc",
+                  "policycoreutils",
+                  "qemu-img",
+                  "systemd",
+                  "tar"
+                ],
+                "releasever": "31",
+                "basearch": "x86_64",
+                "module_platform_id": "platform:f31"
+              }
+            }
+          ]
+        },
+        "runner": "org.osbuild.fedora31"
+      },
+      "stages": [
+        {
+          "name": "org.osbuild.dnf",
+          "options": {
+            "repos": [
+              {
+                "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-31&arch=x86_64",
+                "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFxq3QMBEADUhGfCfP1ijiggBuVbR/pBDSWMC3TWbfC8pt7fhZkYrilzfWUM\nfTsikPymSriScONXP6DNyZ5r7tgrIVdVrJvRIqIFRO0mufp9HyfWKDO//Ctyp7OQ\nzYw6NVthO/aWpyFfJpj6s4iZsYGqf9gByV8brBB8v8jEsCtVOj1BU3bMbLkMsRI9\n+WiLjDYyvopqNBQuIe8ogxSxpYdbUz6+jxzfvhRoBzWdjITd//Gjd90kkrBOMWkO\nLTqO133OD1WMT08G5NuQ4KhjYsVvSbBpfdkTcNuP8gBP9LxCQDc+e1eAhZ95g3qk\nXLeKEK9j+F+wuG/OrEAxBsscCxXRUB38QH6CFe3UxGoSMnBi+jEhicudo+ItpFOy\n7rPaYyRh4Pmu4QHcC83bNjp8NI6zTHrBmVuPqkxMn07GMAQav9ezBXj6umqTX4cU\ndsJUavJrJ3u7rT0lhBdiGrQ9zPbL07u2Kn+OXPAC3dKSf7G8TvwNAdry9esGSpi3\n8aa1myQYVZvAlsIBkbN3fb1wvDJE5czVhzwQ77V2t66jxeg0o9/2OZVH3CozD2Zj\nv28LHuW/jnQHtsQ0fUyQYRmHxNEVkW10GGM7fQwxzpxFFS1O/2XEnfMu7yBHZsgL\nSojfUct0FhLhEN/g/IINX9ZCVrzK5/De27CNjYE1cgYD/lTmQ0SyjfKVwwARAQAB\ntDFGZWRvcmEgKDMxKSA8ZmVkb3JhLTMxLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI+BBMBAgAoAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAUCXGrkTQUJ\nEs8P/QAKCRBQyzkLPDNZxBmDD/90IFwAfFcQq5ENl7/o2CYQ9k2adTHbV5RoIOWC\n/o9I5/btn1y8WDhPOUNmsgbUqRqz6srlVplg+LkpIj67PVLDBwpVbCJC8o1fztd2\nMryVqdvu562WVhUorII+iW7nfqD0yv55nH9b/JR1qloUa8LpeKw84JgvxF5wVfyR\nid1WjI0DBk2taFR4xCfU5Tb262fbdFj5iB9xskP7oNeS29+SfDjlnybtlFoqr9UA\nnY1uvhBPkGmj45SJkpfP+L+kGYXVaUd29M/q/Pt46X1KDvr6Z0l8bSUEk3zfcNdj\nuEhtHBqSy1UPPAikGX1Q5wGdu7R7+mv/ARqfI6OC44ipoOMNK1Aiu6+slbPYphwX\nighSz9yYuG0EdWt7akfKR0R04Kuej4LXLWcxTR4l8XDzThYgPP0g+z0XQJrAkVhi\nSrzICeC3K1GPSiUtNAxSTL+qWWgwvQyAPNoPV/OYmY+wUxUnKCZpEWPkL79lh6CM\nbJx/zlrOMzRumSzaOnKW9AOliviH4Rj89OmDifBEsQ0CewdHN9ly6g4ZFJJGYXJ5\nHTb5jdButTC3tDfvH8Z7dtXKdC4iqJCIxj698Xn8UjVefZQ2nbv5eXcZLfHtvbNB\nTTv1vvBV4G7aiHKYRSj7HmxhLBZC8Y/nmFAemOoOYDpR5eUmPmSbFayoLfRsFXmC\nHLs7cw==\n=6hRW\n-----END PGP PUBLIC KEY BLOCK-----\n",
+                "checksum": "sha256:e39c033883bf8520576de0b0875b5c8cfc40d04f1a0aaf01f1edf57267807580"
+              }
+            ],
+            "packages": [
+              "chrony",
+              "firewalld",
+              "kernel",
+              "langpacks-en",
+              "openssh-server",
+              "policycoreutils",
+              "selinux-policy-targeted"
+            ],
+            "exclude_packages": [
+              "dracut-config-rescue"
+            ],
+            "releasever": "31",
+            "basearch": "x86_64",
+            "module_platform_id": "platform:f31"
+          }
+        },
+        {
+          "name": "org.osbuild.fix-bls",
+          "options": {}
+        },
+        {
+          "name": "org.osbuild.locale",
+          "options": {
+            "language": "en_US"
+          }
+        },
+        {
+          "name": "org.osbuild.users",
+          "options": {
+            "users": {
+              "redhat": {
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            }
+          }
+        },
+        {
+          "name": "org.osbuild.grub2",
+          "options": {
+            "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+            "kernel_opts": "ro biosdevname=0 net.ifnames=0",
+            "legacy": true
+          }
+        },
+        {
+          "name": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+          }
+        }
+      ],
+      "assembler": {
+        "name": "org.osbuild.tar",
+        "options": {
+          "filename": "root.tar.xz",
+          "size": 0,
+          "compression": "xz"
+        }
+      }
+    }
+  },
+  "rpmmd": {
+    "checksums": {
+      "fedora": "sha256:e39c033883bf8520576de0b0875b5c8cfc40d04f1a0aaf01f1edf57267807580"
+    }
+  }
+}
