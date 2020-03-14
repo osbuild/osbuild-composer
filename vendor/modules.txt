@@ -80,6 +80,7 @@ github.com/mattn/go-ieproxy
 github.com/pmezard/go-difflib/difflib
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/http/httpproxy
 golang.org/x/net/idna
