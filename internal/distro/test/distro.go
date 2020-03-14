@@ -55,7 +55,7 @@ func (d *TestDistro) BuildPackages(outputArchitecture string) ([]string, error) 
 	return nil, nil
 }
 
-func (d *TestDistro) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (d *TestDistro) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "test_output" && outputArch == "test_arch" {
 		return &osbuild.Pipeline{}, nil
 	}
@@ -67,8 +67,8 @@ func (d *TestDistro) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	return &osbuild.Sources{}
 }
 
-func (r *TestDistro) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(b, additionalRepos, packageSpecs, buildPackageSpecs, checksums, outputArchitecture, outputFormat, size)
+func (r *TestDistro) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(b, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}

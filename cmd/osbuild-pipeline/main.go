@@ -139,7 +139,7 @@ func main() {
 		}
 	} else {
 		size := d.GetSizeForOutputType(imageType, 0)
-		manifest, err := d.Manifest(blueprint, nil, packageSpecs, buildPackageSpecs, checksums, archArg, imageType, size)
+		manifest, err := d.Manifest(blueprint, nil, packageSpecs, buildPackageSpecs, archArg, imageType, size)
 		if err != nil {
 			panic(err.Error())
 		}
