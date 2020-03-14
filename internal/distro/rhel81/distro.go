@@ -537,14 +537,9 @@ func (r *RHEL81) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 	}
 
 	p := &osbuild.Pipeline{}
-	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.rhel81")
+	p.SetBuild(r.buildPipeline(arch, buildPackageSpecs), "org.osbuild.rhel81")
 
-	packages, excludedPackages, err := r.BasePackages(outputFormat, outputArchitecture)
-	if err != nil {
-		return nil, err
-	}
-	packages = append(packages, b.GetPackages()...)
-	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, excludedPackages)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, additionalRepos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	if output.Bootable {
@@ -613,7 +608,15 @@ func (r *RHEL81) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoCo
 }
 
 func (r *RHEL81) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
-	return &osbuild.Sources{}
+	files := &osbuild.FilesSource{
+		URLs: make(map[string]string),
+	}
+	for _, pkg := range packages {
+		files.URLs[pkg.Checksum] = pkg.RemoteLocation
+	}
+	return &osbuild.Sources{
+		"org.osbuild.files": files,
+	}
 }
 
 func (r *RHEL81) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
@@ -632,43 +635,31 @@ func (r *RHEL81) Runner() string {
 	return "org.osbuild.rhel81"
 }
 
-func (r *RHEL81) buildPipeline(arch arch, checksums map[string]string) *osbuild.Pipeline {
-	packages, err := r.BuildPackages(arch.Name)
-	if err != nil {
-		panic("impossibly invalid arch")
-	}
-
+func (r *RHEL81) buildPipeline(arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
-	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, nil, buildPackageSpecs)))
 	return p
 }
 
-func (r *RHEL81) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *osbuild.DNFStageOptions {
-	options := &osbuild.DNFStageOptions{
-		ReleaseVersion:   "8",
-		BaseArchitecture: arch.Name,
-		ModulePlatformId: ModulePlatformID,
-	}
-	for _, repo := range append(arch.Repositories, additionalRepos...) {
-		options.AddRepository(&osbuild.DNFRepository{
-			BaseURL:    repo.BaseURL,
-			MetaLink:   repo.Metalink,
-			MirrorList: repo.MirrorList,
-			Checksum:   checksums[repo.Id],
-		})
+func (r *RHEL81) rpmStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+	var gpgKeys []string
+	repos := append(arch.Repositories, additionalRepos...)
+	for _, repo := range repos {
+		if repo.GPGKey == "" {
+			continue
+		}
+		gpgKeys = append(gpgKeys, repo.GPGKey)
 	}
 
-	sort.Strings(packages)
-	for _, pkg := range packages {
-		options.AddPackage(pkg)
+	var packages []string
+	for _, spec := range specs {
+		packages = append(packages, spec.Checksum)
 	}
 
-	sort.Strings(excludedPackages)
-	for _, pkg := range excludedPackages {
-		options.ExcludePackage(pkg)
+	return &osbuild.RPMStageOptions{
+		GPGKeys:  gpgKeys,
+		Packages: packages,
 	}
-
-	return options
 }
 
 func (r *RHEL81) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
