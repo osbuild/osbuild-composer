@@ -843,7 +843,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, _, _, err := api.depsolveBlueprint(blueprint, "", api.arch, false)
+		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch, false)
 
 		if err != nil {
 			errors := responseError{
@@ -939,7 +939,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 
-		dependencies, _, _, err := api.depsolveBlueprint(&blueprint, "", api.arch, false)
+		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch, false)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1418,7 +1418,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	if bp != nil {
-		packages, buildPackages, checksums, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch, true)
+		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch, true)
 		if err != nil {
 			errors := responseError{
 				ID:  "DepsolveError",
@@ -1428,7 +1428,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(reply.BuildID, bp, packages, buildPackages, checksums, api.arch, cr.ComposeType, size, uploadTarget)
+		err = api.store.PushCompose(reply.BuildID, bp, packages, buildPackages, api.arch, cr.ComposeType, size, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
@@ -1977,7 +1977,7 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 	return pkg.Name
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string, clean bool) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, map[string]string, error) {
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string, clean bool) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
 	repos := api.distro.Repositories(api.arch)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
@@ -1995,30 +1995,30 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 		// transaction.
 		packages, excludePackages, err := api.distro.BasePackages(outputType, arch)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 		specs = append(specs, packages...)
 		excludeSpecs = append(excludePackages, excludeSpecs...)
 	}
 
-	packages, checksums, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID())
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	buildPackages := []rpmmd.PackageSpec{}
 	if outputType != "" {
 		buildSpecs, err := api.distro.BuildPackages(arch)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID())
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 	}
 
-	return packages, buildPackages, checksums, err
+	return packages, buildPackages, err
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

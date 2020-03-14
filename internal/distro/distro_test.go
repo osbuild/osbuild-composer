@@ -29,7 +29,6 @@ func TestDistro_Manifest(t *testing.T) {
 		type rpmMD struct {
 			BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
 			Packages      []rpmmd.PackageSpec `json:"packages"`
-			Checksums     map[string]string   `json:"checksums"`
 		}
 		var tt struct {
 			ComposeRequest *composeRequest   `json:"compose-request"`
@@ -63,7 +62,6 @@ func TestDistro_Manifest(t *testing.T) {
 				nil,
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
-				tt.RpmMD.Checksums,
 				tt.ComposeRequest.Arch,
 				tt.ComposeRequest.OutputFormat,
 				size)
