@@ -653,7 +653,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, nil, api.distro.Repositories(api.arch), api.distro.ModulePlatformID(), false)
+	packages, _, err := api.rpmmd.Depsolve(names, nil, api.distro.Repositories(api.arch), api.distro.ModulePlatformID())
 
 	if err != nil {
 		errors := responseError{
@@ -2001,7 +2001,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 		excludeSpecs = append(excludePackages, excludeSpecs...)
 	}
 
-	packages, checksums, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID(), clean)
+	packages, checksums, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID())
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -2012,7 +2012,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID(), false)
+		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID())
 		if err != nil {
 			return nil, nil, nil, err
 		}

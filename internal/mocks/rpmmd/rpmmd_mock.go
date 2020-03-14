@@ -34,6 +34,6 @@ func (r *rpmmdMock) FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID str
 	return r.Fixture.fetchPackageList.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.fetchPackageList.err
 }
 
-func (r *rpmmdMock) Depsolve(specs, excludeSpecs []string, repos []rpmmd.RepoConfig, modulePlatformID string, clean bool) ([]rpmmd.PackageSpec, map[string]string, error) {
+func (r *rpmmdMock) Depsolve(specs, excludeSpecs []string, repos []rpmmd.RepoConfig, modulePlatformID string) ([]rpmmd.PackageSpec, map[string]string, error) {
 	return r.Fixture.depsolve.ret, r.Fixture.fetchPackageList.checksums, r.Fixture.depsolve.err
 }
