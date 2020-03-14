@@ -398,15 +398,9 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	}
 
 	p := &osbuild.Pipeline{}
-	p.SetBuild(r.buildPipeline(arch, checksums), "org.osbuild.fedora32")
+	p.SetBuild(r.buildPipeline(arch, buildPackageSpecs), "org.osbuild.fedora32")
 
-	packages, excludedPackages, err := r.BasePackages(outputFormat, outputArchitecture)
-	if err != nil {
-		return nil, err
-	}
-	packages = append(packages, b.GetPackages()...)
-
-	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, additionalRepos, checksums, packages, excludedPackages)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, additionalRepos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -470,7 +464,15 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 }
 
 func (r *Fedora32) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
-	return &osbuild.Sources{}
+	files := &osbuild.FilesSource{
+		URLs: make(map[string]string),
+	}
+	for _, pkg := range packages {
+		files.URLs[pkg.Checksum] = pkg.RemoteLocation
+	}
+	return &osbuild.Sources{
+		"org.osbuild.files": files,
+	}
 }
 
 func (r *Fedora32) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, checksums map[string]string, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
@@ -489,45 +491,31 @@ func (r *Fedora32) Runner() string {
 	return "org.osbuild.fedora32"
 }
 
-func (r *Fedora32) buildPipeline(arch arch, checksums map[string]string) *osbuild.Pipeline {
-	packages, err := r.BuildPackages(arch.Name)
-	if err != nil {
-		panic("impossibly invalid arch")
-	}
-
+func (r *Fedora32) buildPipeline(arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
-	p.AddStage(osbuild.NewDNFStage(r.dnfStageOptions(arch, nil, checksums, packages, nil)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, nil, buildPackageSpecs)))
 	return p
 }
 
-func (r *Fedora32) dnfStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, checksums map[string]string, packages, excludedPackages []string) *osbuild.DNFStageOptions {
-	options := &osbuild.DNFStageOptions{
-		ReleaseVersion:   "32",
-		BaseArchitecture: arch.Name,
-		ModulePlatformId: ModulePlatformID,
+func (r *Fedora32) rpmStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+	var gpgKeys []string
+	repos := append(arch.Repositories, additionalRepos...)
+	for _, repo := range repos {
+		if repo.GPGKey == "" {
+			continue
+		}
+		gpgKeys = append(gpgKeys, repo.GPGKey)
 	}
 
-	for _, repo := range append(arch.Repositories, additionalRepos...) {
-		options.AddRepository(&osbuild.DNFRepository{
-			BaseURL:    repo.BaseURL,
-			MetaLink:   repo.Metalink,
-			MirrorList: repo.MirrorList,
-			GPGKey:     repo.GPGKey,
-			Checksum:   checksums[repo.Id],
-		})
+	var packages []string
+	for _, spec := range specs {
+		packages = append(packages, spec.Checksum)
 	}
 
-	sort.Strings(packages)
-	for _, pkg := range packages {
-		options.AddPackage(pkg)
+	return &osbuild.RPMStageOptions{
+		GPGKeys:  gpgKeys,
+		Packages: packages,
 	}
-
-	sort.Strings(excludedPackages)
-	for _, pkg := range excludedPackages {
-		options.ExcludePackage(pkg)
-	}
-
-	return options
 }
 
 func (r *Fedora32) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
