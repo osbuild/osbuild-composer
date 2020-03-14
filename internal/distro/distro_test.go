@@ -3,7 +3,6 @@ package distro_test
 import (
 	"encoding/json"
 	"io/ioutil"
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -73,11 +72,8 @@ func TestDistro_Manifest(t *testing.T) {
 				return
 			}
 			if tt.Manifest != nil {
-				if !reflect.DeepEqual(got, tt.Manifest) {
-					// Without this the "difference" is just a list of pointers.
-					gotJson, _ := json.Marshal(got)
-					fileJson, _ := json.Marshal(tt.Manifest)
-					t.Errorf("d.Pipeline() =\n%v,\nwant =\n%v", string(gotJson), string(fileJson))
+				if diff := cmp.Diff(got, tt.Manifest); diff != "" {
+					t.Errorf("d.Manifest() different from expected: %v", diff)
 				}
 			}
 		})
