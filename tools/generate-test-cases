@@ -57,10 +57,7 @@ def main(compose_request, store):
     test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
 
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["output-format"], "-rpmmd", "-"]
-    rpmmd = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
-    test_case["rpmmd"] = {
-        "checksums": rpmmd["checksums"]
-    }
+    test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
 
     if boot != "nspawn-extract":
         output_id = run_osbuild(test_case["manifest"], store)
