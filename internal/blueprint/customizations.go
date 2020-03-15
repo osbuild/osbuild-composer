@@ -70,3 +70,109 @@ type CustomizationError struct {
 func (e *CustomizationError) Error() string {
 	return e.Message
 }
+
+func (c *Customizations) GetHostname() *string {
+	if c == nil {
+		return nil
+	}
+	return c.Hostname
+}
+
+func (c *Customizations) GetPrimaryLocale() (*string, *string) {
+	if c == nil {
+		return nil, nil
+	}
+	if c.Locale == nil {
+		return nil, nil
+	}
+	if len(c.Locale.Languages) == 0 {
+		return nil, c.Locale.Keyboard
+	}
+	return &c.Locale.Languages[0], c.Locale.Keyboard
+}
+
+func (c *Customizations) GetTimezoneSettings() (*string, []string) {
+	if c == nil {
+		return nil, nil
+	}
+	if c.Timezone == nil {
+		return nil, nil
+	}
+	return c.Timezone.Timezone, c.Timezone.NTPServers
+}
+
+func (c *Customizations) GetUsers() []UserCustomization {
+	if c == nil {
+		return nil
+	}
+
+	users := []UserCustomization{}
+
+	// prepend sshkey for backwards compat (overridden by users)
+	if len(c.SSHKey) > 0 {
+		for _, c := range c.SSHKey {
+			users = append(users, UserCustomization{
+				Name: c.User,
+				Key:  &c.Key,
+			})
+		}
+	}
+
+	return append(users, c.User...)
+}
+
+func (c *Customizations) GetGroups() []GroupCustomization {
+	if c == nil {
+		return nil
+	}
+
+	// This is for parity with lorax, which assumes that for each
+	// user, a group with that name already exists. Thus, filter groups
+	// named like an existing user.
+
+	groups := []GroupCustomization{}
+	for _, group := range c.Group {
+		exists := false
+		for _, user := range c.User {
+			if user.Name == group.Name {
+				exists = true
+				break
+			}
+		}
+		for _, key := range c.SSHKey {
+			if key.User == group.Name {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			groups = append(groups, group)
+		}
+	}
+
+	return groups
+}
+
+func (c *Customizations) GetKernel() *KernelCustomization {
+	if c == nil {
+		return nil
+	}
+
+	return c.Kernel
+}
+
+func (c *Customizations) GetFirewall() *FirewallCustomization {
+	if c == nil {
+		return nil
+	}
+
+	return c.Firewall
+}
+
+func (c *Customizations) GetServices() *ServicesCustomization {
+	if c == nil {
+		return nil
+	}
+
+	return c.Services
+}

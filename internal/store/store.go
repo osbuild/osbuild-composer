@@ -621,7 +621,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 		repos = append(repos, source.RepoConfig())
 	}
 
-	manifestStruct, err := s.distro.Manifest(bp, repos, packages, buildPackages, arch, composeType, size)
+	manifestStruct, err := s.distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, composeType, size)
 	if err != nil {
 		return err
 	}
@@ -689,7 +689,7 @@ func (s *Store) PushComposeRequest(request ComposeRequest) error {
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		manifestStruct, err := distroStruct.Manifest(&request.Blueprint, request.Repositories, nil, nil, arch, imgTypeCompatStr, 0)
+		manifestStruct, err := distroStruct.Manifest(request.Blueprint.Customizations, request.Repositories, nil, nil, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}

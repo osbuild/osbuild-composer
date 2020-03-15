@@ -58,7 +58,7 @@ func TestDistro_Manifest(t *testing.T) {
 				return
 			}
 			size := d.GetSizeForOutputType(tt.ComposeRequest.OutputFormat, 0)
-			got, err := d.Manifest(tt.ComposeRequest.Blueprint,
+			got, err := d.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				nil,
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
