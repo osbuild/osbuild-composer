@@ -2,24 +2,20 @@
     "aarch64": [
         {
             "id": "baseos",
-            "name": "BaseOS",
             "BaseURL": "http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/RHEL-8.1.0-RC-1.1/compose/BaseOS/aarch64/os"
         },
         {
             "id": "appstream",
-            "name": "AppStream",
             "BaseURL": "http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/RHEL-8.1.0-RC-1.1/compose/AppStream/aarch64/os"
         }
     ],
     "x86_64": [
         {
             "id": "baseos",
-            "name": "BaseOS",
             "BaseURL": "http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/RHEL-8.1.0-RC-1.1/compose/BaseOS/x86_64/os"
         },
         {
             "id": "appstream",
-            "name": "AppStream",
             "BaseURL": "http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/RHEL-8.1.0-RC-1.1/compose/AppStream/x86_64/os"
         }
     ]
