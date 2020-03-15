@@ -76,7 +76,7 @@ func New(confPaths []string) (*RHEL81, error) {
 
 	repos, exists := repoMap["x86_64"]
 	if !exists {
-		log.Printf("Could not load architecture-specific repository data for x86_64 (%s): %s", r.Name(), err.Error())
+		log.Printf("Could not load architecture-specific repository data for x86_64 (%s)", r.Name())
 	} else {
 		r.arches["x86_64"] = arch{
 			Name: "x86_64",
@@ -92,7 +92,7 @@ func New(confPaths []string) (*RHEL81, error) {
 
 	repos, exists = repoMap["aarch64"]
 	if !exists {
-		log.Printf("Could not load architecture-specific repository data for aarch64 (%s): %s", r.Name(), err.Error())
+		log.Printf("Could not load architecture-specific repository data for aarch64 (%s)", r.Name())
 	} else {
 		r.arches["aarch64"] = arch{
 			Name: "aarch64",
