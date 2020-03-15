@@ -67,6 +67,8 @@ type PackageSpec struct {
 	Version        string `json:"version,omitempty"`
 	Release        string `json:"release,omitempty"`
 	Arch           string `json:"arch,omitempty"`
+	RepoID         string `json:"repo_id,omitempty"`
+	Path           string `json:"path,omitempty"`
 	RemoteLocation string `json:"remote_location,omitempty"`
 	Checksum       string `json:"checksum,omitempty"`
 }
