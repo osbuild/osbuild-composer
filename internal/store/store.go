@@ -969,7 +969,6 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 func (s *SourceConfig) RepoConfig() rpmmd.RepoConfig {
 	var repo rpmmd.RepoConfig
 
-	repo.Name = s.Name
 	repo.Id = s.Name
 	repo.IgnoreSSL = !s.CheckSSL
 

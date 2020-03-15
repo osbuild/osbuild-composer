@@ -33,7 +33,6 @@ func (d *FedoraTestDistro) Repositories(arch string) []rpmmd.RepoConfig {
 	return []rpmmd.RepoConfig{
 		{
 			Id:      "test-id",
-			Name:    "Test Name",
 			BaseURL: "http://example.com/test/os/" + arch,
 		},
 	}

@@ -21,7 +21,6 @@ def dnfrepo(desc, parent_conf=None):
     """Makes a dnf.repo.Repo out of a JSON repository description"""
 
     repo = dnf.repo.Repo(desc["id"], parent_conf)
-    repo.name = desc["name"]
 
     if "baseurl" in desc:
         repo.baseurl = desc["baseurl"]

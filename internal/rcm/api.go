@@ -5,12 +5,13 @@ package rcm
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"log"
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -139,7 +140,6 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	for n, repo := range composeRequest.Repositories {
 		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
 			Id:        fmt.Sprintf("repo-%d", n),
-			Name:      fmt.Sprintf("repo-%d", n),
 			BaseURL:   repo.URL,
 			IgnoreSSL: false,
 		})

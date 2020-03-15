@@ -14,7 +14,6 @@ import (
 
 type RepoConfig struct {
 	Id         string `json:"id"`
-	Name       string `json:"name"`
 	BaseURL    string `json:"baseurl,omitempty"`
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`

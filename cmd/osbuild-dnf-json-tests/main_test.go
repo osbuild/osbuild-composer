@@ -46,7 +46,6 @@ func TestFetchChecksum(t *testing.T) {
 
 	repoCfg := rpmmd.RepoConfig{
 		Id:        "repo",
-		Name:      "repo",
 		BaseURL:   fmt.Sprintf("file://%s", dir),
 		IgnoreSSL: true,
 	}
