@@ -386,7 +386,7 @@ func (r *Fedora32) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *Fedora32) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -404,7 +404,7 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
-	language, keyboard := b.GetPrimaryLocale()
+	language, keyboard := c.GetPrimaryLocale()
 
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{*language}))
@@ -416,11 +416,11 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{*keyboard}))
 	}
 
-	if hostname := b.GetHostname(); hostname != nil {
+	if hostname := c.GetHostname(); hostname != nil {
 		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{*hostname}))
 	}
 
-	timezone, ntpServers := b.GetTimezoneSettings()
+	timezone, ntpServers := c.GetTimezoneSettings()
 
 	// TODO install chrony when this is set?
 	if timezone != nil {
@@ -431,7 +431,7 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{ntpServers}))
 	}
 
-	if users := b.GetUsers(); len(users) > 0 {
+	if users := c.GetUsers(); len(users) > 0 {
 		options, err := r.userStageOptions(users)
 		if err != nil {
 			return nil, err
@@ -439,20 +439,20 @@ func (r *Fedora32) pipeline(b *blueprint.Blueprint, additionalRepos []rpmmd.Repo
 		p.AddStage(osbuild.NewUsersStage(options))
 	}
 
-	if groups := b.GetGroups(); len(groups) > 0 {
+	if groups := c.GetGroups(); len(groups) > 0 {
 		p.AddStage(osbuild.NewGroupsStage(r.groupStageOptions(groups)))
 	}
 
 	if output.Bootable {
 		p.AddStage(osbuild.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
 	}
-	p.AddStage(osbuild.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, b.GetKernel(), arch.UEFI)))
+	p.AddStage(osbuild.NewGRUB2Stage(r.grub2StageOptions(output.KernelOptions, c.GetKernel(), arch.UEFI)))
 
-	if services := b.GetServices(); services != nil || output.EnabledServices != nil {
+	if services := c.GetServices(); services != nil || output.EnabledServices != nil {
 		p.AddStage(osbuild.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services)))
 	}
 
-	if firewall := b.GetFirewall(); firewall != nil {
+	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(r.firewallStageOptions(firewall)))
 	}
 
@@ -475,8 +475,8 @@ func (r *Fedora32) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (r *Fedora32) Manifest(b *blueprint.Blueprint, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(b, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *Fedora32) Manifest(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}
