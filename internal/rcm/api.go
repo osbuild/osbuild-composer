@@ -82,6 +82,42 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 }
 
+// Depsolves packages and build packages for building an image for a given
+// distro, in the given architecture
+func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, repos []rpmmd.RepoConfig, imageType common.ImageType, arch common.Architecture) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+	archString, ok := arch.ToString()
+	if !ok {
+		panic("architecture was validated before")
+	}
+
+	imageTypeString, ok := imageType.ToString()
+	if !ok {
+		panic("image type was validated before")
+	}
+
+	specs, excludeSpecs, err := distro.BasePackages(imageTypeString, archString)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Distro.BasePackages: %v", err)
+	}
+
+	packages, _, err := rpmmd.Depsolve(specs, excludeSpecs, repos, distro.ModulePlatformID())
+	if err != nil {
+		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)
+	}
+
+	specs, err = distro.BuildPackages(archString)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Distro.BuildPackages: %v", err)
+	}
+
+	buildPackages, _, err := rpmmd.Depsolve(specs, nil, repos, distro.ModulePlatformID())
+	if err != nil {
+		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)
+	}
+
+	return packages, buildPackages, err
+}
+
 func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	// Check some basic HTTP parameters
 	contentType := request.Header["Content-Type"]
@@ -168,8 +204,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		}
 	}
 
-	// map( repo-id => checksum )
-	_, checksums, err := api.rpmMetadata.FetchMetadata(repoConfigs, distro.ModulePlatformID())
+	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, composeRequest.ImageTypes[0], composeRequest.Architectures[0])
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
@@ -187,7 +222,8 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		Distro:          distro,
 		Arch:            composeRequest.Architectures[0],
 		Repositories:    repoConfigs,
-		Checksums:       checksums,
+		Packages:        packages,
+		BuildPackages:   buildPackages,
 		RequestedImages: requestedImages,
 	})
 	if err != nil {
