@@ -34,12 +34,11 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		distroStruct := test_distro.New()
 		registry, err := distro_mock.NewDefaultRegistry()
 		if err != nil {
 			t.Fatal(err)
 		}
-		api := jobqueue.New(nil, store.New(nil, distroStruct, *registry))
+		api := jobqueue.New(nil, store.New(nil, *registry))
 
 		test.TestNonJsonRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedResponse)
 	}
@@ -52,10 +51,10 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store := store.New(nil, distroStruct, *registry)
+	store := store.New(nil, *registry)
 	api := jobqueue.New(nil, store)
 
-	err = store.PushCompose(id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
+	err = store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -71,11 +70,11 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, exp
 	if err != nil {
 		t.Fatal(err)
 	}
-	store := store.New(nil, distroStruct, *registry)
+	store := store.New(nil, *registry)
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
-		err := store.PushCompose(id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
+		err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}

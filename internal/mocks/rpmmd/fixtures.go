@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -93,9 +92,8 @@ func createBaseStoreFixture() *store.Store {
 		},
 	}
 
-	d := test_distro.New()
 	r, _ := distro_mock.NewDefaultRegistry()
-	s := store.New(nil, d, *r)
+	s := store.New(nil, *r)
 
 	s.Blueprints[bName] = b
 	s.Composes = map[uuid.UUID]compose.Compose{
@@ -190,9 +188,8 @@ func createStoreWithoutComposesFixture() *store.Store {
 		Customizations: nil,
 	}
 
-	d := test_distro.New()
 	r, _ := distro_mock.NewDefaultRegistry()
-	s := store.New(nil, d, *r)
+	s := store.New(nil, *r)
 
 	s.Blueprints[bName] = b
 

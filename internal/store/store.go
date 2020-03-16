@@ -45,7 +45,6 @@ type Store struct {
 	mu             sync.RWMutex // protects all fields
 	pendingJobs    chan Job
 	stateChannel   chan []byte
-	distro         distro.Distro
 	distroRegistry distro.Registry
 	stateDir       *string
 }
@@ -121,7 +120,7 @@ func (e *NoLocalTargetError) Error() string {
 	return e.message
 }
 
-func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Registry) *Store {
+func New(stateDir *string, distroRegistryArg distro.Registry) *Store {
 	var s Store
 
 	if stateDir != nil {
@@ -155,7 +154,6 @@ func New(stateDir *string, distroArg distro.Distro, distroRegistryArg distro.Reg
 	}
 
 	s.pendingJobs = make(chan Job, 200)
-	s.distro = distroArg
 	s.distroRegistry = distroRegistryArg
 	s.stateDir = stateDir
 
@@ -556,8 +554,18 @@ func (s *Store) GetImageBuildImage(composeId uuid.UUID, imageBuildId int) (io.Re
 		return nil, 0, &NoLocalTargetError{"compose does not have local target"}
 	}
 
+	name, ok := imageBuild.Distro.ToString()
+	if !ok {
+		panic("distro name was validated earlier")
+	}
+
+	distro := s.distroRegistry.GetDistro(name)
+	if distro == nil {
+		panic("distro was validated earlier")
+	}
+
 	compatString, _ := imageBuild.ImageType.ToCompatString()
-	filename, _, err := s.distro.FilenameFromType(compatString)
+	filename, _, err := distro.FilenameFromType(compatString)
 	if err != nil {
 		panic(err)
 	}
@@ -588,7 +596,7 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packages, buildPackages []rpmmd.PackageSpec, arch, composeType string, size uint64, uploadTarget *target.Target) error {
+func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *blueprint.Blueprint, packages, buildPackages []rpmmd.PackageSpec, arch, composeType string, size uint64, uploadTarget *target.Target) error {
 	targets := []*target.Target{}
 
 	// Compatibility layer for image types in Weldr API v0
@@ -610,7 +618,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 		))
 	}
 
-	size = s.distro.GetSizeForOutputType(composeType, size)
+	size = distro.GetSizeForOutputType(composeType, size)
 
 	if uploadTarget != nil {
 		targets = append(targets, uploadTarget)
@@ -621,7 +629,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 		repos = append(repos, source.RepoConfig())
 	}
 
-	manifestStruct, err := s.distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, composeType, size)
+	manifestStruct, err := distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, composeType, size)
 	if err != nil {
 		return err
 	}
@@ -645,7 +653,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, bp *blueprint.Blueprint, packag
 	s.pendingJobs <- Job{
 		ComposeID:    composeID,
 		ImageBuildID: 0,
-		Distro:       s.distro.Name(),
+		Distro:       distro.Name(),
 		Manifest:     manifestStruct,
 		Targets:      targets,
 		ImageType:    composeType,
@@ -863,8 +871,18 @@ func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, rea
 		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s and image build %d but it has no local target", composeID.String(), imageBuildID)}
 	}
 
+	name, ok := imageBuild.Distro.ToString()
+	if !ok {
+		panic("distro name was validated earlier")
+	}
+
+	distro := s.distroRegistry.GetDistro(name)
+	if distro == nil {
+		panic("distro was validated earlier")
+	}
+
 	imageType, _ := imageBuild.ImageType.ToCompatString()
-	filename, _, err := s.distro.FilenameFromType(imageType)
+	filename, _, err := distro.FilenameFromType(imageType)
 
 	if err != nil {
 		return &InvalidRequestError{err.Error()}
