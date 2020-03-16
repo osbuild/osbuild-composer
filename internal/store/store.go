@@ -76,7 +76,8 @@ type ComposeRequest struct {
 	Distro          distro.Distro
 	Arch            common.Architecture
 	Repositories    []rpmmd.RepoConfig
-	Checksums       map[string]string
+	Packages        []rpmmd.PackageSpec
+	BuildPackages   []rpmmd.PackageSpec
 	RequestedImages []common.ImageRequest
 }
 
@@ -679,7 +680,7 @@ func (s *Store) PushComposeRequest(request ComposeRequest) error {
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		manifestStruct, err := request.Distro.Manifest(request.Blueprint.Customizations, request.Repositories, nil, nil, arch, imgTypeCompatStr, 0)
+		manifestStruct, err := request.Distro.Manifest(request.Blueprint.Customizations, request.Repositories, request.Packages, request.BuildPackages, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}
