@@ -15,7 +15,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"sync"
 	"time"
@@ -74,7 +73,7 @@ type SourceConfig struct {
 type ComposeRequest struct {
 	Blueprint       blueprint.Blueprint
 	ComposeID       uuid.UUID
-	Distro          common.Distribution
+	Distro          distro.Distro
 	Arch            common.Architecture
 	Repositories    []rpmmd.RepoConfig
 	Checksums       map[string]string
@@ -662,15 +661,6 @@ func (s *Store) PushComposeRequest(request ComposeRequest) error {
 	if !exists {
 		panic("fatal error, arch should exist but it does not")
 	}
-	distroString, exists := request.Distro.ToString()
-	if !exists {
-		panic("fatal error, distro should exist but it does not")
-	}
-
-	distroStruct := s.distroRegistry.GetDistro(distroString)
-	if distroStruct == nil || (reflect.ValueOf(distroStruct).Kind() == reflect.Ptr && reflect.ValueOf(distroStruct).IsNil()) {
-		panic("fatal error, distro should exist but it is not in the registry")
-	}
 
 	// This will be a list of imageBuilds that will be submitted to the state channel
 	imageBuilds := []compose.ImageBuild{}
@@ -689,7 +679,7 @@ func (s *Store) PushComposeRequest(request ComposeRequest) error {
 		if !exists {
 			panic("fatal error, image type should exist but it does not")
 		}
-		manifestStruct, err := distroStruct.Manifest(request.Blueprint.Customizations, request.Repositories, nil, nil, arch, imgTypeCompatStr, 0)
+		manifestStruct, err := request.Distro.Manifest(request.Blueprint.Customizations, request.Repositories, nil, nil, arch, imgTypeCompatStr, 0)
 		if err != nil {
 			return err
 		}
@@ -705,14 +695,17 @@ func (s *Store) PushComposeRequest(request ComposeRequest) error {
 		newJobs = append(newJobs, Job{
 			ComposeID:    request.ComposeID,
 			ImageBuildID: imageBuildID,
-			Distro:       distroString,
+			Distro:       request.Distro.Name(),
 			Manifest:     manifestStruct,
 			Targets:      []*target.Target{},
 			ImageType:    imgTypeCompatStr,
 		})
 
+		// this ought to exist, because we're creating it from an existing distro struct
+		distroTag, _ := common.DistributionFromString(request.Distro.Name())
+
 		imageBuilds = append(imageBuilds, compose.ImageBuild{
-			Distro:      request.Distro,
+			Distro:      distroTag,
 			QueueStatus: common.IBWaiting,
 			ImageType:   imageRequest.ImgType,
 			Manifest:    manifestStruct,

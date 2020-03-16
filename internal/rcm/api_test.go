@@ -54,7 +54,7 @@ func TestBasicRcmAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	distroStruct := fedoratest.New()
-	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
+	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	for _, c := range cases {
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
@@ -81,7 +81,7 @@ func TestSubmitCompose(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()))
+	api := rcm.New(nil, store.New(nil, distroStruct, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`

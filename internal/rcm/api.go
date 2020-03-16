@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
@@ -27,15 +28,17 @@ type API struct {
 	// rpmMetadata is an interface to dnf-json and we include it here so that we can
 	// mock it in the unit tests
 	rpmMetadata rpmmd.RPMMD
+	distros     *distro.Registry
 }
 
 // New creates new RCM API
-func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD) *API {
+func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *API {
 	api := &API{
 		logger:      logger,
 		store:       store,
 		router:      httprouter.New(),
 		rpmMetadata: rpmMetadata,
+		distros:     distros,
 	}
 
 	api.router.RedirectTrailingSlash = false
@@ -93,7 +96,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 	// JSON structure expected from the client
 	var composeRequest struct {
-		Distribution  common.Distribution   `json:"distribution"`
+		Distribution  string                `json:"distribution"`
 		ImageTypes    []common.ImageType    `json:"image_types"`
 		Architectures []common.Architecture `json:"architectures"`
 		Repositories  []Repository          `json:"repositories"`
@@ -156,17 +159,17 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
-	modulePlatformID, err := composeRequest.Distribution.ModulePlatformID()
-	if err != nil {
+	distro := api.distros.GetDistro(composeRequest.Distribution)
+	if distro == nil {
 		writer.WriteHeader(http.StatusBadRequest)
-		_, err := writer.Write([]byte(err.Error()))
+		_, err := writer.Write([]byte("unknown distro"))
 		if err != nil {
 			panic("Failed to write response")
 		}
 	}
 
 	// map( repo-id => checksum )
-	_, checksums, err := api.rpmMetadata.FetchMetadata(repoConfigs, modulePlatformID)
+	_, checksums, err := api.rpmMetadata.FetchMetadata(repoConfigs, distro.ModulePlatformID())
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
@@ -181,7 +184,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	err = api.store.PushComposeRequest(store.ComposeRequest{
 		Blueprint:       blueprint.Blueprint{},
 		ComposeID:       composeUUID,
-		Distro:          composeRequest.Distribution,
+		Distro:          distro,
 		Arch:            composeRequest.Architectures[0],
 		Repositories:    repoConfigs,
 		Checksums:       checksums,
