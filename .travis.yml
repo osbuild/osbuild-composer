@@ -12,33 +12,18 @@ matrix:
   include:
     - name: fedora-30
       arch: amd64
-      language: python
-      python: 3.7
-      script:
-        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
-        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" test/run --arches x86_64 --distro fedora-30
     - name: fedora-30
       arch: arm64
-      language: python
-      python: 3.7
-      script:
-        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
-        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" test/run --arches aarch64 --distro fedora-30
     - name: fedora-31
       arch: amd64
-      language: python
-      python: 3.7
-      script:
-        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
-        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" test/run --arches x86_64 --distro fedora-31
     - name: fedora-31
       arch: arm64
-      language: python
-      python: 3.7
-      script:
-        # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
-        - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
-        - sudo env "PATH=$PATH" "PYTHONUNBUFFERED=1" test/run --arches aarch64 --distro fedora-31
+
+language: generic
+script:
+  # set go version to 1.13.x
+  - eval "$(gimme 1.13.x)"
+  # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
+  - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
+  - go build -tags travis ./cmd/osbuild-image-tests
+  - sudo ./osbuild-image-tests --distro $TRAVIS_JOB_NAME
