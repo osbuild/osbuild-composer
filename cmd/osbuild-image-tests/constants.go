@@ -1,3 +1,5 @@
+// +build !travis
+
 package main
 
 import "os/exec"
