@@ -316,7 +316,7 @@ func getAllCases() ([]string, error) {
 }
 
 // runTests opens, parses and runs all the specified testcases
-func runTests(cases []string) error {
+func runTests(cases []string, d string) error {
 	for _, path := range cases {
 		f, err := os.Open(path)
 		if err != nil {
@@ -335,19 +335,26 @@ func runTests(cases []string) error {
 			continue
 		}
 
-		hostDistroName, err := distro.GetHostDistroName()
-		if err != nil {
-			return fmt.Errorf("cannot get host distro name: %v", err)
-		}
+		if d != "" {
+			if testcase.ComposeRequest.Distro != d {
+				log.Printf("%s: skipping, the required distro is %s, the passed distro is %s", path, testcase.ComposeRequest.Distro, d)
+				continue
+			}
+		} else {
+			hostDistroName, err := distro.GetHostDistroName()
+			if err != nil {
+				return fmt.Errorf("cannot get host distro name: %v", err)
+			}
 
-		// TODO: forge distro name for now
-		if strings.HasPrefix(hostDistroName, "fedora") {
-			hostDistroName = "fedora-30"
-		}
+			// TODO: forge distro name for now
+			if strings.HasPrefix(hostDistroName, "fedora") {
+				hostDistroName = "fedora-30"
+			}
 
-		if testcase.ComposeRequest.Distro != hostDistroName {
-			log.Printf("%s: skipping, the required distro is %s, the host distro is %s", path, testcase.ComposeRequest.Distro, hostDistroName)
-			continue
+			if testcase.ComposeRequest.Distro != hostDistroName {
+				log.Printf("%s: skipping, the required distro is %s, the host distro is %s", path, testcase.ComposeRequest.Distro, hostDistroName)
+				continue
+			}
 		}
 
 		log.Printf("%s: RUNNING", path)
@@ -365,6 +372,7 @@ func runTests(cases []string) error {
 }
 
 func main() {
+	d := flag.String("distro", "", "which distro tests to run")
 	flag.Parse()
 	cases := flag.Args()
 
@@ -377,7 +385,7 @@ func main() {
 		}
 	}
 
-	err := runTests(cases)
+	err := runTests(cases, *d)
 
 	if err != nil {
 		log.Fatalf("error occured while running tests: %v", err)
