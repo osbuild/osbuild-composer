@@ -84,18 +84,8 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 
 // Depsolves packages and build packages for building an image for a given
 // distro, in the given architecture
-func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, repos []rpmmd.RepoConfig, imageType common.ImageType, arch common.Architecture) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
-	archString, ok := arch.ToString()
-	if !ok {
-		panic("architecture was validated before")
-	}
-
-	imageTypeString, ok := imageType.ToString()
-	if !ok {
-		panic("image type was validated before")
-	}
-
-	specs, excludeSpecs, err := distro.BasePackages(imageTypeString, archString)
+func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, repos []rpmmd.RepoConfig, imageType, arch string) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+	specs, excludeSpecs, err := distro.BasePackages(imageType, arch)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Distro.BasePackages: %v", err)
 	}
@@ -105,7 +95,7 @@ func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, repos []rpmmd.RepoConfig,
 		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)
 	}
 
-	specs, err = distro.BuildPackages(archString)
+	specs, err = distro.BuildPackages(arch)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Distro.BuildPackages: %v", err)
 	}
@@ -184,17 +174,6 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
-	// Image requests are derived from requested image types. All of them are uploaded to Koji, because
-	// this API is only for RCM.
-	requestedImages := []common.ImageRequest{}
-	for _, imgType := range composeRequest.ImageTypes {
-		requestedImages = append(requestedImages, common.ImageRequest{
-			ImgType: imgType,
-			// TODO: use koji upload type as soon as it is available
-			UpTarget: []common.UploadTarget{},
-		})
-	}
-
 	distro := api.distros.GetDistro(composeRequest.Distribution)
 	if distro == nil {
 		writer.WriteHeader(http.StatusBadRequest)
@@ -204,7 +183,17 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		}
 	}
 
-	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, composeRequest.ImageTypes[0], composeRequest.Architectures[0])
+	arch, ok := composeRequest.Architectures[0].ToString()
+	if !ok {
+		panic("architecture was validated before")
+	}
+
+	imageType, ok := composeRequest.ImageTypes[0].ToString()
+	if !ok {
+		panic("image type was validated before")
+	}
+
+	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, imageType, arch)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
@@ -216,16 +205,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
-	err = api.store.PushComposeRequest(store.ComposeRequest{
-		Blueprint:       blueprint.Blueprint{},
-		ComposeID:       composeUUID,
-		Distro:          distro,
-		Arch:            composeRequest.Architectures[0],
-		Repositories:    repoConfigs,
-		Packages:        packages,
-		BuildPackages:   buildPackages,
-		RequestedImages: requestedImages,
-	})
+	err = api.store.PushCompose(distro, composeUUID, &blueprint.Blueprint{}, packages, buildPackages, arch, imageType, 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
