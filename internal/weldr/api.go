@@ -1364,7 +1364,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
-	const MegaByte = 1024 * 1024
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
@@ -1409,14 +1408,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
-
-	size := cr.Size
-
-	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if cr.ComposeType == "vhd" && size%MegaByte != 0 {
-		size = (size/MegaByte + 1) * MegaByte
-	}
-
 	if bp != nil {
 		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch)
 		if err != nil {
@@ -1428,7 +1419,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(api.distro, reply.BuildID, bp, packages, buildPackages, api.arch, cr.ComposeType, size, uploadTarget)
+		err = api.store.PushCompose(api.distro, reply.BuildID, bp, packages, buildPackages, api.arch, cr.ComposeType, cr.Size, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
