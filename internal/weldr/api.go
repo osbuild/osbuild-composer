@@ -843,7 +843,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch, false)
+		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch)
 
 		if err != nil {
 			errors := responseError{
@@ -939,7 +939,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch, false)
+		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1418,7 +1418,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	if bp != nil {
-		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch, true)
+		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch)
 		if err != nil {
 			errors := responseError{
 				ID:  "DepsolveError",
@@ -1977,7 +1977,7 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 	return pkg.Name
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string, clean bool) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
 	repos := api.distro.Repositories(api.arch)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
