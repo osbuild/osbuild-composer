@@ -36,12 +36,7 @@ type testcaseStruct struct {
 
 // runOsbuild runs osbuild with the specified manifest and store.
 func runOsbuild(manifest []byte, store string) (string, error) {
-	cmd := exec.Command(
-		"osbuild",
-		"--store", store,
-		"--json",
-		"-",
-	)
+	cmd := getOsbuildCommand(store)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = bytes.NewReader(manifest)
@@ -104,7 +99,7 @@ func testImageInfo(imagePath string, rawImageInfoExpected []byte) error {
 		return fmt.Errorf("cannot decode expected image info: %v", err)
 	}
 
-	cmd := exec.Command("/usr/libexec/osbuild-composer/image-info", imagePath)
+	cmd := exec.Command(imageInfoPath, imagePath)
 	cmd.Stderr = os.Stderr
 	reader, writer := io.Pipe()
 	cmd.Stdout = writer
@@ -148,7 +143,7 @@ func trySSHOnce(ns netNS) error {
 		ctx,
 		"ssh",
 		"-p", "22",
-		"-i", "/usr/share/tests/osbuild-composer/keyring/id_rsa",
+		"-i", privateKeyPath,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"redhat@localhost",
@@ -302,8 +297,7 @@ func runTestcase(testcase testcaseStruct) error {
 
 // getAllCases returns paths to all testcases in the testcase directory
 func getAllCases() ([]string, error) {
-	const casesDirectory = "/usr/share/tests/osbuild-composer/cases"
-	cases, err := ioutil.ReadDir(casesDirectory)
+	cases, err := ioutil.ReadDir(testCasesDirectoryPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list test cases: %v", err)
 	}
@@ -314,7 +308,7 @@ func getAllCases() ([]string, error) {
 			continue
 		}
 
-		casePath := fmt.Sprintf("%s/%s", casesDirectory, c.Name())
+		casePath := fmt.Sprintf("%s/%s", testCasesDirectoryPath, c.Name())
 		casesPaths = append(casesPaths, casePath)
 	}
 
