@@ -116,7 +116,7 @@ func main() {
 			log.Fatal("The RCM API socket unit is misconfigured. It should contain only one socket.")
 		}
 		rcmListener := rcmApiListeners[0]
-		rcmAPI := rcm.New(logger, store, rpm)
+		rcmAPI := rcm.New(logger, store, rpm, distros)
 		go func() {
 			err := rcmAPI.Serve(rcmListener)
 			// If the RCM API fails, take down the whole process, not just a single gorutine
