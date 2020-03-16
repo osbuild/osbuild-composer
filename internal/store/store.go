@@ -68,18 +68,6 @@ type SourceConfig struct {
 	System   bool   `json:"system"`
 }
 
-// ComposeRequest is used to submit a new compose to the store
-type ComposeRequest struct {
-	Blueprint       blueprint.Blueprint
-	ComposeID       uuid.UUID
-	Distro          distro.Distro
-	Arch            common.Architecture
-	Repositories    []rpmmd.RepoConfig
-	Packages        []rpmmd.PackageSpec
-	BuildPackages   []rpmmd.PackageSpec
-	RequestedImages []common.ImageRequest
-}
-
 type NotFoundError struct {
 	message string
 }
@@ -658,84 +646,6 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 		Targets:      targets,
 		ImageType:    composeType,
 	}
-
-	return nil
-}
-
-// PushComposeRequest is an alternative to PushCompose which does not assume a pre-defined distro, as such it is better
-// suited for RCM API and possible future API that would respect the fact that we can build any distro and any arch
-func (s *Store) PushComposeRequest(request ComposeRequest) error {
-	// This should never happen and once distro.Manifest is refactored this check will go away
-	arch, exists := request.Arch.ToString()
-	if !exists {
-		panic("fatal error, arch should exist but it does not")
-	}
-
-	// This will be a list of imageBuilds that will be submitted to the state channel
-	imageBuilds := []compose.ImageBuild{}
-	newJobs := []Job{}
-
-	// TODO: remove this
-	if len(request.RequestedImages) > 1 {
-		panic("Multiple image requests are not yet properly implemented")
-	}
-
-	for imageBuildID, imageRequest := range request.RequestedImages {
-		// TODO: handle custom upload targets
-		// TODO: this requires changes in the Compose Request struct
-		// This should never happen and once distro.Manifest is refactored this check will go away
-		imgTypeCompatStr, exists := imageRequest.ImgType.ToCompatString()
-		if !exists {
-			panic("fatal error, image type should exist but it does not")
-		}
-		manifestStruct, err := request.Distro.Manifest(request.Blueprint.Customizations, request.Repositories, request.Packages, request.BuildPackages, arch, imgTypeCompatStr, 0)
-		if err != nil {
-			return err
-		}
-
-		if s.stateDir != nil {
-			err = os.MkdirAll(s.getImageBuildDirectory(request.ComposeID, imageBuildID), 0755)
-			if err != nil {
-				return err
-			}
-		}
-
-		// This will make the job submission atomic: either all of them or none of them
-		newJobs = append(newJobs, Job{
-			ComposeID:    request.ComposeID,
-			ImageBuildID: imageBuildID,
-			Distro:       request.Distro.Name(),
-			Manifest:     manifestStruct,
-			Targets:      []*target.Target{},
-			ImageType:    imgTypeCompatStr,
-		})
-
-		// this ought to exist, because we're creating it from an existing distro struct
-		distroTag, _ := common.DistributionFromString(request.Distro.Name())
-
-		imageBuilds = append(imageBuilds, compose.ImageBuild{
-			Distro:      distroTag,
-			QueueStatus: common.IBWaiting,
-			ImageType:   imageRequest.ImgType,
-			Manifest:    manifestStruct,
-			Targets:     []*target.Target{},
-			JobCreated:  time.Now(),
-		})
-	}
-
-	// submit all the jobs now
-	for _, job := range newJobs {
-		s.pendingJobs <- job
-	}
-
-	// ignore error because the previous implementation does the same
-	_ = s.change(func() error {
-		s.Composes[request.ComposeID] = compose.Compose{
-			Blueprint:   &request.Blueprint,
-			ImageBuilds: imageBuilds,
-		}
-		return nil
-	})
 
 	return nil
 }
