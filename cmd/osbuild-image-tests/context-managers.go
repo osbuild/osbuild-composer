@@ -76,8 +76,8 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 	return withTempFile("", "osbuild-image-tests-cloudinit", func(cloudInitFile *os.File) error {
 		err := writeCloudInitISO(
 			cloudInitFile,
-			"/usr/share/tests/osbuild-composer/cloud-init/user-data",
-			"/usr/share/tests/osbuild-composer/cloud-init/meta-data",
+			userDataPath,
+			metaDataPath,
 		)
 		if err != nil {
 			return err
