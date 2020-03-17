@@ -4,6 +4,10 @@ linters-settings:
       - shadow # default value recommended by golangci
       - composites
 
+run:
+  build-tags:
+    - integration
+
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
