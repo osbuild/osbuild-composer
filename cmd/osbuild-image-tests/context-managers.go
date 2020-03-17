@@ -90,7 +90,7 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 
 		qemuCmd := ns.NamespacedCommand(
 			"qemu-system-x86_64",
-			"-m", "2048",
+			"-m", "1024",
 			"-snapshot",
 			"-accel", "accel=kvm:hvf:tcg",
 			"-cdrom", cloudInitFile.Name(),
