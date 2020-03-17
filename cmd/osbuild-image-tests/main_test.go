@@ -319,11 +319,6 @@ func runTests(t *testing.T, cases []string, d string) {
 				hostDistroName, err := distro.GetHostDistroName()
 				require.Nil(t, err)
 
-				// TODO: forge distro name for now
-				if strings.HasPrefix(hostDistroName, "fedora") {
-					hostDistroName = "fedora-30"
-				}
-
 				if testcase.ComposeRequest.Distro != hostDistroName {
 					t.Skipf("the required distro is %s, the host distro is %s", testcase.ComposeRequest.Distro, hostDistroName)
 				}
