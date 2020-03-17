@@ -1,3 +1,5 @@
+// +build integration
+
 package main
 
 import (
@@ -13,13 +15,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
+
+var distroArg = flag.String("distro", "", "which distro tests to run")
 
 type testcaseStruct struct {
 	ComposeRequest struct {
@@ -43,18 +49,14 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 	var outBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
 
-	log.Print("[osbuild] running")
 	err := cmd.Run()
 
 	if err != nil {
-		log.Print("[osbuild] failed")
 		if _, ok := err.(*exec.ExitError); ok {
 			return "", fmt.Errorf("running osbuild failed: %s", outBuffer.String())
 		}
 		return "", fmt.Errorf("running osbuild failed from an unexpected reason: %v", err)
 	}
-
-	log.Print("[osbuild] succeeded")
 
 	var result struct {
 		OutputID string `json:"output_id"`
@@ -92,12 +94,10 @@ func splitExtension(path string) (string, string) {
 
 // testImageInfo runs image-info on image specified by imageImage and
 // compares the result with expected image info
-func testImageInfo(imagePath string, rawImageInfoExpected []byte) error {
+func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
 	var imageInfoExpected interface{}
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
-	if err != nil {
-		return fmt.Errorf("cannot decode expected image info: %v", err)
-	}
+	require.Nilf(t, err, "cannot decode expected image info: %v", err)
 
 	cmd := exec.Command(imageInfoPath, imagePath)
 	cmd.Stderr = os.Stderr
@@ -105,26 +105,16 @@ func testImageInfo(imagePath string, rawImageInfoExpected []byte) error {
 	cmd.Stdout = writer
 
 	err = cmd.Start()
-	if err != nil {
-		return fmt.Errorf("image-info cannot start: %v", err)
-	}
+	require.Nilf(t, err, "image-info cannot start: %v", err)
 
 	var imageInfoGot interface{}
 	err = json.NewDecoder(reader).Decode(&imageInfoGot)
-	if err != nil {
-		return fmt.Errorf("decoding image-info output failed: %v", err)
-	}
+	require.Nilf(t, err, "decoding image-info output failed: %v", err)
 
 	err = cmd.Wait()
-	if err != nil {
-		return fmt.Errorf("running image-info failed: %v", err)
-	}
+	require.Nilf(t, err, "running image-info failed: %v", err)
 
-	if diff := cmp.Diff(imageInfoExpected, imageInfoGot); diff != "" {
-		return fmt.Errorf("image info differs:\n%s", diff)
-	}
-
-	return nil
+	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
 
 type timeoutError struct{}
@@ -182,21 +172,24 @@ func trySSHOnce(ns netNS) error {
 // testSSH tests the running image using ssh.
 // It tries 20 attempts before giving up. If a major error occurs, it might
 // return earlier.
-func testSSH(ns netNS) error {
+func testSSH(t *testing.T, ns netNS) {
 	const attempts = 20
 	for i := 0; i < attempts; i++ {
 		err := trySSHOnce(ns)
 		if err == nil {
-			return nil
+			// pass the test
+			return
 		}
+
+		// if any other error than the timeout one happened, fail the test immediately
 		if _, ok := err.(*timeoutError); !ok {
-			return err
+			t.Fatal(err)
 		}
 
 		time.Sleep(10 * time.Second)
 	}
 
-	return fmt.Errorf("ssh test failure, %d attempts were made", attempts)
+	t.Errorf("ssh test failure, %d attempts were made", attempts)
 }
 
 // testBoot tests if the image is able to successfully boot
@@ -204,68 +197,58 @@ func testSSH(ns netNS) error {
 // The test passes if the function is able to connect to the image via ssh
 // in defined number of attempts and systemd-is-running returns running
 // or degraded status.
-func testBoot(imagePath string, bootType string, outputID string) error {
-	return withNetworkNamespace(func(ns netNS) error {
+func testBoot(t *testing.T, imagePath string, bootType string, outputID string) {
+	err := withNetworkNamespace(func(ns netNS) error {
 		switch bootType {
 		case "qemu":
 			fallthrough
 		case "qemu-extract":
 			return withBootedQemuImage(imagePath, ns, func() error {
-				return testSSH(ns)
+				testSSH(t, ns)
+				return nil
 			})
 		case "nspawn":
 			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-				return testSSH(ns)
+				testSSH(t, ns)
+				return nil
 			})
 		case "nspawn-extract":
 			return withExtractedTarArchive(imagePath, func(dir string) error {
 				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-					return testSSH(ns)
+					testSSH(t, ns)
+					return nil
 				})
 			})
 		default:
 			panic("unknown boot type!")
 		}
 	})
+
+	require.Nil(t, err)
 }
 
 // testImage performs a series of tests specified in the testcase
 // on an image
-func testImage(testcase testcaseStruct, imagePath, outputID string) error {
+func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string) {
 	if testcase.ImageInfo != nil {
-		log.Print("[image info sub-test] running")
-		err := testImageInfo(imagePath, testcase.ImageInfo)
-		if err != nil {
-			log.Print("[image info sub-test] failed")
-			return err
-		}
-		log.Print("[image info sub-test] succeeded")
-	} else {
-		log.Print("[image info sub-test] not defined, skipping")
+		t.Run("image info", func(t *testing.T) {
+			testImageInfo(t, imagePath, testcase.ImageInfo)
+		})
 	}
 
 	if testcase.Boot != nil {
-		log.Print("[boot sub-test] running")
-		err := testBoot(imagePath, testcase.Boot.Type, outputID)
-		if err != nil {
-			log.Print("[boot sub-test] failed")
-			return err
-		}
-		log.Print("[boot sub-test] succeeded")
-	} else {
-		log.Print("[boot sub-test] not defined, skipping")
+		t.Run("boot", func(t *testing.T) {
+			testBoot(t, imagePath, testcase.Boot.Type, outputID)
+		})
 	}
-
-	return nil
 }
 
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
-func runTestcase(testcase testcaseStruct) error {
+func runTestcase(t *testing.T, testcase testcaseStruct) {
 	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-")
-	if err != nil {
-		return fmt.Errorf("cannot create temporary store: %v", err)
-	}
+	require.Nilf(t, err, "cannot create temporary store: %v", err)
+
 	defer func() {
 		err := os.RemoveAll(store)
 		if err != nil {
@@ -274,9 +257,7 @@ func runTestcase(testcase testcaseStruct) error {
 	}()
 
 	outputID, err := runOsbuild(testcase.Manifest, store)
-	if err != nil {
-		return err
-	}
+	require.Nil(t, err)
 
 	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
 
@@ -285,14 +266,13 @@ func runTestcase(testcase testcaseStruct) error {
 	if ex == ".xz" {
 		_, ex = splitExtension(base)
 		if ex != ".tar" {
-			if err := extractXZ(imagePath); err != nil {
-				return err
-			}
+			err := extractXZ(imagePath)
+			require.Nil(t, err)
 			imagePath = base
 		}
 	}
 
-	return testImage(testcase, imagePath, outputID)
+	testImage(t, testcase, imagePath, outputID)
 }
 
 // getAllCases returns paths to all testcases in the testcase directory
@@ -316,78 +296,53 @@ func getAllCases() ([]string, error) {
 }
 
 // runTests opens, parses and runs all the specified testcases
-func runTests(cases []string, d string) error {
+func runTests(t *testing.T, cases []string, d string) {
 	for _, path := range cases {
-		f, err := os.Open(path)
-		if err != nil {
-			return fmt.Errorf("%s: cannot open test case: %v", path, err)
-		}
+		t.Run(path, func(t *testing.T) {
+			f, err := os.Open(path)
+			require.Nilf(t, err, "%s: cannot open test case: %v", path, err)
 
-		var testcase testcaseStruct
-		err = json.NewDecoder(f).Decode(&testcase)
-		if err != nil {
-			return fmt.Errorf("%s: cannot decode test case: %v", path, err)
-		}
+			var testcase testcaseStruct
+			err = json.NewDecoder(f).Decode(&testcase)
+			require.Nilf(t, err, "%s: cannot decode test case: %v", path, err)
 
-		currentArch := common.CurrentArch()
-		if testcase.ComposeRequest.Arch != currentArch {
-			log.Printf("%s: skipping, the required arch is %s, the current arch is %s", path, testcase.ComposeRequest.Arch, currentArch)
-			continue
-		}
-
-		if d != "" {
-			if testcase.ComposeRequest.Distro != d {
-				log.Printf("%s: skipping, the required distro is %s, the passed distro is %s", path, testcase.ComposeRequest.Distro, d)
-				continue
-			}
-		} else {
-			hostDistroName, err := distro.GetHostDistroName()
-			if err != nil {
-				return fmt.Errorf("cannot get host distro name: %v", err)
+			currentArch := common.CurrentArch()
+			if testcase.ComposeRequest.Arch != currentArch {
+				t.Skipf("the required arch is %s, the current arch is %s", testcase.ComposeRequest.Arch, currentArch)
 			}
 
-			// TODO: forge distro name for now
-			if strings.HasPrefix(hostDistroName, "fedora") {
-				hostDistroName = "fedora-30"
+			if d != "" {
+				if testcase.ComposeRequest.Distro != d {
+					t.Skipf("the required distro is %s, the passed distro is %s", testcase.ComposeRequest.Distro, d)
+				}
+			} else {
+				hostDistroName, err := distro.GetHostDistroName()
+				require.Nil(t, err)
+
+				// TODO: forge distro name for now
+				if strings.HasPrefix(hostDistroName, "fedora") {
+					hostDistroName = "fedora-30"
+				}
+
+				if testcase.ComposeRequest.Distro != hostDistroName {
+					t.Skipf("the required distro is %s, the host distro is %s", testcase.ComposeRequest.Distro, hostDistroName)
+				}
 			}
 
-			if testcase.ComposeRequest.Distro != hostDistroName {
-				log.Printf("%s: skipping, the required distro is %s, the host distro is %s", path, testcase.ComposeRequest.Distro, hostDistroName)
-				continue
-			}
-		}
-
-		log.Printf("%s: RUNNING", path)
-
-		err = runTestcase(testcase)
-		if err != nil {
-			log.Printf("%s: FAILURE\nReason: %v", path, err)
-		} else {
-			log.Printf("%s: SUCCESS", path)
-		}
+			runTestcase(t, testcase)
+		})
 
 	}
-
-	return nil
 }
 
-func main() {
-	d := flag.String("distro", "", "which distro tests to run")
-	flag.Parse()
+func TestImages(t *testing.T) {
 	cases := flag.Args()
-
 	// if no cases were specified, run the default set
 	if len(cases) == 0 {
 		var err error
 		cases, err = getAllCases()
-		if err != nil {
-			log.Fatalf("searching for testcases failed: %v", err)
-		}
+		require.Nil(t, err)
 	}
 
-	err := runTests(cases, *d)
-
-	if err != nil {
-		log.Fatalf("error occured while running tests: %v", err)
-	}
+	runTests(t, cases, *distroArg)
 }
