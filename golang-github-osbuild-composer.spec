@@ -66,7 +66,6 @@ export GOFLAGS=-mod=vendor
 %endif
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
-%gobuild -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 %gobuild -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 # Build test binaries with `go test -c`, so that they can take advantage of
@@ -75,6 +74,7 @@ export GOFLAGS=-mod=vendor
 
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
 
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/weldrcheck/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
