@@ -7,7 +7,7 @@ build:
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
-	go build -o osbuild-tests ./cmd/osbuild-tests/
+	go test -c -tags=integration -o osbuild-tests ./cmd/osbuild-tests/main_test.go
 	go test -c -tags=integration -o osbuild-weldr-tests ./internal/weldrcheck/
 	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go build -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/
