@@ -2,7 +2,7 @@ package osbuild
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 )
 
 // A Stage transforms a filesystem tree.
@@ -67,7 +67,7 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	case "org.osbuild.script":
 		options = new(ScriptStageOptions)
 	default:
-		return errors.New("unexpected stage name")
+		return fmt.Errorf("unexpected stage name: %s", rawStage.Name)
 	}
 	err = json.Unmarshal(rawStage.Options, options)
 	if err != nil {
