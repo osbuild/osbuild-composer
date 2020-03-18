@@ -33,12 +33,13 @@ type API struct {
 	rpmmd  rpmmd.RPMMD
 	arch   string
 	distro distro.Distro
+	repos  []rpmmd.RepoConfig
 
 	logger *log.Logger
 	router *httprouter.Router
 }
 
-func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
@@ -46,6 +47,7 @@ func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, logger *log.Logge
 		rpmmd:  rpmmd,
 		arch:   arch,
 		distro: distro,
+		repos:  repos,
 		logger: logger,
 	}
 
@@ -232,7 +234,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 
 	names := api.store.ListSources()
 
-	for _, repo := range api.distro.Repositories(api.arch) {
+	for _, repo := range api.repos {
 		names = append(names, repo.Id)
 	}
 
@@ -275,14 +277,14 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	// if names is "*" we want all sources
 	if names == "*" {
 		sources = api.store.GetAllSources()
-		for _, repo := range api.distro.Repositories(api.arch) {
+		for _, repo := range api.repos {
 			sources[repo.Id] = store.NewSourceConfig(repo, true)
 		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
 			found := false
-			for _, repo := range api.distro.Repositories(api.arch) {
+			for _, repo := range api.repos {
 				if name == repo.Id {
 					sources[repo.Id] = store.NewSourceConfig(repo, true)
 					found = true
@@ -622,7 +624,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	if modulesRequested {
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.distro.Repositories(api.arch), api.distro.ModulePlatformID())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -653,7 +655,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, nil, api.distro.Repositories(api.arch), api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.Depsolve(names, nil, api.repos, api.distro.ModulePlatformID())
 
 	if err != nil {
 		errors := responseError{
@@ -1948,7 +1950,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	repos := api.distro.Repositories(api.arch)
+	repos := append([]rpmmd.RepoConfig{}, api.repos...)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
@@ -1969,7 +1971,7 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 }
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
-	repos := api.distro.Repositories(api.arch)
+	repos := append([]rpmmd.RepoConfig{}, api.repos...)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}

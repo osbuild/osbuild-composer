@@ -2,8 +2,6 @@ package fedora32
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"sort"
 	"strconv"
 
@@ -28,7 +26,6 @@ type arch struct {
 	BootloaderPackages []string
 	BuildPackages      []string
 	UEFI               bool
-	Repositories       []rpmmd.RepoConfig
 }
 
 type output struct {
@@ -47,11 +44,10 @@ type output struct {
 const Distro = common.Fedora32
 const ModulePlatformID = "platform:f32"
 
-func New(confPaths []string) (*Fedora32, error) {
+func New() (*Fedora32, error) {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := Fedora32{
-		arches:  map[string]arch{},
 		outputs: map[string]output{},
 		buildPackages: []string{
 			"dnf",
@@ -62,45 +58,28 @@ func New(confPaths []string) (*Fedora32, error) {
 			"systemd",
 			"tar",
 		},
-	}
-
-	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
-	if err != nil {
-		return nil, fmt.Errorf("Could not load repository data for %s: %s", r.Name(), err.Error())
-	}
-
-	repos, exists := repoMap["x86_64"]
-	if !exists {
-		log.Printf("Could not load architecture-specific repository data for x86_64 (%s)", r.Name())
-	} else {
-		r.arches["x86_64"] = arch{
-			Name: "x86_64",
-			BootloaderPackages: []string{
-				"grub2-pc",
+		arches: map[string]arch{
+			"x86_64": arch{
+				Name: "x86_64",
+				BootloaderPackages: []string{
+					"grub2-pc",
+				},
+				BuildPackages: []string{
+					"grub2-pc",
+				},
 			},
-			BuildPackages: []string{
-				"grub2-pc",
+			"aarch64": arch{
+				Name: "aarch64",
+				BootloaderPackages: []string{
+					"dracut-config-generic",
+					"efibootmgr",
+					"grub2-efi-aa64",
+					"grub2-tools",
+					"shim-aa64",
+				},
+				UEFI: true,
 			},
-			Repositories: repos,
-		}
-	}
-
-	repos, exists = repoMap["aarch64"]
-	if !exists {
-		log.Printf("Could not load architecture-specific repository data for aarch64 (%s)", r.Name())
-	} else {
-		r.arches["aarch64"] = arch{
-			Name: "aarch64",
-			BootloaderPackages: []string{
-				"dracut-config-generic",
-				"efibootmgr",
-				"grub2-efi-aa64",
-				"grub2-tools",
-				"shim-aa64",
-			},
-			UEFI:         true,
-			Repositories: repos,
-		}
+		},
 	}
 
 	r.outputs["ami"] = output{
@@ -326,10 +305,6 @@ func (r *Fedora32) ModulePlatformID() string {
 	return ModulePlatformID
 }
 
-func (r *Fedora32) Repositories(arch string) []rpmmd.RepoConfig {
-	return r.arches[arch].Repositories
-}
-
 func (r *Fedora32) ListOutputFormats() []string {
 	formats := make([]string, 0, len(r.outputs))
 	for name := range r.outputs {
@@ -386,7 +361,7 @@ func (r *Fedora32) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *Fedora32) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *Fedora32) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -398,9 +373,9 @@ func (r *Fedora32) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd
 	}
 
 	p := &osbuild.Pipeline{}
-	p.SetBuild(r.buildPipeline(arch, buildPackageSpecs), "org.osbuild.fedora32")
+	p.SetBuild(r.buildPipeline(repos, arch, buildPackageSpecs), "org.osbuild.fedora32")
 
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, additionalRepos, packageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -475,8 +450,8 @@ func (r *Fedora32) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (r *Fedora32) Manifest(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *Fedora32) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}
@@ -491,15 +466,14 @@ func (r *Fedora32) Runner() string {
 	return "org.osbuild.fedora32"
 }
 
-func (r *Fedora32) buildPipeline(arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+func (r *Fedora32) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, nil, buildPackageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, buildPackageSpecs)))
 	return p
 }
 
-func (r *Fedora32) rpmStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+func (r *Fedora32) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
 	var gpgKeys []string
-	repos := append(arch.Repositories, additionalRepos...)
 	for _, repo := range repos {
 		if repo.GPGKey == "" {
 			continue

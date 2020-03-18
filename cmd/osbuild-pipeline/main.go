@@ -74,7 +74,7 @@ func main() {
 		}
 	}
 
-	distros, err := distro.NewDefaultRegistry([]string{"."})
+	distros, err := distro.NewDefaultRegistry()
 	if err != nil {
 		panic(err)
 	}
@@ -86,6 +86,11 @@ func main() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", distro)
 		}
 		return
+	}
+
+	repos, err := rpmmd.LoadRepositories([]string{"."}, distroArg)
+	if err != nil {
+		panic(err)
 	}
 
 	packages := make([]string, len(blueprint.Packages))
@@ -112,7 +117,7 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, d.Repositories(archArg), d.ModulePlatformID())
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[archArg], d.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
@@ -121,7 +126,7 @@ func main() {
 	if err != nil {
 		panic("Could not get build packages: " + err.Error())
 	}
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, d.Repositories(archArg), d.ModulePlatformID())
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[archArg], d.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
@@ -139,7 +144,7 @@ func main() {
 		}
 	} else {
 		size := d.GetSizeForOutputType(imageType, 0)
-		manifest, err := d.Manifest(blueprint.Customizations, nil, packageSpecs, buildPackageSpecs, archArg, imageType, size)
+		manifest, err := d.Manifest(blueprint.Customizations, repos[archArg], packageSpecs, buildPackageSpecs, archArg, imageType, size)
 		if err != nil {
 			panic(err.Error())
 		}

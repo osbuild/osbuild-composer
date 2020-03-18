@@ -2,8 +2,6 @@ package rhel82
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"sort"
 	"strconv"
 
@@ -28,7 +26,6 @@ type arch struct {
 	BootloaderPackages []string
 	BuildPackages      []string
 	UEFI               bool
-	Repositories       []rpmmd.RepoConfig
 }
 
 type output struct {
@@ -48,11 +45,10 @@ type output struct {
 const Distro = common.RHEL82
 const ModulePlatformID = "platform:el8"
 
-func New(confPaths []string) (*RHEL82, error) {
+func New() (*RHEL82, error) {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
-		arches:  map[string]arch{},
 		outputs: map[string]output{},
 		buildPackages: []string{
 			"dnf",
@@ -67,45 +63,28 @@ func New(confPaths []string) (*RHEL82, error) {
 			"tar",
 			"xfsprogs",
 		},
-	}
-
-	repoMap, err := rpmmd.LoadRepositories(confPaths, r.Name())
-	if err != nil {
-		return nil, fmt.Errorf("Could not load repository data for %s: %s", r.Name(), err.Error())
-	}
-
-	repos, exists := repoMap["x86_64"]
-	if !exists {
-		log.Printf("Could not load architecture-specific repository data for x86_64 (%s)", r.Name())
-	} else {
-		r.arches["x86_64"] = arch{
-			Name: "x86_64",
-			BootloaderPackages: []string{
-				"grub2-pc",
+		arches: map[string]arch{
+			"x86_64": arch{
+				Name: "x86_64",
+				BootloaderPackages: []string{
+					"grub2-pc",
+				},
+				BuildPackages: []string{
+					"grub2-pc",
+				},
 			},
-			BuildPackages: []string{
-				"grub2-pc",
+			"aarch64": arch{
+				Name: "aarch64",
+				BootloaderPackages: []string{
+					"dracut-config-generic",
+					"efibootmgr",
+					"grub2-efi-aa64",
+					"grub2-tools",
+					"shim-aa64",
+				},
+				UEFI: true,
 			},
-			Repositories: repos,
-		}
-	}
-
-	repos, exists = repoMap["aarch64"]
-	if !exists {
-		log.Printf("Could not load architecture-specific repository data for aarch64 (%s)", r.Name())
-	} else {
-		r.arches["aarch64"] = arch{
-			Name: "aarch64",
-			BootloaderPackages: []string{
-				"dracut-config-generic",
-				"efibootmgr",
-				"grub2-efi-aa64",
-				"grub2-tools",
-				"shim-aa64",
-			},
-			UEFI:         true,
-			Repositories: repos,
-		}
+		},
 	}
 
 	r.outputs["ami"] = output{
@@ -465,10 +444,6 @@ func (r *RHEL82) ModulePlatformID() string {
 	return ModulePlatformID
 }
 
-func (r *RHEL82) Repositories(arch string) []rpmmd.RepoConfig {
-	return r.arches[arch].Repositories
-}
-
 func (r *RHEL82) ListOutputFormats() []string {
 	formats := make([]string, 0, len(r.outputs))
 	for name := range r.outputs {
@@ -525,7 +500,7 @@ func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *RHEL82) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -537,9 +512,9 @@ func (r *RHEL82) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd.R
 	}
 
 	p := &osbuild.Pipeline{}
-	p.SetBuild(r.buildPipeline(arch, buildPackageSpecs), "org.osbuild.rhel82")
+	p.SetBuild(r.buildPipeline(repos, arch, buildPackageSpecs), "org.osbuild.rhel82")
 
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, additionalRepos, packageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	if output.Bootable {
@@ -619,8 +594,8 @@ func (r *RHEL82) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (r *RHEL82) Manifest(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *RHEL82) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}
@@ -635,15 +610,14 @@ func (r *RHEL82) Runner() string {
 	return "org.osbuild.rhel82"
 }
 
-func (r *RHEL82) buildPipeline(arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+func (r *RHEL82) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, nil, buildPackageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, buildPackageSpecs)))
 	return p
 }
 
-func (r *RHEL82) rpmStageOptions(arch arch, additionalRepos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+func (r *RHEL82) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
 	var gpgKeys []string
-	repos := append(arch.Repositories, additionalRepos...)
 	for _, repo := range repos {
 		if repo.GPGKey == "" {
 			continue
