@@ -151,6 +151,15 @@ RCM-specific version of osbuild-composer not intended for public usage.
 %files rcm
 %{_unitdir}/osbuild-rcm.socket
 
+%post rcm
+%systemd_post osbuild-rcm.socket
+
+%preun rcm
+%systemd_preun osbuild-rcm.socket
+
+%postun rcm
+%systemd_postun_with_restart osbuild-rcm.socket
+
 %package tests
 Summary:	Integration tests
 Requires: 	osbuild-composer
