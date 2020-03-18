@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	var err error
 	testState, err = setupTestState("/run/weldr/api.socket", 60*time.Second)
 	if err != nil {
-		fmt.Printf("ERROR: Test setup failed: %s", err)
+		fmt.Printf("ERROR: Test setup failed: %s\n", err)
 		os.Exit(1)
 	}
 	os.Exit(m.Run())
