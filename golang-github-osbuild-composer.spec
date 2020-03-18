@@ -1,6 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        7
+Version:        8
 
 %gometa
 
