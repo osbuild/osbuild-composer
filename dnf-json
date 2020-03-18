@@ -88,7 +88,10 @@ cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
-    base = create_base(repos, module_platform_id, persistdir, cachedir)
+    try:
+        base = create_base(repos, module_platform_id, persistdir, cachedir)
+    except dnf.exceptions.RepoError as e:
+        exit_with_dnf_error("RepoError", f"Error occurred when setting up repo: {e}")
 
     if command == "dump":
         packages = []
