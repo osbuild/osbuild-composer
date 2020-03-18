@@ -34,10 +34,6 @@ type Distro interface {
 	// for modularity support.
 	ModulePlatformID() string
 
-	// Returns a list of repositories from which this distribution gets its
-	// content.
-	Repositories(arch string) []rpmmd.RepoConfig
-
 	// Returns a sorted list of the output formats this distro supports.
 	ListOutputFormats() []string
 
@@ -58,7 +54,7 @@ type Distro interface {
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to generates an image in the given output format with all packages and
 	// customizations specified in the given blueprint.
-	Manifest(b *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, imageFormat string, size uint64) (*osbuild.Manifest, error)
+	Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, imageFormat string, size uint64) (*osbuild.Manifest, error)
 
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string
@@ -83,24 +79,24 @@ func NewRegistry(distros ...Distro) (*Registry, error) {
 }
 
 // Create a new Registry containing all known distros.
-func NewDefaultRegistry(confPaths []string) (*Registry, error) {
-	f30, err := fedora30.New(confPaths)
+func NewDefaultRegistry() (*Registry, error) {
+	f30, err := fedora30.New()
 	if err != nil {
 		return nil, fmt.Errorf("error loading fedora30: %v", err)
 	}
-	f31, err := fedora31.New(confPaths)
+	f31, err := fedora31.New()
 	if err != nil {
 		return nil, fmt.Errorf("error loading fedora31: %v", err)
 	}
-	f32, err := fedora32.New(confPaths)
+	f32, err := fedora32.New()
 	if err != nil {
 		return nil, fmt.Errorf("error loading fedora32: %v", err)
 	}
-	el81, err := rhel81.New(confPaths)
+	el81, err := rhel81.New()
 	if err != nil {
 		return nil, fmt.Errorf("error loading rhel81: %v", err)
 	}
-	el82, err := rhel82.New(confPaths)
+	el82, err := rhel82.New()
 	if err != nil {
 		return nil, fmt.Errorf("error loading rhel82: %v", err)
 	}

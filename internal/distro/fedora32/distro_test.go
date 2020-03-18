@@ -19,7 +19,7 @@ func TestListOutputFormats(t *testing.T) {
 		"vmdk",
 	}
 
-	f32, err := fedora32.New([]string{"../../../"})
+	f32, err := fedora32.New()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f32, err := fedora32.New([]string{"../../../"})
+			f32, err := fedora32.New()
 			if err != nil {
 				t.Fatal(err)
 			}

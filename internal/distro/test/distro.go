@@ -25,15 +25,6 @@ func (d *TestDistro) ModulePlatformID() string {
 	return ModulePlatformID
 }
 
-func (d *TestDistro) Repositories(arch string) []rpmmd.RepoConfig {
-	return []rpmmd.RepoConfig{
-		{
-			Id:      "test-id",
-			BaseURL: "http://example.com/test/os/" + arch,
-		},
-	}
-}
-
 func (d *TestDistro) ListOutputFormats() []string {
 	return []string{"test_format"}
 }
@@ -54,7 +45,7 @@ func (d *TestDistro) BuildPackages(outputArchitecture string) ([]string, error) 
 	return nil, nil
 }
 
-func (d *TestDistro) pipeline(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (d *TestDistro) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "test_output" && outputArch == "test_arch" {
 		return &osbuild.Pipeline{}, nil
 	}
@@ -66,8 +57,8 @@ func (d *TestDistro) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	return &osbuild.Sources{}
 }
 
-func (r *TestDistro) Manifest(c *blueprint.Customizations, additionalRepos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, additionalRepos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *TestDistro) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}

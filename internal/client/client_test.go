@@ -15,6 +15,7 @@ import (
 
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 
 	"github.com/google/go-cmp/cmp"
@@ -209,8 +210,9 @@ func TestMain(m *testing.M) {
 	fixture := rpmmd_mock.BaseFixture()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	distro := test_distro.New()
+	repos := []rpmmd.RepoConfig{{Id: "test-id", BaseURL: "http://example.com/test/os/test_arch"}}
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.New(rpm, "test_arch", distro, logger, fixture.Store)
+	api := weldr.New(rpm, "test_arch", distro, repos, logger, fixture.Store)
 	server := http.Server{Handler: api}
 	defer server.Close()
 

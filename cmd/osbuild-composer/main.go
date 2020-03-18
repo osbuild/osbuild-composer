@@ -84,7 +84,7 @@ func main() {
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
 
-	distros, err := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
+	distros, err := distro.NewDefaultRegistry()
 	if err != nil {
 		log.Fatalf("Error loading distros: %v", err)
 	}
@@ -92,6 +92,11 @@ func main() {
 	distribution, err := distros.FromHost()
 	if err != nil {
 		log.Fatalf("Could not determine distro from host: " + err.Error())
+	}
+
+	repoMap, err := rpmmd.LoadRepositories([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"}, distribution.Name())
+	if err != nil {
+		log.Fatalf("Could not load repositories for %s: %v", distribution.Name(), err)
 	}
 
 	var logger *log.Logger
@@ -102,7 +107,7 @@ func main() {
 	store := store.New(&stateDir, *distros)
 
 	jobAPI := jobqueue.New(logger, store)
-	weldrAPI := weldr.New(rpm, common.CurrentArch(), distribution, logger, store)
+	weldrAPI := weldr.New(rpm, common.CurrentArch(), distribution, repoMap[common.CurrentArch()], logger, store)
 
 	go func() {
 		err := jobAPI.Serve(jobListener)

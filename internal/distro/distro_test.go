@@ -47,8 +47,12 @@ func TestDistro_Manifest(t *testing.T) {
 			t.Logf("Skipping '%s'.", fileInfo.Name())
 			continue
 		}
+		repoMap, err := rpmmd.LoadRepositories([]string{"../.."}, tt.ComposeRequest.Distro)
+		if err != nil {
+			t.Fatalf("rpmmd.LoadRepositories: %v", err)
+		}
 		t.Run(tt.ComposeRequest.OutputFormat, func(t *testing.T) {
-			distros, err := distro.NewDefaultRegistry([]string{"../.."})
+			distros, err := distro.NewDefaultRegistry()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,7 +63,7 @@ func TestDistro_Manifest(t *testing.T) {
 			}
 			size := d.GetSizeForOutputType(tt.ComposeRequest.OutputFormat, 0)
 			got, err := d.Manifest(tt.ComposeRequest.Blueprint.Customizations,
-				nil,
+				repoMap[tt.ComposeRequest.Arch],
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
 				tt.ComposeRequest.Arch,
@@ -88,7 +92,7 @@ func TestDistro_RegistryList(t *testing.T) {
 		"rhel-8.2",
 	}
 
-	distros, err := distro.NewDefaultRegistry([]string{"../.."})
+	distros, err := distro.NewDefaultRegistry()
 	if err != nil {
 		t.Fatal(err)
 	}
