@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"distro":"fedora-30","manifest":{"sources":{},"pipeline":{}},"targets":[],"output_type":"qcow2"}`, "created", "uuid")
+		`{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[],"output_type":"qcow2"}`, "created", "uuid")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {

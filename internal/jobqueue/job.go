@@ -6,13 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
@@ -20,7 +20,6 @@ import (
 type Job struct {
 	ID           uuid.UUID         `json:"id"`
 	ImageBuildID int               `json:"image_build_id"`
-	Distro       string            `json:"distro"`
 	Manifest     *osbuild.Manifest `json:"manifest"`
 	Targets      []*target.Target  `json:"targets"`
 	OutputType   string            `json:"output_type"`
@@ -46,32 +45,6 @@ func (e *TargetsError) Error() string {
 }
 
 func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error) {
-	distros, err := distro.NewDefaultRegistry([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"})
-	if err != nil {
-		return nil, fmt.Errorf("error loading distros: %v", err)
-	}
-
-	d := distros.GetDistro(job.Distro)
-	if d == nil {
-		return nil, fmt.Errorf("unknown distro: %s", job.Distro)
-	}
-
-	build := osbuild.Build{
-		Runner: d.Runner(),
-	}
-
-	buildFile, err := ioutil.TempFile("", "osbuild-worker-build-env-*")
-	if err != nil {
-		return nil, err
-	}
-	// FIXME: how to handle errors in defer?
-	defer os.Remove(buildFile.Name())
-
-	err = json.NewEncoder(buildFile).Encode(build)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding build environment: %v", err)
-	}
-
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild store: %v", err)
@@ -82,7 +55,6 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 	cmd := exec.Command(
 		"osbuild",
 		"--store", tmpStore,
-		"--build-env", buildFile.Name(),
 		"--json", "-",
 	)
 	cmd.Stderr = os.Stderr
@@ -125,13 +97,23 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			filename, _, err := d.FilenameFromType(job.OutputType)
+			outputDir := path.Join(tmpStore, "refs", result.OutputID)
+
+			files, err := ioutil.ReadDir(outputDir)
 			if err != nil {
 				r = append(r, err)
 				continue
 			}
 
-			f, err := os.Open(tmpStore + "/refs/" + result.OutputID + "/" + filename)
+			// TODO osbuild pipelines can have multiple outputs. All the pipelines we
+			// are currently generating have exactly one, but we should support
+			// uploading all results in the future.
+			if len(files) != 1 {
+				r = append(r, fmt.Errorf("expected exactly one resulting image file"))
+				continue
+			}
+
+			f, err := os.Open(path.Join(outputDir, files[0].Name()))
 			if err != nil {
 				r = append(r, err)
 				continue
