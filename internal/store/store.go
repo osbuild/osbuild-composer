@@ -53,7 +53,6 @@ type Store struct {
 type Job struct {
 	ComposeID    uuid.UUID
 	ImageBuildID int
-	Distro       string
 	Manifest     *osbuild.Manifest
 	Targets      []*target.Target
 	ImageType    string
@@ -166,10 +165,6 @@ func New(stateDir *string, distroRegistryArg distro.Registry) *Store {
 					// s.Composes[composeID] = compose
 				case common.IBWaiting:
 					// Push waiting composes back into the pending jobs queue
-					distroStr, exists := imgBuild.Distro.ToString()
-					if !exists {
-						panic("fatal error, distro tag should exist but does not")
-					}
 					imageTypeCompat, exists := imgBuild.ImageType.ToCompatString()
 					if !exists {
 						panic("fatal error, image type tag should exist but does not")
@@ -177,7 +172,6 @@ func New(stateDir *string, distroRegistryArg distro.Registry) *Store {
 					s.pendingJobs <- Job{
 						ComposeID:    composeID,
 						ImageBuildID: imgBuild.Id,
-						Distro:       distroStr,
 						Manifest:     imgBuild.Manifest,
 						Targets:      imgBuild.Targets,
 						ImageType:    imageTypeCompat,
@@ -641,7 +635,6 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 	s.pendingJobs <- Job{
 		ComposeID:    composeID,
 		ImageBuildID: 0,
-		Distro:       distro.Name(),
 		Manifest:     manifestStruct,
 		Targets:      targets,
 		ImageType:    composeType,

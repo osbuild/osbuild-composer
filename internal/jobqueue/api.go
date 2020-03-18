@@ -105,7 +105,6 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	_ = json.NewEncoder(writer).Encode(Job{
 		ID:           nextJob.ComposeID,
 		ImageBuildID: nextJob.ImageBuildID,
-		Distro:       nextJob.Distro,
 		Manifest:     nextJob.Manifest,
 		Targets:      nextJob.Targets,
 		OutputType:   nextJob.ImageType,
