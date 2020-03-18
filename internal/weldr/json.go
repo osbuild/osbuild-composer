@@ -5,6 +5,7 @@ package weldr
 import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 // StatusV0 is the response to /api/status from a v0+ server
@@ -74,4 +75,49 @@ type BlueprintsFreezeV0 struct {
 }
 type blueprintFrozen struct {
 	Blueprint blueprint.Blueprint `json:"blueprint"`
+}
+
+// SourceListV0 is the response to /source/list request
+type SourceListV0 struct {
+	Sources []string `json:"sources"`
+}
+
+// SourceInfoV0 is the response to a /source/info request
+type SourceInfoV0 struct {
+	Sources map[string]SourceConfigV0 `json:"sources"`
+	Errors  []ResponseError           `json:"errors"`
+}
+
+// SourceConfig returns a SourceConfig struct populated with the supported variables
+func (s *SourceInfoV0) SourceConfig(sourceName string) (ssc store.SourceConfig, ok bool) {
+	si, ok := s.Sources[sourceName]
+	if !ok {
+		return ssc, false
+	}
+
+	return si.SourceConfig(), true
+}
+
+// SourceConfigV0 holds the source repository information
+type SourceConfigV0 struct {
+	Name     string   `json:"name"`
+	Type     string   `json:"type"`
+	URL      string   `json:"url"`
+	CheckGPG bool     `json:"check_gpg"`
+	CheckSSL bool     `json:"check_ssl"`
+	System   bool     `json:"system"`
+	Proxy    string   `json:"proxy"`
+	GPGUrls  []string `json:"gpgkey_urls"`
+}
+
+// SourceConfig returns a SourceConfig struct populated with the supported variables
+// The store does not support proxy and gpgkey_urls
+func (s *SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
+	ssc.Name = s.Name
+	ssc.Type = s.Type
+	ssc.URL = s.URL
+	ssc.CheckGPG = s.CheckGPG
+	ssc.CheckSSL = s.CheckSSL
+
+	return ssc
 }
