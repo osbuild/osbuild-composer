@@ -190,12 +190,4 @@ The worker for osbuild-composer
 %systemd_postun_with_restart osbuild-worker@.service osbuild-remote-worker@.service
 
 %changelog
-* Sun Dec 1 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 4-1
-- New upstream release.
-* Fri Nov 15 11:00:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 3-1
-- New upstream release.
-* Wed Nov 13 15:14:00 CEST 2019 Ondrej Budai <obudai@redhat.com> - 2-2
-- Fix specfile according to packaging guidelines.
-* Mon Nov 11 13:23:00 CEST 2019 Tom Gundersen <teg@jklm.no> - 2-1
-- First release.
-
+# the changelog is distribution-specific, therefore it doesn't make sense to have it upstream
