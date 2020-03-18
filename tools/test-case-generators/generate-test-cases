@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+
+import argparse
+import subprocess
+import json
+import os
+import sys
+
+def main(distro, arch, store, output):
+    with open("tools/test-case-generators/format-request-map.json") as format_request_json:
+        format_request_dict = json.load(format_request_json)
+    for output_format, test_case_request in format_request_dict.items():
+        test_case_request["compose-request"]["distro"] = distro
+        test_case_request["compose-request"]["arch"] = arch
+        test_case = json.loads(subprocess.check_output(["tools/test-case-generators/generate-test-case", store], input=json.dumps(test_case_request), encoding="utf-8"))
+        name = distro.replace("-", "_") + "-" + arch + "-" + output_format.replace("-", "_") + "-boot.json"
+        file_name = output + "/" + name
+        with open(file_name, 'w') as case_file:
+            json.dump(test_case, case_file, indent=2)
+    return
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Generate test cases")
+    parser.add_argument("--distro", help="distribution for test cases", required=True)
+    parser.add_argument("--arch", help="architecture for test cases", required=True)
+    parser.add_argument("--store", metavar="STORE_DIRECTORY", type=os.path.abspath, help="path to the osbuild store", required=True)
+    parser.add_argument("--output", metavar="OUTPUT_DIRECTORY", type=os.path.abspath, help="path to the output directory", required=True)
+    args = parser.parse_args()
+
+    main(args.distro, args.arch, args.store, args.output)
+    sys.exit()
