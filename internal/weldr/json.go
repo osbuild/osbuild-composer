@@ -1,6 +1,6 @@
-// Package client - json contains Exported API response structures
+// Package weldr - json contains Exported API request/response structures
 // Copyright (C) 2020 by Red Hat, Inc.
-package client
+package weldr
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"

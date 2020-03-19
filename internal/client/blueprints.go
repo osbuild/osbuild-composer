@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
 // PostTOMLBlueprintV0 sends a TOML blueprint string to the API
@@ -73,7 +75,7 @@ func ListBlueprintsV0(socket *http.Client) ([]string, *APIResponse, error) {
 	if resp != nil || err != nil {
 		return nil, resp, err
 	}
-	var list BlueprintsListV0
+	var list weldr.BlueprintsListV0
 	err = json.Unmarshal(body, &list)
 	if err != nil {
 		return nil, nil, err
@@ -91,30 +93,30 @@ func GetBlueprintInfoTOMLV0(socket *http.Client, bpName string) (string, *APIRes
 }
 
 // GetBlueprintsInfoJSONV0 returns the requested blueprints and their changed state
-func GetBlueprintsInfoJSONV0(socket *http.Client, bpName string) (BlueprintsInfoV0, *APIResponse, error) {
+func GetBlueprintsInfoJSONV0(socket *http.Client, bpName string) (weldr.BlueprintsInfoV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/info/"+bpName)
 	if resp != nil || err != nil {
-		return BlueprintsInfoV0{}, resp, err
+		return weldr.BlueprintsInfoV0{}, resp, err
 	}
-	var info BlueprintsInfoV0
+	var info weldr.BlueprintsInfoV0
 	err = json.Unmarshal(body, &info)
 	if err != nil {
-		return BlueprintsInfoV0{}, nil, err
+		return weldr.BlueprintsInfoV0{}, nil, err
 	}
 	return info, nil, nil
 }
 
 // GetBlueprintsChangesV0 returns the changes to the listed blueprints
-func GetBlueprintsChangesV0(socket *http.Client, bpNames []string) (BlueprintsChangesV0, *APIResponse, error) {
+func GetBlueprintsChangesV0(socket *http.Client, bpNames []string) (weldr.BlueprintsChangesV0, *APIResponse, error) {
 	names := strings.Join(bpNames, ",")
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/changes/"+names)
 	if resp != nil || err != nil {
-		return BlueprintsChangesV0{}, resp, err
+		return weldr.BlueprintsChangesV0{}, resp, err
 	}
-	var changes BlueprintsChangesV0
+	var changes weldr.BlueprintsChangesV0
 	err = json.Unmarshal(body, &changes)
 	if err != nil {
-		return BlueprintsChangesV0{}, nil, err
+		return weldr.BlueprintsChangesV0{}, nil, err
 	}
 	return changes, nil, nil
 }
@@ -139,30 +141,30 @@ func TagBlueprintV0(socket *http.Client, blueprint string) (*APIResponse, error)
 }
 
 // DepsolveBlueprintV0 depsolves the listed blueprint
-func DepsolveBlueprintV0(socket *http.Client, blueprint string) (BlueprintsDepsolveV0, *APIResponse, error) {
+func DepsolveBlueprintV0(socket *http.Client, blueprint string) (weldr.BlueprintsDepsolveV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/depsolve/"+blueprint)
 	if resp != nil || err != nil {
-		return BlueprintsDepsolveV0{}, resp, err
+		return weldr.BlueprintsDepsolveV0{}, resp, err
 	}
-	var deps BlueprintsDepsolveV0
+	var deps weldr.BlueprintsDepsolveV0
 	err = json.Unmarshal(body, &deps)
 	if err != nil {
-		return BlueprintsDepsolveV0{}, nil, err
+		return weldr.BlueprintsDepsolveV0{}, nil, err
 	}
 	return deps, nil, nil
 }
 
 // FreezeBlueprintV0 depsolves the listed blueprint and returns the blueprint with frozen package
 // versions
-func FreezeBlueprintV0(socket *http.Client, blueprint string) (BlueprintsFreezeV0, *APIResponse, error) {
+func FreezeBlueprintV0(socket *http.Client, blueprint string) (weldr.BlueprintsFreezeV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/blueprints/freeze/"+blueprint)
 	if resp != nil || err != nil {
-		return BlueprintsFreezeV0{}, resp, err
+		return weldr.BlueprintsFreezeV0{}, resp, err
 	}
-	var frozen BlueprintsFreezeV0
+	var frozen weldr.BlueprintsFreezeV0
 	err = json.Unmarshal(body, &frozen)
 	if err != nil {
-		return BlueprintsFreezeV0{}, nil, err
+		return weldr.BlueprintsFreezeV0{}, nil, err
 	}
 	return frozen, nil, nil
 }

@@ -5,10 +5,12 @@ package client
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
 // GetStatusV0 makes a GET request to /api/status and returns the v0 response as a StatusResponseV0
-func GetStatusV0(socket *http.Client) (reply StatusV0, resp *APIResponse, err error) {
+func GetStatusV0(socket *http.Client) (reply weldr.StatusV0, resp *APIResponse, err error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/status")
 	if resp != nil || err != nil {
 		return reply, resp, err
