@@ -782,7 +782,7 @@
       "assembler": {
         "name": "org.osbuild.tar",
         "options": {
-          "filename": "root.tar.xz",
+          "filename": "image",
           "size": 0,
           "compression": "xz"
         }

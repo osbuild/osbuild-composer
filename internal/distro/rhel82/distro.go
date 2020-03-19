@@ -39,7 +39,7 @@ type output struct {
 	DefaultTarget    string
 	KernelOptions    string
 	DefaultSize      uint64
-	Assembler        func(uefi bool, size uint64) *osbuild.Assembler
+	Assembler        func(filename string, uefi bool, size uint64) *osbuild.Assembler
 }
 
 const Distro = common.RHEL82
@@ -159,8 +159,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		DefaultSize:   6 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("raw.xz", filename, uefi, size)
 		},
 	}
 
@@ -186,7 +186,9 @@ func New() (*RHEL82, error) {
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.rawFSAssembler(filename, size)
+		},
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -211,8 +213,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw", "disk.img", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("raw", filename, uefi, size)
 		},
 	}
 
@@ -295,8 +297,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("qcow2", filename, uefi, size)
 		},
 	}
 
@@ -325,8 +327,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("qcow2", filename, uefi, size)
 		},
 	}
 
@@ -351,7 +353,9 @@ func New() (*RHEL82, error) {
 		},
 		Bootable:      false,
 		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.tarAssembler(filename, "xz")
+		},
 	}
 
 	r.outputs["vhd"] = output{
@@ -392,8 +396,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("vpc", filename, uefi, size)
 		},
 	}
 
@@ -420,8 +424,8 @@ func New() (*RHEL82, error) {
 		Bootable:      true,
 		KernelOptions: "ro net.ifnames=0",
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("vmdk", filename, uefi, size)
 		},
 	}
 
@@ -500,7 +504,7 @@ func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, filename, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -577,7 +581,7 @@ func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig,
 
 	p.AddStage(osbuild.NewSELinuxStage(r.selinuxStageOptions()))
 
-	p.Assembler = output.Assembler(arch.UEFI, size)
+	p.Assembler = output.Assembler(filename, arch.UEFI, size)
 
 	return p, nil
 }
@@ -594,8 +598,8 @@ func (r *RHEL82) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (r *RHEL82) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *RHEL82) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, filename, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, filename, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}

@@ -984,7 +984,7 @@
         "name": "org.osbuild.qemu",
         "options": {
           "format": "vpc",
-          "filename": "disk.vhd",
+          "filename": "image",
           "size": 2147483648,
           "ptuuid": "0x14fc63d2",
           "pttype": "mbr",

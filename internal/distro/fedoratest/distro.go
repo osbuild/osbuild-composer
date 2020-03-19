@@ -53,7 +53,7 @@ func (d *FedoraTestDistro) BuildPackages(outputArchitecture string) ([]string, e
 	return nil, nil
 }
 
-func (d *FedoraTestDistro) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, buildPackages, basePackages []rpmmd.PackageSpec, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (d *FedoraTestDistro) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, buildPackages, basePackages []rpmmd.PackageSpec, outputArch, filename, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	if outputFormat == "qcow2" && outputArch == "x86_64" {
 		return &osbuild.Pipeline{}, nil
 	} else {
@@ -65,8 +65,8 @@ func (r *FedoraTestDistro) sources(packages []rpmmd.PackageSpec) *osbuild.Source
 	return &osbuild.Sources{}
 }
 
-func (r *FedoraTestDistro) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *FedoraTestDistro) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, filename, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, filename, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}

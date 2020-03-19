@@ -611,7 +611,7 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 		repos = append(repos, source.RepoConfig())
 	}
 
-	manifestStruct, err := distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, composeType, size)
+	manifestStruct, err := distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, "image", composeType, size)
 	if err != nil {
 		return err
 	}

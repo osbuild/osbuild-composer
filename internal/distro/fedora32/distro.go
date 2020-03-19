@@ -38,7 +38,7 @@ type output struct {
 	KernelOptions    string
 	Bootable         bool
 	DefaultSize      uint64
-	Assembler        func(uefi bool, size uint64) *osbuild.Assembler
+	Assembler        func(filename string, uefi bool, size uint64) *osbuild.Assembler
 }
 
 const Distro = common.Fedora32
@@ -106,8 +106,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		Bootable:      true,
 		DefaultSize:   6 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("raw.xz", filename, uefi, size)
 		},
 	}
 
@@ -128,7 +128,9 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
 		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.rawFSAssembler(filename, size)
+		},
 	}
 
 	r.outputs["partitioned-disk"] = output{
@@ -148,8 +150,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw", "disk.img", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("raw", filename, uefi, size)
 		},
 	}
 
@@ -175,8 +177,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("qcow2", filename, uefi, size)
 		},
 	}
 
@@ -201,8 +203,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("qcow2", filename, uefi, size)
 		},
 	}
 
@@ -223,7 +225,9 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      false,
 		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.tarAssembler(filename, "xz")
+		},
 	}
 
 	r.outputs["vhd"] = output{
@@ -258,8 +262,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("vpc", filename, uefi, size)
 		},
 	}
 
@@ -281,8 +285,8 @@ func New() (*Fedora32, error) {
 		KernelOptions: "ro biosdevname=0 net.ifnames=0",
 		Bootable:      true,
 		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+		Assembler: func(filename string, uefi bool, size uint64) *osbuild.Assembler {
+			return r.qemuAssembler("vmdk", filename, uefi, size)
 		},
 	}
 
@@ -361,7 +365,7 @@ func (r *Fedora32) BuildPackages(outputArchitecture string) ([]string, error) {
 	return append(r.buildPackages, arch.BuildPackages...), nil
 }
 
-func (r *Fedora32) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
+func (r *Fedora32) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, filename, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
 	output, exists := r.outputs[outputFormat]
 	if !exists {
 		return nil, errors.New("invalid output format: " + outputFormat)
@@ -433,7 +437,7 @@ func (r *Fedora32) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfi
 
 	p.AddStage(osbuild.NewSELinuxStage(r.selinuxStageOptions()))
 
-	p.Assembler = output.Assembler(arch.UEFI, size)
+	p.Assembler = output.Assembler(filename, arch.UEFI, size)
 
 	return p, nil
 }
@@ -450,8 +454,8 @@ func (r *Fedora32) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (r *Fedora32) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
+func (r *Fedora32) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, filename, outputFormat string, size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, filename, outputFormat, size)
 	if err != nil {
 		return nil, err
 	}

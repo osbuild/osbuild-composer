@@ -1006,7 +1006,7 @@
         "name": "org.osbuild.qemu",
         "options": {
           "format": "raw.xz",
-          "filename": "image.raw.xz",
+          "filename": "image",
           "size": 6442450944,
           "ptuuid": "0x14fc63d2",
           "pttype": "mbr",

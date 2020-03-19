@@ -1053,7 +1053,7 @@
         "name": "org.osbuild.qemu",
         "options": {
           "format": "qcow2",
-          "filename": "disk.qcow2",
+          "filename": "image",
           "size": 2147483648,
           "ptuuid": "0x14fc63d2",
           "pttype": "mbr",

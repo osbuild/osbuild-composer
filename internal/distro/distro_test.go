@@ -67,6 +67,7 @@ func TestDistro_Manifest(t *testing.T) {
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
 				tt.ComposeRequest.Arch,
+				"image",
 				tt.ComposeRequest.OutputFormat,
 				size)
 			if (err != nil) != (tt.Manifest == nil) {
