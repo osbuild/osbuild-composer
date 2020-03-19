@@ -21,7 +21,7 @@ func withNetworkNamespace(f func(ns netNS) error) error {
 	defer func() {
 		err := ns.Delete()
 		if err != nil {
-			log.Printf("cannot delete network namespace: %v", err)
+			log.Printf("cannot delete network namespace: %#v", err)
 		}
 	}()
 
@@ -33,13 +33,13 @@ func withNetworkNamespace(f func(ns netNS) error) error {
 func withTempFile(dir, pattern string, f func(file *os.File) error) error {
 	tempFile, err := ioutil.TempFile(dir, pattern)
 	if err != nil {
-		return fmt.Errorf("cannot create the temporary file: %v", err)
+		return fmt.Errorf("cannot create the temporary file: %#v", err)
 	}
 
 	defer func() {
 		err := os.Remove(tempFile.Name())
 		if err != nil {
-			log.Printf("cannot remove the temporary file: %v", err)
+			log.Printf("cannot remove the temporary file: %#v", err)
 		}
 	}()
 
@@ -64,7 +64,7 @@ func writeCloudInitISO(writer io.Writer, userData, metaData string) error {
 
 	err := isoCmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot create cloud-init iso: %v", err)
+		return fmt.Errorf("cannot create cloud-init iso: %#v", err)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 
 		err = cloudInitFile.Close()
 		if err != nil {
-			return fmt.Errorf("cannot close temporary cloudinit file: %v", err)
+			return fmt.Errorf("cannot close temporary cloudinit file: %#v", err)
 		}
 
 		qemuCmd := ns.NamespacedCommand(
@@ -101,13 +101,13 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 
 		err = qemuCmd.Start()
 		if err != nil {
-			return fmt.Errorf("cannot start the qemu process: %v", err)
+			return fmt.Errorf("cannot start the qemu process: %#v", err)
 		}
 
 		defer func() {
 			err := killProcessCleanly(qemuCmd.Process, time.Second)
 			if err != nil {
-				log.Printf("cannot kill the qemu process: %v", err)
+				log.Printf("cannot kill the qemu process: %#v", err)
 			}
 		}()
 
@@ -128,13 +128,13 @@ func withBootedNspawnImage(image, name string, ns netNS, f func() error) error {
 
 	err := cmd.Start()
 	if err != nil {
-		return fmt.Errorf("cannot start the systemd-nspawn process: %v", err)
+		return fmt.Errorf("cannot start the systemd-nspawn process: %#v", err)
 	}
 
 	defer func() {
 		err := killProcessCleanly(cmd.Process, time.Second)
 		if err != nil {
-			log.Printf("cannot kill the systemd-nspawn process: %v", err)
+			log.Printf("cannot kill the systemd-nspawn process: %#v", err)
 		}
 	}()
 
@@ -154,13 +154,13 @@ func withBootedNspawnDirectory(dir, name string, ns netNS, f func() error) error
 
 	err := cmd.Start()
 	if err != nil {
-		return fmt.Errorf("cannot start the systemd-nspawn process: %v", err)
+		return fmt.Errorf("cannot start the systemd-nspawn process: %#v", err)
 	}
 
 	defer func() {
 		err := killProcessCleanly(cmd.Process, time.Second)
 		if err != nil {
-			log.Printf("cannot kill the systemd-nspawn process: %v", err)
+			log.Printf("cannot kill the systemd-nspawn process: %#v", err)
 		}
 	}()
 
@@ -173,13 +173,13 @@ func withBootedNspawnDirectory(dir, name string, ns netNS, f func() error) error
 func withExtractedTarArchive(archive string, f func(dir string) error) error {
 	dir, err := ioutil.TempDir("", "tar-archive")
 	if err != nil {
-		return fmt.Errorf("cannot create a temporary dir: %v", err)
+		return fmt.Errorf("cannot create a temporary dir: %#v", err)
 	}
 
 	defer func() {
 		err := os.RemoveAll(dir)
 		if err != nil {
-			log.Printf("cannot remove the temporary dir: %v", err)
+			log.Printf("cannot remove the temporary dir: %#v", err)
 		}
 	}()
 
@@ -193,7 +193,7 @@ func withExtractedTarArchive(archive string, f func(dir string) error) error {
 
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot untar the archive: %v", err)
+		return fmt.Errorf("cannot untar the archive: %#v", err)
 	}
 
 	return f(dir)

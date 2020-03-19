@@ -52,7 +52,7 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 		if _, ok := err.(*exec.ExitError); ok {
 			return "", fmt.Errorf("running osbuild failed: %s", outBuffer.String())
 		}
-		return "", fmt.Errorf("running osbuild failed from an unexpected reason: %v", err)
+		return "", fmt.Errorf("running osbuild failed from an unexpected reason: %#v", err)
 	}
 
 	var result struct {
@@ -61,7 +61,7 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 
 	err = json.NewDecoder(&outBuffer).Decode(&result)
 	if err != nil {
-		return "", fmt.Errorf("cannot decode osbuild output: %v", err)
+		return "", fmt.Errorf("cannot decode osbuild output: %#v", err)
 	}
 
 	return result.OutputID, nil
@@ -73,7 +73,7 @@ func extractXZ(archivePath string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("cannot extract xz archive: %v", err)
+		return fmt.Errorf("cannot extract xz archive: %#v", err)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func splitExtension(path string) (string, string) {
 func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
 	var imageInfoExpected interface{}
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
-	require.Nilf(t, err, "cannot decode expected image info: %v", err)
+	require.Nilf(t, err, "cannot decode expected image info: %#v", err)
 
 	cmd := exec.Command(imageInfoPath, imagePath)
 	cmd.Stderr = os.Stderr
@@ -102,14 +102,14 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	cmd.Stdout = writer
 
 	err = cmd.Start()
-	require.Nilf(t, err, "image-info cannot start: %v", err)
+	require.Nilf(t, err, "image-info cannot start: %#v", err)
 
 	var imageInfoGot interface{}
 	err = json.NewDecoder(reader).Decode(&imageInfoGot)
-	require.Nilf(t, err, "decoding image-info output failed: %v", err)
+	require.Nilf(t, err, "decoding image-info output failed: %#v", err)
 
 	err = cmd.Wait()
-	require.Nilf(t, err, "running image-info failed: %v", err)
+	require.Nilf(t, err, "running image-info failed: %#v", err)
 
 	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
@@ -148,7 +148,7 @@ func trySSHOnce(ns netNS) error {
 				return &timeoutError{}
 			}
 		} else {
-			return fmt.Errorf("ssh command failed from unknown reason: %v", err)
+			return fmt.Errorf("ssh command failed from unknown reason: %#v", err)
 		}
 	}
 
@@ -244,12 +244,12 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct) {
 	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-")
-	require.Nilf(t, err, "cannot create temporary store: %v", err)
+	require.Nilf(t, err, "cannot create temporary store: %#v", err)
 
 	defer func() {
 		err := os.RemoveAll(store)
 		if err != nil {
-			log.Printf("cannot remove temporary store: %v\n", err)
+			log.Printf("cannot remove temporary store: %#v\n", err)
 		}
 	}()
 
@@ -276,7 +276,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 func getAllCases() ([]string, error) {
 	cases, err := ioutil.ReadDir(testCasesDirectoryPath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list test cases: %v", err)
+		return nil, fmt.Errorf("cannot list test cases: %#v", err)
 	}
 
 	casesPaths := []string{}
@@ -297,11 +297,11 @@ func runTests(t *testing.T, cases []string) {
 	for _, path := range cases {
 		t.Run(path, func(t *testing.T) {
 			f, err := os.Open(path)
-			require.Nilf(t, err, "%s: cannot open test case: %v", path, err)
+			require.Nilf(t, err, "%s: cannot open test case: %#v", path, err)
 
 			var testcase testcaseStruct
 			err = json.NewDecoder(f).Decode(&testcase)
-			require.Nilf(t, err, "%s: cannot decode test case: %v", path, err)
+			require.Nilf(t, err, "%s: cannot decode test case: %#v", path, err)
 
 			currentArch := common.CurrentArch()
 			if testcase.ComposeRequest.Arch != currentArch {
