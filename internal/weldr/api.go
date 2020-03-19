@@ -354,6 +354,15 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
+	if request.ContentLength == 0 {
+		errors := responseError{
+			ID:  "ProjectsError",
+			Msg: "Missing source",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	var source SourceConfigV0
 	var err error
 	if contentType[0] == "application/json" {
@@ -366,9 +375,8 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 
 	if err != nil {
 		errors := responseError{
-			Code: http.StatusBadRequest,
-			ID:   "HTTPError",
-			Msg:  "Bad Request",
+			ID:  "ProjectsError",
+			Msg: "Problem parsing POST body: " + err.Error(),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
