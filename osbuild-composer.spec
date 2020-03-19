@@ -82,6 +82,13 @@ export GOFLAGS=-mod=vendor
 # Build test binaries with `go test -c`, so that they can take advantage of
 # golang's testing package. The golang rpm macros don't support building them
 # directly. Thus, do it manually, taking care to also include a build id.
+#
+# On Fedora, also turn off go modules and set the path to the one into which
+# the golang-* packages install source code.
+%if 0%{?fedora}
+export GO111MODULE=off
+export GOPATH=%{gobuilddir}:%{gopath}
+%endif
 
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
 
