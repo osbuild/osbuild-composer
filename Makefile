@@ -11,7 +11,7 @@ build:
 	go test -c -tags=integration -o osbuild-weldr-tests ./internal/weldrcheck/
 	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go test -c -tags=integration -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/main_test.go
-	go test -c -tags=integration -o osbuild-image-tests ./cmd/osbuild-image-tests/main_test.go
+	go test -c -tags=integration,travis -o osbuild-image-tests ./cmd/osbuild-image-tests/
 
 .PHONY: install
 install:
