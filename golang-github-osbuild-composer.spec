@@ -26,14 +26,15 @@ BuildRequires:  systemd
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
 BuildRequires:  golang(github.com/aws/aws-sdk-go)
-BuildRequires:  golang-github-azure-storage-blob-devel
+BuildRequires:  golang(github.com/Azure/azure-storage-blob-go/azblob)
 BuildRequires:  golang(github.com/BurntSushi/toml)
 BuildRequires:  golang(github.com/coreos/go-semver/semver)
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
-BuildRequires:  golang(github.com/google/uuid)
-BuildRequires:  golang(github.com/julienschmidt/httprouter)
 BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
+BuildRequires:  golang(github.com/google/uuid)
+BuildRequires:  golang(github.com/julienschmidt/httprouter)
+BuildRequires:  golang(github.com/stretchr/testify/assert)
 %endif
 
 Requires: golang-github-osbuild-composer-worker
@@ -67,17 +68,31 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 
-# Build test binaries with `go test -c`, so that they can take advantage of
-# golang's testing package. The golang rpm macros don't support building them
-# directly. Thus, do it manually, taking care to also include a build id.
+# The tests need to be compiled by `go test -c`.
+# Go rpm macros have gotest, but it can be used only for running
+# unit tests during rpmbuild.
+#
+# `go test -c` has very similar arguments to `go build`. The following
+# macro uses that fact. It takes gobuild macro and substitutes `go build`
+# with `go test -c` inside the macro. This way we get working `go test -c`
+# command which should be in sync with changes in gobuild macro.
+#
+# Because gobuild macro gets expanded to a string containing apostrophes
+# and shell expansions (which we don't want to expand just yet), heredoc
+# is used to pipe the macro into sed. The apostrophes around HEREDOC
+# put it into non-expansion mode.
+%define gobuildtest(o:) %(sed "s/go build/go test -c/" <<'HEREDOC'
+%{gobuild %{?**}}
+HEREDOC
+)
 
-TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
-
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/weldrcheck/
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
+# the integration tests have the integration build tag, so it needs to be set
+export BUILDTAGS="integration ${BUILDTAGS}"
+%gobuildtest -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
+%gobuildtest -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
+%gobuildtest -o _bin/osbuild-weldr-tests %{goipath}/internal/weldrcheck/
+%gobuildtest -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
+%gobuildtest -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 %install
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
