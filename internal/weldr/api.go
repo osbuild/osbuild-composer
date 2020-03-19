@@ -354,7 +354,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	var source store.SourceConfig
+	var source SourceConfigV0
 	var err error
 	if contentType[0] == "application/json" {
 		err = json.NewDecoder(request.Body).Decode(&source)
@@ -374,7 +374,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	api.store.PushSource(source)
+	api.store.PushSource(source.SourceConfig())
 
 	statusResponseOK(writer)
 }
