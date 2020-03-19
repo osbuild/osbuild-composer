@@ -22,10 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 )
-
-var distroArg = flag.String("distro", "", "which distro tests to run")
 
 type testcaseStruct struct {
 	ComposeRequest struct {
@@ -296,7 +293,7 @@ func getAllCases() ([]string, error) {
 }
 
 // runTests opens, parses and runs all the specified testcases
-func runTests(t *testing.T, cases []string, d string) {
+func runTests(t *testing.T, cases []string) {
 	for _, path := range cases {
 		t.Run(path, func(t *testing.T) {
 			f, err := os.Open(path)
@@ -309,19 +306,6 @@ func runTests(t *testing.T, cases []string, d string) {
 			currentArch := common.CurrentArch()
 			if testcase.ComposeRequest.Arch != currentArch {
 				t.Skipf("the required arch is %s, the current arch is %s", testcase.ComposeRequest.Arch, currentArch)
-			}
-
-			if d != "" {
-				if testcase.ComposeRequest.Distro != d {
-					t.Skipf("the required distro is %s, the passed distro is %s", testcase.ComposeRequest.Distro, d)
-				}
-			} else {
-				hostDistroName, err := distro.GetHostDistroName()
-				require.Nil(t, err)
-
-				if testcase.ComposeRequest.Distro != hostDistroName {
-					t.Skipf("the required distro is %s, the host distro is %s", testcase.ComposeRequest.Distro, hostDistroName)
-				}
 			}
 
 			runTestcase(t, testcase)
@@ -339,5 +323,5 @@ func TestImages(t *testing.T) {
 		require.Nil(t, err)
 	}
 
-	runTests(t, cases, *distroArg)
+	runTests(t, cases)
 }
