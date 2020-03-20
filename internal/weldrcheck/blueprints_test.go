@@ -33,12 +33,29 @@ var testState *TestState
 // Also makes sure there is a running server to test against
 func TestMain(m *testing.M) {
 	var err error
-	testState, err = setupTestState("/run/weldr/api.socket", 60*time.Second)
+	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second)
 	if err != nil {
 		fmt.Printf("ERROR: Test setup failed: %s\n", err)
 		os.Exit(1)
 	}
-	os.Exit(m.Run())
+
+	// Setup the test repo
+	dir, err := setUpTemporaryRepository()
+	if err != nil {
+		fmt.Printf("ERROR: Test repo setup failed: %s\n", err)
+		os.Exit(1)
+	}
+	testState.repoDir = dir
+
+	// Run the tests
+	rc := m.Run()
+
+	// Cleanup after the tests
+	err = tearDownTemporaryRepository(dir)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to clean up temporary repository: %s\n", err)
+	}
+	os.Exit(rc)
 }
 
 // POST a new TOML blueprint
