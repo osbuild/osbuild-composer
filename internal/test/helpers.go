@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -175,4 +177,27 @@ func IgnoreUuids() cmp.Option {
 
 func Ignore(what string) cmp.Option {
 	return cmp.FilterPath(func(p cmp.Path) bool { return p.String() == what }, cmp.Ignore())
+}
+
+// Create a temporary repository
+func SetUpTemporaryRepository() (string, error) {
+	dir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
+	if err != nil {
+		return "", err
+	}
+	cmd := exec.Command("createrepo_c", path.Join(dir))
+	err = cmd.Start()
+	if err != nil {
+		return "", err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+// Remove the temporary repository
+func TearDownTemporaryRepository(dir string) error {
+	return os.RemoveAll(dir)
 }

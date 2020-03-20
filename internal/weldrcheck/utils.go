@@ -9,12 +9,8 @@ package weldrcheck
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
-	"os/exec"
-	"path"
 	"sort"
 	"strconv"
 	"time"
@@ -68,27 +64,4 @@ func setUpTestState(socketPath string, timeout time.Duration) (*TestState, error
 	fmt.Printf("Running tests against %s %s server using V%d API\n\n", status.Backend, status.Build, state.apiVersion)
 
 	return &state, nil
-}
-
-// Create a temporary repository
-func setUpTemporaryRepository() (string, error) {
-	dir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
-	if err != nil {
-		return "", err
-	}
-	cmd := exec.Command("createrepo_c", path.Join(dir))
-	err = cmd.Start()
-	if err != nil {
-		return "", err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return "", err
-	}
-	return dir, nil
-}
-
-// Remove the temporary repository
-func tearDownTemporaryRepository(dir string) error {
-	return os.RemoveAll(dir)
 }
