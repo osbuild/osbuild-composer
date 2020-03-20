@@ -595,9 +595,12 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 
-		targets = append(targets, target.NewLocalTarget(
-			&target.LocalTargetOptions{},
-		))
+		target := target.NewLocalTarget(&target.LocalTargetOptions{})
+		target.ImageName, _, err = distro.FilenameFromType(composeType)
+		if err != nil {
+			return fmt.Errorf("cannot get filename for output type: %v", err)
+		}
+		targets = append(targets, target)
 	}
 
 	size = distro.GetSizeForOutputType(composeType, size)
