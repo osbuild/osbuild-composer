@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/client"
+	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
 // Hold test state to share between tests
@@ -40,7 +41,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Setup the test repo
-	dir, err := setUpTemporaryRepository()
+	dir, err := test.SetUpTemporaryRepository()
 	if err != nil {
 		fmt.Printf("ERROR: Test repo setup failed: %s\n", err)
 		os.Exit(1)
@@ -51,7 +52,7 @@ func TestMain(m *testing.M) {
 	rc := m.Run()
 
 	// Cleanup after the tests
-	err = tearDownTemporaryRepository(dir)
+	err = test.TearDownTemporaryRepository(dir)
 	if err != nil {
 		fmt.Printf("ERROR: Failed to clean up temporary repository: %s\n", err)
 	}

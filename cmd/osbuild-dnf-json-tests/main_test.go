@@ -6,40 +6,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"path"
+	"testing"
+
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
-func setUpTemporaryRepository() (string, error) {
-	dir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
-	if err != nil {
-		return "", err
-	}
-	cmd := exec.Command("createrepo_c", path.Join(dir))
-	err = cmd.Start()
-	if err != nil {
-		return "", err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return "", err
-	}
-	return dir, nil
-}
-
-func tearDownTemporaryRepository(dir string) error {
-	return os.RemoveAll(dir)
-}
-
 func TestFetchChecksum(t *testing.T) {
-	dir, err := setUpTemporaryRepository()
+	dir, err := test.SetUpTemporaryRepository()
 	defer func(dir string) {
-		err := tearDownTemporaryRepository(dir)
+		err := test.TearDownTemporaryRepository(dir)
 		assert.Nil(t, err, "Failed to clean up temporary repository.")
 	}(dir)
 	assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
