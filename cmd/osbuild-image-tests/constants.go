@@ -1,4 +1,4 @@
-// +build !travis
+// +build integration,!travis
 
 package main
 
