@@ -54,7 +54,7 @@ func TestCreate(t *testing.T) {
 	store := store.New(nil, *registry)
 	api := jobqueue.New(nil, store)
 
-	err = store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
+	err = store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -74,7 +74,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, exp
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
-		err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, "x86_64", "qcow2", 0, nil)
+		err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}
