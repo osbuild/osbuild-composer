@@ -2,11 +2,12 @@ package rpmmd_mock
 
 import (
 	"fmt"
+	"sort"
+	"time"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/compose"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
-	"sort"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
