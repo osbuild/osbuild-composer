@@ -11,19 +11,41 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-type UploadResponse struct {
+type uploadResponse struct {
 	Uuid         uuid.UUID              `json:"uuid"`
 	Status       common.ImageBuildState `json:"status"`
 	ProviderName string                 `json:"provider_name"`
 	ImageName    string                 `json:"image_name"`
 	CreationTime float64                `json:"creation_time"`
-	Settings     target.TargetOptions   `json:"settings"`
+	Settings     uploadSettings         `json:"settings"`
 }
 
-type UploadRequest struct {
-	Provider  string               `json:"provider"`
-	ImageName string               `json:"image_name"`
-	Settings  target.TargetOptions `json:"settings"`
+type uploadSettings interface {
+	isUploadSettings()
+}
+
+type awsUploadSettings struct {
+	Region          string `json:"region"`
+	AccessKeyID     string `json:"accessKeyID"`
+	SecretAccessKey string `json:"secretAccessKey"`
+	Bucket          string `json:"bucket"`
+	Key             string `json:"key"`
+}
+
+func (awsUploadSettings) isUploadSettings() {}
+
+type azureUploadSettings struct {
+	Account   string `json:"account"`
+	AccessKey string `json:"accessKey"`
+	Container string `json:"container"`
+}
+
+func (azureUploadSettings) isUploadSettings() {}
+
+type uploadRequest struct {
+	Provider  string         `json:"provider"`
+	ImageName string         `json:"image_name"`
+	Settings  uploadSettings `json:"settings"`
 }
 
 type rawUploadRequest struct {
@@ -32,95 +54,80 @@ type rawUploadRequest struct {
 	Settings  json.RawMessage `json:"settings"`
 }
 
-func (u *UploadRequest) UnmarshalJSON(data []byte) error {
-	var rawUpload rawUploadRequest
-	err := json.Unmarshal(data, &rawUpload)
+func (u *uploadRequest) UnmarshalJSON(data []byte) error {
+	var rawUploadRequest rawUploadRequest
+	err := json.Unmarshal(data, &rawUploadRequest)
 	if err != nil {
 		return err
 	}
 
-	// we need to convert provider name to target name to use the unmarshaller
-	targetName := providerNameToTargetNameMap[rawUpload.Provider]
-	options, err := target.UnmarshalTargetOptions(targetName, rawUpload.Settings)
+	var settings uploadSettings
+	switch rawUploadRequest.Provider {
+	case "azure":
+		settings = new(azureUploadSettings)
+	case "aws":
+		settings = new(awsUploadSettings)
+	default:
+		return errors.New("unexpected provider name")
+	}
+	err = json.Unmarshal(rawUploadRequest.Settings, settings)
+	if err != nil {
+		return err
+	}
 
-	u.Provider = rawUpload.Provider
-	u.ImageName = rawUpload.ImageName
-	u.Settings = options
+	u.Provider = rawUploadRequest.Provider
+	u.ImageName = rawUploadRequest.ImageName
+	u.Settings = settings
 
 	return err
 }
 
-var targetNameToProviderNameMap = map[string]string{
-	"org.osbuild.aws":   "aws",
-	"org.osbuild.azure": "azure",
-}
-
-var providerNameToTargetNameMap = map[string]string{
-	"aws":   "org.osbuild.aws",
-	"azure": "org.osbuild.azure",
-}
-
-func TargetsToUploadResponses(targets []*target.Target) []UploadResponse {
-	var uploads []UploadResponse
+func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
+	var uploads []uploadResponse
 	for _, t := range targets {
-		if t.Name == "org.osbuild.local" {
-			continue
-		}
-
-		providerName, providerExist := targetNameToProviderNameMap[t.Name]
-		if !providerExist {
-			panic("target name " + t.Name + " is not defined in conversion map!")
-		}
-		upload := UploadResponse{
+		upload := uploadResponse{
 			Uuid:         t.Uuid,
 			Status:       t.Status,
-			ProviderName: providerName,
 			ImageName:    t.ImageName,
 			CreationTime: float64(t.Created.UnixNano()) / 1000000000,
 		}
 
 		switch options := t.Options.(type) {
-		case *target.LocalTargetOptions:
-			continue
 		case *target.AWSTargetOptions:
-			upload.Settings = &target.AWSTargetOptions{
+			upload.ProviderName = "aws"
+			upload.Settings = &awsUploadSettings{
 				Region:          options.Region,
 				AccessKeyID:     options.AccessKeyID,
 				SecretAccessKey: options.SecretAccessKey,
 				Bucket:          options.Bucket,
 				Key:             options.Key,
 			}
+			uploads = append(uploads, upload)
 		case *target.AzureTargetOptions:
-			upload.Settings = &target.AzureTargetOptions{
+			upload.ProviderName = "azure"
+			upload.Settings = &azureUploadSettings{
 				Account:   options.Account,
 				AccessKey: options.AccessKey,
 				Container: options.Container,
 			}
+			uploads = append(uploads, upload)
 		}
-		uploads = append(uploads, upload)
 	}
 
 	return uploads
 }
 
-func UploadRequestToTarget(u UploadRequest) (*target.Target, error) {
+func uploadRequestToTarget(u uploadRequest) (*target.Target, error) {
 	var t target.Target
-	targetName, targetExist := providerNameToTargetNameMap[u.Provider]
-
-	if !targetExist {
-		return nil, errors.New("Unknown provider name " + u.Provider)
-	}
 
 	t.Uuid = uuid.New()
 	t.ImageName = u.ImageName
-	t.Name = targetName
 	t.Status = common.IBWaiting
 	t.Created = time.Now()
 
 	switch options := u.Settings.(type) {
-	case *target.LocalTargetOptions:
-		t.Options = &target.LocalTargetOptions{}
-	case *target.AWSTargetOptions:
+	case *awsUploadSettings:
+		t.Name = "org.osbuild.aws"
 		t.Options = &target.AWSTargetOptions{
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
@@ -128,7 +135,8 @@ func UploadRequestToTarget(u UploadRequest) (*target.Target, error) {
 			Bucket:          options.Bucket,
 			Key:             options.Key,
 		}
-	case *target.AzureTargetOptions:
+	case *azureUploadSettings:
+		t.Name = "org.osbuild.azure"
 		t.Options = &target.AzureTargetOptions{
 			Account:   options.Account,
 			AccessKey: options.AccessKey,

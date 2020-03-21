@@ -1360,7 +1360,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		ComposeType   string         `json:"compose_type"`
 		Size          uint64         `json:"size"`
 		Branch        string         `json:"branch"`
-		Upload        *UploadRequest `json:"upload"`
+		Upload        *uploadRequest `json:"upload"`
 	}
 	type ComposeReply struct {
 		BuildID uuid.UUID `json:"build_id"`
@@ -1396,8 +1396,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	var uploadTarget *target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
-		uploadTarget, err = UploadRequestToTarget(*cr.Upload)
-
+		uploadTarget, err = uploadRequestToTarget(*cr.Upload)
 		if err != nil {
 			errors := responseError{
 				ID:  "UploadError",
@@ -1661,7 +1660,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		ComposeType string               `json:"compose_type"`
 		QueueStatus string               `json:"queue_status"`
 		ImageSize   uint64               `json:"image_size"`
-		Uploads     []UploadResponse     `json:"uploads,omitempty"`
+		Uploads     []uploadResponse     `json:"uploads,omitempty"`
 	}
 
 	reply.ID = id
@@ -1676,7 +1675,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	reply.ImageSize = compose.ImageBuilds[0].Size
 
 	if isRequestVersionAtLeast(params, 1) {
-		reply.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
+		reply.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
 	err = json.NewEncoder(writer).Encode(reply)
