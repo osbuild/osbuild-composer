@@ -11,7 +11,4 @@ __pycache__
 /osbuild-weldr-tests
 /osbuild-rcm-tests
 
-/*.tar.gz
-/*.src.rpm
-
 /rpmbuild
