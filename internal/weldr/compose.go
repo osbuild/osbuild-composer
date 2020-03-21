@@ -1,10 +1,11 @@
 package weldr
 
 import (
+	"sort"
+
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/compose"
-	"sort"
 )
 
 type ComposeEntry struct {
@@ -17,7 +18,7 @@ type ComposeEntry struct {
 	JobCreated  float64                `json:"job_created"`
 	JobStarted  float64                `json:"job_started,omitempty"`
 	JobFinished float64                `json:"job_finished,omitempty"`
-	Uploads     []UploadResponse       `json:"uploads,omitempty"`
+	Uploads     []uploadResponse       `json:"uploads,omitempty"`
 }
 
 func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads bool) *ComposeEntry {
@@ -30,7 +31,7 @@ func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads
 	composeEntry.QueueStatus = compose.ImageBuilds[0].QueueStatus
 
 	if includeUploads {
-		composeEntry.Uploads = TargetsToUploadResponses(compose.ImageBuilds[0].Targets)
+		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
 	switch compose.ImageBuilds[0].QueueStatus {
