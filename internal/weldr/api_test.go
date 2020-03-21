@@ -495,6 +495,7 @@ func TestCompose(t *testing.T) {
 						Status:    common.IBWaiting,
 						ImageName: "test_upload",
 						Options: &target.AWSTargetOptions{
+							Filename:        "test.img",
 							Region:          "frankfurt",
 							AccessKeyID:     "accesskey",
 							SecretAccessKey: "secretkey",

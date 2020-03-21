@@ -97,23 +97,7 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			outputDir := path.Join(tmpStore, "refs", result.OutputID)
-
-			files, err := ioutil.ReadDir(outputDir)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			// TODO osbuild pipelines can have multiple outputs. All the pipelines we
-			// are currently generating have exactly one, but we should support
-			// uploading all results in the future.
-			if len(files) != 1 {
-				r = append(r, fmt.Errorf("expected exactly one resulting image file"))
-				continue
-			}
-
-			f, err := os.Open(path.Join(outputDir, files[0].Name()))
+			f, err := os.Open(path.Join(tmpStore, "refs", result.OutputID, options.Filename))
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -137,7 +121,7 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 				options.Key = job.ID.String()
 			}
 
-			_, err = a.Upload(tmpStore+"/refs/"+result.OutputID+"/image.raw.xz", options.Bucket, options.Key)
+			_, err = a.Upload(path.Join(tmpStore, "refs", result.OutputID, options.Filename), options.Bucket, options.Key)
 			if err != nil {
 				r = append(r, err)
 				continue

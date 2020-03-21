@@ -1,6 +1,7 @@
 package target
 
 type AzureTargetOptions struct {
+	Filename  string `json:"filename"`
 	Account   string `json:"account"`
 	AccessKey string `json:"accessKey"`
 	Container string `json:"container"`
