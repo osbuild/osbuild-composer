@@ -578,7 +578,7 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *blueprint.Blueprint, packages, buildPackages []rpmmd.PackageSpec, arch, composeType string, size uint64, uploadTarget *target.Target) error {
+func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, arch, composeType string, size uint64, uploadTarget *target.Target) error {
 	targets := []*target.Target{}
 
 	// Compatibility layer for image types in Weldr API v0
@@ -606,12 +606,12 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 		targets = append(targets, uploadTarget)
 	}
 
-	repos := []rpmmd.RepoConfig{}
+	allRepos := append([]rpmmd.RepoConfig{}, repos...)
 	for _, source := range s.Sources {
-		repos = append(repos, source.RepoConfig())
+		allRepos = append(allRepos, source.RepoConfig())
 	}
 
-	manifestStruct, err := distro.Manifest(bp.Customizations, repos, packages, buildPackages, arch, composeType, size)
+	manifestStruct, err := distro.Manifest(bp.Customizations, allRepos, packages, buildPackages, arch, composeType, size)
 	if err != nil {
 		return err
 	}
