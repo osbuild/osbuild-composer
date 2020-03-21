@@ -3,8 +3,9 @@ package weldr
 import (
 	"encoding/json"
 	"errors"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"time"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -59,24 +60,6 @@ var providerNameToTargetNameMap = map[string]string{
 	"azure": "org.osbuild.azure",
 }
 
-func targetToUploadResponse(t *target.Target) UploadResponse {
-	var u UploadResponse
-
-	providerName, providerExist := targetNameToProviderNameMap[t.Name]
-	if !providerExist {
-		panic("target name " + t.Name + " is not defined in conversion map!")
-	}
-
-	u.CreationTime = float64(t.Created.UnixNano()) / 1000000000
-	u.ImageName = t.ImageName
-	u.ProviderName = providerName
-	u.Status = t.Status
-	u.Uuid = t.Uuid
-	u.Settings = t.Options
-
-	return u
-}
-
 func TargetsToUploadResponses(targets []*target.Target) []UploadResponse {
 	var uploads []UploadResponse
 	for _, t := range targets {
@@ -84,8 +67,36 @@ func TargetsToUploadResponses(targets []*target.Target) []UploadResponse {
 			continue
 		}
 
-		upload := targetToUploadResponse(t)
+		providerName, providerExist := targetNameToProviderNameMap[t.Name]
+		if !providerExist {
+			panic("target name " + t.Name + " is not defined in conversion map!")
+		}
+		upload := UploadResponse{
+			Uuid:         t.Uuid,
+			Status:       t.Status,
+			ProviderName: providerName,
+			ImageName:    t.ImageName,
+			CreationTime: float64(t.Created.UnixNano()) / 1000000000,
+		}
 
+		switch options := t.Options.(type) {
+		case *target.LocalTargetOptions:
+			continue
+		case *target.AWSTargetOptions:
+			upload.Settings = &target.AWSTargetOptions{
+				Region:          options.Region,
+				AccessKeyID:     options.AccessKeyID,
+				SecretAccessKey: options.SecretAccessKey,
+				Bucket:          options.Bucket,
+				Key:             options.Key,
+			}
+		case *target.AzureTargetOptions:
+			upload.Settings = &target.AzureTargetOptions{
+				Account:   options.Account,
+				AccessKey: options.AccessKey,
+				Container: options.Container,
+			}
+		}
 		uploads = append(uploads, upload)
 	}
 
@@ -102,10 +113,28 @@ func UploadRequestToTarget(u UploadRequest) (*target.Target, error) {
 
 	t.Uuid = uuid.New()
 	t.ImageName = u.ImageName
-	t.Options = u.Settings
 	t.Name = targetName
 	t.Status = common.IBWaiting
 	t.Created = time.Now()
+
+	switch options := u.Settings.(type) {
+	case *target.LocalTargetOptions:
+		t.Options = &target.LocalTargetOptions{}
+	case *target.AWSTargetOptions:
+		t.Options = &target.AWSTargetOptions{
+			Region:          options.Region,
+			AccessKeyID:     options.AccessKeyID,
+			SecretAccessKey: options.SecretAccessKey,
+			Bucket:          options.Bucket,
+			Key:             options.Key,
+		}
+	case *target.AzureTargetOptions:
+		t.Options = &target.AzureTargetOptions{
+			Account:   options.Account,
+			AccessKey: options.AccessKey,
+			Container: options.Container,
+		}
+	}
 
 	return &t, nil
 }
