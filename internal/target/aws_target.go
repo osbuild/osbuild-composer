@@ -1,6 +1,7 @@
 package target
 
 type AWSTargetOptions struct {
+	Filename        string `json:"filename"`
 	Region          string `json:"region"`
 	AccessKeyID     string `json:"accessKeyID"`
 	SecretAccessKey string `json:"secretAccessKey"`

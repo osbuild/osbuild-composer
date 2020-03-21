@@ -1,6 +1,7 @@
 package target
 
 type LocalTargetOptions struct {
+	Filename string `json:"filename"`
 }
 
 func (LocalTargetOptions) isTargetOptions() {}

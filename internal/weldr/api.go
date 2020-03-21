@@ -1396,7 +1396,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	var uploadTarget *target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
-		uploadTarget, err = uploadRequestToTarget(*cr.Upload)
+		uploadTarget, err = uploadRequestToTarget(*cr.Upload, api.distro, cr.ComposeType)
 		if err != nil {
 			errors := responseError{
 				ID:  "UploadError",

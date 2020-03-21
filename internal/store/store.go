@@ -595,8 +595,15 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 
+		filename, _, err := distro.FilenameFromType(composeType)
+		if err != nil {
+			return fmt.Errorf("cannot query filename from image type %s: %#v", composeType, err)
+		}
+
 		targets = append(targets, target.NewLocalTarget(
-			&target.LocalTargetOptions{},
+			&target.LocalTargetOptions{
+				Filename: filename,
+			},
 		))
 	}
 
