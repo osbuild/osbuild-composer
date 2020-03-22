@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/google/uuid"
@@ -14,12 +15,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
-
-type RHEL81 struct {
-	arches        map[string]arch
-	outputs       map[string]output
-	buildPackages []string
-}
 
 type arch struct {
 	Name               string
@@ -44,6 +39,103 @@ type output struct {
 
 const Distro = common.RHEL81
 const ModulePlatformID = "platform:el8"
+
+type RHEL81 struct {
+	arches        map[string]arch
+	outputs       map[string]output
+	buildPackages []string
+}
+
+type RHEL81Arch struct {
+	name   string
+	distro *RHEL81
+	arch   *arch
+}
+
+type RHEL81ImageType struct {
+	name   string
+	arch   *RHEL81Arch
+	output *output
+}
+
+func (d *RHEL81) GetArch(arch string) (distro.Arch, error) {
+	a, exists := d.arches[arch]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + arch)
+	}
+
+	return &RHEL81Arch{
+		name:   arch,
+		distro: d,
+		arch:   &a,
+	}, nil
+}
+
+func (a *RHEL81Arch) Name() string {
+	return a.name
+}
+
+func (a *RHEL81Arch) ListImageTypes() []string {
+	return a.distro.ListOutputFormats()
+}
+
+func (a *RHEL81Arch) GetImageType(imageType string) (distro.ImageType, error) {
+	t, exists := a.distro.outputs[imageType]
+	if !exists {
+		return nil, errors.New("invalid image type: " + imageType)
+	}
+
+	return &RHEL81ImageType{
+		name:   imageType,
+		arch:   a,
+		output: &t,
+	}, nil
+}
+
+func (t *RHEL81ImageType) Name() string {
+	return t.name
+}
+
+func (t *RHEL81ImageType) Filename() string {
+	return t.output.Name
+}
+
+func (t *RHEL81ImageType) MIMEType() string {
+	return t.output.MimeType
+}
+
+func (t *RHEL81ImageType) Size(size uint64) uint64 {
+	return t.arch.distro.GetSizeForOutputType(t.name, size)
+}
+
+func (t *RHEL81ImageType) BasePackages() ([]string, []string) {
+	packages := t.output.Packages
+	if t.output.Bootable {
+		packages = append(packages, t.arch.arch.BootloaderPackages...)
+	}
+
+	return packages, t.output.ExcludedPackages
+}
+
+func (t *RHEL81ImageType) BuildPackages() []string {
+	return append(t.arch.distro.buildPackages, t.arch.arch.BuildPackages...)
+}
+
+func (t *RHEL81ImageType) Manifest(c *blueprint.Customizations,
+	repos []rpmmd.RepoConfig,
+	packageSpecs,
+	buildPackageSpecs []rpmmd.PackageSpec,
+	size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := t.arch.distro.pipeline(c, repos, packageSpecs, buildPackageSpecs, t.arch.name, t.name, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return &osbuild.Manifest{
+		Sources:  *t.arch.distro.sources(append(packageSpecs, buildPackageSpecs...)),
+		Pipeline: *pipeline,
+	}, nil
+}
 
 func New() *RHEL81 {
 	const GigaByte = 1024 * 1024 * 1024
