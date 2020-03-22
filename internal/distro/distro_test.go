@@ -66,14 +66,21 @@ func TestDistro_Manifest(t *testing.T) {
 				t.Errorf("unknown distro: %v", tt.ComposeRequest.Distro)
 				return
 			}
-			size := d.GetSizeForOutputType(tt.ComposeRequest.OutputFormat, 0)
-			got, err := d.Manifest(tt.ComposeRequest.Blueprint.Customizations,
+			arch, err := d.GetArch(tt.ComposeRequest.Arch)
+			if err != nil {
+				t.Errorf("unknown arch: %v", tt.ComposeRequest.Arch)
+				return
+			}
+			imageType, err := arch.GetImageType(tt.ComposeRequest.OutputFormat)
+			if err != nil {
+				t.Errorf("unknown image type: %v", tt.ComposeRequest.OutputFormat)
+				return
+			}
+			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				repoMap[tt.ComposeRequest.Arch],
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
-				tt.ComposeRequest.Arch,
-				tt.ComposeRequest.OutputFormat,
-				size)
+				imageType.Size(0))
 			if (err != nil) != (tt.Manifest == nil) {
 				t.Errorf("distro.Manifest() error = %v", err)
 				return
