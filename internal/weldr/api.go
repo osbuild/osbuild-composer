@@ -1532,7 +1532,7 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	for _, format := range api.distro.ListOutputFormats() {
+	for _, format := range api.arch.ListImageTypes() {
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 
