@@ -20,9 +20,6 @@ type Distro interface {
 	// Returns the name of the distro.
 	Name() string
 
-	// Return strong-typed distribution
-	Distribution() common.Distribution
-
 	// Returns the module platform id of the distro. This is used by DNF
 	// for modularity support.
 	ModulePlatformID() string
@@ -31,30 +28,10 @@ type Distro interface {
 	// by this distro.
 	GetArch(arch string) (Arch, error)
 
-	// Returns a sorted list of the output formats this distro supports.
-	ListOutputFormats() []string
-
 	// Returns the canonical filename and MIME type for a given output
 	// format. `outputFormat` must be one returned by
+	// TODO: remove when redundant
 	FilenameFromType(outputFormat string) (string, string, error)
-
-	// Returns the proper image size for a given output format. If the size
-	// is 0 the default value for the format will be returned.
-	GetSizeForOutputType(outputFormat string, size uint64) uint64
-
-	// Returns the base packages for a given output type and architecture
-	BasePackages(outputFormat, outputArchitecture string) ([]string, []string, error)
-
-	// Returns the build packages for a given output architecture
-	BuildPackages(outputArchitecture string) ([]string, error)
-
-	// Returns an osbuild manifest, containing the sources and pipeline necessary
-	// to generates an image in the given output format with all packages and
-	// customizations specified in the given blueprint.
-	Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, imageFormat string, size uint64) (*osbuild.Manifest, error)
-
-	// Returns a osbuild runner that can be used on this distro.
-	Runner() string
 }
 
 // An Arch represents a given distribution's support for a given architecture.
