@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/google/uuid"
@@ -14,12 +15,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
-
-type Fedora30 struct {
-	arches        map[string]arch
-	outputs       map[string]output
-	buildPackages []string
-}
 
 type arch struct {
 	Name               string
@@ -43,6 +38,103 @@ type output struct {
 
 const Distro = common.Fedora30
 const ModulePlatformID = "platform:f30"
+
+type Fedora30 struct {
+	arches        map[string]arch
+	outputs       map[string]output
+	buildPackages []string
+}
+
+type Fedora30Arch struct {
+	name   string
+	distro *Fedora30
+	arch   *arch
+}
+
+type Fedora30ImageType struct {
+	name   string
+	arch   *Fedora30Arch
+	output *output
+}
+
+func (d *Fedora30) GetArch(arch string) (distro.Arch, error) {
+	a, exists := d.arches[arch]
+	if !exists {
+		return nil, errors.New("invalid architecture: " + arch)
+	}
+
+	return &Fedora30Arch{
+		name:   arch,
+		distro: d,
+		arch:   &a,
+	}, nil
+}
+
+func (a *Fedora30Arch) Name() string {
+	return a.name
+}
+
+func (a *Fedora30Arch) ListImageTypes() []string {
+	return a.distro.ListOutputFormats()
+}
+
+func (a *Fedora30Arch) GetImageType(imageType string) (distro.ImageType, error) {
+	t, exists := a.distro.outputs[imageType]
+	if !exists {
+		return nil, errors.New("invalid image type: " + imageType)
+	}
+
+	return &Fedora30ImageType{
+		name:   imageType,
+		arch:   a,
+		output: &t,
+	}, nil
+}
+
+func (t *Fedora30ImageType) Name() string {
+	return t.name
+}
+
+func (t *Fedora30ImageType) Filename() string {
+	return t.output.Name
+}
+
+func (t *Fedora30ImageType) MIMEType() string {
+	return t.output.MimeType
+}
+
+func (t *Fedora30ImageType) Size(size uint64) uint64 {
+	return t.arch.distro.GetSizeForOutputType(t.name, size)
+}
+
+func (t *Fedora30ImageType) BasePackages() ([]string, []string) {
+	packages := t.output.Packages
+	if t.output.Bootable {
+		packages = append(packages, t.arch.arch.BootloaderPackages...)
+	}
+
+	return packages, t.output.ExcludedPackages
+}
+
+func (t *Fedora30ImageType) BuildPackages() []string {
+	return append(t.arch.distro.buildPackages, t.arch.arch.BuildPackages...)
+}
+
+func (t *Fedora30ImageType) Manifest(c *blueprint.Customizations,
+	repos []rpmmd.RepoConfig,
+	packageSpecs,
+	buildPackageSpecs []rpmmd.PackageSpec,
+	size uint64) (*osbuild.Manifest, error) {
+	pipeline, err := t.arch.distro.pipeline(c, repos, packageSpecs, buildPackageSpecs, t.arch.name, t.name, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return &osbuild.Manifest{
+		Sources:  *t.arch.distro.sources(append(packageSpecs, buildPackageSpecs...)),
+		Pipeline: *pipeline,
+	}, nil
+}
 
 func New() *Fedora30 {
 	const GigaByte = 1024 * 1024 * 1024

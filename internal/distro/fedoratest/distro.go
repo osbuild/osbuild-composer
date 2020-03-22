@@ -5,13 +5,89 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const ModulePlatformID = "platform:f30"
+
 type FedoraTestDistro struct{}
 
-const ModulePlatformID = "platform:f30"
+type FedoraTestDistroArch struct {
+	name   string
+	distro *FedoraTestDistro
+}
+
+type FedoraTestDistroImageType struct {
+	name string
+	arch *FedoraTestDistroArch
+}
+
+func (d *FedoraTestDistro) GetArch(arch string) (distro.Arch, error) {
+	if arch != "x86_64" {
+		return nil, errors.New("invalid architecture: " + arch)
+	}
+
+	return &FedoraTestDistroArch{
+		name:   arch,
+		distro: d,
+	}, nil
+}
+
+func (a *FedoraTestDistroArch) Name() string {
+	return a.name
+}
+
+func (a *FedoraTestDistroArch) ListImageTypes() []string {
+	return a.distro.ListOutputFormats()
+}
+
+func (a *FedoraTestDistroArch) GetImageType(imageType string) (distro.ImageType, error) {
+	if imageType != "qcow2" {
+		return nil, errors.New("invalid image type: " + imageType)
+	}
+
+	return &FedoraTestDistroImageType{
+		name: imageType,
+		arch: a,
+	}, nil
+}
+
+func (t *FedoraTestDistroImageType) Name() string {
+	return t.name
+}
+
+func (t *FedoraTestDistroImageType) Filename() string {
+	return "test.img"
+}
+
+func (t *FedoraTestDistroImageType) MIMEType() string {
+	return "application/x-test"
+}
+
+func (t *FedoraTestDistroImageType) Size(size uint64) uint64 {
+	return t.arch.distro.GetSizeForOutputType(t.name, size)
+}
+
+func (t *FedoraTestDistroImageType) BasePackages() ([]string, []string) {
+	return nil, nil
+}
+
+func (t *FedoraTestDistroImageType) BuildPackages() []string {
+	return nil
+}
+
+func (t *FedoraTestDistroImageType) Manifest(c *blueprint.Customizations,
+	repos []rpmmd.RepoConfig,
+	packageSpecs,
+	buildPackageSpecs []rpmmd.PackageSpec,
+	size uint64) (*osbuild.Manifest, error) {
+	return &osbuild.Manifest{
+		Pipeline: osbuild.Pipeline{},
+		Sources:  osbuild.Sources{},
+	}, nil
+}
 
 func New() *FedoraTestDistro {
 	return &FedoraTestDistro{}

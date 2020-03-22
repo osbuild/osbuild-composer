@@ -4,14 +4,67 @@ import (
 	"errors"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type TestDistro struct{}
+type TestArch struct{}
+type TestImageType struct{}
 
 const Name = "test-distro"
 const ModulePlatformID = "platform:test"
+
+func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
+	if arch != "test_arch" {
+		return nil, errors.New("invalid arch: " + arch)
+	}
+	return &TestArch{}, nil
+}
+
+func (a *TestArch) Name() string {
+	return Name
+}
+
+func (a *TestArch) ListImageTypes() []string {
+	return []string{"test-format"}
+}
+
+func (a *TestArch) GetImageType(imageType string) (distro.ImageType, error) {
+	if imageType != "test_output" {
+		return nil, errors.New("invalid image type: " + imageType)
+	}
+	return &TestImageType{}, nil
+}
+
+func (t *TestImageType) Name() string {
+	return "test-format"
+}
+
+func (t *TestImageType) Filename() string {
+	return "test.img"
+}
+
+func (t *TestImageType) MIMEType() string {
+	return "application/x-test"
+}
+
+func (t *TestImageType) Size(size uint64) uint64 {
+	return 0
+}
+
+func (t *TestImageType) BasePackages() ([]string, []string) {
+	return nil, nil
+}
+
+func (t *TestImageType) BuildPackages() []string {
+	return nil
+}
+
+func (t *TestImageType) Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error) {
+	return &osbuild.Manifest{}, nil
+}
 
 func New() *TestDistro {
 	return &TestDistro{}

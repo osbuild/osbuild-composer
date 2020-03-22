@@ -16,9 +16,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+// A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
-	// Returns the name of the distro. This is the same name that was
-	// passed to New().
+	// Returns the name of the distro.
 	Name() string
 
 	// Return strong-typed distribution
@@ -27,6 +27,10 @@ type Distro interface {
 	// Returns the module platform id of the distro. This is used by DNF
 	// for modularity support.
 	ModulePlatformID() string
+
+	// Returns an object representing the given architecture as support
+	// by this distro.
+	GetArch(arch string) (Arch, error)
 
 	// Returns a sorted list of the output formats this distro supports.
 	ListOutputFormats() []string
@@ -52,6 +56,49 @@ type Distro interface {
 
 	// Returns a osbuild runner that can be used on this distro.
 	Runner() string
+}
+
+// An Arch represents a given distribution's support for a given architecture.
+type Arch interface {
+	// Returns the name of the architecture.
+	Name() string
+
+	// Returns a sorted list of the names of the image types this architecture
+	// supports.
+	ListImageTypes() []string
+
+	// Returns an object representing a given image format for this architecture,
+	// on this distro.
+	GetImageType(imageType string) (ImageType, error)
+}
+
+// An ImageType represents a given distribution's support for a given Image Type
+// for a given architecture.
+type ImageType interface {
+	// Returns the name of the image type.
+	Name() string
+
+	// Returns the canonical filename for the image type.
+	Filename() string
+
+	// Retrns the MIME-type for the image type.
+	MIMEType() string
+
+	// Returns the proper image size for a given output format. If the input size
+	// is 0 the default value for the format will be returned.
+	Size(size uint64) uint64
+
+	// Returns the default packages to include and exclude when making the image
+	// type.
+	BasePackages() ([]string, []string)
+
+	// Returns the build packages for the output type.
+	BuildPackages() []string
+
+	// Returns an osbuild manifest, containing the sources and pipeline necessary
+	// to build an image, given output format with all packages and customizations
+	// specified in the given blueprint.
+	Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error)
 }
 
 type Registry struct {
