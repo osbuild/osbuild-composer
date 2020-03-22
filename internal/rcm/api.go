@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 
 	"github.com/google/uuid"
@@ -122,10 +121,10 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 	// JSON structure expected from the client
 	var composeRequest struct {
-		Distribution  string                `json:"distribution"`
-		ImageTypes    []common.ImageType    `json:"image_types"`
-		Architectures []common.Architecture `json:"architectures"`
-		Repositories  []Repository          `json:"repositories"`
+		Distribution  string       `json:"distribution"`
+		ImageTypes    []string     `json:"image_types"`
+		Architectures []string     `json:"architectures"`
+		Repositories  []Repository `json:"repositories"`
 	}
 	// JSON structure with error message
 	var errorReason struct {
@@ -163,6 +162,36 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
+	distro := api.distros.GetDistro(composeRequest.Distribution)
+	if distro == nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte("unknown distro"))
+		if err != nil {
+			panic("Failed to write response")
+		}
+		return
+	}
+
+	arch, err := distro.GetArch(composeRequest.Architectures[0])
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte("unknown architecture for distro"))
+		if err != nil {
+			panic("Failed to write response")
+		}
+		return
+	}
+
+	imageType, err := arch.GetImageType(composeRequest.ImageTypes[0])
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte("unknown image type for distro and architecture"))
+		if err != nil {
+			panic("Failed to write response")
+		}
+		return
+	}
+
 	// Create repo configurations from the URLs in the request. Use made up repo id and name, because
 	// we don't want to bother clients of this API with details like this
 	repoConfigs := []rpmmd.RepoConfig{}
@@ -174,38 +203,20 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
-	distro := api.distros.GetDistro(composeRequest.Distribution)
-	if distro == nil {
-		writer.WriteHeader(http.StatusBadRequest)
-		_, err := writer.Write([]byte("unknown distro"))
-		if err != nil {
-			panic("Failed to write response")
-		}
-	}
-
-	arch, ok := composeRequest.Architectures[0].ToString()
-	if !ok {
-		panic("architecture was validated before")
-	}
-
-	imageType, ok := composeRequest.ImageTypes[0].ToString()
-	if !ok {
-		panic("image type was validated before")
-	}
-
-	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, imageType, arch)
+	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, imageType.Name(), arch.Name())
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
 		if err != nil {
 			panic("Failed to write response")
 		}
+		return
 	}
 
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
-	err = api.store.PushCompose(distro, composeUUID, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, arch, imageType, 0, nil)
+	err = api.store.PushCompose(distro, composeUUID, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, arch.Name(), imageType.Name(), 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
