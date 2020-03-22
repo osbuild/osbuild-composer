@@ -1389,14 +1389,19 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	reply := ComposeReply{
-		BuildID: uuid.New(),
-		Status:  true,
+	imageType, err := api.arch.GetImageType(cr.ComposeType)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownComposeType",
+			Msg: fmt.Sprintf("Unknown compose type for architecture: %s", cr.ComposeType),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
 	}
 
 	var uploadTarget *target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
-		uploadTarget, err = uploadRequestToTarget(*cr.Upload, api.distro, cr.ComposeType)
+		uploadTarget, err = uploadRequestToTarget(*cr.Upload, imageType)
 		if err != nil {
 			errors := responseError{
 				ID:  "UploadError",
@@ -1418,16 +1423,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	imageType, err := api.arch.GetImageType(cr.ComposeType)
-	if err != nil {
-		errors := responseError{
-			ID:  "UnknownComposeType",
-			Msg: fmt.Sprintf("Unknown compose type for architecture: %s", cr.ComposeType),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
 	packages, buildPackages, err := api.depsolveBlueprint(bp, imageType)
 	if err != nil {
 		errors := responseError{
@@ -1436,6 +1431,11 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
+	}
+
+	reply := ComposeReply{
+		BuildID: uuid.New(),
+		Status:  true,
 	}
 
 	err = api.store.PushCompose(api.distro, reply.BuildID, bp, api.repos, packages, buildPackages, api.arch.Name(), cr.ComposeType, cr.Size, uploadTarget)
