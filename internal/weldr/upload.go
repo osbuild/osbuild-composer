@@ -118,13 +118,8 @@ func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
 	return uploads
 }
 
-func uploadRequestToTarget(u uploadRequest, d distro.Distro, imageType string) (*target.Target, error) {
+func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) (*target.Target, error) {
 	var t target.Target
-
-	filename, _, err := d.FilenameFromType(imageType)
-	if err != nil {
-		return nil, err
-	}
 
 	t.Uuid = uuid.New()
 	t.ImageName = u.ImageName
@@ -135,7 +130,7 @@ func uploadRequestToTarget(u uploadRequest, d distro.Distro, imageType string) (
 	case *awsUploadSettings:
 		t.Name = "org.osbuild.aws"
 		t.Options = &target.AWSTargetOptions{
-			Filename:        filename,
+			Filename:        imageType.Filename(),
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
 			SecretAccessKey: options.SecretAccessKey,
@@ -145,7 +140,7 @@ func uploadRequestToTarget(u uploadRequest, d distro.Distro, imageType string) (
 	case *azureUploadSettings:
 		t.Name = "org.osbuild.azure"
 		t.Options = &target.AzureTargetOptions{
-			Filename:  filename,
+			Filename:  imageType.Filename(),
 			Account:   options.Account,
 			AccessKey: options.AccessKey,
 			Container: options.Container,
