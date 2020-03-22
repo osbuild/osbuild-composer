@@ -845,7 +845,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch.Name())
+		dependencies, _, err := api.depsolveBlueprint(blueprint, nil)
 
 		if err != nil {
 			errors := responseError{
@@ -941,7 +941,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch.Name())
+		dependencies, _, err := api.depsolveBlueprint(&blueprint, nil)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1418,7 +1418,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch.Name())
+	imageType, err := api.arch.GetImageType(cr.ComposeType)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownComposeType",
+			Msg: fmt.Sprintf("Unknown compose type for architecture: %s", cr.ComposeType),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packages, buildPackages, err := api.depsolveBlueprint(bp, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -1969,7 +1979,7 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 	return pkg.Name
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch string) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
 	repos := append([]rpmmd.RepoConfig{}, api.repos...)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
@@ -1982,13 +1992,10 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 		specs = append(specs, getPkgNameGlob(mod))
 	}
 	excludeSpecs := []string{}
-	if outputType != "" {
+	if imageType != nil {
 		// When the output type is known, include the base packages in the depsolve
 		// transaction.
-		packages, excludePackages, err := api.distro.BasePackages(outputType, arch)
-		if err != nil {
-			return nil, nil, err
-		}
+		packages, excludePackages := imageType.BasePackages()
 		specs = append(specs, packages...)
 		excludeSpecs = append(excludePackages, excludeSpecs...)
 	}
@@ -1999,11 +2006,8 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, outputType, arch stri
 	}
 
 	buildPackages := []rpmmd.PackageSpec{}
-	if outputType != "" {
-		buildSpecs, err := api.distro.BuildPackages(arch)
-		if err != nil {
-			return nil, nil, err
-		}
+	if imageType != nil {
+		buildSpecs := imageType.BuildPackages()
 		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID())
 		if err != nil {
 			return nil, nil, err
