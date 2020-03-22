@@ -31,7 +31,7 @@ type API struct {
 	store *store.Store
 
 	rpmmd  rpmmd.RPMMD
-	arch   string
+	arch   distro.Arch
 	distro distro.Distro
 	repos  []rpmmd.RepoConfig
 
@@ -39,7 +39,7 @@ type API struct {
 	router *httprouter.Router
 }
 
-func New(rpmmd rpmmd.RPMMD, arch string, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
+func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
 	// This needs to be shared with the worker API so that they can communicate with each other
 	// builds := make(chan queue.Build, 200)
 	api := &API{
@@ -845,7 +845,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch)
+		dependencies, _, err := api.depsolveBlueprint(blueprint, "", api.arch.Name())
 
 		if err != nil {
 			errors := responseError{
@@ -941,7 +941,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch)
+		dependencies, _, err := api.depsolveBlueprint(&blueprint, "", api.arch.Name())
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1410,7 +1410,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 	if bp != nil {
-		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch)
+		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch.Name())
 		if err != nil {
 			errors := responseError{
 				ID:  "DepsolveError",
@@ -1420,7 +1420,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 
-		err = api.store.PushCompose(api.distro, reply.BuildID, bp, api.repos, packages, buildPackages, api.arch, cr.ComposeType, cr.Size, uploadTarget)
+		err = api.store.PushCompose(api.distro, reply.BuildID, bp, api.repos, packages, buildPackages, api.arch.Name(), cr.ComposeType, cr.Size, uploadTarget)
 
 		// TODO: we should probably do some kind of blueprint validation in future
 		// for now, let's just 500 and bail out
