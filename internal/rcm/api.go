@@ -135,7 +135,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&composeRequest)
-	if err != nil || len(composeRequest.Architectures) == 0 || len(composeRequest.Repositories) == 0 || len(composeRequest.ImageTypes) == 0 {
+	if err != nil || len(composeRequest.Architectures) != 1 || len(composeRequest.ImageTypes) != 1 || len(composeRequest.Repositories) == 0 {
 		writer.WriteHeader(http.StatusBadRequest)
 		errors := []string{}
 		if err != nil {
