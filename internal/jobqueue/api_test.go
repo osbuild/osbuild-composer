@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -40,11 +40,19 @@ func TestBasic(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	distroStruct := test_distro.New()
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	if err != nil {
+		t.Fatalf("error getting arch from distro")
+	}
+	imageType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		t.Fatalf("error getting image type from arch")
+	}
 	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
-	err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
+	err = store.PushCompose(distroStruct, arch, imageType, id, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -55,12 +63,20 @@ func TestCreate(t *testing.T) {
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-	distroStruct := test_distro.New()
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	if err != nil {
+		t.Fatalf("error getting arch from distro")
+	}
+	imageType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		t.Fatalf("error getting image type from arch")
+	}
 	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {
-		err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
+		err := store.PushCompose(distroStruct, arch, imageType, id, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}

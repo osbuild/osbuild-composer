@@ -560,11 +560,11 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, arch, composeType string, size uint64, uploadTarget *target.Target) error {
+func (s *Store) PushCompose(distro distro.Distro, arch distro.Arch, imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, uploadTarget *target.Target) error {
 	targets := []*target.Target{}
 
 	// Compatibility layer for image types in Weldr API v0
-	imageType, exists := common.ImageTypeFromCompatString(composeType)
+	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
 	if !exists {
 		panic("fatal error, compose type does not exist")
 	}
@@ -577,19 +577,12 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 
-		filename, _, err := distro.FilenameFromType(composeType)
-		if err != nil {
-			return fmt.Errorf("cannot query filename from image type %s: %#v", composeType, err)
-		}
-
 		targets = append(targets, target.NewLocalTarget(
 			&target.LocalTargetOptions{
-				Filename: filename,
+				Filename: imageType.Filename(),
 			},
 		))
 	}
-
-	size = distro.GetSizeForOutputType(composeType, size)
 
 	if uploadTarget != nil {
 		targets = append(targets, uploadTarget)
@@ -600,7 +593,7 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 		allRepos = append(allRepos, source.RepoConfig())
 	}
 
-	manifestStruct, err := distro.Manifest(bp.Customizations, allRepos, packages, buildPackages, arch, composeType, size)
+	manifestStruct, err := imageType.Manifest(bp.Customizations, allRepos, packages, buildPackages, imageType.Size(size))
 	if err != nil {
 		return err
 	}
@@ -612,7 +605,7 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 				{
 					QueueStatus: common.IBWaiting,
 					Manifest:    manifestStruct,
-					ImageType:   imageType,
+					ImageType:   imageTypeCommon,
 					Targets:     targets,
 					JobCreated:  time.Now(),
 					Size:        size,
@@ -626,7 +619,7 @@ func (s *Store) PushCompose(distro distro.Distro, composeID uuid.UUID, bp *bluep
 		ImageBuildID: 0,
 		Manifest:     manifestStruct,
 		Targets:      targets,
-		ImageType:    composeType,
+		ImageType:    imageType.Name(),
 	}
 
 	return nil
