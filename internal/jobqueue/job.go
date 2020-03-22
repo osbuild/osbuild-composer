@@ -22,7 +22,6 @@ type Job struct {
 	ImageBuildID int               `json:"image_build_id"`
 	Manifest     *osbuild.Manifest `json:"manifest"`
 	Targets      []*target.Target  `json:"targets"`
-	OutputType   string            `json:"output_type"`
 }
 
 type JobStatus struct {
