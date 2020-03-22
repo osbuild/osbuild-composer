@@ -4,11 +4,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
-	"github.com/osbuild/osbuild-composer/internal/rcm"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
+	"github.com/osbuild/osbuild-composer/internal/rcm"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -84,7 +90,7 @@ func main() {
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
 
-	distros, err := distro.NewDefaultRegistry()
+	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 	if err != nil {
 		log.Fatalf("Error loading distros: %v", err)
 	}
