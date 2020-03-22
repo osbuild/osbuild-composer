@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -102,29 +101,25 @@ type ImageType interface {
 }
 
 type Registry struct {
-	distros map[common.Distribution]Distro
+	distros map[string]Distro
 }
 
 func NewRegistry(distros ...Distro) (*Registry, error) {
 	reg := &Registry{
-		distros: make(map[common.Distribution]Distro),
+		distros: make(map[string]Distro),
 	}
 	for _, distro := range distros {
-		distroTag := distro.Distribution()
-		if _, exists := reg.distros[distroTag]; exists {
+		name := distro.Name()
+		if _, exists := reg.distros[name]; exists {
 			return nil, fmt.Errorf("NewRegistry: passed two distros with the same name: %s", distro.Name())
 		}
-		reg.distros[distroTag] = distro
+		reg.distros[name] = distro
 	}
 	return reg, nil
 }
 
 func (r *Registry) GetDistro(name string) Distro {
-	distroTag, exists := common.DistributionFromString(name)
-	if !exists {
-		return nil
-	}
-	distro, ok := r.distros[distroTag]
+	distro, ok := r.distros[name]
 	if !ok {
 		return nil
 	}
