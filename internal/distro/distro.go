@@ -78,29 +78,9 @@ func NewRegistry(distros ...Distro) (*Registry, error) {
 	return reg, nil
 }
 
-// Create a new Registry containing all known distros.
+// NewDefaultRegistry creates a new Registry containing all known distros.
 func NewDefaultRegistry() (*Registry, error) {
-	f30, err := fedora30.New()
-	if err != nil {
-		return nil, fmt.Errorf("error loading fedora30: %v", err)
-	}
-	f31, err := fedora31.New()
-	if err != nil {
-		return nil, fmt.Errorf("error loading fedora31: %v", err)
-	}
-	f32, err := fedora32.New()
-	if err != nil {
-		return nil, fmt.Errorf("error loading fedora32: %v", err)
-	}
-	el81, err := rhel81.New()
-	if err != nil {
-		return nil, fmt.Errorf("error loading rhel81: %v", err)
-	}
-	el82, err := rhel82.New()
-	if err != nil {
-		return nil, fmt.Errorf("error loading rhel82: %v", err)
-	}
-	return NewRegistry(f30, f31, f32, el81, el82)
+	return NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 }
 
 func (r *Registry) GetDistro(name string) Distro {
@@ -116,7 +96,7 @@ func (r *Registry) GetDistro(name string) Distro {
 	return distro
 }
 
-// Returns the names of all distros in a Registry, sorted alphabetically.
+// List returns the names of all distros in a Registry, sorted alphabetically.
 func (r *Registry) List() []string {
 	list := []string{}
 	for _, distro := range r.distros {
