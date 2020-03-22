@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"testing"
 
-	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
-
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -34,11 +32,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		registry, err := distro_mock.NewDefaultRegistry()
-		if err != nil {
-			t.Fatal(err)
-		}
-		api := jobqueue.New(nil, store.New(nil, *registry))
+		api := jobqueue.New(nil, store.New(nil))
 
 		test.TestNonJsonRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedResponse)
 	}
@@ -47,14 +41,10 @@ func TestBasic(t *testing.T) {
 func TestCreate(t *testing.T) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry, err := distro_mock.NewDefaultRegistry()
-	if err != nil {
-		t.Fatal(err)
-	}
-	store := store.New(nil, *registry)
+	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
-	err = store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
+	err := store.PushCompose(distroStruct, id, &blueprint.Blueprint{}, nil, nil, nil, "x86_64", "qcow2", 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -66,11 +56,7 @@ func TestCreate(t *testing.T) {
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
 	id, _ := uuid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := test_distro.New()
-	registry, err := distro_mock.NewDefaultRegistry()
-	if err != nil {
-		t.Fatal(err)
-	}
-	store := store.New(nil, *registry)
+	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
 	if from != "VOID" {

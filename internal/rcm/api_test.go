@@ -3,11 +3,12 @@ package rcm_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
+
+	"github.com/google/uuid"
 
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
@@ -52,7 +53,7 @@ func TestBasicRcmAPI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	for _, c := range cases {
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
@@ -78,7 +79,7 @@ func TestSubmitCompose(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil, *registry), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`

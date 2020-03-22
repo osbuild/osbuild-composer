@@ -104,7 +104,7 @@ func main() {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	store := store.New(&stateDir, *distros)
+	store := store.New(&stateDir)
 
 	jobAPI := jobqueue.New(logger, store)
 	weldrAPI := weldr.New(rpm, common.CurrentArch(), distribution, repoMap[common.CurrentArch()], logger, store)
