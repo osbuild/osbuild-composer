@@ -14,12 +14,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
 
 type Distro interface {
@@ -76,11 +70,6 @@ func NewRegistry(distros ...Distro) (*Registry, error) {
 		reg.distros[distroTag] = distro
 	}
 	return reg, nil
-}
-
-// NewDefaultRegistry creates a new Registry containing all known distros.
-func NewDefaultRegistry() (*Registry, error) {
-	return NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 }
 
 func (r *Registry) GetDistro(name string) Distro {

@@ -9,6 +9,11 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -52,7 +57,7 @@ func TestDistro_Manifest(t *testing.T) {
 			t.Fatalf("rpmmd.LoadRepositories: %v", err)
 		}
 		t.Run(tt.ComposeRequest.OutputFormat, func(t *testing.T) {
-			distros, err := distro.NewDefaultRegistry()
+			distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -92,7 +97,7 @@ func TestDistro_RegistryList(t *testing.T) {
 		"rhel-8.2",
 	}
 
-	distros, err := distro.NewDefaultRegistry()
+	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 	if err != nil {
 		t.Fatal(err)
 	}
