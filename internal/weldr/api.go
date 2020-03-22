@@ -1409,36 +1409,36 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
-	if bp != nil {
-		packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch.Name())
-		if err != nil {
-			errors := responseError{
-				ID:  "DepsolveError",
-				Msg: err.Error(),
-			}
-			statusResponseError(writer, http.StatusInternalServerError, errors)
-			return
-		}
-
-		err = api.store.PushCompose(api.distro, reply.BuildID, bp, api.repos, packages, buildPackages, api.arch.Name(), cr.ComposeType, cr.Size, uploadTarget)
-
-		// TODO: we should probably do some kind of blueprint validation in future
-		// for now, let's just 500 and bail out
-		if err != nil {
-			log.Println("error when pushing new compose: ", err.Error())
-			errors := responseError{
-				ID:  "ComposePushErrored",
-				Msg: err.Error(),
-			}
-			statusResponseError(writer, http.StatusInternalServerError, errors)
-			return
-		}
-	} else {
+	if bp == nil {
 		errors := responseError{
 			ID:  "UnknownBlueprint",
 			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packages, buildPackages, err := api.depsolveBlueprint(bp, cr.ComposeType, api.arch.Name())
+	if err != nil {
+		errors := responseError{
+			ID:  "DepsolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
+	err = api.store.PushCompose(api.distro, reply.BuildID, bp, api.repos, packages, buildPackages, api.arch.Name(), cr.ComposeType, cr.Size, uploadTarget)
+
+	// TODO: we should probably do some kind of blueprint validation in future
+	// for now, let's just 500 and bail out
+	if err != nil {
+		log.Println("error when pushing new compose: ", err.Error())
+		errors := responseError{
+			ID:  "ComposePushErrored",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
 	}
 
