@@ -44,7 +44,7 @@ type output struct {
 const Distro = common.Fedora31
 const ModulePlatformID = "platform:f31"
 
-func New() (*Fedora31, error) {
+func New() *Fedora31 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := Fedora31{
@@ -286,7 +286,7 @@ func New() (*Fedora31, error) {
 		},
 	}
 
-	return &r, nil
+	return &r
 }
 
 func (r *Fedora31) Name() string {

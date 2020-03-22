@@ -45,7 +45,7 @@ type output struct {
 const Distro = common.RHEL82
 const ModulePlatformID = "platform:el8"
 
-func New() (*RHEL82, error) {
+func New() *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
@@ -425,7 +425,7 @@ func New() (*RHEL82, error) {
 		},
 	}
 
-	return &r, nil
+	return &r
 }
 
 func (r *RHEL82) Name() string {
