@@ -83,22 +83,14 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 
 // Depsolves packages and build packages for building an image for a given
 // distro, in the given architecture
-func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, repos []rpmmd.RepoConfig, imageType, arch string) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
-	specs, excludeSpecs, err := distro.BasePackages(imageType, arch)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Distro.BasePackages: %v", err)
-	}
-
+func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, imageType distro.ImageType, repos []rpmmd.RepoConfig) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+	specs, excludeSpecs := imageType.BasePackages()
 	packages, _, err := rpmmd.Depsolve(specs, excludeSpecs, repos, distro.ModulePlatformID())
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)
 	}
 
-	specs, err = distro.BuildPackages(arch)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Distro.BuildPackages: %v", err)
-	}
-
+	specs = imageType.BuildPackages()
 	buildPackages, _, err := rpmmd.Depsolve(specs, nil, repos, distro.ModulePlatformID())
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)
@@ -203,7 +195,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
-	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, repoConfigs, imageType.Name(), arch.Name())
+	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, imageType, repoConfigs)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
