@@ -18,7 +18,7 @@ import (
 	"testing"
 )
 
-func TestComposeIntegration(t *testing.T) {
+func TestEverything(t *testing.T) {
 	// Smoke tests, until functionality tested fully
 	// that the calls succeed and return valid output
 	runComposerCLI(t, false, "compose", "types")
@@ -55,15 +55,34 @@ func TestComposeIntegration(t *testing.T) {
 	runComposerCLI(t, false, "projects", "info", "filesystem")
 	runComposerCLI(t, false, "projects", "info", "filesystem", "kernel")
 	runComposerCLI(t, false, "sources", "list")
-	// runCommand(false, "sources", "info", "fedora")
-	// runCommand(false, "sources", "info", "fedora", "fedora-updates")
-	// runCommand(false, "sources", "add" SOURCES.TOML)
-	// runCommand(false, "sources", "change" SOURCES.TOML)
-	// runCommand(false, "sources", "delete" SOURCES.TOML)
 	runComposerCLI(t, false, "status", "show")
 
 	// Full integration tests
 	testCompose(t, "ami")
+}
+
+func TestSources(t *testing.T) {
+	sources_toml, err := ioutil.TempFile("", "SOURCES-*.TOML")
+	require.NoErrorf(t, err, "Could not create temporary file: %v", err)
+	defer os.Remove(sources_toml.Name())
+
+	_, err = sources_toml.Write([]byte(`name = "osbuild-test-addon-source"
+url = "file://REPO-PATH"
+type = "yum-baseurl"
+proxy = "https://proxy-url/"
+check_ssl = true
+check_gpg = true
+gpgkey_urls = ["https://url/path/to/gpg-key"]
+`))
+	require.NoError(t, err)
+
+	runComposerCLI(t, false, "sources", "list")
+	// todo: this will fail on RHEL
+	runComposerCLI(t, false, "sources", "info", "fedora")
+
+	runComposerCLI(t, false, "sources", "add", sources_toml.Name())
+	runComposerCLI(t, false, "sources", "change", sources_toml.Name())
+	runComposerCLI(t, false, "sources", "delete", "osbuild-test-addon-source")
 }
 
 func testCompose(t *testing.T, outputType string) {
