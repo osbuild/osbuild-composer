@@ -476,7 +476,15 @@ func TestCompose(t *testing.T) {
 			{
 				QueueStatus: common.IBWaiting,
 				ImageType:   common.Qcow2Generic,
-				Targets:     []*target.Target{},
+				Targets: []*target.Target{
+					{
+						// skip Uuid and Created fields - they are ignored
+						Name: "org.osbuild.local",
+						Options: &target.LocalTargetOptions{
+							Filename: "test.img",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -505,6 +513,13 @@ func TestCompose(t *testing.T) {
 							SecretAccessKey: "secretkey",
 							Bucket:          "clay",
 							Key:             "imagekey",
+						},
+					},
+					{
+						// skip Uuid and Created fields - they are ignored
+						Name: "org.osbuild.local",
+						Options: &target.LocalTargetOptions{
+							Filename: "test.img",
 						},
 					},
 				},

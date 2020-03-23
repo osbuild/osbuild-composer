@@ -1407,10 +1407,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	var uploadTarget *target.Target
+	var targets []*target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
-		uploadTarget = uploadRequestToTarget(*cr.Upload, imageType)
+		t := uploadRequestToTarget(*cr.Upload, imageType)
+		targets = append(targets, t)
 	}
+
+	targets = append(targets, target.NewLocalTarget(
+		&target.LocalTargetOptions{
+			Filename: imageType.Filename(),
+		},
+	))
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 	if bp == nil {
@@ -1437,7 +1444,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Status:  true,
 	}
 
-	err = api.store.PushCompose(api.distro, api.arch, imageType, reply.BuildID, bp, api.repos, packages, buildPackages, cr.Size, uploadTarget)
+	err = api.store.PushCompose(api.distro, api.arch, imageType, reply.BuildID, bp, api.repos, packages, buildPackages, cr.Size, targets)
 
 	// TODO: we should probably do some kind of blueprint validation in future
 	// for now, let's just 500 and bail out
