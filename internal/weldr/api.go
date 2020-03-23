@@ -1444,7 +1444,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Status:  true,
 	}
 
-	err = api.store.PushCompose(api.distro, api.arch, imageType, reply.BuildID, bp, api.repos, packages, buildPackages, cr.Size, targets)
+	err = api.store.PushCompose(api.distro, api.arch, imageType, reply.BuildID, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
 
 	// TODO: we should probably do some kind of blueprint validation in future
 	// for now, let's just 500 and bail out
@@ -1965,12 +1965,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	repos := append([]rpmmd.RepoConfig{}, api.repos...)
-	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, source.RepoConfig())
-	}
-
-	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.FetchMetadata(api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
 	return packages, err
 }
 
@@ -1985,11 +1980,17 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 	return pkg.Name
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+// Returns all configured repositories (base + sources) as rpmmd.RepoConfig
+func (api *API) allRepositories() []rpmmd.RepoConfig {
 	repos := append([]rpmmd.RepoConfig{}, api.repos...)
 	for _, source := range api.store.GetAllSources() {
 		repos = append(repos, source.RepoConfig())
 	}
+	return repos
+}
+
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
+	repos := api.allRepositories()
 	var specs []string = []string{}
 	for _, pkg := range bp.Packages {
 		specs = append(specs, getPkgNameGlob(pkg))
