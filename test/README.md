@@ -55,9 +55,9 @@ The easiest way to get started with integration testing from a git
 checkout is:
 
 * `dnf -y install rpm-build`
-* `dnf -y builddep golang-github-osbuild-composer.spec`
+* `dnf -y builddep osbuild-composer.spec`
 * `make rpm` to build the software under test
-* `dnf install rpmbuild/RPMS/x86_64/golang-github-osbuild-composer-*.rpm` - this will
+* `dnf install rpmbuild/RPMS/x86_64/osbuild-composer-*.rpm` - this will
   install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
 * `systemctl start osbuild-composer`
 * `/usr/libexec/tests/osbuild-composer/osbuild-tests` to execute the test suite.

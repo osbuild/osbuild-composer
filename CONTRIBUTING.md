@@ -17,7 +17,7 @@ $ cd osbuild-composer
 
 ```
 $ dnf group install 'RPM Development Tools'        # Install rpmbuild
-$ dnf builddep golang-github-osbuild-composer.spec # Install build-time dependencies
+$ dnf builddep osbuild-composer.spec               # Install build-time dependencies
 $ sudo dnf -y install cockpit-composer             # Optional: Install cockpit integration
 $ sudo systemctl start cockpit.socket              # Optional: Start cockpit
 ```
