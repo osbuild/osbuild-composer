@@ -65,6 +65,7 @@ export PATH=$PWD/_bin${PATH:+:$PATH}
 export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS=-mod=vendor
 %endif
+
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 
@@ -86,24 +87,8 @@ install -m 0755 -vp _bin/osbuild-composer                   %{buildroot}%{_libex
 install -m 0755 -vp _bin/osbuild-worker                     %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
 
-install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
-install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-rcm-tests                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
-
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
 install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
-
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
-install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
-install -m 0600 -vp test/keyring/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
-
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
-install -m 0644 -vp test/cloud-init/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
 
 install -m 0755 -vd                                         %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
@@ -112,6 +97,22 @@ install -m 0755 -vd                                         %{buildroot}%{_sysus
 install -m 0644 -vp distribution/osbuild-composer.conf      %{buildroot}%{_sysusersdir}/
 
 install -m 0755 -vd                                         %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
+
+install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
+install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-rcm-tests                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
+install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
+install -m 0600 -vp test/keyring/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
+install -m 0644 -vp test/cloud-init/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
 
 %check
 %if 0%{?rhel}
@@ -143,8 +144,8 @@ export GOPATH=$PWD/_build:%{gopath}
 %{_sysusersdir}/osbuild-composer.conf
 
 %package rcm
-Summary:	RCM-specific version of osbuild-composer
-Requires: 	osbuild-composer
+Summary:    RCM-specific version of osbuild-composer
+Requires:   osbuild-composer
 
 %description rcm
 RCM-specific version of osbuild-composer not intended for public usage.
@@ -161,24 +162,8 @@ RCM-specific version of osbuild-composer not intended for public usage.
 %postun rcm
 %systemd_postun_with_restart osbuild-rcm.socket
 
-%package tests
-Summary:	Integration tests
-Requires: 	osbuild-composer
-Requires: 	composer-cli
-Requires:	createrepo_c
-Requires:   genisoimage
-Requires:   qemu-kvm-core
-
-%description tests
-Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
-
-%files tests
-%{_libexecdir}/tests/osbuild-composer/
-%{_datadir}/tests/osbuild-composer/
-%{_libexecdir}/osbuild-composer/image-info
-
 %package worker
-Summary:	The worker for osbuild-composer
+Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   osbuild
 
@@ -198,6 +183,22 @@ The worker for osbuild-composer
 
 %postun worker
 %systemd_postun_with_restart osbuild-worker@.service osbuild-remote-worker@.service
+
+%package tests
+Summary:    Integration tests
+Requires:   osbuild-composer
+Requires:   composer-cli
+Requires:   createrepo_c
+Requires:   genisoimage
+Requires:   qemu-kvm-core
+
+%description tests
+Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
+
+%files tests
+%{_libexecdir}/tests/osbuild-composer/
+%{_datadir}/tests/osbuild-composer/
+%{_libexecdir}/osbuild-composer/image-info
 
 %changelog
 # the changelog is distribution-specific, therefore it doesn't make sense to have it upstream
