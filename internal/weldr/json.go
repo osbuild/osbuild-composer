@@ -121,3 +121,26 @@ func (s *SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
 
 	return ssc
 }
+
+// ProjectsListV0 is the response to /projects/list request
+type ProjectsListV0 struct {
+	Total    uint                `json:"total"`
+	Offset   uint                `json:"offset"`
+	Limit    uint                `json:"limit"`
+	Projects []rpmmd.PackageInfo `json:"projects"`
+}
+
+// ProjectsInfoV0 is the response to /projects/info request
+type ProjectsInfoV0 struct {
+	Projects []rpmmd.PackageInfo `json:"projects"`
+}
+
+// ProjectsDependenciesV0 is the response to /projects/depsolve request
+type ProjectsDependenciesV0 struct {
+	Projects []rpmmd.PackageSpec `json:"projects"`
+}
+
+// ModulesInfoV0 is the response to /modules/info request
+type ModulesInfoV0 struct {
+	Modules []rpmmd.PackageInfo `json:"modules"`
+}
