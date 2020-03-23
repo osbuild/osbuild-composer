@@ -37,12 +37,14 @@ def dnfrepo(desc, parent_conf=None):
     return repo
 
 
-def create_base(repos, module_platform_id, persistdir, cachedir):
+def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     base = dnf.Base()
     base.conf.module_platform_id = module_platform_id
     base.conf.config_file_path = "/dev/null"
     base.conf.persistdir = persistdir
     base.conf.cachedir = cachedir
+    base.conf.substitutions['arch'] = arch
+    base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
 
     for repo in repos:
         base.repos.add(dnfrepo(repo, base.conf))
@@ -84,12 +86,13 @@ call = json.load(sys.stdin)
 command = call["command"]
 arguments = call["arguments"]
 repos = arguments.get("repos", {})
+arch = arguments["arch"]
 cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
     try:
-        base = create_base(repos, module_platform_id, persistdir, cachedir)
+        base = create_base(repos, module_platform_id, persistdir, cachedir, arch)
     except dnf.exceptions.RepoError as e:
         exit_with_dnf_error("RepoError", f"Error occurred when setting up repo: {e}")
 
