@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
@@ -16,46 +15,46 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-type arch struct {
-	Name               string
-	BootloaderPackages []string
-	BuildPackages      []string
-	UEFI               bool
-}
-
-type output struct {
-	Name             string
-	MimeType         string
-	Packages         []string
-	ExcludedPackages []string
-	EnabledServices  []string
-	DisabledServices []string
-	Bootable         bool
-	DefaultTarget    string
-	KernelOptions    string
-	DefaultSize      uint64
-	Assembler        func(uefi bool, size uint64) *osbuild.Assembler
-}
-
-const Distro = common.RHEL82
-const ModulePlatformID = "platform:el8"
+const name = "rhel-8.2"
+const modulePlatformID = "platform:el8"
 
 type RHEL82 struct {
 	arches        map[string]arch
-	outputs       map[string]output
+	imageTypes    map[string]imageType
 	buildPackages []string
 }
 
-type RHEL82Arch struct {
+type arch struct {
+	name               string
+	bootloaderPackages []string
+	buildPackages      []string
+	uefi               bool
+}
+
+type imageType struct {
+	name             string
+	mimeType         string
+	packages         []string
+	excludedPackages []string
+	enabledServices  []string
+	disabledServices []string
+	bootable         bool
+	defaultTarget    string
+	kernelOptions    string
+	defaultSize      uint64
+	assembler        func(uefi bool, size uint64) *osbuild.Assembler
+}
+
+type rhel82Arch struct {
 	name   string
 	distro *RHEL82
 	arch   *arch
 }
 
-type RHEL82ImageType struct {
-	name   string
-	arch   *RHEL82Arch
-	output *output
+type rhel82ImageType struct {
+	name      string
+	arch      *rhel82Arch
+	imageType *imageType
 }
 
 func (d *RHEL82) GetArch(arch string) (distro.Arch, error) {
@@ -64,75 +63,88 @@ func (d *RHEL82) GetArch(arch string) (distro.Arch, error) {
 		return nil, errors.New("invalid architecture: " + arch)
 	}
 
-	return &RHEL82Arch{
+	return &rhel82Arch{
 		name:   arch,
 		distro: d,
 		arch:   &a,
 	}, nil
 }
 
-func (a *RHEL82Arch) Name() string {
+func (a *rhel82Arch) Name() string {
 	return a.name
 }
 
-func (a *RHEL82Arch) ListImageTypes() []string {
-	return a.distro.ListOutputFormats()
+func (a *rhel82Arch) ListImageTypes() []string {
+	formats := make([]string, 0, len(a.distro.imageTypes))
+	for name := range a.distro.imageTypes {
+		formats = append(formats, name)
+	}
+	sort.Strings(formats)
+	return formats
 }
 
-func (a *RHEL82Arch) GetImageType(imageType string) (distro.ImageType, error) {
-	t, exists := a.distro.outputs[imageType]
+func (a *rhel82Arch) GetImageType(imageType string) (distro.ImageType, error) {
+	t, exists := a.distro.imageTypes[imageType]
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
 
-	return &RHEL82ImageType{
-		name:   imageType,
-		arch:   a,
-		output: &t,
+	return &rhel82ImageType{
+		name:      imageType,
+		arch:      a,
+		imageType: &t,
 	}, nil
 }
 
-func (t *RHEL82ImageType) Name() string {
+func (t *rhel82ImageType) Name() string {
 	return t.name
 }
 
-func (t *RHEL82ImageType) Filename() string {
-	return t.output.Name
+func (t *rhel82ImageType) Filename() string {
+	return t.imageType.name
 }
 
-func (t *RHEL82ImageType) MIMEType() string {
-	return t.output.MimeType
+func (t *rhel82ImageType) MIMEType() string {
+	return t.imageType.mimeType
 }
 
-func (t *RHEL82ImageType) Size(size uint64) uint64 {
-	return t.arch.distro.GetSizeForOutputType(t.name, size)
+func (t *rhel82ImageType) Size(size uint64) uint64 {
+	const MegaByte = 1024 * 1024
+	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
+	if t.name == "vhd" && size%MegaByte != 0 {
+		size = (size/MegaByte + 1) * MegaByte
+	}
+	if size == 0 {
+		size = t.imageType.defaultSize
+	}
+	return size
 }
 
-func (t *RHEL82ImageType) BasePackages() ([]string, []string) {
-	packages := t.output.Packages
-	if t.output.Bootable {
-		packages = append(packages, t.arch.arch.BootloaderPackages...)
+func (t *rhel82ImageType) BasePackages() ([]string, []string) {
+	packages := t.imageType.packages
+	if t.imageType.bootable {
+		packages = append(packages, t.arch.arch.bootloaderPackages...)
 	}
 
-	return packages, t.output.ExcludedPackages
+	return packages, t.imageType.excludedPackages
 }
 
-func (t *RHEL82ImageType) BuildPackages() []string {
-	return append(t.arch.distro.buildPackages, t.arch.arch.BuildPackages...)
+func (t *rhel82ImageType) BuildPackages() []string {
+	return append(t.arch.distro.buildPackages, t.arch.arch.buildPackages...)
 }
 
-func (t *RHEL82ImageType) Manifest(c *blueprint.Customizations,
+func (t *rhel82ImageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
 	buildPackageSpecs []rpmmd.PackageSpec,
 	size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := t.arch.distro.pipeline(c, repos, packageSpecs, buildPackageSpecs, t.arch.name, t.name, size)
+	pipeline, err := t.pipeline(c, repos, packageSpecs, buildPackageSpecs, size)
 	if err != nil {
 		return nil, err
 	}
 
 	return &osbuild.Manifest{
-		Sources:  *t.arch.distro.sources(append(packageSpecs, buildPackageSpecs...)),
+		Sources:  *sources(append(packageSpecs, buildPackageSpecs...)),
 		Pipeline: *pipeline,
 	}, nil
 }
@@ -141,7 +153,7 @@ func New() *RHEL82 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := RHEL82{
-		outputs: map[string]output{},
+		imageTypes: map[string]imageType{},
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",
@@ -157,32 +169,32 @@ func New() *RHEL82 {
 		},
 		arches: map[string]arch{
 			"x86_64": arch{
-				Name: "x86_64",
-				BootloaderPackages: []string{
+				name: "x86_64",
+				bootloaderPackages: []string{
 					"grub2-pc",
 				},
-				BuildPackages: []string{
+				buildPackages: []string{
 					"grub2-pc",
 				},
 			},
 			"aarch64": arch{
-				Name: "aarch64",
-				BootloaderPackages: []string{
+				name: "aarch64",
+				bootloaderPackages: []string{
 					"dracut-config-generic",
 					"efibootmgr",
 					"grub2-efi-aa64",
 					"grub2-tools",
 					"shim-aa64",
 				},
-				UEFI: true,
+				uefi: true,
 			},
 		},
 	}
 
-	r.outputs["ami"] = output{
-		Name:     "image.raw.xz",
-		MimeType: "application/octet-stream",
-		Packages: []string{
+	r.imageTypes["ami"] = imageType{
+		name:     "image.raw.xz",
+		mimeType: "application/octet-stream",
+		packages: []string{
 			"checkpolicy",
 			"chrony",
 			"cloud-init",
@@ -208,7 +220,7 @@ func New() *RHEL82 {
 			// TODO this doesn't exist in BaseOS or AppStream
 			// "rh-amazon-rhui-client",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"aic94xx-firmware",
 			"alsa-firmware",
 			"alsa-lib",
@@ -247,19 +259,19 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		DefaultTarget: "multi-user.target",
-		Bootable:      true,
-		KernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		DefaultSize:   6 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		defaultTarget: "multi-user.target",
+		bootable:      true,
+		kernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		defaultSize:   6 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
 		},
 	}
 
-	r.outputs["ext4-filesystem"] = output{
-		Name:     "filesystem.img",
-		MimeType: "application/octet-stream",
-		Packages: []string{
+	r.imageTypes["ext4-filesystem"] = imageType{
+		name:     "filesystem.img",
+		mimeType: "application/octet-stream",
+		packages: []string{
 			"policycoreutils",
 			"selinux-policy-targeted",
 			"kernel",
@@ -268,23 +280,23 @@ func New() *RHEL82 {
 			"dracut-config-generic",
 			"langpacks-en",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		Bootable:      false,
-		KernelOptions: "ro net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
+		bootable:      false,
+		kernelOptions: "ro net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
 	}
 
-	r.outputs["partitioned-disk"] = output{
-		Name:     "disk.img",
-		MimeType: "application/octet-stream",
-		Packages: []string{
+	r.imageTypes["partitioned-disk"] = imageType{
+		name:     "disk.img",
+		mimeType: "application/octet-stream",
+		packages: []string{
 			"@core",
 			"chrony",
 			"dracut-config-generic",
@@ -293,25 +305,25 @@ func New() *RHEL82 {
 			"langpacks-en",
 			"selinux-policy-targeted",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		Bootable:      true,
-		KernelOptions: "ro net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		bootable:      true,
+		kernelOptions: "ro net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("raw", "disk.img", uefi, size)
 		},
 	}
 
-	r.outputs["qcow2"] = output{
-		Name:     "disk.qcow2",
-		MimeType: "application/x-qemu-disk",
-		Packages: []string{
+	r.imageTypes["qcow2"] = imageType{
+		name:     "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packages: []string{
 			"@core",
 			"chrony",
 			"dnf",
@@ -344,7 +356,7 @@ func New() *RHEL82 {
 			"insights-client",
 			// TODO: rh-amazon-rhui-client
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 			"aic94xx-firmware",
 			"alsa-firmware",
@@ -384,18 +396,18 @@ func New() *RHEL82 {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		Bootable:      true,
-		KernelOptions: "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		bootable:      true,
+		kernelOptions: "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
 
-	r.outputs["openstack"] = output{
-		Name:     "disk.qcow2",
-		MimeType: "application/x-qemu-disk",
-		Packages: []string{
+	r.imageTypes["openstack"] = imageType{
+		name:     "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packages: []string{
 			// Defaults
 			"@Core",
 			"langpacks-en",
@@ -411,21 +423,21 @@ func New() *RHEL82 {
 			"qemu-guest-agent",
 			"spice-vdagent",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 		},
-		Bootable:      true,
-		KernelOptions: "ro net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		bootable:      true,
+		kernelOptions: "ro net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
 
-	r.outputs["tar"] = output{
-		Name:     "root.tar.xz",
-		MimeType: "application/x-tar",
-		Packages: []string{
+	r.imageTypes["tar"] = imageType{
+		name:     "root.tar.xz",
+		mimeType: "application/x-tar",
+		packages: []string{
 			"policycoreutils",
 			"selinux-policy-targeted",
 			"kernel",
@@ -434,22 +446,22 @@ func New() *RHEL82 {
 			"dracut-config-generic",
 			"langpacks-en",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		Bootable:      false,
-		KernelOptions: "ro net.ifnames=0",
-		Assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		bootable:      false,
+		kernelOptions: "ro net.ifnames=0",
+		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
-	r.outputs["vhd"] = output{
-		Name:     "disk.vhd",
-		MimeType: "application/x-vhd",
-		Packages: []string{
+	r.imageTypes["vhd"] = imageType{
+		name:     "disk.vhd",
+		mimeType: "application/x-vhd",
+		packages: []string{
 			// Defaults
 			"@Core",
 			"langpacks-en",
@@ -469,30 +481,30 @@ func New() *RHEL82 {
 			"cloud-utils-growpart",
 			"gdisk",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		EnabledServices: []string{
+		enabledServices: []string{
 			"sshd",
 			"waagent",
 		},
-		DefaultTarget: "multi-user.target",
-		Bootable:      true,
-		KernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		defaultTarget: "multi-user.target",
+		bootable:      true,
+		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
 		},
 	}
 
-	r.outputs["vmdk"] = output{
-		Name:     "disk.vmdk",
-		MimeType: "application/x-vmdk",
-		Packages: []string{
+	r.imageTypes["vmdk"] = imageType{
+		name:     "disk.vmdk",
+		mimeType: "application/x-vmdk",
+		packages: []string{
 			"@core",
 			"chrony",
 			"dracut-config-generic",
@@ -502,17 +514,17 @@ func New() *RHEL82 {
 			"open-vm-tools",
 			"selinux-policy-targeted",
 		},
-		ExcludedPackages: []string{
+		excludedPackages: []string{
 			"dracut-config-rescue",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		Bootable:      true,
-		KernelOptions: "ro net.ifnames=0",
-		DefaultSize:   2 * GigaByte,
-		Assembler: func(uefi bool, size uint64) *osbuild.Assembler {
+		bootable:      true,
+		kernelOptions: "ro net.ifnames=0",
+		defaultSize:   2 * GigaByte,
+		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
 		},
 	}
@@ -521,66 +533,37 @@ func New() *RHEL82 {
 }
 
 func (r *RHEL82) Name() string {
-	name, exists := Distro.ToString()
-	if !exists {
-		panic("Fatal error, hardcoded distro value in rhel82 package is not valid!")
-	}
 	return name
 }
 
-func (r *RHEL82) Distribution() common.Distribution {
-	return Distro
-}
-
 func (r *RHEL82) ModulePlatformID() string {
-	return ModulePlatformID
-}
-
-func (r *RHEL82) ListOutputFormats() []string {
-	formats := make([]string, 0, len(r.outputs))
-	for name := range r.outputs {
-		formats = append(formats, name)
-	}
-	sort.Strings(formats)
-	return formats
+	return modulePlatformID
 }
 
 func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
-	if output, exists := r.outputs[outputFormat]; exists {
-		return output.Name, output.MimeType, nil
+	if output, exists := r.imageTypes[outputFormat]; exists {
+		return output.name, output.mimeType, nil
 	}
 	return "", "", errors.New("invalid output format: " + outputFormat)
 }
 
-func (r *RHEL82) GetSizeForOutputType(outputFormat string, size uint64) uint64 {
-	const MegaByte = 1024 * 1024
-	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if outputFormat == "vhd" && size%MegaByte != 0 {
-		size = (size/MegaByte + 1) * MegaByte
-	}
-	if size == 0 {
-		size = r.outputs[outputFormat].DefaultSize
-	}
-	return size
-}
-
 func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
-	output, exists := r.outputs[outputFormat]
+	output, exists := r.imageTypes[outputFormat]
 	if !exists {
 		return nil, nil, errors.New("invalid output format: " + outputFormat)
 	}
 
-	packages := output.Packages
-	if output.Bootable {
+	packages := output.packages
+	if output.bootable {
 		arch, exists := r.arches[outputArchitecture]
 		if !exists {
 			return nil, nil, errors.New("invalid architecture: " + outputArchitecture)
 		}
 
-		packages = append(packages, arch.BootloaderPackages...)
+		packages = append(packages, arch.bootloaderPackages...)
 	}
 
-	return packages, output.ExcludedPackages, nil
+	return packages, output.excludedPackages, nil
 }
 
 func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
@@ -589,35 +572,37 @@ func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
 		return nil, errors.New("invalid architecture: " + outputArchitecture)
 	}
 
-	return append(r.buildPackages, arch.BuildPackages...), nil
+	return append(r.buildPackages, arch.buildPackages...), nil
 }
 
-func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
-	output, exists := r.outputs[outputFormat]
-	if !exists {
-		return nil, errors.New("invalid output format: " + outputFormat)
+func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
+	files := &osbuild.FilesSource{
+		URLs: make(map[string]string),
 	}
-
-	arch, exists := r.arches[outputArchitecture]
-	if !exists {
-		return nil, errors.New("invalid architecture: " + outputArchitecture)
+	for _, pkg := range packages {
+		files.URLs[pkg.Checksum] = pkg.RemoteLocation
 	}
+	return &osbuild.Sources{
+		"org.osbuild.files": files,
+	}
+}
 
+func (t *rhel82ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
-	p.SetBuild(r.buildPipeline(repos, arch, buildPackageSpecs), "org.osbuild.rhel82")
+	p.SetBuild(t.buildPipeline(repos, *t.arch.arch, buildPackageSpecs), "org.osbuild.rhel82")
 
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, packageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch.arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
-	if output.Bootable {
-		p.AddStage(osbuild.NewFSTabStage(r.fsTabStageOptions(arch.UEFI)))
+	if t.imageType.bootable {
+		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.arch.uefi)))
 	}
 
-	kernelOptions := output.KernelOptions
+	kernelOptions := t.imageType.kernelOptions
 	if kernel := c.GetKernel(); kernel != nil {
 		kernelOptions += " " + kernel.Append
 	}
-	p.AddStage(osbuild.NewGRUB2Stage(r.grub2StageOptions(kernelOptions, arch.UEFI)))
+	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(kernelOptions, t.arch.arch.uefi)))
 
 	// TODO support setting all languages and install corresponding langpack-* package
 	language, keyboard := c.GetPrimaryLocale()
@@ -648,7 +633,7 @@ func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig,
 	}
 
 	if users := c.GetUsers(); len(users) > 0 {
-		options, err := r.userStageOptions(users)
+		options, err := t.userStageOptions(users)
 		if err != nil {
 			return nil, err
 		}
@@ -656,59 +641,31 @@ func (r *RHEL82) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig,
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(r.groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
-	if services := c.GetServices(); services != nil || output.EnabledServices != nil {
-		p.AddStage(osbuild.NewSystemdStage(r.systemdStageOptions(output.EnabledServices, output.DisabledServices, services, output.DefaultTarget)))
+	if services := c.GetServices(); services != nil || t.imageType.enabledServices != nil {
+		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.imageType.enabledServices, t.imageType.disabledServices, services, t.imageType.defaultTarget)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(r.firewallStageOptions(firewall)))
+		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
 	}
 
-	p.AddStage(osbuild.NewSELinuxStage(r.selinuxStageOptions()))
+	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
-	p.Assembler = output.Assembler(arch.UEFI, size)
+	p.Assembler = t.imageType.assembler(t.arch.arch.uefi, size)
 
 	return p, nil
 }
 
-func (r *RHEL82) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
-	files := &osbuild.FilesSource{
-		URLs: make(map[string]string),
-	}
-	for _, pkg := range packages {
-		files.URLs[pkg.Checksum] = pkg.RemoteLocation
-	}
-	return &osbuild.Sources{
-		"org.osbuild.files": files,
-	}
-}
-
-func (r *RHEL82) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
-	if err != nil {
-		return nil, err
-	}
-
-	return &osbuild.Manifest{
-		Sources:  *r.sources(append(packageSpecs, buildPackageSpecs...)),
-		Pipeline: *pipeline,
-	}, nil
-}
-
-func (r *RHEL82) Runner() string {
-	return "org.osbuild.rhel82"
-}
-
-func (r *RHEL82) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+func (r *rhel82ImageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, buildPackageSpecs)))
 	return p
 }
 
-func (r *RHEL82) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+func (r *rhel82ImageType) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
 	var gpgKeys []string
 	for _, repo := range repos {
 		if repo.GPGKey == "" {
@@ -727,7 +684,7 @@ func (r *RHEL82) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rp
 		Packages: packages,
 	}
 }
-func (r *RHEL82) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+func (r *rhel82ImageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
 	options := osbuild.UsersStageOptions{
 		Users: make(map[string]osbuild.UsersStageOptionsUser),
 	}
@@ -767,7 +724,7 @@ func (r *RHEL82) userStageOptions(users []blueprint.UserCustomization) (*osbuild
 	return &options, nil
 }
 
-func (r *RHEL82) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+func (r *rhel82ImageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
 	options := osbuild.GroupsStageOptions{
 		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
 	}
@@ -787,7 +744,7 @@ func (r *RHEL82) groupStageOptions(groups []blueprint.GroupCustomization) *osbui
 	return &options
 }
 
-func (r *RHEL82) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
+func (r *rhel82ImageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
 	options := osbuild.FirewallStageOptions{
 		Ports: firewall.Ports,
 	}
@@ -800,7 +757,7 @@ func (r *RHEL82) firewallStageOptions(firewall *blueprint.FirewallCustomization)
 	return &options
 }
 
-func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *osbuild.SystemdStageOptions {
+func (r *rhel82ImageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *osbuild.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
 		disabledServices = append(disabledServices, s.Disabled...)
@@ -812,7 +769,7 @@ func (r *RHEL82) systemdStageOptions(enabledServices, disabledServices []string,
 	}
 }
 
-func (r *RHEL82) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+func (r *rhel82ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	options := osbuild.FSTabStageOptions{}
 	options.AddFilesystem("0bd700f8-090f-4556-b797-b340297ea1bd", "xfs", "/", "defaults", 0, 0)
 	if uefi {
@@ -821,7 +778,7 @@ func (r *RHEL82) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	return &options
 }
 
-func (r *RHEL82) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRUB2StageOptions {
+func (r *rhel82ImageType) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRUB2StageOptions {
 	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	if err != nil {
 		panic("invalid UUID")
@@ -842,7 +799,7 @@ func (r *RHEL82) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRU
 	}
 }
 
-func (r *RHEL82) selinuxStageOptions() *osbuild.SELinuxStageOptions {
+func (r *rhel82ImageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	return &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}

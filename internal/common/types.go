@@ -80,12 +80,6 @@ func toStringHelper(mapping map[string]int, tag int) (string, bool) {
 	return "", false
 }
 
-// See unmarshalHelper for introduction. Converts between string and TypeAlias(int)
-func fromStringHelper(mapping map[string]int, stringInput string) (int, bool) {
-	value, exists := mapping[stringInput]
-	return value, exists
-}
-
 // Architecture represents one of the supported CPU architectures available for images
 // produced by osbuild-composer. It is represented as an integer because if it
 // was a string it would unmarshal from JSON just fine even in case that the architecture
@@ -235,70 +229,6 @@ func ImageTypeFromCompatString(input string) (ImageType, bool) {
 
 func (imgType ImageType) ToString() (string, bool) {
 	return toStringHelper(getImageTypeMapping(), int(imgType))
-}
-
-type Distribution int
-
-// NOTE: If you want to add more constants here, don't forget to add a mapping below
-const (
-	Fedora30 Distribution = iota
-	Fedora31
-	Fedora32
-	RHEL81
-	RHEL82
-)
-
-// getArchMapping is a helper function that defines the conversion from JSON string value
-// to Distribution.
-func getDistributionMapping() map[string]int {
-	// Don't forget to add module-platform-id mapping below
-	mapping := map[string]int{
-		"fedora-30": int(Fedora30),
-		"fedora-31": int(Fedora31),
-		"fedora-32": int(Fedora32),
-		"rhel-8.1":  int(RHEL81),
-		"rhel-8.2":  int(RHEL82),
-	}
-	return mapping
-}
-
-func (dist *Distribution) ModulePlatformID() (string, error) {
-	mapping := map[Distribution]string{
-		// TODO: this could be refactored so we don't have these strings hard coded in two places
-		Fedora30: "platform:f30",
-		Fedora31: "platform:f31",
-		Fedora32: "platform:f32",
-		RHEL81:   "platform:el8",
-		RHEL82:   "platform:el8",
-	}
-	id, exists := mapping[*dist]
-	if !exists {
-		return "", &CustomTypeError{reason: "Distribution does not have a module platform ID assigned"}
-	} else {
-		return id, nil
-	}
-}
-
-func (distro *Distribution) UnmarshalJSON(data []byte) error {
-	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid distribution", getDistributionMapping())
-	if err != nil {
-		return err
-	}
-	*distro = Distribution(value)
-	return nil
-}
-
-func (distro Distribution) MarshalJSON() ([]byte, error) {
-	return marshalHelper(int(distro), getDistributionMapping(), "is not a valid distribution tag")
-}
-
-func (distro Distribution) ToString() (string, bool) {
-	return toStringHelper(getDistributionMapping(), int(distro))
-}
-
-func DistributionFromString(distro string) (Distribution, bool) {
-	tag, exists := fromStringHelper(getDistributionMapping(), distro)
-	return Distribution(tag), exists
 }
 
 type UploadTarget int

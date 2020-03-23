@@ -10,60 +10,63 @@ import (
 )
 
 type TestDistro struct{}
-type TestArch struct{}
-type TestImageType struct{}
+type testArch struct{}
+type testImageType struct{}
 
-const Name = "test-distro"
-const ModulePlatformID = "platform:test"
+const name = "test-distro"
+const modulePlatformID = "platform:test"
 
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
 	if arch != "test_arch" {
 		return nil, errors.New("invalid arch: " + arch)
 	}
-	return &TestArch{}, nil
+	return &testArch{}, nil
 }
 
-func (a *TestArch) Name() string {
-	return Name
+func (a *testArch) Name() string {
+	return "test_format"
 }
 
-func (a *TestArch) ListImageTypes() []string {
+func (a *testArch) ListImageTypes() []string {
 	return []string{"test-format"}
 }
 
-func (a *TestArch) GetImageType(imageType string) (distro.ImageType, error) {
+func (a *testArch) GetImageType(imageType string) (distro.ImageType, error) {
 	if imageType != "test_output" {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
-	return &TestImageType{}, nil
+	return &testImageType{}, nil
 }
 
-func (t *TestImageType) Name() string {
+func (t *testImageType) Name() string {
 	return "test-format"
 }
 
-func (t *TestImageType) Filename() string {
+func (t *testImageType) Filename() string {
 	return "test.img"
 }
 
-func (t *TestImageType) MIMEType() string {
+func (t *testImageType) MIMEType() string {
 	return "application/x-test"
 }
 
-func (t *TestImageType) Size(size uint64) uint64 {
+func (t *testImageType) Size(size uint64) uint64 {
 	return 0
 }
 
-func (t *TestImageType) BasePackages() ([]string, []string) {
+func (t *testImageType) BasePackages() ([]string, []string) {
 	return nil, nil
 }
 
-func (t *TestImageType) BuildPackages() []string {
+func (t *testImageType) BuildPackages() []string {
 	return nil
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error) {
-	return &osbuild.Manifest{}, nil
+func (t *testImageType) Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error) {
+	return &osbuild.Manifest{
+		Sources:  osbuild.Sources{},
+		Pipeline: osbuild.Pipeline{},
+	}, nil
 }
 
 func New() *TestDistro {
@@ -71,15 +74,11 @@ func New() *TestDistro {
 }
 
 func (d *TestDistro) Name() string {
-	return Name
+	return name
 }
 
 func (d *TestDistro) ModulePlatformID() string {
-	return ModulePlatformID
-}
-
-func (d *TestDistro) ListOutputFormats() []string {
-	return []string{"test_format"}
+	return modulePlatformID
 }
 
 func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, error) {
@@ -88,40 +87,4 @@ func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, erro
 	}
 
 	return "", "", errors.New("invalid output format: " + outputFormat)
-}
-
-func (d *TestDistro) BasePackages(outputFormat, outputArchitecture string) ([]string, []string, error) {
-	return nil, nil, nil
-}
-
-func (d *TestDistro) BuildPackages(outputArchitecture string) ([]string, error) {
-	return nil, nil
-}
-
-func (d *TestDistro) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArch, outputFormat string, size uint64) (*osbuild.Pipeline, error) {
-	if outputFormat == "test_output" && outputArch == "test_arch" {
-		return &osbuild.Pipeline{}, nil
-	}
-
-	return nil, errors.New("invalid output format or arch: " + outputFormat + " @ " + outputArch)
-}
-
-func (d *TestDistro) sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
-	return &osbuild.Sources{}
-}
-
-func (r *TestDistro) Manifest(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, outputArchitecture, outputFormat string, size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := r.pipeline(c, repos, packageSpecs, buildPackageSpecs, outputArchitecture, outputFormat, size)
-	if err != nil {
-		return nil, err
-	}
-
-	return &osbuild.Manifest{
-		Sources:  *r.sources(append(packageSpecs, buildPackageSpecs...)),
-		Pipeline: *pipeline,
-	}, nil
-}
-
-func (d *TestDistro) Runner() string {
-	return "org.osbuild.test"
 }
