@@ -37,9 +37,10 @@ type Package struct {
 }
 
 func (pkg Package) ToPackageBuild() PackageBuild {
+	// Convert the time to the API time format
 	return PackageBuild{
 		Arch:      pkg.Arch,
-		BuildTime: pkg.BuildTime,
+		BuildTime: pkg.BuildTime.Format("2006-01-02T15:04:05"),
 		Epoch:     pkg.Epoch,
 		Release:   pkg.Release,
 		Source: PackageSource{
@@ -79,7 +80,7 @@ type PackageSource struct {
 
 type PackageBuild struct {
 	Arch      string        `json:"arch"`
-	BuildTime time.Time     `json:"build_time"`
+	BuildTime string        `json:"build_time"`
 	Epoch     uint          `json:"epoch"`
 	Release   string        `json:"release"`
 	Source    PackageSource `json:"source"`
