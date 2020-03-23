@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -88,4 +89,21 @@ func TestBumpVersion(t *testing.T) {
 			t.Errorf("BumpVersion(%#v) is expected to return %#v, but instead returned %#v", c.OldVersion, c.ExpectedVersion, bp.Version)
 		}
 	}
+}
+
+func TestGetPackages(t *testing.T) {
+
+	bp := Blueprint{
+		Name:        "packages-test",
+		Description: "Testing GetPackages function",
+		Version:     "0.0.1",
+		Packages: []Package{
+			{Name: "tmux", Version: "1.2"}},
+		Modules: []Package{
+			{Name: "openssh-server", Version: "*"}},
+		Groups: []Group{
+			{Name: "anaconda-tools"}},
+	}
+	Received_packages := bp.GetPackages()
+	assert.ElementsMatch(t, []string{"tmux-1.2", "openssh-server", "@anaconda-tools"}, Received_packages)
 }
