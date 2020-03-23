@@ -676,23 +676,10 @@ func (s *Store) PopJob() Job {
 		if !exists {
 			panic("Invalid job in queue.")
 		}
-		// Loop over the image builds and find the right one according to the image type
 		// Change queue status to running for the image build as well as for the targets
-		for n, imageBuild := range compose.ImageBuilds {
-			imgTypeCompatStr, exists := imageBuild.ImageType.ToCompatString()
-			if !exists {
-				panic("fatal error, image type should exist but it does not")
-			}
-			if imgTypeCompatStr != job.ImageType {
-				continue
-			}
-			if imageBuild.QueueStatus != common.IBWaiting {
-				panic("Invalid job in queue.")
-			}
-			compose.ImageBuilds[n].QueueStatus = common.IBRunning
-			for m := range compose.ImageBuilds[n].Targets {
-				compose.ImageBuilds[n].Targets[m].Status = common.IBRunning
-			}
+		compose.ImageBuilds[job.ImageBuildID].QueueStatus = common.IBRunning
+		for m := range compose.ImageBuilds[job.ImageBuildID].Targets {
+			compose.ImageBuilds[job.ImageBuildID].Targets[m].Status = common.IBRunning
 		}
 		// Replace the compose struct with the new one
 		// TODO: I'm not sure this is needed, but I don't know what is the golang semantics in this case
