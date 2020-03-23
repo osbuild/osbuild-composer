@@ -47,6 +47,7 @@ Requires: osbuild >= 7
 
 Provides: weldr
 
+# remove in F34
 Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
 
@@ -162,6 +163,7 @@ export GOPATH=$PWD/_build:%{gopath}
 Summary:    RCM-specific version of osbuild-composer
 Requires:   osbuild-composer
 
+# remove in F34
 Obsoletes: golang-github-osbuild-composer-rcm < %{version}-%{release}
 Provides:  golang-github-osbuild-composer-rcm = %{version}-%{release}
 
@@ -185,6 +187,7 @@ Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   osbuild
 
+# remove in F34
 Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
 Provides:  golang-github-osbuild-composer-worker = %{version}-%{release}
 
