@@ -175,6 +175,7 @@ func New() *RHEL81 {
 			"systemd",
 			"tar",
 			"xfsprogs",
+			"xz",
 		},
 		arches: map[string]arch{
 			"x86_64": arch{
