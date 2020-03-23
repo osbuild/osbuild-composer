@@ -106,7 +106,8 @@ func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, err
 	}
 
 	// Convert the API's JSON error response to an error type and return it
-	if resp.StatusCode == 400 {
+	// lorax-composer (wrongly) returns 404 for some of its json responses
+	if resp.StatusCode == 400 || resp.StatusCode == 404 {
 		apiResponse, err := apiError(resp)
 		return nil, apiResponse, err
 	}
