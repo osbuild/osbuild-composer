@@ -26,7 +26,7 @@ BuildRequires:  systemd
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
 BuildRequires:  golang(github.com/aws/aws-sdk-go)
-BuildRequires:  golang-github-azure-storage-blob-devel
+BuildRequires:  golang(github.com/Azure/azure-storage-blob-go/azblob)
 BuildRequires:  golang(github.com/BurntSushi/toml)
 BuildRequires:  golang(github.com/coreos/go-semver/semver)
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
