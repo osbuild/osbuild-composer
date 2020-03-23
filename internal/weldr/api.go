@@ -632,7 +632,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	if modulesRequested {
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -663,7 +663,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 
 	names := strings.Split(params.ByName("projects"), ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, nil, api.repos, api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.Depsolve(names, nil, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
 
 	if err != nil {
 		errors := responseError{
@@ -1963,7 +1963,7 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 		repos = append(repos, source.RepoConfig())
 	}
 
-	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID(), api.arch.Name())
 	return packages, err
 }
 
@@ -1999,7 +1999,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.Imag
 		excludeSpecs = append(excludePackages, excludeSpecs...)
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID())
+	packages, _, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID(), api.arch.Name())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2007,7 +2007,7 @@ func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.Imag
 	buildPackages := []rpmmd.PackageSpec{}
 	if imageType != nil {
 		buildSpecs := imageType.BuildPackages()
-		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID())
+		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID(), api.arch.Name())
 		if err != nil {
 			return nil, nil, err
 		}

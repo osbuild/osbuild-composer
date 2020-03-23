@@ -28,7 +28,7 @@ func TestFetchChecksum(t *testing.T) {
 		IgnoreSSL: true,
 	}
 	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
-	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31")
+	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64")
 	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
 	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
 }
