@@ -554,8 +554,10 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(distro distro.Distro, arch distro.Arch, imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, uploadTarget *target.Target) error {
-	targets := []*target.Target{}
+func (s *Store) PushCompose(distro distro.Distro, arch distro.Arch, imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) error {
+	if targets == nil {
+		targets = []*target.Target{}
+	}
 
 	// Compatibility layer for image types in Weldr API v0
 	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
@@ -570,16 +572,6 @@ func (s *Store) PushCompose(distro distro.Distro, arch distro.Arch, imageType di
 		if err != nil {
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
-
-		targets = append(targets, target.NewLocalTarget(
-			&target.LocalTargetOptions{
-				Filename: imageType.Filename(),
-			},
-		))
-	}
-
-	if uploadTarget != nil {
-		targets = append(targets, uploadTarget)
 	}
 
 	allRepos := append([]rpmmd.RepoConfig{}, repos...)
