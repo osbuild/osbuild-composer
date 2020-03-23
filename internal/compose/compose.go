@@ -22,7 +22,6 @@ func (ste *StateTransitionError) Error() string {
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
 	Id          int                    `json:"id"`
-	Distro      common.Distribution    `json:"distro"`
 	QueueStatus common.ImageBuildState `json:"queue_status"`
 	ImageType   common.ImageType       `json:"image_type"`
 	Manifest    *osbuild.Manifest      `json:"manifest"`
@@ -48,7 +47,6 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 	// Create new image build struct
 	return ImageBuild{
 		Id:          ib.Id,
-		Distro:      ib.Distro,
 		QueueStatus: ib.QueueStatus,
 		ImageType:   ib.ImageType,
 		Manifest:    newManifestPtr,
