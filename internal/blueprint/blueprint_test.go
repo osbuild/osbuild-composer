@@ -1,8 +1,8 @@
 package blueprint
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -18,24 +18,16 @@ func TestDeepCopy(t *testing.T) {
 	}
 
 	bpCopy, err := bpOrig.DeepCopy()
-	if err != nil {
-		t.Fatalf("Blueprint.DeepCopy failure: %s", err.Error())
-	}
-	if diff := cmp.Diff(bpOrig, bpCopy); diff != "" {
-		t.Fatalf("Blueprint.DeepCopy is different from original\ndiff: %s", diff)
-	}
+	require.NoError(t, err)
+	require.Equalf(t, bpOrig, bpCopy, "Blueprints.DeepCopy is different from original.")
 
 	// Modify the copy
 	bpCopy.Packages[0].Version = "1.2.3"
-	if bpOrig.Packages[0].Version != "*" {
-		t.Fatalf("Blueprint.DeepCopy failed, original modified")
-	}
+	require.Equalf(t, bpOrig.Packages[0].Version, "*", "Blueprint.DeepCopy failed, original modified")
 
 	// Modify the original
 	bpOrig.Packages[0].Version = "42.0"
-	if bpCopy.Packages[0].Version != "1.2.3" {
-		t.Fatalf("Blueprint.DeepCopy failed, copy modified")
-	}
+	require.Equalf(t, bpCopy.Packages[0].Version, "1.2.3", "Blueprint.DeepCopy failed, copy modified.")
 }
 
 func TestBlueprintInitialize(t *testing.T) {
@@ -56,9 +48,7 @@ func TestBlueprintInitialize(t *testing.T) {
 	for _, c := range cases {
 		bp := c.NewBlueprint
 		err := bp.Initialize()
-		if (err != nil) != c.ExpectedError {
-			t.Errorf("Initialize(%#v) returned an unexpected error: %s", c.NewBlueprint, err.Error())
-		}
+		assert.Equalf(t, (err != nil), c.ExpectedError, "Initialize(%#v) returnted an unexpected error: %#v", c.NewBlueprint, err)
 	}
 }
 
@@ -80,14 +70,10 @@ func TestBumpVersion(t *testing.T) {
 	for _, c := range cases {
 		bp := c.NewBlueprint
 		err := bp.Initialize()
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 
 		bp.BumpVersion(c.OldVersion)
-		if bp.Version != c.ExpectedVersion {
-			t.Errorf("BumpVersion(%#v) is expected to return %#v, but instead returned %#v", c.OldVersion, c.ExpectedVersion, bp.Version)
-		}
+		assert.Equalf(t, c.ExpectedVersion, bp.Version, "BumpVersion(%#v) is expected to return %#v, but instead returned %#v.", c.OldVersion, c.ExpectedVersion, bp.Version)
 	}
 }
 
