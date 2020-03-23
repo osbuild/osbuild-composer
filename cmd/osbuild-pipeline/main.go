@@ -121,13 +121,13 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[arch.Name()], distro.ModulePlatformID())
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[arch.Name()], distro.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
 
 	buildPkgs := imageType.BuildPackages()
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[arch.Name()], distro.ModulePlatformID())
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[arch.Name()], distro.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
