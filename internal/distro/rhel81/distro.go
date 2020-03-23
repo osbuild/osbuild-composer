@@ -920,7 +920,7 @@ func (r *RHEL81) rawFSAssembler(filename string, size uint64) *osbuild.Assembler
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
-			RootFilesystemUUDI: id,
+			RootFilesystemUUID: id,
 			Size:               size,
 			FilesystemType:     "xfs",
 		})

@@ -779,7 +779,7 @@ func (r *Fedora30) rawFSAssembler(filename string, size uint64) *osbuild.Assembl
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
-			RootFilesystemUUDI: id,
+			RootFilesystemUUID: id,
 			Size:               size,
 		})
 }
