@@ -170,6 +170,7 @@ func New() *Fedora32 {
 			"qemu-img",
 			"systemd",
 			"tar",
+			"xz",
 		},
 		arches: map[string]arch{
 			"x86_64": arch{
