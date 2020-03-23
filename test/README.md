@@ -37,6 +37,15 @@ panics and nil pointer memory problems.
 Stand-alone test binaries also have the `-test.failfast` option.
 
 
+## Notes on code coverage
+
+Code coverage is recorded in
+[Coveralls.io](https://coveralls.io/github/osbuild/osbuild-composer).
+This information comes only from unit tests and for the time being
+we're not concerned with collecting coverage information from integration
+tests, see `.github/workflows/coverage.yml`.
+
+
 ## Integration testing
 
 This will consume the osbuild-composer API surface via the `composer-cli`
@@ -48,7 +57,7 @@ checkout is:
 * `dnf -y install rpm-build`
 * `dnf -y builddep golang-github-osbuild-composer.spec`
 * `make rpm` to build the software under test
-* `dnf install output/x86_64/golang-github-osbuild-composer-*.rpm` - this will
+* `dnf install rpmbuild/RPMS/x86_64/golang-github-osbuild-composer-*.rpm` - this will
   install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
 * `systemctl start osbuild-composer`
 * `/usr/libexec/tests/osbuild-composer/osbuild-tests` to execute the test suite.
