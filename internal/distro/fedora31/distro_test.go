@@ -1,30 +1,10 @@
 package fedora31_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 )
-
-func TestListOutputFormats(t *testing.T) {
-	want := []string{
-		"ami",
-		"ext4-filesystem",
-		"openstack",
-		"partitioned-disk",
-		"qcow2",
-		"tar",
-		"vhd",
-		"vmdk",
-	}
-
-	f31 := fedora31.New()
-
-	if got := f31.ListOutputFormats(); !reflect.DeepEqual(got, want) {
-		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
-	}
-}
 
 func TestFilenameFromType(t *testing.T) {
 	type args struct {

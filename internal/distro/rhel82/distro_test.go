@@ -1,30 +1,10 @@
 package rhel82_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 )
-
-func TestListOutputFormats(t *testing.T) {
-	want := []string{
-		"ami",
-		"ext4-filesystem",
-		"openstack",
-		"partitioned-disk",
-		"qcow2",
-		"tar",
-		"vhd",
-		"vmdk",
-	}
-
-	el82 := rhel82.New()
-
-	if got := el82.ListOutputFormats(); !reflect.DeepEqual(got, want) {
-		t.Errorf("ListOutputFormats() = %v, want %v", got, want)
-	}
-}
 
 func TestFilenameFromType(t *testing.T) {
 	type args struct {
