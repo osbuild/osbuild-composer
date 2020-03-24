@@ -617,10 +617,7 @@ func (r *fedora32ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOpti
 }
 
 func (r *fedora32ImageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
-	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-	if err != nil {
-		panic("invalid UUID")
-	}
+	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
 	if kernel != nil {
 		kernelOptions += " " + kernel.Append
@@ -711,10 +708,7 @@ func (r *Fedora32) tarAssembler(filename, compression string) *osbuild.Assembler
 }
 
 func (r *Fedora32) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
-	id, err := uuid.Parse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-	if err != nil {
-		panic("invalid UUID")
-	}
+	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
