@@ -27,25 +27,19 @@ type rpmMD struct {
 }
 
 func main() {
+	var distroArg string
+	var archArg string
 	var imageTypeArg string
 	var blueprintArg string
-	var archArg string
-	var distroArg string
 	var rpmmdArg bool
-	flag.StringVar(&imageTypeArg, "image-type", "", "image type, e.g. qcow2 or ami")
-	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
 	flag.StringVar(&distroArg, "distro", "", "distribution to create, e.g. fedora-30")
+	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
+	flag.StringVar(&imageTypeArg, "image-type", "", "image type, e.g. qcow2 or ami")
 	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
 	flag.Parse()
 
 	// Path to blueprint or '-' for stdin
 	blueprintArg = flag.Arg(0)
-
-	// Print help usage if one of the required arguments wasn't provided
-	if imageTypeArg == "" || archArg == "" || distroArg == "" {
-		flag.Usage()
-		return
-	}
 
 	blueprint := &blueprint.Blueprint{}
 	if blueprintArg != "" {
@@ -74,28 +68,34 @@ func main() {
 		panic(err)
 	}
 
-	d := distros.GetDistro(distroArg)
-	if d == nil {
-		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution (%s) is not supported. Use one of these:\n", distroArg)
-		for _, distro := range distros.List() {
-			_, _ = fmt.Fprintln(os.Stderr, " *", distro)
+	distro := distros.GetDistro(distroArg)
+	if distro == nil {
+		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution '%s' is not supported. Use one of these:\n", distroArg)
+		for _, d := range distros.List() {
+			_, _ = fmt.Fprintln(os.Stderr, " *", d)
 		}
 		return
 	}
 
-	arch, err := d.GetArch(archArg)
+	arch, err := distro.GetArch(archArg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided architecture (%s) is not supported by distro %s.: %s\n", archArg, distroArg, err.Error())
+		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", archArg, distro.Name())
+		for _, a := range distro.ListArchs() {
+			_, _ = fmt.Fprintln(os.Stderr, " *", a)
+		}
 		return
 	}
 
 	imageType, err := arch.GetImageType(imageTypeArg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided image type (%s) is not supported by architecture %s on distro %s.: %s\n", imageTypeArg, archArg, distroArg, err.Error())
+		fmt.Fprintf(os.Stderr, "The provided image type '%s' is not supported by %s for %s. Use one of these:\n", imageTypeArg, distro.Name(), arch.Name())
+		for _, t := range arch.ListImageTypes() {
+			_, _ = fmt.Fprintln(os.Stderr, " *", t)
+		}
 		return
 	}
 
-	repos, err := rpmmd.LoadRepositories([]string{"."}, distroArg)
+	repos, err := rpmmd.LoadRepositories([]string{"."}, distro.Name())
 	if err != nil {
 		panic(err)
 	}
@@ -121,13 +121,13 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[archArg], d.ModulePlatformID())
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[arch.Name()], distro.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
 
 	buildPkgs := imageType.BuildPackages()
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[archArg], d.ModulePlatformID())
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[arch.Name()], distro.ModulePlatformID())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
@@ -144,7 +144,7 @@ func main() {
 			panic("could not marshal rpmmd struct into JSON")
 		}
 	} else {
-		manifest, err := imageType.Manifest(blueprint.Customizations, repos[archArg], packageSpecs, buildPackageSpecs, imageType.Size(0))
+		manifest, err := imageType.Manifest(blueprint.Customizations, repos[arch.Name()], packageSpecs, buildPackageSpecs, imageType.Size(0))
 		if err != nil {
 			panic(err.Error())
 		}
