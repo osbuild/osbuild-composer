@@ -46,13 +46,13 @@ jobs:
       - name: Run unit tests
         run: go test -v ./...
 
-  rpm_build:
-    name: "📦 RPM"
+  old_rpm_build:
+    name: "📦 RPM (golang-github-osbuild-composer)"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        fedora_release: ["31", "32", "rawhide"]
+        fedora_release: ["31"]
     container:
       image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
     steps:
@@ -69,6 +69,47 @@ jobs:
 
       - name: "🛒 Install RPM build dependencies"
         run: dnf -y builddep golang-github-osbuild-composer.spec
+
+      - name: "🛠️ Build RPMs"
+        run: |
+          mkdir rpms
+          make old-srpm
+          cp -av rpmbuild/SRPMS/*.rpm rpms/
+          make old-rpm
+          cp -av rpmbuild/RPMS/*/*.rpm rpms/
+
+      - name: "📤 Upload artifacts"
+        uses: actions/upload-artifact@v1
+        with:
+          name: rpms
+          path: rpms/
+
+      - name: "🔎 Test RPM installation"
+        run: dnf -y install $(ls rpms/*.x86_64.rpm)
+
+  rpm_build:
+    name: "📦 RPM (osbuild-composer)"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora_release: ["32", "rawhide"]
+    container:
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+    steps:
+      - name: "📥 Prepare container"
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          rm -fv /etc/yum.repos.d/fedora*modular*
+          dnf -y upgrade
+          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
+
+      - name: "🗄️ Clone the repository"
+        uses: actions/checkout@v2
+
+      - name: "🛒 Install RPM build dependencies"
+        run: dnf -y builddep osbuild-composer.spec
 
       - name: "🛠️ Build RPMs"
         run: |
