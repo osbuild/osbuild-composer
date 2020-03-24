@@ -789,10 +789,7 @@ func (r *rhel82ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOption
 }
 
 func (r *rhel82ImageType) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRUB2StageOptions {
-	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
-	if err != nil {
-		panic("invalid UUID")
-	}
+	id := uuid.MustParse("0bd700f8-090f-4556-b797-b340297ea1bd")
 
 	var uefiOptions *osbuild.GRUB2UEFI
 	if uefi {
@@ -879,10 +876,7 @@ func (r *RHEL82) tarAssembler(filename, compression string) *osbuild.Assembler {
 }
 
 func (r *RHEL82) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
-	id, err := uuid.Parse("0bd700f8-090f-4556-b797-b340297ea1bd")
-	if err != nil {
-		panic("invalid UUID")
-	}
+	id := uuid.MustParse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
