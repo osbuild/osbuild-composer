@@ -16,6 +16,10 @@ type testImageType struct{}
 const name = "test-distro"
 const modulePlatformID = "platform:test"
 
+func (d *TestDistro) ListArchs() []string {
+	return []string{"test_arch"}
+}
+
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
 	if arch != "test_arch" {
 		return nil, errors.New("invalid arch: " + arch)

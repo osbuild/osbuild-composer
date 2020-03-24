@@ -56,6 +56,15 @@ type fedora30ImageType struct {
 	imageType *imageType
 }
 
+func (d *Fedora30) ListArchs() []string {
+	archs := make([]string, 0, len(d.arches))
+	for name := range d.arches {
+		archs = append(archs, name)
+	}
+	sort.Strings(archs)
+	return archs
+}
+
 func (d *Fedora30) GetArch(arch string) (distro.Arch, error) {
 	a, exists := d.arches[arch]
 	if !exists {
