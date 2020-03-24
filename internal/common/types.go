@@ -51,25 +51,6 @@ func marshalHelper(input int, mapping map[string]int, errorMessage string) ([]by
 	return nil, &CustomJsonConversionError{fmt.Sprintf("%d %s", input, errorMessage)}
 }
 
-// See unmarshalHelper for introduction. This helper can create a list of possible values of a single type.
-func listHelper(mapping map[string]int) []string {
-	ret := make([]string, 0)
-	for k := range mapping {
-		ret = append(ret, k)
-	}
-	return ret
-}
-
-// See unmarshalHelper for introduction. With this helper one can make sure a value exists in a set of existing values.
-func existsHelper(mapping map[string]int, testedValue string) bool {
-	for k := range mapping {
-		if k == testedValue {
-			return true
-		}
-	}
-	return false
-}
-
 // See unmarshalHelper for introduction. Converts between TypeAlias(int) and string
 func toStringHelper(mapping map[string]int, tag int) (string, bool) {
 	for k, v := range mapping {
@@ -78,69 +59,6 @@ func toStringHelper(mapping map[string]int, tag int) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-// Architecture represents one of the supported CPU architectures available for images
-// produced by osbuild-composer. It is represented as an integer because if it
-// was a string it would unmarshal from JSON just fine even in case that the architecture
-// was unknown.
-type Architecture int
-
-// A list of supported architectures. As the comment above suggests the type system does
-// not allow to create a type with a custom set of values, so it is possible to use e.g.
-// 56 instead of an architecture, but as opposed to a string it should be obvious that
-// hardcoding a number instead of an architecture is just wrong.
-//
-// NOTE: If you want to add more constants here, don't forget to add a mapping below
-const (
-	X86_64 Architecture = iota
-	Aarch64
-	Armv7hl
-	I686
-	Ppc64le
-	S390x
-)
-
-// getArchMapping is a helper function that defines the conversion from JSON string value
-// to Architecture.
-func getArchMapping() map[string]int {
-	mapping := map[string]int{
-		"x86_64":  int(X86_64),
-		"aarch64": int(Aarch64),
-		"armv7hl": int(Armv7hl),
-		"i686":    int(I686),
-		"ppc64le": int(Ppc64le),
-		"s390x":   int(S390x),
-	}
-	return mapping
-}
-
-func ListArchitectures() []string {
-	return listHelper(getArchMapping())
-}
-
-func ArchitectureExists(testedArch string) bool {
-	return existsHelper(getArchMapping(), testedArch)
-}
-
-// UnmarshalJSON is a custom unmarshaling function to limit the set of allowed values
-// in case the input is JSON.
-func (arch *Architecture) UnmarshalJSON(data []byte) error {
-	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid architecture", getArchMapping())
-	if err != nil {
-		return err
-	}
-	*arch = Architecture(value)
-	return nil
-}
-
-// MarshalJSON is a custom marshaling function for our custom Architecture type
-func (arch Architecture) MarshalJSON() ([]byte, error) {
-	return marshalHelper(int(arch), getArchMapping(), "is not a valid architecture tag")
-}
-
-func (arch Architecture) ToString() (string, bool) {
-	return toStringHelper(getArchMapping(), int(arch))
 }
 
 type ImageType int
