@@ -77,10 +77,8 @@ gpgkey_urls = ["https://url/path/to/gpg-key"]
 	require.NoError(t, err)
 
 	runComposerCLI(t, false, "sources", "list")
-	// todo: this will fail on RHEL
-	runComposerCLI(t, false, "sources", "info", "fedora")
-
 	runComposerCLI(t, false, "sources", "add", sources_toml.Name())
+	runComposerCLI(t, false, "sources", "info", "osbuild-test-addon-source")
 	runComposerCLI(t, false, "sources", "change", sources_toml.Name())
 	runComposerCLI(t, false, "sources", "delete", "osbuild-test-addon-source")
 }
