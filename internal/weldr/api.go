@@ -64,7 +64,8 @@ func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmm
 	api.router.POST("/api/v:version/projects/source/new", api.sourceNewHandler)
 	api.router.DELETE("/api/v:version/projects/source/delete/*source", api.sourceDeleteHandler)
 
-	api.router.GET("/api/v:version/projects/depsolve/:projects", api.projectsDepsolveHandler)
+	api.router.GET("/api/v:version/projects/depsolve", api.projectsDepsolveHandler)
+	api.router.GET("/api/v:version/projects/depsolve/*projects", api.projectsDepsolveHandler)
 
 	api.router.GET("/api/v:version/modules/list", api.modulesListHandler)
 	api.router.GET("/api/v:version/modules/list/*modules", api.modulesListHandler)
@@ -661,7 +662,20 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		Projects []rpmmd.PackageSpec `json:"projects"`
 	}
 
-	names := strings.Split(params.ByName("projects"), ",")
+	projects := params.ByName("projects")
+
+	if projects == "" || projects == "/" {
+		errors := responseError{
+			ID:  "UnknownProject",
+			Msg: "No packages specified.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// remove leading /
+	projects = projects[1:]
+	names := strings.Split(projects, ",")
 
 	packages, _, err := api.rpmmd.Depsolve(names, nil, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
 
