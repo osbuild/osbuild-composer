@@ -140,6 +140,18 @@ type ProjectsDependenciesV0 struct {
 	Projects []rpmmd.PackageSpec `json:"projects"`
 }
 
+type ModuleName struct {
+	Name      string `json:"name"`
+	GroupType string `json:"group_type"`
+}
+
+type ModulesListV0 struct {
+	Total   uint         `json:"total"`
+	Offset  uint         `json:"offset"`
+	Limit   uint         `json:"limit"`
+	Modules []ModuleName `json:"modules"`
+}
+
 // ModulesInfoV0 is the response to /modules/info request
 type ModulesInfoV0 struct {
 	Modules []rpmmd.PackageInfo `json:"modules"`
