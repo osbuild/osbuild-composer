@@ -65,12 +65,17 @@ worker-key-pair: ca
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-RPM_SPECFILE=rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+OLD_RPM_SPECFILE=rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
+RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
+
+$(OLD_RPM_SPECFILE):
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	(echo "%global commit $(COMMIT)"; git show HEAD:golang-github-osbuild-composer.spec) > $(OLD_RPM_SPECFILE)
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	(echo "%global commit $(COMMIT)"; git show HEAD:golang-github-osbuild-composer.spec) > $(RPM_SPECFILE)
+	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild-composer.spec) > $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
@@ -80,10 +85,24 @@ $(RPM_TARBALL):
 srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
+		--with tests \
 		$(RPM_SPECFILE)
 
 .PHONY: rpm
 rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
+		--with tests \
 		$(RPM_SPECFILE)
+
+.PHONY: old-srpm
+old-srpm: $(OLD_RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bs \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(OLD_RPM_SPECFILE)
+
+.PHONY: old-rpm
+old-rpm: $(OLD_RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(OLD_RPM_SPECFILE)
