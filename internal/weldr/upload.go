@@ -13,7 +13,7 @@ import (
 )
 
 type uploadResponse struct {
-	Uuid         uuid.UUID              `json:"uuid"`
+	UUID         uuid.UUID              `json:"uuid"`
 	Status       common.ImageBuildState `json:"status"`
 	ProviderName string                 `json:"provider_name"`
 	ImageName    string                 `json:"image_name"`
@@ -87,7 +87,7 @@ func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
 	var uploads []uploadResponse
 	for _, t := range targets {
 		upload := uploadResponse{
-			Uuid:         t.Uuid,
+			UUID:         t.Uuid,
 			Status:       t.Status,
 			ImageName:    t.ImageName,
 			CreationTime: float64(t.Created.UnixNano()) / 1000000000,
@@ -118,7 +118,7 @@ func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
 	return uploads
 }
 
-func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) (*target.Target, error) {
+func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.Target {
 	var t target.Target
 
 	t.Uuid = uuid.New()
@@ -147,5 +147,5 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) (*target
 		}
 	}
 
-	return &t, nil
+	return &t
 }

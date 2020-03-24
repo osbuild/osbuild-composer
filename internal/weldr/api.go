@@ -1409,16 +1409,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	var uploadTarget *target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
-		uploadTarget, err = uploadRequestToTarget(*cr.Upload, imageType)
-		if err != nil {
-			errors := responseError{
-				ID:  "UploadError",
-				Msg: fmt.Sprintf("bad input format: %s", err.Error()),
-			}
-
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
-		}
+		uploadTarget = uploadRequestToTarget(*cr.Upload, imageType)
 	}
 
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
