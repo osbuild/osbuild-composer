@@ -24,6 +24,10 @@ type fedoraTestDistroImageType struct {
 	arch *fedoraTestDistroArch
 }
 
+func (d *FedoraTestDistro) ListArchs() []string {
+	return []string{"x86_64"}
+}
+
 func (d *FedoraTestDistro) GetArch(arch string) (distro.Arch, error) {
 	if arch != "x86_64" {
 		return nil, errors.New("invalid architecture: " + arch)

@@ -24,6 +24,10 @@ type Distro interface {
 	// for modularity support.
 	ModulePlatformID() string
 
+	// Returns a sorted list of the names of the architectures this distro
+	// supports.
+	ListArchs() []string
+
 	// Returns an object representing the given architecture as support
 	// by this distro.
 	GetArch(arch string) (Arch, error)
