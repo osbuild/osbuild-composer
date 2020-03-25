@@ -141,7 +141,7 @@ func main() {
 		}
 		bytes, err = json.Marshal(rpmMDInfo)
 		if err != nil {
-			panic("could not marshal rpmmd struct into JSON")
+			panic(err)
 		}
 	} else {
 		manifest, err := imageType.Manifest(blueprint.Customizations, repos[arch.Name()], packageSpecs, buildPackageSpecs, imageType.Size(0))
@@ -151,7 +151,7 @@ func main() {
 
 		bytes, err = json.Marshal(manifest)
 		if err != nil {
-			panic("could not marshal manifest into JSON")
+			panic(err)
 		}
 	}
 	os.Stdout.Write(bytes)

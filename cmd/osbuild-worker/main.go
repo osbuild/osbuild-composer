@@ -102,7 +102,7 @@ func (c *ComposerClient) AddJob() (*jobqueue.Job, error) {
 	var b bytes.Buffer
 	err := json.NewEncoder(&b).Encode(request{})
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	response, err := c.client.Post(c.createURL("/job-queue/v1/jobs"), "application/json", &b)
 	if err != nil {
@@ -129,7 +129,7 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildSt
 	var b bytes.Buffer
 	err := json.NewEncoder(&b).Encode(&jobqueue.JobStatus{status, result})
 	if err != nil {
-		return err
+		panic(err)
 	}
 	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ID.String(), job.ImageBuildID)
 	url := c.createURL(urlPath)
