@@ -50,7 +50,7 @@ def parse_environment_vars(s):
         line = line.strip()
         if not line:
             continue
-        if line[0] is '#':
+        if line[0] == '#':
             continue
         key, value = line.split("=", 1)
         r[key] = value.strip('"')
