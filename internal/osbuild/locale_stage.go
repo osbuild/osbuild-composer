@@ -10,14 +10,6 @@ type LocaleStageOptions struct {
 
 func (LocaleStageOptions) isStageOptions() {}
 
-// NewLocaleStageOptions creates a new locale stage options object, with
-// the mandatory fields set.
-func NewLocaleStageOptions(language string) *LocaleStageOptions {
-	return &LocaleStageOptions{
-		Language: language,
-	}
-}
-
 // NewLocaleStage creates a new Locale Stage object.
 func NewLocaleStage(options *LocaleStageOptions) *Stage {
 	return &Stage{
