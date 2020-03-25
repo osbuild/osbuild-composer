@@ -55,18 +55,8 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	}, nil
 }
 
-func newConnection(remoteAddress string) (net.Conn, error) {
+func newConnection(remoteAddress string, conf *tls.Config) (net.Conn, error) {
 	if remoteAddress != "" {
-		conf, err := createTLSConfig(&connectionConfig{
-			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
-			ClientKeyFile:  "/etc/osbuild-composer/worker-key.pem",
-			ClientCertFile: "/etc/osbuild-composer/worker-crt.pem",
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
 		return tls.Dial("tcp", remoteAddress, conf)
 	}
 
@@ -75,11 +65,11 @@ func newConnection(remoteAddress string) (net.Conn, error) {
 
 }
 
-func NewClient(remoteAddress string) *ComposerClient {
+func NewClient(remoteAddress string, conf *tls.Config) *ComposerClient {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
-				return newConnection(remoteAddress)
+				return newConnection(remoteAddress, conf)
 			},
 		},
 	}
@@ -189,11 +179,22 @@ func main() {
 	flag.StringVar(&remoteAddress, "remote", "", "Connect to a remote composer using the specified address")
 	flag.Parse()
 
+	var conf *tls.Config
 	if remoteAddress != "" {
 		remoteAddress = fmt.Sprintf("%s:%d", remoteAddress, RemoteWorkerPort)
+
+		var err error
+		conf, err = createTLSConfig(&connectionConfig{
+			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
+			ClientKeyFile:  "/etc/osbuild-composer/worker-key.pem",
+			ClientCertFile: "/etc/osbuild-composer/worker-crt.pem",
+		})
+		if err != nil {
+			log.Fatalf("Error creating TLS config: %v", err)
+		}
 	}
 
-	client := NewClient(remoteAddress)
+	client := NewClient(remoteAddress, conf)
 	for {
 		if err := handleJob(client); err != nil {
 			log.Fatalf("Failed to handle job: " + err.Error())
