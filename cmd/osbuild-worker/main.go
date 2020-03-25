@@ -14,8 +14,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
-const RemoteWorkerPort = 8700
-
 type connectionConfig struct {
 	CACertFile     string
 	ClientKeyFile  string
@@ -88,8 +86,6 @@ func main() {
 	if unix {
 		client = jobqueue.NewClientUnix(address)
 	} else {
-		address = fmt.Sprintf("%s:%d", address, RemoteWorkerPort)
-
 		conf, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
 			ClientKeyFile:  "/etc/osbuild-composer/worker-key.pem",
