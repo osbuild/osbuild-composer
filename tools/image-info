@@ -61,7 +61,7 @@ def parse_unit_files(s, expected_state):
     r = []
     for line in s.split("\n")[1:]:
         try:
-            unit, state = line.split()
+            unit, state, *_ = line.split()
         except ValueError:
             pass
         if state != expected_state:
