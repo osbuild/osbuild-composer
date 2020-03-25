@@ -67,6 +67,10 @@ def parse_unit_files(s, expected_state):
         if state != expected_state:
             continue
         r.append(unit)
+
+    # deduplicate and sort
+    r = list(set(r))
+    r.sort()
     return r
 
 
