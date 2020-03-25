@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -67,12 +68,26 @@ func handleJob(client *jobqueue.Client) error {
 }
 
 func main() {
-	var address string
-	flag.StringVar(&address, "remote", "", "Connect to a remote composer using the specified address")
+	var unix bool
+	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
+
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-unix] address\n", os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
 	flag.Parse()
 
+	address := flag.Arg(0)
+	if address == "" {
+		flag.Usage()
+	}
+
 	var client *jobqueue.Client
-	if address != "" {
+	if unix {
+		client = jobqueue.NewClientUnix(address)
+	} else {
 		address = fmt.Sprintf("%s:%d", address, RemoteWorkerPort)
 
 		conf, err := createTLSConfig(&connectionConfig{
@@ -85,8 +100,6 @@ func main() {
 		}
 
 		client = jobqueue.NewClient(address, conf)
-	} else {
-		client = jobqueue.NewClientUnix(address)
 	}
 
 	for {

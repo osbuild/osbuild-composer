@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Type=simple
 PrivateTmp=true
-ExecStart=/usr/libexec/osbuild-composer/osbuild-worker --remote %i
+ExecStart=/usr/libexec/osbuild-composer/osbuild-worker %i
 CacheDirectory=osbuild-composer
 Restart=on-failure
 RestartSec=10s
