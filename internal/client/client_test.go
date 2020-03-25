@@ -3,33 +3,16 @@
 package client
 
 import (
-	"context"
-	"io/ioutil"
-	"log"
-	"net"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
-	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/weldr"
 
 	"github.com/google/go-cmp/cmp"
 )
 
-// socketPath is the path to the temporary unix domain socket
-var socketPath string
-
-// socket is the client connection to the server on socketPath
-var socket *http.Client
-
 func TestRequest(t *testing.T) {
 	// Make a request to the status route
-	resp, err := Request(socket, "GET", "/api/status", "", map[string]string{})
+	resp, err := Request(testState.socket, "GET", "/api/status", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request good route failed: %v", err)
 	}
@@ -38,7 +21,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	// Make a request to a bad route
-	resp, err = Request(socket, "GET", "/invalidroute", "", map[string]string{})
+	resp, err = Request(testState.socket, "GET", "/invalidroute", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request bad route failed: %v", err)
 	}
@@ -53,7 +36,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	// Make a request with a bad offset to trigger a JSON response with Status set to 400
-	resp, err = Request(socket, "GET", "/api/v0/blueprints/list?offset=bad", "", map[string]string{})
+	resp, err = Request(testState.socket, "GET", "/api/v0/blueprints/list?offset=bad", "", map[string]string{})
 	if err != nil {
 		t.Fatalf("Request bad offset failed: %v", err)
 	}
@@ -90,7 +73,7 @@ func TestAPIResponse(t *testing.T) {
 
 func TestGetRaw(t *testing.T) {
 	// Get raw data
-	b, resp, err := GetRaw(socket, "GET", "/api/status")
+	b, resp, err := GetRaw(testState.socket, "GET", "/api/status")
 	if err != nil {
 		t.Fatalf("GetRaw failed with a client error: %v", err)
 	}
@@ -101,7 +84,7 @@ func TestGetRaw(t *testing.T) {
 		t.Fatal("GetRaw returned an empty string")
 	}
 	// Get an API error
-	b, resp, err = GetRaw(socket, "GET", "/api/v0/blueprints/list?offset=bad")
+	b, resp, err = GetRaw(testState.socket, "GET", "/api/v0/blueprints/list?offset=bad")
 	if err != nil {
 		t.Fatalf("GetRaw bad request failed with a client error: %v", err)
 	}
@@ -120,7 +103,7 @@ func TestGetRaw(t *testing.T) {
 
 func TestGetJSONAll(t *testing.T) {
 	// Get all the projects
-	b, resp, err := GetJSONAll(socket, "/api/v0/projects/list")
+	b, resp, err := GetJSONAll(testState.socket, "/api/v0/projects/list")
 	if err != nil {
 		t.Fatalf("GetJSONAll failed with a client error: %v", err)
 	}
@@ -132,7 +115,7 @@ func TestGetJSONAll(t *testing.T) {
 	}
 
 	// Run it on a route that doesn't support offset/limit
-	b, resp, err = GetJSONAll(socket, "/api/status")
+	b, resp, err = GetJSONAll(testState.socket, "/api/status")
 	if err == nil {
 		t.Fatalf("GetJSONAll bad route failed: %v", b)
 	}
@@ -143,7 +126,7 @@ func TestGetJSONAll(t *testing.T) {
 
 func TestPostRaw(t *testing.T) {
 	// There are no routes that accept raw POST w/o Content-Type so this ends up testing the error path
-	b, resp, err := PostRaw(socket, "/api/v0/blueprints/new", "nobody", nil)
+	b, resp, err := PostRaw(testState.socket, "/api/v0/blueprints/new", "nobody", nil)
 	if err != nil {
 		t.Fatalf("PostRaw bad request failed with a client error: %v", err)
 	}
@@ -164,7 +147,7 @@ func TestPostTOML(t *testing.T) {
 	blueprint := `name = "test-blueprint"
 				  description = "TOML test blueprint"
 				  version = "0.0.1"`
-	b, resp, err := PostTOML(socket, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostTOML(testState.socket, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
 		t.Fatalf("PostTOML client failed: %v", err)
 	}
@@ -180,7 +163,7 @@ func TestPostJSON(t *testing.T) {
 	blueprint := `{"name": "test-blueprint",
 				   "description": "JSON test blueprint",
 				   "version": "0.0.1"}`
-	b, resp, err := PostJSON(socket, "/api/v0/blueprints/new", blueprint)
+	b, resp, err := PostJSON(testState.socket, "/api/v0/blueprints/new", blueprint)
 	if err != nil {
 		t.Fatalf("PostJSON client failed: %v", err)
 	}
@@ -190,53 +173,4 @@ func TestPostJSON(t *testing.T) {
 	if !strings.Contains(string(b), "true") {
 		t.Fatalf("PostJSON failed: %#v", string(b))
 	}
-}
-
-func TestMain(m *testing.M) {
-	// Setup the mocked server running on a temporary domain socket
-	tmpdir, err := ioutil.TempDir("", "client_test-")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(tmpdir)
-
-	socketPath = tmpdir + "/client_test.socket"
-	ln, err := net.Listen("unix", socketPath)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a mock API server listening on the temporary socket
-	fixture := rpmmd_mock.BaseFixture()
-	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	distro := fedoratest.New()
-	arch, err := distro.GetArch("x86_64")
-	if err != nil {
-		panic(err)
-	}
-	repos := []rpmmd.RepoConfig{{Id: "test-id", BaseURL: "http://example.com/test/os/test_arch"}}
-	logger := log.New(os.Stdout, "", 0)
-	api := weldr.New(rpm, arch, distro, repos, logger, fixture.Store)
-	server := http.Server{Handler: api}
-	defer server.Close()
-
-	go func() {
-		err := server.Serve(ln)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	// Setup client connection to socketPath
-	socket = &http.Client{
-		Timeout: 60 * time.Second,
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
-			},
-		},
-	}
-
-	// Run the tests
-	os.Exit(m.Run())
 }
