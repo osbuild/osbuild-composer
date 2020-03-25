@@ -142,7 +142,7 @@ func (c *ComposerClient) UpdateJob(job *jobqueue.Job, status common.ImageBuildSt
 
 func (c *ComposerClient) UploadImage(job *jobqueue.Job, reader io.Reader) error {
 	// content type doesn't really matter
-	url := fmt.Sprintf("http://localhost/job-queue/v1/jobs/%s/builds/%d/image", job.ID.String(), job.ImageBuildID)
+	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", job.ID.String(), job.ImageBuildID))
 	_, err := c.client.Post(url, "application/octet-stream", reader)
 
 	return err
