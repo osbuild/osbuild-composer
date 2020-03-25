@@ -183,3 +183,63 @@ func TestGetSourceInfoV0(t *testing.T) {
 	require.NoError(t, err, "DELETE source failed with a client error")
 	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }
+
+func UploadUserDefinedSources(t *testing.T, sources []string) {
+	for i := range sources {
+		source := strings.Replace(sources[i], "REPO-PATH", testState.repoDir, 1)
+		resp, err := client.PostJSONSourceV0(testState.socket, source)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.True(t, resp.Status, "POST source failed: %#v", resp)
+	}
+}
+
+// verify user defined sources are not present
+func VerifyNoUserDefinedSources(t *testing.T, source_names []string) {
+	list, api, err := client.ListSourcesV0(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+	require.GreaterOrEqual(t, len(list), 1, "Not enough sources returned")
+	for i := range(source_names) {
+		require.NotContains(t, list, source_names[i])
+	}
+}
+
+func TestDeleteUserDefinedSourcesV0(t *testing.T) {
+	source_names := []string{"package-repo-1", "package-repo-2"}
+	sources := []string{`{
+		"name": "package-repo-1",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`,
+		`{
+		"name": "package-repo-2",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`}
+
+	// verify test starts without user defined sources
+	VerifyNoUserDefinedSources(t, source_names)
+
+	// post user defined sources
+	UploadUserDefinedSources(t, sources)
+	// note: not verifying user defined sources have been pushed b/c correct
+	// operation of PostJSONSourceV0 is validated in the test functions above
+
+	// Remove the test sources
+	for _, n := range(source_names) {
+		resp, err := client.DeleteSourceV0(testState.socket, n)
+		require.NoError(t, err, "DELETE source failed with a client error")
+		require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+	}
+
+	// verify removed sources are not present after removal
+	VerifyNoUserDefinedSources(t, source_names)
+}
