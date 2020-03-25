@@ -1,6 +1,7 @@
 package blueprint
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -28,6 +29,27 @@ func TestDeepCopy(t *testing.T) {
 	// Modify the original
 	bpOrig.Packages[0].Version = "42.0"
 	require.Equalf(t, bpCopy.Packages[0].Version, "1.2.3", "Blueprint.DeepCopy failed, copy modified.")
+
+	// This simulates json.Marshal returning an error
+	myJsonMarshal := JsonMarshal
+	JsonMarshal = func(interface{}) ([]byte, error) {
+		return []byte("test"), errors.New("test")
+	}
+
+	assert.Panics(t, func() { _, err = bpOrig.DeepCopy() })
+
+	// Return the original function definition
+	JsonMarshal = myJsonMarshal
+
+	// This simulates json.Unmarshal returning an error
+	myJsonUnmarshal := JsonUnmarshal
+	defer func() { JsonUnmarshal = myJsonUnmarshal }()
+	JsonUnmarshal = func([]byte, interface{}) error {
+		return errors.New("test")
+	}
+
+	assert.Panics(t, func() { _, err = bpOrig.DeepCopy() })
+
 }
 
 func TestBlueprintInitialize(t *testing.T) {

@@ -38,16 +38,19 @@ type Group struct {
 	Name string `json:"name" toml:"name"`
 }
 
+var JsonMarshal = json.Marshal
+var JsonUnmarshal = json.Unmarshal
+
 // DeepCopy returns a deep copy of the blueprint
 // This uses json.Marshal and Unmarshal which are not very efficient
 func (b *Blueprint) DeepCopy() (Blueprint, error) {
-	bpJSON, err := json.Marshal(b)
+	bpJSON, err := JsonMarshal(b)
 	if err != nil {
 		panic(err)
 	}
 
 	var bp Blueprint
-	err = json.Unmarshal(bpJSON, &bp)
+	err = JsonUnmarshal(bpJSON, &bp)
 	if err != nil {
 		panic(err)
 	}
