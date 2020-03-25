@@ -56,7 +56,7 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	}, nil
 }
 
-func NewClient(remoteAddress string, conf *tls.Config) *ComposerClient {
+func NewClient(address string, conf *tls.Config) *ComposerClient {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: conf,
@@ -70,7 +70,7 @@ func NewClient(remoteAddress string, conf *tls.Config) *ComposerClient {
 		scheme = "https"
 	}
 
-	return &ComposerClient{client, scheme, remoteAddress}
+	return &ComposerClient{client, scheme, address}
 }
 
 func NewClientUnix(path string) *ComposerClient {
@@ -177,13 +177,13 @@ func handleJob(client *ComposerClient) error {
 }
 
 func main() {
-	var remoteAddress string
-	flag.StringVar(&remoteAddress, "remote", "", "Connect to a remote composer using the specified address")
+	var address string
+	flag.StringVar(&address, "remote", "", "Connect to a remote composer using the specified address")
 	flag.Parse()
 
 	var client *ComposerClient
-	if remoteAddress != "" {
-		remoteAddress = fmt.Sprintf("%s:%d", remoteAddress, RemoteWorkerPort)
+	if address != "" {
+		address = fmt.Sprintf("%s:%d", address, RemoteWorkerPort)
 
 		conf, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
@@ -194,7 +194,7 @@ func main() {
 			log.Fatalf("Error creating TLS config: %v", err)
 		}
 
-		client = NewClient(remoteAddress, conf)
+		client = NewClient(address, conf)
 	} else {
 		client = NewClientUnix("/run/osbuild-composer/job.socket")
 	}
