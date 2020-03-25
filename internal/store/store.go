@@ -287,7 +287,6 @@ func (s *Store) change(f func() error) error {
 	if s.stateChannel != nil {
 		serialized, err := json.Marshal(s)
 		if err != nil {
-			// we ought to know all types that go into the store
 			panic(err)
 		}
 

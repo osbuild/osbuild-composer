@@ -43,13 +43,13 @@ type Group struct {
 func (b *Blueprint) DeepCopy() (Blueprint, error) {
 	bpJSON, err := json.Marshal(b)
 	if err != nil {
-		return Blueprint{}, err
+		panic(err)
 	}
 
 	var bp Blueprint
 	err = json.Unmarshal(bpJSON, &bp)
 	if err != nil {
-		return Blueprint{}, err
+		panic(err)
 	}
 	return bp, nil
 }
