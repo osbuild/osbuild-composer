@@ -67,9 +67,7 @@ func newConnection(remoteAddress string) (net.Conn, error) {
 			return nil, err
 		}
 
-		address := fmt.Sprintf("%s:%d", remoteAddress, RemoteWorkerPort)
-
-		return tls.Dial("tcp", address, conf)
+		return tls.Dial("tcp", remoteAddress, conf)
 	}
 
 	// plain non-encrypted connection
@@ -190,6 +188,10 @@ func main() {
 	var remoteAddress string
 	flag.StringVar(&remoteAddress, "remote", "", "Connect to a remote composer using the specified address")
 	flag.Parse()
+
+	if remoteAddress != "" {
+		remoteAddress = fmt.Sprintf("%s:%d", remoteAddress, RemoteWorkerPort)
+	}
 
 	client := NewClient(remoteAddress)
 	for {
