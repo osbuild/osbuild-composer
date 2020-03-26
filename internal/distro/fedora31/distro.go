@@ -24,6 +24,7 @@ type Fedora31 struct {
 }
 
 type imageType struct {
+	arch             *arch
 	name             string
 	mimeType         string
 	packages         []string
@@ -43,12 +44,6 @@ type arch struct {
 	buildPackages      []string
 	uefi               bool
 	imageTypes         map[string]imageType
-}
-
-type fedora31ImageType struct {
-	name      string
-	arch      *arch
-	imageType *imageType
 }
 
 func (d *Fedora31) ListArchs() []string {
@@ -87,52 +82,48 @@ func (a *arch) GetImageType(imageType string) (distro.ImageType, error) {
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
-
-	return &fedora31ImageType{
-		name:      imageType,
-		arch:      a,
-		imageType: &t,
-	}, nil
+	t.arch = a
+	return &t, nil
 }
 
-func (t *fedora31ImageType) Name() string {
+func (t *imageType) Name() string {
 	return t.name
 }
 
-func (t *fedora31ImageType) Filename() string {
-	return t.imageType.name
+func (t *imageType) Filename() string {
+	return t.name
 }
 
-func (t *fedora31ImageType) MIMEType() string {
-	return t.imageType.mimeType
+func (t *imageType) MIMEType() string {
+	return t.mimeType
 }
 
-func (t *fedora31ImageType) Size(size uint64) uint64 {
+func (t *imageType) Size(size uint64) uint64 {
 	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
 	if t.name == "vhd" && size%MegaByte != 0 {
 		size = (size/MegaByte + 1) * MegaByte
 	}
 	if size == 0 {
-		size = t.imageType.defaultSize
+		size = t.defaultSize
 	}
 	return size
 }
 
-func (t *fedora31ImageType) BasePackages() ([]string, []string) {
-	packages := t.imageType.packages
-	if t.imageType.bootable {
+func (t *imageType) BasePackages() ([]string, []string) {
+	packages := t.packages
+	if t.bootable {
 		packages = append(packages, t.arch.bootloaderPackages...)
 	}
 
-	return packages, t.imageType.excludedPackages
+	return packages, t.excludedPackages
 }
 
-func (t *fedora31ImageType) BuildPackages() []string {
+func (t *imageType) BuildPackages() []string {
 	return append(t.arch.distro.buildPackages, t.arch.buildPackages...)
 }
 
-func (t *fedora31ImageType) Manifest(c *blueprint.Customizations,
+func (t *imageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
 	buildPackageSpecs []rpmmd.PackageSpec,
@@ -432,7 +423,7 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (t *fedora31ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
+func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora31")
 
@@ -479,13 +470,13 @@ func (t *fedora31ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.
 		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
-	if t.imageType.bootable {
+	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
 	}
-	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.imageType.kernelOptions, c.GetKernel(), t.arch.uefi)))
+	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
 
-	if services := c.GetServices(); services != nil || t.imageType.enabledServices != nil {
-		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.imageType.enabledServices, t.imageType.disabledServices, services)))
+	if services := c.GetServices(); services != nil || t.enabledServices != nil {
+		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
@@ -494,18 +485,18 @@ func (t *fedora31ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
-	p.Assembler = t.imageType.assembler(t.arch.uefi, size)
+	p.Assembler = t.assembler(t.arch.uefi, size)
 
 	return p, nil
 }
 
-func (r *fedora31ImageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+func (r *imageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(repos, buildPackageSpecs)))
 	return p
 }
 
-func (r *fedora31ImageType) rpmStageOptions(repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+func (r *imageType) rpmStageOptions(repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
 	var gpgKeys []string
 	for _, repo := range repos {
 		if repo.GPGKey == "" {
@@ -525,7 +516,7 @@ func (r *fedora31ImageType) rpmStageOptions(repos []rpmmd.RepoConfig, specs []rp
 	}
 }
 
-func (r *fedora31ImageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+func (r *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
 	options := osbuild.UsersStageOptions{
 		Users: make(map[string]osbuild.UsersStageOptionsUser),
 	}
@@ -565,7 +556,7 @@ func (r *fedora31ImageType) userStageOptions(users []blueprint.UserCustomization
 	return &options, nil
 }
 
-func (r *fedora31ImageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+func (r *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
 	options := osbuild.GroupsStageOptions{
 		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
 	}
@@ -585,7 +576,7 @@ func (r *fedora31ImageType) groupStageOptions(groups []blueprint.GroupCustomizat
 	return &options
 }
 
-func (r *fedora31ImageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
+func (r *imageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
 	options := osbuild.FirewallStageOptions{
 		Ports: firewall.Ports,
 	}
@@ -598,7 +589,7 @@ func (r *fedora31ImageType) firewallStageOptions(firewall *blueprint.FirewallCus
 	return &options
 }
 
-func (r *fedora31ImageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *osbuild.SystemdStageOptions {
+func (r *imageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *osbuild.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
 		disabledServices = append(disabledServices, s.Disabled...)
@@ -609,7 +600,7 @@ func (r *fedora31ImageType) systemdStageOptions(enabledServices, disabledService
 	}
 }
 
-func (r *fedora31ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+func (r *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	options := osbuild.FSTabStageOptions{}
 	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
 	if uefi {
@@ -618,7 +609,7 @@ func (r *fedora31ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOpti
 	return &options
 }
 
-func (r *fedora31ImageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
+func (r *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
 	if kernel != nil {
@@ -640,7 +631,7 @@ func (r *fedora31ImageType) grub2StageOptions(kernelOptions string, kernel *blue
 	}
 }
 
-func (r *fedora31ImageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
+func (r *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	return &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}
