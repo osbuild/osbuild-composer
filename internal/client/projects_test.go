@@ -33,7 +33,15 @@ func TestListSomeProjectsV0(t *testing.T) {
 
 // Get info on a specific project
 func TestOneProjectsInfoV0(t *testing.T) {
-	projs, api, err := GetProjectsInfoV0(testState.socket, "bash")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1"
+	} else {
+		moduleNames = "bash"
+	}
+	projs, api, err := GetProjectsInfoV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "GetProjectsInfo failed: %#v", api)
 	require.True(t, len(projs) == 1, "Not enough projects returned")
@@ -41,7 +49,15 @@ func TestOneProjectsInfoV0(t *testing.T) {
 
 // Get info on a two specific projects
 func TestTwoProjectsInfoV0(t *testing.T) {
-	projs, api, err := GetProjectsInfoV0(testState.socket, "bash,tmux")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1,package2"
+	} else {
+		moduleNames = "bash,tmux"
+	}
+	projs, api, err := GetProjectsInfoV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "GetProjectsInfo failed: %#v", api)
 	require.True(t, len(projs) == 2, "Not enough projects returned")

@@ -18,6 +18,7 @@ type TestState struct {
 	socket     *http.Client
 	apiVersion int
 	repoDir    string
+	unitTest   bool
 }
 
 // isStringInSlice returns true if the string is present, false if not
@@ -31,8 +32,9 @@ func isStringInSlice(slice []string, s string) bool {
 	return false
 }
 
-func setUpTestState(socketPath string, timeout time.Duration) (*TestState, error) {
-	var state TestState
+func setUpTestState(socketPath string, timeout time.Duration, unitTest bool) (*TestState, error) {
+	state := TestState{unitTest: unitTest}
+
 	state.socket = &http.Client{
 		// TODO This may be too short/simple for downloading images
 		Timeout: timeout,

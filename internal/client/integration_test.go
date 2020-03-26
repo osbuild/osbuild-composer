@@ -21,7 +21,7 @@ var testState *TestState
 // Also makes sure there is a running server to test against
 func TestMain(m *testing.M) {
 	var err error
-	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second)
+	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second, false)
 	if err != nil {
 		fmt.Printf("ERROR: Test setup failed: %s\n", err)
 		os.Exit(1)

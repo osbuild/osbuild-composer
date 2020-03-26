@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	testState, err = setUpTestState(socketPath, 60*time.Second)
+	testState, err = setUpTestState(socketPath, 60*time.Second, true)
 	if err != nil {
 		log.Fatalf("ERROR: Test setup failed: %s\n", err)
 	}
