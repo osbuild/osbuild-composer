@@ -32,7 +32,15 @@ func TestListSomeModulesV0(t *testing.T) {
 
 // List one module
 func TestListOneModulesV0(t *testing.T) {
-	modules, api, err := ListModulesV0(testState.socket, "bash")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1"
+	} else {
+		moduleNames = "bash"
+	}
+	modules, api, err := ListModulesV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "ListModules failed: %#v", api)
 	require.True(t, len(modules) == 1, "Not enough modules returned")
@@ -40,7 +48,15 @@ func TestListOneModulesV0(t *testing.T) {
 
 // List two modules
 func TestListTwoModulesV0(t *testing.T) {
-	modules, api, err := ListModulesV0(testState.socket, "bash,tmux")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1,package2"
+	} else {
+		moduleNames = "bash,tmux"
+	}
+	modules, api, err := ListModulesV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "ListModules failed: %#v", api)
 	require.True(t, len(modules) == 2, "Not enough modules returned")
@@ -48,7 +64,15 @@ func TestListTwoModulesV0(t *testing.T) {
 
 // Get info on a specific module
 func TestOneModuleInfoV0(t *testing.T) {
-	modules, api, err := GetModulesInfoV0(testState.socket, "bash")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1"
+	} else {
+		moduleNames = "bash"
+	}
+	modules, api, err := GetModulesInfoV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "GetModulesInfo failed: %#v", api)
 	require.True(t, len(modules) == 1, "Not enough modules returned: %#v", modules)
@@ -56,7 +80,15 @@ func TestOneModuleInfoV0(t *testing.T) {
 
 // Get info on two specific modules
 func TestTwoModuleInfoV0(t *testing.T) {
-	modules, api, err := GetModulesInfoV0(testState.socket, "bash,tmux")
+	var moduleNames string
+
+	// Unit test uses modules/packages named packageN
+	if testState.unitTest {
+		moduleNames = "package1,package2"
+	} else {
+		moduleNames = "bash,tmux"
+	}
+	modules, api, err := GetModulesInfoV0(testState.socket, moduleNames)
 	require.NoError(t, err)
 	require.Nil(t, api, "GetModulesInfo failed: %#v", api)
 	require.True(t, len(modules) == 2, "Not enough modules returned: %#v", modules)

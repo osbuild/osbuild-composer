@@ -32,7 +32,7 @@ func TestRequest(t *testing.T) {
 	// Test that apiError returns an error when trying to parse non-JSON response
 	_, err = apiError(resp)
 	if err == nil {
-		t.Fatalf("apiError of a 404 response did not return an error")
+		t.Fatalf("apiError of a 404 response did not return an error: %#v", resp)
 	}
 
 	// Make a request with a bad offset to trigger a JSON response with Status set to 400

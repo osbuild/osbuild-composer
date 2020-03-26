@@ -697,6 +697,33 @@ func TestNonBlueprintDepsolveV0(t *testing.T) {
 
 // freeze a blueprint
 func TestBlueprintFreezeV0(t *testing.T) {
+	if testState.unitTest {
+		// The unit test mock server uses packages named dep-packageN
+		bp := `{
+			"name": "test",
+			"description": "CheckBlueprintFreezeV0",
+			"version": "0.0.1",
+			"packages": [{"name": "dep-package1", "version": "*"}],
+			"modules": [{"name": "dep-package2", "version": "*"}]
+	    }`
+
+		// Push a blueprint
+		resp, err := PostJSONBlueprintV0(testState.socket, bp)
+		require.NoError(t, err, "POST blueprint failed with a client error")
+		require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
+
+		// The unit test server returns hard-coded frozen packages
+		// in the modules section with an empty packages list
+		frozen, api, err := FreezeBlueprintV0(testState.socket, "test")
+		require.NoError(t, err, "Freeze blueprint failed with a client error")
+		require.Nil(t, api, "FreezeBlueprint failed: %#v", api)
+		require.Greater(t, len(frozen.Blueprints), 0, "No frozen blueprints returned")
+		require.Equal(t, 1, len(frozen.Blueprints[0].Blueprint.Packages), "No frozen packages returned")
+		require.Equal(t, 1, len(frozen.Blueprints[0].Blueprint.Modules), "No frozen modules returned")
+		return
+	}
+
+	// Integration test
 	bp := `{
 		"name": "test-freeze-blueprint-v0",
 		"description": "CheckBlueprintFreezeV0",
