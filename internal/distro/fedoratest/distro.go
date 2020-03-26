@@ -104,11 +104,3 @@ func (d *FedoraTestDistro) Name() string {
 func (d *FedoraTestDistro) ModulePlatformID() string {
 	return modulePlatformID
 }
-
-func (d *FedoraTestDistro) FilenameFromType(outputFormat string) (string, string, error) {
-	if outputFormat == "qcow2" {
-		return "test.img", "application/x-test", nil
-	} else {
-		return "", "", errors.New("invalid output format: " + outputFormat)
-	}
-}

@@ -550,13 +550,6 @@ func (r *RHEL82) ModulePlatformID() string {
 	return modulePlatformID
 }
 
-func (r *RHEL82) FilenameFromType(outputFormat string) (string, string, error) {
-	if output, exists := r.imageTypes[outputFormat]; exists {
-		return output.name, output.mimeType, nil
-	}
-	return "", "", errors.New("invalid output format: " + outputFormat)
-}
-
 func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
 	output, exists := r.imageTypes[outputFormat]
 	if !exists {
