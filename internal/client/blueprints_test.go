@@ -1,4 +1,4 @@
-// Package weldrcheck - blueprints contains functions to check the blueprints API
+// Package client - blueprints_test contains functions to check the blueprints API
 // Copyright (C) 2020 by Red Hat, Inc.
 
 // Tests should be self-contained and not depend on the state of the server
@@ -8,56 +8,15 @@
 // not from other functions.
 // The blueprint version number may get bumped if the server has had tests run before
 // do not assume the bp version will match unless first deleting the old one.
-
-// +build integration
-
-package weldrcheck
+package client
 
 import (
-	"fmt"
-	"os"
 	"sort"
 	"testing"
-	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/require"
-
-	"github.com/osbuild/osbuild-composer/internal/client"
-	"github.com/osbuild/osbuild-composer/internal/test"
 )
-
-// Hold test state to share between tests
-var testState *TestState
-
-// Setup the socket to use for running the tests
-// Also makes sure there is a running server to test against
-func TestMain(m *testing.M) {
-	var err error
-	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second)
-	if err != nil {
-		fmt.Printf("ERROR: Test setup failed: %s\n", err)
-		os.Exit(1)
-	}
-
-	// Setup the test repo
-	dir, err := test.SetUpTemporaryRepository()
-	if err != nil {
-		fmt.Printf("ERROR: Test repo setup failed: %s\n", err)
-		os.Exit(1)
-	}
-	testState.repoDir = dir
-
-	// Run the tests
-	rc := m.Run()
-
-	// Cleanup after the tests
-	err = test.TearDownTemporaryRepository(dir)
-	if err != nil {
-		fmt.Printf("ERROR: Failed to clean up temporary repository: %s\n", err)
-	}
-	os.Exit(rc)
-}
 
 // POST a new TOML blueprint
 func TestPostTOMLBlueprintV0(t *testing.T) {
@@ -77,7 +36,7 @@ func TestPostTOMLBlueprintV0(t *testing.T) {
 		name="root"
 		password="qweqweqwe"
 		`
-	resp, err := client.PostTOMLBlueprintV0(testState.socket, bp)
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 }
@@ -92,14 +51,14 @@ func TestPostInvalidTOMLBlueprintV0(t *testing.T) {
 		name="bash"
 		version="*"
 		`
-	resp, err := client.PostTOMLBlueprintV0(testState.socket, bp)
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
 
 // POST an empty TOML blueprint
 func TestPostEmptyTOMLBlueprintV0(t *testing.T) {
-	resp, err := client.PostTOMLBlueprintV0(testState.socket, "")
+	resp, err := PostTOMLBlueprintV0(testState.socket, "")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -115,7 +74,7 @@ func TestPostJSONBlueprintV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 }
@@ -129,14 +88,14 @@ func TestPostInvalidJSONBlueprintV0(t *testing.T) {
 		"modules": [{"name: "util-linux", "version": "*"}],
 	}`
 
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
 
 // POST an empty JSON blueprint
 func TestPostEmptyJSONBlueprintV0(t *testing.T) {
-	resp, err := client.PostJSONBlueprintV0(testState.socket, "")
+	resp, err := PostJSONBlueprintV0(testState.socket, "")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -159,7 +118,7 @@ func TestPostTOMLWorkspaceV0(t *testing.T) {
 		name="root"
 		password="qweqweqwe"
 		`
-	resp, err := client.PostTOMLWorkspaceV0(testState.socket, bp)
+	resp, err := PostTOMLWorkspaceV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 }
@@ -174,14 +133,14 @@ func TestPostInvalidTOMLWorkspaceV0(t *testing.T) {
 		name="bash"
 		version="*"
 		`
-	resp, err := client.PostTOMLWorkspaceV0(testState.socket, bp)
+	resp, err := PostTOMLWorkspaceV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
 
 // POST an empty TOML blueprint to the workspace
 func TestPostEmptyTOMLWorkspaceV0(t *testing.T) {
-	resp, err := client.PostTOMLWorkspaceV0(testState.socket, "")
+	resp, err := PostTOMLWorkspaceV0(testState.socket, "")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -197,7 +156,7 @@ func TestPostJSONWorkspaceV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err := client.PostJSONWorkspaceV0(testState.socket, bp)
+	resp, err := PostJSONWorkspaceV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 }
@@ -211,14 +170,14 @@ func TestPostInvalidJSONWorkspaceV0(t *testing.T) {
 		"modules": [{"name: "util-linux", "version": "*"}],
 	}`
 
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
 
 // POST an empty JSON blueprint to the workspace
 func TestPostEmptyJSONWorkspaceV0(t *testing.T) {
-	resp, err := client.PostJSONBlueprintV0(testState.socket, "")
+	resp, err := PostJSONBlueprintV0(testState.socket, "")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -235,19 +194,19 @@ func TestDeleteBlueprintV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 
 	// Delete the blueprint
-	resp, err = client.DeleteBlueprintV0(testState.socket, "test-delete-blueprint-v0")
+	resp, err = DeleteBlueprintV0(testState.socket, "test-delete-blueprint-v0")
 	require.NoError(t, err, "DELETE failed with a client error")
 	require.True(t, resp.Status, "DELETE failed: %#v", resp)
 }
 
 // delete a non-existent blueprint
 func TestDeleteNonBlueprint0(t *testing.T) {
-	resp, err := client.DeleteBlueprintV0(testState.socket, "test-delete-non-blueprint-v0")
+	resp, err := DeleteBlueprintV0(testState.socket, "test-delete-non-blueprint-v0")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -264,12 +223,12 @@ func TestDeleteNewWorkspaceV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err := client.PostJSONWorkspaceV0(testState.socket, bp)
+	resp, err := PostJSONWorkspaceV0(testState.socket, bp)
 	require.NoError(t, err, "POST failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 
 	// Delete the blueprint
-	resp, err = client.DeleteWorkspaceV0(testState.socket, "test-delete-new-blueprint-ws-v0")
+	resp, err = DeleteWorkspaceV0(testState.socket, "test-delete-new-blueprint-ws-v0")
 	require.NoError(t, err, "DELETE failed with a client error")
 	require.True(t, resp.Status, "DELETE failed: %#v", resp)
 }
@@ -286,7 +245,7 @@ func TestDeleteChangesWorkspaceV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
@@ -300,12 +259,12 @@ func TestDeleteChangesWorkspaceV0(t *testing.T) {
 		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
 	}`
 
-	resp, err = client.PostJSONWorkspaceV0(testState.socket, bp)
+	resp, err = PostJSONWorkspaceV0(testState.socket, bp)
 	require.NoError(t, err, "POST workspace failed with a client error")
 	require.True(t, resp.Status, "POST workspace failed: %#v", resp)
 
 	// Get the blueprint, make sure it is the modified one and that changes = true
-	info, api, err := client.GetBlueprintsInfoJSONV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
+	info, api, err := GetBlueprintsInfoJSONV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GET blueprint request failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -316,12 +275,12 @@ func TestDeleteChangesWorkspaceV0(t *testing.T) {
 	require.Equal(t, "workspace copy", info.Blueprints[0].Description, "workspace copy not returned")
 
 	// Delete the blueprint from the workspace
-	resp, err = client.DeleteWorkspaceV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
+	resp, err = DeleteWorkspaceV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
 	require.NoError(t, err, "DELETE workspace failed with a client error")
 	require.True(t, resp.Status, "DELETE workspace failed: %#v", resp)
 
 	// Get the blueprint, make sure it is the un-modified one
-	info, api, err = client.GetBlueprintsInfoJSONV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
+	info, api, err = GetBlueprintsInfoJSONV0(testState.socket, "test-delete-blueprint-changes-ws-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GET blueprint request failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -353,13 +312,13 @@ func TestListBlueprintsV0(t *testing.T) {
 	}`}
 
 	for i := range bps {
-		resp, err := client.PostJSONBlueprintV0(testState.socket, bps[i])
+		resp, err := PostJSONBlueprintV0(testState.socket, bps[i])
 		require.NoError(t, err, "POST blueprint failed with a client error")
 		require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 	}
 
 	// Get the list of blueprints
-	list, api, err := client.ListBlueprintsV0(testState.socket)
+	list, api, err := ListBlueprintsV0(testState.socket)
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "ListBlueprints failed: %#v", api)
 	require.Contains(t, list, "test-list-blueprint-1-v0")
@@ -378,12 +337,12 @@ func TestGetTOMLBlueprintV0(t *testing.T) {
 	}`
 
 	// Post a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
 	// Get it as TOML
-	body, api, err := client.GetBlueprintInfoTOMLV0(testState.socket, "test-get-blueprint-1-v0")
+	body, api, err := GetBlueprintInfoTOMLV0(testState.socket, "test-get-blueprint-1-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintInfoTOML failed: %#v", api)
 	require.Greater(t, len(body), 0, "body of response is empty")
@@ -396,7 +355,7 @@ func TestGetTOMLBlueprintV0(t *testing.T) {
 
 // get non-existent blueprint contents as TOML
 func TestGetNonTOMLBlueprintV0(t *testing.T) {
-	_, api, err := client.GetBlueprintInfoTOMLV0(testState.socket, "test-get-non-blueprint-1-v0")
+	_, api, err := GetBlueprintInfoTOMLV0(testState.socket, "test-get-non-blueprint-1-v0")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, api, "did not return an error")
 	require.False(t, api.Status, "wrong Status (true)")
@@ -414,12 +373,12 @@ func TestGetJSONBlueprintV0(t *testing.T) {
 	}`
 
 	// Post a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
 	// Get the blueprint and its changed state
-	info, api, err := client.GetBlueprintsInfoJSONV0(testState.socket, "test-get-blueprint-2-v0")
+	info, api, err := GetBlueprintsInfoJSONV0(testState.socket, "test-get-blueprint-2-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintInfoJSON failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -431,7 +390,7 @@ func TestGetJSONBlueprintV0(t *testing.T) {
 
 // get non-existent blueprint contents as JSON
 func TestGetNonJSONBkueprintV0(t *testing.T) {
-	resp, api, err := client.GetBlueprintsInfoJSONV0(testState.socket, "test-get-non-blueprint-1-v0")
+	resp, api, err := GetBlueprintsInfoJSONV0(testState.socket, "test-get-non-blueprint-1-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "ListBlueprints failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
@@ -449,7 +408,7 @@ func TestBumpBlueprintVersionV0(t *testing.T) {
 	}`
 
 	// List blueprints
-	list, api, err := client.ListBlueprintsV0(testState.socket)
+	list, api, err := ListBlueprintsV0(testState.socket)
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "ListBlueprints failed: %#v", api)
 
@@ -457,23 +416,23 @@ func TestBumpBlueprintVersionV0(t *testing.T) {
 	sorted := sort.StringSlice(list)
 	if isStringInSlice(sorted, "test-bump-blueprint-1-v0") {
 		// Delete this blueprint if it already exists
-		resp, err := client.DeleteBlueprintV0(testState.socket, "test-bump-blueprint-1-v0")
+		resp, err := DeleteBlueprintV0(testState.socket, "test-bump-blueprint-1-v0")
 		require.NoError(t, err, "DELETE blueprint failed with a client error")
 		require.True(t, resp.Status, "DELETE blueprint failed: %#v", resp)
 	}
 
 	// Post a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
 	// Post a blueprint again to bump verion to 2.1.3
-	resp, err = client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err = PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint 2nd time failed with a client error")
 	require.True(t, resp.Status, "POST blueprint 2nd time failed: %#v", resp)
 
 	// Get the blueprint and its changed state
-	info, api, err := client.GetBlueprintsInfoJSONV0(testState.socket, "test-bump-blueprint-1-v0")
+	info, api, err := GetBlueprintsInfoJSONV0(testState.socket, "test-bump-blueprint-1-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsInfoJSON failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -509,13 +468,13 @@ func TestBlueprintChangesV0(t *testing.T) {
 
 	// Push 3 changes to the blueprint
 	for i := range bps {
-		resp, err := client.PostJSONBlueprintV0(testState.socket, bps[i])
+		resp, err := PostJSONBlueprintV0(testState.socket, bps[i])
 		require.NoError(t, err, "POST blueprint #%d failed with a client error")
 		require.True(t, resp.Status, "POST blueprint #%d failed: %#v", i, resp)
 	}
 
 	// List the changes
-	changes, api, err := client.GetBlueprintsChangesV0(testState.socket, []string{"test-blueprint-changes-v0"})
+	changes, api, err := GetBlueprintsChangesV0(testState.socket, []string{"test-blueprint-changes-v0"})
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsChanges failed: %#v", api)
 	require.Equal(t, 1, len(changes.BlueprintsChanges), "No changes returned")
@@ -525,7 +484,7 @@ func TestBlueprintChangesV0(t *testing.T) {
 
 // Get changes for a non-existent blueprint
 func TestBlueprintNonChangesV0(t *testing.T) {
-	resp, api, err := client.GetBlueprintsChangesV0(testState.socket, []string{"test-non-blueprint-changes-v0"})
+	resp, api, err := GetBlueprintsChangesV0(testState.socket, []string{"test-non-blueprint-changes-v0"})
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsChanges failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
@@ -551,12 +510,12 @@ func TestUndoBlueprintV0(t *testing.T) {
 	}`}
 
 	// Push original version of the blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bps[0])
+	resp, err := PostJSONBlueprintV0(testState.socket, bps[0])
 	require.NoError(t, err, "POST blueprint #0 failed with a client error")
 	require.True(t, resp.Status, "POST blueprint #0 failed: %#v", resp)
 
 	// Get the commit hash
-	changes, api, err := client.GetBlueprintsChangesV0(testState.socket, []string{"test-undo-blueprint-v0"})
+	changes, api, err := GetBlueprintsChangesV0(testState.socket, []string{"test-undo-blueprint-v0"})
 	require.NoError(t, err, "GET blueprint #0 failed with a client error")
 	require.Nil(t, api, "GetBlueprintsChanges #0 failed: %#v", api)
 	require.Equal(t, 1, len(changes.BlueprintsChanges), "No changes returned")
@@ -565,12 +524,12 @@ func TestUndoBlueprintV0(t *testing.T) {
 	require.NotEmpty(t, commit, "First commit is empty")
 
 	// Push the new version with wrong bash version
-	resp, err = client.PostJSONBlueprintV0(testState.socket, bps[1])
+	resp, err = PostJSONBlueprintV0(testState.socket, bps[1])
 	require.NoError(t, err, "POST blueprint #1 failed with a client error")
 	require.True(t, resp.Status, "POST blueprint #1 failed: %#v", resp)
 
 	// Get the blueprint, confirm bash version is '0.5.*'
-	info, api, err := client.GetBlueprintsInfoJSONV0(testState.socket, "test-undo-blueprint-v0")
+	info, api, err := GetBlueprintsInfoJSONV0(testState.socket, "test-undo-blueprint-v0")
 	require.NoError(t, err, "GET blueprint #1 failed with a client error")
 	require.Nil(t, api, "GetBlueprintsInfo #1 failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -579,12 +538,12 @@ func TestUndoBlueprintV0(t *testing.T) {
 	require.Equal(t, "0.5.*", info.Blueprints[0].Packages[0].Version, "Wrong version in blueprint")
 
 	// Revert the blueprint to the original version
-	resp, err = client.UndoBlueprintChangeV0(testState.socket, "test-undo-blueprint-v0", commit)
+	resp, err = UndoBlueprintChangeV0(testState.socket, "test-undo-blueprint-v0", commit)
 	require.NoError(t, err, "Undo blueprint failed with a client error")
 	require.True(t, resp.Status, "Undo blueprint failed: %#v", resp)
 
 	// Get the blueprint, confirm bash version is '*'
-	info, api, err = client.GetBlueprintsInfoJSONV0(testState.socket, "test-undo-blueprint-v0")
+	info, api, err = GetBlueprintsInfoJSONV0(testState.socket, "test-undo-blueprint-v0")
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsInfo failed: %#v", api)
 	require.Greater(t, len(info.Blueprints), 0, "No blueprints returned")
@@ -613,19 +572,19 @@ func TestUndoBlueprintNonCommitV0(t *testing.T) {
 	}`}
 
 	for i := range bps {
-		resp, err := client.PostJSONBlueprintV0(testState.socket, bps[i])
+		resp, err := PostJSONBlueprintV0(testState.socket, bps[i])
 		require.NoError(t, err, "POST blueprint #%d failed with a client error")
 		require.True(t, resp.Status, "POST blueprint #%d failed: %#v", i, resp)
 	}
 
-	resp, err := client.UndoBlueprintChangeV0(testState.socket, "test-undo-blueprint-non-commit-v0", "FFFF")
+	resp, err := UndoBlueprintChangeV0(testState.socket, "test-undo-blueprint-non-commit-v0", "FFFF")
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
 
 // Undo non-existent blueprint changes
 func TestUndoNonBlueprintV0(t *testing.T) {
-	resp, err := client.UndoBlueprintChangeV0(testState.socket, "test-undo-non-blueprint-v0", "FFFF")
+	resp, err := UndoBlueprintChangeV0(testState.socket, "test-undo-non-blueprint-v0", "FFFF")
 	require.NoError(t, err, "blueprint failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
 }
@@ -652,17 +611,17 @@ func TestBlueprintTagV0(t *testing.T) {
 	}`}
 
 	// Push a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bps[0])
+	resp, err := PostJSONBlueprintV0(testState.socket, bps[0])
 	require.NoError(t, err, "POST blueprint #0 failed with a client error")
 	require.True(t, resp.Status, "POST blueprint #0 failed: %#v", resp)
 
 	// Tag the blueprint
-	tagResp, err := client.TagBlueprintV0(testState.socket, "test-tag-blueprint-v0")
+	tagResp, err := TagBlueprintV0(testState.socket, "test-tag-blueprint-v0")
 	require.NoError(t, err, "Tag blueprint #0 failed with a client error")
 	require.True(t, tagResp.Status, "Tag blueprint #0 failed: %#v", resp)
 
 	// Get changes, get the blueprint's revision
-	changes, api, err := client.GetBlueprintsChangesV0(testState.socket, []string{"test-tag-blueprint-v0"})
+	changes, api, err := GetBlueprintsChangesV0(testState.socket, []string{"test-tag-blueprint-v0"})
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsChanges failed: %#v", api)
 	require.Equal(t, 1, len(changes.BlueprintsChanges), "No changes returned")
@@ -673,17 +632,17 @@ func TestBlueprintTagV0(t *testing.T) {
 	require.NotEqual(t, 0, *revision, "Revision is zero")
 
 	// Push a new version of the blueprint
-	resp, err = client.PostJSONBlueprintV0(testState.socket, bps[1])
+	resp, err = PostJSONBlueprintV0(testState.socket, bps[1])
 	require.NoError(t, err, "POST blueprint #1 failed with a client error")
 	require.True(t, resp.Status, "POST blueprint #1 failed: %#v", resp)
 
 	// Tag the blueprint
-	tagResp, err = client.TagBlueprintV0(testState.socket, "test-tag-blueprint-v0")
+	tagResp, err = TagBlueprintV0(testState.socket, "test-tag-blueprint-v0")
 	require.NoError(t, err, "Tag blueprint #1 failed with a client error")
 	require.True(t, tagResp.Status, "Tag blueprint #1 failed: %#v", resp)
 
 	// Get changes, confirm that Revision is revision +1
-	changes, api, err = client.GetBlueprintsChangesV0(testState.socket, []string{"test-tag-blueprint-v0"})
+	changes, api, err = GetBlueprintsChangesV0(testState.socket, []string{"test-tag-blueprint-v0"})
 	require.NoError(t, err, "GET blueprint failed with a client error")
 	require.Nil(t, api, "GetBlueprintsChanges failed: %#v", api)
 	require.Equal(t, 1, len(changes.BlueprintsChanges), "No changes returned")
@@ -696,7 +655,7 @@ func TestBlueprintTagV0(t *testing.T) {
 
 // Tag a non-existent blueprint
 func TestNonBlueprintTagV0(t *testing.T) {
-	tagResp, err := client.TagBlueprintV0(testState.socket, "test-tag-non-blueprint-v0")
+	tagResp, err := TagBlueprintV0(testState.socket, "test-tag-non-blueprint-v0")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, tagResp.Status, "did not return an error")
 }
@@ -712,12 +671,12 @@ func TestBlueprintDepsolveV0(t *testing.T) {
 	}`
 
 	// Push a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
 	// Depsolve the blueprint
-	deps, api, err := client.DepsolveBlueprintV0(testState.socket, "test-deps-blueprint-v0")
+	deps, api, err := DepsolveBlueprintV0(testState.socket, "test-deps-blueprint-v0")
 	require.NoError(t, err, "Depsolve blueprint failed with a client error")
 	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
 	require.Greater(t, len(deps.Blueprints), 0, "No blueprint dependencies returned")
@@ -730,7 +689,7 @@ func TestBlueprintDepsolveV0(t *testing.T) {
 
 // depsolve a non-existent blueprint
 func TestNonBlueprintDepsolveV0(t *testing.T) {
-	resp, api, err := client.DepsolveBlueprintV0(testState.socket, "test-deps-non-blueprint-v0")
+	resp, api, err := DepsolveBlueprintV0(testState.socket, "test-deps-non-blueprint-v0")
 	require.NoError(t, err, "Depsolve blueprint failed with a client error")
 	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
@@ -747,12 +706,12 @@ func TestBlueprintFreezeV0(t *testing.T) {
 	}`
 
 	// Push a blueprint
-	resp, err := client.PostJSONBlueprintV0(testState.socket, bp)
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "POST blueprint failed with a client error")
 	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
 
 	// Freeze the blueprint
-	frozen, api, err := client.FreezeBlueprintV0(testState.socket, "test-freeze-blueprint-v0")
+	frozen, api, err := FreezeBlueprintV0(testState.socket, "test-freeze-blueprint-v0")
 	require.NoError(t, err, "Freeze blueprint failed with a client error")
 	require.Nil(t, api, "FreezeBlueprint failed: %#v", api)
 	require.Greater(t, len(frozen.Blueprints), 0, "No frozen blueprints returned")
@@ -766,7 +725,7 @@ func TestBlueprintFreezeV0(t *testing.T) {
 
 // freeze a non-existent blueprint
 func TestNonBlueprintFreezeV0(t *testing.T) {
-	resp, api, err := client.FreezeBlueprintV0(testState.socket, "test-freeze-non-blueprint-v0")
+	resp, api, err := FreezeBlueprintV0(testState.socket, "test-freeze-non-blueprint-v0")
 	require.NoError(t, err, "Freeze blueprint failed with a client error")
 	require.Nil(t, api, "FreezeBlueprint failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)

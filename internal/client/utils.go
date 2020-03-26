@@ -1,7 +1,7 @@
 // Package weldrcheck contains functions used to run integration tests on a running API server
 // Copyright (C) 2020 by Red Hat, Inc.
 
-// nolint: deadcode // These functions are used by the *_test.go code
+// nolint: deadcode,unused // These functions are used by the *_test.go code
 package client
 
 import (
