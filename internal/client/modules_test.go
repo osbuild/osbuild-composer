@@ -1,4 +1,4 @@
-// Package weldrcheck - modules contains functions to check the modules API
+// Package client - modules_test contains functions to check the modules API
 // Copyright (C) 2020 by Red Hat, Inc.
 
 // Tests should be self-contained and not depend on the state of the server
@@ -6,23 +6,17 @@
 // They should not assume version numbers for packages will match
 // They should run tests that depend on previous results from the same function
 // not from other functions.
-
-// +build integration
-
-package weldrcheck
+package client
 
 import (
-	//	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/osbuild/osbuild-composer/internal/client"
 )
 
 // List all the modules
 func TestListAllModulesV0(t *testing.T) {
-	modules, api, err := client.ListAllModulesV0(testState.socket)
+	modules, api, err := ListAllModulesV0(testState.socket)
 	require.NoError(t, err)
 	require.Nil(t, api, "ListAllModules failed: %#v", api)
 	require.True(t, len(modules) > 1, "Not enough modules returned")
@@ -30,7 +24,7 @@ func TestListAllModulesV0(t *testing.T) {
 
 // List some modules
 func TestListSomeModulesV0(t *testing.T) {
-	modules, api, err := client.ListSomeModulesV0(testState.socket, 0, 5)
+	modules, api, err := ListSomeModulesV0(testState.socket, 0, 5)
 	require.NoError(t, err)
 	require.Nil(t, api, "ListSomeProjects failed: %#v", api)
 	require.True(t, len(modules) == 5, "Not enough modules returned")
@@ -38,7 +32,7 @@ func TestListSomeModulesV0(t *testing.T) {
 
 // List one module
 func TestListOneModulesV0(t *testing.T) {
-	modules, api, err := client.ListModulesV0(testState.socket, "bash")
+	modules, api, err := ListModulesV0(testState.socket, "bash")
 	require.NoError(t, err)
 	require.Nil(t, api, "ListModules failed: %#v", api)
 	require.True(t, len(modules) == 1, "Not enough modules returned")
@@ -46,7 +40,7 @@ func TestListOneModulesV0(t *testing.T) {
 
 // List two modules
 func TestListTwoModulesV0(t *testing.T) {
-	modules, api, err := client.ListModulesV0(testState.socket, "bash,tmux")
+	modules, api, err := ListModulesV0(testState.socket, "bash,tmux")
 	require.NoError(t, err)
 	require.Nil(t, api, "ListModules failed: %#v", api)
 	require.True(t, len(modules) == 2, "Not enough modules returned")
@@ -54,7 +48,7 @@ func TestListTwoModulesV0(t *testing.T) {
 
 // Get info on a specific module
 func TestOneModuleInfoV0(t *testing.T) {
-	modules, api, err := client.GetModulesInfoV0(testState.socket, "bash")
+	modules, api, err := GetModulesInfoV0(testState.socket, "bash")
 	require.NoError(t, err)
 	require.Nil(t, api, "GetModulesInfo failed: %#v", api)
 	require.True(t, len(modules) == 1, "Not enough modules returned: %#v", modules)
@@ -62,7 +56,7 @@ func TestOneModuleInfoV0(t *testing.T) {
 
 // Get info on two specific modules
 func TestTwoModuleInfoV0(t *testing.T) {
-	modules, api, err := client.GetModulesInfoV0(testState.socket, "bash,tmux")
+	modules, api, err := GetModulesInfoV0(testState.socket, "bash,tmux")
 	require.NoError(t, err)
 	require.Nil(t, api, "GetModulesInfo failed: %#v", api)
 	require.True(t, len(modules) == 2, "Not enough modules returned: %#v", modules)
@@ -70,7 +64,7 @@ func TestTwoModuleInfoV0(t *testing.T) {
 
 // Test an invalid info request
 func TestEmptyModuleInfoV0(t *testing.T) {
-	modules, api, err := client.GetModulesInfoV0(testState.socket, "")
+	modules, api, err := GetModulesInfoV0(testState.socket, "")
 	require.NoError(t, err)
 	require.NotNil(t, api, "did not return an error")
 	require.False(t, api.Status, "wrong Status (true)")
