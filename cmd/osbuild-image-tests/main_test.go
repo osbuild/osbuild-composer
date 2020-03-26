@@ -96,7 +96,7 @@ func splitExtension(path string) (string, string) {
 func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
 	var imageInfoExpected interface{}
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
-	require.Nilf(t, err, "cannot decode expected image info: %#v", err)
+	require.NoErrorf(t, err, "cannot decode expected image info: %#v", err)
 
 	cmd := exec.Command(imageInfoPath, imagePath)
 	cmd.Stderr = os.Stderr
@@ -104,14 +104,14 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	cmd.Stdout = writer
 
 	err = cmd.Start()
-	require.Nilf(t, err, "image-info cannot start: %#v", err)
+	require.NoErrorf(t, err, "image-info cannot start: %#v", err)
 
 	var imageInfoGot interface{}
 	err = json.NewDecoder(reader).Decode(&imageInfoGot)
-	require.Nilf(t, err, "decoding image-info output failed: %#v", err)
+	require.NoErrorf(t, err, "decoding image-info output failed: %#v", err)
 
 	err = cmd.Wait()
-	require.Nilf(t, err, "running image-info failed: %#v", err)
+	require.NoErrorf(t, err, "running image-info failed: %#v", err)
 
 	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
@@ -223,7 +223,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 		}
 	})
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 // testImage performs a series of tests specified in the testcase
@@ -246,7 +246,7 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct) {
 	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-")
-	require.Nilf(t, err, "cannot create temporary store: %#v", err)
+	require.NoErrorf(t, err, "cannot create temporary store: %#v", err)
 
 	defer func() {
 		err := os.RemoveAll(store)
@@ -256,7 +256,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 	}()
 
 	outputID, err := runOsbuild(testcase.Manifest, store)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
 
@@ -266,7 +266,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 		_, ex = splitExtension(base)
 		if ex != ".tar" {
 			err := extractXZ(imagePath)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			imagePath = base
 		}
 	}
@@ -299,11 +299,11 @@ func runTests(t *testing.T, cases []string) {
 	for _, path := range cases {
 		t.Run(path, func(t *testing.T) {
 			f, err := os.Open(path)
-			require.Nilf(t, err, "%s: cannot open test case: %#v", path, err)
+			require.NoErrorf(t, err, "%s: cannot open test case: %#v", path, err)
 
 			var testcase testcaseStruct
 			err = json.NewDecoder(f).Decode(&testcase)
-			require.Nilf(t, err, "%s: cannot decode test case: %#v", path, err)
+			require.NoErrorf(t, err, "%s: cannot decode test case: %#v", path, err)
 
 			currentArch := common.CurrentArch()
 			if testcase.ComposeRequest.Arch != currentArch {
@@ -322,7 +322,7 @@ func TestImages(t *testing.T) {
 	if len(cases) == 0 {
 		var err error
 		cases, err = getAllCases()
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	runTests(t, cases)
