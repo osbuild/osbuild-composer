@@ -50,7 +50,9 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("running osbuild failed: %s", outBuffer.String())
+			var formattedOutput bytes.Buffer
+			_ = json.Indent(&formattedOutput, outBuffer.Bytes(), "", "  ")
+			return "", fmt.Errorf("running osbuild failed: %s", formattedOutput.String())
 		}
 		return "", fmt.Errorf("running osbuild failed from an unexpected reason: %#v", err)
 	}
