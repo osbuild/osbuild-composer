@@ -1,9 +1,8 @@
 package rhel81_test
 
 import (
-	"testing"
-
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
+	"testing"
 )
 
 func TestFilenameFromType(t *testing.T) {
@@ -73,18 +72,21 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			el81 := rhel81.New()
-			got, got1, err := el81.FilenameFromType(tt.args.outputFormat)
+			dist := rhel81.New()
+			arch, _ := dist.GetArch("x86_64")
+			imgType, err := arch.GetImageType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FilenameFromType() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
+				got := imgType.Filename()
+				got1 := imgType.MIMEType()
 				if got != tt.want {
-					t.Errorf("FilenameFromType() got = %v, want %v", got, tt.want)
+					t.Errorf("ImageType.Filename()  got = %v, want %v", got, tt.want)
 				}
 				if got1 != tt.want1 {
-					t.Errorf("FilenameFromType() got1 = %v, want %v", got1, tt.want1)
+					t.Errorf("ImageType.MIMEType() got1 = %v, want %v", got1, tt.want1)
 				}
 			}
 		})

@@ -31,11 +31,6 @@ type Distro interface {
 	// Returns an object representing the given architecture as support
 	// by this distro.
 	GetArch(arch string) (Arch, error)
-
-	// Returns the canonical filename and MIME type for a given output
-	// format. `outputFormat` must be one returned by
-	// TODO: remove when redundant
-	FilenameFromType(outputFormat string) (string, string, error)
 }
 
 // An Arch represents a given distribution's support for a given architecture.

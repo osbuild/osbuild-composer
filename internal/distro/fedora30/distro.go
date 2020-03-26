@@ -411,13 +411,6 @@ func (r *Fedora30) ModulePlatformID() string {
 	return modulePlatformID
 }
 
-func (r *Fedora30) FilenameFromType(outputFormat string) (string, string, error) {
-	if output, exists := r.imageTypes[outputFormat]; exists {
-		return output.name, output.mimeType, nil
-	}
-	return "", "", errors.New("invalid output format: " + outputFormat)
-}
-
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	files := &osbuild.FilesSource{
 		URLs: make(map[string]string),
