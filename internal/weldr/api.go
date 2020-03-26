@@ -1754,16 +1754,18 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 
 	imageBuild := compose.ImageBuilds[0]
 	imageType, _ := imageBuild.ImageType.ToCompatString()
-	imageName, imageMime, err := api.distro.FilenameFromType(imageType)
-
+	imageTypeStruct, err := api.arch.GetImageType(imageType)
 	if err != nil {
 		errors := responseError{
-			ID:  "BadCompose",
-			Msg: fmt.Sprintf("Compose %s is ill-formed: output type %v is invalid for distro %s", uuidString, imageBuild.ImageType, api.distro.Name()),
+			ID: "BadCompose",
+			Msg: fmt.Sprintf("Compose %s is ill-formed: output type %v is invalid for distro %s on %s",
+				uuidString, imageBuild.ImageType, api.distro.Name(), api.arch.Name()),
 		}
 		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
 	}
+	imageName := imageTypeStruct.Filename()
+	imageMime := imageTypeStruct.MIMEType()
 
 	reader, fileSize, err := api.store.GetImageBuildImage(uuid, 0)
 
