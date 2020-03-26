@@ -29,10 +29,10 @@ func TestRequest(t *testing.T) {
 		t.Fatalf("Request bad route: %d != 404", resp.StatusCode)
 	}
 
-	// Test that apiError returns an error when trying to parse non-JSON response
+	// Test that apiError returns an error response
 	_, err = apiError(resp)
-	if err == nil {
-		t.Fatalf("apiError of a 404 response did not return an error: %#v", resp)
+	if err != nil {
+		t.Fatalf("apiError could not parse the response: %s", err)
 	}
 
 	// Make a request with a bad offset to trigger a JSON response with Status set to 400

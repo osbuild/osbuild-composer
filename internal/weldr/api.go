@@ -167,7 +167,12 @@ func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) 
 }
 
 func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusNotFound)
+	errors := responseError{
+		Code: http.StatusNotFound,
+		ID:   "HTTPError",
+		Msg:  "Not Found",
+	}
+	statusResponseError(writer, http.StatusNotFound, errors)
 }
 
 func notImplementedHandler(writer http.ResponseWriter, httpRequest *http.Request, _ httprouter.Params) {
