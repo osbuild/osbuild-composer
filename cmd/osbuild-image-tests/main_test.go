@@ -125,7 +125,7 @@ func (*timeoutError) Error() string { return "" }
 // that 10 seconds or if systemd-is-running returns starting.
 // It returns nil if systemd-is-running returns running or degraded.
 // It can also return other errors in other error cases.
-func trySSHOnce(ns *netNS) error {
+func trySSHOnce(address string, ns *netNS) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -135,7 +135,7 @@ func trySSHOnce(ns *netNS) error {
 		"-i", privateKeyPath,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
-		"redhat@localhost",
+		"redhat@" + address,
 		"systemctl --wait is-system-running",
 	}
 
@@ -180,10 +180,10 @@ func trySSHOnce(ns *netNS) error {
 // testSSH tests the running image using ssh.
 // It tries 20 attempts before giving up. If a major error occurs, it might
 // return earlier.
-func testSSH(t *testing.T, ns *netNS) {
+func testSSH(t *testing.T, address string, ns *netNS) {
 	const attempts = 20
 	for i := 0; i < attempts; i++ {
-		err := trySSHOnce(ns)
+		err := trySSHOnce(address, ns)
 		if err == nil {
 			// pass the test
 			return
@@ -212,18 +212,18 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 			fallthrough
 		case "qemu-extract":
 			return withBootedQemuImage(imagePath, ns, func() error {
-				testSSH(t, &ns)
+				testSSH(t, "localhost", &ns)
 				return nil
 			})
 		case "nspawn":
 			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-				testSSH(t, &ns)
+				testSSH(t, "localhost", &ns)
 				return nil
 			})
 		case "nspawn-extract":
 			return withExtractedTarArchive(imagePath, func(dir string) error {
 				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-					testSSH(t, &ns)
+					testSSH(t, "localhost", &ns)
 					return nil
 				})
 			})
