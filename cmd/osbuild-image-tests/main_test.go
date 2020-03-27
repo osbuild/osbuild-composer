@@ -206,33 +206,41 @@ func testSSH(t *testing.T, address string, ns *netNS) {
 // in defined number of attempts and systemd-is-running returns running
 // or degraded status.
 func testBoot(t *testing.T, imagePath string, bootType string, outputID string) {
-	err := withNetworkNamespace(func(ns netNS) error {
-		switch bootType {
-		case "qemu":
-			fallthrough
-		case "qemu-extract":
+	switch bootType {
+	case "qemu":
+		fallthrough
+	case "qemu-extract":
+		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedQemuImage(imagePath, ns, func() error {
 				testSSH(t, "localhost", &ns)
 				return nil
 			})
-		case "nspawn":
+		})
+		require.NoError(t, err)
+
+	case "nspawn":
+		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
 				testSSH(t, "localhost", &ns)
 				return nil
 			})
-		case "nspawn-extract":
+		})
+		require.NoError(t, err)
+
+	case "nspawn-extract":
+		err := withNetworkNamespace(func(ns netNS) error {
 			return withExtractedTarArchive(imagePath, func(dir string) error {
 				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
 					testSSH(t, "localhost", &ns)
 					return nil
 				})
 			})
-		default:
-			panic("unknown boot type!")
-		}
-	})
+		})
+		require.NoError(t, err)
 
-	require.NoError(t, err)
+	default:
+		panic("unknown boot type!")
+	}
 }
 
 // testImage performs a series of tests specified in the testcase
