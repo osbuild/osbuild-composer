@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 
@@ -108,15 +107,22 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	}
 
 	type repository struct {
-		URL string `json:"url"`
+		BaseURL    string `json:"baseurl,omitempty"`
+		Metalink   string `json:"metalink,omitempty"`
+		MirrorList string `json:"mirrorlist,omitempty"`
+		GPGKey     string `json:"gpgkey,omitempty"`
+	}
+
+	type imageBuild struct {
+		Distribution string       `json:"distribution"`
+		Architecture string       `json:"architecture"`
+		ImageType    string       `json:"image_type"`
+		Repositories []repository `json:"repositories"`
 	}
 
 	// JSON structure expected from the client
 	var composeRequest struct {
-		Distribution  string       `json:"distribution"`
-		ImageTypes    []string     `json:"image_types"`
-		Architectures []string     `json:"architectures"`
-		Repositories  []repository `json:"repositories"`
+		ImageBuilds []imageBuild `json:"image_builds"`
 	}
 	// JSON structure with error message
 	var errorReason struct {
@@ -126,35 +132,27 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&composeRequest)
-	if err != nil || len(composeRequest.Architectures) != 1 || len(composeRequest.ImageTypes) != 1 || len(composeRequest.Repositories) == 0 {
+	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
-		errors := []string{}
+		err = json.NewEncoder(writer).Encode(err.Error())
 		if err != nil {
-			errors = append(errors, err.Error())
-		}
-		if len(composeRequest.ImageTypes) == 0 {
-			errors = append(errors, "input must specify an image type")
-		} else if len(composeRequest.ImageTypes) != 1 {
-			errors = append(errors, "multiple image types are not yet supported")
-		}
-		if len(composeRequest.Architectures) == 0 {
-			errors = append(errors, "input must specify an architecture")
-		} else if len(composeRequest.Architectures) != 1 {
-			errors = append(errors, "multiple architectures are not yet supported")
-		}
-		if len(composeRequest.Repositories) == 0 {
-			errors = append(errors, "input must specify repositories")
-		}
-		errorReason.Error = strings.Join(errors, ", ")
-		err = json.NewEncoder(writer).Encode(errorReason)
-		if err != nil {
-			// JSON encoding is clearly our fault.
-			panic("Failed to encode errors in RCM API. This is a bug.")
+			panic("Failed to write response")
 		}
 		return
 	}
 
-	distro := api.distros.GetDistro(composeRequest.Distribution)
+	if len(composeRequest.ImageBuilds) != 1 {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte("unsupported number of image builds"))
+		if err != nil {
+			panic("Failed to write response")
+		}
+		return
+	}
+
+	buildRequest := composeRequest.ImageBuilds[0]
+
+	distro := api.distros.GetDistro(buildRequest.Distribution)
 	if distro == nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte("unknown distro"))
@@ -164,7 +162,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	arch, err := distro.GetArch(composeRequest.Architectures[0])
+	arch, err := distro.GetArch(buildRequest.Architecture)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte("unknown architecture for distro"))
@@ -174,7 +172,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	imageType, err := arch.GetImageType(composeRequest.ImageTypes[0])
+	imageType, err := arch.GetImageType(buildRequest.ImageType)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte("unknown image type for distro and architecture"))
@@ -184,14 +182,15 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	// Create repo configurations from the URLs in the request. Use made up repo id and name, because
-	// we don't want to bother clients of this API with details like this
+	// Create repo configurations from the URLs in the request.
 	repoConfigs := []rpmmd.RepoConfig{}
-	for n, repo := range composeRequest.Repositories {
+	for n, repo := range buildRequest.Repositories {
 		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
-			Id:        fmt.Sprintf("repo-%d", n),
-			BaseURL:   repo.URL,
-			IgnoreSSL: false,
+			Id:         fmt.Sprintf("repo-%d", n),
+			BaseURL:    repo.BaseURL,
+			Metalink:   repo.Metalink,
+			MirrorList: repo.MirrorList,
+			GPGKey:     repo.GPGKey,
 		})
 	}
 

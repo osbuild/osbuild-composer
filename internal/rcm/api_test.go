@@ -3,6 +3,7 @@ package rcm_test
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -44,7 +45,7 @@ func TestBasicRcmAPI(t *testing.T) {
 		{"GET", "/v1/compose", ``, "", http.StatusMethodNotAllowed, ``},
 		{"POST", "/v1/compose", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, ``},
 		{"POST", "/v1/compose", `{"status":"RUNNING"}`, "text/plain", http.StatusBadRequest, ``},
-		{"POST", "/v1/compose", `{"distribution": "fedora-30", "image_types": ["qcow2"], "architectures":["x86_64"], "repositories": []}`, "application/json", http.StatusBadRequest, ""},
+		{"POST", "/v1/compose", `{"image_builds":[]}`, "application/json", http.StatusBadRequest, ""},
 		{"POST", "/v1/compose/111-222-333", `{"status":"RUNNING"}`, "application/json", http.StatusMethodNotAllowed, ``},
 		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, `{"error_reason":"Compose UUID does not exist"}`},
 	}
@@ -73,7 +74,134 @@ func TestBasicRcmAPI(t *testing.T) {
 	}
 }
 
-func TestSubmitCompose(t *testing.T) {
+func TestSubmit(t *testing.T) {
+	registry, err := distro_mock.NewDefaultRegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
+	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+
+	var submit_reply struct {
+		UUID uuid.UUID `json:"compose_id"`
+	}
+
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ContentType    string
+		ExpectedStatus int
+	}{
+		{
+			"POST",
+			"/v1/compose",
+			`{
+				"image_builds":
+				[
+					{
+						"distribution": "fedora-30",
+						"architecture": "x86_64",
+						"image_type": "qcow2",
+						"repositories":
+						[
+							{
+								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							}
+						]
+					}
+				]
+			}`,
+			"application/json",
+			http.StatusOK,
+		},
+		{
+			"POST",
+			"/v1/compose",
+			`{
+				"image_builds":
+				[
+					{
+						"distribution": "invalid",
+						"architecture": "x86_64",
+						"image_type": "qcow2",
+						"repositories":
+						[
+							{
+								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							}
+						]
+					}
+				]
+			}`,
+			"application/json",
+			http.StatusBadRequest,
+		},
+		{
+			"POST",
+			"/v1/compose",
+			`{
+				"image_builds":
+				[
+					{
+						"distribution": "fedora-30",
+						"architecture": "invalid",
+						"image_type": "qcow2",
+						"repositories":
+						[
+							{
+								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							}
+						]
+					}
+				]
+			}`,
+			"application/json",
+			http.StatusBadRequest,
+		},
+		{
+			"POST",
+			"/v1/compose",
+			`{
+				"image_builds":
+				[
+					{
+						"distribution": "fedora-30",
+						"architecture": "x86_64",
+						"image_type": "invalid",
+						"repositories":
+						[
+							{
+								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							}
+						]
+					}
+				]
+			}`,
+			"application/json",
+			http.StatusBadRequest,
+		},
+	}
+
+	for n, c := range cases {
+		// Submit job
+		t.Logf("RCM API submit compose, case %d\n", n)
+		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
+		if resp.StatusCode != c.ExpectedStatus {
+			errReason, _ := ioutil.ReadAll(resp.Body)
+			t.Fatal("Failed to call /v1/compose, HTTP status code: ", resp.StatusCode, "Error message: ", string(errReason))
+		}
+		if resp.StatusCode == http.StatusOK {
+			decoder := json.NewDecoder(resp.Body)
+			decoder.DisallowUnknownFields()
+			err := decoder.Decode(&submit_reply)
+			if err != nil {
+				t.Fatal("Failed to decode response to /v1/compose:", err)
+			}
+		}
+	}
+}
+
+func TestStatus(t *testing.T) {
 	// Test the most basic use case: Submit a new job and get its status.
 	registry, err := distro_mock.NewDefaultRegistry()
 	if err != nil {
@@ -88,50 +216,66 @@ func TestSubmitCompose(t *testing.T) {
 		Status      string `json:"status,omitempty"`
 		ErrorReason string `json:"error_reason,omitempty"`
 	}
+	// Submit a job
+	resp := internalRequest(api,
+		"POST",
+		"/v1/compose",
+		`{
+				"image_builds":
+				[
+					{
+						"distribution": "fedora-30",
+						"architecture": "x86_64",
+						"image_type": "qcow2",
+						"repositories":
+						[
+							{
+								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							}
+						]
+					}
+				]
+			}`,
+		"application/json")
+	if resp.StatusCode != http.StatusOK {
+		errReason, _ := ioutil.ReadAll(resp.Body)
+		t.Fatal("Failed to call /v1/compose, HTTP status code: ", resp.StatusCode, "Error message: ", string(errReason))
+	}
+	decoder := json.NewDecoder(resp.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&submit_reply)
+	if err != nil {
+		t.Fatal("Failed to decode response to /v1/compose:", err)
+	}
 
 	var cases = []struct {
-		Method      string
-		Path        string
-		Body        string
-		ContentType string
+		Method         string
+		Path           string
+		Body           string
+		ContentType    string
+		ExpectedStatus string
 	}{
 		{
-			"POST",
-			"/v1/compose",
-			`{"distribution": "fedora-30", 
-					"image_types": ["qcow2"], 
-					"architectures":["x86_64"], 
-					"repositories": [{
-						"url": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
-					}]}`,
+			"GET",
+			"/v1/compose/" + submit_reply.UUID.String(),
+			``,
 			"application/json",
+			"WAITING",
 		},
 	}
 
 	for n, c := range cases {
-		// Submit job
-		t.Logf("RCM API submit compose, case %d\n", n)
-		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("Failed to call /v1/compose, HTTP status code:", resp.StatusCode)
-		}
-		decoder := json.NewDecoder(resp.Body)
-		decoder.DisallowUnknownFields()
-		err := decoder.Decode(&submit_reply)
-		if err != nil {
-			t.Fatal("Failed to decode response to /v1/compose:", err)
-		}
 		// Get the status
-		t.Log("RCM API get status")
-		resp = internalRequest(api, "GET", "/v1/compose/"+submit_reply.UUID.String(), "", "")
+		t.Logf("RCM API get compose status, case %d\n", n)
+		resp = internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
 		decoder = json.NewDecoder(resp.Body)
 		decoder.DisallowUnknownFields()
 		err = decoder.Decode(&status_reply)
 		if err != nil {
 			t.Fatal("Failed to decode response to /v1/compose/UUID:", err)
 		}
-		if status_reply.ErrorReason != "" {
-			t.Error("Failed to get compose status, reason:", status_reply.ErrorReason)
+		if status_reply.Status != c.ExpectedStatus {
+			t.Error("Failed to get compose status:", status_reply.Status)
 		}
 	}
 }
