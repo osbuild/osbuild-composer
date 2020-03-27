@@ -2,6 +2,7 @@ package fedora30_test
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
+	"reflect"
 	"testing"
 )
 
@@ -90,5 +91,49 @@ func TestFilenameFromType(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestImageType_BuildPackages(t *testing.T) {
+	x8664BuildPackages := []string{
+		"dnf",
+		"dosfstools",
+		"e2fsprogs",
+		"grub2-pc",
+		"policycoreutils",
+		"qemu-img",
+		"systemd",
+		"tar",
+		"xz",
+	}
+	aarch64BuildPackages := []string{
+		"dnf",
+		"dosfstools",
+		"e2fsprogs",
+		"policycoreutils",
+		"qemu-img",
+		"systemd",
+		"tar",
+		"xz",
+	}
+	buildPackages := map[string][]string{
+		"x86_64":  x8664BuildPackages,
+		"aarch64": aarch64BuildPackages,
+	}
+	d := fedora30.New()
+	for _, archLabel := range d.ListArchs() {
+		archStruct, err := d.GetArch(archLabel)
+		if err != nil {
+			t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)
+			continue
+		}
+		for _, itLabel := range archStruct.ListImageTypes() {
+			itStruct, err := archStruct.GetImageType(itLabel)
+			if err != nil {
+				t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)
+				continue
+			}
+			reflect.DeepEqual(itStruct.BuildPackages(), buildPackages[archLabel])
+		}
 	}
 }
