@@ -107,7 +107,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	type Repository struct {
+	type repository struct {
 		URL string `json:"url"`
 	}
 
@@ -116,7 +116,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		Distribution  string       `json:"distribution"`
 		ImageTypes    []string     `json:"image_types"`
 		Architectures []string     `json:"architectures"`
-		Repositories  []Repository `json:"repositories"`
+		Repositories  []repository `json:"repositories"`
 	}
 	// JSON structure with error message
 	var errorReason struct {
