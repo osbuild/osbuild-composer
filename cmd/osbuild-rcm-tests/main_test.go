@@ -7,22 +7,31 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRCM(t *testing.T) {
 	// This is the first request the user sends to osbuild.
 	submitBody := `
 		{
-			"distribution": "fedora-31",
-		 	"image_types": ["qcow2"], 
- 		 	"architectures":["x86_64"], 
-			"repositories": [
-				{"url": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"}
+			"image_builds":
+			[
+				{
+					"distribution": "fedora-31",
+					"architecture": "x86_64",
+					"image_type": "qcow2",
+					"repositories":
+					[
+						{
+							"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+						}
+					]
+				}
 			]
 		}
 	`
