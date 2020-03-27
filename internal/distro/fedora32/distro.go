@@ -25,14 +25,17 @@ type Fedora32 struct {
 }
 
 type arch struct {
+	distro             *Fedora32
 	name               string
 	bootloaderPackages []string
 	buildPackages      []string
 	uefi               bool
+	imageTypes         map[string]imageType
 }
 
 type imageType struct {
 	name             string
+	filename         string
 	mimeType         string
 	packages         []string
 	excludedPackages []string
@@ -44,15 +47,9 @@ type imageType struct {
 	assembler        func(uefi bool, size uint64) *osbuild.Assembler
 }
 
-type fedora32Arch struct {
-	name   string
-	distro *Fedora32
-	arch   *arch
-}
-
 type fedora32ImageType struct {
 	name      string
-	arch      *fedora32Arch
+	arch      *arch
 	imageType *imageType
 }
 
@@ -71,28 +68,38 @@ func (d *Fedora32) GetArch(arch string) (distro.Arch, error) {
 		return nil, errors.New("invalid architecture: " + arch)
 	}
 
-	return &fedora32Arch{
-		name:   arch,
-		distro: d,
-		arch:   &a,
-	}, nil
+	return &a, nil
 }
 
-func (a *fedora32Arch) Name() string {
+func (d *Fedora32) setArches(arches ...arch) {
+	d.arches = map[string]arch{}
+	for _, a := range arches {
+		d.arches[a.name] = arch{
+			distro:             d,
+			name:               a.name,
+			bootloaderPackages: a.bootloaderPackages,
+			buildPackages:      a.buildPackages,
+			uefi:               a.uefi,
+			imageTypes:         a.imageTypes,
+		}
+	}
+}
+
+func (a *arch) Name() string {
 	return a.name
 }
 
-func (a *fedora32Arch) ListImageTypes() []string {
-	formats := make([]string, 0, len(a.distro.imageTypes))
-	for name := range a.distro.imageTypes {
+func (a *arch) ListImageTypes() []string {
+	formats := make([]string, 0, len(a.imageTypes))
+	for name := range a.imageTypes {
 		formats = append(formats, name)
 	}
 	sort.Strings(formats)
 	return formats
 }
 
-func (a *fedora32Arch) GetImageType(imageType string) (distro.ImageType, error) {
-	t, exists := a.distro.imageTypes[imageType]
+func (a *arch) GetImageType(imageType string) (distro.ImageType, error) {
+	t, exists := a.imageTypes[imageType]
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
@@ -104,12 +111,31 @@ func (a *fedora32Arch) GetImageType(imageType string) (distro.ImageType, error) 
 	}, nil
 }
 
+func (a *arch) setImageTypes(imageTypes ...imageType) {
+	a.imageTypes = map[string]imageType{}
+	for _, it := range imageTypes {
+		a.imageTypes[it.name] = imageType{
+			name:             it.name,
+			filename:         it.filename,
+			mimeType:         it.mimeType,
+			packages:         it.packages,
+			excludedPackages: it.excludedPackages,
+			enabledServices:  it.enabledServices,
+			disabledServices: it.disabledServices,
+			kernelOptions:    it.kernelOptions,
+			bootable:         it.bootable,
+			defaultSize:      it.defaultSize,
+			assembler:        it.assembler,
+		}
+	}
+}
+
 func (t *fedora32ImageType) Name() string {
 	return t.name
 }
 
 func (t *fedora32ImageType) Filename() string {
-	return t.imageType.name
+	return t.imageType.filename
 }
 
 func (t *fedora32ImageType) MIMEType() string {
@@ -131,14 +157,14 @@ func (t *fedora32ImageType) Size(size uint64) uint64 {
 func (t *fedora32ImageType) BasePackages() ([]string, []string) {
 	packages := t.imageType.packages
 	if t.imageType.bootable {
-		packages = append(packages, t.arch.arch.bootloaderPackages...)
+		packages = append(packages, t.arch.bootloaderPackages...)
 	}
 
 	return packages, t.imageType.excludedPackages
 }
 
 func (t *fedora32ImageType) BuildPackages() []string {
-	return append(t.arch.distro.buildPackages, t.arch.arch.buildPackages...)
+	return append(t.arch.distro.buildPackages, t.arch.buildPackages...)
 }
 
 func (t *fedora32ImageType) Manifest(c *blueprint.Customizations,
@@ -160,44 +186,9 @@ func (t *fedora32ImageType) Manifest(c *blueprint.Customizations,
 func New() *Fedora32 {
 	const GigaByte = 1024 * 1024 * 1024
 
-	r := Fedora32{
-		imageTypes: map[string]imageType{},
-		buildPackages: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"policycoreutils",
-			"qemu-img",
-			"systemd",
-			"tar",
-			"xz",
-		},
-		arches: map[string]arch{
-			"x86_64": arch{
-				name: "x86_64",
-				bootloaderPackages: []string{
-					"grub2-pc",
-				},
-				buildPackages: []string{
-					"grub2-pc",
-				},
-			},
-			"aarch64": arch{
-				name: "aarch64",
-				bootloaderPackages: []string{
-					"dracut-config-generic",
-					"efibootmgr",
-					"grub2-efi-aa64",
-					"grub2-tools",
-					"shim-aa64",
-				},
-				uefi: true,
-			},
-		},
-	}
-
-	r.imageTypes["ami"] = imageType{
-		name:     "image.raw.xz",
+	amiImgType := imageType{
+		name:     "ami",
+		filename: "image.raw.xz",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@Core",
@@ -221,12 +212,13 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
+			return qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
 		},
 	}
 
-	r.imageTypes["ext4-filesystem"] = imageType{
-		name:     "filesystem.img",
+	ext4FilesystemType := imageType{
+		name:     "ext4-filesystem",
+		filename: "filesystem.img",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"policycoreutils",
@@ -242,11 +234,12 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      false,
 		defaultSize:   2 * GigaByte,
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
+		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return rawFSAssembler("filesystem.img", size) },
 	}
 
-	r.imageTypes["partitioned-disk"] = imageType{
-		name:     "disk.img",
+	partitionedDisk := imageType{
+		name:     "partitioned-disk",
+		filename: "disk.img",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@core",
@@ -263,12 +256,13 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw", "disk.img", uefi, size)
+			return qemuAssembler("raw", "disk.img", uefi, size)
 		},
 	}
 
-	r.imageTypes["qcow2"] = imageType{
-		name:     "disk.qcow2",
+	qcow2ImageType := imageType{
+		name:     "qcow2",
+		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packages: []string{
 			"kernel-core",
@@ -290,12 +284,13 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
 
-	r.imageTypes["openstack"] = imageType{
-		name:     "disk.qcow2",
+	openstackImgType := imageType{
+		name:     "openstack",
+		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packages: []string{
 			"@Core",
@@ -316,12 +311,13 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
 	}
 
-	r.imageTypes["tar"] = imageType{
-		name:     "root.tar.xz",
+	tarImgType := imageType{
+		name:     "tar",
+		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packages: []string{
 			"policycoreutils",
@@ -337,11 +333,12 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      false,
 		defaultSize:   2 * GigaByte,
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
+		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return tarAssembler("root.tar.xz", "xz") },
 	}
 
-	r.imageTypes["vhd"] = imageType{
-		name:     "disk.vhd",
+	vhdImgType := imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packages: []string{
 			"@Core",
@@ -373,12 +370,13 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vpc", "disk.vhd", uefi, size)
+			return qemuAssembler("vpc", "disk.vhd", uefi, size)
 		},
 	}
 
-	r.imageTypes["vmdk"] = imageType{
-		name:     "disk.vmdk",
+	vmdkImgType := imageType{
+		name:     "vmdk",
+		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packages: []string{
 			"@core",
@@ -396,9 +394,66 @@ func New() *Fedora32 {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+			return qemuAssembler("vmdk", "disk.vmdk", uefi, size)
 		},
 	}
+
+	r := Fedora32{
+		imageTypes: map[string]imageType{},
+		buildPackages: []string{
+			"dnf",
+			"dosfstools",
+			"e2fsprogs",
+			"policycoreutils",
+			"qemu-img",
+			"systemd",
+			"tar",
+			"xz",
+		},
+	}
+	x8664 := arch{
+		distro: &r,
+		name:   "x86_64",
+		bootloaderPackages: []string{
+			"grub2-pc",
+		},
+		buildPackages: []string{
+			"grub2-pc",
+		},
+	}
+	x8664.setImageTypes(
+		amiImgType,
+		ext4FilesystemType,
+		partitionedDisk,
+		qcow2ImageType,
+		openstackImgType,
+		tarImgType,
+		vhdImgType,
+		vmdkImgType,
+	)
+
+	aarch64 := arch{
+		distro: &r,
+		name:   "aarch64",
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"efibootmgr",
+			"grub2-efi-aa64",
+			"grub2-tools",
+			"shim-aa64",
+		},
+		uefi: true,
+	}
+	aarch64.setImageTypes(
+		amiImgType,
+		ext4FilesystemType,
+		partitionedDisk,
+		qcow2ImageType,
+		openstackImgType,
+		tarImgType,
+	)
+
+	r.setArches(x8664, aarch64)
 
 	return &r
 }
@@ -425,9 +480,9 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 
 func (t *fedora32ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
-	p.SetBuild(t.buildPipeline(repos, *t.arch.arch, buildPackageSpecs), "org.osbuild.fedora32")
+	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora32")
 
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch.arch, repos, packageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -471,9 +526,9 @@ func (t *fedora32ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.
 	}
 
 	if t.imageType.bootable {
-		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.arch.uefi)))
+		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
 	}
-	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.imageType.kernelOptions, c.GetKernel(), t.arch.arch.uefi)))
+	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.imageType.kernelOptions, c.GetKernel(), t.arch.uefi)))
 
 	if services := c.GetServices(); services != nil || t.imageType.enabledServices != nil {
 		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.imageType.enabledServices, t.imageType.disabledServices, services)))
@@ -485,7 +540,7 @@ func (t *fedora32ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
-	p.Assembler = t.imageType.assembler(t.arch.arch.uefi, size)
+	p.Assembler = t.imageType.assembler(t.arch.uefi, size)
 
 	return p, nil
 }
@@ -637,7 +692,7 @@ func (r *fedora32ImageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func (r *Fedora32) qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
@@ -692,7 +747,7 @@ func (r *Fedora32) qemuAssembler(format string, filename string, uefi bool, size
 	return osbuild.NewQEMUAssembler(&options)
 }
 
-func (r *Fedora32) tarAssembler(filename, compression string) *osbuild.Assembler {
+func tarAssembler(filename, compression string) *osbuild.Assembler {
 	return osbuild.NewTarAssembler(
 		&osbuild.TarAssemblerOptions{
 			Filename:    filename,
@@ -700,7 +755,7 @@ func (r *Fedora32) tarAssembler(filename, compression string) *osbuild.Assembler
 		})
 }
 
-func (r *Fedora32) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
+func rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
