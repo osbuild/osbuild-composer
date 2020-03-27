@@ -26,6 +26,7 @@ type Fedora31 struct {
 type imageType struct {
 	arch             *arch
 	name             string
+	filename         string
 	mimeType         string
 	packages         []string
 	excludedPackages []string
@@ -64,6 +65,20 @@ func (d *Fedora31) GetArch(arch string) (distro.Arch, error) {
 	return &a, nil
 }
 
+func (d *Fedora31) setArches(arches ...arch) {
+	d.arches = map[string]arch{}
+	for _, a := range arches {
+		d.arches[a.name] = arch{
+			distro:             d,
+			name:               a.name,
+			bootloaderPackages: a.bootloaderPackages,
+			buildPackages:      a.buildPackages,
+			uefi:               a.uefi,
+			imageTypes:         a.imageTypes,
+		}
+	}
+}
+
 func (a *arch) Name() string {
 	return a.name
 }
@@ -82,8 +97,28 @@ func (a *arch) GetImageType(imageType string) (distro.ImageType, error) {
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
-	t.arch = a
+
 	return &t, nil
+}
+
+func (a *arch) setImageTypes(imageTypes ...imageType) {
+	a.imageTypes = map[string]imageType{}
+	for _, it := range imageTypes {
+		a.imageTypes[it.name] = imageType{
+			arch:             a,
+			name:             it.name,
+			filename:         it.filename,
+			mimeType:         it.mimeType,
+			packages:         it.packages,
+			excludedPackages: it.excludedPackages,
+			enabledServices:  it.enabledServices,
+			disabledServices: it.disabledServices,
+			kernelOptions:    it.kernelOptions,
+			bootable:         it.bootable,
+			defaultSize:      it.defaultSize,
+			assembler:        it.assembler,
+		}
+	}
 }
 
 func (t *imageType) Name() string {
@@ -91,7 +126,7 @@ func (t *imageType) Name() string {
 }
 
 func (t *imageType) Filename() string {
-	return t.name
+	return t.filename
 }
 
 func (t *imageType) MIMEType() string {
@@ -101,7 +136,7 @@ func (t *imageType) MIMEType() string {
 func (t *imageType) Size(size uint64) uint64 {
 	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.name == "vhd" && size%MegaByte != 0 {
+	if t.filename == "vhd" && size%MegaByte != 0 {
 		size = (size/MegaByte + 1) * MegaByte
 	}
 	if size == 0 {
@@ -143,7 +178,8 @@ func New() *Fedora31 {
 	const GigaByte = 1024 * 1024 * 1024
 
 	amiImgType := imageType{
-		name:     "image.raw.xz",
+		name:     "ami",
+		filename: "image.raw.xz",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@Core",
@@ -172,7 +208,8 @@ func New() *Fedora31 {
 	}
 
 	ext4FilesystemType := imageType{
-		name:     "filesystem.img",
+		name:     "ext4-filesystem",
+		filename: "filesystem.img",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"policycoreutils",
@@ -192,7 +229,8 @@ func New() *Fedora31 {
 	}
 
 	partitionedDisk := imageType{
-		name:     "disk.img",
+		name:     "partitioned-disk",
+		filename: "disk.img",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@core",
@@ -214,7 +252,8 @@ func New() *Fedora31 {
 	}
 
 	qcow2ImageType := imageType{
-		name:     "disk.qcow2",
+		name:     "qcow2",
+		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packages: []string{
 			"kernel-core",
@@ -241,7 +280,8 @@ func New() *Fedora31 {
 	}
 
 	openstackImgType := imageType{
-		name:     "disk.qcow2",
+		name:     "openstack",
+		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packages: []string{
 			"@Core",
@@ -267,7 +307,8 @@ func New() *Fedora31 {
 	}
 
 	tarImgType := imageType{
-		name:     "root.tar.xz",
+		name:     "tar",
+		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packages: []string{
 			"policycoreutils",
@@ -287,7 +328,8 @@ func New() *Fedora31 {
 	}
 
 	vhdImgType := imageType{
-		name:     "disk.vhd",
+		name:     "vhd",
+		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packages: []string{
 			"@Core",
@@ -324,7 +366,8 @@ func New() *Fedora31 {
 	}
 
 	vmdkImgType := imageType{
-		name:     "disk.vmdk",
+		name:     "vmdk",
+		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packages: []string{
 			"@core",
@@ -357,48 +400,50 @@ func New() *Fedora31 {
 			"tar",
 			"xz",
 		},
-		arches: map[string]arch{
-			"x86_64": {
-				name: "x86_64",
-				bootloaderPackages: []string{
-					"grub2-pc",
-				},
-				buildPackages: []string{
-					"grub2-pc",
-				},
-				imageTypes: map[string]imageType{
-					"ami":              amiImgType,
-					"ext4-filesystem":  ext4FilesystemType,
-					"partitioned-disk": partitionedDisk,
-					"qcow2":            qcow2ImageType,
-					"openstack":        openstackImgType,
-					"tar":              tarImgType,
-					"vhd":              vhdImgType,
-					"vmdk":             vmdkImgType,
-				},
-			},
-			"aarch64": {
-				name: "aarch64",
-				bootloaderPackages: []string{
-					"dracut-config-generic",
-					"efibootmgr",
-					"grub2-efi-aa64",
-					"grub2-tools",
-					"shim-aa64",
-				},
-				uefi: true,
-				imageTypes: map[string]imageType{
-					"ami":              amiImgType,
-					"ext4-filesystem":  ext4FilesystemType,
-					"partitioned-disk": partitionedDisk,
-					"qcow2":            qcow2ImageType,
-					"openstack":        openstackImgType,
-					"tar":              tarImgType,
-					"vhd":              vhdImgType,
-				},
-			},
+	}
+	x8664 := arch{
+		distro: &r,
+		name:   "x86_64",
+		bootloaderPackages: []string{
+			"grub2-pc",
+		},
+		buildPackages: []string{
+			"grub2-pc",
 		},
 	}
+	x8664.setImageTypes(
+		amiImgType,
+		ext4FilesystemType,
+		partitionedDisk,
+		qcow2ImageType,
+		openstackImgType,
+		tarImgType,
+		vhdImgType,
+		vmdkImgType,
+	)
+
+	aarch64 := arch{
+		distro: &r,
+		name:   "aarch64",
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"efibootmgr",
+			"grub2-efi-aa64",
+			"grub2-tools",
+			"shim-aa64",
+		},
+		uefi: true,
+	}
+	aarch64.setImageTypes(
+		amiImgType,
+		ext4FilesystemType,
+		partitionedDisk,
+		qcow2ImageType,
+		openstackImgType,
+		tarImgType,
+	)
+
+	r.setArches(x8664, aarch64)
 
 	return &r
 }
