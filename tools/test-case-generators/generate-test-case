@@ -16,7 +16,7 @@ This script generates a json test case. It accepts a test_case_request as input 
     "compose-request": {
         "distro": "fedora-30",
         "arch": "x86_64",
-        "output-format": "qcow2",
+        "image-type": "qcow2",
         "filename": "disk.qcow2",
         "blueprint": {}
     }
@@ -38,10 +38,10 @@ def main(test_case, store):
 
     blueprint = json.dumps(compose_request["blueprint"])
 
-    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["output-format"], "-"]
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["image-type"], "-"]
     test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
 
-    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["output-format"], "-rpmmd", "-"]
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["image-type"], "-rpmmd", "-"]
     test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
 
     if boot_type != "nspawn-extract":

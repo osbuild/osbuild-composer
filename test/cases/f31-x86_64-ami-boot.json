@@ -6,7 +6,7 @@
     "distro": "fedora-31",
     "arch": "x86_64",
     "filename": "image.raw.xz",
-    "output-format": "ami",
+    "image-type": "ami",
     "blueprint": {}
   },
   "manifest": {

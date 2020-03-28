@@ -3,7 +3,7 @@
     "type": "nspawn-extract"
   },
   "compose-request": {
-    "output-format": "tar",
+    "image-type": "tar",
     "distro": "fedora-30",
     "arch": "x86_64",
     "filename": "root.tar.xz",

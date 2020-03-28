@@ -5,7 +5,7 @@
   "compose-request": {
     "distro": "fedora-31",
     "arch": "x86_64",
-    "output-format": "openstack",
+    "image-type": "openstack",
     "filename": "disk.qcow2",
     "blueprint": {
       "name": "openstack-boot-test",

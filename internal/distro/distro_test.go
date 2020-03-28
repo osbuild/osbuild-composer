@@ -28,7 +28,7 @@ func TestDistro_Manifest(t *testing.T) {
 		type composeRequest struct {
 			Distro       string               `json:"distro"`
 			Arch         string               `json:"arch"`
-			OutputFormat string               `json:"output-format"`
+			ImageType    string               `json:"image-type"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		type rpmMD struct {
@@ -56,7 +56,7 @@ func TestDistro_Manifest(t *testing.T) {
 		if err != nil {
 			t.Fatalf("rpmmd.LoadRepositories: %v", err)
 		}
-		t.Run(tt.ComposeRequest.OutputFormat, func(t *testing.T) {
+		t.Run(tt.ComposeRequest.ImageType, func(t *testing.T) {
 			distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
 			if err != nil {
 				t.Fatal(err)
@@ -71,9 +71,9 @@ func TestDistro_Manifest(t *testing.T) {
 				t.Errorf("unknown arch: %v", tt.ComposeRequest.Arch)
 				return
 			}
-			imageType, err := arch.GetImageType(tt.ComposeRequest.OutputFormat)
+			imageType, err := arch.GetImageType(tt.ComposeRequest.ImageType)
 			if err != nil {
-				t.Errorf("unknown image type: %v", tt.ComposeRequest.OutputFormat)
+				t.Errorf("unknown image type: %v", tt.ComposeRequest.ImageType)
 				return
 			}
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
