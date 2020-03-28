@@ -5,7 +5,7 @@
   "compose-request": {
     "distro": "fedora-30",
     "arch": "x86_64",
-    "output-format": "vmdk",
+    "image-type": "vmdk",
     "filename": "disk.vmdk",
     "blueprint": {
       "name": "vmdk-boot-test",

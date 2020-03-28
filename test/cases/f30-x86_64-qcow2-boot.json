@@ -5,7 +5,7 @@
   "compose-request": {
     "distro": "fedora-30",
     "arch": "x86_64",
-    "output-format": "qcow2",
+    "image-type": "qcow2",
     "filename": "disk.qcow2",
     "blueprint": {
       "name": "qcow2-boot-test",

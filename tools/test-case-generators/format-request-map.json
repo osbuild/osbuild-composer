@@ -6,8 +6,8 @@
     "compose-request": {
       "distro": "",
       "arch": "",
+      "image-type": "ami",
       "filename": "image.raw.xz",
-      "output-format": "ami",
       "blueprint": {}
     }
   },
@@ -18,7 +18,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "ext4-filesystem",
+      "image-type": "ext4-filesystem",
       "filename": "filesystem.img",
       "blueprint": {
         "name": "ext4-filesystem-boot-test",
@@ -49,7 +49,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "openstack",
+      "image-type": "openstack",
       "filename": "disk.qcow2",
       "blueprint": {
         "name": "openstack-boot-test",
@@ -75,7 +75,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "partitioned-disk",
+      "image-type": "partitioned-disk",
       "filename": "disk.img",
       "blueprint": {
         "name": "partitioned-disk-boot-test",
@@ -99,9 +99,9 @@
       "type": "nspawn-extract"
     },
     "compose-request": {
-      "output-format": "tar",
       "distro": "",
       "arch": "",
+      "image-type": "tar",
       "filename": "root.tar.xz",
       "blueprint": {
         "name": "tar-boot-test",
@@ -132,7 +132,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "qcow2",
+      "image-type": "qcow2",
       "filename": "disk.qcow2",
       "blueprint": {
         "name": "qcow2-boot-test",
@@ -158,7 +158,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "vhd",
+      "image-type": "vhd",
       "filename": "disk.vhd",
       "blueprint": {
         "name": "vhd-boot-test",
@@ -184,7 +184,7 @@
     "compose-request": {
       "distro": "",
       "arch": "",
-      "output-format": "vmdk",
+      "image-type": "vmdk",
       "filename": "disk.vmdk",
       "blueprint": {
         "name": "vmdk-boot-test",

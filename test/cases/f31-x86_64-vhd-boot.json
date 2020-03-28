@@ -5,7 +5,7 @@
   "compose-request": {
     "distro": "fedora-31",
     "arch": "x86_64",
-    "output-format": "vhd",
+    "image-type": "vhd",
     "filename": "disk.vhd",
     "blueprint": {
       "name": "vhd-boot-test",
