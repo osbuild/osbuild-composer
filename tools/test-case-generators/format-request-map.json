@@ -7,6 +7,7 @@
       "distro": "",
       "arch": "",
       "image-type": "ami",
+      "repositories": [],
       "filename": "image.raw.xz",
       "blueprint": {}
     }
@@ -19,6 +20,7 @@
       "distro": "",
       "arch": "",
       "image-type": "ext4-filesystem",
+      "repositories": [],
       "filename": "filesystem.img",
       "blueprint": {
         "name": "ext4-filesystem-boot-test",
@@ -50,6 +52,7 @@
       "distro": "",
       "arch": "",
       "image-type": "openstack",
+      "repositories": [],
       "filename": "disk.qcow2",
       "blueprint": {
         "name": "openstack-boot-test",
@@ -77,6 +80,7 @@
       "arch": "",
       "image-type": "partitioned-disk",
       "filename": "disk.img",
+      "repositories": [],
       "blueprint": {
         "name": "partitioned-disk-boot-test",
         "description": "Image for boot test",
@@ -102,6 +106,7 @@
       "distro": "",
       "arch": "",
       "image-type": "tar",
+      "repositories": [],
       "filename": "root.tar.xz",
       "blueprint": {
         "name": "tar-boot-test",
@@ -133,6 +138,7 @@
       "distro": "",
       "arch": "",
       "image-type": "qcow2",
+      "repositories": [],
       "filename": "disk.qcow2",
       "blueprint": {
         "name": "qcow2-boot-test",
@@ -159,6 +165,7 @@
       "distro": "",
       "arch": "",
       "image-type": "vhd",
+      "repositories": [],
       "filename": "disk.vhd",
       "blueprint": {
         "name": "vhd-boot-test",

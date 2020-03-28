@@ -9,9 +9,12 @@ import sys
 def main(distro, arch, store, output):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
         format_request_dict = json.load(format_request_json)
+    with open("tools/test-case-generators/repos.json") as repos_json:
+        repos_dict = json.load(repos_json)
     for output_format, test_case_request in format_request_dict.items():
         test_case_request["compose-request"]["distro"] = distro
         test_case_request["compose-request"]["arch"] = arch
+        test_case_request["compose-request"]["repositories"] = repos_dict[distro][arch]
         test_case = json.loads(subprocess.check_output(["tools/test-case-generators/generate-test-case", store], input=json.dumps(test_case_request), encoding="utf-8"))
         name = distro.replace("-", "_") + "-" + arch + "-" + output_format.replace("-", "_") + "-boot.json"
         file_name = output + "/" + name

@@ -2,6 +2,7 @@ package distro_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -25,10 +26,17 @@ func TestDistro_Manifest(t *testing.T) {
 		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)
 	}
 	for _, fileInfo := range fileInfos {
+		type repository struct {
+			BaseURL    string `json:"baseurl,omitempty"`
+			Metalink   string `json:"metalink,omitempty"`
+			MirrorList string `json:"mirrorlist,omitempty"`
+			GPGKey     string `json:"gpgkey,omitempty"`
+		}
 		type composeRequest struct {
 			Distro       string               `json:"distro"`
 			Arch         string               `json:"arch"`
 			ImageType    string               `json:"image-type"`
+			Repositories []repository         `json:"repositories"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		type rpmMD struct {
@@ -52,9 +60,16 @@ func TestDistro_Manifest(t *testing.T) {
 			t.Logf("Skipping '%s'.", fileInfo.Name())
 			continue
 		}
-		repoMap, err := rpmmd.LoadRepositories([]string{"../.."}, tt.ComposeRequest.Distro)
-		if err != nil {
-			t.Fatalf("rpmmd.LoadRepositories: %v", err)
+
+		repos := make([]rpmmd.RepoConfig, len(tt.ComposeRequest.Repositories))
+		for i, repo := range tt.ComposeRequest.Repositories {
+			repos[i] = rpmmd.RepoConfig{
+				Id:         fmt.Sprintf("repo-%d", i),
+				BaseURL:    repo.BaseURL,
+				Metalink:   repo.Metalink,
+				MirrorList: repo.MirrorList,
+				GPGKey:     repo.GPGKey,
+			}
 		}
 		t.Run(tt.ComposeRequest.ImageType, func(t *testing.T) {
 			distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
@@ -77,7 +92,7 @@ func TestDistro_Manifest(t *testing.T) {
 				return
 			}
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
-				repoMap[tt.ComposeRequest.Arch],
+				repos,
 				tt.RpmMD.Packages,
 				tt.RpmMD.BuildPackages,
 				imageType.Size(0))
