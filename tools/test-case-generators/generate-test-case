@@ -34,19 +34,19 @@ def run_osbuild(manifest, store):
 
 def main(test_case, store):
     boot_type = test_case["boot"]["type"]
-    compose_request = test_case["compose-request"]
+    compose_request = json.dumps(test_case["compose-request"])
 
-    blueprint = json.dumps(compose_request["blueprint"])
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-"]
+    test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=compose_request, encoding="utf-8"))
 
-    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["image-type"], "-"]
-    test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
+    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-rpmmd", "-"]
+    test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=compose_request, encoding="utf-8"))
 
-    pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-distro", compose_request["distro"], "-arch", compose_request["arch"], "-image-type", compose_request["image-type"], "-rpmmd", "-"]
-    test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=blueprint, encoding="utf-8"))
+    return test_case
 
     if boot_type != "nspawn-extract":
         output_id = run_osbuild(test_case["manifest"], store)
-        image_file = os.path.join(store, "refs", output_id, compose_request["filename"])
+        image_file = os.path.join(store, "refs", output_id, test_case["compose-request"]["filename"])
 
         # we don't yet support image-info on directory trees
         if boot_type == "qemu-extract":

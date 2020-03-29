@@ -20,6 +20,21 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+type repository struct {
+	BaseURL    string `json:"baseurl,omitempty"`
+	Metalink   string `json:"metalink,omitempty"`
+	MirrorList string `json:"mirrorlist,omitempty"`
+	GPGKey     string `json:"gpgkey,omitempty"`
+}
+
+type composeRequest struct {
+	Distro       string              `json:"distro"`
+	Arch         string              `json:"arch"`
+	ImageType    string              `json:"image-type"`
+	Blueprint    blueprint.Blueprint `json:"blueprint"`
+	Repositories []repository        `json:"repositories"`
+}
+
 type rpmMD struct {
 	BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
 	Packages      []rpmmd.PackageSpec `json:"packages"`
@@ -27,37 +42,30 @@ type rpmMD struct {
 }
 
 func main() {
-	var distroArg string
-	var archArg string
-	var imageTypeArg string
-	var blueprintArg string
 	var rpmmdArg bool
-	flag.StringVar(&distroArg, "distro", "", "distribution to create, e.g. fedora-30")
-	flag.StringVar(&archArg, "arch", "", "architecture to create image for, e.g. x86_64")
-	flag.StringVar(&imageTypeArg, "image-type", "", "image type, e.g. qcow2 or ami")
 	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
 	flag.Parse()
 
-	// Path to blueprint or '-' for stdin
-	blueprintArg = flag.Arg(0)
+	// Path to composeRequet or '-' for stdin
+	composeRequestArg := flag.Arg(0)
 
-	blueprint := &blueprint.Blueprint{}
-	if blueprintArg != "" {
+	composeRequest := &composeRequest{}
+	if composeRequestArg != "" {
 		var reader io.Reader
-		if blueprintArg == "-" {
+		if composeRequestArg == "-" {
 			reader = os.Stdin
 		} else {
 			var err error
-			reader, err = os.Open(blueprintArg)
+			reader, err = os.Open(composeRequestArg)
 			if err != nil {
-				panic("Could not open bluerpint: " + err.Error())
+				panic("Could not open compose request: " + err.Error())
 			}
 		}
 		file, err := ioutil.ReadAll(reader)
 		if err != nil {
-			panic("Could not read blueprint: " + err.Error())
+			panic("Could not read compose request: " + err.Error())
 		}
-		err = json.Unmarshal(file, &blueprint)
+		err = json.Unmarshal(file, &composeRequest)
 		if err != nil {
 			panic("Could not parse blueprint: " + err.Error())
 		}
@@ -68,40 +76,46 @@ func main() {
 		panic(err)
 	}
 
-	distro := distros.GetDistro(distroArg)
+	distro := distros.GetDistro(composeRequest.Distro)
 	if distro == nil {
-		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution '%s' is not supported. Use one of these:\n", distroArg)
+		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution '%s' is not supported. Use one of these:\n", composeRequest.Distro)
 		for _, d := range distros.List() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", d)
 		}
 		return
 	}
 
-	arch, err := distro.GetArch(archArg)
+	arch, err := distro.GetArch(composeRequest.Arch)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", archArg, distro.Name())
+		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", composeRequest.Arch, distro.Name())
 		for _, a := range distro.ListArchs() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", a)
 		}
 		return
 	}
 
-	imageType, err := arch.GetImageType(imageTypeArg)
+	imageType, err := arch.GetImageType(composeRequest.ImageType)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided image type '%s' is not supported by %s for %s. Use one of these:\n", imageTypeArg, distro.Name(), arch.Name())
+		fmt.Fprintf(os.Stderr, "The provided image type '%s' is not supported by %s for %s. Use one of these:\n", composeRequest.ImageType, distro.Name(), arch.Name())
 		for _, t := range arch.ListImageTypes() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", t)
 		}
 		return
 	}
 
-	repos, err := rpmmd.LoadRepositories([]string{"."}, distro.Name())
-	if err != nil {
-		panic(err)
+	repos := make([]rpmmd.RepoConfig, len(composeRequest.Repositories))
+	for i, repo := range composeRequest.Repositories {
+		repos[i] = rpmmd.RepoConfig{
+			Id:         fmt.Sprintf("repo-%d", i),
+			BaseURL:    repo.BaseURL,
+			Metalink:   repo.Metalink,
+			MirrorList: repo.MirrorList,
+			GPGKey:     repo.GPGKey,
+		}
 	}
 
-	packages := make([]string, len(blueprint.Packages))
-	for i, pkg := range blueprint.Packages {
+	packages := make([]string, len(composeRequest.Blueprint.Packages))
+	for i, pkg := range composeRequest.Blueprint.Packages {
 		packages[i] = pkg.Name
 		// If a package has version "*" the package name suffix must be equal to "-*-*.*"
 		// Using just "-*" would find any other package containing the package name
@@ -112,7 +126,7 @@ func main() {
 		}
 	}
 
-	pkgs, exclude_pkgs := imageType.BasePackages()
+	pkgs, excludePkgs := imageType.BasePackages()
 	packages = append(pkgs, packages...)
 
 	home, err := os.UserHomeDir()
@@ -121,13 +135,13 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, exclude_pkgs, repos[arch.Name()], distro.ModulePlatformID(), arch.Name())
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, excludePkgs, repos, distro.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
 
 	buildPkgs := imageType.BuildPackages()
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos[arch.Name()], distro.ModulePlatformID(), arch.Name())
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos, distro.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
@@ -144,7 +158,7 @@ func main() {
 			panic(err)
 		}
 	} else {
-		manifest, err := imageType.Manifest(blueprint.Customizations, repos[arch.Name()], packageSpecs, buildPackageSpecs, imageType.Size(0))
+		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations, repos, packageSpecs, buildPackageSpecs, imageType.Size(0))
 		if err != nil {
 			panic(err.Error())
 		}
