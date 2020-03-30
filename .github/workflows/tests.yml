@@ -40,19 +40,14 @@ jobs:
       - name: Install golangci-lint
         run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.7
 
-      - name: Install goveralls
-        run: GO111MODULE=off go get github.com/mattn/goveralls
-
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run
 
       - name: Run unit tests
-        run: go test -v -race -covermode atomic -coverprofile=profile.cov ./...
+        run: go test -v -race -covermode atomic -coverprofile=coverage.txt ./...
 
-      - name: Send coverage to coveralls.io
-        env:
-          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: $(go env GOPATH)/bin/goveralls -coverprofile=profile.cov -service=github
+      - name: Send coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
 
   old_rpm_build:
     name: "📦 RPM (golang-github-osbuild-composer)"
