@@ -40,10 +40,10 @@ Stand-alone test binaries also have the `-test.failfast` option.
 ## Notes on code coverage
 
 Code coverage is recorded in
-[Coveralls.io](https://coveralls.io/github/osbuild/osbuild-composer).
+[codecov.io](https://codecov.io/github/osbuild/osbuild-composer).
 This information comes only from unit tests and for the time being
 we're not concerned with collecting coverage information from integration
-tests, see `.github/workflows/coverage.yml`.
+tests, see `.github/workflows/tests.yml`.
 
 
 ## Integration testing
