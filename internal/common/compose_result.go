@@ -6,32 +6,33 @@ import (
 	"io"
 )
 
+type assembler struct {
+	Name    string          `json:"name"`
+	Options json.RawMessage `json:"options"`
+	Success bool            `json:"success"`
+	Output  string          `json:"output"`
+}
+
+type stage struct {
+	Name    string          `json:"name"`
+	Options json.RawMessage `json:"options"`
+	Success bool            `json:"success"`
+	Output  string          `json:"output"`
+}
+
+type build struct {
+	Stages  []stage `json:"stages"`
+	TreeID  string  `json:"tree_id"`
+	Success bool    `json:"success"`
+}
+
 type ComposeResult struct {
-	TreeID   string `json:"tree_id"`
-	OutputID string `json:"output_id"`
-	Build    *struct {
-		Stages []struct {
-			Name    string          `json:"name"`
-			Options json.RawMessage `json:"options"`
-			Success bool            `json:"success"`
-			Output  string          `json:"output"`
-		} `json:"stages"`
-		TreeID  string `json:"tree_id"`
-		Success bool   `json:"success"`
-	} `json:"build"`
-	Stages []struct {
-		Name    string          `json:"name"`
-		Options json.RawMessage `json:"options"`
-		Success bool            `json:"success"`
-		Output  string          `json:"output"`
-	} `json:"stages"`
-	Assembler *struct {
-		Name    string          `json:"name"`
-		Options json.RawMessage `json:"options"`
-		Success bool            `json:"success"`
-		Output  string          `json:"output"`
-	} `json:"assembler"`
-	Success bool `json:"success"`
+	TreeID    string     `json:"tree_id"`
+	OutputID  string     `json:"output_id"`
+	Build     *build     `json:"build"`
+	Stages    []stage    `json:"stages"`
+	Assembler *assembler `json:"assembler"`
+	Success   bool       `json:"success"`
 }
 
 func (cr *ComposeResult) Write(writer io.Writer) error {
