@@ -154,12 +154,12 @@ func New(stateDir *string) *Store {
 			if len(compose.ImageBuilds) == 0 {
 				panic("the was a compose with zero image builds, that is forbidden")
 			}
-			for _, imgBuild := range compose.ImageBuilds {
+			for imgID, imgBuild := range compose.ImageBuilds {
 				switch imgBuild.QueueStatus {
 				case common.IBRunning:
 					// We do not support resuming an in-flight build
-					imgBuild.QueueStatus = common.IBFailed
-					// s.Composes[composeID] = compose
+					compose.ImageBuilds[imgID].QueueStatus = common.IBFailed
+					s.Composes[composeID] = compose
 				case common.IBWaiting:
 					// Push waiting composes back into the pending jobs queue
 					s.pendingJobs <- Job{
