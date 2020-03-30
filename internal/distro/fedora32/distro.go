@@ -48,7 +48,7 @@ type imageType struct {
 	assembler        func(uefi bool, size uint64) *osbuild.Assembler
 }
 
-func (d *Fedora32) ListArchs() []string {
+func (d *Fedora32) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
 		archs = append(archs, name)

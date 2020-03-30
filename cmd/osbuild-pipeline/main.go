@@ -88,7 +88,7 @@ func main() {
 	arch, err := distro.GetArch(composeRequest.Arch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", composeRequest.Arch, distro.Name())
-		for _, a := range distro.ListArchs() {
+		for _, a := range distro.ListArches() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", a)
 		}
 		return

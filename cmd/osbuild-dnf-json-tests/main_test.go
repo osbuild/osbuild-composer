@@ -61,7 +61,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 			// for the remaining distros
 			continue
 		}
-		for _, archStr := range distroStruct.ListArchs() {
+		for _, archStr := range distroStruct.ListArches() {
 			arch, err := distroStruct.GetArch(archStr)
 			assert.Nilf(t, err, "Failed to GetArch from %v structure: %v", distroStruct.Name(), err)
 			if err != nil {
