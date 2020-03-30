@@ -16,7 +16,7 @@ type testImageType struct{}
 const name = "test-distro"
 const modulePlatformID = "platform:test"
 
-func (d *TestDistro) ListArchs() []string {
+func (d *TestDistro) ListArches() []string {
 	return []string{"test_arch"}
 }
 

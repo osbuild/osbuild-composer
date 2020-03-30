@@ -24,7 +24,7 @@ type fedoraTestDistroImageType struct {
 	arch *fedoraTestDistroArch
 }
 
-func (d *FedoraTestDistro) ListArchs() []string {
+func (d *FedoraTestDistro) ListArches() []string {
 	return []string{"x86_64"}
 }
 

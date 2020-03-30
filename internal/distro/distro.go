@@ -26,7 +26,7 @@ type Distro interface {
 
 	// Returns a sorted list of the names of the architectures this distro
 	// supports.
-	ListArchs() []string
+	ListArches() []string
 
 	// Returns an object representing the given architecture as support
 	// by this distro.

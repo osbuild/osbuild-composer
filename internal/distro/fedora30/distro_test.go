@@ -121,7 +121,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"aarch64": aarch64BuildPackages,
 	}
 	d := fedora30.New()
-	for _, archLabel := range d.ListArchs() {
+	for _, archLabel := range d.ListArches() {
 		archStruct, err := d.GetArch(archLabel)
 		if err != nil {
 			t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)

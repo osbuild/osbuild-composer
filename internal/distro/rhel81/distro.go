@@ -57,7 +57,7 @@ type rhel81ImageType struct {
 	imageType *imageType
 }
 
-func (d *RHEL81) ListArchs() []string {
+func (d *RHEL81) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
 		archs = append(archs, name)
