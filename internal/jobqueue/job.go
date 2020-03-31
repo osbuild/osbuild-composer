@@ -17,10 +17,10 @@ import (
 )
 
 type Job struct {
-	ComposeID    uuid.UUID         `json:"id"`
-	ImageBuildID int               `json:"image_build_id"`
-	Manifest     *osbuild.Manifest `json:"manifest"`
-	Targets      []*target.Target  `json:"targets"`
+	ComposeID    uuid.UUID
+	ImageBuildID int
+	Manifest     *osbuild.Manifest
+	Targets      []*target.Target
 }
 
 type TargetsError struct {
