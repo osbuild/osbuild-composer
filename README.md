@@ -1,62 +1,82 @@
-# osbuild-composer
+OSBuild Composer
+================
 
-An HTTP service for building bootable OS images. It provides the same API as [lorax-composer](https://github.com/weldr/lorax) but in the background it uses [osbuild](https://github.com/osbuild/osbuild) to create the images.
+Operating System Image Composition Services
 
-You can control it in [Cockpit](https://github.com/weldr/cockpit-composer) or using the [composer-cli](https://weldr.io/lorax/composer-cli.html). To get started on Fedora, run:
+The composer project is a set of HTTP services for composing operating system
+images. It builds on the pipeline execution engine of *osbuild* and defines
+its own class of images that it supports building.
 
-```
-# dnf install cockpit-composer osbuild-composer composer-cli
-# systemctl enable --now cockpit.socket
-# systemctl enable --now osbuild-composer.socket
-```
+Multiple APIs are available to access a composer service. This includes
+support for the [lorax-composer](https://github.com/weldr/lorax) API, and as
+such can serve as drop-in replacement for lorax-composer.
 
-Now you can access the service using `composer-cli`, for example:
+You can control a composer instance either directly via the provided APIs, or
+through higher-level user-interfaces from external projects. This, for
+instance, includes a
+[Cockpit Module](https://github.com/weldr/cockpit-composer) or using the
+[composer-cli](https://weldr.io/lorax/composer-cli.html) command-line tool.
 
-```
-composer-cli status show
-```
+### Project
 
-or using a browser: `http://localhost:9090`
+ * **Website**: <https://www.osbuild.org>
+ * **Bug Tracker**: <https://github.com/osbuild/osbuild-composer/issues>
 
-## API documentation
+### About
 
-Please refer to the [lorax-composer](https://github.com/weldr/lorax)'s documenation as osbuild-composer is a drop-in replacement.
+Composer is a middleman between the workhorses from *osbuild* and the
+user-interfaces like *cockpit-composer*, *composer-cli*, or others. It defines
+a set of high-level image compositions that it supports building. Builds of
+these compositions can be requested via the different APIs of *Composer*, which
+will then translate the requests into pipeline-descriptions for *osbuild*. The
+pipeline output is then either provided back to the user, or uploaded to a user
+specified target.
 
-## High-level overview
+The following image visualizes the overall architecture of the OSBuild
+infrastructure and the place that *Composer* takes:
 
 ![overview](docs/osbuild-composer.svg)
 
-### Frontends
+Consult the `osbuild-composer(7)` man-page for an introduction into composer,
+information on running your own composer instance, as well as details on the
+provided infrastructure and services.
 
-`osbuild-composer` is meant to be used with 2 different front-ends. The primary one, which is meant for general use, is cockpit-composer. It is part of the Cockpit project and unless you have a strong reason not to use it, you should use it. `composer-cli` is a command line tool that can be used with `osbuild-composer`.
+### Requirements
 
-### Compose
-* Compose is what the user submits over one of the frontends
-* It contains of one or more **image builds**
-* It contains zero or more **upload actions**
+The requirements for this project are:
 
-### Image build
-* The resulting *image* has a *type*: https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/fedora30/distro.go#L19
-* Running build in osbuild-composer is referred to as a "job" (internal terminology, not related to end-user experience)
+ * `osbuild >= 7`
+ * `systemd >= 244`
 
-### Job
-* What composer submits to a worker
-* Is a unit of work performed by `osbuild` (internally it is a single execution of `osbuild`)
-* Consists of **one** image build and **zero or more** Upload actions
+At build-time, the following software is required:
 
-### Image type
-* In the cockpit-composer, for examples these are image types:
-  * Openstack
-  * Azure
-  * AWS
-* As of now, we name them internally by their file format: vhd, ami, etc.
-* You can see a list of types by executing: `composer-cli compose types`
+ * `go >= 1.14`
+ * `python-docutils >= 0.13`
 
-### Upload action
-* Each image can be, but does not have to be, uploaded to a remote location
-* One image can be uploaded to multiple locations
+### Build
 
+The standard go package system is used. Consult upstream documentation for
+detailed help. In most situations the following commands are sufficient to
+build and install from source:
 
-## Testing
+```sh
+mkdir build
+go build -o build ./...
+```
 
-See [test/README.md](test/README.md)
+The man-pages require `python-docutils` and can be built via:
+
+```sh
+make man
+```
+
+### Repository:
+
+ - **web**:   <https://github.com/osbuild/osbuild-composer>
+ - **https**: `https://github.com/osbuild/osbuild-composer.git`
+ - **ssh**:   `git@github.com:osbuild/osbuild-composer.git`
+
+### License:
+
+ - **Apache-2.0**
+ - See LICENSE file for details.
