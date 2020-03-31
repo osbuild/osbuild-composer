@@ -39,7 +39,6 @@ func TestBasic(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	id := uuid.MustParse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -52,17 +51,16 @@ func TestCreate(t *testing.T) {
 	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
-	err = store.PushCompose(imageType, id, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
+	id, err := store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
 
 	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"id":"ffffffff-ffff-ffff-ffff-ffffffffffff","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created", "uuid")
+		`{"id":"`+id.String()+`","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {
-	id := uuid.MustParse("ffffffff-ffff-ffff-ffff-ffffffffffff")
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -75,20 +73,22 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, exp
 	store := store.New(nil)
 	api := jobqueue.New(nil, store)
 
+	id := uuid.Nil
 	if from != "VOID" {
-		err := store.PushCompose(imageType, id, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
+		id, err = store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}
+
 		if from != "WAITING" {
 			test.SendHTTP(api, false, "POST", "/job-queue/v1/jobs", `{}`)
 			if from != "RUNNING" {
-				test.SendHTTP(api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff/builds/0", `{"status":"`+from+`"}`)
+				test.SendHTTP(api, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+from+`"}`)
 			}
 		}
 	}
 
-	test.TestNonJsonRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/ffffffff-ffff-ffff-ffff-ffffffffffff/builds/0", `{"status":"`+to+`"}`, expectedStatus, expectedResponse)
+	test.TestNonJsonRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+to+`"}`, expectedStatus, expectedResponse)
 }
 
 func TestUpdate(t *testing.T) {
