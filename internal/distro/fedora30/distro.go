@@ -344,7 +344,6 @@ func New() *Fedora30 {
 			"libxcrypt-compat",
 			"initscripts",
 			"glibc-all-langpacks",
-			"dracut-config-generic",
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
@@ -407,6 +406,7 @@ func New() *Fedora30 {
 		distro: &r,
 		name:   "x86_64",
 		bootloaderPackages: []string{
+			"dracut-config-generic",
 			"grub2-pc",
 		},
 		buildPackages: []string{
