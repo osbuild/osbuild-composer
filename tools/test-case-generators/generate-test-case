@@ -42,8 +42,6 @@ def main(test_case, store):
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-rpmmd", "-"]
     test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=compose_request, encoding="utf-8"))
 
-    return test_case
-
     if boot_type != "nspawn-extract":
         output_id = run_osbuild(test_case["manifest"], store)
         image_file = os.path.join(store, "refs", output_id, test_case["compose-request"]["filename"])
