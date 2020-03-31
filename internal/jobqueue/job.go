@@ -24,11 +24,6 @@ type Job struct {
 	Targets      []*target.Target  `json:"targets"`
 }
 
-type JobStatus struct {
-	Status common.ImageBuildState `json:"status"`
-	Result *common.ComposeResult  `json:"result"`
-}
-
 type TargetsError struct {
 	Errors []error
 }
@@ -41,6 +36,10 @@ func (e *TargetsError) Error() string {
 	}
 
 	return errString
+}
+
+func NewJob(id uuid.UUID, imageBuildID int, manifest *osbuild.Manifest, targets []*target.Target) *Job {
+	return &Job{id, imageBuildID, manifest, targets}
 }
 
 func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error) {

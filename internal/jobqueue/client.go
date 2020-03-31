@@ -71,18 +71,18 @@ func (c *Client) AddJob() (*Job, error) {
 		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, r)
 	}
 
-	job := &Job{}
-	err = json.NewDecoder(response.Body).Decode(job)
+	var jr addJobResponse
+	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
 		return nil, err
 	}
 
-	return job, nil
+	return NewJob(jr.ID, jr.ImageBuildID, jr.Manifest, jr.Targets), nil
 }
 
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
 	var b bytes.Buffer
-	err := json.NewEncoder(&b).Encode(&JobStatus{status, result})
+	err := json.NewEncoder(&b).Encode(&updateJobRequest{status, result})
 	if err != nil {
 		panic(err)
 	}
