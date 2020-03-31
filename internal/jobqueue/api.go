@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/osbuild/osbuild-composer/internal/store"
-
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type API struct {
