@@ -1463,7 +1463,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Status:  true,
 	}
 
-	err = api.store.PushCompose(api.distro, api.arch, imageType, reply.BuildID, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
+	err = api.store.PushCompose(imageType, reply.BuildID, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
 
 	// TODO: we should probably do some kind of blueprint validation in future
 	// for now, let's just 500 and bail out

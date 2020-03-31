@@ -207,7 +207,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	// Push the requested compose to the store
 	composeUUID := uuid.New()
 	// nil is used as an upload target, because LocalTarget is already used in the PushCompose function
-	err = api.store.PushCompose(distro, arch, imageType, composeUUID, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, 0, nil)
+	err = api.store.PushCompose(imageType, composeUUID, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
