@@ -18,7 +18,7 @@ import (
 )
 
 type Job struct {
-	ID           uuid.UUID         `json:"id"`
+	ComposeID    uuid.UUID         `json:"id"`
 	ImageBuildID int               `json:"image_build_id"`
 	Manifest     *osbuild.Manifest `json:"manifest"`
 	Targets      []*target.Target  `json:"targets"`
@@ -116,7 +116,7 @@ func (job *Job) Run(uploader LocalTargetUploader) (*common.ComposeResult, error)
 			}
 
 			if options.Key == "" {
-				options.Key = job.ID.String()
+				options.Key = job.ComposeID.String()
 			}
 
 			_, err = a.Upload(path.Join(tmpStore, "refs", result.OutputID, options.Filename), options.Bucket, options.Key)

@@ -103,7 +103,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 	writer.WriteHeader(http.StatusCreated)
 	// FIXME: handle or comment this possible error
 	_ = json.NewEncoder(writer).Encode(addJobResponse{
-		ID:           nextJob.ComposeID,
+		ComposeID:    nextJob.ComposeID,
 		ImageBuildID: nextJob.ImageBuildID,
 		Manifest:     nextJob.Manifest,
 		Targets:      nextJob.Targets,

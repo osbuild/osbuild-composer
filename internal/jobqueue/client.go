@@ -77,7 +77,7 @@ func (c *Client) AddJob() (*Job, error) {
 		return nil, err
 	}
 
-	return NewJob(jr.ID, jr.ImageBuildID, jr.Manifest, jr.Targets), nil
+	return NewJob(jr.ComposeID, jr.ImageBuildID, jr.Manifest, jr.Targets), nil
 }
 
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
@@ -86,7 +86,7 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *comm
 	if err != nil {
 		panic(err)
 	}
-	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ID.String(), job.ImageBuildID)
+	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ComposeID.String(), job.ImageBuildID)
 	url := c.createURL(urlPath)
 	req, err := http.NewRequest("PATCH", url, &b)
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *comm
 
 func (c *Client) UploadImage(job *Job, reader io.Reader) error {
 	// content type doesn't really matter
-	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", job.ID.String(), job.ImageBuildID))
+	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", job.ComposeID.String(), job.ImageBuildID))
 	_, err := c.client.Post(url, "application/octet-stream", reader)
 
 	return err

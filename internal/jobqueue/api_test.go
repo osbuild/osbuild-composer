@@ -57,7 +57,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"id":"`+id.String()+`","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created")
+		`{"compose_id":"`+id.String()+`","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int, expectedResponse string) {

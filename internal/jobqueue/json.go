@@ -9,7 +9,7 @@ import (
 )
 
 type addJobResponse struct {
-	ID           uuid.UUID         `json:"id"`
+	ComposeID    uuid.UUID         `json:"compose_id"`
 	ImageBuildID int               `json:"image_build_id"`
 	Manifest     *osbuild.Manifest `json:"manifest"`
 	Targets      []*target.Target  `json:"targets"`
