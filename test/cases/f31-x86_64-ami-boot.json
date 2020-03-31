@@ -105,6 +105,7 @@
           "sha256:33f37ee132feff578bdf50f89f6f6a18c3c7fcc699b5ea7922317087fd210c18": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/l/libarchive-3.4.0-1.fc31.x86_64.rpm",
           "sha256:3434fe7dfffa29d996d94d2664dd2597ce446abf6b0d75920cc691540e139fcc": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/l/libXft-2.3.3-2.fc31.x86_64.rpm",
           "sha256:34a182fca42c4cac66aa6186603509b90659076d62147ac735def1adb72883dd": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/g/gcr-3.33.4-1.fc31.x86_64.rpm",
+          "sha256:34a9986b8b61812ceaf32ce3b189bd0b2cb4adaaf47d76ec1f50ce07c45b5675": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/d/dracut-config-generic-049-27.git20181204.fc31.1.x86_64.rpm",
           "sha256:34f7954cf6c6ceb4385fdcc587dced94405913ddfe5e3213fcbd72562f286fbc": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/d/dejavu-fonts-common-2.37-2.fc31.noarch.rpm",
           "sha256:35413dd963ebd9e61467067c18a53c7027dcd95ebcae5a5ffaf4727507e37c8c": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/p/python-unversioned-command-3.7.4-5.fc31.noarch.rpm",
           "sha256:359d74d5f3988e1c2c5327f9d4ea59d0c49a2383541928084ef00383d70b6d55": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/p/publicsuffix-list-dafsa-20190417-2.fc31.noarch.rpm",
@@ -790,6 +791,7 @@
               "sha256:02301d2744b96674019251b6c8d2199790960e4cc79d90fbdb946a298fc2c4ea",
               "sha256:16ea1e6ba5bbf16cb6a052b2326d25b9980971fd72c46e7d701e09f267d33063",
               "sha256:ef55145ef56d4d63c0085d04e856943d5c61c11ba10c70a383d8f67b74818159",
+              "sha256:34a9986b8b61812ceaf32ce3b189bd0b2cb4adaaf47d76ec1f50ce07c45b5675",
               "sha256:71c02de0e50e07999d0f4f40bce06ca4904e0ab786220bd7ffebc4a60a4d3cd7",
               "sha256:de678f5a55f5ff690f3587adcbc7a1b7d477fefe85ffd5d91fc1447ddba63c89",
               "sha256:cab1b0c3bdae2a07e15b90b414f50753c759e325b6f0cddfa27895748c77f082",
@@ -4225,6 +4227,15 @@
         "checksum": "sha256:ef55145ef56d4d63c0085d04e856943d5c61c11ba10c70a383d8f67b74818159"
       },
       {
+        "name": "dracut-config-generic",
+        "epoch": 0,
+        "version": "049",
+        "release": "27.git20181204.fc31.1",
+        "arch": "x86_64",
+        "remote_location": "http://dl.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/Packages/d/dracut-config-generic-049-27.git20181204.fc31.1.x86_64.rpm",
+        "checksum": "sha256:34a9986b8b61812ceaf32ce3b189bd0b2cb4adaaf47d76ec1f50ce07c45b5675"
+      },
+      {
         "name": "e2fsprogs",
         "epoch": 0,
         "version": "1.45.3",
@@ -7530,6 +7541,7 @@
       "dnf-data-4.2.9-5.fc31.noarch",
       "dnf-plugins-core-4.0.9-1.fc31.noarch",
       "dracut-049-27.git20181204.fc31.1.x86_64",
+      "dracut-config-generic-049-27.git20181204.fc31.1.x86_64",
       "e2fsprogs-1.45.3-1.fc31.x86_64",
       "e2fsprogs-libs-1.45.3-1.fc31.x86_64",
       "ebtables-legacy-2.0.10-37.fc31.x86_64",

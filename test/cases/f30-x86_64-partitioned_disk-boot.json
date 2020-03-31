@@ -182,6 +182,7 @@
           "sha256:7e61fb39689669e2c96909008f7970ea5037046fd4133c9bb38364ce82813966": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.27-0.6rc7.fc30.x86_64.rpm",
           "sha256:7efe8696caf1e8b1471225cf3be33c95ace91b2b58443efa6d16fb744754874c": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/c/chrony-3.4-2.fc30.x86_64.rpm",
           "sha256:806617532d01219c819194085466aab3a6bc4a0b16da7d5851370576861116b0": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/g/grep-3.1-9.fc30.x86_64.rpm",
+          "sha256:8185411da358027837a036579f2336e627d7e65cb8e15a3fe79f7e9f1a2286ba": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/d/dracut-config-generic-049-26.git20181204.fc30.x86_64.rpm",
           "sha256:82b7ab937022da773f88246233f2e806460a534e74cb3a30c6554e7e568f962f": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/l/libedit-3.1-26.20181209cvs.fc30.x86_64.rpm",
           "sha256:83106462e3330c682a5f3c8ddee487131666f6692fa6c7e071be61c831ee3766": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/f/file-5.36-2.fc30.x86_64.rpm",
           "sha256:835813f87c48afef832488374fa1517a175626a5b8a36836f0abd73fe298b581": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/l/libsemanage-2.9-1.fc30.x86_64.rpm",
@@ -633,6 +634,7 @@
               "sha256:a8e1a237699150c2eb2196079e7af1690c89297ab99b0696389cb4d2058e6ee2",
               "sha256:44d6eac48fdf84e2577d7ba97cf50409051d8882f86f9f001140a210b0ea6c1d",
               "sha256:76962ec5ea720cb22eb43f808013d8c974fb6862ebd6c193a76e49c987341856",
+              "sha256:8185411da358027837a036579f2336e627d7e65cb8e15a3fe79f7e9f1a2286ba",
               "sha256:109f8a9036587d3df953290ef6424780f81b11f4fc162f44d1f1bd20fa8f90a7",
               "sha256:4eefc58e32aca46c0b3d64da2454ffd52aa0beb03a7ce5e00c3cff0e49736639",
               "sha256:d342deb7dc135e1056185670b89989225fdf898101d26b70abbe6cfacfe507e9",
@@ -3277,6 +3279,15 @@
         "checksum": "sha256:76962ec5ea720cb22eb43f808013d8c974fb6862ebd6c193a76e49c987341856"
       },
       {
+        "name": "dracut-config-generic",
+        "epoch": 0,
+        "version": "049",
+        "release": "26.git20181204.fc30",
+        "arch": "x86_64",
+        "remote_location": "http://dl.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/d/dracut-config-generic-049-26.git20181204.fc30.x86_64.rpm",
+        "checksum": "sha256:8185411da358027837a036579f2336e627d7e65cb8e15a3fe79f7e9f1a2286ba"
+      },
+      {
         "name": "e2fsprogs",
         "epoch": 0,
         "version": "1.44.6",
@@ -5832,6 +5843,7 @@
       "dnf-plugins-core-4.0.6-1.fc30.noarch",
       "dnf-yum-4.2.2-2.fc30.noarch",
       "dracut-049-26.git20181204.fc30.x86_64",
+      "dracut-config-generic-049-26.git20181204.fc30.x86_64",
       "e2fsprogs-1.44.6-1.fc30.x86_64",
       "e2fsprogs-libs-1.44.6-1.fc30.x86_64",
       "ebtables-2.0.10-31.fc30.x86_64",
