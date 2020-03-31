@@ -575,12 +575,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 		}
 	}
 
-	allRepos := append([]rpmmd.RepoConfig{}, repos...)
-	for _, source := range s.Sources {
-		allRepos = append(allRepos, source.RepoConfig())
-	}
-
-	manifestStruct, err := imageType.Manifest(bp.Customizations, allRepos, packages, buildPackages, imageType.Size(size))
+	manifestStruct, err := imageType.Manifest(bp.Customizations, repos, packages, buildPackages, imageType.Size(size))
 	if err != nil {
 		return uuid.Nil, err
 	}
