@@ -553,10 +553,12 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) error {
+func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) (uuid.UUID, error) {
 	if targets == nil {
 		targets = []*target.Target{}
 	}
+
+	composeID := uuid.New()
 
 	// Compatibility layer for image types in Weldr API v0
 	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
@@ -569,7 +571,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, composeID uuid.UUID, bp 
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
-			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
+			return uuid.Nil, fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 	}
 
@@ -580,7 +582,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, composeID uuid.UUID, bp 
 
 	manifestStruct, err := imageType.Manifest(bp.Customizations, allRepos, packages, buildPackages, imageType.Size(size))
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
@@ -606,7 +608,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, composeID uuid.UUID, bp 
 		Targets:      targets,
 	}
 
-	return nil
+	return composeID, nil
 }
 
 // DeleteCompose deletes the compose from the state file and also removes all files on disk that are

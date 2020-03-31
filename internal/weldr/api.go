@@ -1458,12 +1458,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	reply := ComposeReply{
-		BuildID: uuid.New(),
-		Status:  true,
-	}
-
-	err = api.store.PushCompose(imageType, reply.BuildID, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
+	composeID, err := api.store.PushCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
 
 	// TODO: we should probably do some kind of blueprint validation in future
 	// for now, let's just 500 and bail out
@@ -1477,7 +1472,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	err = json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(ComposeReply{
+		BuildID: composeID,
+		Status:  true,
+	})
 	common.PanicOnError(err)
 }
 

@@ -205,8 +205,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	}
 
 	// Push the requested compose to the store
-	composeUUID := uuid.New()
-	err = api.store.PushCompose(imageType, composeUUID, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, 0, nil)
+	composeID, err := api.store.PushCompose(imageType, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
@@ -222,7 +221,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	var reply struct {
 		UUID uuid.UUID `json:"compose_id"`
 	}
-	reply.UUID = composeUUID
+	reply.UUID = composeID
 	// TODO: handle error
 	_ = json.NewEncoder(writer).Encode(reply)
 }
