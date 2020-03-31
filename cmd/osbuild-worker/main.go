@@ -55,7 +55,7 @@ func handleJob(client *jobqueue.Client) error {
 		return err
 	}
 
-	fmt.Printf("Running job %s\n", job.ID.String())
+	fmt.Printf("Running job %s\n", job.ComposeID.String())
 	result, err := job.Run(client)
 	if err != nil {
 		log.Printf("  Job failed: %v", err)
