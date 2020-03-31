@@ -8,11 +8,10 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
-
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )

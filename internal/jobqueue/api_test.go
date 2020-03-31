@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
-
-	"github.com/google/uuid"
 )
 
 func TestBasic(t *testing.T) {
