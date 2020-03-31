@@ -30,12 +30,18 @@ RST2MAN ?= rst2man
 # evaluated once. This, however, means they are always executed regardless of
 # which target is run.
 #
+#     VERSION:
+#         This evaluates the `Version` field of the specfile. Therefore, it will
+#         be set to the latest version number of this repository without any
+#         prefix (just a plain number).
+#
 #     COMMIT:
 #         This evaluates to the latest git commit sha. This will not work if
 #         the source is not a git checkout. Hence, this variable is not
 #         pre-fetched but evaluated at time of use.
 #
 
+VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" osbuild-composer.spec | sed 's/.*\([[:digit:]]\+\).*/\1/'))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 
 #
@@ -206,3 +212,66 @@ old-rpm: $(OLD_RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(OLD_RPM_SPECFILE)
+
+#
+# Releasing
+#
+
+NEXT_VERSION := $(shell expr "$(VERSION)" + 1)
+
+.PHONY: release
+release:
+	@echo
+	@echo "Checklist for release of osbuild-composer-$(NEXT_VERSION):"
+	@echo
+	@echo " * Create news entry in NEWS.md with a short description of"
+	@echo "   any changes since the last release, which are relevant to"
+	@echo "   users, packagers, distributors, or dependent projects."
+	@echo
+	@echo "   Use the following template, break lines at 80ch:"
+	@echo
+	@echo "--------------------------------------------------------------------------------"
+	@echo "## CHANGES WITH $(NEXT_VERSION):"
+	@echo
+	@echo "        * ..."
+	@echo
+	@echo "        * ..."
+	@echo
+	@echo -n "        Contributions from: "
+	# We omit the contributor list if `git log` fails. If you hit this,
+	# consider fetching missing tags via `git fetch --tags`, or just copy
+	# this command and remove the stderr-redirect.
+	@echo `( git log --format='%an, ' v$(VERSION)..HEAD 2>/dev/null | sort -u | tr -d '\n' | sed 's/, $$//' ) || echo`
+	@echo
+	@echo "        - Location, YYYY-MM-DD"
+	@echo "--------------------------------------------------------------------------------"
+	@echo
+	@echo "   To get a list of changes since the last release, you may use:"
+	@echo
+	@echo "        git log v$(VERSION)..HEAD"
+	@echo
+	@echo " * Bump the project version. The canonical location so far is"
+	@echo "   'osbuild-composer.spec'."
+	@echo
+	@echo " * Make sure the spec-file is updated for the new release and"
+	@echo "   correctly supports all new features. This should already be"
+	@echo "   done by previous commits that introduced the changes, but"
+	@echo "   a sanity check does not hurt."
+	@echo
+	@echo " * Commit the version bump, specfile changes and NEWS.md in any"
+	@echo "   order you want."
+	@echo
+	@echo " * Tag the release via:"
+	@echo
+	@echo "        git tag -s -m 'osbuild-composer $(NEXT_VERSION)' v$(NEXT_VERSION) HEAD"
+	@echo
+	@echo " * Push master as well as the tag:"
+	@echo
+	@echo "        git push origin master"
+	@echo "        git push origin v$(NEXT_VERSION)"
+	@echo
+	@echo " * Create a release on github. Use 'NEWS.md' verbatim from the"
+	@echo "   top until the end of the section for this release as release"
+	@echo "   notes. Use 'v$(NEXT_VERSION)' as release name and as tag for"
+	@echo "   the release."
+	@echo
