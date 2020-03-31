@@ -553,7 +553,7 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(distro distro.Distro, arch distro.Arch, imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) error {
+func (s *Store) PushCompose(imageType distro.ImageType, composeID uuid.UUID, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) error {
 	if targets == nil {
 		targets = []*target.Target{}
 	}
