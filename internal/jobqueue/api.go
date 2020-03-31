@@ -102,7 +102,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 
 	writer.WriteHeader(http.StatusCreated)
 	// FIXME: handle or comment this possible error
-	_ = json.NewEncoder(writer).Encode(Job{
+	_ = json.NewEncoder(writer).Encode(addJobResponse{
 		ID:           nextJob.ComposeID,
 		ImageBuildID: nextJob.ImageBuildID,
 		Manifest:     nextJob.Manifest,
@@ -130,7 +130,7 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	var body JobStatus
+	var body updateJobRequest
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
