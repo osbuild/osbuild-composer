@@ -2,14 +2,16 @@ package common
 
 import "runtime"
 
+var RuntimeGOARCH = runtime.GOARCH
+
 func CurrentArch() string {
-	if runtime.GOARCH == "amd64" {
+	if RuntimeGOARCH == "amd64" {
 		return "x86_64"
-	} else if runtime.GOARCH == "arm64" {
+	} else if RuntimeGOARCH == "arm64" {
 		return "aarch64"
-	} else if runtime.GOARCH == "ppc64le" {
+	} else if RuntimeGOARCH == "ppc64le" {
 		return "ppc64le"
-	} else if runtime.GOARCH == "s390x" {
+	} else if RuntimeGOARCH == "s390x" {
 		return "s390x"
 	} else {
 		panic("unsupported architecture")
