@@ -1,6 +1,7 @@
 package crypt
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -40,4 +41,21 @@ func Test_crypt_PasswordIsCrypted(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCryptSHA512(t *testing.T) {
+	retPassFirst, err := CryptSHA512("testPass")
+	assert.NoError(t, err)
+	retPassSecond, _ := CryptSHA512("testPass")
+	expectedPassStart := "$6$"
+	assert.Equal(t, expectedPassStart, retPassFirst[0:3])
+	assert.NotEqual(t, retPassFirst, retPassSecond)
+}
+
+func TestGenSalt(t *testing.T) {
+	length := 10
+	retSaltFirst, err := genSalt(length)
+	assert.NoError(t, err)
+	retSaltSecond, _ := genSalt(length)
+	assert.NotEqual(t, retSaltFirst, retSaltSecond)
 }
