@@ -2,7 +2,7 @@ package common
 
 import (
 	"encoding/json"
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -29,31 +29,21 @@ func TestJSONConversions(t *testing.T) {
 	for n, c := range strCases {
 		var inputStringAsStruct *TestJson
 		err := json.Unmarshal([]byte(c), &inputStringAsStruct)
-		if err != nil {
-			t.Fatal("Failed to unmarshal:", err)
-		}
-		if reflect.DeepEqual(inputStringAsStruct, typedCases[n]) {
-			t.Error("Unmarshaled compose request is not the one expected")
-		}
+		assert.NoErrorf(t, err, "Failed to unmarshal: %#v", err)
+		assert.Equal(t, inputStringAsStruct, &typedCases[n])
 	}
 
 	var byteArrays [][]byte
 	for _, c := range typedCases {
 		data, err := json.Marshal(c)
-		if err != nil {
-			t.Fatal("Failed to marshal state:", err)
-		}
+		assert.NoError(t, err)
 		byteArrays = append(byteArrays, data)
 	}
 	for n, b := range byteArrays {
 		var inputStringAsStruct *TestJson
 		err := json.Unmarshal(b, &inputStringAsStruct)
-		if err != nil {
-			t.Fatal("Failed to unmarshal:", err)
-		}
-		if reflect.DeepEqual(inputStringAsStruct, typedCases[n]) {
-			t.Error("Unmarshaled compose request is not the one expected")
-		}
+		assert.NoError(t, err)
+		assert.Equal(t, inputStringAsStruct, &typedCases[n])
 	}
 
 }
