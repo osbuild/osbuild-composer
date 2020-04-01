@@ -181,6 +181,7 @@ func New() *RHEL81 {
 			"x86_64": arch{
 				name: "x86_64",
 				bootloaderPackages: []string{
+					"dracut-config-generic",
 					"grub2-pc",
 				},
 				buildPackages: []string{
@@ -212,7 +213,6 @@ func New() *RHEL81 {
 			"cloud-utils-growpart",
 			"@core",
 			"dhcp-client",
-			"dracut-config-generic",
 			"gdisk",
 			"insights-client",
 			"kernel",
@@ -287,7 +287,6 @@ func New() *RHEL81 {
 			"kernel",
 			"firewalld",
 			"chrony",
-			"dracut-config-generic",
 			"langpacks-en",
 		},
 		excludedPackages: []string{
@@ -309,7 +308,6 @@ func New() *RHEL81 {
 		packages: []string{
 			"@core",
 			"chrony",
-			"dracut-config-generic",
 			"firewalld",
 			"kernel",
 			"langpacks-en",
@@ -345,7 +343,6 @@ func New() *RHEL81 {
 			"python3-jsonschema",
 			"qemu-guest-agent",
 			"cloud-utils-growpart",
-			"dracut-config-generic",
 			"dracut-norescue",
 			"tar",
 			"tcpdump",
@@ -422,10 +419,6 @@ func New() *RHEL81 {
 			"@Core",
 			"langpacks-en",
 
-			// Don't run dracut in host-only mode, in order to pull in
-			// the hv_vmbus, hv_netvsc and hv_storvsc modules into the initrd.
-			"dracut-config-generic",
-
 			// From the lorax kickstart
 			"kernel",
 			"selinux-policy-targeted",
@@ -453,7 +446,6 @@ func New() *RHEL81 {
 			"kernel",
 			"firewalld",
 			"chrony",
-			"dracut-config-generic",
 			"langpacks-en",
 		},
 		excludedPackages: []string{
@@ -475,10 +467,6 @@ func New() *RHEL81 {
 			// Defaults
 			"@Core",
 			"langpacks-en",
-
-			// Don't run dracut in host-only mode, in order to pull in
-			// the hv_vmbus, hv_netvsc and hv_storvsc modules into the initrd.
-			"dracut-config-generic",
 
 			// From the lorax kickstart
 			"kernel",
@@ -517,7 +505,6 @@ func New() *RHEL81 {
 		packages: []string{
 			"@core",
 			"chrony",
-			"dracut-config-generic",
 			"firewalld",
 			"kernel",
 			"langpacks-en",
