@@ -166,7 +166,6 @@ func New() *RHEL81 {
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",
-			"dracut-config-generic",
 			"e2fsprogs",
 			"glibc",
 			"policycoreutils",
