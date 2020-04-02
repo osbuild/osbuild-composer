@@ -125,14 +125,14 @@ func (*timeoutError) Error() string { return "" }
 // that 10 seconds or if systemd-is-running returns starting.
 // It returns nil if systemd-is-running returns running or degraded.
 // It can also return other errors in other error cases.
-func trySSHOnce(address string, ns *netNS) error {
+func trySSHOnce(address string, privateKey string, ns *netNS) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	cmdName := "ssh"
 	cmdArgs := []string{
 		"-p", "22",
-		"-i", privateKeyPath,
+		"-i", privateKey,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "UserKnownHostsFile=/dev/null",
 		"redhat@" + address,
@@ -180,10 +180,10 @@ func trySSHOnce(address string, ns *netNS) error {
 // testSSH tests the running image using ssh.
 // It tries 20 attempts before giving up. If a major error occurs, it might
 // return earlier.
-func testSSH(t *testing.T, address string, ns *netNS) {
+func testSSH(t *testing.T, address string, privateKey string, ns *netNS) {
 	const attempts = 20
 	for i := 0; i < attempts; i++ {
-		err := trySSHOnce(address, ns)
+		err := trySSHOnce(address, privateKey, ns)
 		if err == nil {
 			// pass the test
 			return
@@ -212,7 +212,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	case "qemu-extract":
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedQemuImage(imagePath, ns, func() error {
-				testSSH(t, "localhost", &ns)
+				testSSH(t, "localhost", privateKeyPath, &ns)
 				return nil
 			})
 		})
@@ -221,7 +221,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	case "nspawn":
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-				testSSH(t, "localhost", &ns)
+				testSSH(t, "localhost", privateKeyPath, &ns)
 				return nil
 			})
 		})
@@ -231,7 +231,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withExtractedTarArchive(imagePath, func(dir string) error {
 				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-					testSSH(t, "localhost", &ns)
+					testSSH(t, "localhost", privateKeyPath, &ns)
 					return nil
 				})
 			})
