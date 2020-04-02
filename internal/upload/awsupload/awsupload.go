@@ -9,12 +9,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type AWS struct {
 	uploader *s3manager.Uploader
 	importer *ec2.EC2
+	s3       *s3.S3
 }
 
 func New(region, accessKeyID, accessKey string) (*AWS, error) {
@@ -33,6 +35,7 @@ func New(region, accessKeyID, accessKey string) (*AWS, error) {
 	return &AWS{
 		uploader: s3manager.NewUploader(sess),
 		importer: ec2.New(sess),
+		s3:       s3.New(sess),
 	}, nil
 }
 
@@ -121,6 +124,15 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 			},
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// we no longer need the object in s3, let's just delete it
+	_, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
 	if err != nil {
 		return nil, err
 	}
