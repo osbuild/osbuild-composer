@@ -232,6 +232,47 @@ func testBootUsingNspawnDirectory(t *testing.T, imagePath string, outputID strin
 	require.NoError(t, err)
 }
 
+func testBootUsingAWS(t *testing.T, imagePath string) {
+	creds, err := getAWSCredentialsFromEnv()
+	require.NoError(t, err)
+
+	// if no credentials are given, fall back to qemu
+	if creds == nil {
+		log.Print("no AWS credentials given, falling back to booting using qemu")
+		testBootUsingQemu(t, imagePath)
+		return
+
+	}
+
+	imageName, err := generateRandomString("osbuild-image-tests-image-")
+	require.NoError(t, err)
+
+	e, err := newEC2(creds)
+	require.NoError(t, err)
+
+	// the following line should be done by osbuild-composer at some point
+	err = uploadImageToAWS(creds, imagePath, imageName)
+	require.NoErrorf(t, err, "upload to amazon failed, resources could have been leaked")
+
+	imageDesc, err := describeEC2Image(e, imageName)
+	require.NoErrorf(t, err, "cannot describe the ec2 image")
+
+	// delete the image after the test is over
+	defer func() {
+		err = deleteEC2Image(e, imageDesc)
+		require.NoErrorf(t, err, "cannot delete the ec2 image, resources could have been leaked")
+	}()
+
+	// boot the uploaded image and try to connect to it
+	err = withSSHKeyPair(func(privateKey, publicKey string) error {
+		return withBootedImageInEC2(e, imageDesc, publicKey, func(address string) error {
+			testSSH(t, address, privateKey, nil)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
 // testBoot tests if the image is able to successfully boot
 // Before the test it boots the image respecting the specified bootType.
 // The test passes if the function is able to connect to the image via ssh
@@ -249,6 +290,9 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 
 	case "nspawn-extract":
 		testBootUsingNspawnDirectory(t, imagePath, outputID)
+
+	case "aws":
+		testBootUsingAWS(t, imagePath)
 
 	default:
 		panic("unknown boot type!")
