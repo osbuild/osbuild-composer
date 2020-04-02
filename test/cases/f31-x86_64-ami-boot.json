@@ -1,6 +1,6 @@
 {
   "boot": {
-    "type": "qemu-extract"
+    "type": "aws"
   },
   "compose-request": {
     "distro": "fedora-31",

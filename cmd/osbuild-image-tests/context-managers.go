@@ -206,3 +206,24 @@ func withExtractedTarArchive(archive string, f func(dir string) error) error {
 		return f(dir)
 	})
 }
+
+// withSSHKeyPair runs the function f with a newly generated
+// ssh key-pair, they key-pair is deleted immediately after
+// the function f returns
+func withSSHKeyPair(f func(privateKey, publicKey string) error) error {
+	return withTempDir("", "keys", func(dir string) error {
+		privateKey := dir + "/id_rsa"
+		publicKey := dir + "/id_rsa.pub"
+		cmd := exec.Command("ssh-keygen",
+			"-N", "",
+			"-f", privateKey,
+		)
+
+		err := cmd.Run()
+		if err != nil {
+			return fmt.Errorf("ssh-keygen failed: %#v", err)
+		}
+
+		return f(privateKey, publicKey)
+	})
+}

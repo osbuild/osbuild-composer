@@ -7,6 +7,8 @@ import (
 	"os"
 	"syscall"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // durationMin returns the smaller of two given durations
@@ -49,4 +51,15 @@ func killProcessCleanly(process *os.Process, timeout time.Duration) error {
 	}
 
 	return process.Kill()
+}
+
+// generateRandomString generates a new random string with specified prefix.
+// The random part is based on UUID.
+func generateRandomString(prefix string) (string, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+
+	return prefix + id.String(), nil
 }
