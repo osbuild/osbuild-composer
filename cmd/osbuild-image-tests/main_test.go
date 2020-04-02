@@ -98,7 +98,7 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
 	require.NoErrorf(t, err, "cannot decode expected image info: %#v", err)
 
-	cmd := exec.Command(imageInfoPath, imagePath)
+	cmd := exec.Command(testPaths.imageInfo, imagePath)
 	cmd.Stderr = os.Stderr
 	reader, writer := io.Pipe()
 	cmd.Stdout = writer
@@ -212,7 +212,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	case "qemu-extract":
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedQemuImage(imagePath, ns, func() error {
-				testSSH(t, "localhost", privateKeyPath, &ns)
+				testSSH(t, "localhost", testPaths.privateKey, &ns)
 				return nil
 			})
 		})
@@ -221,7 +221,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	case "nspawn":
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-				testSSH(t, "localhost", privateKeyPath, &ns)
+				testSSH(t, "localhost", testPaths.privateKey, &ns)
 				return nil
 			})
 		})
@@ -231,7 +231,7 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 		err := withNetworkNamespace(func(ns netNS) error {
 			return withExtractedTarArchive(imagePath, func(dir string) error {
 				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-					testSSH(t, "localhost", privateKeyPath, &ns)
+					testSSH(t, "localhost", testPaths.privateKey, &ns)
 					return nil
 				})
 			})
@@ -293,7 +293,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 
 // getAllCases returns paths to all testcases in the testcase directory
 func getAllCases() ([]string, error) {
-	cases, err := ioutil.ReadDir(testCasesDirectoryPath)
+	cases, err := ioutil.ReadDir(testPaths.testCasesDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list test cases: %#v", err)
 	}
@@ -304,7 +304,7 @@ func getAllCases() ([]string, error) {
 			continue
 		}
 
-		casePath := fmt.Sprintf("%s/%s", testCasesDirectoryPath, c.Name())
+		casePath := fmt.Sprintf("%s/%s", testPaths.testCasesDirectory, c.Name())
 		casesPaths = append(casesPaths, casePath)
 	}
 

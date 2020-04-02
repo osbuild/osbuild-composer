@@ -13,8 +13,16 @@ func getOsbuildCommand(store string) *exec.Cmd {
 	)
 }
 
-var imageInfoPath = "/usr/libexec/osbuild-composer/image-info"
-var privateKeyPath = "/usr/share/tests/osbuild-composer/keyring/id_rsa"
-var testCasesDirectoryPath = "/usr/share/tests/osbuild-composer/cases"
-var userDataPath = "/usr/share/tests/osbuild-composer/cloud-init/user-data"
-var metaDataPath = "/usr/share/tests/osbuild-composer/cloud-init/meta-data"
+var testPaths = struct {
+	imageInfo          string
+	privateKey         string
+	testCasesDirectory string
+	userData           string
+	metaData           string
+}{
+	imageInfo:          "/usr/libexec/osbuild-composer/image-info",
+	privateKey:         "/usr/share/tests/osbuild-composer/keyring/id_rsa",
+	testCasesDirectory: "/usr/share/tests/osbuild-composer/cases",
+	userData:           "/usr/share/tests/osbuild-composer/cloud-init/user-data",
+	metaData:           "/usr/share/tests/osbuild-composer/cloud-init/meta-data",
+}
