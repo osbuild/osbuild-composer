@@ -200,6 +200,38 @@ func testSSH(t *testing.T, address string, privateKey string, ns *netNS) {
 	t.Errorf("ssh test failure, %d attempts were made", attempts)
 }
 
+func testBootUsingQemu(t *testing.T, imagePath string) {
+	err := withNetworkNamespace(func(ns netNS) error {
+		return withBootedQemuImage(imagePath, ns, func() error {
+			testSSH(t, "localhost", testPaths.privateKey, &ns)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
+func testBootUsingNspawnImage(t *testing.T, imagePath string, outputID string) {
+	err := withNetworkNamespace(func(ns netNS) error {
+		return withBootedNspawnImage(imagePath, outputID, ns, func() error {
+			testSSH(t, "localhost", testPaths.privateKey, &ns)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
+func testBootUsingNspawnDirectory(t *testing.T, imagePath string, outputID string) {
+	err := withNetworkNamespace(func(ns netNS) error {
+		return withExtractedTarArchive(imagePath, func(dir string) error {
+			return withBootedNspawnDirectory(dir, outputID, ns, func() error {
+				testSSH(t, "localhost", testPaths.privateKey, &ns)
+				return nil
+			})
+		})
+	})
+	require.NoError(t, err)
+}
+
 // testBoot tests if the image is able to successfully boot
 // Before the test it boots the image respecting the specified bootType.
 // The test passes if the function is able to connect to the image via ssh
@@ -210,33 +242,13 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	case "qemu":
 		fallthrough
 	case "qemu-extract":
-		err := withNetworkNamespace(func(ns netNS) error {
-			return withBootedQemuImage(imagePath, ns, func() error {
-				testSSH(t, "localhost", testPaths.privateKey, &ns)
-				return nil
-			})
-		})
-		require.NoError(t, err)
+		testBootUsingQemu(t, imagePath)
 
 	case "nspawn":
-		err := withNetworkNamespace(func(ns netNS) error {
-			return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-				testSSH(t, "localhost", testPaths.privateKey, &ns)
-				return nil
-			})
-		})
-		require.NoError(t, err)
+		testBootUsingNspawnImage(t, imagePath, outputID)
 
 	case "nspawn-extract":
-		err := withNetworkNamespace(func(ns netNS) error {
-			return withExtractedTarArchive(imagePath, func(dir string) error {
-				return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-					testSSH(t, "localhost", testPaths.privateKey, &ns)
-					return nil
-				})
-			})
-		})
-		require.NoError(t, err)
+		testBootUsingNspawnDirectory(t, imagePath, outputID)
 
 	default:
 		panic("unknown boot type!")
