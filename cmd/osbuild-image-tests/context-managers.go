@@ -48,6 +48,22 @@ func withTempFile(dir, pattern string, f func(file *os.File) error) error {
 	return f(tempFile)
 }
 
+func withTempDir(dir, pattern string, f func(dir string) error) error {
+	tempDir, err := ioutil.TempDir(dir, pattern)
+	if err != nil {
+		return fmt.Errorf("cannot create the temporary directory %#v", err)
+	}
+
+	defer func() {
+		err := os.RemoveAll(tempDir)
+		if err != nil {
+			log.Printf("cannot remove the temporary directory: %#v", err)
+		}
+	}()
+
+	return f(tempDir)
+}
+
 // writeCloudInitSO creates cloud-init iso from specified userData and
 // metaData and writes it to the writer
 func writeCloudInitISO(writer io.Writer, userData, metaData string) error {
@@ -173,30 +189,20 @@ func withBootedNspawnDirectory(dir, name string, ns netNS, f func() error) error
 // a path to the result to the function f. The result is deleted
 // immediately after the function returns.
 func withExtractedTarArchive(archive string, f func(dir string) error) error {
-	dir, err := ioutil.TempDir("", "tar-archive")
-	if err != nil {
-		return fmt.Errorf("cannot create a temporary dir: %#v", err)
-	}
+	return withTempDir("", "tar-archive", func(dir string) error {
+		cmd := exec.Command(
+			"tar",
+			"xf", archive,
+			"-C", dir,
+		)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
 
-	defer func() {
-		err := os.RemoveAll(dir)
+		err := cmd.Run()
 		if err != nil {
-			log.Printf("cannot remove the temporary dir: %#v", err)
+			return fmt.Errorf("cannot untar the archive: %#v", err)
 		}
-	}()
 
-	cmd := exec.Command(
-		"tar",
-		"xf", archive,
-		"-C", dir,
-	)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("cannot untar the archive: %#v", err)
-	}
-
-	return f(dir)
+		return f(dir)
+	})
 }
