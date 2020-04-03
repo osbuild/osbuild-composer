@@ -57,12 +57,12 @@ type Job struct {
 }
 
 type SourceConfig struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	URL      string `json:"url"`
-	CheckGPG bool   `json:"check_gpg"`
-	CheckSSL bool   `json:"check_ssl"`
-	System   bool   `json:"system"`
+	Name     string `json:"name" toml:"name"`
+	Type     string `json:"type" toml:"type"`
+	URL      string `json:"url" toml:"url"`
+	CheckGPG bool   `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL bool   `json:"check_ssl" toml:"check_ssl"`
+	System   bool   `json:"system" toml:"system"`
 }
 
 type NotFoundError struct {
