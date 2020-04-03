@@ -109,6 +109,25 @@ func TestPOSTInvalidTOMLSourceV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
+// POST a wrong TOML source
+func TestPOSTWrongTOMLSourceV0(t *testing.T) {
+	// Should not have a [] section
+	source := `
+		[package-repo-toml-v0]
+		name = "package-repo-toml-v0"
+		url = "file://REPO-PATH
+		type = "yum-baseurl"
+		proxy = "https://proxy-url/"
+		check_ssl = true
+		check_gpg = true
+		gpgkey_urls = ["https://url/path/to/gpg-key"]
+	`
+
+	resp, err := PostTOMLSourceV0(testState.socket, source)
+	require.NoError(t, err, "POST source failed with a client error")
+	require.False(t, resp.Status, "did not return an error")
+}
+
 // list sources
 func TestListSourcesV0(t *testing.T) {
 	sources := []string{`{

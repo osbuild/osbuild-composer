@@ -878,6 +878,31 @@ check_gpg = false
 	test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 }
 
+// Empty TOML, and invalid TOML should return an error
+func TestSourcesNewWrongToml(t *testing.T) {
+	sources := []string{``, `
+[fish]
+name = "fish"
+url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
+type = "yum-baseurl"
+check_ssl = false
+check_gpg = false
+`}
+	for _, source := range sources {
+		req := httptest.NewRequest("POST", "/api/v0/projects/source/new", bytes.NewReader([]byte(source)))
+		req.Header.Set("Content-Type", "text/x-toml")
+		recorder := httptest.NewRecorder()
+
+		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
+		api.ServeHTTP(recorder, req)
+
+		r := recorder.Result()
+		if r.StatusCode != http.StatusBadRequest {
+			t.Errorf("unexpected status %v", r.StatusCode)
+		}
+	}
+}
+
 func TestSourcesInfo(t *testing.T) {
 	sourceStr := `{"name":"fish","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":false,"check_ssl":false,"system":false}`
 

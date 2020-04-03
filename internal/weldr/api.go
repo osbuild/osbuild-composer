@@ -379,6 +379,15 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		err = errors_package.New("blueprint must be in json or toml format")
 	}
 
+	// Basic check of the source, should at least have a name and type
+	if err == nil {
+		if len(source.Name) == 0 {
+			err = errors_package.New("'name' field is missing from API v0 request")
+		} else if len(source.Type) == 0 {
+			err = errors_package.New("'type' field is missing from API v0 request")
+		}
+	}
+
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
