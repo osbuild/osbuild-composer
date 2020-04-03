@@ -100,14 +100,14 @@ func (s *SourceInfoV0) SourceConfig(sourceName string) (ssc store.SourceConfig, 
 
 // SourceConfigV0 holds the source repository information
 type SourceConfigV0 struct {
-	Name     string   `json:"name"`
-	Type     string   `json:"type"`
-	URL      string   `json:"url"`
-	CheckGPG bool     `json:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl"`
-	System   bool     `json:"system"`
-	Proxy    string   `json:"proxy"`
-	GPGUrls  []string `json:"gpgkey_urls"`
+	Name     string   `json:"name" toml:"name"`
+	Type     string   `json:"type" toml:"type"`
+	URL      string   `json:"url" toml:"url"`
+	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
+	System   bool     `json:"system" toml:"system"`
+	Proxy    string   `json:"proxy" toml:"proxy"`
+	GPGUrls  []string `json:"gpgkey_urls" toml:"gpgkey_urls"`
 }
 
 // SourceConfig returns a SourceConfig struct populated with the supported variables
