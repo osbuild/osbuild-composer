@@ -65,11 +65,8 @@ type ImageType int
 
 // NOTE: If you want to add more constants here, don't forget to add a mapping below
 const (
-	Alibaba ImageType = iota
-	Azure
+	Azure ImageType = iota
 	Aws
-	GoogleCloud
-	HyperV
 	LiveISO
 	OpenStack
 	Qcow2Generic
@@ -83,11 +80,8 @@ const (
 // to ImageType.
 func getImageTypeMapping() map[string]int {
 	mapping := map[string]int{
-		"Alibaba":          int(Alibaba),
 		"Azure":            int(Azure),
 		"AWS":              int(Aws),
-		"Google-Cloud":     int(GoogleCloud),
-		"Hyper-V":          int(HyperV),
 		"LiveISO":          int(LiveISO),
 		"OpenStack":        int(OpenStack),
 		"qcow2":            int(Qcow2Generic),
@@ -102,11 +96,8 @@ func getImageTypeMapping() map[string]int {
 // TODO: check the mapping here:
 func getCompatImageTypeMapping() map[int]string {
 	mapping := map[int]string{
-		int(Alibaba):         "ami",
 		int(Azure):           "vhd",
 		int(Aws):             "ami",
-		int(GoogleCloud):     "ami",
-		int(HyperV):          "vhd",
 		int(LiveISO):         "liveiso",
 		int(OpenStack):       "openstack",
 		int(Qcow2Generic):    "qcow2",
