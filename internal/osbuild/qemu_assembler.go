@@ -22,6 +22,7 @@ type QEMUPartition struct {
 	Size       uint64         `json:"size,omitempty"`
 	Type       *uuid.UUID     `json:"type,omitempty"`
 	Bootable   bool           `json:"bootable,omitempty"`
+	UUID       *uuid.UUID     `json:"uuid,omitempty"`
 	Filesystem QEMUFilesystem `json:"filesystem"`
 }
 
