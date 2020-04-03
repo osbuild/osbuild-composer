@@ -21,7 +21,7 @@ pushd ansible-osbuild
 popd
 
 # Run the integration tests.
-# /usr/libexec/tests/osbuild-composer/osbuild-dnf-json-tests
+/usr/libexec/tests/osbuild-composer/osbuild-dnf-json-tests -test.v
 # /usr/libexec/tests/osbuild-composer/osbuild-image-tests
 /usr/libexec/tests/osbuild-composer/osbuild-rcm-tests -test.v
 # /usr/libexec/tests/osbuild-composer/osbuild-tests -test.v
