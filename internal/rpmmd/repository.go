@@ -13,12 +13,13 @@ import (
 )
 
 type RepoConfig struct {
-	Id         string `json:"id"`
-	BaseURL    string `json:"baseurl,omitempty"`
-	Metalink   string `json:"metalink,omitempty"`
-	MirrorList string `json:"mirrorlist,omitempty"`
-	GPGKey     string `json:"gpgkey,omitempty"`
-	IgnoreSSL  bool   `json:"ignoressl"`
+	Id             string `json:"id"`
+	BaseURL        string `json:"baseurl,omitempty"`
+	Metalink       string `json:"metalink,omitempty"`
+	MirrorList     string `json:"mirrorlist,omitempty"`
+	GPGKey         string `json:"gpgkey,omitempty"`
+	IgnoreSSL      bool   `json:"ignoressl"`
+	MetadataExpire string `json:"metadata_expire,omitempty"`
 }
 
 type PackageList []Package
