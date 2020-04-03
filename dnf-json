@@ -34,6 +34,21 @@ def dnfrepo(desc, parent_conf=None):
     if desc.get("ignoressl", False):
         repo.sslverify = False
 
+    # The default metadata expiration time is 48 hours. This is not enough for
+    # all repositories we want to support (in particular fedora updates needs
+    # it set to at most 6h in order to guarantee the backing rpms are still
+    # available). The time rpms are guaranteed to stay around is not indicated
+    # in the repo metadata, but must be set by the caller. We would really
+    # rather not have to keep knowledge about this, but just as importantly,
+    # we may want to set the expiration timeout to a smaller value, so that
+    # we would pick up updates as soon as they hit the repos. Otherwise, we
+    # would need some mechanism for flushing the cache. For now, force a
+    # check for fresh metadata on every call. If the metadata did not change
+    # this just means a roundtrip on the network, if it did change it means
+    # redownloading all the metadata, possibly sooner than we would have
+    # liked.
+    repo.metadata_expire = "0"
+
     return repo
 
 
