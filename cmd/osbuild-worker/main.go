@@ -50,11 +50,6 @@ func handleJob(client *jobqueue.Client) error {
 		return err
 	}
 
-	err = client.UpdateJob(job, common.IBRunning, nil)
-	if err != nil {
-		return err
-	}
-
 	fmt.Printf("Running job %s\n", job.ComposeID.String())
 	result, err := job.Run(client)
 	if err != nil {
