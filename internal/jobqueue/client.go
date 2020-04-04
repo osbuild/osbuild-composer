@@ -12,13 +12,24 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Client struct {
 	client   *http.Client
 	scheme   string
 	hostname string
+}
+
+type Job struct {
+	ComposeID    uuid.UUID
+	ImageBuildID int
+	Manifest     *osbuild.Manifest
+	Targets      []*target.Target
 }
 
 func NewClient(address string, conf *tls.Config) *Client {
@@ -77,7 +88,12 @@ func (c *Client) AddJob() (*Job, error) {
 		return nil, err
 	}
 
-	return NewJob(jr.ComposeID, jr.ImageBuildID, jr.Manifest, jr.Targets), nil
+	return &Job{
+		jr.ComposeID,
+		jr.ImageBuildID,
+		jr.Manifest,
+		jr.Targets,
+	}, nil
 }
 
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
