@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -71,44 +69,9 @@ func RunJob(job *jobqueue.Job, uploadFunc func(*jobqueue.Job, io.Reader) error) 
 	// FIXME: how to handle errors in defer?
 	defer os.RemoveAll(tmpStore)
 
-	cmd := exec.Command(
-		"osbuild",
-		"--store", tmpStore,
-		"--json", "-",
-	)
-	cmd.Stderr = os.Stderr
-
-	stdin, err := cmd.StdinPipe()
+	result, err := RunOSBuild(job.Manifest, tmpStore, os.Stderr)
 	if err != nil {
-		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("error setting up stdout for osbuild: %v", err)
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return nil, fmt.Errorf("error starting osbuild: %v", err)
-	}
-
-	err = json.NewEncoder(stdin).Encode(job.Manifest)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
-	}
-	// FIXME: handle or comment this possible error
-	_ = stdin.Close()
-
-	var result common.ComposeResult
-	err = json.NewDecoder(stdout).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %#v", err)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return &result, err
+		return nil, fmt.Errorf("osbuild error: %v", err)
 	}
 
 	var r []error
@@ -159,10 +122,10 @@ func RunJob(job *jobqueue.Job, uploadFunc func(*jobqueue.Job, io.Reader) error) 
 	}
 
 	if len(r) > 0 {
-		return &result, &TargetsError{r}
+		return result, &TargetsError{r}
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 func main() {
