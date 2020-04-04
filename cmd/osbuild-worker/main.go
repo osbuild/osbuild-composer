@@ -43,23 +43,6 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	}, nil
 }
 
-func handleJob(client *jobqueue.Client) error {
-	fmt.Println("Waiting for a new job...")
-	job, err := client.AddJob()
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Running job %s\n", job.ComposeID.String())
-	result, err := job.Run(client)
-	if err != nil {
-		log.Printf("  Job failed: %v", err)
-		return client.UpdateJob(job, common.IBFailed, result)
-	}
-
-	return client.UpdateJob(job, common.IBFinished, result)
-}
-
 func main() {
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -94,8 +77,26 @@ func main() {
 	}
 
 	for {
-		if err := handleJob(client); err != nil {
-			log.Fatalf("Failed to handle job: " + err.Error())
+		fmt.Println("Waiting for a new job...")
+		job, err := client.AddJob()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Running job %s\n", job.ComposeID.String())
+
+		var status common.ImageBuildState
+		result, err := job.Run(client)
+		if err != nil {
+			log.Printf("  Job failed: %v", err)
+			status = common.IBFailed
+		} else {
+			status = common.IBFinished
+		}
+
+		err = client.UpdateJob(job, status, result)
+		if err != nil {
+			log.Fatalf("Error reporting job result: %v", err)
 		}
 	}
 }
