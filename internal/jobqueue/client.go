@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 
@@ -74,9 +73,9 @@ func (c *Client) AddJob() (*Job, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		rawR, _ := ioutil.ReadAll(response.Body)
-		r := string(rawR)
-		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, r)
+		var er errorResponse
+		_ = json.NewDecoder(response.Body).Decode(&er)
+		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
 	}
 
 	var jr addJobResponse

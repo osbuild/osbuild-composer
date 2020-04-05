@@ -59,34 +59,36 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	api.router.ServeHTTP(writer, request)
 }
 
+// jsonErrorf() is similar to http.Error(), but returns the message in a json
+// object with a "message" field.
+func jsonErrorf(writer http.ResponseWriter, code int, message string, args ...interface{}) {
+	writer.WriteHeader(code)
+
+	// ignore error, because we cannot do anything useful with it
+	_ = json.NewEncoder(writer).Encode(&errorResponse{
+		Message: fmt.Sprintf(message, args...),
+	})
+}
+
 func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusMethodNotAllowed)
+	jsonErrorf(writer, http.StatusMethodNotAllowed, "method not allowed")
 }
 
 func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusNotFound)
-}
-
-func statusResponseError(writer http.ResponseWriter, code int, message string) {
-	writer.WriteHeader(code)
-
-	if message != "" {
-		// ignore error, because we cannot do anything useful with it
-		fmt.Fprint(writer, message)
-	}
+	jsonErrorf(writer, http.StatusNotFound, "not found")
 }
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType, "")
+		jsonErrorf(writer, http.StatusUnsupportedMediaType, "request must contain application/json data")
 		return
 	}
 
 	var body addJobRequest
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid request: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "%v", err)
 		return
 	}
 
@@ -105,59 +107,57 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType, "")
+		jsonErrorf(writer, http.StatusUnsupportedMediaType, "request must contain application/json data")
 		return
 	}
 
 	id, err := uuid.Parse(params.ByName("job_id"))
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid compose id: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
 		return
 	}
 
 	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
 
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid image build id: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse image build id: %v", err)
 		return
 	}
 
 	var body updateJobRequest
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid status: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse request body: %v", err)
 		return
 	}
 
 	err = api.store.UpdateImageBuildInCompose(id, imageBuildId, body.Status, body.Result)
 	if err != nil {
 		switch err.(type) {
-		case *store.NotFoundError:
-			statusResponseError(writer, http.StatusNotFound, err.Error())
-		case *store.NotPendingError:
-			statusResponseError(writer, http.StatusNotFound, err.Error())
-		case *store.NotRunningError:
-			statusResponseError(writer, http.StatusBadRequest, err.Error())
-		case *store.InvalidRequestError:
-			statusResponseError(writer, http.StatusBadRequest, err.Error())
+		case *store.NotFoundError, *store.NotPendingError:
+			jsonErrorf(writer, http.StatusNotFound, "%v", err)
+		case *store.NotRunningError, *store.InvalidRequestError:
+			jsonErrorf(writer, http.StatusBadRequest, "%v", err)
 		default:
-			statusResponseError(writer, http.StatusInternalServerError, err.Error())
+			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
 		}
 		return
 	}
+
+	_ = json.NewEncoder(writer).Encode(updateJobResponse{})
 }
 
 func (api *API) addJobImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id, err := uuid.Parse(params.ByName("job_id"))
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid compose id: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
 		return
 	}
 
 	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
 
 	if err != nil {
-		statusResponseError(writer, http.StatusBadRequest, "invalid build id: "+err.Error())
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse image build id: %v", err)
 		return
 	}
 
@@ -166,11 +166,11 @@ func (api *API) addJobImageHandler(writer http.ResponseWriter, request *http.Req
 	if err != nil {
 		switch err.(type) {
 		case *store.NotFoundError:
-			statusResponseError(writer, http.StatusNotFound, err.Error())
+			jsonErrorf(writer, http.StatusNotFound, "%v", err)
 		case *store.NoLocalTargetError:
-			statusResponseError(writer, http.StatusBadRequest, err.Error())
+			jsonErrorf(writer, http.StatusBadRequest, "%v", err)
 		default:
-			statusResponseError(writer, http.StatusInternalServerError, err.Error())
+			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
 		}
 		return
 	}
