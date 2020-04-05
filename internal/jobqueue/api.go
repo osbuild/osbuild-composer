@@ -66,10 +66,6 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 }
 
-func statusResponseOK(writer http.ResponseWriter) {
-	writer.WriteHeader(http.StatusOK)
-}
-
 func statusResponseError(writer http.ResponseWriter, code int, errors ...string) {
 	writer.WriteHeader(code)
 
@@ -150,7 +146,6 @@ func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Reque
 		}
 		return
 	}
-	statusResponseOK(writer)
 }
 
 func (api *API) addJobImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -180,6 +175,4 @@ func (api *API) addJobImageHandler(writer http.ResponseWriter, request *http.Req
 		}
 		return
 	}
-
-	statusResponseOK(writer)
 }
