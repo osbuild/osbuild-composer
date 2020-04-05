@@ -8,6 +8,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
+type errorResponse struct {
+	Message string `json:"message"`
+}
+
 type addJobRequest struct {
 }
 
@@ -21,4 +25,7 @@ type addJobResponse struct {
 type updateJobRequest struct {
 	Status common.ImageBuildState `json:"status"`
 	Result *common.ComposeResult  `json:"result"`
+}
+
+type updateJobResponse struct {
 }
