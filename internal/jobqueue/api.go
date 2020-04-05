@@ -2,6 +2,7 @@ package jobqueue
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -66,21 +67,19 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusNotFound)
 }
 
-func statusResponseError(writer http.ResponseWriter, code int, errors ...string) {
+func statusResponseError(writer http.ResponseWriter, code int, message string) {
 	writer.WriteHeader(code)
 
-	for _, err := range errors {
-		_, e := writer.Write([]byte(err))
-		if e != nil {
-			panic(e)
-		}
+	if message != "" {
+		// ignore error, because we cannot do anything useful with it
+		fmt.Fprint(writer, message)
 	}
 }
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType)
+		statusResponseError(writer, http.StatusUnsupportedMediaType, "")
 		return
 	}
 
@@ -106,7 +105,7 @@ func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request,
 func (api *API) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		statusResponseError(writer, http.StatusUnsupportedMediaType)
+		statusResponseError(writer, http.StatusUnsupportedMediaType, "")
 		return
 	}
 
