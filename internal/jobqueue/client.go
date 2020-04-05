@@ -62,11 +62,8 @@ func NewClientUnix(path string) *Client {
 }
 
 func (c *Client) AddJob() (*Job, error) {
-	type request struct {
-	}
-
 	var b bytes.Buffer
-	err := json.NewEncoder(&b).Encode(request{})
+	err := json.NewEncoder(&b).Encode(addJobRequest{})
 	if err != nil {
 		panic(err)
 	}
