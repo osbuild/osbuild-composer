@@ -8,6 +8,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
+type addJobRequest struct {
+}
+
 type addJobResponse struct {
 	ComposeID    uuid.UUID         `json:"compose_id"`
 	ImageBuildID int               `json:"image_build_id"`

@@ -82,16 +82,13 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...string)
 }
 
 func (api *API) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	type requestBody struct {
-	}
-
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		statusResponseError(writer, http.StatusUnsupportedMediaType)
 		return
 	}
 
-	var body requestBody
+	var body addJobRequest
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		statusResponseError(writer, http.StatusBadRequest, "invalid request: "+err.Error())
