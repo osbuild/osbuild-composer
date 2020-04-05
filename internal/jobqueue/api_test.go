@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
-func TestBasic(t *testing.T) {
+func TestErrors(t *testing.T) {
 	var cases = []struct {
 		Method           string
 		Path             string
@@ -21,8 +21,12 @@ func TestBasic(t *testing.T) {
 		ExpectedStatus   int
 		ExpectedResponse string
 	}{
+		// Bogus path
+		{"GET", "/foo", ``, http.StatusNotFound, ``},
 		// Create job with invalid body
 		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest, `invalid request: EOF`},
+		// Wrong method
+		{"GET", "/job-queue/v1/jobs", ``, http.StatusMethodNotAllowed, ``},
 		// Update job with invalid ID
 		{"PATCH", "/job-queue/v1/jobs/foo/builds/0", `{"status":"RUNNING"}`, http.StatusBadRequest, `invalid compose id: invalid UUID length: 3`},
 		// Update job that does not exist, with invalid body
