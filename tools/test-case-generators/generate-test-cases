@@ -6,6 +6,14 @@ import json
 import os
 import sys
 
+def get_subprocess_stdout(*args, **kwargs):
+    sp = subprocess.run(*args, **kwargs, stdout=subprocess.PIPE)
+    if sp.returncode != 0:
+        sys.stderr.write(sp.stdout)
+        sys.exit(1)
+    
+    return sp.stdout
+
 def main(distro, arch, store, output):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
         format_request_dict = json.load(format_request_json)
@@ -15,7 +23,7 @@ def main(distro, arch, store, output):
         test_case_request["compose-request"]["distro"] = distro
         test_case_request["compose-request"]["arch"] = arch
         test_case_request["compose-request"]["repositories"] = repos_dict[distro][arch]
-        test_case = json.loads(subprocess.check_output(["tools/test-case-generators/generate-test-case", store], input=json.dumps(test_case_request), encoding="utf-8"))
+        test_case = json.loads(get_subprocess_stdout(["tools/test-case-generators/generate-test-case", store], input=json.dumps(test_case_request), encoding="utf-8"))
         name = distro.replace("-", "_") + "-" + arch + "-" + output_format.replace("-", "_") + "-boot.json"
         file_name = output + "/" + name
         with open(file_name, 'w') as case_file:

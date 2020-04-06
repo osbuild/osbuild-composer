@@ -26,9 +26,18 @@ It then outputs a json test case as standard output.
 '''
 
 
+def get_subprocess_stdout(*args, **kwargs):
+    sp = subprocess.run(*args, **kwargs, stdout=subprocess.PIPE)
+    if sp.returncode != 0:
+        sys.stderr.write(sp.stdout)
+        sys.exit(1)
+    
+    return sp.stdout
+
+
 def run_osbuild(manifest, store):
     osbuild_cmd = ["osbuild", "--store", store, "--json", "-"]
-    result = json.loads(subprocess.check_output(osbuild_cmd, encoding="utf-8", input=json.dumps(manifest)))
+    result = json.loads(get_subprocess_stdout(osbuild_cmd, encoding="utf-8", input=json.dumps(manifest)))
     return result.get("output_id")
 
 
@@ -37,10 +46,10 @@ def main(test_case, store):
     compose_request = json.dumps(test_case["compose-request"])
 
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-"]
-    test_case["manifest"] = json.loads(subprocess.check_output(pipeline_command, input=compose_request, encoding="utf-8"))
+    test_case["manifest"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
 
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-rpmmd", "-"]
-    test_case["rpmmd"] = json.loads(subprocess.check_output(pipeline_command, input=compose_request, encoding="utf-8"))
+    test_case["rpmmd"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
 
     if boot_type != "nspawn-extract":
         output_id = run_osbuild(test_case["manifest"], store)
@@ -53,7 +62,7 @@ def main(test_case, store):
                 with open(fn, "w") as f:
                     subprocess.run(["xz", "--decompress", "--stdout", image_file], stdout=f)
                 image_file = fn
-        test_case["image-info"] = json.loads(subprocess.check_output(["tools/image-info", image_file]))
+        test_case["image-info"] = json.loads(get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8"))
 
     return test_case
 
