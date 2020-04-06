@@ -56,34 +56,31 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora30.New(), fedora31.New(), fedora32.New()} {
-		repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
-		assert.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
-		if err != nil {
-			// There is no point in running the tests without having repositories, but we can still run tests
-			// for the remaining distros
-			continue
-		}
-		for _, archStr := range distroStruct.ListArches() {
-			arch, err := distroStruct.GetArch(archStr)
-			assert.NoErrorf(t, err, "Failed to GetArch from %v structure", distroStruct.Name())
-			if err != nil {
-				continue
-			}
-			for _, imgTypeStr := range arch.ListImageTypes() {
-				imgType, err := arch.GetImageType(imgTypeStr)
-				assert.NoErrorf(t, err, "Failed to GetImageType for %v on %v", distroStruct.Name(), arch.Name())
-				if err != nil {
-					continue
-				}
+		t.Run(distroStruct.Name(), func(t *testing.T) {
+			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
+			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
 
-				buildPackages := imgType.BuildPackages()
-				_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
-				assert.NoErrorf(t, err, "Failed to Depsolve build packages for %v %v %v image", distroStruct.Name(), imgType.Name(), arch.Name())
+			for _, archStr := range distroStruct.ListArches() {
+				t.Run(archStr, func(t *testing.T) {
+					arch, err := distroStruct.GetArch(archStr)
+					require.NoError(t, err)
 
-				basePackagesInclude, basePackagesExclude := imgType.BasePackages()
-				_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
-				assert.NoErrorf(t, err, "Failed to Depsolve base packages for %v %v %v image", distroStruct.Name(), imgType.Name(), arch.Name())
+					for _, imgTypeStr := range arch.ListImageTypes() {
+						t.Run(imgTypeStr, func(t *testing.T) {
+							imgType, err := arch.GetImageType(imgTypeStr)
+							require.NoError(t, err)
+
+							buildPackages := imgType.BuildPackages()
+							_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							assert.NoError(t, err)
+
+							basePackagesInclude, basePackagesExclude := imgType.BasePackages()
+							_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							assert.NoError(t, err)
+						})
+					}
+				})
 			}
-		}
+		})
 	}
 }
