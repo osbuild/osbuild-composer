@@ -1,3 +1,6 @@
+coverage:
+  status:
+    patch: no
 codecov:
   require_ci_to_pass: no
 comment: no
