@@ -43,7 +43,7 @@ BuildRequires:  golang(github.com/stretchr/testify/assert)
 
 Requires: osbuild-composer-worker
 Requires: systemd
-Requires: osbuild >= 7
+Requires: osbuild >= 11
 
 Provides: weldr
 
