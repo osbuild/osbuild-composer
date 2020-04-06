@@ -25,4 +25,4 @@ popd
 # /usr/libexec/tests/osbuild-composer/osbuild-image-tests
 /usr/libexec/tests/osbuild-composer/osbuild-rcm-tests -test.v
 /usr/libexec/tests/osbuild-composer/osbuild-tests -test.v
-# /usr/libexec/tests/osbuild-composer/osbuild-weldr-tests -test.v
+/usr/libexec/tests/osbuild-composer/osbuild-weldr-tests -test.v
