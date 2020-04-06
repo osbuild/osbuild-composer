@@ -519,8 +519,8 @@ func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConf
 
 	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
+		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
 	}
-	p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil {
 		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services)))
