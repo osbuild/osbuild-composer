@@ -93,7 +93,7 @@ module_platform_id = arguments["module_platform_id"]
 with tempfile.TemporaryDirectory() as persistdir:
     try:
         base = create_base(repos, module_platform_id, persistdir, cachedir, arch)
-    except dnf.exceptions.RepoError as e:
+    except dnf.exceptions.Error as e:
         exit_with_dnf_error("RepoError", f"Error occurred when setting up repo: {e}")
 
     if command == "dump":
