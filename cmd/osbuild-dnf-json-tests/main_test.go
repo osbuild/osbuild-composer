@@ -57,7 +57,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora30.New(), fedora31.New(), fedora32.New()} {
 		repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
-		assert.Nilf(t, err, "Failed to LoadRepositories from %v for %v: %v", repoDir, distroStruct.Name(), err)
+		assert.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
 		if err != nil {
 			// There is no point in running the tests without having repositories, but we can still run tests
 			// for the remaining distros
@@ -65,24 +65,24 @@ func TestCrossArchDepsolve(t *testing.T) {
 		}
 		for _, archStr := range distroStruct.ListArches() {
 			arch, err := distroStruct.GetArch(archStr)
-			assert.Nilf(t, err, "Failed to GetArch from %v structure: %v", distroStruct.Name(), err)
+			assert.NoErrorf(t, err, "Failed to GetArch from %v structure", distroStruct.Name())
 			if err != nil {
 				continue
 			}
 			for _, imgTypeStr := range arch.ListImageTypes() {
 				imgType, err := arch.GetImageType(imgTypeStr)
-				assert.Nilf(t, err, "Failed to GetImageType for %v on %v: %v", distroStruct.Name(), arch.Name(), err)
+				assert.NoErrorf(t, err, "Failed to GetImageType for %v on %v", distroStruct.Name(), arch.Name())
 				if err != nil {
 					continue
 				}
 
 				buildPackages := imgType.BuildPackages()
 				_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
-				assert.Nilf(t, err, "Failed to Depsolve build packages for %v %v %v image: %v", distroStruct.Name(), imgType.Name(), arch.Name(), err)
+				assert.NoErrorf(t, err, "Failed to Depsolve build packages for %v %v %v image", distroStruct.Name(), imgType.Name(), arch.Name())
 
 				basePackagesInclude, basePackagesExclude := imgType.BasePackages()
 				_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
-				assert.Nilf(t, err, "Failed to Depsolve base packages for %v %v %v image: %v", distroStruct.Name(), imgType.Name(), arch.Name(), err)
+				assert.NoErrorf(t, err, "Failed to Depsolve base packages for %v %v %v image", distroStruct.Name(), imgType.Name(), arch.Name())
 			}
 		}
 	}
