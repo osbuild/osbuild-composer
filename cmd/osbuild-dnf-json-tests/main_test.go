@@ -52,12 +52,12 @@ func TestCrossArchDepsolve(t *testing.T) {
 	rpm := rpmmd.NewRPMMD(dir)
 
 	// Load repositories from the definition we provide in the RPM package
-	repositories := "/usr/share/osbuild-composer"
+	repoDir := "/usr/share/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora30.New(), fedora31.New(), fedora32.New()} {
-		repoConfig, err := rpmmd.LoadRepositories([]string{repositories}, distroStruct.Name())
-		assert.Nilf(t, err, "Failed to LoadRepositories from %v for %v: %v", repositories, distroStruct.Name(), err)
+		repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
+		assert.Nilf(t, err, "Failed to LoadRepositories from %v for %v: %v", repoDir, distroStruct.Name(), err)
 		if err != nil {
 			// There is no point in running the tests without having repositories, but we can still run tests
 			// for the remaining distros
@@ -77,11 +77,11 @@ func TestCrossArchDepsolve(t *testing.T) {
 				}
 
 				buildPackages := imgType.BuildPackages()
-				_, _, err = rpm.Depsolve(buildPackages, []string{}, repoConfig[archStr], distroStruct.ModulePlatformID(), archStr)
+				_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 				assert.Nilf(t, err, "Failed to Depsolve build packages for %v %v %v image: %v", distroStruct.Name(), imgType.Name(), arch.Name(), err)
 
 				basePackagesInclude, basePackagesExclude := imgType.BasePackages()
-				_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repoConfig[archStr], distroStruct.ModulePlatformID(), archStr)
+				_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 				assert.Nilf(t, err, "Failed to Depsolve base packages for %v %v %v image: %v", distroStruct.Name(), imgType.Name(), arch.Name(), err)
 			}
 		}
