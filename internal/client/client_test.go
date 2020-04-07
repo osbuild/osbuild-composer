@@ -3,11 +3,15 @@
 package client
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestRequest(t *testing.T) {
@@ -173,4 +177,52 @@ func TestPostJSON(t *testing.T) {
 	if !strings.Contains(string(b), "true") {
 		t.Fatalf("PostJSON failed: %#v", string(b))
 	}
+}
+
+// todo: copied from weldr/api.go::composeTypesHandler
+type composeType struct {
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+
+// match against an expected list of compose types for each arch
+func TestComposeTypesMatch(t *testing.T) {
+	// Get raw data
+	body, resp, err := GetRaw(testState.socket, "GET", "/api/v1/compose/types")
+	require.NoError(t, err)
+	require.Nil(t, resp)
+	require.Greater(t, len(body), 0)
+
+	// todo: copied from weldr/api.go::composeTypesHandler
+	var reply struct {
+		Types []composeType `json:"types"`
+	}
+
+	err = json.Unmarshal(body, &reply)
+	require.NoError(t, err)
+
+	var actual_types []string
+	for _, compose_type := range reply.Types {
+		actual_types = append(actual_types, compose_type.Name)
+	}
+
+	// todo: if running in unit-test mode expected_types is only qcow2 b/c
+	// the API server uses rpmmd_mock.BaseFixture. Not sure how to check
+	// in which mode this is running. In integration-test mode all of this PASS on x86_64
+	var expected_types []string
+	currentArch := common.CurrentArch()
+	if currentArch == "x86_64" {
+		expected_types = []string{"ami", "ext4-filesystem", "openstack",
+			"partitioned-disk", "qcow2", "tar",
+			"vhd", "vmdk"}
+	} else if currentArch == "aarch64" {
+		// TODO: can't find the list of supported image types for other arches
+		expected_types = []string{}
+	} else if currentArch == "ppc64le" {
+		expected_types = []string{}
+	} else if currentArch == "s390x" {
+		expected_types = []string{}
+	}
+
+	require.ElementsMatch(t, expected_types, actual_types)
 }
