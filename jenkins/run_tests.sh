@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+cat /etc/redhat-release
+
 # Ensure Ansible is installed.
 sudo dnf -y install ansible
 
