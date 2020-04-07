@@ -14,12 +14,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/jsondb"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -32,6 +32,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// The name under which to save the store to the underlying jsondb
+const StoreDBName = "state"
+
 // A Store contains all the persistent state of osbuild-composer, and is serialized
 // on every change, and deserialized on start.
 type Store struct {
@@ -42,10 +45,10 @@ type Store struct {
 	BlueprintsChanges map[string]map[string]blueprint.Change `json:"changes"`
 	BlueprintsCommits map[string][]string                    `json:"commits"`
 
-	mu           sync.RWMutex // protects all fields
-	pendingJobs  chan Job
-	stateChannel chan []byte
-	stateDir     *string
+	mu          sync.RWMutex // protects all fields
+	pendingJobs chan Job
+	stateDir    *string
+	db          *jsondb.JSONDatabase
 }
 
 // A Job contains the information about a compose a worker needs to process it.
@@ -114,28 +117,11 @@ func New(stateDir *string) *Store {
 			log.Fatalf("cannot create output directory")
 		}
 
-		stateFile := *stateDir + "/state.json"
-		state, err := ioutil.ReadFile(stateFile)
-
-		if err == nil {
-			err := json.Unmarshal(state, &s)
-			if err != nil {
-				log.Fatalf("invalid initial state: %v", err)
-			}
-		} else if !os.IsNotExist(err) {
+		s.db = jsondb.New(*stateDir, 0600)
+		_, err = s.db.Read(StoreDBName, &s)
+		if err != nil {
 			log.Fatalf("cannot read state: %v", err)
 		}
-
-		s.stateChannel = make(chan []byte, 128)
-
-		go func() {
-			for {
-				err := writeFileAtomically(stateFile, <-s.stateChannel, 0600)
-				if err != nil {
-					log.Fatalf("cannot write state: %v", err)
-				}
-			}
-		}()
 	}
 
 	s.pendingJobs = make(chan Job, 200)
@@ -225,43 +211,6 @@ func New(stateDir *string) *Store {
 	return &s
 }
 
-func writeFileAtomically(filename string, data []byte, mode os.FileMode) error {
-	dir, name := filepath.Dir(filename), filepath.Base(filename)
-
-	tmpfile, err := ioutil.TempFile(dir, name+"-*.tmp")
-	if err != nil {
-		return err
-	}
-
-	_, err = tmpfile.Write(data)
-	if err != nil {
-		// FIXME: handle or comment this possible error
-		_ = os.Remove(tmpfile.Name())
-		return err
-	}
-
-	err = tmpfile.Chmod(mode)
-	if err != nil {
-		return err
-	}
-
-	err = tmpfile.Close()
-	if err != nil {
-		// FIXME: handle or comment this possible error
-		_ = os.Remove(tmpfile.Name())
-		return err
-	}
-
-	err = os.Rename(tmpfile.Name(), filename)
-	if err != nil {
-		// FIXME: handle or comment this possible error
-		_ = os.Remove(tmpfile.Name())
-		return err
-	}
-
-	return nil
-}
-
 func randomSHA1String() (string, error) {
 	hash := sha1.New()
 	data := make([]byte, 20)
@@ -284,14 +233,13 @@ func (s *Store) change(f func() error) error {
 
 	result := f()
 
-	if s.stateChannel != nil {
-		serialized, err := json.Marshal(s)
+	if s.stateDir != nil {
+		err := s.db.Write(StoreDBName, s)
 		if err != nil {
 			panic(err)
 		}
-
-		s.stateChannel <- serialized
 	}
+
 	return result
 }
 
