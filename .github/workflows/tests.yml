@@ -57,7 +57,7 @@ jobs:
       matrix:
         fedora_release: ["31"]
     container:
-      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
     steps:
       - name: "📥 Prepare container"
         run: |
@@ -96,9 +96,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fedora_release: ["32", "rawhide"]
+        fedora_release: ["32", "33"]
     container:
-      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
     steps:
       - name: "📥 Prepare container"
         run: |
