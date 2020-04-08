@@ -538,7 +538,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 					ImageType:   imageTypeCommon,
 					Targets:     targets,
 					JobCreated:  time.Now(),
-					Size:        size,
+					Size:        imageType.Size(size),
 				},
 			},
 		}
