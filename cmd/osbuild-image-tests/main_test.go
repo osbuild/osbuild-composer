@@ -299,6 +299,21 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 	}
 }
 
+func kvmAvailable() bool {
+	_, err := os.Stat("/dev/kvm")
+	// File exists
+	if err == nil {
+		// KVM is available
+		return true
+	} else if os.IsNotExist(err) {
+		// KVM is not available as /dev/kvm is missing
+		return false
+	} else {
+		// The error was different than non-existing file which is unexpected
+		panic(err)
+	}
+}
+
 // testImage performs a series of tests specified in the testcase
 // on an image
 func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string) {
@@ -309,6 +324,10 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string
 	}
 
 	if testcase.Boot != nil {
+		if common.CurrentArch() == "aarch64" && !kvmAvailable() {
+			t.Log("Running on aarch64 without KVM support, skipping the boot test.")
+			return
+		}
 		t.Run("boot", func(t *testing.T) {
 			testBoot(t, imagePath, testcase.Boot.Type, outputID)
 		})
