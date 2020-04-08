@@ -76,6 +76,21 @@ make man
  - **https**: `https://github.com/osbuild/osbuild-composer.git`
  - **ssh**:   `git@github.com:osbuild/osbuild-composer.git`
 
+### Pull request gating
+
+Each pull request against `osbuild-composer` starts a series of automated
+tests. Tests run via GitHub Actions, Travis CI, and Jenkins. Each push to
+the pull request will launch theses tests automatically.
+
+Jenkins only tests pull requests from members of the `osbuild` organization in
+GitHub. A member of the `osbuild` organization must say `ok to test` in a pull
+request comment to approve testing. Anyone can ask for testing to run by
+saying the bot's favorite word, `schutzbot`, in a pull request comment.
+Testing will begin shortly after the comment is posted.
+
+Test results in Jenkins are available by clicking the *Details* link on the
+right side of the Schutzbot check in the pull request page.
+
 ### License:
 
  - **Apache-2.0**
