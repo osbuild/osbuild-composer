@@ -56,7 +56,7 @@ def main(test_case, store):
         image_file = os.path.join(store, "refs", output_id, test_case["compose-request"]["filename"])
 
         # we don't yet support image-info on directory trees
-        if boot_type == "qemu-extract":
+        if boot_type in {"qemu-extract", "aws"}:
             fn, ex = os.path.splitext(image_file)
             if ex == ".xz":
                 with open(fn, "w") as f:
