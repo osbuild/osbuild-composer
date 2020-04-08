@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type JSONDatabase struct {
@@ -53,6 +54,27 @@ func (db *JSONDatabase) Read(name string, document interface{}) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// Returns a list of all documents' names.
+func (db *JSONDatabase) List() ([]string, error) {
+	f, err := os.Open(db.dir)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	infos, err := f.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, len(infos))
+	for i, info := range infos {
+		names[i] = strings.TrimSuffix(info.Name(), ".json")
+	}
+
+	return names, nil
 }
 
 // Writes `document` to `name`, overwriting a previous document if it exists.
