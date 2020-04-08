@@ -224,6 +224,9 @@ Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
 Requires:   qemu-kvm-core
+%ifarch %{arm}
+Requires:   edk2-aarch64
+%endif
 
 %description tests
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.

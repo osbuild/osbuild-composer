@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"io"
 	"io/ioutil"
 	"log"
@@ -106,7 +107,26 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			return fmt.Errorf("cannot close temporary cloudinit file: %#v", err)
 		}
 
-		qemuCmd := ns.NamespacedCommand(
+		var qemuCmd *exec.Cmd
+		// This command does not use KVM as I was unable to make it work in Beaker,
+		// once we have machines that can use KVM, enable it to make it faster
+		qemuAarch64Cmd := ns.NamespacedCommand(
+			"qemu-system-aarch64",
+			"-cpu", "host",
+			"-M", "virt",
+			"-m", "2048",
+			// As opposed to x86_64, aarch64 uses UEFI, this one comes from edk2-aarch64 package on Fedora
+			"-bios", "/usr/share/edk2/aarch64/QEMU_EFI.fd",
+			"-boot", "efi",
+			"-accel", "accel=kvm",
+			"-snapshot",
+			"-cdrom", cloudInitFile.Name(),
+			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
+			"-nographic",
+			image,
+		)
+
+		qemuX8664Cmd := ns.NamespacedCommand(
 			"qemu-system-x86_64",
 			"-m", "1024",
 			"-snapshot",
@@ -116,6 +136,14 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			"-nographic",
 			image,
 		)
+
+		if common.CurrentArch() == "x86_64" {
+			qemuCmd = qemuX8664Cmd
+		} else if common.CurrentArch() == "aarch64" {
+			qemuCmd = qemuAarch64Cmd
+		} else {
+			panic("Running on unknown architecture.")
+		}
 
 		err = qemuCmd.Start()
 		if err != nil {
