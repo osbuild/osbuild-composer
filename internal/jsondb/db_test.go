@@ -17,34 +17,56 @@ type document struct {
 	CanSwim bool   `json:"can-swim"`
 }
 
+func cleanupTempDir(t *testing.T, dir string) {
+	err := os.RemoveAll(dir)
+	require.NoError(t, err)
+}
+
 // If the passed directory is not readable (writable), we should notice on the
 // first read (write).
 func TestDegenerate(t *testing.T) {
-	db := jsondb.New("/non-existant-directory", 0755)
+	t.Run("no-exist", func(t *testing.T) {
+		db := jsondb.New("/non-existant-directory", 0755)
 
-	var d document
-	exist, err := db.Read("one", &d)
-	assert.False(t, exist)
-	assert.NoError(t, err)
+		var d document
+		exist, err := db.Read("one", &d)
+		assert.False(t, exist)
+		assert.NoError(t, err)
 
-	err = db.Write("one", &d)
-	assert.Error(t, err)
+		err = db.Write("one", &d)
+		assert.Error(t, err)
+
+		l, err := db.List()
+		assert.Error(t, err)
+		assert.Nil(t, l)
+	})
+
+	t.Run("invalid-json", func(t *testing.T) {
+		dir, err := ioutil.TempDir("", "jsondb-test-")
+		require.NoError(t, err)
+		defer cleanupTempDir(t, dir)
+
+		db := jsondb.New(dir, 0755)
+
+		// write-only file
+		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0644)
+		require.NoError(t, err)
+
+		var d document
+		_, err = db.Read("one", &d)
+		assert.Error(t, err)
+	})
 }
 
 func TestCorrupt(t *testing.T) {
 	dir, err := ioutil.TempDir("", "jsondb-test-")
 	require.NoError(t, err)
-
-	defer func() {
-		err := os.RemoveAll(dir)
-		require.NoError(t, err)
-	}()
+	defer cleanupTempDir(t, dir)
 
 	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0755)
 	require.NoError(t, err)
 
 	db := jsondb.New(dir, 0755)
-
 	var d document
 	_, err = db.Read("one", &d)
 	require.Error(t, err)
@@ -53,11 +75,7 @@ func TestCorrupt(t *testing.T) {
 func TestMultiple(t *testing.T) {
 	dir, err := ioutil.TempDir("", "jsondb-test-")
 	require.NoError(t, err)
-
-	defer func() {
-		err := os.RemoveAll(dir)
-		require.NoError(t, err)
-	}()
+	defer cleanupTempDir(t, dir)
 
 	perm := os.FileMode(0600)
 	documents := map[string]document{
@@ -72,12 +90,9 @@ func TestMultiple(t *testing.T) {
 		err = db.Write(name, doc)
 		require.NoError(t, err)
 	}
-	infos, err := ioutil.ReadDir(dir)
+	names, err := db.List()
 	require.NoError(t, err)
-	require.Equal(t, len(infos), len(documents))
-	for _, info := range infos {
-		require.Equal(t, perm, info.Mode())
-	}
+	require.ElementsMatch(t, []string{"one", "two", "three"}, names)
 
 	for name, doc := range documents {
 		var d document
