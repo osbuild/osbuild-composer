@@ -1467,7 +1467,29 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	composeID, err := api.store.PushCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
+	var composeID uuid.UUID
+
+	// Check for test parameter
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	testMode := q.Get("test")
+	if testMode == "1" {
+		// Create a failed compose
+		composeID, err = api.store.PushTestCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets, false)
+	} else if testMode == "2" {
+		// Create a successful compose
+		composeID, err = api.store.PushTestCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets, true)
+	} else {
+		composeID, err = api.store.PushCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
+	}
 
 	// TODO: we should probably do some kind of blueprint validation in future
 	// for now, let's just 500 and bail out
