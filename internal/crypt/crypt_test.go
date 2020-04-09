@@ -1,3 +1,5 @@
+// +build !macos
+
 package crypt
 
 import (
