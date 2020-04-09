@@ -554,6 +554,73 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 	return composeID, nil
 }
 
+// PushTestCompose is used for testing
+// Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
+// It does not actually run a compose job
+func (s *Store) PushTestCompose(imageType distro.ImageType, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target, testSuccess bool) (uuid.UUID, error) {
+	if targets == nil {
+		targets = []*target.Target{}
+	}
+
+	composeID := uuid.New()
+
+	// Compatibility layer for image types in Weldr API v0
+	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
+	if !exists {
+		panic("fatal error, compose type does not exist")
+	}
+
+	if s.stateDir != nil {
+		outputDir := s.getImageBuildDirectory(composeID, 0)
+
+		err := os.MkdirAll(outputDir, 0755)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
+		}
+	}
+
+	manifestStruct, err := imageType.Manifest(bp.Customizations, repos, packages, buildPackages, imageType.Size(size))
+	if err != nil {
+		return uuid.Nil, err
+	}
+	// FIXME: handle or comment this possible error
+	_ = s.change(func() error {
+		s.Composes[composeID] = compose.Compose{
+			Blueprint: bp,
+			ImageBuilds: []compose.ImageBuild{
+				{
+					QueueStatus: common.IBRunning,
+					Manifest:    manifestStruct,
+					ImageType:   imageTypeCommon,
+					Targets:     targets,
+					JobCreated:  time.Now(),
+					JobStarted:  time.Now(),
+					Size:        size,
+				},
+			},
+		}
+		return nil
+	})
+
+	var status common.ImageBuildState
+	var result common.ComposeResult
+	if testSuccess {
+		status = common.IBFinished
+		result = common.ComposeResult{Success: true}
+	} else {
+		status = common.IBFailed
+		result = common.ComposeResult{}
+	}
+
+	// Instead of starting the job, immediately set a final status
+	err = s.UpdateImageBuildInCompose(composeID, 0, status, &result)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return composeID, nil
+}
+
 // DeleteCompose deletes the compose from the state file and also removes all files on disk that are
 // associated with this compose
 func (s *Store) DeleteCompose(id uuid.UUID) error {
