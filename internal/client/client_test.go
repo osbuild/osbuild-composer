@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,9 +32,7 @@ func TestRequest(t *testing.T) {
 
 func TestAPIErrorMsg(t *testing.T) {
 	err := APIErrorMsg{ID: "ERROR_ID", Msg: "Meaningful error message"}
-	if diff := cmp.Diff(err.String(), "ERROR_ID: Meaningful error message"); diff != "" {
-		t.Fatalf("APIErrorMsg: %s", diff)
-	}
+	require.Equal(t, "ERROR_ID: Meaningful error message", err.String())
 }
 
 func TestAPIResponse(t *testing.T) {
@@ -47,12 +44,10 @@ func TestAPIResponse(t *testing.T) {
 			{ID: "ONE_ERROR", Msg: "First message"},
 			{ID: "TWO_ERROR", Msg: "Second message"}},
 	}
-	if diff := cmp.Diff(resp.String(), "ONE_ERROR: First message"); diff != "" {
-		t.Fatalf("APIResponse.Error: %s", diff)
-	}
-	if diff := cmp.Diff(resp.AllErrors(), []string{"ONE_ERROR: First message", "TWO_ERROR: Second message"}); diff != "" {
-		t.Fatalf("APIErrorMsg: %s", diff)
-	}
+	require.Equal(t, "ONE_ERROR: First message", resp.String())
+	require.ElementsMatch(t, []string{
+		"ONE_ERROR: First message",
+		"TWO_ERROR: Second message"}, resp.AllErrors())
 }
 
 func TestGetRaw(t *testing.T) {
