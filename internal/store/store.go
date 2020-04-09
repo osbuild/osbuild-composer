@@ -607,6 +607,7 @@ func (s *Store) PopJob() Job {
 		}
 		// Change queue status to running for the image build as well as for the targets
 		compose.ImageBuilds[job.ImageBuildID].QueueStatus = common.IBRunning
+		compose.ImageBuilds[job.ImageBuildID].JobStarted = time.Now()
 		for m := range compose.ImageBuilds[job.ImageBuildID].Targets {
 			compose.ImageBuilds[job.ImageBuildID].Targets[m].Status = common.IBRunning
 		}
