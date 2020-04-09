@@ -43,13 +43,13 @@ func (db *JSONDatabase) Read(name string, document interface{}) (bool, error) {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		return false, fmt.Errorf("error accessing db file %s: %w", name, err)
+		return false, fmt.Errorf("error accessing db file %s: %v", name, err)
 	}
 	defer f.Close()
 
 	err = json.NewDecoder(f).Decode(&document)
 	if err != nil {
-		return false, fmt.Errorf("error reading db file %s: %w", name, err)
+		return false, fmt.Errorf("error reading db file %s: %v", name, err)
 	}
 
 	return true, nil
@@ -81,25 +81,25 @@ func writeFileAtomically(dir, filename string, mode os.FileMode, writer func(f *
 	err = tmpfile.Chmod(mode)
 	if err != nil {
 		_ = os.Remove(tmpfile.Name())
-		return fmt.Errorf("error setting permissions on %s: %w", tmpfile.Name(), err)
+		return fmt.Errorf("error setting permissions on %s: %v", tmpfile.Name(), err)
 	}
 
 	err = writer(tmpfile)
 	if err != nil {
 		_ = os.Remove(tmpfile.Name())
-		return fmt.Errorf("error writing to %s: %w", tmpfile.Name(), err)
+		return fmt.Errorf("error writing to %s: %v", tmpfile.Name(), err)
 	}
 
 	err = tmpfile.Close()
 	if err != nil {
 		_ = os.Remove(tmpfile.Name())
-		return fmt.Errorf("error closing %s: %w", tmpfile.Name(), err)
+		return fmt.Errorf("error closing %s: %v", tmpfile.Name(), err)
 	}
 
 	err = os.Rename(tmpfile.Name(), path.Join(dir, filename))
 	if err != nil {
 		_ = os.Remove(tmpfile.Name())
-		return fmt.Errorf("error moving %s to %s: %w", filepath.Base(tmpfile.Name()), filename, err)
+		return fmt.Errorf("error moving %s to %s: %v", filepath.Base(tmpfile.Name()), filename, err)
 	}
 
 	return nil
