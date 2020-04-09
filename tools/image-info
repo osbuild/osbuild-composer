@@ -228,8 +228,11 @@ def append_filesystem(report, tree):
 
         if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
             assert "bootmenu" not in report
-            with open(f"{tree}/boot/grub2/grubenv") as f:
-                report["boot-environment"] = parse_environment_vars(f.read())
+            try:
+                with open(f"{tree}/boot/grub2/grubenv") as f:
+                    report["boot-environment"] = parse_environment_vars(f.read())
+            except FileNotFoundError:
+                pass
             report["bootmenu"] = read_boot_entries(f"{tree}/boot")
 
     elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
