@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -22,9 +23,8 @@ import (
 func TestDistro_Manifest(t *testing.T) {
 	pipelinePath := "../../test/cases/"
 	fileInfos, err := ioutil.ReadDir(pipelinePath)
-	if err != nil {
-		t.Errorf("Could not read pipelines directory '%s': %v", pipelinePath, err)
-	}
+	assert.NoErrorf(t, err, "Could not read pipelines directory '%s'", pipelinePath)
+
 	for _, fileInfo := range fileInfos {
 		type repository struct {
 			BaseURL    string `json:"baseurl,omitempty"`
@@ -49,13 +49,11 @@ func TestDistro_Manifest(t *testing.T) {
 			Manifest       *osbuild.Manifest `json:"manifest,omitempty"`
 		}
 		file, err := ioutil.ReadFile(pipelinePath + fileInfo.Name())
-		if err != nil {
-			t.Errorf("Could not read test-case '%s': %v", fileInfo.Name(), err)
-		}
+		assert.NoErrorf(t, err, "Could not read test-case '%s'", fileInfo.Name())
+
 		err = json.Unmarshal([]byte(file), &tt)
-		if err != nil {
-			t.Errorf("Could not parse test-case '%s': %v", fileInfo.Name(), err)
-		}
+		assert.NoErrorf(t, err, "Could not parse test-case '%s'", fileInfo.Name())
+
 		if tt.ComposeRequest == nil || tt.ComposeRequest.Blueprint == nil {
 			t.Logf("Skipping '%s'.", fileInfo.Name())
 			continue
@@ -77,20 +75,14 @@ func TestDistro_Manifest(t *testing.T) {
 				t.Fatal(err)
 			}
 			d := distros.GetDistro(tt.ComposeRequest.Distro)
-			if d == nil {
-				t.Errorf("unknown distro: %v", tt.ComposeRequest.Distro)
-				return
-			}
+			require.NotNilf(t, d, "unknown distro: %v", tt.ComposeRequest.Distro)
+
 			arch, err := d.GetArch(tt.ComposeRequest.Arch)
-			if err != nil {
-				t.Errorf("unknown arch: %v", tt.ComposeRequest.Arch)
-				return
-			}
+			require.NoErrorf(t, err, "unknown arch: %v", tt.ComposeRequest.Arch)
+
 			imageType, err := arch.GetImageType(tt.ComposeRequest.ImageType)
-			if err != nil {
-				t.Errorf("unknown image type: %v", tt.ComposeRequest.ImageType)
-				return
-			}
+			require.NoError(t, err, "unknown image type: %v", tt.ComposeRequest.ImageType)
+
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				repos,
 				tt.RpmMD.Packages,
@@ -101,9 +93,7 @@ func TestDistro_Manifest(t *testing.T) {
 				return
 			}
 			if tt.Manifest != nil {
-				if diff := cmp.Diff(got, tt.Manifest); diff != "" {
-					t.Errorf("d.Manifest() different from expected: %v", diff)
-				}
+				assert.Equalf(t, tt.Manifest, got, "d.Manifest() different from expected")
 			}
 		})
 	}
@@ -120,11 +110,7 @@ func TestDistro_RegistryList(t *testing.T) {
 	}
 
 	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	if diff := cmp.Diff(distros.List(), expected); diff != "" {
-		t.Errorf("unexpected list of distros: %v", diff)
-	}
+	require.Equalf(t, expected, distros.List(), "unexpected list of distros")
 }

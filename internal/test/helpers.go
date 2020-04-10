@@ -11,12 +11,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type API interface {
@@ -105,66 +106,41 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 		t.Skip("This test is for internal testing only")
 	}
 
-	if resp.StatusCode != expectedStatus {
-		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, resp.StatusCode)
-	}
+	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s", path)
 
 	replyJSON, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("%s: could not read response body: %v", path, err)
-		return
-	}
+	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	if expectedJSON == "" {
-		if len(replyJSON) != 0 {
-			t.Errorf("%s: expected no response body, but got:\n%s", path, replyJSON)
-		}
-		return
+		require.Lenf(t, replyJSON, 0, "%s: expected no response body, but got:\n%s", path, replyJSON)
 	}
 
 	var reply, expected interface{}
 	err = json.Unmarshal(replyJSON, &reply)
-	if err != nil {
-		t.Errorf("%s: %v\n%s", path, err, string(replyJSON))
-		return
-	}
+	require.NoErrorf(t, err, "%s: json.Unmarshal failed for\n%s", path, string(replyJSON))
 
 	if expectedJSON == "*" {
 		return
 	}
 
 	err = json.Unmarshal([]byte(expectedJSON), &expected)
-	if err != nil {
-		t.Errorf("%s: expected JSON is invalid: %v", path, err)
-		return
-	}
+	require.NoErrorf(t, err, "%s: expected JSON is invalid", path)
 
 	dropFields(reply, ignoreFields...)
 	dropFields(expected, ignoreFields...)
 
-	if diff := cmp.Diff(expected, reply); diff != "" {
-		t.Errorf("%s: reply != expected:\n   reply: %s\nexpected: %s\ndiff: %s", path, strings.TrimSpace(string(replyJSON)), expectedJSON, diff)
-		return
-	}
+	require.Equal(t, expected, reply)
 }
 
 func TestNonJsonRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedResponse string) {
 	response := SendHTTP(api, external, method, path, body)
-
-	if response.StatusCode != expectedStatus {
-		t.Errorf("%s: expected status %v, but got %v", path, expectedStatus, response.StatusCode)
-	}
+	assert.Equalf(t, expectedStatus, response.StatusCode, "%s: status mismatch", path)
 
 	responseBodyBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		t.Errorf("%s: could not read response body: %v", path, err)
-	}
+	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	responseBody := string(responseBodyBytes)
-
-	if responseBody != expectedResponse {
-		t.Errorf("%s: expected response \"%s\", but got \"%s\"", path, expectedResponse, responseBody)
-	}
+	require.Equalf(t, expectedResponse, responseBody, "%s: body mismatch", path)
 }
 
 func IgnoreDates() cmp.Option {
