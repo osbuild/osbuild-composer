@@ -25,7 +25,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
 )
 
 func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.Store) {
@@ -106,9 +106,7 @@ version = "2.4.*"`
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestBlueprintsEmptyToml(t *testing.T) {
@@ -120,9 +118,7 @@ func TestBlueprintsEmptyToml(t *testing.T) {
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusBadRequest {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusBadRequest, r.StatusCode)
 }
 
 func TestBlueprintsInvalidToml(t *testing.T) {
@@ -143,9 +139,7 @@ version = "2.4.*"`
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusBadRequest {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusBadRequest, r.StatusCode)
 }
 
 func TestBlueprintsWorkspaceJSON(t *testing.T) {
@@ -185,9 +179,7 @@ version = "2.4.*"`
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestBlueprintsWorkspaceEmptyTOML(t *testing.T) {
@@ -199,9 +191,7 @@ func TestBlueprintsWorkspaceEmptyTOML(t *testing.T) {
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusBadRequest {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusBadRequest, r.StatusCode)
 }
 
 func TestBlueprintsWorkspaceInvalidTOML(t *testing.T) {
@@ -222,9 +212,7 @@ version = "2.4.*"`
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusBadRequest {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusBadRequest, r.StatusCode)
 }
 
 func TestBlueprintsInfo(t *testing.T) {
@@ -262,15 +250,11 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	api.ServeHTTP(recorder, req)
 
 	resp := recorder.Result()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %v", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var got blueprint.Blueprint
 	_, err := toml.DecodeReader(resp.Body, &got)
-	if err != nil {
-		t.Fatalf("error decoding toml file: %v", err)
-	}
+	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := blueprint.Blueprint{
 		Name:        "test1",
@@ -282,9 +266,7 @@ func TestBlueprintsInfoToml(t *testing.T) {
 		Groups:  []blueprint.Group{},
 		Modules: []blueprint.Package{},
 	}
-	if diff := cmp.Diff(got, expected); diff != "" {
-		t.Fatalf("received unexpected blueprint: %s", diff)
-	}
+	require.Equalf(t, expected, got, "received unexpected blueprint")
 }
 
 func TestNonExistentBlueprintsInfoToml(t *testing.T) {
@@ -294,9 +276,7 @@ func TestNonExistentBlueprintsInfoToml(t *testing.T) {
 	api.ServeHTTP(recorder, req)
 
 	resp := recorder.Result()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("unexpected status %v", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestSetPkgEVRA(t *testing.T) {
@@ -331,15 +311,9 @@ func TestSetPkgEVRA(t *testing.T) {
 	}
 	// Replace globs with dependencies
 	err := setPkgEVRA(deps, pkgs)
-	if err != nil {
-		t.Fatalf("setPkgEVRA failed: %s", err.Error())
-	}
-	if pkgs[0].Version != "1.33-2.fc30.x86_64" {
-		t.Fatalf("setPkgEVRA Unexpected pkg version")
-	}
-	if pkgs[1].Version != "2.9-1.fc30.x86_64" {
-		t.Fatalf("setPkgEVRA Unexpected pkg version")
-	}
+	require.NoErrorf(t, err, "setPkgEVRA failed")
+	require.Equalf(t, "1.33-2.fc30.x86_64", pkgs[0].Version, "setPkgEVRA Unexpected pkg version")
+	require.Equalf(t, "2.9-1.fc30.x86_64", pkgs[1].Version, "setPkgEVRA Unexpected pkg version")
 
 	// Test that a missing package in deps returns an error
 	pkgs = []blueprint.Package{
@@ -347,9 +321,7 @@ func TestSetPkgEVRA(t *testing.T) {
 		{Name: "dep-package0", Version: "*"},
 	}
 	err = setPkgEVRA(deps, pkgs)
-	if err == nil || err.Error() != "dep-package0 missing from depsolve results" {
-		t.Fatalf("setPkgEVRA missing package failed to return error")
-	}
+	require.EqualErrorf(t, err, "dep-package0 missing from depsolve results", "setPkgEVRA missing package failed to return error")
 }
 
 func TestBlueprintsFreeze(t *testing.T) {
@@ -437,9 +409,7 @@ func TestGetPkgNameGlob(t *testing.T) {
 
 	for _, c := range cases {
 		result := getPkgNameGlob(c.pkg)
-		if result != c.result {
-			t.Fatalf("getPkgNameGlob failed: %s != %s", result, c.result)
-		}
+		require.Equalf(t, c.result, result, "getPkgNameGlob failed for %s", c.pkg.Name)
 	}
 }
 
@@ -550,9 +520,7 @@ func TestCompose(t *testing.T) {
 			continue
 		}
 
-		if len(s.Composes) != 1 {
-			t.Fatalf("%s: bad compose count in store: %d", c.Path, len(s.Composes))
-		}
+		require.Equalf(t, 1, len(s.Composes), "%s: bad compose count in store", c.Path)
 
 		// I have no idea how to get the compose in better way
 		var composeStruct compose.Compose
@@ -561,12 +529,9 @@ func TestCompose(t *testing.T) {
 			break
 		}
 
-		if composeStruct.ImageBuilds[0].Manifest == nil {
-			t.Fatalf("%s: the compose in the store did not contain a blueprint", c.Path)
-		} else {
-			// TODO: find some (reasonable) way to verify the contents of the pipeline
-			composeStruct.ImageBuilds[0].Manifest = nil
-		}
+		require.NotNilf(t, composeStruct.ImageBuilds[0].Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
+		// TODO: find some (reasonable) way to verify the contents of the pipeline
+		composeStruct.ImageBuilds[0].Manifest = nil
 
 		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
@@ -602,11 +567,7 @@ func TestComposeDelete(t *testing.T) {
 			idsInStore = append(idsInStore, id.String())
 		}
 
-		diff := cmp.Diff(idsInStore, c.ExpectedIDsInStore, cmpopts.SortSlices(func(a, b string) bool { return a < b }))
-
-		if diff != "" {
-			t.Errorf("%s: composes in store are different, expected: %v, got: %v, diff:\n%s", c.Path, c.ExpectedIDsInStore, idsInStore, diff)
-		}
+		require.ElementsMatch(t, c.ExpectedIDsInStore, idsInStore, "%s: composes in store are different", c.Path)
 	}
 }
 
@@ -682,39 +643,21 @@ func TestComposeLogs(t *testing.T) {
 		api, _ := createWeldrAPI(rpmmd_mock.BaseFixture)
 
 		response := test.SendHTTP(api, false, "GET", c.Path, "")
-		if response.StatusCode != http.StatusOK {
-			t.Errorf("%s: expected status code: %d, but got: %d", c.Path, 200, response.StatusCode)
-		}
-
-		if response.Header.Get("content-disposition") != c.ExpectedContentDisposition {
-			t.Errorf("%s: expected content-disposition: %s, but got: %s", c.Path, c.ExpectedContentDisposition, response.Header.Get("content-disposition"))
-		}
-
-		if response.Header.Get("content-type") != c.ExpectedContentType {
-			t.Errorf("%s: expected content-type: %s, but got: %s", c.Path, c.ExpectedContentType, response.Header.Get("content-type"))
-		}
+		require.Equalf(t, http.StatusOK, response.StatusCode, "%s: unexpected status code", c.Path)
+		require.Equalf(t, c.ExpectedContentDisposition, response.Header.Get("content-disposition"), "%s: header mismatch", c.Path)
+		require.Equalf(t, c.ExpectedContentType, response.Header.Get("content-type"), "%s: header mismatch", c.Path)
 
 		tr := tar.NewReader(response.Body)
 		h, err := tr.Next()
 
-		if err != nil {
-			t.Errorf("untarring failed with error: %s", err.Error())
-		}
-
-		if h.Name != c.ExpectedFileName {
-			t.Errorf("%s: expected log content: %s, but got: %s", c.Path, c.ExpectedFileName, h.Name)
-		}
+		require.NoErrorf(t, err, "untarring failed with error")
+		require.Equalf(t, c.ExpectedFileName, h.Name, "%s: unexpected file name", c.Path)
 
 		var buffer bytes.Buffer
 
 		_, err = io.Copy(&buffer, tr)
-		if err != nil {
-			t.Errorf("cannot copy untar result: %v", err)
-		}
-
-		if buffer.String() != c.ExpectedFileContent {
-			t.Errorf("%s: expected log content: %s, but got: %s", c.Path, c.ExpectedFileContent, buffer.String())
-		}
+		require.NoErrorf(t, err, "cannot copy untar result")
+		require.Equalf(t, c.ExpectedFileContent, buffer.String(), "%s: unexpected log content", c.Path)
 	}
 
 	var failureCases = []struct {
@@ -871,9 +814,7 @@ check_gpg = false
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
-	if r.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %v", r.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, r.StatusCode)
 
 	test.SendHTTP(api, true, "DELETE", "/api/v0/projects/source/delete/fish", ``)
 }
@@ -897,9 +838,7 @@ check_gpg = false
 		api.ServeHTTP(recorder, req)
 
 		r := recorder.Result()
-		if r.StatusCode != http.StatusBadRequest {
-			t.Errorf("unexpected status %v", r.StatusCode)
-		}
+		require.Equal(t, http.StatusBadRequest, r.StatusCode)
 	}
 }
 
@@ -926,9 +865,7 @@ func TestSourcesInfoToml(t *testing.T) {
 
 	var sources map[string]store.SourceConfig
 	_, err := toml.DecodeReader(resp.Body, &sources)
-	if err != nil {
-		t.Fatalf("error decoding toml file: %v", err)
-	}
+	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := map[string]store.SourceConfig{
 		"fish": {
@@ -938,9 +875,7 @@ func TestSourcesInfoToml(t *testing.T) {
 		},
 	}
 
-	if diff := cmp.Diff(sources, expected); diff != "" {
-		t.Fatalf("received unexpected source: %s", diff)
-	}
+	require.Equal(t, expected, sources)
 }
 
 func TestSourcesDelete(t *testing.T) {
