@@ -20,9 +20,25 @@ pushd ansible-osbuild
     playbook.yml
 popd
 
-# Run the integration tests.
-/usr/libexec/tests/osbuild-composer/osbuild-dnf-json-tests -test.v
+run_osbuild_test() {
+  TEST_NAME=$1
+  /usr/libexec/tests/osbuild-composer/${TEST_NAME} \
+    -test.v | tee ${TEST_NAME}.log > /dev/null &
+}
+
+# Run the rcm and weldr tests separately to avoid API errors and timeouts.
+run_osbuild_test osbuild-rcm-tests
+run_osbuild_test osbuild-weldr-tests
+
+# Run the dnf and other tests together.
+TEST_PIDS=()
+run_osbuild_test osbuild-tests
+TEST_PIDS+=($!)
+run_osbuild_test osbuild-dnf-json-tests
+TEST_PIDS+=($!)
+for TEST_PID in "${TEST_PIDS[@]}"; do
+  wait $TEST_PID
+done
+
+# Wait on the image tests for now.
 # /usr/libexec/tests/osbuild-composer/osbuild-image-tests
-/usr/libexec/tests/osbuild-composer/osbuild-rcm-tests -test.v
-/usr/libexec/tests/osbuild-composer/osbuild-tests -test.v
-/usr/libexec/tests/osbuild-composer/osbuild-weldr-tests -test.v
