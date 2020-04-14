@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -97,9 +98,9 @@ func apiError(resp *http.Response) (*APIResponse, error) {
 	return NewAPIResponse(body)
 }
 
-// GetRaw returns raw data from a GET request
-// Errors from the API are returned as an APIResponse, client errors are returned as error
-func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, error) {
+// GetRawBody returns the resp.Body io.ReadCloser to the caller
+// NOTE: The caller is responsible for closing the Body when finished
+func GetRawBody(socket *http.Client, method, path string) (io.ReadCloser, *APIResponse, error) {
 	resp, err := Request(socket, method, path, "", map[string]string{})
 	if err != nil {
 		return nil, nil, err
@@ -111,14 +112,24 @@ func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, err
 		apiResponse, err := apiError(resp)
 		return nil, apiResponse, err
 	}
-	defer resp.Body.Close()
+	return resp.Body, nil, nil
+}
 
-	body, err := ioutil.ReadAll(resp.Body)
+// GetRaw returns raw data from a GET request
+// Errors from the API are returned as an APIResponse, client errors are returned as error
+func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, error) {
+	body, resp, err := GetRawBody(socket, method, path)
+	if err != nil || resp != nil {
+		return nil, resp, err
+	}
+	defer body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return body, nil, nil
+	return bodyBytes, nil, nil
 }
 
 // GetJSONAll returns all JSON results from a GET request using offset/limit
