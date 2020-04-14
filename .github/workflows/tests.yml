@@ -111,6 +111,9 @@ jobs:
       - name: "🗄️ Clone the repository"
         uses: actions/checkout@v2
 
+      - name: "🧱 Pre-install osbuild from updates-testing repo"
+        run: dnf -y --enablerepo=updates-testing install osbuild
+
       - name: "🛒 Install RPM build dependencies"
         run: dnf -y builddep osbuild-composer.spec
 
