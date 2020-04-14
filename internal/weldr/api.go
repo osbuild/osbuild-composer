@@ -1559,9 +1559,9 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 					fmt.Sprintf("%s: %s", id, err.Error()),
 				})
 			}
+		} else {
+			results = append(results, composeDeleteStatus{id, true})
 		}
-
-		results = append(results, composeDeleteStatus{id, true})
 	}
 
 	reply := struct {
