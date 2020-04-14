@@ -1765,7 +1765,7 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	compose, exists := api.store.GetCompose(uuid)
 	if !exists {
 		errors := responseError{
-			ID:  "BuildMissingFile",
+			ID:  "UnknownUUID",
 			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
