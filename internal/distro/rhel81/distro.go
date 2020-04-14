@@ -753,7 +753,7 @@ func (r *rhel81ImageType) grub2StageOptions(kernelOptions string, uefi bool) *os
 	return &osbuild.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
-		Legacy:             !uefi,
+		Legacy:             osbuild.GRUB2LegacyFromBool(!uefi),
 		UEFI:               uefiOptions,
 	}
 }

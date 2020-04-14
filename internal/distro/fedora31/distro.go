@@ -671,7 +671,7 @@ func (r *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.Ke
 	return &osbuild.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
-		Legacy:             !uefi,
+		Legacy:             osbuild.GRUB2LegacyFromBool(!uefi),
 		UEFI:               uefiOptions,
 	}
 }
