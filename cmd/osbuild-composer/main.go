@@ -117,11 +117,11 @@ func main() {
 
 	store := store.New(&stateDir)
 
-	jobAPI := worker.New(logger, store)
+	workerAPI := worker.NewServer(logger, store)
 	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store)
 
 	go func() {
-		err := jobAPI.Serve(jobListener)
+		err := workerAPI.Serve(jobListener)
 		common.PanicOnError(err)
 	}()
 
@@ -157,7 +157,7 @@ func main() {
 
 			listener := tls.NewListener(listener, tlsConfig)
 			go func() {
-				err := jobAPI.Serve(listener)
+				err := workerAPI.Serve(listener)
 				common.PanicOnError(err)
 			}()
 		}
