@@ -35,8 +35,8 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := worker.New(nil, store.New(nil))
-		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
+		server := worker.NewServer(nil, store.New(nil))
+		test.TestRoute(t, server, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
 
@@ -51,14 +51,14 @@ func TestCreate(t *testing.T) {
 		t.Fatalf("error getting image type from arch")
 	}
 	store := store.New(nil)
-	api := worker.New(nil, store)
+	server := worker.NewServer(nil, store)
 
 	id, err := store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
 
-	test.TestRoute(t, api, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
 		`{"compose_id":"`+id.String()+`","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created")
 }
 
@@ -73,7 +73,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 		t.Fatalf("error getting image type from arch")
 	}
 	store := store.New(nil)
-	api := worker.New(nil, store)
+	server := worker.NewServer(nil, store)
 
 	id := uuid.Nil
 	if from != "VOID" {
@@ -83,14 +83,14 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 		}
 
 		if from != "WAITING" {
-			test.SendHTTP(api, false, "POST", "/job-queue/v1/jobs", `{}`)
+			test.SendHTTP(server, false, "POST", "/job-queue/v1/jobs", `{}`)
 			if from != "RUNNING" {
-				test.SendHTTP(api, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+from+`"}`)
+				test.SendHTTP(server, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+from+`"}`)
 			}
 		}
 	}
 
-	test.TestRoute(t, api, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
+	test.TestRoute(t, server, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
 }
 
 func TestUpdate(t *testing.T) {
