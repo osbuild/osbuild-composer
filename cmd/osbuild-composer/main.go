@@ -18,10 +18,10 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 
 	"github.com/coreos/go-systemd/activation"
 )
@@ -117,7 +117,7 @@ func main() {
 
 	store := store.New(&stateDir)
 
-	jobAPI := jobqueue.New(logger, store)
+	jobAPI := worker.New(logger, store)
 	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store)
 
 	go func() {

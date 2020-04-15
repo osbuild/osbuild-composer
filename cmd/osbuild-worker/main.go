@@ -13,9 +13,9 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type connectionConfig struct {
@@ -61,7 +61,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *jobqueue.Job, uploadFunc func(*jobqueue.Job, io.Reader) error) (*common.ComposeResult, error) {
+func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*common.ComposeResult, error) {
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild store: %v", err)
@@ -145,9 +145,9 @@ func main() {
 		flag.Usage()
 	}
 
-	var client *jobqueue.Client
+	var client *worker.Client
 	if unix {
-		client = jobqueue.NewClientUnix(address)
+		client = worker.NewClientUnix(address)
 	} else {
 		conf, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
@@ -158,7 +158,7 @@ func main() {
 			log.Fatalf("Error creating TLS config: %v", err)
 		}
 
-		client = jobqueue.NewClient(address, conf)
+		client = worker.NewClient(address, conf)
 	}
 
 	for {

@@ -1,4 +1,4 @@
-package jobqueue
+package worker
 
 import (
 	"encoding/json"

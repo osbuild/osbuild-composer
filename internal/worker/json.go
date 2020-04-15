@@ -1,4 +1,4 @@
-package jobqueue
+package worker
 
 import (
 	"github.com/google/uuid"
