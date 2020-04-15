@@ -70,7 +70,7 @@ NOTES
 .. [#lorax-github] Lorax Composer:
                    https://github.com/weldr/lorax
 .. [#cockpit-composer] Cockpit Composer:
-                       https://github.com/weldr/cockpit-composer
+                       https://github.com/osbuild/cockpit-composer
 .. [#composer-cli] Composer CLI:
                    https://weldr.io/lorax/composer-cli.html
 .. [#cockpit] Cockpit Project:
