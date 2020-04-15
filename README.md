@@ -14,7 +14,7 @@ such can serve as drop-in replacement for lorax-composer.
 You can control a composer instance either directly via the provided APIs, or
 through higher-level user-interfaces from external projects. This, for
 instance, includes a
-[Cockpit Module](https://github.com/weldr/cockpit-composer) or using the
+[Cockpit Module](https://github.com/osbuild/cockpit-composer) or using the
 [composer-cli](https://weldr.io/lorax/composer-cli.html) command-line tool.
 
 ### Project
