@@ -1,4 +1,4 @@
-package jobqueue_test
+package worker_test
 
 import (
 	"net/http"
@@ -8,9 +8,9 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/test"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 func TestErrors(t *testing.T) {
@@ -35,7 +35,7 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		api := jobqueue.New(nil, store.New(nil))
+		api := worker.New(nil, store.New(nil))
 		test.TestRoute(t, api, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
@@ -51,7 +51,7 @@ func TestCreate(t *testing.T) {
 		t.Fatalf("error getting image type from arch")
 	}
 	store := store.New(nil)
-	api := jobqueue.New(nil, store)
+	api := worker.New(nil, store)
 
 	id, err := store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
 	if err != nil {
@@ -73,7 +73,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 		t.Fatalf("error getting image type from arch")
 	}
 	store := store.New(nil)
-	api := jobqueue.New(nil, store)
+	api := worker.New(nil, store)
 
 	id := uuid.Nil
 	if from != "VOID" {
