@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -37,8 +38,17 @@ type testcaseStruct struct {
 	}
 }
 
+// mutex to enforce only one osbuild instance run at a time, see below
+var osbuildMutex sync.Mutex
+
 // runOsbuild runs osbuild with the specified manifest and store.
 func runOsbuild(manifest []byte, store string) (string, error) {
+	// Osbuild crashes when multiple instances are run at a time.
+	// This mutex enforces that there's always just one osbuild instance.
+	// This should be removed once osbuild is fixed.
+	// See https://github.com/osbuild/osbuild/issues/351
+	osbuildMutex.Lock()
+	defer osbuildMutex.Unlock()
 	cmd := getOsbuildCommand(store)
 
 	cmd.Stderr = os.Stderr
@@ -401,6 +411,13 @@ func runTests(t *testing.T, cases []string) {
 			if testcase.ComposeRequest.Arch != currentArch {
 				t.Skipf("the required arch is %s, the current arch is %s", testcase.ComposeRequest.Arch, currentArch)
 			}
+
+			// Run the test in parallel
+			// The t.Parallel() call is after the skip conditions, because
+			// the skipped tests are short and there's no need to run
+			// them in parallel and create more goroutines.
+			// Also the output is clearer this way.
+			t.Parallel()
 
 			runTestcase(t, testcase)
 		})
