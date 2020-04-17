@@ -11,6 +11,10 @@ get_fastest_mirror() {
     sed 's#releases.*##' || true
 }
 
+# Set AWS variables.
+export AWS_REGION=us-east-1
+export AWS_BUCKET=schutzbot-${AWS_REGION}
+
 # Install packages.
 sudo dnf -y install ansible perl-XML-XPath
 
@@ -52,6 +56,15 @@ run_osbuild_test() {
   /usr/libexec/tests/osbuild-composer/${TEST_NAME} \
     -test.v $TEST_CASE 2>&1 | tee $LOGFILE > /dev/null &
 }
+
+# Try an upload to AWS.
+if [[ $NAME == 'Fedora' ]] && [[ $VERSION_ID == "31" ]]; then
+  run_osbuild_test osbuild-image-tests \
+    ${TEST_CASE_DIR}/cases/fedora_31-x86_64-ami-boot.json
+  wait
+fi
+
+exit 0
 
 # Run the rcm and weldr tests separately to avoid API errors and timeouts.
 run_osbuild_test osbuild-rcm-tests
