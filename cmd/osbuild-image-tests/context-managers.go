@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -128,6 +130,8 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 
 		qemuX8664Cmd := ns.NamespacedCommand(
 			"qemu-system-x86_64",
+			"-cpu", "host",
+			"-smp", strconv.Itoa(runtime.NumCPU()),
 			"-m", "1024",
 			"-snapshot",
 			"-accel", "accel=kvm:hvf:tcg",
