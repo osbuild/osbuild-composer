@@ -74,7 +74,7 @@ func WaitUntilImportSnapshotTaskCompleted(c *ec2.EC2, input *ec2.DescribeImportS
 func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context, input *ec2.DescribeImportSnapshotTasksInput, opts ...request.WaiterOption) error {
 	w := request.Waiter{
 		Name:        "WaitUntilImportSnapshotTaskCompleted",
-		MaxAttempts: 80, // this can take up to 15 minutes, therefore set the timeout to 20 minutes
+		MaxAttempts: 300, // this can take up to 15 minutes, therefore set the timeout to 20 minutes
 		Delay:       request.ConstantWaiterDelay(15 * time.Second),
 		Acceptors: []request.WaiterAcceptor{
 			{
