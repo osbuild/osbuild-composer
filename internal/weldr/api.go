@@ -1480,15 +1480,26 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	size := imageType.Size(cr.Size)
+	manifest, err := imageType.Manifest(bp.Customizations, api.allRepositories(), packages, buildPackages, size)
+	if err != nil {
+		errors := responseError{
+			ID:  "ManifestCreationFailed",
+			Msg: fmt.Sprintf("failed to create osbuild manifest: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	testMode := q.Get("test")
 	if testMode == "1" {
 		// Create a failed compose
-		composeID, err = api.store.PushTestCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets, false)
+		composeID, err = api.store.PushTestCompose(manifest, imageType, bp, size, targets, false)
 	} else if testMode == "2" {
 		// Create a successful compose
-		composeID, err = api.store.PushTestCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets, true)
+		composeID, err = api.store.PushTestCompose(manifest, imageType, bp, size, targets, true)
 	} else {
-		composeID, err = api.store.PushCompose(imageType, bp, api.allRepositories(), packages, buildPackages, cr.Size, targets)
+		composeID, err = api.store.PushCompose(manifest, imageType, bp, size, targets)
 	}
 
 	// TODO: we should probably do some kind of blueprint validation in future
