@@ -53,7 +53,12 @@ func TestCreate(t *testing.T) {
 	store := store.New(nil)
 	server := worker.NewServer(nil, store)
 
-	id, err := store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
+	manifest, err := imageType.Manifest(nil, nil, nil, nil, imageType.Size(0))
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest")
+	}
+
+	id, err := store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
 	if err != nil {
 		t.Fatalf("error pushing compose: %v", err)
 	}
@@ -77,7 +82,12 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 
 	id := uuid.Nil
 	if from != "VOID" {
-		id, err = store.PushCompose(imageType, &blueprint.Blueprint{}, nil, nil, nil, 0, nil)
+		manifest, err := imageType.Manifest(nil, nil, nil, nil, imageType.Size(0))
+		if err != nil {
+			t.Fatalf("error creating osbuild manifest")
+		}
+
+		id, err = store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
 		if err != nil {
 			t.Fatalf("error pushing compose: %v", err)
 		}

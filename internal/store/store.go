@@ -19,12 +19,12 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
@@ -501,7 +501,7 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target) (uuid.UUID, error) {
+func (s *Store) PushCompose(manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target) (uuid.UUID, error) {
 	if targets == nil {
 		targets = []*target.Target{}
 	}
@@ -523,10 +523,6 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 		}
 	}
 
-	manifestStruct, err := imageType.Manifest(bp.Customizations, repos, packages, buildPackages, imageType.Size(size))
-	if err != nil {
-		return uuid.Nil, err
-	}
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
 		s.Composes[composeID] = compose.Compose{
@@ -534,11 +530,11 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 			ImageBuilds: []compose.ImageBuild{
 				{
 					QueueStatus: common.IBWaiting,
-					Manifest:    manifestStruct,
+					Manifest:    manifest,
 					ImageType:   imageTypeCommon,
 					Targets:     targets,
 					JobCreated:  time.Now(),
-					Size:        imageType.Size(size),
+					Size:        size,
 				},
 			},
 		}
@@ -547,7 +543,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 	s.pendingJobs <- Job{
 		ComposeID:    composeID,
 		ImageBuildID: 0,
-		Manifest:     manifestStruct,
+		Manifest:     manifest,
 		Targets:      targets,
 	}
 
@@ -557,7 +553,7 @@ func (s *Store) PushCompose(imageType distro.ImageType, bp *blueprint.Blueprint,
 // PushTestCompose is used for testing
 // Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
 // It does not actually run a compose job
-func (s *Store) PushTestCompose(imageType distro.ImageType, bp *blueprint.Blueprint, repos []rpmmd.RepoConfig, packages, buildPackages []rpmmd.PackageSpec, size uint64, targets []*target.Target, testSuccess bool) (uuid.UUID, error) {
+func (s *Store) PushTestCompose(manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) (uuid.UUID, error) {
 	if targets == nil {
 		targets = []*target.Target{}
 	}
@@ -579,10 +575,6 @@ func (s *Store) PushTestCompose(imageType distro.ImageType, bp *blueprint.Bluepr
 		}
 	}
 
-	manifestStruct, err := imageType.Manifest(bp.Customizations, repos, packages, buildPackages, imageType.Size(size))
-	if err != nil {
-		return uuid.Nil, err
-	}
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
 		s.Composes[composeID] = compose.Compose{
@@ -590,7 +582,7 @@ func (s *Store) PushTestCompose(imageType distro.ImageType, bp *blueprint.Bluepr
 			ImageBuilds: []compose.ImageBuild{
 				{
 					QueueStatus: common.IBRunning,
-					Manifest:    manifestStruct,
+					Manifest:    manifest,
 					ImageType:   imageTypeCommon,
 					Targets:     targets,
 					JobCreated:  time.Now(),
@@ -613,7 +605,7 @@ func (s *Store) PushTestCompose(imageType distro.ImageType, bp *blueprint.Bluepr
 	}
 
 	// Instead of starting the job, immediately set a final status
-	err = s.UpdateImageBuildInCompose(composeID, 0, status, &result)
+	err := s.UpdateImageBuildInCompose(composeID, 0, status, &result)
 	if err != nil {
 		return uuid.Nil, err
 	}

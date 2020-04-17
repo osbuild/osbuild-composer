@@ -204,8 +204,19 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
+	size := imageType.Size(0)
+	manifest, err := imageType.Manifest(nil, repoConfigs, packages, buildPackages, size)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, err := writer.Write([]byte(err.Error()))
+		if err != nil {
+			panic("Failed to write response")
+		}
+		return
+	}
+
 	// Push the requested compose to the store
-	composeID, err := api.store.PushCompose(imageType, &blueprint.Blueprint{}, repoConfigs, packages, buildPackages, 0, nil)
+	composeID, err := api.store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
