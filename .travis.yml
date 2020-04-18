@@ -12,12 +12,8 @@ matrix:
   include:
     - name: fedora_30
       arch: amd64
-    - name: fedora_30
-      arch: arm64
     - name: fedora_31
       arch: amd64
-    - name: fedora_31
-      arch: arm64
 
 language: generic
 script:
@@ -26,5 +22,5 @@ script:
   # ubuntu's rpm package sets dbpath to ~/.rpmdb, which makes rpm fail...
   - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
   - export GO111MODULE=on
-  - if [ "${TRAVIS_CPU_ARCH}" = "amd64" ]; then go test -c -tags 'travis integration' -o osbuild-image-tests ./cmd/osbuild-image-tests; fi
-  - if [ "${TRAVIS_CPU_ARCH}" = "amd64" ]; then sudo ./osbuild-image-tests -test.v test/cases/$TRAVIS_JOB_NAME*; fi
+  - go test -c -tags 'travis integration' -o osbuild-image-tests ./cmd/osbuild-image-tests
+  - sudo ./osbuild-image-tests -test.v test/cases/$TRAVIS_JOB_NAME*
