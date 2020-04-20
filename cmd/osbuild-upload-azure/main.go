@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"os"
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -11,7 +11,9 @@ import (
 
 func checkStringNotEmpty(variable string, errorMessage string) {
 	if variable == "" {
-		log.Fatal(errorMessage)
+		fmt.Fprintln(os.Stderr, errorMessage)
+		flag.Usage()
+		os.Exit(1)
 	}
 }
 
