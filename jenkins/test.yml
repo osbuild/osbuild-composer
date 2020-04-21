@@ -1,0 +1,27 @@
+---
+
+- hosts: localhost
+  vars:
+    passed_tests: []
+    failed_tests: []
+    journald_cursor: "{{ ansible_env.JOURNALD_CURSOR"
+  vars_files:
+    - vars.yml
+  tasks:
+
+    - name: Run osbuild-composer tests
+      include_tasks: test_runner.yml
+      loop: "{{ osbuild_composer_base_tests }}"
+      loop_control:
+        loop_var: test
+
+    - name: Show failed and passed tests
+      debug:
+        msg: |
+          Passed tests: "{{ passed_tests }}"
+          Failed tests: "{{ failed_tests }}"
+
+    - name: Fail the test run if a test failed
+      fail:
+        msg: One or more tests failed.
+      when: failed_tests
