@@ -1,44 +1,44 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Ensure Ansible is installed.
-sudo dnf -y install ansible
+# Restart systemd to work around some Fedora issues in cloud images.
+systemctl restart systemd-journald
 
-# Clone the latest version of ansible-osbuild.
-git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
+# Get the current journald cursor.
+export JOURNALD_CURSOR=$(journalctl --quiet -n 1 --show-cursor | tail -n 1 | grep -oP 's\=.*$')
 
-# Get the current SHA of osbuild-composer.
-OSBUILD_COMPOSER_VERSION=$(git rev-parse HEAD)
-
-# Run the deployment.
-pushd ansible-osbuild
-  echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
-  ansible-playbook \
-    -i hosts.ini \
-    -e osbuild_composer_repo=${WORKSPACE} \
-    -e osbuild_composer_version=${OSBUILD_COMPOSER_VERSION} \
-    playbook.yml
-popd
-
-run_osbuild_test() {
-  TEST_NAME=$1
-  /usr/libexec/tests/osbuild-composer/${TEST_NAME} \
-    -test.v | tee ${TEST_NAME}.log > /dev/null &
+# Add a function to preserve the system journal if something goes wrong.
+preserve_journal() {
+  journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
+  exit 1
 }
+trap "preserve_journal" ERR
 
-# Run the rcm and weldr tests separately to avoid API errors and timeouts.
-run_osbuild_test osbuild-rcm-tests
-run_osbuild_test osbuild-weldr-tests
+# Ensure Ansible is installed.
+if ! rpm -q ansible; then
+  sudo dnf -y install ansible
+fi
 
-# Run the dnf and other tests together.
-TEST_PIDS=()
-run_osbuild_test osbuild-tests
-TEST_PIDS+=($!)
-run_osbuild_test osbuild-dnf-json-tests
-TEST_PIDS+=($!)
-for TEST_PID in "${TEST_PIDS[@]}"; do
-  wait $TEST_PID
-done
+# Write a simple hosts file for Ansible.
+echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 
-# Wait on the image tests for now.
-# /usr/libexec/tests/osbuild-composer/osbuild-image-tests
+# Set Ansible's config file location.
+export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
+
+# Deploy the software.
+git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
+ansible-playbook \
+  -i hosts.ini \
+  -e osbuild_composer_repo=${WORKSPACE} \
+  -e osbuild_composer_version=$(git rev-parse HEAD) \
+  ansible-osbuild/playbook.yml
+
+# Run the tests.
+ansible-playbook \
+  -e workspace=${WORKSPACE} \
+  -e journald_cursor="${JOURNALD_CURSOR}" \
+  -i hosts.ini \
+  jenkins/test.yml
+
+# Collect the systemd journal anyway if we made it all the way to the end.
+journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log

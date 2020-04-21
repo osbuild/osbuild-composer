@@ -1,0 +1,20 @@
+# Tests should use this as their working directory. This part is critical
+# since dnf-json must be in $PATH.
+tests_working_directory: /usr/libexec/osbuild-composer
+
+# The test executables are here.
+tests_path: /usr/libexec/tests/osbuild-composer
+
+# Set each test executable name and its timeout (in minutes).
+osbuild_composer_base_tests:
+  - name: osbuild-rcm-tests
+    timeout: 5
+  - name: osbuild-weldr-tests
+    timeout: 5
+  - name: osbuild-dnf-json-tests
+    timeout: 15
+  - name: osbuild-tests
+    timeout: 30
+
+# Frequency to check for completed tests.
+polling_interval: 15
