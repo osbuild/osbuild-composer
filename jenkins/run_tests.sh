@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+echo "WOOT"
+
 # Ensure Ansible is installed.
 sudo dnf -y install ansible
 
