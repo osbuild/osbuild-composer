@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel83"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -70,7 +71,7 @@ func TestDistro_Manifest(t *testing.T) {
 			}
 		}
 		t.Run(tt.ComposeRequest.ImageType, func(t *testing.T) {
-			distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
+			distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New(), rhel83.New())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -107,9 +108,10 @@ func TestDistro_RegistryList(t *testing.T) {
 		"fedora-32",
 		"rhel-8.1",
 		"rhel-8.2",
+		"rhel-8.3",
 	}
 
-	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New())
+	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New(), rhel83.New())
 	require.NoError(t, err)
 
 	require.Equalf(t, expected, distros.List(), "unexpected list of distros")
