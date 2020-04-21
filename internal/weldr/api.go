@@ -40,8 +40,6 @@ type API struct {
 }
 
 func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store) *API {
-	// This needs to be shared with the worker API so that they can communicate with each other
-	// builds := make(chan queue.Build, 200)
 	api := &API{
 		store:  store,
 		rpmmd:  rpmmd,
