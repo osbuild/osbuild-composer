@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
@@ -48,7 +49,8 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 	// See https://github.com/osbuild/osbuild/issues/351
 	osbuildMutex.Lock()
 	defer osbuildMutex.Unlock()
-	cmd := getOsbuildCommand(store)
+
+	cmd := constants.GetOsbuildCommand(store)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = bytes.NewReader(manifest)
@@ -85,7 +87,7 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
 	require.NoErrorf(t, err, "cannot decode expected image info: %#v", err)
 
-	cmd := exec.Command(testPaths.imageInfo, imagePath)
+	cmd := exec.Command(constants.TestPaths.ImageInfo, imagePath)
 	cmd.Stderr = os.Stderr
 	reader, writer := io.Pipe()
 	cmd.Stdout = writer
@@ -190,7 +192,7 @@ func testSSH(t *testing.T, address string, privateKey string, ns *netNS) {
 func testBootUsingQemu(t *testing.T, imagePath string) {
 	err := withNetworkNamespace(func(ns netNS) error {
 		return withBootedQemuImage(imagePath, ns, func() error {
-			testSSH(t, "localhost", testPaths.privateKey, &ns)
+			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 			return nil
 		})
 	})
@@ -200,7 +202,7 @@ func testBootUsingQemu(t *testing.T, imagePath string) {
 func testBootUsingNspawnImage(t *testing.T, imagePath string, outputID string) {
 	err := withNetworkNamespace(func(ns netNS) error {
 		return withBootedNspawnImage(imagePath, outputID, ns, func() error {
-			testSSH(t, "localhost", testPaths.privateKey, &ns)
+			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 			return nil
 		})
 	})
@@ -211,7 +213,7 @@ func testBootUsingNspawnDirectory(t *testing.T, imagePath string, outputID strin
 	err := withNetworkNamespace(func(ns netNS) error {
 		return withExtractedTarArchive(imagePath, func(dir string) error {
 			return withBootedNspawnDirectory(dir, outputID, ns, func() error {
-				testSSH(t, "localhost", testPaths.privateKey, &ns)
+				testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 				return nil
 			})
 		})
@@ -342,7 +344,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 
 // getAllCases returns paths to all testcases in the testcase directory
 func getAllCases() ([]string, error) {
-	cases, err := ioutil.ReadDir(testPaths.testCasesDirectory)
+	cases, err := ioutil.ReadDir(constants.TestPaths.TestCasesDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list test cases: %#v", err)
 	}
@@ -353,7 +355,7 @@ func getAllCases() ([]string, error) {
 			continue
 		}
 
-		casePath := fmt.Sprintf("%s/%s", testPaths.testCasesDirectory, c.Name())
+		casePath := fmt.Sprintf("%s/%s", constants.TestPaths.TestCasesDirectory, c.Name())
 		casesPaths = append(casesPaths, casePath)
 	}
 
