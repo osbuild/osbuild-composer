@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euxo pipefail
 
+# DEBUG: Testing image tests
+export TEST_TYPE=image
+
 # Restart systemd to work around some Fedora issues in cloud images.
 systemctl restart systemd-journald
 
