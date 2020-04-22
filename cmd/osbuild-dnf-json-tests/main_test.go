@@ -57,6 +57,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora30.New(), fedora31.New(), fedora32.New()} {
 		t.Run(distroStruct.Name(), func(t *testing.T) {
+
+			// Run tests in parallel to speed up run times.
+			t.Parallel()
+
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
 
