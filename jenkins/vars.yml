@@ -5,7 +5,7 @@ tests_working_directory: /usr/libexec/osbuild-composer
 # The test executables are here.
 tests_path: /usr/libexec/tests/osbuild-composer
 
-# Set each test executable name and its timeout (in minutes).
+# List of base tests and their timeouts (in minutes)
 osbuild_composer_base_tests:
   - name: osbuild-rcm-tests
     timeout: 5
@@ -15,6 +15,15 @@ osbuild_composer_base_tests:
     timeout: 15
   - name: osbuild-tests
     timeout: 30
+
+# List of image tests and their timeouts (in minutes).
+osbuild_composer_image_tests:
+  - name: osbuild-image-tests
+    case: fedora_31-x86_64-tar-boot.json
+    timeout: 15
+
+# Location of image test case files.
+image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
 # Frequency to check for completed tests.
 polling_interval: 15

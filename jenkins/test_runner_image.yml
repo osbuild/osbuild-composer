@@ -1,0 +1,38 @@
+---
+
+- block:
+
+    - name: "Run image test case: {{ case | basename }}"
+      command: |
+        {{ tests_path }}/{{ test.name }} -test.v \
+          {{ image_test_case_path }}/{{ test.case }}
+      args:
+        chdir: "{{ tests_working_directory }}"
+      register: async_test
+      async: "{{ test.timeout * 60 }}"
+      poll: "{{ polling_interval }}"
+
+    - name: "Mark {{ case | basename }} as passed"
+      set_fact:
+        passed_tests: "{{ passed_tests + [case | basename] }}"
+
+  rescue:
+
+    - name: "Mark {{ case | basename }} as failed"
+      set_fact:
+        failed_tests: "{{ failed_tests + [case | basename] }}"
+
+  always:
+
+    - name: "Write log for {{ case | basename }}"
+      copy:
+        dest: "{{ workspace }}/{{ case | basename }}.log"
+        content: |
+          Logs from image test: {{ case | basename }}
+          ----------------------------------------------------------------------
+          stderr:
+          {{ async_test.stderr }}
+          ----------------------------------------------------------------------
+          stdout:
+          {{ async_test.stdout }}
+
