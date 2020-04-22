@@ -12,7 +12,7 @@ osbuild_composer_base_tests:
   - name: osbuild-weldr-tests
     timeout: 5
   - name: osbuild-dnf-json-tests
-    timeout: 15
+    timeout: 20
   - name: osbuild-tests
     timeout: 30
 
