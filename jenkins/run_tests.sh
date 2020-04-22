@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+# TESTING RHEL 8.3
+
 # Restart systemd to work around some Fedora issues in cloud images.
 systemctl restart systemd-journald
 
