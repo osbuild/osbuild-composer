@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +12,9 @@ import (
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 // withNetworkNamespace provides the function f with a new network namespace
@@ -97,8 +99,8 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 	return withTempFile("", "osbuild-image-tests-cloudinit", func(cloudInitFile *os.File) error {
 		err := writeCloudInitISO(
 			cloudInitFile,
-			testPaths.userData,
-			testPaths.metaData,
+			constants.TestPaths.UserData,
+			constants.TestPaths.MetaData,
 		)
 		if err != nil {
 			return err
