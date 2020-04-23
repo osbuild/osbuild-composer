@@ -1,0 +1,135 @@
+---
+openapi: 3.0.1
+info:
+  version: '1'
+  title: OSBuild Composer - Koji
+  description: Service to build and push images to Koji.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+paths:
+  /compose/{id}:
+    get:
+      summary: The status of a compose
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: ID of compose status to get
+      description: Get the status of a running or finished compose. This includes whether or not it succeeded, and also meta information about the result.
+      responses:
+        '200':
+          description: compose status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeStatus'
+
+  /compose:
+    post:
+      summary: Create compose
+      description: Create a new compose, potentially consisting of several images and upload each to koji.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '200':
+          description: Compose has started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeResponse'
+
+components:
+  schemas:
+    ComposeStatus:
+      required:
+        - status
+        - image_statuses
+        - koji_task_id
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending', 'registering']
+          example: 'success'
+        image_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageStatus'
+        koji_task_id:
+          type: integer
+          example: 203143
+    ImageStatus:
+      required:
+       - status
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending', 'building', 'uploading']
+          example: 'success'
+    ComposeRequest:
+      type: object
+      required:
+        - distribution
+        - image_requests
+        - koji
+      properties:
+        distribution:
+          type: string
+          example: 'rhel-8.3'
+        image_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRequest'
+        koji:
+          $ref: '#/components/schemas/Koji'
+    ImageRequest:
+      required:
+        - architecture
+        - image_type
+        - repositories
+      properties:
+        architecture:
+          type: string
+          example: 'x86_64'
+        image_type:
+          type: string
+          example: 'ami'
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+    Repository:
+      type: object
+      required:
+        - baseurl
+      properties:
+        baseurl:
+          type: string
+          format: url
+          example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+    Koji:
+      type: object
+      required:
+        - server
+      properties:
+        server:
+          type: string
+          format: url
+          example: 'https://koji.fedoraproject.org/kojihub'
+    ComposeResponse:
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'
