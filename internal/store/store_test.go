@@ -1,11 +1,13 @@
 package store
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/stretchr/testify/suite"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
 //struct for sharing state between tests
