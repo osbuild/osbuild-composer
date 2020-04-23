@@ -136,7 +136,7 @@ func (t *imageType) MIMEType() string {
 func (t *imageType) Size(size uint64) uint64 {
 	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.filename == "vhd" && size%MegaByte != 0 {
+	if t.name == "vhd" && size%MegaByte != 0 {
 		size = (size/MegaByte + 1) * MegaByte
 	}
 	if size == 0 {
