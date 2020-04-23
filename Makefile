@@ -18,6 +18,7 @@ BUILDDIR ?= .
 SRCDIR ?= .
 
 RST2MAN ?= rst2man
+OAPI_CODEGEN ?= oapi-codegen # `go get github.com/deepmap/oapi-codegen`
 
 #
 # Automatic Variables
@@ -74,6 +75,7 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo "    openapi:            Generate OpenAPI wrappers"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -98,6 +100,23 @@ $(MANPAGES_TROFF): $(BUILDDIR)/docs/%: $(SRCDIR)/docs/%.rst | $(BUILDDIR)/docs/
 
 .PHONY: man
 man: $(MANPAGES_TROFF)
+
+#
+# OpenAPI Code Generation
+#
+# The `openapi` targets allow regenerating the request handlers from the openapi
+# specifications. Note that these targets modify the source-tree and the generated
+# code is committed upstream.
+#
+
+OPENAPIS_YAML = $(wildcard $(SRCDIR)/openapi/*.yml)
+OPENAPIS_GO = $(patsubst $(SRCDIR)/openapi/%.yml,$(SRCDIR)/internal/%/openapi.go,$(OPENAPIS_YAML))
+
+$(OPENAPIS_GO): $(SRCDIR)/internal/%/openapi.go: $(SRCDIR)/openapi/%.yml
+	$(OAPI_CODEGEN) --generate "types,chi-server" "$<" >"$@"
+
+.PHONY: openapi
+openapi: $(OPENAPIS_GO)
 
 #
 # Maintenance Targets
