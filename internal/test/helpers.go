@@ -108,10 +108,10 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 		t.Skip("This test is for internal testing only")
 	}
 
-	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s", path)
-
 	replyJSON, err := ioutil.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
+
+	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyJSON))
 
 	if expectedJSON == "" {
 		require.Lenf(t, replyJSON, 0, "%s: expected no response body, but got:\n%s", path, replyJSON)
