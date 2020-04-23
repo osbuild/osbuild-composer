@@ -10,6 +10,7 @@
       register: async_test
       async: "{{ test.timeout * 60 }}"
       poll: "{{ polling_interval }}"
+      no_log: yes
 
     - name: "Mark {{ test.name }} as passed"
       set_fact:

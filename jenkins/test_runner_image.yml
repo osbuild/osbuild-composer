@@ -1,0 +1,43 @@
+---
+
+- name: Set a fact for the short test case name
+  set_fact:
+    test_case_name: "{{ test.case | splitext | first }}"
+
+- block:
+
+    - name: "Run image test case: {{ test_case_name | basename }}"
+      command: |
+        {{ tests_path }}/{{ test.name }} -test.v \
+          {{ image_test_case_path }}/{{ test.case }}
+      args:
+        chdir: "{{ tests_working_directory }}"
+      register: async_test
+      async: "{{ test.timeout * 60 }}"
+      poll: "{{ polling_interval }}"
+      no_log: yes
+
+    - name: "Mark {{ test_case_name }} as passed"
+      set_fact:
+        passed_tests: "{{ passed_tests + [test_case_name] }}"
+
+  rescue:
+
+    - name: "Mark {{ test_case_name }} as failed"
+      set_fact:
+        failed_tests: "{{ failed_tests + [test_case_name] }}"
+
+  always:
+
+    - name: "Write log for {{ test_case_name }}"
+      copy:
+        dest: "{{ workspace }}/{{ test_case_name }}.log"
+        content: |
+          Logs from image test: {{ test_case_name }}
+          ----------------------------------------------------------------------
+          stderr:
+          {{ async_test.stderr }}
+          ----------------------------------------------------------------------
+          stdout:
+          {{ async_test.stdout }}
+
