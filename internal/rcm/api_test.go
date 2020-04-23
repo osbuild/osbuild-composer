@@ -18,14 +18,14 @@ import (
 )
 
 type API interface {
-	ServeHTTP(writer http.ResponseWriter, request *http.Request)
+	ServeHTTPUnauthenticated(writer http.ResponseWriter, request *http.Request)
 }
 
 func internalRequest(api API, method, path, body, contentType string) *http.Response {
 	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", contentType)
 	resp := httptest.NewRecorder()
-	api.ServeHTTP(resp, req)
+	api.ServeHTTPUnauthenticated(resp, req)
 
 	return resp.Result()
 }
@@ -54,7 +54,7 @@ func TestBasicRcmAPI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+	api := rcm.NewUnauthenticated(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	for _, c := range cases {
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
@@ -79,7 +79,7 @@ func TestSubmit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+	api := rcm.NewUnauthenticated(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`
@@ -207,7 +207,7 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+	api := rcm.NewUnauthenticated(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`

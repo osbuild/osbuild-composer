@@ -5,6 +5,8 @@ package rcm
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jcmturner/gokrb5/v8/keytab"
+	"github.com/jcmturner/gokrb5/v8/spnego"
 	"log"
 	"net"
 	"net/http"
@@ -27,10 +29,23 @@ type API struct {
 	// mock it in the unit tests
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
+	keytab      *keytab.Keytab
 }
 
 // New creates new RCM API
 func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *API {
+	kt, err := keytab.Load("/tmp/keytab")
+	if err != nil {
+		panic(err)
+	}
+
+	api := NewUnauthenticated(logger, store, rpmMetadata, distros)
+	api.keytab = kt
+
+	return api
+}
+
+func NewUnauthenticated(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *API {
 	api := &API{
 		logger:      logger,
 		store:       store,
@@ -68,6 +83,13 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		log.Println(request.Method, request.URL.Path)
 	}
 
+	handler := spnego.SPNEGOKRB5Authenticate(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		api.ServeHTTPUnauthenticated(writer, request)
+	}), api.keytab)
+	handler.ServeHTTP(writer, request)
+}
+
+func (api *API) ServeHTTPUnauthenticated(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	api.router.ServeHTTP(writer, request)
 }
