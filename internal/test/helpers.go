@@ -101,6 +101,8 @@ func dropFields(obj interface{}, fields ...string) {
 }
 
 func TestRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
+	t.Helper()
+
 	resp := SendHTTP(api, external, method, path, body)
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
