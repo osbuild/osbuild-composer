@@ -17,6 +17,12 @@
       when:
         - test_type == 'base'
 
+    - name: Update image test cases with the nearest mirror
+      include_tasks: use_nearest_mirror.yml
+      when:
+        - test_type == 'image'
+        - ansible_distribution == 'Fedora'
+
     - name: Run osbuild-composer image tests
       include_tasks: test_runner_image.yml
       loop: "{{ osbuild_composer_image_tests }}"
@@ -24,6 +30,7 @@
         loop_var: test
       when:
         - test_type == 'image'
+        - ansible_distribution == 'Fedora'
 
     - name: Show failed and passed tests
       debug:

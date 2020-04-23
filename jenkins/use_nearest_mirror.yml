@@ -1,0 +1,40 @@
+---
+
+- name: Ensure xpath is installed
+  package:
+    name: perl-XML-XPath
+    state: present
+
+- name: Download the Fedora metalink XML
+  uri:
+    url: "{{ fedora_metalink_url }}"
+    return_content: yes
+  register: metalink_download
+
+- name: Get the HTTPS mirrors from the metalink list
+  command: |
+    xpath -e "/metalink/files/file/resources/url[@protocol='https']/text()"
+  args:
+    stdin: "{{ metalink_download.content }}"
+  register: metalink_mirrors
+
+- name: Get the base URL of the top mirror from the list
+  set_fact:
+    top_mirror_url: "{{ metalink_mirrors.stdout_lines[0].split('/releases') | first }}"
+
+- debug:
+    msg: "Best mirror selected: {{ top_mirror_url }}"
+
+- name: Find test case files
+  find:
+    paths: "{{ image_test_case_path }}"
+    patterns: '*.json'
+  register: test_case_files
+
+- name: Adjust the image test cases to use the preferred mirror
+  command: |
+    sed -i \
+      "s#{{ generic_mirror_url }}#{{ top_mirror_url }}/releases/#" \
+      {{ item.path }}
+  loop: "{{ test_case_files.files }}"
+    

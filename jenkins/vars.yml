@@ -30,3 +30,9 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
 # Frequency to check for completed tests.
 polling_interval: 15
+
+# The URL for Fedora's mirror metalink.
+fedora_metalink_url: "https://mirrors.fedoraproject.org/metalink?repo=fedora-{{ ansible_distribution_version }}&arch={{ ansible_machine }}"
+
+# The generic mirror used in the test case json (will be replaced).
+generic_mirror_url: http://dl.fedoraproject.org/pub/fedora/linux/releases/

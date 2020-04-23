@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euxo pipefail
 
+### DEBUG: Remove before merging.
+export TEST_TYPE=image
+
 # Restart systemd to work around some Fedora issues in cloud images.
 systemctl restart systemd-journald
 
