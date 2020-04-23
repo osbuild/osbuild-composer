@@ -9,11 +9,21 @@
     - vars.yml
   tasks:
 
-    - name: Run osbuild-composer tests
-      include_tasks: test_runner.yml
+    - name: Run osbuild-composer base tests
+      include_tasks: test_runner_base.yml
       loop: "{{ osbuild_composer_base_tests }}"
       loop_control:
         loop_var: test
+      when:
+        - test_type == 'base'
+
+    - name: Run osbuild-composer image tests
+      include_tasks: test_runner_image.yml
+      loop: "{{ osbuild_composer_image_tests }}"
+      loop_control:
+        loop_var: test
+      when:
+        - test_type == 'image'
 
     - name: Show failed and passed tests
       debug:
