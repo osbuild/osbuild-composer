@@ -5,7 +5,7 @@
     msg: |
       Running the following image test cases:
       {% for test_case in osbuild_composer_image_test_cases %}
-        - {{ osbuild_composer_image_test_cases }}
+        - {{ test_case | splitext | first }}
       {% endfor %}
 
 - block:
