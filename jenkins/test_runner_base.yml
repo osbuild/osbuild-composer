@@ -2,7 +2,6 @@
 
 - block:
 
-    # NOTE(mhayden): Running tests from the workspace dirt
     - name: "Run {{ test.name }} test"
       command: "{{ tests_path }}/{{ test.name }} -test.v"
       args:
