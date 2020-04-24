@@ -23,7 +23,7 @@ import (
 // Hold test state to share between tests
 var testState *TestState
 
-func TestMain(m *testing.M) {
+func executeTests(m *testing.M) int {
 	// Setup the mocked server running on a temporary domain socket
 	tmpdir, err := ioutil.TempDir("", "client_test-")
 	if err != nil {
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 
 	go func() {
 		err := server.Serve(ln)
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
@@ -64,5 +64,9 @@ func TestMain(m *testing.M) {
 	}
 
 	// Run the tests
-	os.Exit(m.Run())
+	return m.Run()
+}
+
+func TestMain(m *testing.M) {
+	os.Exit(executeTests(m))
 }
