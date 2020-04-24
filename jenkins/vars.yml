@@ -1,3 +1,4 @@
+## Global test variables
 # Tests should use this as their working directory. This part is critical
 # since dnf-json must be in $PATH.
 tests_working_directory: /usr/libexec/osbuild-composer
@@ -5,6 +6,10 @@ tests_working_directory: /usr/libexec/osbuild-composer
 # The test executables are here.
 tests_path: /usr/libexec/tests/osbuild-composer
 
+# Frequency to check for completed tests.
+polling_interval: 15
+
+## Non-image test variables.
 # List of base tests and their timeouts (in minutes)
 osbuild_composer_base_tests:
   - name: osbuild-rcm-tests
@@ -16,17 +21,17 @@ osbuild_composer_base_tests:
   - name: osbuild-tests
     timeout: 30
 
-# List of image tests and their timeouts (in minutes).
-osbuild_composer_image_tests:
-  - name: osbuild-image-tests
-    case: fedora_31-x86_64-ext4_filesystem-boot.json
-    timeout: 15
-  - name: osbuild-image-tests
-    case: fedora_31-x86_64-tar-boot.json
-    timeout: 15
+## Image test variables.
+# Executable that runs image tests.
+image_test_executable: "{{ tests_path }}/osbuild-image-tests"
+
+# Timeout for image tests (in minutes).
+image_test_timeout: 15
 
 # Location of image test case files.
 image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
-# Frequency to check for completed tests.
-polling_interval: 15
+# List of image tests and their timeouts (in minutes).
+osbuild_composer_image_test_cases:
+  - fedora_31-x86_64-ext4_filesystem-boot.json
+  - fedora_31-x86_64-tar-boot.json
