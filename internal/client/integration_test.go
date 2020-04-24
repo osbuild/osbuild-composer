@@ -19,29 +19,35 @@ var testState *TestState
 
 // Setup the socket to use for running the tests
 // Also makes sure there is a running server to test against
-func TestMain(m *testing.M) {
+func executeTests(m *testing.M) int {
 	var err error
 	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second, false)
 	if err != nil {
 		fmt.Printf("ERROR: Test setup failed: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	// Setup the test repo
 	dir, err := test.SetUpTemporaryRepository()
 	if err != nil {
 		fmt.Printf("ERROR: Test repo setup failed: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+
+	// Cleanup after the tests
+	defer func() {
+		err := test.TearDownTemporaryRepository(dir)
+		if err != nil {
+			fmt.Printf("ERROR: Failed to clean up temporary repository: %s\n", err)
+		}
+	}()
+
 	testState.repoDir = dir
 
 	// Run the tests
-	rc := m.Run()
+	return m.Run()
+}
 
-	// Cleanup after the tests
-	err = test.TearDownTemporaryRepository(dir)
-	if err != nil {
-		fmt.Printf("ERROR: Failed to clean up temporary repository: %s\n", err)
-	}
-	os.Exit(rc)
+func TestMain(m *testing.M) {
+	os.Exit(executeTests(m))
 }
