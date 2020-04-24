@@ -13,7 +13,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -77,28 +76,6 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 	}
 
 	return result.OutputID, nil
-}
-
-// extractXZ extracts an xz archive, it's just a simple wrapper around unxz(1).
-func extractXZ(archivePath string) error {
-	cmd := exec.Command("unxz", archivePath)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("cannot extract xz archive: %#v", err)
-	}
-
-	return nil
-}
-
-// splitExtension returns a file extension as the second return value and
-// the rest as the first return value.
-// The functionality should be the same as Python splitext's
-func splitExtension(path string) (string, string) {
-	ex := filepath.Ext(path)
-	base := strings.TrimSuffix(path, ex)
-
-	return base, ex
 }
 
 // testImageInfo runs image-info on image specified by imageImage and
@@ -359,17 +336,6 @@ func runTestcase(t *testing.T, testcase testcaseStruct) {
 	require.NoError(t, err)
 
 	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
-
-	// if the result is xz archive but not tar.xz archive, extract it
-	base, ex := splitExtension(imagePath)
-	if ex == ".xz" {
-		_, ex = splitExtension(base)
-		if ex != ".tar" {
-			err := extractXZ(imagePath)
-			require.NoError(t, err)
-			imagePath = base
-		}
-	}
 
 	testImage(t, testcase, imagePath, outputID)
 }
