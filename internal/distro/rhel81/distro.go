@@ -202,7 +202,7 @@ func New() *RHEL81 {
 	}
 
 	r.imageTypes["ami"] = imageType{
-		name:     "image.raw.xz",
+		name:     "image.vhdx",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"checkpolicy",
@@ -273,7 +273,7 @@ func New() *RHEL81 {
 		kernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw.xz", "image.raw.xz", uefi, size)
+			return r.qemuAssembler("vhdx", "image.vhdx", uefi, size)
 		},
 	}
 

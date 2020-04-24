@@ -8,7 +8,7 @@
       "arch": "",
       "image-type": "ami",
       "repositories": [],
-      "filename": "image.raw.xz",
+      "filename": "image.vhdx",
       "blueprint": {}
     }
   },
