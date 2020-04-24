@@ -54,14 +54,6 @@ def main(test_case, store):
     if boot_type != "nspawn-extract":
         output_id = run_osbuild(test_case["manifest"], store)
         image_file = os.path.join(store, "refs", output_id, test_case["compose-request"]["filename"])
-
-        # we don't yet support image-info on directory trees
-        if boot_type in {"qemu-extract"}:
-            fn, ex = os.path.splitext(image_file)
-            if ex == ".xz":
-                with open(fn, "w") as f:
-                    subprocess.run(["xz", "--decompress", "--stdout", image_file], stdout=f)
-                image_file = fn
         test_case["image-info"] = json.loads(get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8"))
 
     return test_case
