@@ -1,39 +1,52 @@
 ---
 
-- name: Set a fact for the short test case name
-  set_fact:
-    test_case_name: "{{ test.case | splitext | first }}"
+- name: Show which tests will be run
+  debug:
+    msg: |
+      Running the following image test cases:
+      {% for test_case in osbuild_composer_image_test_cases %}
+        - {{ osbuild_composer_image_test_cases }}
+      {% endfor %}
 
 - block:
 
-    - name: "Run image test case: {{ test_case_name | basename }}"
+    # NOTE(mhayden): The fancy jinja2 here ensures that the last test case
+    # in the list does not have a backslash added. That would make the shell
+    # upset and nobody likes it when that happens.
+    - name: "Run image tests"
       command: |
-        {{ tests_path }}/{{ test.name }} -test.v \
-          {{ image_test_case_path }}/{{ test.case }}
+        {{ image_test_executable }} -test.v \
+          {% for test_case in osbuild_composer_image_test_cases %}
+            {% if loop.last %}
+          {{ image_test_case_path }}/{{ test_case }}
+            {% else %}
+          {{ image_test_case_path }}/{{ test_case }} \
+            {% endif %}
+          {% endfor %}
       args:
         chdir: "{{ tests_working_directory }}"
       register: async_test
-      async: "{{ test.timeout * 60 }}"
+      async: "{{ image_test_timeout * 60 }}"
       poll: "{{ polling_interval }}"
       no_log: yes
 
-    - name: "Mark {{ test_case_name }} as passed"
+    - name: "Mark image tests as passed"
       set_fact:
-        passed_tests: "{{ passed_tests + [test_case_name] }}"
+        passed_tests: "{{ passed_tests + ['image_tests'] }}"
 
   rescue:
 
-    - name: "Mark {{ test_case_name }} as failed"
+    - name: "Mark image tests as failed"
       set_fact:
-        failed_tests: "{{ failed_tests + [test_case_name] }}"
+        failed_tests: "{{ failed_tests + ['image_tests'] }}"
 
   always:
 
-    - name: "Write log for {{ test_case_name }}"
+    - name: "Write log for image tests"
       copy:
-        dest: "{{ workspace }}/{{ test_case_name }}.log"
+        dest: "{{ workspace }}/image_test.log"
         content: |
-          Logs from image test: {{ test_case_name }}
+          Logs from image test
           ----------------------------------------------------------------------
           stderr:
           {{ async_test.stderr }}
