@@ -291,8 +291,6 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 func testBoot(t *testing.T, imagePath string, bootType string, outputID string) {
 	switch bootType {
 	case "qemu":
-		fallthrough
-	case "qemu-extract":
 		testBootUsingQemu(t, imagePath)
 
 	case "nspawn":
