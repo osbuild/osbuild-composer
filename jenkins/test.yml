@@ -25,8 +25,14 @@
     - name: Show failed and passed tests
       debug:
         msg: |
-          Passed tests: "{{ passed_tests }}"
-          Failed tests: "{{ failed_tests }}"
+          Passed tests: {{ 'None' if not passed_tests else '' }}
+          {% for test_name in passed_tests %}
+            - {{ test_name }}
+          {% endfor %}
+          Failed tests: {{ 'None' if not failed_tests else '' }}
+          {% for test_name in failed_tests %}
+            - {{ test_name }}
+          {% endfor %}
 
     - name: Fail the test run if a test failed
       fail:
