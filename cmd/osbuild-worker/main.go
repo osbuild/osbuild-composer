@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
+	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -116,6 +117,28 @@ func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*co
 				continue
 			}
 		case *target.AzureTargetOptions:
+
+			credentials := azure.Credentials{
+				StorageAccount:   options.StorageAccount,
+				StorageAccessKey: options.StorageAccessKey,
+			}
+			metadata := azure.ImageMetadata{
+				ContainerName: options.Container,
+				ImageName:     t.ImageName,
+			}
+
+			const azureMaxUploadGoroutines = 4
+			err := azure.UploadImage(
+				credentials,
+				metadata,
+				path.Join(tmpStore, "refs", result.OutputID, options.Filename),
+				azureMaxUploadGoroutines,
+			)
+
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
 		default:
 			r = append(r, fmt.Errorf("invalid target type"))
 		}
