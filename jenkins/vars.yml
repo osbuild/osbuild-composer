@@ -26,7 +26,7 @@ osbuild_composer_base_tests:
 image_test_executable: "{{ tests_path }}/osbuild-image-tests"
 
 # Timeout for image tests (in minutes).
-image_test_timeout: 15
+image_test_timeout: 45
 
 # Location of image test case files.
 image_test_case_path: /usr/share/tests/osbuild-composer/cases
@@ -34,4 +34,8 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 # List of image tests and their timeouts (in minutes).
 osbuild_composer_image_test_cases:
   - ext4_filesystem-boot.json
+  - partitioned_disk-boot.json
+  - qcow2-boot.json
   - tar-boot.json
+  - vhd-boot.json
+  - vmdk-boot.json
