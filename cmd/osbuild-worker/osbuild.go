@@ -10,6 +10,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
+type OSBuildError struct {
+	Message string
+	Result  *common.ComposeResult
+}
+
+func (e *OSBuildError) Error() string {
+	return e.Message
+}
+
 func RunOSBuild(manifest *osbuild.Manifest, store string, errorWriter io.Writer) (*common.ComposeResult, error) {
 	cmd := exec.Command(
 		"osbuild",
@@ -48,7 +57,10 @@ func RunOSBuild(manifest *osbuild.Manifest, store string, errorWriter io.Writer)
 
 	err = cmd.Wait()
 	if err != nil {
-		return &result, err
+		return nil, &OSBuildError{
+			Message: fmt.Sprintf("running osbuild failed: %v", err),
+			Result:  &result,
+		}
 	}
 
 	return &result, nil
