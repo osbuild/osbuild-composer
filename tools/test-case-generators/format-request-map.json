@@ -159,7 +159,7 @@
   },
   "vhd": {
     "boot": {
-      "type": "qemu"
+      "type": "azure"
     },
     "compose-request": {
       "distro": "",
