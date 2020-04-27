@@ -113,11 +113,11 @@ build:
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
-	go test -c -tags=integration -o osbuild-tests ./cmd/osbuild-tests/main_test.go
-	go test -c -tags=integration -o osbuild-weldr-tests ./internal/client/
-	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
-	go test -c -tags=integration -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/main_test.go
-	go test -c -tags=integration,travis -o osbuild-image-tests ./cmd/osbuild-image-tests/
+	go test -c -tags=integration -covermode atomic -o osbuild-tests ./cmd/osbuild-tests/main_test.go
+	go test -c -tags=integration -covermode atomic -o osbuild-weldr-tests ./internal/client/
+	go test -c -tags=integration -covermode atomic -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
+	go test -c -tags=integration -covermode atomic -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/main_test.go
+	go test -c -tags=integration,travis -covermode atomic -o osbuild-image-tests ./cmd/osbuild-image-tests/
 
 .PHONY: install
 install:

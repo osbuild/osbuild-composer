@@ -3,7 +3,7 @@
 - block:
 
     - name: "Run {{ test.name }} test"
-      command: "{{ tests_path }}/{{ test.name }} -test.v"
+      command: "{{ tests_path }}/{{ test.name }} -test.v -test.coverprofile=coverage.txt"
       args:
         chdir: "{{ tests_working_directory }}"
       register: async_test
@@ -14,6 +14,11 @@
     - name: "Mark {{ test.name }} as passed"
       set_fact:
         passed_tests: "{{ passed_tests + [test.name] }}"
+
+    - name: "Send coverage to codecov.io"
+      shell: curl -s https://codecov.io/bash | bash
+      args:
+        warn: no
 
   rescue:
 

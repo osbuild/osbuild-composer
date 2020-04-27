@@ -24,7 +24,7 @@
     # upset and nobody likes it when that happens.
     - name: "Run image tests"
       command: |
-        {{ image_test_executable }} -test.v \
+        {{ image_test_executable }} -test.v -test.coverprofile=coverage.txt \
           {% for test_case in osbuild_composer_image_test_cases %}
             {% if loop.last %}
           {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }}
@@ -42,6 +42,11 @@
     - name: "Mark image tests as passed"
       set_fact:
         passed_tests: "{{ passed_tests + ['image_tests'] }}"
+
+    - name: "Send coverage to codecov.io"
+      shell: curl -s https://codecov.io/bash | bash
+      args:
+        warn: no
 
   rescue:
 
