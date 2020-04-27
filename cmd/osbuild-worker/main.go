@@ -71,7 +71,7 @@ func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*co
 
 	result, err := RunOSBuild(job.Manifest, tmpStore, os.Stderr)
 	if err != nil {
-		return nil, fmt.Errorf("osbuild error: %v", err)
+		return result, fmt.Errorf("osbuild error: %v", err)
 	}
 
 	var r []error
@@ -175,6 +175,11 @@ func main() {
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
+
+			// If the error comes from osbuild, retrieve the result
+			if osbuildError, ok := err.(*OSBuildError); ok {
+				result = osbuildError.Result
+			}
 		} else {
 			status = common.IBFinished
 		}
