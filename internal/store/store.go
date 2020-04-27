@@ -638,14 +638,9 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 
 		var err error
 		if s.stateDir != nil {
-			// TODO: we need to rename the files as the compose will have multiple images
-			for _, imageBuild := range compose.ImageBuilds {
-				if imageBuild.QueueStatus == common.IBFinished || imageBuild.QueueStatus == common.IBFailed {
-					err = os.RemoveAll(s.getComposeDirectory(id))
-					if err != nil {
-						return err
-					}
-				}
+			err = os.RemoveAll(s.getComposeDirectory(id))
+			if err != nil {
+				return err
 			}
 		}
 
