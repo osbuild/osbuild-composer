@@ -36,9 +36,9 @@ type awsUploadSettings struct {
 func (awsUploadSettings) isUploadSettings() {}
 
 type azureUploadSettings struct {
-	Account   string `json:"account"`
-	AccessKey string `json:"accessKey"`
-	Container string `json:"container"`
+	StorageAccount   string `json:"storageAccount"`
+	StorageAccessKey string `json:"storageAccessKey"`
+	Container        string `json:"container"`
 }
 
 func (azureUploadSettings) isUploadSettings() {}
@@ -107,9 +107,9 @@ func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
 		case *target.AzureTargetOptions:
 			upload.ProviderName = "azure"
 			upload.Settings = &azureUploadSettings{
-				Account:   options.Account,
-				AccessKey: options.AccessKey,
-				Container: options.Container,
+				StorageAccount:   options.StorageAccount,
+				StorageAccessKey: options.StorageAccessKey,
+				Container:        options.Container,
 			}
 			uploads = append(uploads, upload)
 		}
@@ -140,10 +140,10 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *azureUploadSettings:
 		t.Name = "org.osbuild.azure"
 		t.Options = &target.AzureTargetOptions{
-			Filename:  imageType.Filename(),
-			Account:   options.Account,
-			AccessKey: options.AccessKey,
-			Container: options.Container,
+			Filename:         imageType.Filename(),
+			StorageAccount:   options.StorageAccount,
+			StorageAccessKey: options.StorageAccessKey,
+			Container:        options.Container,
 		}
 	}
 
