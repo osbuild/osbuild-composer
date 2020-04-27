@@ -18,6 +18,18 @@ are also compiled via `go test -c -o` during rpm build or via `make build`.
 See *Integration testing* for more information.
 
 
+## Image tests
+
+In the `test/cases` directory, sample image builds and their tests are
+collected for the various distros, architectures, configuration we support.
+
+Each test case describes how the image is built, the expected osbuild
+manifest used internally, the expected image-info output and how to
+boot-test the image.
+
+To (re)generate these test cases use the tool
+`tools/test-case-generators/generate-test-cases`.
+
 ## Notes on asserts and comparing expected values
 
 When comparing for expected values in test functions you should use the
