@@ -1,0 +1,211 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "testId": {
+      "type": "string"
+    },
+    "publicIPAddressName": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "imagePath": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPublicKey": {
+      "type": "secureString"
+    }
+  },
+  "variables": {
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/default')]",
+    "networkInterfaceName": "[concat('iface-', parameters('testId'))]",
+    "networkSecurityGroupName": "[concat('nsg-', parameters('testId'))]",
+    "virtualNetworkName": "[concat('vnet-', parameters('testId'))]",
+    "publicIPAddressName": "[concat('ip-', parameters('testId'))]",
+    "virtualMachineName": "[concat('vm-', parameters('testId'))]",
+    "diskName": "[concat('disk-', parameters('testId'))]",
+    "imageName": "[concat('image-', parameters('testId'))]",
+    "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+    "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('publicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[variables('nsgId')]"
+        }
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-02-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "priority": 300,
+              "protocol": "TCP",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          }
+        ]
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    },
+    {
+      "name": "[variables('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.5.0/24"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.5.0/24"
+            }
+          }
+        ]
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    },
+    {
+      "name": "[parameters('publicIPAddressName')]",
+      "type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2019-02-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIpAllocationMethod": "Dynamic"
+      },
+      "sku": {
+        "name": "Basic"
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    },
+    {
+      "name": "[variables('imageName')]",
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hyperVGeneration": "V1",
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux",
+            "blobUri": "[parameters('imagePath')]",
+            "osState": "Generalized"
+          }
+        }
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    },
+    {
+      "name": "[variables('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+        "[concat('Microsoft.Compute/images/', variables('imageName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B1s"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Compute/images', variables('imageName'))]"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[variables('diskName')]",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('adminPublicKey')]"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "tags": {
+        "osbuild-composer-image-test": "[parameters('tag')]"
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/azuretest"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
@@ -262,6 +263,43 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 }
 
+func testBootUsingAzure(t *testing.T, imagePath string) {
+	creds, err := azuretest.GetAzureCredentialsFromEnv()
+	require.NoError(t, err)
+
+	// if no credentials are given, fall back to qemu
+	if creds == nil {
+		log.Print("no Azure credentials given, falling back to booting using qemu")
+		testBootUsingQemu(t, imagePath)
+		return
+	}
+
+	// create a random test id to name all the resources used in this test
+	testId, err := generateRandomString("")
+	require.NoError(t, err)
+
+	imageName := "image-" + testId + ".vhd"
+
+	// the following line should be done by osbuild-composer at some point
+	err = azuretest.UploadImageToAzure(creds, imagePath, imageName)
+	require.NoErrorf(t, err, "upload to azure failed, resources could have been leaked")
+
+	// delete the image after the test is over
+	defer func() {
+		err = azuretest.DeleteImageFromAzure(creds, imageName)
+		require.NoErrorf(t, err, "cannot delete the azure image, resources could have been leaked")
+	}()
+
+	// boot the uploaded image and try to connect to it
+	err = withSSHKeyPair(func(privateKey, publicKey string) error {
+		return azuretest.WithBootedImageInAzure(creds, imageName, testId, publicKey, func(address string) error {
+			testSSH(t, address, privateKey, nil)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
 // testBoot tests if the image is able to successfully boot
 // Before the test it boots the image respecting the specified bootType.
 // The test passes if the function is able to connect to the image via ssh
@@ -280,6 +318,9 @@ func testBoot(t *testing.T, imagePath string, bootType string, outputID string) 
 
 	case "aws":
 		testBootUsingAWS(t, imagePath)
+
+	case "azure":
+		testBootUsingAzure(t, imagePath)
 
 	default:
 		panic("unknown boot type!")

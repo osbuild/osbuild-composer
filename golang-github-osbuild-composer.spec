@@ -26,6 +26,7 @@ BuildRequires:  systemd
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
 BuildRequires:  golang(github.com/aws/aws-sdk-go)
+BuildRequires:  golang(github.com/Azure/azure-sdk-for-go)
 BuildRequires:  golang(github.com/Azure/azure-storage-blob-go/azblob)
 BuildRequires:  golang(github.com/BurntSushi/toml)
 BuildRequires:  golang(github.com/coreos/go-semver/semver)
@@ -112,6 +113,9 @@ install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libex
 install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-rcm-tests                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer
+install -m 0644 -vp test/azure-deployment-template.json     %{buildroot}%{_datadir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
 install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
