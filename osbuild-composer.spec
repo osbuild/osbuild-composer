@@ -217,7 +217,8 @@ The worker for osbuild-composer
 %systemd_preun osbuild-worker@.service osbuild-remote-worker@.service
 
 %postun worker
-%systemd_postun_with_restart osbuild-worker@.service osbuild-remote-worker@.service
+# restart all the worker services
+%systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
 %if %{with tests}
 
