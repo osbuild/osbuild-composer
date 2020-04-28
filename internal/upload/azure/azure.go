@@ -31,7 +31,7 @@ type ImageMetadata struct {
 }
 
 // UploadImage takes the metadata and credentials required to upload the image specified by `fileName`
-// It can speed up the upload by using gorutines. The number of parallel gorutines is bounded by
+// It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
 func UploadImage(credentials Credentials, metadata ImageMetadata, fileName string, threads int) error {
 	// Create a default request pipeline using your storage account name and account key.
@@ -90,8 +90,8 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	// Create control variables
 	// This channel simulates behavior of a semaphore and bounds the number of parallel threads
 	var semaphore = make(chan int, threads)
-	// Forward error from gorutine to the caller
-	var errorInGorutine = make(chan error, 1)
+	// Forward error from goroutine to the caller
+	var errorInGoroutine = make(chan error, 1)
 	var counter int64 = 0
 
 	// Create buffered reader to speed up the upload
@@ -119,9 +119,9 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 			_, err = blobURL.UploadPages(ctx, counter*azblob.PageBlobMaxUploadPagesBytes, bytes.NewReader(buffer[:n]), azblob.PageBlobAccessConditions{}, nil)
 			if err != nil {
 				err = fmt.Errorf("uploading a page failed: %v", err)
-				// Send the error to the error channel in a non-blocking way. If there is already an error, just discart this one
+				// Send the error to the error channel in a non-blocking way. If there is already an error, just discard this one
 				select {
-				case errorInGorutine <- err:
+				case errorInGoroutine <- err:
 				default:
 				}
 			}
@@ -129,11 +129,11 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 		}(counter, buffer, n)
 		counter++
 	}
-	// Wait for all gorutines to finish
+	// Wait for all goroutines to finish
 	wg.Wait()
 	// Check any errors during the transmission using a nonblocking read from the channel
 	select {
-	case err := <-errorInGorutine:
+	case err := <-errorInGoroutine:
 		return err
 	default:
 	}
