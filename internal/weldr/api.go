@@ -1683,7 +1683,14 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		filteredUUIDs = append(filteredUUIDs, id)
 	}
 
-	reply.UUIDs = composesToComposeEntries(composes, filteredUUIDs, isRequestVersionAtLeast(params, 1))
+	reply.UUIDs = []*ComposeEntry{}
+	includeUploads := isRequestVersionAtLeast(params, 1)
+	for _, id := range filteredUUIDs {
+		if compose, exists := composes[id]; exists {
+			reply.UUIDs = append(reply.UUIDs, composeToComposeEntry(id, compose, includeUploads))
+		}
+	}
+	sortComposeEntries(reply.UUIDs)
 
 	err = json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
@@ -1986,13 +1993,13 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 		Finished []*ComposeEntry `json:"finished"`
 	}{[]*ComposeEntry{}}
 
-	composes := api.store.GetAllComposes()
-	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
-		switch entry.QueueStatus {
-		case common.IBFinished:
-			reply.Finished = append(reply.Finished, entry)
+	includeUploads := isRequestVersionAtLeast(params, 1)
+	for id, compose := range api.store.GetAllComposes() {
+		if compose.ImageBuilds[0].QueueStatus == common.IBFinished {
+			reply.Finished = append(reply.Finished, composeToComposeEntry(id, compose, includeUploads))
 		}
 	}
+	sortComposeEntries(reply.Finished)
 
 	err := json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
@@ -2007,13 +2014,13 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 		Failed []*ComposeEntry `json:"failed"`
 	}{[]*ComposeEntry{}}
 
-	composes := api.store.GetAllComposes()
-	for _, entry := range composesToComposeEntries(composes, nil, isRequestVersionAtLeast(params, 1)) {
-		switch entry.QueueStatus {
-		case common.IBFailed:
-			reply.Failed = append(reply.Failed, entry)
+	includeUploads := isRequestVersionAtLeast(params, 1)
+	for id, compose := range api.store.GetAllComposes() {
+		if compose.ImageBuilds[0].QueueStatus == common.IBFailed {
+			reply.Failed = append(reply.Failed, composeToComposeEntry(id, compose, includeUploads))
 		}
 	}
+	sortComposeEntries(reply.Failed)
 
 	err := json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
