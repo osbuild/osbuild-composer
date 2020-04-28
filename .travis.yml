@@ -14,6 +14,8 @@ matrix:
       arch: amd64
     - name: fedora_31
       arch: amd64
+    - name: fedora_32
+      arch: amd64
 
 language: generic
 script:
