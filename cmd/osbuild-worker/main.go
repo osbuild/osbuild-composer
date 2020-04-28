@@ -71,7 +71,7 @@ func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*co
 
 	result, err := RunOSBuild(job.Manifest, tmpStore, os.Stderr)
 	if err != nil {
-		return result, fmt.Errorf("osbuild error: %v", err)
+		return nil, err
 	}
 
 	var r []error
