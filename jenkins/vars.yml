@@ -33,5 +33,5 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
 # List of image tests and their timeouts (in minutes).
 osbuild_composer_image_test_cases:
-  - fedora_31-x86_64-ext4_filesystem-boot.json
-  - fedora_31-x86_64-tar-boot.json
+  - ext4_filesystem-boot.json
+  - tar-boot.json

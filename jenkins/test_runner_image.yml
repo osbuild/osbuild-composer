@@ -1,5 +1,14 @@
 ---
 
+- name: Setup test case prefix based on distro and release
+  set_fact:
+    test_case_prefix: >-
+      {%- if ansible_distribution == "Fedora" -%}
+      fedora_{{ ansible_distribution_version }}-{{ ansible_machine }}
+      {%- else -%}
+      rhel_{{ ansible_distribution_version }}-{{ ansible_machine }}
+      {%- endif -%}
+
 - name: Show which tests will be run
   debug:
     msg: |
@@ -18,9 +27,9 @@
         {{ image_test_executable }} -test.v \
           {% for test_case in osbuild_composer_image_test_cases %}
             {% if loop.last %}
-          {{ image_test_case_path }}/{{ test_case }}
+          {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }}
             {% else %}
-          {{ image_test_case_path }}/{{ test_case }} \
+          {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }} \
             {% endif %}
           {% endfor %}
       args:
