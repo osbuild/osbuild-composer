@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -13,14 +14,6 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 )
-
-type errorString struct {
-	s string
-}
-
-func (e *errorString) Error() string {
-	return e.s
-}
 
 // Credentials contains credentials to connect to your account
 // It uses so called "Client credentials", see the official documentation for more information:
@@ -153,7 +146,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	var fileChecksum []byte = imageFileHash.Sum(nil)
 
 	if !bytes.Equal(blobChecksum, fileChecksum) {
-		return &errorString{"error during image upload. the image seems to be corrupted"}
+		return errors.New("error during image upload. the image seems to be corrupted")
 	}
 
 	return nil
