@@ -59,26 +59,8 @@ func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads
 	return &composeEntry
 }
 
-func composesToComposeEntries(composes map[uuid.UUID]compose.Compose, uuids []uuid.UUID, includeUploads bool) []*ComposeEntry {
-	var composeEntries []*ComposeEntry
-	if uuids == nil {
-		composeEntries = make([]*ComposeEntry, 0, len(composes))
-		for id, compose := range composes {
-			composeEntries = append(composeEntries, composeToComposeEntry(id, compose, includeUploads))
-		}
-	} else {
-		composeEntries = make([]*ComposeEntry, 0, len(uuids))
-		for _, id := range uuids {
-			if compose, exists := composes[id]; exists {
-				composeEntries = append(composeEntries, composeToComposeEntry(id, compose, includeUploads))
-			}
-		}
-	}
-
-	// make this function output more predictable
-	sort.Slice(composeEntries, func(i, j int) bool {
-		return composeEntries[i].ID.String() < composeEntries[j].ID.String()
+func sortComposeEntries(entries []*ComposeEntry) {
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].ID.String() < entries[j].ID.String()
 	})
-
-	return composeEntries
 }
