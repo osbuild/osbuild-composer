@@ -44,7 +44,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	// Create a default request pipeline using your storage account name and account key.
 	credential, err := azblob.NewSharedKeyCredential(credentials.StorageAccount, credentials.StorageAccessKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot create azure credentials: %v", err)
 	}
 
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
@@ -62,36 +62,36 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	// Open the image file for reading
 	imageFile, err := os.Open(fileName)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot open the image: %v", err)
 	}
 	defer imageFile.Close()
 
 	// Stat image to get the file size
 	stat, err := imageFile.Stat()
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot stat the image: %v", err)
 	}
 
 	// Hash the imageFile
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
-		return err
+		return fmt.Errorf("cannot create md5 of the image: %v", err)
 	}
 	// Move the cursor back to the start of the imageFile
 	if _, err := imageFile.Seek(0, 0); err != nil {
-		return err
+		return fmt.Errorf("cannot seek the image: %v", err)
 	}
 
 	// Create page blob URL. Page blob is required for VM images
 	blobURL := containerURL.NewPageBlobURL(metadata.ImageName)
 	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot create the blob URL: %v", err)
 	}
 	// Wrong MD5 does not seem to have any impact on the upload
 	_, err = blobURL.SetHTTPHeaders(ctx, azblob.BlobHTTPHeaders{ContentMD5: imageFileHash.Sum(nil)}, azblob.BlobAccessConditions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot set the HTTP headers on the blob URL: %v", err)
 	}
 
 	// Create control variables
@@ -113,7 +113,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 			if err == io.EOF {
 				run = false
 			} else {
-				return err
+				return fmt.Errorf("reading the image failed: %v", err)
 			}
 		}
 		if n == 0 {
@@ -125,6 +125,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 			defer wg.Done()
 			_, err = blobURL.UploadPages(ctx, counter*azblob.PageBlobMaxUploadPagesBytes, bytes.NewReader(buffer[:n]), azblob.PageBlobAccessConditions{}, nil)
 			if err != nil {
+				err = fmt.Errorf("uploading a page failed: %v", err)
 				// Send the error to the error channel in a non-blocking way. If there is already an error, just discart this one
 				select {
 				case errorInGorutine <- err:
@@ -146,7 +147,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	// Check properties, specifically MD5 sum of the blob
 	props, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("getting the properties of the new blob failed: %v", err)
 	}
 	var blobChecksum []byte = props.ContentMD5()
 	var fileChecksum []byte = imageFileHash.Sum(nil)
