@@ -1631,10 +1631,10 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 
 	uuidsParam := params.ByName("uuids")
 
-	var uuids []uuid.UUID
+	composes := api.store.GetAllComposes()
+	uuids := []uuid.UUID{}
 
 	if uuidsParam != "*" {
-		uuids = []uuid.UUID{}
 		for _, uuidString := range strings.Split(uuidsParam, ",") {
 			id, err := uuid.Parse(uuidString)
 			if err != nil {
@@ -1647,8 +1647,11 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 			}
 			uuids = append(uuids, id)
 		}
+	} else {
+		for id := range composes {
+			uuids = append(uuids, id)
+		}
 	}
-	composes := api.store.GetAllComposes()
 
 	q, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
@@ -1662,23 +1665,25 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 
 	filterBlueprint := q.Get("blueprint")
 	filterStatus := q.Get("status")
-	filterImageType := q.Get("type")
+	filterImageType, filterImageTypeExists := common.ImageTypeFromCompatString(q.Get("type"))
 
-	if filterBlueprint != "" || filterStatus != "" || filterImageType != "" {
-		for uuid, compose := range composes {
-			filterImageType, found := common.ImageTypeFromCompatString(filterImageType)
-
-			if filterBlueprint != "" && compose.Blueprint.Name != filterBlueprint {
-				delete(composes, uuid)
-			} else if filterStatus != "" && compose.ImageBuilds[0].QueueStatus.ToString() != filterStatus {
-				delete(composes, uuid)
-			} else if found && compose.ImageBuilds[0].ImageType != filterImageType {
-				delete(composes, uuid)
-			}
+	filteredUUIDs := []uuid.UUID{}
+	for _, id := range uuids {
+		compose, exists := composes[id]
+		if !exists {
+			continue
 		}
+		if filterBlueprint != "" && compose.Blueprint.Name != filterBlueprint {
+			continue
+		} else if filterStatus != "" && compose.ImageBuilds[0].QueueStatus.ToString() != filterStatus {
+			continue
+		} else if filterImageTypeExists && compose.ImageBuilds[0].ImageType != filterImageType {
+			continue
+		}
+		filteredUUIDs = append(filteredUUIDs, id)
 	}
 
-	reply.UUIDs = composesToComposeEntries(composes, uuids, isRequestVersionAtLeast(params, 1))
+	reply.UUIDs = composesToComposeEntries(composes, filteredUUIDs, isRequestVersionAtLeast(params, 1))
 
 	err = json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
