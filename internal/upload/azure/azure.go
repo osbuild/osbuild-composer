@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
@@ -34,6 +35,11 @@ type ImageMetadata struct {
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
 func UploadImage(credentials Credentials, metadata ImageMetadata, fileName string, threads int) error {
+	// Azure cannot create an image from a storage blob without .vhd extension
+	if !strings.HasSuffix(metadata.ImageName, ".vhd") {
+		metadata.ImageName = metadata.ImageName + ".vhd"
+	}
+
 	// Create a default request pipeline using your storage account name and account key.
 	credential, err := azblob.NewSharedKeyCredential(credentials.StorageAccount, credentials.StorageAccessKey)
 	if err != nil {
