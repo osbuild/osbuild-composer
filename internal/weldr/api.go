@@ -1634,9 +1634,8 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	var uuids []uuid.UUID
 
 	if uuidsParam != "*" {
-		uuidStrings := strings.Split(uuidsParam, ",")
-		uuids = make([]uuid.UUID, len(uuidStrings))
-		for _, uuidString := range uuidStrings {
+		uuids = []uuid.UUID{}
+		for _, uuidString := range strings.Split(uuidsParam, ",") {
 			id, err := uuid.Parse(uuidString)
 			if err != nil {
 				errors := responseError{
