@@ -6,7 +6,6 @@ package osbuild
 // compression type, and stores the output with the given filename.
 type TarAssemblerOptions struct {
 	Filename    string `json:"filename"`
-	Size        uint64 `json:"size"`
 	Compression string `json:"compression,omitempty"`
 }
 

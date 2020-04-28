@@ -18,7 +18,7 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 		{
 			// invalid JSON - note the missing brace at the end of the string
 			name:          "invalid json",
-			data:          []byte(`{"name":"org.osbuild.tar","options":{"filename":"",size:0}`),
+			data:          []byte(`{"name":"org.osbuild.tar","options":{"filename":""}`),
 			errorExpected: true,
 		},
 		{
@@ -75,7 +75,7 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 				Name:    "org.osbuild.tar",
 				Options: &TarAssemblerOptions{},
 			},
-			data: []byte(`{"name":"org.osbuild.tar","options":{"filename":"","size":0}}`),
+			data: []byte(`{"name":"org.osbuild.tar","options":{"filename":""}}`),
 		},
 		{
 			name: "tar assembler full",
@@ -83,11 +83,10 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 				Name: "org.osbuild.tar",
 				Options: &TarAssemblerOptions{
 					Filename:    "root.tar.xz",
-					Size:        0,
 					Compression: "xz",
 				},
 			},
-			data: []byte(`{"name":"org.osbuild.tar","options":{"filename":"root.tar.xz","size":0,"compression":"xz"}}`),
+			data: []byte(`{"name":"org.osbuild.tar","options":{"filename":"root.tar.xz","compression":"xz"}}`),
 		},
 		{
 			name: "rawfs assembler empty",
