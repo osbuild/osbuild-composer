@@ -214,7 +214,13 @@ The worker for osbuild-composer
 %systemd_post osbuild-worker@.service osbuild-remote-worker@.service
 
 %preun worker
-%systemd_preun osbuild-worker@.service osbuild-remote-worker@.service
+# systemd_preun uses systemctl disable --now which doesn't work well with template services.
+# See https://github.com/systemd/systemd/issues/15620
+# The following lines mimicks its behaviour by running two commands:
+
+# disable and stop all the worker services
+systemctl --no-reload disable osbuild-worker@.service osbuild-remote-worker@.service
+systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
 %postun worker
 # restart all the worker services
