@@ -41,7 +41,7 @@ RST2MAN ?= rst2man
 #         pre-fetched but evaluated at time of use.
 #
 
-VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" osbuild-composer.spec | sed 's/.*\([[:digit:]]\+\).*/\1/'))
+VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" osbuild-composer.spec | sed 's/[^[:digit:]]*\([[:digit:]]\+\).*/\1/'))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 
 #
