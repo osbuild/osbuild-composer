@@ -174,12 +174,10 @@ func TestImageType_Name(t *testing.T) {
 	}
 	for _, mapping := range imgMap {
 		arch, err := distro.GetArch(mapping.arch)
-		assert.Nil(t, err)
-		if err == nil {
+		if assert.NoError(t, err) {
 			for _, imgName := range mapping.imgNames {
 				imgType, err := arch.GetImageType(imgName)
-				assert.Nil(t, err)
-				if err == nil {
+				if assert.NoError(t, err) {
 					assert.Equalf(t, imgName, imgType.Name(), "arch: %s", mapping.arch)
 				}
 			}
@@ -218,12 +216,10 @@ func TestImageType_Size(t *testing.T) {
 
 	distro := fedora30.New()
 	arch, err := distro.GetArch("x86_64")
-	assert.Nil(t, err)
-	if err == nil {
+	if assert.NoError(t, err) {
 		for _, mapping := range sizeMap {
 			imgType, err := arch.GetImageType(mapping.name)
-			assert.Nil(t, err)
-			if err == nil {
+			if assert.NoError(t, err) {
 				size := imgType.Size(mapping.inputSize)
 				assert.Equalf(t, mapping.outputSize, size, "Image type: %s, input size: %d, expected: %d, got: %d",
 					mapping.name, mapping.inputSize, mapping.outputSize, size)
@@ -304,11 +300,11 @@ func TestImageType_BasePackages(t *testing.T) {
 	}
 	distro := fedora30.New()
 	arch, err := distro.GetArch("x86_64")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	for _, pkgMap := range pkgMaps {
 		imgType, err := arch.GetImageType(pkgMap.name)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 		basePackages, excludedPackages := imgType.BasePackages()
 		assert.Equalf(
 			t,
@@ -353,10 +349,10 @@ func TestFedora30_GetArch(t *testing.T) {
 		actualArch, err := distro.GetArch(a.name)
 		if !a.errorExpected {
 			assert.Equal(t, a.name, actualArch.Name())
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 		} else {
 			assert.Nil(t, actualArch)
-			assert.NotNil(t, err)
+			assert.Error(t, err)
 		}
 	}
 }
