@@ -774,7 +774,6 @@
         "name": "org.osbuild.tar",
         "options": {
           "filename": "root.tar.xz",
-          "size": 0,
           "compression": "xz"
         }
       }
