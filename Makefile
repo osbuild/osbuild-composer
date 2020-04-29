@@ -251,7 +251,8 @@ release:
 	@echo "        git log v$(VERSION)..HEAD"
 	@echo
 	@echo " * Bump the project version. The canonical location so far is"
-	@echo "   'osbuild-composer.spec'."
+	@echo "   'osbuild-composer.spec' and"
+	@echo "   'golang-github-osbuild-composer.spec'."
 	@echo
 	@echo " * Make sure the spec-file is updated for the new release and"
 	@echo "   correctly supports all new features. This should already be"
