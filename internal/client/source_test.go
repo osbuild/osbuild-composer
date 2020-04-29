@@ -128,7 +128,7 @@ func TestPOSTWrongTOMLSourceV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
-// list sources
+// list sources using the v0 API
 func TestListSourcesV0(t *testing.T) {
 	sources := []string{`{
 		"name": "package-repo-1",
@@ -167,6 +167,54 @@ func TestListSourcesV0(t *testing.T) {
 
 	// Get the list of sources
 	list, api, err := ListSourcesV0(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+	require.True(t, len(list) > 1, "Not enough sources returned")
+	require.Contains(t, list, "package-repo-1")
+	require.Contains(t, list, "package-repo-2")
+}
+
+// list sources using the v1 API
+func TestListSourcesV1(t *testing.T) {
+	sources := []string{`{
+		"name": "package-repo-1",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`,
+		`{
+		"name": "package-repo-2",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`}
+
+	// TODO update for PostJSONSourceV1
+	for i := range sources {
+		source := strings.Replace(sources[i], "REPO-PATH", testState.repoDir, 1)
+		resp, err := PostJSONSourceV0(testState.socket, source)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.True(t, resp.Status, "POST source failed: %#v", resp)
+	}
+
+	// TODO update for DeleteJSONSourceV1
+	// Remove the test sources, ignoring any errors
+	defer func() {
+		for _, n := range []string{"package-repo-1", "package-repo-2"} {
+			resp, err := DeleteSourceV0(testState.socket, n)
+			require.NoError(t, err, "DELETE source failed with a client error")
+			require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+		}
+	}()
+
+	// Get the list of sources
+	list, api, err := ListSourcesV1(testState.socket)
 	require.NoError(t, err, "GET source failed with a client error")
 	require.Nil(t, api, "ListSources failed: %#v", api)
 	require.True(t, len(list) > 1, "Not enough sources returned")

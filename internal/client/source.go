@@ -25,6 +25,20 @@ func ListSourcesV0(socket *http.Client) ([]string, *APIResponse, error) {
 	return list.Sources, nil, nil
 }
 
+// ListSourcesV1 returns a list of source ids
+func ListSourcesV1(socket *http.Client) ([]string, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v1/projects/source/list")
+	if resp != nil || err != nil {
+		return nil, resp, err
+	}
+	var list weldr.SourceListV1
+	err = json.Unmarshal(body, &list)
+	if err != nil {
+		return nil, nil, err
+	}
+	return list.Sources, nil, nil
+}
+
 // GetSourceInfoV0 returns detailed information on the named sources
 func GetSourceInfoV0(socket *http.Client, sourceNames string) (map[string]weldr.SourceConfigV0, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/projects/source/info/"+sourceNames)

@@ -424,7 +424,23 @@ func (s *Store) DeleteSource(name string) {
 	})
 }
 
-func (s *Store) ListSources() []string {
+// ListSourcesByName returns the repo source names
+// Name is different than Id, it can be a full description of the repo
+func (s *Store) ListSourcesByName() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	names := make([]string, 0, len(s.sources))
+	for _, source := range s.sources {
+		names = append(names, source.Name)
+	}
+	sort.Strings(names)
+
+	return names
+}
+
+// ListSourcesById returns the repo source id
+// Id is a short identifier for the repo, not a full name description
+func (s *Store) ListSourcesById() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	names := make([]string, 0, len(s.sources))
