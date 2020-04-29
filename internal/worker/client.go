@@ -39,10 +39,11 @@ func NewClient(address string, conf *tls.Config) *Client {
 	}
 
 	var scheme string
+	// Use https if the TLS configuration is present, otherwise use http.
 	if conf != nil {
-		scheme = "http"
-	} else {
 		scheme = "https"
+	} else {
+		scheme = "http"
 	}
 
 	return &Client{client, scheme, address}
