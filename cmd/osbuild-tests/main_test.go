@@ -112,7 +112,8 @@ func TestSourcesCommands(t *testing.T) {
 	require.NoErrorf(t, err, "Could not create temporary file: %v", err)
 	defer os.Remove(sources_toml.Name())
 
-	_, err = sources_toml.Write([]byte(`name = "osbuild-test-addon-source"
+	_, err = sources_toml.Write([]byte(`id = "osbuild-test-addon-source"
+name = "Testing sources add command"
 url = "file://REPO-PATH"
 type = "yum-baseurl"
 proxy = "https://proxy-url/"

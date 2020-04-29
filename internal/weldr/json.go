@@ -106,6 +106,13 @@ func (s *SourceInfoV0) SourceConfig(sourceName string) (ssc store.SourceConfig, 
 	return si.SourceConfig(), true
 }
 
+type SourceConfig interface {
+	GetKey() string
+	GetName() string
+	GetType() string
+	SourceConfig() store.SourceConfig
+}
+
 // SourceConfigV0 holds the source repository information
 type SourceConfigV0 struct {
 	Name     string   `json:"name" toml:"name"`
@@ -118,9 +125,64 @@ type SourceConfigV0 struct {
 	GPGUrls  []string `json:"gpgkey_urls" toml:"gpgkey_urls"`
 }
 
+// Key return the key, .Name in this case
+func (s SourceConfigV0) GetKey() string {
+	return s.Name
+}
+
+// Name return the .Name field
+func (s SourceConfigV0) GetName() string {
+	return s.Name
+}
+
+// Type return the .Type field
+func (s SourceConfigV0) GetType() string {
+	return s.Type
+}
+
 // SourceConfig returns a SourceConfig struct populated with the supported variables
 // The store does not support proxy and gpgkey_urls
-func (s *SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
+func (s SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
+	ssc.Name = s.Name
+	ssc.Type = s.Type
+	ssc.URL = s.URL
+	ssc.CheckGPG = s.CheckGPG
+	ssc.CheckSSL = s.CheckSSL
+
+	return ssc
+}
+
+// SourceConfigV1 holds the source repository information
+type SourceConfigV1 struct {
+	ID       string   `json:"id" toml:"id"`
+	Name     string   `json:"name" toml:"name"`
+	Type     string   `json:"type" toml:"type"`
+	URL      string   `json:"url" toml:"url"`
+	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
+	System   bool     `json:"system" toml:"system"`
+	Proxy    string   `json:"proxy" toml:"proxy"`
+	GPGUrls  []string `json:"gpgkey_urls" toml:"gpgkey_urls"`
+}
+
+// Key returns the key, .ID in this case
+func (s SourceConfigV1) GetKey() string {
+	return s.ID
+}
+
+// Name return the .Name field
+func (s SourceConfigV1) GetName() string {
+	return s.Name
+}
+
+// Type return the .Type field
+func (s SourceConfigV1) GetType() string {
+	return s.Type
+}
+
+// SourceConfig returns a SourceConfig struct populated with the supported variables
+// The store does not support proxy and gpgkey_urls
+func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.Name = s.Name
 	ssc.Type = s.Type
 	ssc.URL = s.URL

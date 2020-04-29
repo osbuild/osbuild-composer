@@ -462,6 +462,35 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	}
 }
 
+// DecodeSourceConfigV0 parses a request.Body into a SourceConfigV0
+func DecodeSourceConfigV0(body io.Reader, contentType string) (source SourceConfigV0, err error) {
+	if contentType == "application/json" {
+		err = json.NewDecoder(body).Decode(&source)
+	} else if contentType == "text/x-toml" {
+		_, err = toml.DecodeReader(body, &source)
+	} else {
+		err = errors_package.New("blueprint must be in json or toml format")
+	}
+	return source, err
+}
+
+// DecodeSourceConfigV1 parses a request.Body into a SourceConfigV1
+func DecodeSourceConfigV1(body io.Reader, contentType string) (source SourceConfigV1, err error) {
+	if contentType == "application/json" {
+		err = json.NewDecoder(body).Decode(&source)
+	} else if contentType == "text/x-toml" {
+		_, err = toml.DecodeReader(body, &source)
+	} else {
+		err = errors_package.New("blueprint must be in json or toml format")
+	}
+
+	if err == nil && len(source.GetKey()) == 0 {
+		err = errors_package.New("'id' field is missing from request")
+	}
+
+	return source, err
+}
+
 func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
 		return
@@ -486,22 +515,20 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	var source SourceConfigV0
+	var source SourceConfig
 	var err error
-	if contentType[0] == "application/json" {
-		err = json.NewDecoder(request.Body).Decode(&source)
-	} else if contentType[0] == "text/x-toml" {
-		_, err = toml.DecodeReader(request.Body, &source)
+	if isRequestVersionAtLeast(params, 1) {
+		source, err = DecodeSourceConfigV1(request.Body, contentType[0])
 	} else {
-		err = errors_package.New("blueprint must be in json or toml format")
+		source, err = DecodeSourceConfigV0(request.Body, contentType[0])
 	}
 
 	// Basic check of the source, should at least have a name and type
 	if err == nil {
-		if len(source.Name) == 0 {
-			err = errors_package.New("'name' field is missing from API v0 request")
-		} else if len(source.Type) == 0 {
-			err = errors_package.New("'type' field is missing from API v0 request")
+		if len(source.GetName()) == 0 {
+			err = errors_package.New("'name' field is missing from request")
+		} else if len(source.GetType()) == 0 {
+			err = errors_package.New("'type' field is missing from request")
 		}
 	}
 
@@ -514,7 +541,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	api.store.PushSource(source.SourceConfig())
+	api.store.PushSource(source.GetKey(), source.SourceConfig())
 
 	statusResponseOK(writer)
 }

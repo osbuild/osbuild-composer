@@ -408,18 +408,20 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 	})
 }
 
-func (s *Store) PushSource(source SourceConfig) {
+// PushSource stores a SourceConfig in store.Sources
+func (s *Store) PushSource(key string, source SourceConfig) {
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.sources[source.Name] = source
+		s.sources[key] = source
 		return nil
 	})
 }
 
-func (s *Store) DeleteSource(name string) {
+// DeleteSource removes a SourceConfig from store.Sources
+func (s *Store) DeleteSource(key string) {
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		delete(s.sources, name)
+		delete(s.sources, key)
 		return nil
 	})
 }
