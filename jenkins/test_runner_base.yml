@@ -16,9 +16,14 @@
         passed_tests: "{{ passed_tests + [test.name] }}"
 
     - name: "Send coverage to codecov.io"
-      shell: curl -s https://codecov.io/bash | bash
+      shell: |
+        curl -s https://codecov.io/bash > codecov.sh
+        chmod a+x codecov.sh
+        ./codecov.sh -v
       args:
         warn: no
+      register: codecov
+    - debug: var=codecov.stdout_lines
 
   rescue:
 
