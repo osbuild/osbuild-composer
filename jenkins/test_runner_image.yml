@@ -37,7 +37,6 @@
       register: async_test
       async: "{{ image_test_timeout * 60 }}"
       poll: "{{ polling_interval }}"
-      no_log: yes
 
     - name: "Mark image tests as passed"
       set_fact:
