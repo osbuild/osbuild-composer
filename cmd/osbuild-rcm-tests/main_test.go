@@ -28,7 +28,7 @@ func TestRCM(t *testing.T) {
 					"repositories":
 					[
 						{
-							"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+							"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/x86_64/os/"
 						}
 					]
 				}
