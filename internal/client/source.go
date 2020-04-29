@@ -63,10 +63,30 @@ func PostJSONSourceV0(socket *http.Client, source string) (*APIResponse, error) 
 	return NewAPIResponse(body)
 }
 
+// PostJSONSourceV1 sends a JSON source string to the API
+// and returns an APIResponse
+func PostJSONSourceV1(socket *http.Client, source string) (*APIResponse, error) {
+	body, resp, err := PostJSON(socket, "/api/v1/projects/source/new", source)
+	if resp != nil || err != nil {
+		return resp, err
+	}
+	return NewAPIResponse(body)
+}
+
 // PostTOMLSourceV0 sends a TOML source string to the API
 // and returns an APIResponse
 func PostTOMLSourceV0(socket *http.Client, source string) (*APIResponse, error) {
 	body, resp, err := PostTOML(socket, "/api/v0/projects/source/new", source)
+	if resp != nil || err != nil {
+		return resp, err
+	}
+	return NewAPIResponse(body)
+}
+
+// PostTOMLSourceV1 sends a TOML source string to the API
+// and returns an APIResponse
+func PostTOMLSourceV1(socket *http.Client, source string) (*APIResponse, error) {
+	body, resp, err := PostTOML(socket, "/api/v1/projects/source/new", source)
 	if resp != nil || err != nil {
 		return resp, err
 	}
