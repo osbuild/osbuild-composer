@@ -85,6 +85,11 @@ type SourceListV0 struct {
 	Sources []string `json:"sources"`
 }
 
+// SourceListV1 is the response to /source/list request
+type SourceListV1 struct {
+	Sources []string `json:"sources"`
+}
+
 // SourceInfoV0 is the response to a /source/info request
 type SourceInfoV0 struct {
 	Sources map[string]SourceConfigV0 `json:"sources"`

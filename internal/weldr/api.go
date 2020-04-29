@@ -348,7 +348,14 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 		Sources []string `json:"sources"`
 	}
 
-	names := api.store.ListSources()
+	// The v0 API used the repo Name, a descriptive string, as the key
+	// In the v1 API this was changed to separate the Name and the Id (a short identifier)
+	var names []string
+	if isRequestVersionAtLeast(params, 1) {
+		names = api.store.ListSourcesById()
+	} else {
+		names = api.store.ListSourcesByName()
+	}
 
 	for _, repo := range api.repos {
 		names = append(names, repo.Name)
