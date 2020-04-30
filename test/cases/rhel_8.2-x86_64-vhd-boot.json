@@ -8291,7 +8291,6 @@
   },
   "image-info": {
     "boot-environment": {
-      "GRUB2_ROOT_FS_UUID": "0bd700f8-090f-4556-b797-b340297ea1bd",
       "kernelopts": "root=UUID=0bd700f8-090f-4556-b797-b340297ea1bd ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0"
     },
     "bootloader": "grub",
