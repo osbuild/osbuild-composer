@@ -31,7 +31,8 @@ image_test_timeout: 45
 # Location of image test case files.
 image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
-# List of image tests and their timeouts (in minutes).
+# List of image tests and their timeouts.
+osbuild_composer_image_timeout: 15
 osbuild_composer_image_test_cases:
   - ext4_filesystem-boot.json
   - partitioned_disk-boot.json
@@ -39,3 +40,18 @@ osbuild_composer_image_test_cases:
   - tar-boot.json
   - vhd-boot.json
   - vmdk-boot.json
+osbuild_composer_image_env_vars: {}
+
+# Timeout for AWS test (in minutes).
+osbuild_composer_aws_timeout: 60
+
+# List of AWS test cases.
+osbuild_composer_aws_test_cases:
+  - ami-boot.json
+
+# Environment variables for AWS tests.
+osbuild_composer_aws_env_vars:
+  AWS_BUCKET: imagebuilder-jenkins-testing-use2
+  AWS_REGION: us-east-2
+  AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
