@@ -319,7 +319,7 @@ func TestListSourcesV1(t *testing.T) {
 	require.Contains(t, list, "package-repo-2")
 }
 
-// Get the source info
+// Get the source info using the v0 API
 func TestGetSourceInfoV0(t *testing.T) {
 	source := `
 		name = "package-repo-info-v0"
@@ -344,6 +344,37 @@ func TestGetSourceInfoV0(t *testing.T) {
 	require.Equal(t, "file://"+testState.repoDir, info["package-repo-info-v0"].URL)
 
 	resp, err = DeleteSourceV0(testState.socket, "package-repo-info-v0")
+	require.NoError(t, err, "DELETE source failed with a client error")
+	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+}
+
+// Get the source info using the v1 API
+func TestGetSourceInfoV1(t *testing.T) {
+	source := `
+		id = "package-repo-info-v1"
+		name = "repo for info test v1"
+		url = "file://REPO-PATH"
+		type = "yum-baseurl"
+		proxy = "https://proxy-url/"
+		check_ssl = true
+		check_gpg = true
+		gpgkey_urls = ["https://url/path/to/gpg-key"]
+	`
+	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
+
+	resp, err := PostTOMLSourceV1(testState.socket, source)
+	require.NoError(t, err, "POST source failed with a client error")
+	require.True(t, resp.Status, "POST source failed: %#v", resp)
+
+	info, resp, err := GetSourceInfoV1(testState.socket, "package-repo-info-v1")
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, resp, "GET source failed: %#v", resp)
+	require.Contains(t, info, "package-repo-info-v1", "No source info returned")
+	require.Equal(t, "repo for info test v1", info["package-repo-info-v1"].Name)
+	require.Equal(t, "file://"+testState.repoDir, info["package-repo-info-v1"].URL)
+
+	// TODO update for DeleteJSONSourceV1
+	resp, err = DeleteSourceV0(testState.socket, "package-repo-info-v1")
 	require.NoError(t, err, "DELETE source failed with a client error")
 	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }

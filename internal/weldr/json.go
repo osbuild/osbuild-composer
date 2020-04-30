@@ -106,11 +106,27 @@ func (s *SourceInfoV0) SourceConfig(sourceName string) (ssc store.SourceConfig, 
 	return si.SourceConfig(), true
 }
 
+// SourceConfig interface defines the common functions needed to query the SourceConfigV0/V1 structs
 type SourceConfig interface {
 	GetKey() string
 	GetName() string
 	GetType() string
 	SourceConfig() store.SourceConfig
+}
+
+// NewSourceConfigV0 converts a store.SourceConfig to a SourceConfigV0
+// The store does not support proxy and gpgkey_urls
+func NewSourceConfigV0(s store.SourceConfig) SourceConfigV0 {
+	var sc SourceConfigV0
+
+	sc.Name = s.Name
+	sc.Type = s.Type
+	sc.URL = s.URL
+	sc.CheckGPG = s.CheckGPG
+	sc.CheckSSL = s.CheckSSL
+	sc.System = s.System
+
+	return sc
 }
 
 // SourceConfigV0 holds the source repository information
@@ -121,8 +137,8 @@ type SourceConfigV0 struct {
 	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
 	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
 	System   bool     `json:"system" toml:"system"`
-	Proxy    string   `json:"proxy" toml:"proxy"`
-	GPGUrls  []string `json:"gpgkey_urls" toml:"gpgkey_urls"`
+	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
+	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
 }
 
 // Key return the key, .Name in this case
@@ -152,6 +168,28 @@ func (s SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
 	return ssc
 }
 
+// SourceInfoResponseV0
+type SourceInfoResponseV0 struct {
+	Sources map[string]SourceConfigV0 `json:"sources"`
+	Errors  []responseError           `json:"errors"`
+}
+
+// NewSourceConfigV1 converts a store.SourceConfig to a SourceConfigV1
+// The store does not support proxy and gpgkey_urls
+func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
+	var sc SourceConfigV1
+
+	sc.ID = id
+	sc.Name = s.Name
+	sc.Type = s.Type
+	sc.URL = s.URL
+	sc.CheckGPG = s.CheckGPG
+	sc.CheckSSL = s.CheckSSL
+	sc.System = s.System
+
+	return sc
+}
+
 // SourceConfigV1 holds the source repository information
 type SourceConfigV1 struct {
 	ID       string   `json:"id" toml:"id"`
@@ -161,8 +199,8 @@ type SourceConfigV1 struct {
 	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
 	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
 	System   bool     `json:"system" toml:"system"`
-	Proxy    string   `json:"proxy" toml:"proxy"`
-	GPGUrls  []string `json:"gpgkey_urls" toml:"gpgkey_urls"`
+	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
+	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
 }
 
 // Key returns the key, .ID in this case
@@ -190,6 +228,12 @@ func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.CheckSSL = s.CheckSSL
 
 	return ssc
+}
+
+// SourceInfoResponseV1
+type SourceInfoResponseV1 struct {
+	Sources map[string]SourceConfigV1 `json:"sources"`
+	Errors  []responseError           `json:"errors"`
 }
 
 // ProjectsListV0 is the response to /projects/list request

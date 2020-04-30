@@ -464,7 +464,22 @@ func (s *Store) GetSource(name string) *SourceConfig {
 	return &source
 }
 
-func (s *Store) GetAllSources() map[string]SourceConfig {
+// GetAllSourcesByName returns the sources using the repo name as the key
+func (s *Store) GetAllSourcesByName() map[string]SourceConfig {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sources := make(map[string]SourceConfig)
+
+	for _, v := range s.sources {
+		sources[v.Name] = v
+	}
+
+	return sources
+}
+
+// GetAllSourcesByID returns the sources using the repo id as the key
+func (s *Store) GetAllSourcesByID() map[string]SourceConfig {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -499,10 +514,10 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	return sc
 }
 
-func (s *SourceConfig) RepoConfig() rpmmd.RepoConfig {
+func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	var repo rpmmd.RepoConfig
 
-	repo.Name = s.Name
+	repo.Name = name
 	repo.IgnoreSSL = !s.CheckSSL
 
 	if s.Type == "yum-baseurl" {
