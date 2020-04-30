@@ -45,12 +45,6 @@ func TestFetchChecksum(t *testing.T) {
 // and tries to run depsolve for each architecture. With N architectures available
 // this should run cross-arch dependency solving N-1 times.
 func TestCrossArchDepsolve(t *testing.T) {
-	// Set up temporary directory for rpm/dnf cache
-	dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
-	require.Nilf(t, err, "Failed to create tmp dir for depsolve test: %v", err)
-	defer os.RemoveAll(dir)
-	rpm := rpmmd.NewRPMMD(dir)
-
 	// Load repositories from the definition we provide in the RPM package
 	repoDir := "/usr/share/osbuild-composer"
 
@@ -60,6 +54,12 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 			// Run tests in parallel to speed up run times.
 			t.Parallel()
+
+			// Set up temporary directory for rpm/dnf cache
+			dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
+			require.Nilf(t, err, "Failed to create tmp dir for depsolve test: %v", err)
+			defer os.RemoveAll(dir)
+			rpm := rpmmd.NewRPMMD(dir)
 
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
