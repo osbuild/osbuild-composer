@@ -4,6 +4,10 @@ set -euxo pipefail
 # Restart systemd to work around some Fedora issues in cloud images.
 systemctl restart systemd-journald
 
+# Clear out any leftover files in tmp from a previous run.
+# See https://github.com/osbuild/osbuild-composer/pull/574.
+rm -rf /tmp/rpmmd-test-*
+
 # Get the current journald cursor.
 export JOURNALD_CURSOR=$(journalctl --quiet -n 1 --show-cursor | tail -n 1 | grep -oP 's\=.*$')
 
@@ -31,6 +35,7 @@ ansible-playbook \
   -i hosts.ini \
   -e osbuild_composer_repo=${WORKSPACE} \
   -e osbuild_composer_version=$(git rev-parse HEAD) \
+  -e cleanup_composer_directories=yes \
   ansible-osbuild/playbook.yml
 
 # Run the tests.
