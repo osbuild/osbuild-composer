@@ -9,6 +9,9 @@
     - vars.yml
   tasks:
 
+    - name: Prepare squid cache for image tests
+      include_tasks: squid_package_cache.yml
+
     - name: Run osbuild-composer base tests
       include_tasks: test_runner_base.yml
       loop: "{{ osbuild_composer_base_tests }}"

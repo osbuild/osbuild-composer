@@ -1,0 +1,33 @@
+---
+
+- name: Install squid
+  dnf:
+    name: squid
+    state: latest
+
+- name: Deploy squid configuration file
+  copy:
+    src: squid.conf
+    dest: /etc/squid/squid.conf
+  register: squid_conf
+
+- name: Ensure squid is running
+  systemd:
+    name: squid
+    state: "{{ squid_conf is changed | ternary('restarted', 'started') }}"
+    enabled: yes
+
+- name: Verify that squid is listening
+  wait_for:
+    host: 127.0.0.1
+    port: 8080
+    state: started
+
+# osbuild uses curl to download packages.
+- name: Set curl configuration file to use the proxy
+  copy:
+    dest: /root/.curlrc
+    content: |
+      # Managed by Ansible for osbuild-composer CI.
+      proxy = 127.0.0.1:8080
+
