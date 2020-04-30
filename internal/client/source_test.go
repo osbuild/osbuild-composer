@@ -128,8 +128,7 @@ func TestPOSTTOMLSourceV1(t *testing.T) {
 	require.NoError(t, err, "POST source failed with a client error")
 	require.True(t, resp.Status, "POST source failed: %#v", resp)
 
-	// TODO update for DeleteJSONSourceV1
-	resp, err = DeleteSourceV0(testState.socket, "package-repo-toml-v0")
+	resp, err = DeleteSourceV1(testState.socket, "package-repo-toml-v1")
 	require.NoError(t, err, "DELETE source failed with a client error")
 	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }
@@ -300,11 +299,10 @@ func TestListSourcesV1(t *testing.T) {
 		require.True(t, resp.Status, "POST source failed: %#v", resp)
 	}
 
-	// TODO update for DeleteJSONSourceV1
 	// Remove the test sources, ignoring any errors
 	defer func() {
 		for _, n := range []string{"package-repo-1", "package-repo-2"} {
-			resp, err := DeleteSourceV0(testState.socket, n)
+			resp, err := DeleteSourceV1(testState.socket, n)
 			require.NoError(t, err, "DELETE source failed with a client error")
 			require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 		}
@@ -373,8 +371,7 @@ func TestGetSourceInfoV1(t *testing.T) {
 	require.Equal(t, "repo for info test v1", info["package-repo-info-v1"].Name)
 	require.Equal(t, "file://"+testState.repoDir, info["package-repo-info-v1"].URL)
 
-	// TODO update for DeleteJSONSourceV1
-	resp, err = DeleteSourceV0(testState.socket, "package-repo-info-v1")
+	resp, err = DeleteSourceV1(testState.socket, "package-repo-info-v1")
 	require.NoError(t, err, "DELETE source failed with a client error")
 	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }
@@ -490,10 +487,9 @@ func TestDeleteUserDefinedSourcesV1(t *testing.T) {
 	// note: not verifying user defined sources have been pushed b/c correct
 	// operation of PostJSONSourceV0 is validated in the test functions above
 
-	// TODO update for DeleteJSONSourceV1
 	// Remove the test sources
 	for _, n := range source_names {
-		resp, err := DeleteSourceV0(testState.socket, n)
+		resp, err := DeleteSourceV1(testState.socket, n)
 		require.NoError(t, err, "DELETE source failed with a client error")
 		require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 	}
@@ -534,6 +530,32 @@ func TestDeleteSystemSourcesV0(t *testing.T) {
 
 		// verify that system sources are still there
 		list, api, err := ListSourcesV0(testState.socket)
+		require.NoError(t, err, "GET source failed with a client error")
+		require.Nil(t, api, "ListSources failed: %#v", api)
+		require.GreaterOrEqual(t, len(list), 1, "Not enough sources returned")
+		require.Contains(t, list, repo_name)
+	}
+}
+
+func TestDeleteSystemSourcesV1(t *testing.T) {
+	sources_list, api, err := ListSourcesV1(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+
+	for _, repo_name := range []string{"test-system-repo", "fedora", "baseos"} {
+		// skip repository names which are not present b/c this test can be
+		// executed both as a unit test and as an integration test
+		if !Include(sources_list, repo_name) {
+			continue
+		}
+
+		// try removing system source
+		resp, err := DeleteSourceV1(testState.socket, repo_name)
+		require.NoError(t, err, "DELETE source failed with a client error")
+		require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+
+		// verify that system sources are still there
+		list, api, err := ListSourcesV1(testState.socket)
 		require.NoError(t, err, "GET source failed with a client error")
 		require.Nil(t, api, "ListSources failed: %#v", api)
 		require.GreaterOrEqual(t, len(list), 1, "Not enough sources returned")

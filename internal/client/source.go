@@ -115,3 +115,12 @@ func DeleteSourceV0(socket *http.Client, sourceName string) (*APIResponse, error
 	}
 	return NewAPIResponse(body)
 }
+
+// DeleteSourceV1 deletes the named source and returns an APIResponse
+func DeleteSourceV1(socket *http.Client, sourceName string) (*APIResponse, error) {
+	body, resp, err := DeleteRaw(socket, "/api/v1/projects/source/delete/"+sourceName)
+	if resp != nil || err != nil {
+		return resp, err
+	}
+	return NewAPIResponse(body)
+}
