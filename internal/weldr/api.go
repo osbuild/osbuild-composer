@@ -380,18 +380,9 @@ func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http
 	statusResponseError(writer, http.StatusNotFound, errors)
 }
 
-func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	if !verifyRequestVersion(writer, params, 0) { // TODO: version 1 API
-		return
-	}
-
-	// weldr uses a slightly different format than dnf to store repository
-	// configuration
-	type reply struct {
-		Sources map[string]store.SourceConfig `json:"sources"`
-		Errors  []responseError               `json:"errors"`
-	}
-
+// getSourceConfigs retrieves the list of sources from the system repos an store
+// Returning a list of store.SourceConfig entries indexed by the id of the source
+func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.SourceConfig, []responseError) {
 	names := params.ByName("sources")
 
 	sources := map[string]store.SourceConfig{}
@@ -399,7 +390,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	// if names is "*" we want all sources
 	if names == "*" {
-		sources = api.store.GetAllSources()
+		sources = api.store.GetAllSourcesByID()
 		for _, repo := range api.repos {
 			sources[repo.Name] = store.NewSourceConfig(repo, true)
 		}
@@ -419,7 +410,7 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 			}
 			// check if the source is in the store
 			if source := api.store.GetSource(name); source != nil {
-				sources[source.Name] = *source
+				sources[name] = *source
 			} else {
 				error := responseError{
 					ID:  "UnknownSource",
@@ -428,6 +419,37 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 				errors = append(errors, error)
 			}
 		}
+	}
+
+	return sources, errors
+}
+
+// sourceInfoHandler routes the call to the correct API version handler
+func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	versionString := params.ByName("version")
+	version, err := strconv.ParseUint(versionString, 10, 0)
+	if err != nil {
+		notFoundHandler(writer, nil)
+		return
+	}
+	switch version {
+	case 0:
+		api.sourceInfoHandlerV0(writer, request, params)
+	case 1:
+		api.sourceInfoHandlerV1(writer, request, params)
+	default:
+		notFoundHandler(writer, nil)
+	}
+}
+
+// sourceInfoHandlerV0 handles the API v0 response
+func (api *API) sourceInfoHandlerV0(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	sources, errors := api.getSourceConfigs(params)
+
+	// V0 responses use the source name as the key
+	v0Sources := make(map[string]SourceConfigV0, len(sources))
+	for _, s := range sources {
+		v0Sources[s.Name] = NewSourceConfigV0(s)
 	}
 
 	q, err := url.ParseQuery(request.URL.RawQuery)
@@ -442,8 +464,8 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 
 	format := q.Get("format")
 	if format == "json" || format == "" {
-		err := json.NewEncoder(writer).Encode(reply{
-			Sources: sources,
+		err := json.NewEncoder(writer).Encode(SourceInfoResponseV0{
+			Sources: v0Sources,
 			Errors:  errors,
 		})
 		common.PanicOnError(err)
@@ -458,7 +480,47 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 			Msg: fmt.Sprintf("invalid format parameter: %s", format),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
+	}
+}
+
+// sourceInfoHandlerV1 handles the API v0 response
+func (api *API) sourceInfoHandlerV1(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	sources, errors := api.getSourceConfigs(params)
+
+	// V1 responses use the source id as the key
+	v1Sources := make(map[string]SourceConfigV1, len(sources))
+	for id, s := range sources {
+		v1Sources[id] = NewSourceConfigV1(id, s)
+	}
+
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
+	}
+
+	format := q.Get("format")
+	if format == "json" || format == "" {
+		err := json.NewEncoder(writer).Encode(SourceInfoResponseV1{
+			Sources: v1Sources,
+			Errors:  errors,
+		})
+		common.PanicOnError(err)
+	} else if format == "toml" {
+		encoder := toml.NewEncoder(writer)
+		encoder.Indent = ""
+		err := encoder.Encode(sources)
+		common.PanicOnError(err)
+	} else {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid format parameter: %s", format),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 	}
 }
 
@@ -2409,8 +2471,8 @@ func getPkgNameGlob(pkg blueprint.Package) string {
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
 func (api *API) allRepositories() []rpmmd.RepoConfig {
 	repos := append([]rpmmd.RepoConfig{}, api.repos...)
-	for _, source := range api.store.GetAllSources() {
-		repos = append(repos, source.RepoConfig())
+	for id, source := range api.store.GetAllSourcesByID() {
+		repos = append(repos, source.RepoConfig(id))
 	}
 	return repos
 }

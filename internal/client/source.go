@@ -45,7 +45,21 @@ func GetSourceInfoV0(socket *http.Client, sourceNames string) (map[string]weldr.
 	if resp != nil || err != nil {
 		return nil, resp, err
 	}
-	var info weldr.SourceInfoV0
+	var info weldr.SourceInfoResponseV0
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		return nil, nil, err
+	}
+	return info.Sources, nil, nil
+}
+
+// GetSourceInfoV1 returns detailed information on the named sources
+func GetSourceInfoV1(socket *http.Client, sourceNames string) (map[string]weldr.SourceConfigV1, *APIResponse, error) {
+	body, resp, err := GetRaw(socket, "GET", "/api/v1/projects/source/info/"+sourceNames)
+	if resp != nil || err != nil {
+		return nil, resp, err
+	}
+	var info weldr.SourceInfoResponseV1
 	err = json.Unmarshal(body, &info)
 	if err != nil {
 		return nil, nil, err
