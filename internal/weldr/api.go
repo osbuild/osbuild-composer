@@ -625,8 +625,12 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	// remove leading / from first name
-	api.store.DeleteSource(name[0][1:])
+	// Only delete the first name, which will have a / at the start because of the /*source route
+	if isRequestVersionAtLeast(params, 1) {
+		api.store.DeleteSourceByID(name[0][1:])
+	} else {
+		api.store.DeleteSourceByName(name[0][1:])
+	}
 
 	statusResponseOK(writer)
 }

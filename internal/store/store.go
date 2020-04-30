@@ -416,8 +416,22 @@ func (s *Store) PushSource(key string, source SourceConfig) {
 	})
 }
 
-// DeleteSource removes a SourceConfig from store.Sources
-func (s *Store) DeleteSource(key string) {
+// DeleteSourceByName removes a SourceConfig from store.Sources using the .Name field
+func (s *Store) DeleteSourceByName(name string) {
+	// FIXME: handle or comment this possible error
+	_ = s.change(func() error {
+		for key := range s.sources {
+			if s.sources[key].Name == name {
+				delete(s.sources, key)
+				return nil
+			}
+		}
+		return nil
+	})
+}
+
+// DeleteSourceByID removes a SourceConfig from store.Sources using the ID
+func (s *Store) DeleteSourceByID(key string) {
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
 		delete(s.sources, key)
