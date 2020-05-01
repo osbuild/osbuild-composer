@@ -136,7 +136,7 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			"-smp", strconv.Itoa(runtime.NumCPU()),
 			"-m", "1024",
 			"-snapshot",
-			"-M", "accel=kvm:hvf:tcg",
+			"-M", "accel=kvm",
 			"-cdrom", cloudInitFile.Name(),
 			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
 			"-nographic",
