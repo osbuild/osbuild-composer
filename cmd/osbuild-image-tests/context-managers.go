@@ -122,7 +122,7 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			// As opposed to x86_64, aarch64 uses UEFI, this one comes from edk2-aarch64 package on Fedora
 			"-bios", "/usr/share/edk2/aarch64/QEMU_EFI.fd",
 			"-boot", "efi",
-			"-accel", "accel=kvm",
+			"-M", "accel=kvm",
 			"-snapshot",
 			"-cdrom", cloudInitFile.Name(),
 			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
@@ -136,7 +136,7 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			"-smp", strconv.Itoa(runtime.NumCPU()),
 			"-m", "1024",
 			"-snapshot",
-			"-accel", "accel=kvm:hvf:tcg",
+			"-M", "accel=kvm:hvf:tcg",
 			"-cdrom", cloudInitFile.Name(),
 			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
 			"-nographic",
