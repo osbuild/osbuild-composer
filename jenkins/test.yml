@@ -1,10 +1,10 @@
 ---
 
 - hosts: localhost
+  become: yes
   vars:
     passed_tests: []
     failed_tests: []
-    journald_cursor: "{{ ansible_env.JOURNALD_CURSOR"
   vars_files:
     - vars.yml
   tasks:
