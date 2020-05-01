@@ -1537,6 +1537,7 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 				"UnknownUUID",
 				fmt.Sprintf("%s is not a valid uuid", uuidString),
 			})
+			continue
 		}
 
 		err = api.store.DeleteCompose(id)
