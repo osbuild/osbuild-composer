@@ -19,6 +19,9 @@
 
     - name: Run osbuild-composer image tests
       include_tasks: test_runner_image.yml
+      loop: "{{ osbuild_composer_image_test_cases }}"
+      loop_control:
+        loop_var: test_case
       when:
         - test_type == 'image'
 
