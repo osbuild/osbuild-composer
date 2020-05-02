@@ -118,8 +118,8 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := server.workers.Enqueue(ir.manifest, nil)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to enqueu image build job: %s", err), http.StatusInternalServerError)
-		return
+		// This is a programming errror.
+		panic(err)
 	}
 
 	var response ComposeResponse

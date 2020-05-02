@@ -94,40 +94,46 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-rcm-test
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 %install
-install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/osbuild-composer
-install -m 0755 -vp _bin/osbuild-composer                   %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-worker                     %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp dnf-json                                %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vd                                         	%{buildroot}%{_libexecdir}/osbuild-composer
+install -m 0755 -vp _bin/osbuild-composer                   	%{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-worker                     	%{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp dnf-json                                	%{buildroot}%{_libexecdir}/osbuild-composer/
 
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/osbuild-composer/repositories
-install -m 0644 -vp repositories/*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0755 -vd                                         	%{buildroot}%{_datadir}/osbuild-composer/repositories
+install -m 0644 -vp repositories/*                          	%{buildroot}%{_datadir}/osbuild-composer/repositories/
 
-install -m 0755 -vd                                         %{buildroot}%{_unitdir}
-install -m 0644 -vp distribution/*.{service,socket}         %{buildroot}%{_unitdir}/
+install -m 0755 -vd                                             %{buildroot}%{_unitdir}
+install -m 0644 -vp distribution/osbuild-composer.service       %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-composer.socket        %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-rcm.socket             %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-remote-worker.socket   %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-remote-worker@.service %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-worker@.service        %{buildroot}%{_unitdir}/
 
-install -m 0755 -vd                                         %{buildroot}%{_sysusersdir}
-install -m 0644 -vp distribution/osbuild-composer.conf      %{buildroot}%{_sysusersdir}/
 
-install -m 0755 -vd                                         %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
+install -m 0755 -vd                                         	%{buildroot}%{_sysusersdir}
+install -m 0644 -vp distribution/osbuild-composer.conf      	%{buildroot}%{_sysusersdir}/
 
-install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
-install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-rcm-tests                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vd                                         	%{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer
-install -m 0644 -vp test/azure-deployment-template.json     %{buildroot}%{_datadir}/tests/osbuild-composer/
+install -m 0755 -vd                                         	%{buildroot}%{_libexecdir}/tests/osbuild-composer
+install -m 0755 -vp _bin/osbuild-tests                      	%{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-weldr-tests                	%{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-dnf-json-tests             	%{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-image-tests                	%{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-rcm-tests                  	%{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp tools/image-info                        	%{buildroot}%{_libexecdir}/osbuild-composer/
 
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
-install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
-install -m 0600 -vp test/keyring/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+install -m 0755 -vd                                         	%{buildroot}%{_datadir}/tests/osbuild-composer
+install -m 0644 -vp test/azure-deployment-template.json     	%{buildroot}%{_datadir}/tests/osbuild-composer/
 
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
-install -m 0644 -vp test/cloud-init/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
+install -m 0755 -vd                                         	%{buildroot}%{_datadir}/tests/osbuild-composer/cases
+install -m 0644 -vp test/cases/*                            	%{buildroot}%{_datadir}/tests/osbuild-composer/cases/
+install -m 0755 -vd                                         	%{buildroot}%{_datadir}/tests/osbuild-composer/keyring
+install -m 0600 -vp test/keyring/*                          	%{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                         	%{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
+install -m 0644 -vp test/cloud-init/*                       	%{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
 
 %check
 %if 0%{?rhel}

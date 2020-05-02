@@ -109,6 +109,7 @@ man: $(MANPAGES_TROFF)
 .PHONY: build
 build:
 	go build -o osbuild-composer ./cmd/osbuild-composer/
+	go build -o osbuild-composer-koji ./cmd/osbuild-composer-koji/
 	go build -o osbuild-worker ./cmd/osbuild-worker/
 	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
@@ -118,11 +119,13 @@ build:
 	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go test -c -tags=integration -o osbuild-rcm-tests ./cmd/osbuild-rcm-tests/main_test.go
 	go test -c -tags=integration,travis -o osbuild-image-tests ./cmd/osbuild-image-tests/
+	go test -c -tags=integration -o osbuild-composer-koji-tests ./cmd/osbuild-composer-koji-tests/main_test.go
 
 .PHONY: install
 install:
 	- mkdir -p /usr/libexec/osbuild-composer
 	cp osbuild-composer /usr/libexec/osbuild-composer/
+	cp osbuild-composer-koji /usr/libexec/osbuild-composer/
 	cp osbuild-worker /usr/libexec/osbuild-composer/
 	cp dnf-json /usr/libexec/osbuild-composer/
 	- mkdir -p /usr/share/osbuild-composer/repositories

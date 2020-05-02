@@ -1,0 +1,20 @@
+[Unit]
+Description=OSBuild Composer Koji
+After=multi-user.target
+Requires=osbuild-composer-koji.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/osbuild-composer/osbuild-composer-koji
+CacheDirectory=osbuild-composer-koji
+StateDirectory=osbuild-composer-koji
+WorkingDirectory=/usr/libexec/osbuild-composer/
+User=_osbuild-composer
+Restart=on-failure
+
+# systemd >= 240 sets this, but osbuild-composer runs on earlier versions
+Environment="CACHE_DIRECTORY=/var/cache/osbuild-composer-koji"
+Environment="STATE_DIRECTORY=/var/lib/osbuild-composer-koji"
+
+[Install]
+WantedBy=multi-user.target
