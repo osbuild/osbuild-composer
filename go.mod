@@ -14,6 +14,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.3.12
+	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1
