@@ -82,6 +82,8 @@ github.com/deepmap/oapi-codegen/pkg/types
 github.com/dgrijalva/jwt-go
 # github.com/dimchansky/utfbom v1.1.0
 github.com/dimchansky/utfbom
+# github.com/go-chi/chi v4.1.1+incompatible
+github.com/go-chi/chi
 # github.com/gobwas/glob v0.2.3
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler
