@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
-	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -27,15 +27,15 @@ func TestErrors(t *testing.T) {
 		// Wrong method
 		{"GET", "/job-queue/v1/jobs", ``, http.StatusMethodNotAllowed},
 		// Update job with invalid ID
-		{"PATCH", "/job-queue/v1/jobs/foo/builds/0", `{"status":"RUNNING"}`, http.StatusBadRequest},
+		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
 		// Update job that does not exist, with invalid body
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/builds/0", ``, http.StatusBadRequest},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
 		// Update job that does not exist
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/builds/0", `{"status":"RUNNING"}`, http.StatusNotFound},
+		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
 	}
 
 	for _, c := range cases {
-		server := worker.NewServer(nil, store.New(nil))
+		server := worker.NewServer(nil, testjobqueue.New(), nil)
 		test.TestRoute(t, server, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
@@ -50,21 +50,18 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	store := store.New(nil)
-	server := worker.NewServer(nil, store)
+	server := worker.NewServer(nil, testjobqueue.New(), nil)
 
 	manifest, err := imageType.Manifest(nil, nil, nil, nil, imageType.Size(0))
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
 
-	id, err := store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
-	if err != nil {
-		t.Fatalf("error pushing compose: %v", err)
-	}
+	id, err := server.Enqueue(manifest, nil)
+	require.NoError(t, err)
 
 	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
-		`{"compose_id":"`+id.String()+`","image_build_id":0,"manifest":{"sources":{},"pipeline":{}},"targets":[]}`, "created")
+		`{"id":"`+id.String()+`","manifest":{"sources":{},"pipeline":{}}}`, "created")
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
@@ -77,8 +74,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	store := store.New(nil)
-	server := worker.NewServer(nil, store)
+	server := worker.NewServer(nil, testjobqueue.New(), nil)
 
 	id := uuid.Nil
 	if from != "VOID" {
@@ -87,20 +83,18 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 			t.Fatalf("error creating osbuild manifest")
 		}
 
-		id, err = store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
-		if err != nil {
-			t.Fatalf("error pushing compose: %v", err)
-		}
+		id, err = server.Enqueue(manifest, nil)
+		require.NoError(t, err)
 
 		if from != "WAITING" {
 			test.SendHTTP(server, false, "POST", "/job-queue/v1/jobs", `{}`)
 			if from != "RUNNING" {
-				test.SendHTTP(server, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+from+`"}`)
+				test.SendHTTP(server, false, "PATCH", "/job-queue/v1/jobs/"+id.String(), `{"status":"`+from+`"}`)
 			}
 		}
 	}
 
-	test.TestRoute(t, server, false, "PATCH", "/job-queue/v1/jobs/"+id.String()+"/builds/0", `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
+	test.TestRoute(t, server, false, "PATCH", "/job-queue/v1/jobs/"+id.String(), `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
 }
 
 func TestUpdate(t *testing.T) {
@@ -109,16 +103,16 @@ func TestUpdate(t *testing.T) {
 		To             string
 		ExpectedStatus int
 	}{
-		{"VOID", "WAITING", http.StatusNotFound},
-		{"VOID", "RUNNING", http.StatusNotFound},
+		{"VOID", "WAITING", http.StatusBadRequest},
+		{"VOID", "RUNNING", http.StatusBadRequest},
 		{"VOID", "FINISHED", http.StatusNotFound},
 		{"VOID", "FAILED", http.StatusNotFound},
-		{"WAITING", "WAITING", http.StatusNotFound},
-		{"WAITING", "RUNNING", http.StatusNotFound},
-		{"WAITING", "FINISHED", http.StatusNotFound},
-		{"WAITING", "FAILED", http.StatusNotFound},
+		{"WAITING", "WAITING", http.StatusBadRequest},
+		{"WAITING", "RUNNING", http.StatusBadRequest},
+		{"WAITING", "FINISHED", http.StatusBadRequest},
+		{"WAITING", "FAILED", http.StatusBadRequest},
 		{"RUNNING", "WAITING", http.StatusBadRequest},
-		{"RUNNING", "RUNNING", http.StatusOK},
+		{"RUNNING", "RUNNING", http.StatusBadRequest},
 		{"RUNNING", "FINISHED", http.StatusOK},
 		{"RUNNING", "FAILED", http.StatusOK},
 		{"FINISHED", "WAITING", http.StatusBadRequest},
@@ -132,6 +126,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		t.Log(c)
 		testUpdateTransition(t, c.From, c.To, c.ExpectedStatus)
 	}
 }

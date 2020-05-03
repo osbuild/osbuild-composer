@@ -10,19 +10,18 @@ import (
 	"net/http"
 
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 // API encapsulates RCM-specific API that is exposed over a separate TCP socket
 type API struct {
-	logger *log.Logger
-	store  *store.Store
-	router *httprouter.Router
+	logger  *log.Logger
+	workers *worker.Server
+	router  *httprouter.Router
 	// rpmMetadata is an interface to dnf-json and we include it here so that we can
 	// mock it in the unit tests
 	rpmMetadata rpmmd.RPMMD
@@ -30,10 +29,10 @@ type API struct {
 }
 
 // New creates new RCM API
-func New(logger *log.Logger, store *store.Store, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *API {
+func New(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *API {
 	api := &API{
 		logger:      logger,
-		store:       store,
+		workers:     workers,
 		router:      httprouter.New(),
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
@@ -215,8 +214,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	// Push the requested compose to the store
-	composeID, err := api.store.PushCompose(manifest, imageType.Name(), &blueprint.Blueprint{}, 0, nil)
+	composeID, err := api.workers.Enqueue(manifest, nil)
 	if err != nil {
 		if api.logger != nil {
 			api.logger.Println("RCM API failed to push compose:", err)
@@ -254,22 +252,20 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	}
 
 	// Check that the compose exists
-	compose, exists := api.store.GetCompose(id)
-	if !exists {
+	status, _, err := api.workers.JobResult(id)
+	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
-		errorReason.Error = "Compose UUID does not exist"
+		errorReason.Error = err.Error()
 		// TODO: handle error
 		_ = json.NewEncoder(writer).Encode(errorReason)
 		return
 	}
 
 	// JSON structure with success response
-	var reply struct {
+	type reply struct {
 		Status string `json:"status"`
 	}
 
-	// TODO: return per-job status like Koji does (requires changes in the store)
-	reply.Status = compose.GetState().ToString()
 	// TODO: handle error
-	_ = json.NewEncoder(writer).Encode(reply)
+	_ = json.NewEncoder(writer).Encode(reply{Status: status.ToString()})
 }

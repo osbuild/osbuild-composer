@@ -3,27 +3,37 @@ package worker
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Server struct {
-	logger *log.Logger
-	store  *store.Store
-	router *httprouter.Router
+	logger      *log.Logger
+	jobs        jobqueue.JobQueue
+	router      *httprouter.Router
+	imageWriter WriteImageFunc
 }
 
-func NewServer(logger *log.Logger, store *store.Store) *Server {
+type WriteImageFunc func(composeID uuid.UUID, imageBuildID int, reader io.Reader) error
+
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, imageWriter WriteImageFunc) *Server {
 	s := &Server{
-		logger: logger,
-		store:  store,
+		logger:      logger,
+		jobs:        jobs,
+		imageWriter: imageWriter,
 	}
 
 	s.router = httprouter.New()
@@ -33,7 +43,7 @@ func NewServer(logger *log.Logger, store *store.Store) *Server {
 	s.router.NotFound = http.HandlerFunc(notFoundHandler)
 
 	s.router.POST("/job-queue/v1/jobs", s.addJobHandler)
-	s.router.PATCH("/job-queue/v1/jobs/:job_id/builds/:build_id", s.updateJobHandler)
+	s.router.PATCH("/job-queue/v1/jobs/:job_id", s.updateJobHandler)
 	s.router.POST("/job-queue/v1/jobs/:job_id/builds/:build_id/image", s.addJobImageHandler)
 
 	return s
@@ -57,6 +67,38 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	s.router.ServeHTTP(writer, request)
+}
+
+func (s *Server) Enqueue(manifest *osbuild.Manifest, targets []*target.Target) (uuid.UUID, error) {
+	job := OSBuildJob{
+		Manifest: manifest,
+		Targets:  targets,
+	}
+
+	return s.jobs.Enqueue("osbuild", job, nil)
+}
+
+func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, started, finished time.Time, err error) {
+	var result OSBuildJobResult
+	var status jobqueue.JobStatus
+
+	status, queued, started, finished, err = s.jobs.JobStatus(id, &result)
+	if err != nil {
+		return
+	}
+
+	state = composeStateFromJobStatus(status, result.OSBuildOutput)
+	return
+}
+
+func (s *Server) JobResult(id uuid.UUID) (common.ComposeState, *common.ComposeResult, error) {
+	var result OSBuildJobResult
+	status, _, _, _, err := s.jobs.JobStatus(id, &result)
+	if err != nil {
+		return common.CWaiting, nil, err
+	}
+
+	return composeStateFromJobStatus(status, result.OSBuildOutput), result.OSBuildOutput, nil
 }
 
 // jsonErrorf() is similar to http.Error(), but returns the message in a json
@@ -92,15 +134,19 @@ func (s *Server) addJobHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	nextJob := s.store.PopJob()
+	var job OSBuildJob
+	id, err := s.jobs.Dequeue(request.Context(), []string{"osbuild"}, &job)
+	if err != nil {
+		jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+		return
+	}
 
 	writer.WriteHeader(http.StatusCreated)
 	// FIXME: handle or comment this possible error
 	_ = json.NewEncoder(writer).Encode(addJobResponse{
-		ComposeID:    nextJob.ComposeID,
-		ImageBuildID: nextJob.ImageBuildID,
-		Manifest:     nextJob.Manifest,
-		Targets:      nextJob.Targets,
+		Id:       id,
+		Manifest: job.Manifest,
+		Targets:  job.Targets,
 	})
 }
 
@@ -117,13 +163,6 @@ func (s *Server) updateJobHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
-
-	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse image build id: %v", err)
-		return
-	}
-
 	var body updateJobRequest
 	err = json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
@@ -131,13 +170,21 @@ func (s *Server) updateJobHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	err = s.store.UpdateImageBuildInCompose(id, imageBuildId, body.Status, body.Result)
+	// The jobqueue doesn't support setting the status before a job is
+	// finished. This branch should never be hit, because the worker
+	// doesn't attempt this. Change the API to remove this awkwardness.
+	if body.Status != common.IBFinished && body.Status != common.IBFailed {
+		jsonErrorf(writer, http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
+		return
+	}
+
+	err = s.jobs.FinishJob(id, OSBuildJobResult{OSBuildOutput: body.Result})
 	if err != nil {
-		switch err.(type) {
-		case *store.NotFoundError, *store.NotPendingError:
-			jsonErrorf(writer, http.StatusNotFound, "%v", err)
-		case *store.NotRunningError, *store.InvalidRequestError:
-			jsonErrorf(writer, http.StatusBadRequest, "%v", err)
+		switch err {
+		case jobqueue.ErrNotExist:
+			jsonErrorf(writer, http.StatusNotFound, "job does not exist: %s", id)
+		case jobqueue.ErrNotRunning:
+			jsonErrorf(writer, http.StatusBadRequest, "job is not running: %s", id)
 		default:
 			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
 		}
@@ -155,23 +202,33 @@ func (s *Server) addJobImageHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
-
 	if err != nil {
 		jsonErrorf(writer, http.StatusBadRequest, "cannot parse image build id: %v", err)
 		return
 	}
 
-	err = s.store.AddImageToImageUpload(id, imageBuildId, request.Body)
-
-	if err != nil {
-		switch err.(type) {
-		case *store.NotFoundError:
-			jsonErrorf(writer, http.StatusNotFound, "%v", err)
-		case *store.NoLocalTargetError:
-			jsonErrorf(writer, http.StatusBadRequest, "%v", err)
-		default:
-			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
-		}
-		return
+	if s.imageWriter == nil {
+		_, err = io.Copy(ioutil.Discard, request.Body)
+	} else {
+		err = s.imageWriter(id, imageBuildId, request.Body)
 	}
+	if err != nil {
+		jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+	}
+}
+
+func composeStateFromJobStatus(status jobqueue.JobStatus, output *common.ComposeResult) common.ComposeState {
+	switch status {
+	case jobqueue.JobPending:
+		return common.CWaiting
+	case jobqueue.JobRunning:
+		return common.CRunning
+	case jobqueue.JobFinished:
+		if output.Success {
+			return common.CFinished
+		} else {
+			return common.CFailed
+		}
+	}
+	return common.CWaiting
 }

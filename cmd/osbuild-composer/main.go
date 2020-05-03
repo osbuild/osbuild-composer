@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel83"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/rcm"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -118,11 +119,28 @@ func main() {
 
 	store := store.New(&stateDir)
 
-	workerAPI := worker.NewServer(logger, store)
-	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store)
+	queueDir := path.Join(stateDir, "jobs")
+	err = os.Mkdir(queueDir, 0700)
+	if err != nil && !os.IsExist(err) {
+		log.Fatalf("cannot create queue directory: %v", err)
+	}
+
+	jobs, err := fsjobqueue.New(queueDir)
+	if err != nil {
+		log.Fatalf("cannot create jobqueue: %v", err)
+	}
+
+	outputDir := path.Join(stateDir, "outputs")
+	err = os.Mkdir(outputDir, 0755)
+	if err != nil && !os.IsExist(err) {
+		log.Fatalf("cannot create output directory: %v", err)
+	}
+
+	workers := worker.NewServer(logger, jobs, store.AddImageToImageUpload)
+	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store, workers)
 
 	go func() {
-		err := workerAPI.Serve(jobListener)
+		err := workers.Serve(jobListener)
 		common.PanicOnError(err)
 	}()
 
@@ -133,7 +151,7 @@ func main() {
 			log.Fatal("The RCM API socket unit is misconfigured. It should contain only one socket.")
 		}
 		rcmListener := rcmApiListeners[0]
-		rcmAPI := rcm.New(logger, store, rpm, distros)
+		rcmAPI := rcm.New(logger, workers, rpm, distros)
 		go func() {
 			err := rcmAPI.Serve(rcmListener)
 			// If the RCM API fails, take down the whole process, not just a single gorutine
@@ -158,7 +176,7 @@ func main() {
 
 			listener := tls.NewListener(listener, tlsConfig)
 			go func() {
-				err := workerAPI.Serve(listener)
+				err := workers.Serve(listener)
 				common.PanicOnError(err)
 			}()
 		}

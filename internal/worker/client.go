@@ -25,10 +25,9 @@ type Client struct {
 }
 
 type Job struct {
-	ComposeID    uuid.UUID
-	ImageBuildID int
-	Manifest     *osbuild.Manifest
-	Targets      []*target.Target
+	Id       uuid.UUID
+	Manifest *osbuild.Manifest
+	Targets  []*target.Target
 }
 
 func NewClient(address string, conf *tls.Config) *Client {
@@ -86,8 +85,7 @@ func (c *Client) AddJob() (*Job, error) {
 	}
 
 	return &Job{
-		jr.ComposeID,
-		jr.ImageBuildID,
+		jr.Id,
 		jr.Manifest,
 		jr.Targets,
 	}, nil
@@ -99,7 +97,7 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *comm
 	if err != nil {
 		panic(err)
 	}
-	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d", job.ComposeID.String(), job.ImageBuildID)
+	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s", job.Id)
 	url := c.createURL(urlPath)
 	req, err := http.NewRequest("PATCH", url, &b)
 	if err != nil {
@@ -120,9 +118,9 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *comm
 	return nil
 }
 
-func (c *Client) UploadImage(job *Job, reader io.Reader) error {
+func (c *Client) UploadImage(composeId uuid.UUID, imageBuildId int, reader io.Reader) error {
 	// content type doesn't really matter
-	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", job.ComposeID.String(), job.ImageBuildID))
+	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", composeId, imageBuildId))
 	_, err := c.client.Post(url, "application/octet-stream", reader)
 
 	return err
