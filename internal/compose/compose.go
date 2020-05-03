@@ -5,6 +5,7 @@ package compose
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -21,15 +22,20 @@ func (ste *StateTransitionError) Error() string {
 
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
-	Id          int                    `json:"id"`
-	QueueStatus common.ImageBuildState `json:"queue_status"`
-	ImageType   common.ImageType       `json:"image_type"`
-	Manifest    *osbuild.Manifest      `json:"manifest"`
-	Targets     []*target.Target       `json:"targets"`
-	JobCreated  time.Time              `json:"job_created"`
-	JobStarted  time.Time              `json:"job_started"`
-	JobFinished time.Time              `json:"job_finished"`
-	Size        uint64                 `json:"size"`
+	Id          int               `json:"id"`
+	ImageType   common.ImageType  `json:"image_type"`
+	Manifest    *osbuild.Manifest `json:"manifest"`
+	Targets     []*target.Target  `json:"targets"`
+	JobCreated  time.Time         `json:"job_created"`
+	JobStarted  time.Time         `json:"job_started"`
+	JobFinished time.Time         `json:"job_finished"`
+	Size        uint64            `json:"size"`
+	JobId       uuid.UUID         `json:"jobid,omitempty"`
+
+	// Kept for backwards compatibility. Image builds which were done
+	// before the move to the job queue use this to store whether they
+	// finished successfully.
+	QueueStatus common.ImageBuildState `json:"queue_status,omitempty"`
 }
 
 // DeepCopy creates a copy of the ImageBuild structure
@@ -55,6 +61,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		JobStarted:  ib.JobStarted,
 		JobFinished: ib.JobFinished,
 		Size:        ib.Size,
+		JobId:       ib.JobId,
 	}
 }
 
@@ -92,55 +99,6 @@ func (c *Compose) DeepCopy() Compose {
 		Blueprint:   newBpPtr,
 		ImageBuilds: newImageBuilds,
 	}
-}
-
-func anyImageBuild(fn func(common.ImageBuildState) bool, list []common.ImageBuildState) bool {
-	acc := false
-	for _, i := range list {
-		if fn(i) {
-			acc = true
-		}
-	}
-	return acc
-}
-
-func allImageBuilds(fn func(common.ImageBuildState) bool, list []common.ImageBuildState) bool {
-	acc := true
-	for _, i := range list {
-		if !fn(i) {
-			acc = false
-		}
-	}
-	return acc
-}
-
-// GetState returns a state of the whole compose which is derived from the states of
-// individual image builds inside the compose
-func (c *Compose) GetState() common.ComposeState {
-	var imageBuildsStates []common.ImageBuildState
-	for _, ib := range c.ImageBuilds {
-		imageBuildsStates = append(imageBuildsStates, ib.QueueStatus)
-	}
-	// In case all states are the same
-	if allImageBuilds(func(ib common.ImageBuildState) bool { return ib == common.IBWaiting }, imageBuildsStates) {
-		return common.CWaiting
-	}
-	if allImageBuilds(func(ib common.ImageBuildState) bool { return ib == common.IBFinished }, imageBuildsStates) {
-		return common.CFinished
-	}
-	if allImageBuilds(func(ib common.ImageBuildState) bool { return ib == common.IBFailed }, imageBuildsStates) {
-		return common.CFailed
-	}
-	// In case the states are mixed
-	// TODO: can this condition be removed because it is already covered by the default?
-	if anyImageBuild(func(ib common.ImageBuildState) bool { return ib == common.IBRunning }, imageBuildsStates) {
-		return common.CRunning
-	}
-	if allImageBuilds(func(ib common.ImageBuildState) bool { return ib == common.IBFailed || ib == common.IBFinished }, imageBuildsStates) {
-		return common.CFailed
-	}
-	// Default value
-	return common.CRunning
 }
 
 // UpdateState changes a state of a single image build inside the Compose

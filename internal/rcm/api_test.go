@@ -6,15 +6,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/rcm"
-	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type API interface {
@@ -28,6 +31,21 @@ func internalRequest(api API, method, path, body, contentType string) *http.Resp
 	api.ServeHTTP(resp, req)
 
 	return resp.Result()
+}
+
+func newTestWorkerServer(t *testing.T) (*worker.Server, string) {
+	dir, err := ioutil.TempDir("", "rcm-test-")
+	require.NoError(t, err)
+
+	w := worker.NewServer(nil, testjobqueue.New(), nil)
+	require.NotNil(t, w)
+
+	return w, dir
+}
+
+func cleanupTempDir(t *testing.T, dir string) {
+	err := os.RemoveAll(dir)
+	require.NoError(t, err)
 }
 
 func TestBasicRcmAPI(t *testing.T) {
@@ -47,14 +65,18 @@ func TestBasicRcmAPI(t *testing.T) {
 		{"POST", "/v1/compose", `{"status":"RUNNING"}`, "text/plain", http.StatusBadRequest, ``},
 		{"POST", "/v1/compose", `{"image_builds":[]}`, "application/json", http.StatusBadRequest, ""},
 		{"POST", "/v1/compose/111-222-333", `{"status":"RUNNING"}`, "application/json", http.StatusMethodNotAllowed, ``},
-		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, `{"error_reason":"Compose UUID does not exist"}`},
+		{"GET", "/v1/compose/7802c476-9cd1-41b7-ba81-43c1906bce73", `{"status":"RUNNING"}`, "application/json", http.StatusBadRequest, ``},
 	}
 
 	registry, err := distro_mock.NewDefaultRegistry()
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+
+	workers, dir := newTestWorkerServer(t)
+	defer cleanupTempDir(t, dir)
+
+	api := rcm.New(nil, workers, rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	for _, c := range cases {
 		resp := internalRequest(api, c.Method, c.Path, c.Body, c.ContentType)
@@ -79,7 +101,11 @@ func TestSubmit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+
+	workers, dir := newTestWorkerServer(t)
+	defer cleanupTempDir(t, dir)
+
+	api := rcm.New(nil, workers, rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`
@@ -207,7 +233,11 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	api := rcm.New(nil, store.New(nil), rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
+
+	workers, dir := newTestWorkerServer(t)
+	defer cleanupTempDir(t, dir)
+
+	api := rcm.New(nil, workers, rpmmd_mock.NewRPMMDMock(rpmmd_mock.BaseFixture()), registry)
 
 	var submit_reply struct {
 		UUID uuid.UUID `json:"compose_id"`

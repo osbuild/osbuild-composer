@@ -1,7 +1,11 @@
 package target
 
+import "github.com/google/uuid"
+
 type LocalTargetOptions struct {
-	Filename string `json:"filename"`
+	ComposeId    uuid.UUID `json:"compose_id"`
+	ImageBuildId int       `json:"image_build_id"`
+	Filename     string    `json:"filename"`
 }
 
 func (LocalTargetOptions) isTargetOptions() {}

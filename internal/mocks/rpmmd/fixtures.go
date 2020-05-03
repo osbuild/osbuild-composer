@@ -7,6 +7,8 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -150,6 +152,10 @@ func createBaseStoreFixture() *store.Store {
 	return s
 }
 
+func createBaseWorkersFixture() *worker.Server {
+	return worker.NewServer(nil, testjobqueue.New(), nil)
+}
+
 func createBaseDepsolveFixture() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{
 		{
@@ -207,6 +213,7 @@ func BaseFixture() Fixture {
 			nil,
 		},
 		createBaseStoreFixture(),
+		createBaseWorkersFixture(),
 	}
 }
 
@@ -223,6 +230,7 @@ func NoComposesFixture() Fixture {
 			nil,
 		},
 		createStoreWithoutComposesFixture(),
+		createBaseWorkersFixture(),
 	}
 }
 
@@ -242,6 +250,7 @@ func NonExistingPackage() Fixture {
 			},
 		},
 		createBaseStoreFixture(),
+		createBaseWorkersFixture(),
 	}
 }
 
@@ -261,6 +270,7 @@ func BadDepsolve() Fixture {
 			},
 		},
 		createBaseStoreFixture(),
+		createBaseWorkersFixture(),
 	}
 }
 
@@ -283,5 +293,6 @@ func BadFetch() Fixture {
 			},
 		},
 		createBaseStoreFixture(),
+		createBaseWorkersFixture(),
 	}
 }

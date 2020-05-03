@@ -2,6 +2,7 @@ package weldr
 
 import (
 	"sort"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -21,37 +22,40 @@ type ComposeEntry struct {
 	Uploads     []uploadResponse       `json:"uploads,omitempty"`
 }
 
-func composeToComposeEntry(id uuid.UUID, compose compose.Compose, includeUploads bool) *ComposeEntry {
+func composeToComposeEntry(id uuid.UUID, compose compose.Compose, state common.ComposeState, queued, started, finished time.Time, includeUploads bool) *ComposeEntry {
 	var composeEntry ComposeEntry
 
 	composeEntry.ID = id
 	composeEntry.Blueprint = compose.Blueprint.Name
 	composeEntry.Version = compose.Blueprint.Version
 	composeEntry.ComposeType = compose.ImageBuilds[0].ImageType
-	composeEntry.QueueStatus = compose.ImageBuilds[0].QueueStatus
 
 	if includeUploads {
 		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
 	}
 
-	switch compose.ImageBuilds[0].QueueStatus {
-	case common.IBWaiting:
-		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
+	switch state {
+	case common.CWaiting:
+		composeEntry.QueueStatus = common.IBWaiting
+		composeEntry.JobCreated = float64(queued.UnixNano()) / 1000000000
 
-	case common.IBRunning:
-		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
+	case common.CRunning:
+		composeEntry.QueueStatus = common.IBRunning
+		composeEntry.JobCreated = float64(queued.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(started.UnixNano()) / 1000000000
 
-	case common.IBFinished:
+	case common.CFinished:
+		composeEntry.QueueStatus = common.IBFinished
 		composeEntry.ImageSize = compose.ImageBuilds[0].Size
-		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
-		composeEntry.JobFinished = float64(compose.ImageBuilds[0].JobFinished.UnixNano()) / 1000000000
+		composeEntry.JobCreated = float64(queued.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(started.UnixNano()) / 1000000000
+		composeEntry.JobFinished = float64(finished.UnixNano()) / 1000000000
 
-	case common.IBFailed:
-		composeEntry.JobCreated = float64(compose.ImageBuilds[0].JobCreated.UnixNano()) / 1000000000
-		composeEntry.JobStarted = float64(compose.ImageBuilds[0].JobStarted.UnixNano()) / 1000000000
-		composeEntry.JobFinished = float64(compose.ImageBuilds[0].JobFinished.UnixNano()) / 1000000000
+	case common.CFailed:
+		composeEntry.QueueStatus = common.IBFailed
+		composeEntry.JobCreated = float64(queued.UnixNano()) / 1000000000
+		composeEntry.JobStarted = float64(started.UnixNano()) / 1000000000
+		composeEntry.JobFinished = float64(finished.UnixNano()) / 1000000000
 	default:
 		panic("invalid compose state")
 	}

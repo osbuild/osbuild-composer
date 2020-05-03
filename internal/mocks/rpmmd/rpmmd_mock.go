@@ -3,6 +3,7 @@ package rpmmd_mock
 import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type fetchPackageList struct {
@@ -20,6 +21,7 @@ type Fixture struct {
 	fetchPackageList
 	depsolve
 	*store.Store
+	Workers *worker.Server
 }
 
 type rpmmdMock struct {

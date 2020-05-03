@@ -38,7 +38,7 @@ func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.
 		panic(err)
 	}
 
-	return New(rpm, arch, d, repos, nil, fixture.Store), fixture.Store
+	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers), fixture.Store
 }
 
 func TestBasic(t *testing.T) {

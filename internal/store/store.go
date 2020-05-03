@@ -84,14 +84,6 @@ func (e *NotPendingError) Error() string {
 	return e.message
 }
 
-type NotRunningError struct {
-	message string
-}
-
-func (e *NotRunningError) Error() string {
-	return e.message
-}
-
 type InvalidRequestError struct {
 	message string
 }
@@ -136,27 +128,23 @@ func New(stateDir *string) *Store {
 	if s.Composes == nil {
 		s.Composes = make(map[uuid.UUID]compose.Compose)
 	} else {
+		// Backwards compatibility: fail all builds that are queued or
+		// running. Jobs status is now handled outside of the store
+		// (and the compose). The fields are kept so that previously
+		// succeeded builds still show up correctly.
 		for composeID, compose := range s.Composes {
 			if len(compose.ImageBuilds) == 0 {
 				panic("the was a compose with zero image builds, that is forbidden")
 			}
 			for imgID, imgBuild := range compose.ImageBuilds {
 				switch imgBuild.QueueStatus {
-				case common.IBRunning:
-					// We do not support resuming an in-flight build
+				case common.IBRunning, common.IBWaiting:
 					compose.ImageBuilds[imgID].QueueStatus = common.IBFailed
 					s.Composes[composeID] = compose
-				case common.IBWaiting:
-					// Push waiting composes back into the pending jobs queue
-					s.pendingJobs <- Job{
-						ComposeID:    composeID,
-						ImageBuildID: imgBuild.Id,
-						Manifest:     imgBuild.Manifest,
-						Targets:      imgBuild.Targets,
-					}
 				}
 			}
 		}
+
 	}
 	if s.Sources == nil {
 		s.Sources = make(map[string]SourceConfig)
@@ -501,12 +489,14 @@ func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) st
 	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
 }
 
-func (s *Store) PushCompose(manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target) (uuid.UUID, error) {
+func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
+	if _, exists := s.GetCompose(composeID); exists {
+		panic("a compose with this id already exists")
+	}
+
 	if targets == nil {
 		targets = []*target.Target{}
 	}
-
-	composeID := uuid.New()
 
 	// Compatibility layer for image types in Weldr API v0
 	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
@@ -519,7 +509,7 @@ func (s *Store) PushCompose(manifest *osbuild.Manifest, imageType distro.ImageTy
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
+			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 	}
 
@@ -529,36 +519,27 @@ func (s *Store) PushCompose(manifest *osbuild.Manifest, imageType distro.ImageTy
 			Blueprint: bp,
 			ImageBuilds: []compose.ImageBuild{
 				{
-					QueueStatus: common.IBWaiting,
-					Manifest:    manifest,
-					ImageType:   imageTypeCommon,
-					Targets:     targets,
-					JobCreated:  time.Now(),
-					Size:        size,
+					Manifest:   manifest,
+					ImageType:  imageTypeCommon,
+					Targets:    targets,
+					JobCreated: time.Now(),
+					Size:       size,
+					JobId:      jobId,
 				},
 			},
 		}
 		return nil
 	})
-	s.pendingJobs <- Job{
-		ComposeID:    composeID,
-		ImageBuildID: 0,
-		Manifest:     manifest,
-		Targets:      targets,
-	}
-
-	return composeID, nil
+	return nil
 }
 
 // PushTestCompose is used for testing
 // Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
 // It does not actually run a compose job
-func (s *Store) PushTestCompose(manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) (uuid.UUID, error) {
+func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
 	if targets == nil {
 		targets = []*target.Target{}
 	}
-
-	composeID := uuid.New()
 
 	// Compatibility layer for image types in Weldr API v0
 	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
@@ -571,7 +552,7 @@ func (s *Store) PushTestCompose(manifest *osbuild.Manifest, imageType distro.Ima
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
+			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 	}
 
@@ -607,31 +588,18 @@ func (s *Store) PushTestCompose(manifest *osbuild.Manifest, imageType distro.Ima
 	// Instead of starting the job, immediately set a final status
 	err := s.UpdateImageBuildInCompose(composeID, 0, status, &result)
 	if err != nil {
-		return uuid.Nil, err
+		return err
 	}
 
-	return composeID, nil
+	return nil
 }
 
 // DeleteCompose deletes the compose from the state file and also removes all files on disk that are
 // associated with this compose
 func (s *Store) DeleteCompose(id uuid.UUID) error {
 	return s.change(func() error {
-		compose, exists := s.Composes[id]
-
-		if !exists {
+		if _, exists := s.Composes[id]; !exists {
 			return &NotFoundError{}
-		}
-
-		// If any of the image builds have build artifacts, remove them
-		invalidRequest := true
-		for _, imageBuild := range compose.ImageBuilds {
-			if imageBuild.QueueStatus == common.IBFinished || imageBuild.QueueStatus == common.IBFailed {
-				invalidRequest = false
-			}
-		}
-		if invalidRequest {
-			return &InvalidRequestError{fmt.Sprintf("Compose %s is not in FINISHED or FAILED.", id)}
 		}
 
 		delete(s.Composes, id)
@@ -646,31 +614,6 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 
 		return err
 	})
-}
-
-// PopJob returns a job from the job queue and changes the status of the corresponding image build to running
-func (s *Store) PopJob() Job {
-	job := <-s.pendingJobs
-	// FIXME: handle or comment this possible error
-	_ = s.change(func() error {
-		// Get the compose from the map
-		compose, exists := s.Composes[job.ComposeID]
-		// Check that it exists
-		if !exists {
-			panic("Invalid job in queue.")
-		}
-		// Change queue status to running for the image build as well as for the targets
-		compose.ImageBuilds[job.ImageBuildID].QueueStatus = common.IBRunning
-		compose.ImageBuilds[job.ImageBuildID].JobStarted = time.Now()
-		for m := range compose.ImageBuilds[job.ImageBuildID].Targets {
-			compose.ImageBuilds[job.ImageBuildID].Targets[m].Status = common.IBRunning
-		}
-		// Replace the compose struct with the new one
-		// TODO: I'm not sure this is needed, but I don't know what is the golang semantics in this case
-		s.Composes[job.ComposeID] = compose
-		return nil
-	})
-	return job
 }
 
 // UpdateImageBuildInCompose sets the status and optionally also the final image.

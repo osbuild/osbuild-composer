@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -62,7 +63,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*common.ComposeResult, error) {
+func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (*common.ComposeResult, error) {
 	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild store: %v", err)
@@ -86,7 +87,7 @@ func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*co
 				continue
 			}
 
-			err = uploadFunc(job, f)
+			err = uploadFunc(options.ComposeId, options.ImageBuildId, f)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -101,7 +102,7 @@ func RunJob(job *worker.Job, uploadFunc func(*worker.Job, io.Reader) error) (*co
 			}
 
 			if options.Key == "" {
-				options.Key = job.ComposeID.String()
+				options.Key = job.Id.String()
 			}
 
 			_, err = a.Upload(path.Join(tmpStore, "refs", result.OutputID, options.Filename), options.Bucket, options.Key)
@@ -191,7 +192,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Running job %s\n", job.ComposeID.String())
+		fmt.Printf("Running job %s\n", job.Id)
 
 		var status common.ImageBuildState
 		result, err := RunJob(job, client.UploadImage)
