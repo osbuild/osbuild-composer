@@ -11,10 +11,12 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 // withNetworkNamespace provides the function f with a new network namespace
@@ -130,8 +132,20 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 			image,
 		)
 
+		hostDistroName, err := distro.GetHostDistroName()
+		if err != nil {
+			return fmt.Errorf("cannot determing the current distro: %v", err)
+		}
+
+		var qemuPath string
+		if strings.HasPrefix(hostDistroName, "rhel") {
+			qemuPath = "/usr/libexec/qemu-kvm"
+		} else {
+			qemuPath = "qemu-system-x86_64"
+		}
+
 		qemuX8664Cmd := ns.NamespacedCommand(
-			"qemu-system-x86_64",
+			qemuPath,
 			"-cpu", "host",
 			"-smp", strconv.Itoa(runtime.NumCPU()),
 			"-m", "1024",
