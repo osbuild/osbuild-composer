@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Create temporary directories for Ansible.
+sudo mkdir -vp /opt/ansible_{local,remote}
+sudo chmod -R 777 /opt/ansible_{local,remote}
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
