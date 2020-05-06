@@ -5,6 +5,9 @@ set -euxo pipefail
 sudo mkdir -vp /opt/ansible_{local,remote}
 sudo chmod -R 777 /opt/ansible_{local,remote}
 
+# Disable IPv6 to avoid issues in PSI OpenStack.
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
