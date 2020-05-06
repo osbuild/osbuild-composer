@@ -20,6 +20,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 	assert := assert.New(t)
 	fileNames, err := filepath.Glob(filepath.Join(pipelinePath, prefix))
 	assert.NoErrorf(err, "Could not read pipelines directory '%s': %v", pipelinePath, err)
+	require.Greaterf(t, len(fileNames), 0, "No pipelines found in %s for %s", pipelinePath, prefix)
 	for _, fileName := range fileNames {
 		type repository struct {
 			BaseURL    string `json:"baseurl,omitempty"`
