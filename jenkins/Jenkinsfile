@@ -53,17 +53,17 @@ pipeline {
                         sh "jenkins/run_tests.sh"
                     }
                 }
-                stage('RHEL 8.2 base') {
-                    agent {
-                        label "rhel82"
-                    }
-                    environment {
-                        TEST_TYPE = "base"
-                    }
-                    steps {
-                        sh "jenkins/run_tests.sh"
-                    }
-                }
+                //stage('RHEL 8.2 base') {
+                //    agent {
+                //        label "rhel82"
+                //    }
+                //    environment {
+                //        TEST_TYPE = "base"
+                //    }
+                //    steps {
+                //        sh "jenkins/run_tests.sh"
+                //    }
+                //}
                 // Disable RHEL 8.3 image testing for now until we work out the
                 // QEMU issues there.
                 //
