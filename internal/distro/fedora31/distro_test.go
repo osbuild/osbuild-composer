@@ -274,7 +274,7 @@ func TestImageType_BasePackages(t *testing.T) {
 }
 
 func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../../test/cases/", "f31*", fedora31.New())
+	distro_test_common.TestDistro_Manifest(t, "../../../test/cases/", "fedora_31*", fedora31.New())
 }
 
 func TestFedora31_ListArches(t *testing.T) {
