@@ -6,20 +6,46 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/google/uuid"
 )
 
-type RepoConfig struct {
+type repository struct {
+	Id         string `json:"id"`
+	BaseURL    string `json:"baseurl,omitempty"`
+	Metalink   string `json:"metalink,omitempty"`
+	MirrorList string `json:"mirrorlist,omitempty"`
+	GPGKey     string `json:"gpgkey,omitempty"`
+	RHSM       bool   `json:"rhsm,omitempty"`
+}
+
+type dnfRepoConfig struct {
 	Id             string `json:"id"`
 	BaseURL        string `json:"baseurl,omitempty"`
 	Metalink       string `json:"metalink,omitempty"`
 	MirrorList     string `json:"mirrorlist,omitempty"`
 	GPGKey         string `json:"gpgkey,omitempty"`
 	IgnoreSSL      bool   `json:"ignoressl"`
+	SSLCACert      string `json:"sslcacert,omitempty"`
+	SSLClientKey   string `json:"sslclientkey,omitempty"`
+	SSLClientCert  string `json:"sslclientcert,omitempty"`
 	MetadataExpire string `json:"metadata_expire,omitempty"`
+}
+
+type RepoConfig struct {
+	Id             string
+	BaseURL        string
+	Metalink       string
+	MirrorList     string
+	GPGKey         string
+	IgnoreSSL      bool
+	MetadataExpire string
+	RHSM           bool
 }
 
 type PackageList []Package
@@ -72,6 +98,7 @@ type PackageSpec struct {
 	Path           string `json:"path,omitempty"`
 	RemoteLocation string `json:"remote_location,omitempty"`
 	Checksum       string `json:"checksum,omitempty"`
+	Secrets        string `json:"secrets,omitempty"`
 }
 
 type PackageSource struct {
@@ -125,6 +152,35 @@ func (re *RepositoryError) Error() string {
 	return re.msg
 }
 
+type RHSMSecrets struct {
+	SSLCACert     string `json:"sslcacert,omitempty"`
+	SSLClientKey  string `json:"sslclientkey,omitempty"`
+	SSLClientCert string `json:"sslclientcert,omitempty"`
+}
+
+var rhsmSecrets RHSMSecrets
+
+func getRHSMSecrets() (RHSMSecrets, error) {
+	if rhsmSecrets == (RHSMSecrets{}) {
+		keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
+		if err != nil {
+			return rhsmSecrets, &RepositoryError{fmt.Sprintf("unable to find client key in /etc/pki/entitlement/: %v", err)}
+		}
+		for _, key := range keys {
+			cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
+			if _, err := os.Stat(cert); err == nil {
+				rhsmSecrets = RHSMSecrets{
+					SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
+					SSLClientKey:  key,
+					SSLClientCert: cert,
+				}
+				break
+			}
+		}
+	}
+	return rhsmSecrets, nil
+}
+
 func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
 	var f *os.File
 	var err error
@@ -143,14 +199,29 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	}
 	defer f.Close()
 
-	var repos map[string][]RepoConfig
+	var reposMap map[string][]repository
+	repoConfigs := make(map[string][]RepoConfig)
 
-	err = json.NewDecoder(f).Decode(&repos)
+	err = json.NewDecoder(f).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}
 
-	return repos, nil
+	for arch, repos := range reposMap {
+		for _, repo := range repos {
+			config := RepoConfig{
+				Id:         repo.Id,
+				BaseURL:    repo.BaseURL,
+				Metalink:   repo.Metalink,
+				MirrorList: repo.MirrorList,
+				GPGKey:     repo.GPGKey,
+				RHSM:       repo.RHSM,
+			}
+
+			repoConfigs[arch] = append(repoConfigs[arch], config)
+		}
+	}
+	return repoConfigs, nil
 }
 
 func runDNF(command string, arguments interface{}, result interface{}) error {
@@ -223,18 +294,52 @@ func NewRPMMD(cacheDir string) RPMMD {
 	}
 }
 
+func (repo RepoConfig) toDNFRepoConfig() (dnfRepoConfig, error) {
+	id := uuid.New().String()
+	dnfRepo := dnfRepoConfig{
+		Id:             id,
+		BaseURL:        repo.BaseURL,
+		Metalink:       repo.Metalink,
+		MirrorList:     repo.MirrorList,
+		GPGKey:         repo.GPGKey,
+		IgnoreSSL:      repo.IgnoreSSL,
+		MetadataExpire: repo.MetadataExpire,
+	}
+	if repo.RHSM {
+		secrets, err := getRHSMSecrets()
+		if err != nil {
+			return dnfRepoConfig{}, err
+		}
+		dnfRepo.SSLCACert = secrets.SSLCACert
+		dnfRepo.SSLClientKey = secrets.SSLClientKey
+		dnfRepo.SSLClientCert = secrets.SSLClientCert
+	}
+	return dnfRepo, nil
+}
+
 func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, arch string) (PackageList, map[string]string, error) {
+	var dnfRepoConfigs []dnfRepoConfig
+	for _, repo := range repos {
+		dnfRepo, err := repo.toDNFRepoConfig()
+		if err != nil {
+			return nil, nil, err
+		}
+		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+	}
+
 	var arguments = struct {
-		Repos            []RepoConfig `json:"repos"`
-		CacheDir         string       `json:"cachedir"`
-		ModulePlatformID string       `json:"module_platform_id"`
-		Arch             string       `json:"arch"`
-	}{repos, r.CacheDir, modulePlatformID, arch}
+		Repos            []dnfRepoConfig `json:"repos"`
+		CacheDir         string          `json:"cachedir"`
+		ModulePlatformID string          `json:"module_platform_id"`
+		Arch             string          `json:"arch"`
+	}{dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
 	var reply struct {
 		Checksums map[string]string `json:"checksums"`
 		Packages  PackageList       `json:"packages"`
 	}
+
 	err := runDNF("dump", arguments, &reply)
+
 	sort.Slice(reply.Packages, func(i, j int) bool {
 		return reply.Packages[i].Name < reply.Packages[j].Name
 	})
@@ -242,19 +347,41 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 }
 
 func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
+	repoMap := make(map[string]RepoConfig)
+	var dnfRepoConfigs []dnfRepoConfig
+
+	for _, repo := range repos {
+		id := repo.Id
+		repoMap[id] = repo
+
+		dnfRepo, err := repo.toDNFRepoConfig()
+		if err != nil {
+			return nil, nil, err
+		}
+		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+	}
+
 	var arguments = struct {
-		PackageSpecs     []string     `json:"package-specs"`
-		ExcludSpecs      []string     `json:"exclude-specs"`
-		Repos            []RepoConfig `json:"repos"`
-		CacheDir         string       `json:"cachedir"`
-		ModulePlatformID string       `json:"module_platform_id"`
-		Arch             string       `json:"arch"`
-	}{specs, excludeSpecs, repos, r.CacheDir, modulePlatformID, arch}
+		PackageSpecs     []string        `json:"package-specs"`
+		ExcludSpecs      []string        `json:"exclude-specs"`
+		Repos            []dnfRepoConfig `json:"repos"`
+		CacheDir         string          `json:"cachedir"`
+		ModulePlatformID string          `json:"module_platform_id"`
+		Arch             string          `json:"arch"`
+	}{specs, excludeSpecs, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
 	}
 	err := runDNF("depsolve", arguments, &reply)
+
+	for i, pack := range reply.Dependencies {
+		id := pack.RepoID
+		if repoMap[id].RHSM {
+			reply.Dependencies[i].Secrets = "org.osbuild.rhsm"
+		}
+	}
+
 	return reply.Dependencies, reply.Checksums, err
 }
 
