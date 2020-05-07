@@ -3,7 +3,7 @@
 //
 // Jobs are stored in the file system, using the `jsondb` package. However,
 // this package does not use the file system as a database, but keeps some
-// state in memory. This means that access to a given directory myst be
+// state in memory. This means that access to a given directory must be
 // exclusive to only one `fsJobQueue` object at a time. A single `fsJobQueue`
 // can be safely accessed from multiple goroutines, though.
 //
@@ -52,9 +52,9 @@ type job struct {
 	Result       json.RawMessage `json:"result,omitempty"`
 
 	Status     jobqueue.JobStatus `json:"status"`
-	QueuedAt   time.Time          `json:"queued-at,omitempty"`
-	StartedAt  time.Time          `json:"started-at,omitempty"`
-	FinishedAt time.Time          `json:"finished-at,omitempty"`
+	QueuedAt   time.Time          `json:"queued_at,omitempty"`
+	StartedAt  time.Time          `json:"started_at,omitempty"`
+	FinishedAt time.Time          `json:"finished_at,omitempty"`
 }
 
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
@@ -150,7 +150,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 }
 
 func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, args interface{}) (uuid.UUID, error) {
-	// Return early if the conext is already canceled.
+	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
 		return uuid.Nil, err
 	}
