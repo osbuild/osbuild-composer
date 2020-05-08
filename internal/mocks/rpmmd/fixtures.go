@@ -5,16 +5,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 
-	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
-	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type FixtureGenerator func() Fixture
@@ -57,101 +52,6 @@ func generatePackageList() rpmmd.PackageList {
 	return packageList
 }
 
-func createBaseStoreFixture() *store.Store {
-	var bName = "test"
-	var b = blueprint.Blueprint{
-		Name:           bName,
-		Version:        "0.0.0",
-		Packages:       []blueprint.Package{},
-		Modules:        []blueprint.Package{},
-		Groups:         []blueprint.Group{},
-		Customizations: nil,
-	}
-
-	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
-
-	var localTarget = &target.Target{
-		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.local",
-		ImageName: "localimage",
-		Created:   date,
-		Status:    common.IBWaiting,
-		Options:   &target.LocalTargetOptions{},
-	}
-
-	var awsTarget = &target.Target{
-		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.aws",
-		ImageName: "awsimage",
-		Created:   date,
-		Status:    common.IBWaiting,
-		Options: &target.AWSTargetOptions{
-			Region:          "frankfurt",
-			AccessKeyID:     "accesskey",
-			SecretAccessKey: "secretkey",
-			Bucket:          "clay",
-			Key:             "imagekey",
-		},
-	}
-
-	s := store.New(nil)
-
-	s.Blueprints[bName] = b
-	s.Composes = map[uuid.UUID]compose.Compose{
-		uuid.MustParse("30000000-0000-0000-0000-000000000000"): compose.Compose{
-			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
-				{
-					QueueStatus: common.IBWaiting,
-					ImageType:   common.Qcow2Generic,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-				},
-			},
-		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000001"): compose.Compose{
-			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
-				{
-					QueueStatus: common.IBRunning,
-					ImageType:   common.Qcow2Generic,
-					Targets:     []*target.Target{localTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-				},
-			},
-		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000002"): compose.Compose{
-			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
-				{
-					QueueStatus: common.IBFinished,
-					ImageType:   common.Qcow2Generic,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-					JobFinished: date,
-				},
-			},
-		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000003"): compose.Compose{
-			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
-				{
-					QueueStatus: common.IBFailed,
-					ImageType:   common.Qcow2Generic,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-					JobFinished: date,
-				},
-			},
-		},
-	}
-
-	return s
-}
-
 func createBaseWorkersFixture() *worker.Server {
 	return worker.NewServer(nil, testjobqueue.New(), nil)
 }
@@ -182,24 +82,6 @@ func createBaseDepsolveFixture() []rpmmd.PackageSpec {
 	}
 }
 
-func createStoreWithoutComposesFixture() *store.Store {
-	var bName = "test"
-	var b = blueprint.Blueprint{
-		Name:           bName,
-		Version:        "0.0.0",
-		Packages:       []blueprint.Package{},
-		Modules:        []blueprint.Package{},
-		Groups:         []blueprint.Group{},
-		Customizations: nil,
-	}
-
-	s := store.New(nil)
-
-	s.Blueprints[bName] = b
-
-	return s
-}
-
 func BaseFixture() Fixture {
 	return Fixture{
 		fetchPackageList{
@@ -212,7 +94,7 @@ func BaseFixture() Fixture {
 			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
-		createBaseStoreFixture(),
+		store.FixtureBase(),
 		createBaseWorkersFixture(),
 	}
 }
@@ -229,7 +111,7 @@ func NoComposesFixture() Fixture {
 			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
-		createStoreWithoutComposesFixture(),
+		store.FixtureEmpty(),
 		createBaseWorkersFixture(),
 	}
 }
@@ -249,7 +131,7 @@ func NonExistingPackage() Fixture {
 				Reason: "Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash",
 			},
 		},
-		createBaseStoreFixture(),
+		store.FixtureBase(),
 		createBaseWorkersFixture(),
 	}
 }
@@ -269,7 +151,7 @@ func BadDepsolve() Fixture {
 				Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
 			},
 		},
-		createBaseStoreFixture(),
+		store.FixtureBase(),
 		createBaseWorkersFixture(),
 	}
 }
@@ -292,7 +174,7 @@ func BadFetch() Fixture {
 				Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
 			},
 		},
-		createBaseStoreFixture(),
+		store.FixtureBase(),
 		createBaseWorkersFixture(),
 	}
 }
