@@ -521,11 +521,13 @@ func TestCompose(t *testing.T) {
 			continue
 		}
 
-		require.Equalf(t, 1, len(s.Composes), "%s: bad compose count in store", c.Path)
+		composes := s.GetAllComposes()
+
+		require.Equalf(t, 1, len(composes), "%s: bad compose count in store", c.Path)
 
 		// I have no idea how to get the compose in better way
 		var composeStruct compose.Compose
-		for _, c := range s.Composes {
+		for _, c := range composes {
 			composeStruct = c
 			break
 		}
@@ -564,7 +566,7 @@ func TestComposeDelete(t *testing.T) {
 
 		idsInStore := []string{}
 
-		for id := range s.Composes {
+		for id := range s.GetAllComposes() {
 			idsInStore = append(idsInStore, id.String())
 		}
 
