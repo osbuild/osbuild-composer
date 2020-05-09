@@ -73,7 +73,6 @@ func (suite *storeTest) TestNewEmpty() {
 	suite.Empty(suite.myStore.sources)
 	suite.Empty(suite.myStore.blueprintsChanges)
 	suite.Empty(suite.myStore.blueprintsCommits)
-	suite.Empty(suite.myStore.pendingJobs)
 	suite.Equal(&suite.dir, suite.myStore.stateDir)
 }
 

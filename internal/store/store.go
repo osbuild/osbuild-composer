@@ -44,18 +44,9 @@ type Store struct {
 	blueprintsChanges map[string]map[string]blueprint.Change
 	blueprintsCommits map[string][]string
 
-	mu          sync.RWMutex // protects all fields
-	pendingJobs chan Job
-	stateDir    *string
-	db          *jsondb.JSONDatabase
-}
-
-// A Job contains the information about a compose a worker needs to process it.
-type Job struct {
-	ComposeID    uuid.UUID
-	ImageBuildID int
-	Manifest     *osbuild.Manifest
-	Targets      []*target.Target
+	mu       sync.RWMutex // protects all fields
+	stateDir *string
+	db       *jsondb.JSONDatabase
 }
 
 type SourceConfig struct {
@@ -102,7 +93,6 @@ func New(stateDir *string) *Store {
 
 	store := newStoreFromV0(storeStruct)
 
-	store.pendingJobs = make(chan Job, 200)
 	store.stateDir = stateDir
 	store.db = db
 
