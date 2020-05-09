@@ -139,39 +139,3 @@ func ImageTypeFromCompatString(input string) (ImageType, bool) {
 func (imgType ImageType) ToString() (string, bool) {
 	return toStringHelper(getImageTypeMapping(), int(imgType))
 }
-
-type UploadTarget int
-
-// NOTE: If you want to add more constants here, don't forget to add a mapping below
-const (
-	EC2          UploadTarget = iota
-	AzureStorage              // I mention "storage" explicitly because we might want to support gallery as well
-)
-
-// getArchMapping is a helper function that defines the conversion from JSON string value
-// to UploadTarget.
-func getUploadTargetMapping() map[string]int {
-	mapping := map[string]int{
-		"AWS EC2":       int(EC2),
-		"Azure storage": int(AzureStorage),
-	}
-	return mapping
-}
-
-func (ut *UploadTarget) UnmarshalJSON(data []byte) error {
-	value, err := unmarshalHelper(data, " is not a valid JSON value", " is not a valid upload target", getUploadTargetMapping())
-	if err != nil {
-		return err
-	}
-	*ut = UploadTarget(value)
-	return nil
-}
-
-func (ut UploadTarget) MarshalJSON() ([]byte, error) {
-	return marshalHelper(int(ut), getUploadTargetMapping(), "is not a valid upload target tag")
-}
-
-type ImageRequest struct {
-	ImgType  ImageType      `json:"image_type"`
-	UpTarget []UploadTarget `json:"upload_targets"`
-}
