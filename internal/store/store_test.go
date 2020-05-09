@@ -67,12 +67,12 @@ func (suite *storeTest) TestRandomSHA1String() {
 
 //Check initial state of fields
 func (suite *storeTest) TestNewEmpty() {
-	suite.Empty(suite.myStore.Blueprints)
-	suite.Empty(suite.myStore.Workspace)
-	suite.Empty(suite.myStore.Composes)
-	suite.Empty(suite.myStore.Sources)
-	suite.Empty(suite.myStore.BlueprintsChanges)
-	suite.Empty(suite.myStore.BlueprintsCommits)
+	suite.Empty(suite.myStore.blueprints)
+	suite.Empty(suite.myStore.workspace)
+	suite.Empty(suite.myStore.composes)
+	suite.Empty(suite.myStore.sources)
+	suite.Empty(suite.myStore.blueprintsChanges)
+	suite.Empty(suite.myStore.blueprintsCommits)
 	suite.Empty(suite.myStore.pendingJobs)
 	suite.Equal(&suite.dir, suite.myStore.stateDir)
 }
@@ -80,27 +80,27 @@ func (suite *storeTest) TestNewEmpty() {
 //Push a blueprint
 func (suite *storeTest) TestPushBlueprint() {
 	suite.myStore.PushBlueprint(suite.myBP, "testing commit")
-	suite.Equal(suite.myBP, suite.myStore.Blueprints["testBP"])
+	suite.Equal(suite.myBP, suite.myStore.blueprints["testBP"])
 	//force a version bump
 	suite.myStore.PushBlueprint(suite.myBP, "testing commit")
-	suite.Equal("0.0.2", suite.myStore.Blueprints["testBP"].Version)
+	suite.Equal("0.0.2", suite.myStore.blueprints["testBP"].Version)
 }
 
 //List the blueprint
 func (suite *storeTest) TestListBlueprints() {
-	suite.myStore.Blueprints["testBP"] = suite.myBP
+	suite.myStore.blueprints["testBP"] = suite.myBP
 	suite.Equal([]string{"testBP"}, suite.myStore.ListBlueprints())
 }
 
 //Push a blueprint to workspace
 func (suite *storeTest) TestPushBlueprintToWorkspace() {
 	suite.NoError(suite.myStore.PushBlueprintToWorkspace(suite.myBP))
-	suite.Equal(suite.myBP, suite.myStore.Workspace["testBP"])
+	suite.Equal(suite.myBP, suite.myStore.workspace["testBP"])
 }
 
 func (suite *storeTest) TestGetBlueprint() {
-	suite.myStore.Blueprints["testBP"] = suite.myBP
-	suite.myStore.Workspace["WIPtestBP"] = suite.myBP
+	suite.myStore.blueprints["testBP"] = suite.myBP
+	suite.myStore.workspace["WIPtestBP"] = suite.myBP
 	//Get pushed BP
 	actualBP, inWorkspace := suite.myStore.GetBlueprint("testBP")
 	suite.Equal(&suite.myBP, actualBP)
@@ -116,7 +116,7 @@ func (suite *storeTest) TestGetBlueprint() {
 }
 
 func (suite *storeTest) TestGetBlueprintCommited() {
-	suite.myStore.Blueprints["testBP"] = suite.myBP
+	suite.myStore.blueprints["testBP"] = suite.myBP
 	//Get pushed BP
 	actualBP := suite.myStore.GetBlueprintCommitted("testBP")
 	suite.Equal(&suite.myBP, actualBP)
@@ -126,7 +126,7 @@ func (suite *storeTest) TestGetBlueprintCommited() {
 }
 
 func (suite *storeTest) TestGetBlueprintChanges() {
-	suite.myStore.BlueprintsCommits["testBP"] = []string{"firstCommit", "secondCommit"}
+	suite.myStore.blueprintsCommits["testBP"] = []string{"firstCommit", "secondCommit"}
 	actualChanges := suite.myStore.GetBlueprintChanges("testBP")
 	suite.Len(actualChanges, 2)
 }
@@ -134,8 +134,8 @@ func (suite *storeTest) TestGetBlueprintChanges() {
 func (suite *storeTest) TestGetBlueprintChange() {
 	Commit := make(map[string]blueprint.Change)
 	Commit[suite.CommitHash] = suite.myChange
-	suite.myStore.BlueprintsCommits["testBP"] = []string{suite.CommitHash}
-	suite.myStore.BlueprintsChanges["testBP"] = Commit
+	suite.myStore.blueprintsCommits["testBP"] = []string{suite.CommitHash}
+	suite.myStore.blueprintsChanges["testBP"] = Commit
 
 	actualChange, err := suite.myStore.GetBlueprintChange("testBP", suite.CommitHash)
 	suite.NoError(err)
@@ -156,15 +156,15 @@ func (suite *storeTest) TestGetBlueprintChange() {
 func (suite *storeTest) TestTagBlueprint() {
 	Commit := make(map[string]blueprint.Change)
 	Commit[suite.CommitHash] = suite.myChange
-	suite.myStore.Blueprints["testBP"] = suite.myBP
-	suite.myStore.BlueprintsCommits["testBP"] = []string{suite.CommitHash}
-	suite.myStore.BlueprintsChanges["testBP"] = Commit
+	suite.myStore.blueprints["testBP"] = suite.myBP
+	suite.myStore.blueprintsCommits["testBP"] = []string{suite.CommitHash}
+	suite.myStore.blueprintsChanges["testBP"] = Commit
 
 	//Check that the blueprints change has no revision
-	suite.Nil(suite.myStore.BlueprintsChanges["testBP"][suite.CommitHash].Revision)
+	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash].Revision)
 	suite.NoError(suite.myStore.TagBlueprint("testBP"))
 	//The blueprints change should have a revision now
-	actualRevision := suite.myStore.BlueprintsChanges["testBP"][suite.CommitHash].Revision
+	actualRevision := suite.myStore.blueprintsChanges["testBP"][suite.CommitHash].Revision
 	suite.Equal(1, *actualRevision)
 	//Try to tag it again (should not change)
 	suite.NoError(suite.myStore.TagBlueprint("testBP"))
@@ -172,22 +172,22 @@ func (suite *storeTest) TestTagBlueprint() {
 	//Try to tag a non existing BNP
 	suite.EqualError(suite.myStore.TagBlueprint("Non_existing_BP"), "Unknown blueprint")
 	//Remove commits from a blueprint and try to tag it
-	suite.myStore.BlueprintsCommits["testBP"] = []string{}
+	suite.myStore.blueprintsCommits["testBP"] = []string{}
 	suite.EqualError(suite.myStore.TagBlueprint("testBP"), "No commits for blueprint")
 }
 
 func (suite *storeTest) TestDeleteBlueprint() {
-	suite.myStore.Blueprints["testBP"] = suite.myBP
+	suite.myStore.blueprints["testBP"] = suite.myBP
 	suite.NoError(suite.myStore.DeleteBlueprint("testBP"))
-	suite.Empty(suite.myStore.Blueprints)
+	suite.Empty(suite.myStore.blueprints)
 	//Try to delete again (should return an error)
 	suite.EqualError(suite.myStore.DeleteBlueprint("testBP"), "Unknown blueprint: testBP")
 }
 
 func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
-	suite.myStore.Workspace["WIPtestBP"] = suite.myBP
+	suite.myStore.workspace["WIPtestBP"] = suite.myBP
 	suite.NoError(suite.myStore.DeleteBlueprintFromWorkspace("WIPtestBP"))
-	suite.Empty(suite.myStore.Workspace)
+	suite.Empty(suite.myStore.workspace)
 	//Try to delete again (should return an error)
 	suite.EqualError(suite.myStore.DeleteBlueprintFromWorkspace("WIPtestBP"), "Unknown blueprint: WIPtestBP")
 }
