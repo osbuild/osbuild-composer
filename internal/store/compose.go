@@ -1,6 +1,4 @@
-// Package compose encapsulates the concept of a compose. It is a separate module from common, because it includes
-// target which in turn includes common and thus it would create a cyclic dependency, which is forbidden in golang.
-package compose
+package store
 
 import (
 	"time"
@@ -22,20 +20,19 @@ func (ste *StateTransitionError) Error() string {
 
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
-	Id          int               `json:"id"`
-	ImageType   common.ImageType  `json:"image_type"`
-	Manifest    *osbuild.Manifest `json:"manifest"`
-	Targets     []*target.Target  `json:"targets"`
-	JobCreated  time.Time         `json:"job_created"`
-	JobStarted  time.Time         `json:"job_started"`
-	JobFinished time.Time         `json:"job_finished"`
-	Size        uint64            `json:"size"`
-	JobId       uuid.UUID         `json:"jobid,omitempty"`
-
+	Id          int
+	ImageType   common.ImageType
+	Manifest    *osbuild.Manifest
+	Targets     []*target.Target
+	JobCreated  time.Time
+	JobStarted  time.Time
+	JobFinished time.Time
+	Size        uint64
+	JobId       uuid.UUID
 	// Kept for backwards compatibility. Image builds which were done
 	// before the move to the job queue use this to store whether they
 	// finished successfully.
-	QueueStatus common.ImageBuildState `json:"queue_status,omitempty"`
+	QueueStatus common.ImageBuildState
 }
 
 // DeepCopy creates a copy of the ImageBuild structure
@@ -80,8 +77,8 @@ func (ib *ImageBuild) GetLocalTargetOptions() *target.LocalTargetOptions {
 // It contains all the information necessary to generate the inputs for the job, as
 // well as the job's state.
 type Compose struct {
-	Blueprint   *blueprint.Blueprint `json:"blueprint"`
-	ImageBuilds []ImageBuild         `json:"image_builds"`
+	Blueprint   *blueprint.Blueprint
+	ImageBuilds []ImageBuild
 }
 
 // DeepCopy creates a copy of the Compose structure

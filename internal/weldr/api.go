@@ -23,7 +23,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -146,7 +145,7 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // Returns the state of the image in `compose` and the times the job was
 // queued, started, and finished. Assumes that there's only one image in the
 // compose. Returns CWaiting on error.
-func (api *API) getComposeState(compose compose.Compose) (state common.ComposeState, queued, started, finished time.Time) {
+func (api *API) getComposeState(compose store.Compose) (state common.ComposeState, queued, started, finished time.Time) {
 	if len(compose.ImageBuilds) == 0 {
 		return
 	}

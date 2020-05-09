@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -91,18 +90,18 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]compose.Compose {
-	composes := make(map[uuid.UUID]compose.Compose)
+func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]Compose {
+	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
-		c := compose.Compose{
+		c := Compose{
 			Blueprint: composeStruct.Blueprint,
 		}
 		if len(composeStruct.ImageBuilds) == 0 {
 			panic("the was a compose with zero image builds, that is forbidden")
 		}
 		for _, imgBuild := range composeStruct.ImageBuilds {
-			ib := compose.ImageBuild{
+			ib := ImageBuild{
 				Id:          imgBuild.ID,
 				ImageType:   imgBuild.ImageType,
 				Manifest:    imgBuild.Manifest,
@@ -229,7 +228,7 @@ func newStoreFromV0(storeStruct storeV0) *Store {
 	return &store
 }
 
-func newComposesV0(composes map[uuid.UUID]compose.Compose) composesV0 {
+func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 	composesStruct := make(composesV0)
 	for composeID, compose := range composes {
 		c := composeV0{

@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -39,7 +38,7 @@ const StoreDBName = "state"
 type Store struct {
 	blueprints        map[string]blueprint.Blueprint
 	workspace         map[string]blueprint.Blueprint
-	composes          map[uuid.UUID]compose.Compose
+	composes          map[uuid.UUID]Compose
 	sources           map[string]SourceConfig
 	blueprintsChanges map[string]map[string]blueprint.Change
 	blueprintsCommits map[string][]string
@@ -319,7 +318,7 @@ func (s *Store) TagBlueprint(name string) error {
 	})
 }
 
-func (s *Store) GetCompose(id uuid.UUID) (compose.Compose, bool) {
+func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -329,11 +328,11 @@ func (s *Store) GetCompose(id uuid.UUID) (compose.Compose, bool) {
 
 // GetAllComposes creates a deep copy of all composes present in this store
 // and returns them as a dictionary with compose UUIDs as keys
-func (s *Store) GetAllComposes() map[uuid.UUID]compose.Compose {
+func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	composes := make(map[uuid.UUID]compose.Compose)
+	composes := make(map[uuid.UUID]Compose)
 
 	for id, singleCompose := range s.composes {
 		newCompose := singleCompose.DeepCopy()
@@ -415,9 +414,9 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.composes[composeID] = compose.Compose{
+		s.composes[composeID] = Compose{
 			Blueprint: bp,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					Manifest:   manifest,
 					ImageType:  imageTypeCommon,
@@ -474,9 +473,9 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.composes[composeID] = compose.Compose{
+		s.composes[composeID] = Compose{
 			Blueprint: bp,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: status,
 					Manifest:    manifest,
