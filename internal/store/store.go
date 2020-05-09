@@ -28,22 +28,21 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
-	"github.com/coreos/go-semver/semver"
 	"github.com/google/uuid"
 )
 
-// The name under which to save the store to the underlying jsondb
+// StoreDBName is the name under which to save the store to the underlying jsondb
 const StoreDBName = "state"
 
 // A Store contains all the persistent state of osbuild-composer, and is serialized
 // on every change, and deserialized on start.
 type Store struct {
-	Blueprints        map[string]blueprint.Blueprint         `json:"blueprints"`
-	Workspace         map[string]blueprint.Blueprint         `json:"workspace"`
-	Composes          map[uuid.UUID]compose.Compose          `json:"composes"`
-	Sources           map[string]SourceConfig                `json:"sources"`
-	BlueprintsChanges map[string]map[string]blueprint.Change `json:"changes"`
-	BlueprintsCommits map[string][]string                    `json:"commits"`
+	blueprints        map[string]blueprint.Blueprint
+	workspace         map[string]blueprint.Blueprint
+	composes          map[uuid.UUID]compose.Compose
+	sources           map[string]SourceConfig
+	blueprintsChanges map[string]map[string]blueprint.Change
+	blueprintsCommits map[string][]string
 
 	mu          sync.RWMutex // protects all fields
 	pendingJobs chan Job
@@ -85,7 +84,8 @@ func (e *NoLocalTargetError) Error() string {
 }
 
 func New(stateDir *string) *Store {
-	var s Store
+	var storeStruct storeV0
+	var db *jsondb.JSONDatabase
 
 	if stateDir != nil {
 		err := os.Mkdir(*stateDir+"/"+"outputs", 0700)
@@ -93,94 +93,20 @@ func New(stateDir *string) *Store {
 			log.Fatalf("cannot create output directory")
 		}
 
-		s.db = jsondb.New(*stateDir, 0600)
-		_, err = s.db.Read(StoreDBName, &s)
+		db = jsondb.New(*stateDir, 0600)
+		_, err = db.Read(StoreDBName, &storeStruct)
 		if err != nil {
 			log.Fatalf("cannot read state: %v", err)
 		}
 	}
 
-	s.pendingJobs = make(chan Job, 200)
-	s.stateDir = stateDir
+	store := newStoreFromV0(storeStruct)
 
-	if s.Blueprints == nil {
-		s.Blueprints = make(map[string]blueprint.Blueprint)
-	}
-	if s.Workspace == nil {
-		s.Workspace = make(map[string]blueprint.Blueprint)
-	}
-	if s.Composes == nil {
-		s.Composes = make(map[uuid.UUID]compose.Compose)
-	} else {
-		// Backwards compatibility: fail all builds that are queued or
-		// running. Jobs status is now handled outside of the store
-		// (and the compose). The fields are kept so that previously
-		// succeeded builds still show up correctly.
-		for composeID, compose := range s.Composes {
-			if len(compose.ImageBuilds) == 0 {
-				panic("the was a compose with zero image builds, that is forbidden")
-			}
-			for imgID, imgBuild := range compose.ImageBuilds {
-				switch imgBuild.QueueStatus {
-				case common.IBRunning, common.IBWaiting:
-					compose.ImageBuilds[imgID].QueueStatus = common.IBFailed
-					s.Composes[composeID] = compose
-				}
-			}
-		}
+	store.pendingJobs = make(chan Job, 200)
+	store.stateDir = stateDir
+	store.db = db
 
-	}
-	if s.Sources == nil {
-		s.Sources = make(map[string]SourceConfig)
-	}
-	if s.BlueprintsChanges == nil {
-		s.BlueprintsChanges = make(map[string]map[string]blueprint.Change)
-	}
-	if s.BlueprintsCommits == nil {
-		s.BlueprintsCommits = make(map[string][]string)
-	}
-
-	// Populate BlueprintsCommits for existing blueprints without commit history
-	// BlueprintsCommits tracks the order of the commits in BlueprintsChanges,
-	// but may not be in-sync with BlueprintsChanges because it was added later.
-	// This will sort the existing commits by timestamp and version to update
-	// the store. BUT since the timestamp resolution is only 1s it is possible
-	// that the order may be slightly wrong.
-	for name := range s.BlueprintsChanges {
-		if len(s.BlueprintsChanges[name]) != len(s.BlueprintsCommits[name]) {
-			changes := make([]blueprint.Change, 0, len(s.BlueprintsChanges[name]))
-
-			for commit := range s.BlueprintsChanges[name] {
-				changes = append(changes, s.BlueprintsChanges[name][commit])
-			}
-
-			// Sort the changes by Timestamp then version, ascending
-			sort.Slice(changes, func(i, j int) bool {
-				if changes[i].Timestamp == changes[j].Timestamp {
-					vI, err := semver.NewVersion(changes[i].Blueprint.Version)
-					if err != nil {
-						vI = semver.New("0.0.0")
-					}
-					vJ, err := semver.NewVersion(changes[j].Blueprint.Version)
-					if err != nil {
-						vJ = semver.New("0.0.0")
-					}
-
-					return vI.LessThan(*vJ)
-				}
-				return changes[i].Timestamp < changes[j].Timestamp
-			})
-
-			commits := make([]string, 0, len(changes))
-			for _, c := range changes {
-				commits = append(commits, c.Commit)
-			}
-
-			s.BlueprintsCommits[name] = commits
-		}
-	}
-
-	return &s
+	return store
 }
 
 func randomSHA1String() (string, error) {
@@ -206,7 +132,7 @@ func (s *Store) change(f func() error) error {
 	result := f()
 
 	if s.stateDir != nil {
-		err := s.db.Write(StoreDBName, s)
+		err := s.db.Write(StoreDBName, s.toStoreV0())
 		if err != nil {
 			panic(err)
 		}
@@ -219,8 +145,8 @@ func (s *Store) ListBlueprints() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	names := make([]string, 0, len(s.Blueprints))
-	for name := range s.Blueprints {
+	names := make([]string, 0, len(s.blueprints))
+	for name := range s.blueprints {
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -232,10 +158,10 @@ func (s *Store) GetBlueprint(name string) (*blueprint.Blueprint, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	bp, inWorkspace := s.Workspace[name]
+	bp, inWorkspace := s.workspace[name]
 	if !inWorkspace {
 		var ok bool
-		bp, ok = s.Blueprints[name]
+		bp, ok = s.blueprints[name]
 		if !ok {
 			return nil, false
 		}
@@ -248,7 +174,7 @@ func (s *Store) GetBlueprintCommitted(name string) *blueprint.Blueprint {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	bp, ok := s.Blueprints[name]
+	bp, ok := s.blueprints[name]
 	if !ok {
 		return nil
 	}
@@ -262,10 +188,10 @@ func (s *Store) GetBlueprintChange(name string, commit string) (*blueprint.Chang
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if _, ok := s.BlueprintsChanges[name]; !ok {
+	if _, ok := s.blueprintsChanges[name]; !ok {
 		return nil, errors.New("Unknown blueprint")
 	}
-	change, ok := s.BlueprintsChanges[name][commit]
+	change, ok := s.blueprintsChanges[name][commit]
 	if !ok {
 		return nil, errors.New("Unknown commit")
 	}
@@ -279,8 +205,8 @@ func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 
 	var changes []blueprint.Change
 
-	for _, commit := range s.BlueprintsCommits[name] {
-		changes = append(changes, s.BlueprintsChanges[name][commit])
+	for _, commit := range s.blueprintsCommits[name] {
+		changes = append(changes, s.blueprintsChanges[name][commit])
 	}
 
 	return changes
@@ -307,20 +233,20 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 			Blueprint: bp,
 		}
 
-		delete(s.Workspace, bp.Name)
-		if s.BlueprintsChanges[bp.Name] == nil {
-			s.BlueprintsChanges[bp.Name] = make(map[string]blueprint.Change)
+		delete(s.workspace, bp.Name)
+		if s.blueprintsChanges[bp.Name] == nil {
+			s.blueprintsChanges[bp.Name] = make(map[string]blueprint.Change)
 		}
-		s.BlueprintsChanges[bp.Name][commit] = change
+		s.blueprintsChanges[bp.Name][commit] = change
 		// Keep track of the order of the commits
-		s.BlueprintsCommits[bp.Name] = append(s.BlueprintsCommits[bp.Name], commit)
+		s.blueprintsCommits[bp.Name] = append(s.blueprintsCommits[bp.Name], commit)
 
-		if old, ok := s.Blueprints[bp.Name]; ok {
+		if old, ok := s.blueprints[bp.Name]; ok {
 			if bp.Version == "" || bp.Version == old.Version {
 				bp.BumpVersion(old.Version)
 			}
 		}
-		s.Blueprints[bp.Name] = bp
+		s.blueprints[bp.Name] = bp
 		return nil
 	})
 }
@@ -333,7 +259,7 @@ func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
 			return err
 		}
 
-		s.Workspace[bp.Name] = bp
+		s.workspace[bp.Name] = bp
 		return nil
 	})
 }
@@ -343,11 +269,11 @@ func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
 // The workspace copy is deleted unconditionally, it will not return an error if it does not exist.
 func (s *Store) DeleteBlueprint(name string) error {
 	return s.change(func() error {
-		delete(s.Workspace, name)
-		if _, ok := s.Blueprints[name]; !ok {
+		delete(s.workspace, name)
+		if _, ok := s.blueprints[name]; !ok {
 			return fmt.Errorf("Unknown blueprint: %s", name)
 		}
-		delete(s.Blueprints, name)
+		delete(s.blueprints, name)
 		return nil
 	})
 }
@@ -356,10 +282,10 @@ func (s *Store) DeleteBlueprint(name string) error {
 // if the blueprint doesn't exist in the workspace it returns an error
 func (s *Store) DeleteBlueprintFromWorkspace(name string) error {
 	return s.change(func() error {
-		if _, ok := s.Workspace[name]; !ok {
+		if _, ok := s.workspace[name]; !ok {
 			return fmt.Errorf("Unknown blueprint: %s", name)
 		}
-		delete(s.Workspace, name)
+		delete(s.workspace, name)
 		return nil
 	})
 }
@@ -368,27 +294,27 @@ func (s *Store) DeleteBlueprintFromWorkspace(name string) error {
 // It will return an error if the blueprint doesn't exist
 func (s *Store) TagBlueprint(name string) error {
 	return s.change(func() error {
-		_, ok := s.Blueprints[name]
+		_, ok := s.blueprints[name]
 		if !ok {
 			return errors.New("Unknown blueprint")
 		}
 
-		if len(s.BlueprintsCommits[name]) == 0 {
+		if len(s.blueprintsCommits[name]) == 0 {
 			return errors.New("No commits for blueprint")
 		}
 
-		latest := s.BlueprintsCommits[name][len(s.BlueprintsCommits[name])-1]
+		latest := s.blueprintsCommits[name][len(s.blueprintsCommits[name])-1]
 		// If the most recent commit already has a revision, don't bump it
-		if s.BlueprintsChanges[name][latest].Revision != nil {
+		if s.blueprintsChanges[name][latest].Revision != nil {
 			return nil
 		}
 
 		// Get the latest revision for this blueprint
 		var revision int
 		var change blueprint.Change
-		for i := len(s.BlueprintsCommits[name]) - 1; i >= 0; i-- {
-			commit := s.BlueprintsCommits[name][i]
-			change = s.BlueprintsChanges[name][commit]
+		for i := len(s.blueprintsCommits[name]) - 1; i >= 0; i-- {
+			commit := s.blueprintsCommits[name][i]
+			change = s.blueprintsChanges[name][commit]
 			if change.Revision != nil && *change.Revision > revision {
 				revision = *change.Revision
 				break
@@ -398,7 +324,7 @@ func (s *Store) TagBlueprint(name string) error {
 		// Bump the revision (if there was none it will start at 1)
 		revision++
 		change.Revision = &revision
-		s.BlueprintsChanges[name][latest] = change
+		s.blueprintsChanges[name][latest] = change
 		return nil
 	})
 }
@@ -407,7 +333,7 @@ func (s *Store) GetCompose(id uuid.UUID) (compose.Compose, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	compose, exists := s.Composes[id]
+	compose, exists := s.composes[id]
 	return compose, exists
 }
 
@@ -419,7 +345,7 @@ func (s *Store) GetAllComposes() map[uuid.UUID]compose.Compose {
 
 	composes := make(map[uuid.UUID]compose.Compose)
 
-	for id, singleCompose := range s.Composes {
+	for id, singleCompose := range s.composes {
 		newCompose := singleCompose.DeepCopy()
 		composes[id] = newCompose
 	}
@@ -436,7 +362,7 @@ func (s *Store) GetImageBuildResult(composeId uuid.UUID, imageBuildId int) (io.R
 }
 
 func (s *Store) GetImageBuildImage(composeId uuid.UUID, imageBuildId int) (io.ReadCloser, int64, error) {
-	c, ok := s.Composes[composeId]
+	c, ok := s.composes[composeId]
 
 	if !ok {
 		return nil, 0, &NotFoundError{"compose does not exist"}
@@ -499,7 +425,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.Composes[composeID] = compose.Compose{
+		s.composes[composeID] = compose.Compose{
 			Blueprint: bp,
 			ImageBuilds: []compose.ImageBuild{
 				{
@@ -558,7 +484,7 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.Composes[composeID] = compose.Compose{
+		s.composes[composeID] = compose.Compose{
 			Blueprint: bp,
 			ImageBuilds: []compose.ImageBuild{
 				{
@@ -583,11 +509,11 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 // associated with this compose
 func (s *Store) DeleteCompose(id uuid.UUID) error {
 	return s.change(func() error {
-		if _, exists := s.Composes[id]; !exists {
+		if _, exists := s.composes[id]; !exists {
 			return &NotFoundError{}
 		}
 
-		delete(s.Composes, id)
+		delete(s.composes, id)
 
 		var err error
 		if s.stateDir != nil {
@@ -602,7 +528,7 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 }
 
 func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, reader io.Reader) error {
-	currentCompose, exists := s.Composes[composeID]
+	currentCompose, exists := s.composes[composeID]
 	if !exists {
 		return &NotFoundError{"compose does not exist"}
 	}
@@ -631,7 +557,7 @@ func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, rea
 func (s *Store) PushSource(source SourceConfig) {
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.Sources[source.Name] = source
+		s.sources[source.Name] = source
 		return nil
 	})
 }
@@ -639,7 +565,7 @@ func (s *Store) PushSource(source SourceConfig) {
 func (s *Store) DeleteSource(name string) {
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		delete(s.Sources, name)
+		delete(s.sources, name)
 		return nil
 	})
 }
@@ -647,8 +573,8 @@ func (s *Store) DeleteSource(name string) {
 func (s *Store) ListSources() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	names := make([]string, 0, len(s.Sources))
-	for name := range s.Sources {
+	names := make([]string, 0, len(s.sources))
+	for name := range s.sources {
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -660,7 +586,7 @@ func (s *Store) GetSource(name string) *SourceConfig {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	source, ok := s.Sources[name]
+	source, ok := s.sources[name]
 	if !ok {
 		return nil
 	}
@@ -673,7 +599,7 @@ func (s *Store) GetAllSources() map[string]SourceConfig {
 
 	sources := make(map[string]SourceConfig)
 
-	for k, v := range s.Sources {
+	for k, v := range s.sources {
 		sources[k] = v
 	}
 

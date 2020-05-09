@@ -49,8 +49,8 @@ func FixtureBase() *Store {
 
 	s := New(nil)
 
-	s.Blueprints[bName] = b
-	s.Composes = map[uuid.UUID]compose.Compose{
+	s.blueprints[bName] = b
+	s.composes = map[uuid.UUID]compose.Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): compose.Compose{
 			Blueprint: &b,
 			ImageBuilds: []compose.ImageBuild{
@@ -118,7 +118,7 @@ func FixtureEmpty() *Store {
 
 	s := New(nil)
 
-	s.Blueprints[bName] = b
+	s.blueprints[bName] = b
 
 	return s
 }
