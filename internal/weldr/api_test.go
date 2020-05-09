@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -434,7 +433,7 @@ func TestBlueprintsDepsolve(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	expectedComposeLocal := &compose.Compose{
+	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -443,7 +442,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuilds: []compose.ImageBuild{
+		ImageBuilds: []store.ImageBuild{
 			{
 				QueueStatus: common.IBWaiting,
 				ImageType:   common.Qcow2Generic,
@@ -459,7 +458,7 @@ func TestCompose(t *testing.T) {
 			},
 		},
 	}
-	expectedComposeLocalAndAws := &compose.Compose{
+	expectedComposeLocalAndAws := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -468,7 +467,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuilds: []compose.ImageBuild{
+		ImageBuilds: []store.ImageBuild{
 			{
 				QueueStatus: common.IBWaiting,
 				ImageType:   common.Qcow2Generic,
@@ -505,7 +504,7 @@ func TestCompose(t *testing.T) {
 		Body            string
 		ExpectedStatus  int
 		ExpectedJSON    string
-		ExpectedCompose *compose.Compose
+		ExpectedCompose *store.Compose
 		IgnoreFields    []string
 	}{
 		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "qcow2","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, nil, []string{"build_id"}},
@@ -526,7 +525,7 @@ func TestCompose(t *testing.T) {
 		require.Equalf(t, 1, len(composes), "%s: bad compose count in store", c.Path)
 
 		// I have no idea how to get the compose in better way
-		var composeStruct compose.Compose
+		var composeStruct store.Compose
 		for _, c := range composes {
 			composeStruct = c
 			break

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -50,10 +49,10 @@ func FixtureBase() *Store {
 	s := New(nil)
 
 	s.blueprints[bName] = b
-	s.composes = map[uuid.UUID]compose.Compose{
-		uuid.MustParse("30000000-0000-0000-0000-000000000000"): compose.Compose{
+	s.composes = map[uuid.UUID]Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBWaiting,
 					ImageType:   common.Qcow2Generic,
@@ -62,9 +61,9 @@ func FixtureBase() *Store {
 				},
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000001"): compose.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBRunning,
 					ImageType:   common.Qcow2Generic,
@@ -74,9 +73,9 @@ func FixtureBase() *Store {
 				},
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000002"): compose.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000002"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBFinished,
 					ImageType:   common.Qcow2Generic,
@@ -87,9 +86,9 @@ func FixtureBase() *Store {
 				},
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000003"): compose.Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []compose.ImageBuild{
+			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBFailed,
 					ImageType:   common.Qcow2Generic,

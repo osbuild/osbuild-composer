@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/compose"
+	"github.com/osbuild/osbuild-composer/internal/store"
 )
 
 type ComposeEntry struct {
@@ -22,7 +22,7 @@ type ComposeEntry struct {
 	Uploads     []uploadResponse       `json:"uploads,omitempty"`
 }
 
-func composeToComposeEntry(id uuid.UUID, compose compose.Compose, state common.ComposeState, queued, started, finished time.Time, includeUploads bool) *ComposeEntry {
+func composeToComposeEntry(id uuid.UUID, compose store.Compose, state common.ComposeState, queued, started, finished time.Time, includeUploads bool) *ComposeEntry {
 	var composeEntry ComposeEntry
 
 	composeEntry.ID = id
