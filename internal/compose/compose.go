@@ -100,29 +100,3 @@ func (c *Compose) DeepCopy() Compose {
 		ImageBuilds: newImageBuilds,
 	}
 }
-
-// UpdateState changes a state of a single image build inside the Compose
-func (c *Compose) UpdateState(imageBuildId int, newState common.ImageBuildState) error {
-	switch newState {
-	case common.IBWaiting:
-		return &StateTransitionError{"image build cannot be moved into waiting state"}
-	case common.IBRunning:
-		if c.ImageBuilds[imageBuildId].QueueStatus == common.IBWaiting || c.ImageBuilds[imageBuildId].QueueStatus == common.IBRunning {
-			c.ImageBuilds[imageBuildId].QueueStatus = newState
-		} else {
-			return &StateTransitionError{"only waiting image build can be transitioned into running state"}
-		}
-	case common.IBFinished, common.IBFailed:
-		if c.ImageBuilds[imageBuildId].QueueStatus == common.IBRunning {
-			c.ImageBuilds[imageBuildId].QueueStatus = newState
-			for _, t := range c.ImageBuilds[imageBuildId].Targets {
-				t.Status = newState
-			}
-		} else {
-			return &StateTransitionError{"only running image build can be transitioned into finished or failed state"}
-		}
-	default:
-		return &StateTransitionError{"invalid state"}
-	}
-	return nil
-}

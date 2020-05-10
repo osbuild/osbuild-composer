@@ -76,22 +76,6 @@ func (e *NotFoundError) Error() string {
 	return e.message
 }
 
-type NotPendingError struct {
-	message string
-}
-
-func (e *NotPendingError) Error() string {
-	return e.message
-}
-
-type InvalidRequestError struct {
-	message string
-}
-
-func (e *InvalidRequestError) Error() string {
-	return e.message
-}
-
 type NoLocalTargetError struct {
 	message string
 }
@@ -554,6 +538,22 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 		if err != nil {
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
+
+		f, err := os.Create(s.getImageBuildDirectory(composeID, 0) + "/result.json")
+		if err != nil {
+			return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
+		}
+		err = json.NewEncoder(f).Encode(common.ComposeResult{Success: testSuccess})
+		if err != nil {
+			return fmt.Errorf("cannot write to result.json for job %v: %#v", composeID, err)
+		}
+	}
+
+	var status common.ImageBuildState
+	if testSuccess {
+		status = common.IBFinished
+	} else {
+		status = common.IBFailed
 	}
 
 	// FIXME: handle or comment this possible error
@@ -562,34 +562,19 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 			Blueprint: bp,
 			ImageBuilds: []compose.ImageBuild{
 				{
-					QueueStatus: common.IBRunning,
+					QueueStatus: status,
 					Manifest:    manifest,
 					ImageType:   imageTypeCommon,
 					Targets:     targets,
 					JobCreated:  time.Now(),
 					JobStarted:  time.Now(),
+					JobFinished: time.Now(),
 					Size:        size,
 				},
 			},
 		}
 		return nil
 	})
-
-	var status common.ImageBuildState
-	var result common.ComposeResult
-	if testSuccess {
-		status = common.IBFinished
-		result = common.ComposeResult{Success: true}
-	} else {
-		status = common.IBFailed
-		result = common.ComposeResult{}
-	}
-
-	// Instead of starting the job, immediately set a final status
-	err := s.UpdateImageBuildInCompose(composeID, 0, status, &result)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -613,49 +598,6 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 		}
 
 		return err
-	})
-}
-
-// UpdateImageBuildInCompose sets the status and optionally also the final image.
-func (s *Store) UpdateImageBuildInCompose(composeID uuid.UUID, imageBuildID int, status common.ImageBuildState, result *common.ComposeResult) error {
-	return s.change(func() error {
-		// Check that the compose exists
-		currentCompose, exists := s.Composes[composeID]
-		if !exists {
-			return &NotFoundError{"compose does not exist"}
-		}
-		// Check that the image build was waiting
-		if currentCompose.ImageBuilds[imageBuildID].QueueStatus == common.IBWaiting {
-			return &NotPendingError{"compose has not been popped"}
-		}
-
-		// write result into file
-		if s.stateDir != nil && result != nil {
-			f, err := os.Create(s.getImageBuildDirectory(composeID, imageBuildID) + "/result.json")
-
-			if err != nil {
-				return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
-			}
-
-			// FIXME: handle error
-			_ = json.NewEncoder(f).Encode(result)
-		}
-
-		// Update the image build state including all target states
-		err := currentCompose.UpdateState(imageBuildID, status)
-		if err != nil {
-			// TODO: log error
-			return &InvalidRequestError{"invalid state transition: " + err.Error()}
-		}
-
-		// In case the image build is done, store the time and possibly also the image
-		if status == common.IBFinished || status == common.IBFailed {
-			currentCompose.ImageBuilds[imageBuildID].JobFinished = time.Now()
-		}
-
-		s.Composes[composeID] = currentCompose
-
-		return nil
 	})
 }
 
