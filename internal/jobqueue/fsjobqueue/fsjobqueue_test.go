@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -169,4 +170,35 @@ func TestDependencies(t *testing.T) {
 		require.True(t, !started.IsZero())
 		require.True(t, !finished.IsZero())
 	})
+}
+
+// Test that a job queue allows parallel access to multiple workers, mainly to
+// verify the quirky unlocking in Dequeue().
+func TestMultipleWorkers(t *testing.T) {
+	q, dir := newTemporaryQueue(t)
+	defer cleanupTempDir(t, dir)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		id, err := q.Dequeue(ctx, []string{"octopus"}, &json.RawMessage{})
+		require.NoError(t, err)
+		require.NotEmpty(t, id)
+	}()
+
+	// Increase the likelihood that the above goroutine was scheduled and
+	// is waiting in Dequeue().
+	time.Sleep(10 * time.Millisecond)
+
+	// This call to Dequeue() should not block on the one in the goroutine.
+	id := pushTestJob(t, q, "clownfish", nil, nil)
+	r, err := q.Dequeue(context.Background(), []string{"clownfish"}, &json.RawMessage{})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+
+	// Now wake up the Dequeue() in the goroutine and wait for it to finish.
+	_ = pushTestJob(t, q, "octopus", nil, nil)
+	<-done
 }
