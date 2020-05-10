@@ -79,14 +79,17 @@ func (s *Server) Enqueue(manifest *osbuild.Manifest, targets []*target.Target) (
 }
 
 func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, started, finished time.Time, err error) {
+	var canceled bool
 	var result OSBuildJobResult
 
-	queued, started, finished, err = s.jobs.JobStatus(id, &result)
+	queued, started, finished, canceled, err = s.jobs.JobStatus(id, &result)
 	if err != nil {
 		return
 	}
 
-	if !finished.IsZero() {
+	if canceled {
+		state = common.CFailed
+	} else if !finished.IsZero() {
 		if result.OSBuildOutput.Success {
 			state = common.CFinished
 		} else {
@@ -102,15 +105,18 @@ func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, sta
 }
 
 func (s *Server) JobResult(id uuid.UUID) (common.ComposeState, *common.ComposeResult, error) {
+	var canceled bool
 	var result OSBuildJobResult
 
-	_, started, finished, err := s.jobs.JobStatus(id, &result)
+	_, started, finished, canceled, err := s.jobs.JobStatus(id, &result)
 	if err != nil {
 		return common.CWaiting, nil, err
 	}
 
 	state := common.CWaiting
-	if !finished.IsZero() {
+	if canceled {
+		state = common.CFailed
+	} else if !finished.IsZero() {
 		if result.OSBuildOutput.Success {
 			state = common.CFinished
 		} else {

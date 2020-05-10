@@ -56,6 +56,8 @@ type job struct {
 	QueuedAt   time.Time `json:"queued_at,omitempty"`
 	StartedAt  time.Time `json:"started_at,omitempty"`
 	FinishedAt time.Time `json:"finished_at,omitempty"`
+
+	Canceled bool `json:"canceled,omitempty"`
 }
 
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
@@ -161,31 +163,39 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, args interf
 		}
 	}
 
-	// Unlock the mutex while polling channels, so that multiple goroutines
-	// can wait at the same time.
-	q.mu.Unlock()
-	id, err := selectUUIDChannel(ctx, chans)
-	q.mu.Lock()
+	// Loop until finding a non-canceled job.
+	var j *job
+	for {
+		// Unlock the mutex while polling channels, so that multiple goroutines
+		// can wait at the same time.
+		q.mu.Unlock()
+		id, err := selectUUIDChannel(ctx, chans)
+		q.mu.Lock()
 
-	if err != nil {
-		return uuid.Nil, err
+		if err != nil {
+			return uuid.Nil, err
+		}
+
+		j, err = q.readJob(id)
+		if err != nil {
+			return uuid.Nil, err
+		}
+
+		if !j.Canceled {
+			break
+		}
 	}
 
-	j, err := q.readJob(id)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	err = json.Unmarshal(j.Args, args)
+	err := json.Unmarshal(j.Args, args)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", j.Id, err)
 	}
 
 	j.StartedAt = time.Now()
 
-	err = q.db.Write(id.String(), j)
+	err = q.db.Write(j.Id.String(), j)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("error writing job %s: %v", id, err)
+		return uuid.Nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
 	}
 
 	return j.Id, nil
@@ -198,6 +208,10 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	j, err := q.readJob(id)
 	if err != nil {
 		return err
+	}
+
+	if j.Canceled {
+		return jobqueue.ErrCanceled
 	}
 
 	if j.StartedAt.IsZero() || !j.FinishedAt.IsZero() {
@@ -232,13 +246,36 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	return nil
 }
 
-func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error) {
+func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	j, err := q.readJob(id)
+	if err != nil {
+		return err
+	}
+
+	if !j.FinishedAt.IsZero() {
+		return nil
+	}
+
+	j.Canceled = true
+
+	err = q.db.Write(id.String(), j)
+	if err != nil {
+		return fmt.Errorf("error writing job %s: %v", id, err)
+	}
+
+	return nil
+}
+
+func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
 	}
 
-	if !j.FinishedAt.IsZero() {
+	if !j.FinishedAt.IsZero() && !j.Canceled {
 		err = json.Unmarshal(j.Result, result)
 		if err != nil {
 			err = fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
@@ -249,6 +286,7 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, starte
 	queued = j.QueuedAt
 	started = j.StartedAt
 	finished = j.FinishedAt
+	canceled = j.Canceled
 
 	return
 }
