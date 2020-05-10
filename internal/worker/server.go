@@ -80,25 +80,47 @@ func (s *Server) Enqueue(manifest *osbuild.Manifest, targets []*target.Target) (
 
 func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, started, finished time.Time, err error) {
 	var result OSBuildJobResult
-	var status jobqueue.JobStatus
 
-	status, queued, started, finished, err = s.jobs.JobStatus(id, &result)
+	queued, started, finished, err = s.jobs.JobStatus(id, &result)
 	if err != nil {
 		return
 	}
 
-	state = composeStateFromJobStatus(status, result.OSBuildOutput)
+	if !finished.IsZero() {
+		if result.OSBuildOutput.Success {
+			state = common.CFinished
+		} else {
+			state = common.CFailed
+		}
+	} else if !started.IsZero() {
+		state = common.CRunning
+	} else {
+		state = common.CWaiting
+	}
+
 	return
 }
 
 func (s *Server) JobResult(id uuid.UUID) (common.ComposeState, *common.ComposeResult, error) {
 	var result OSBuildJobResult
-	status, _, _, _, err := s.jobs.JobStatus(id, &result)
+
+	_, started, finished, err := s.jobs.JobStatus(id, &result)
 	if err != nil {
 		return common.CWaiting, nil, err
 	}
 
-	return composeStateFromJobStatus(status, result.OSBuildOutput), result.OSBuildOutput, nil
+	state := common.CWaiting
+	if !finished.IsZero() {
+		if result.OSBuildOutput.Success {
+			state = common.CFinished
+		} else {
+			state = common.CFailed
+		}
+	} else if !started.IsZero() {
+		state = common.CRunning
+	}
+
+	return state, result.OSBuildOutput, nil
 }
 
 // jsonErrorf() is similar to http.Error(), but returns the message in a json
@@ -215,20 +237,4 @@ func (s *Server) addJobImageHandler(writer http.ResponseWriter, request *http.Re
 	if err != nil {
 		jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
 	}
-}
-
-func composeStateFromJobStatus(status jobqueue.JobStatus, output *common.ComposeResult) common.ComposeState {
-	switch status {
-	case jobqueue.JobPending:
-		return common.CWaiting
-	case jobqueue.JobRunning:
-		return common.CRunning
-	case jobqueue.JobFinished:
-		if output.Success {
-			return common.CFinished
-		} else {
-			return common.CFailed
-		}
-	}
-	return common.CWaiting
 }
