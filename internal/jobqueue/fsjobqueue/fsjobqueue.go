@@ -233,9 +233,7 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 }
 
 func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error) {
-	var j *job
-
-	j, err = q.readJob(id)
+	j, err := q.readJob(id)
 	if err != nil {
 		return
 	}
