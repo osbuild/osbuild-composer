@@ -30,7 +30,9 @@ type job struct {
 	Args         json.RawMessage
 	Dependencies []uuid.UUID
 	Result       json.RawMessage
-	Status       jobqueue.JobStatus
+	QueuedAt     time.Time
+	StartedAt    time.Time
+	FinishedAt   time.Time
 }
 
 func New() *testJobQueue {
@@ -45,7 +47,7 @@ func (q *testJobQueue) Enqueue(jobType string, args interface{}, dependencies []
 		Id:           uuid.New(),
 		Type:         jobType,
 		Dependencies: uniqueUUIDList(dependencies),
-		Status:       jobqueue.JobPending,
+		QueuedAt:     time.Now(),
 	}
 
 	var err error
@@ -92,7 +94,7 @@ func (q *testJobQueue) Dequeue(ctx context.Context, jobTypes []string, args inte
 			return uuid.Nil, err
 		}
 
-		j.Status = jobqueue.JobRunning
+		j.StartedAt = time.Now()
 		return j.Id, nil
 	}
 
@@ -105,7 +107,7 @@ func (q *testJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return jobqueue.ErrNotExist
 	}
 
-	if j.Status != jobqueue.JobRunning {
+	if j.StartedAt.IsZero() || !j.FinishedAt.IsZero() {
 		return jobqueue.ErrNotRunning
 	}
 
@@ -115,7 +117,7 @@ func (q *testJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return fmt.Errorf("error marshaling result: %v", err)
 	}
 
-	j.Status = jobqueue.JobFinished
+	j.FinishedAt = time.Now()
 
 	for _, depid := range q.dependants[id] {
 		dep := q.jobs[depid]
@@ -132,7 +134,7 @@ func (q *testJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	return nil
 }
 
-func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (status jobqueue.JobStatus, queued, started, finished time.Time, err error) {
+func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error) {
 	var j *job
 
 	j, exists := q.jobs[id]
@@ -141,16 +143,16 @@ func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (status jobqu
 		return
 	}
 
-	if j.Status == jobqueue.JobFinished {
+	if !j.FinishedAt.IsZero() {
 		err = json.Unmarshal(j.Result, result)
 		if err != nil {
 			return
 		}
 	}
 
-	queued = time.Time{}
-	started = time.Time{}
-	finished = time.Time{}
+	queued = j.QueuedAt
+	started = j.StartedAt
+	finished = j.FinishedAt
 
 	return
 }

@@ -130,15 +130,19 @@ func TestDependencies(t *testing.T) {
 		require.ElementsMatch(t, []uuid.UUID{one, two}, r)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		status, _, _, _, err := q.JobStatus(j, nil)
+		queued, started, finished, err := q.JobStatus(j, nil)
 		require.NoError(t, err)
-		require.Equal(t, jobqueue.JobPending, status)
+		require.True(t, !queued.IsZero())
+		require.True(t, started.IsZero())
+		require.True(t, finished.IsZero())
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}))
 
-		status, _, _, _, err = q.JobStatus(j, &testResult{})
+		queued, started, finished, err = q.JobStatus(j, &testResult{})
 		require.NoError(t, err)
-		require.Equal(t, jobqueue.JobFinished, status)
+		require.True(t, !queued.IsZero())
+		require.True(t, !started.IsZero())
+		require.True(t, !finished.IsZero())
 	})
 
 	t.Run("done-after-pushing-dependant", func(t *testing.T) {
@@ -146,9 +150,11 @@ func TestDependencies(t *testing.T) {
 		two := pushTestJob(t, q, "test", nil, nil)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		status, _, _, _, err := q.JobStatus(j, nil)
+		queued, started, finished, err := q.JobStatus(j, nil)
 		require.NoError(t, err)
-		require.Equal(t, jobqueue.JobPending, status)
+		require.True(t, !queued.IsZero())
+		require.True(t, started.IsZero())
+		require.True(t, finished.IsZero())
 
 		r := []uuid.UUID{}
 		r = append(r, finishNextTestJob(t, q, "test", testResult{}))
@@ -157,8 +163,10 @@ func TestDependencies(t *testing.T) {
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}))
 
-		status, _, _, _, err = q.JobStatus(j, &testResult{})
+		queued, started, finished, err = q.JobStatus(j, &testResult{})
 		require.NoError(t, err)
-		require.Equal(t, jobqueue.JobFinished, status)
+		require.True(t, !queued.IsZero())
+		require.True(t, !started.IsZero())
+		require.True(t, !finished.IsZero())
 	})
 }

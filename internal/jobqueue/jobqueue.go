@@ -14,7 +14,6 @@ package jobqueue
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -49,54 +48,13 @@ type JobQueue interface {
 	// job type and must be serializable to JSON.
 	FinishJob(id uuid.UUID, result interface{}) error
 
-	// Returns the current status of the job. If the job has already
-	// finished, its result will be returned in `result`. Also returns the
-	// time the job was
-	//    queued   - always valid
-	//    started  - valid when the job is running or has finished
-	//    finished - valid when the job has finished
-	JobStatus(id uuid.UUID, result interface{}) (status JobStatus, queued, started, finished time.Time, err error)
-}
-
-type JobStatus int
-
-const (
-	JobPending JobStatus = iota
-	JobRunning
-	JobFinished
-)
-
-func (s JobStatus) String() string {
-	switch s {
-	case JobPending:
-		return "pending"
-	case JobRunning:
-		return "running"
-	case JobFinished:
-		return "finished"
-	default:
-		return "<invalid>"
-	}
-}
-
-func (s JobStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
-}
-
-func (s *JobStatus) UnmarshalJSON(data []byte) error {
-	var str string
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-	switch str {
-	case "pending":
-		*s = JobPending
-	case "running":
-		*s = JobRunning
-	case "finished":
-		*s = JobFinished
-	}
-	return nil
+	// Returns the current status of the job, in the form of three times:
+	// queued, started, and finished. `started` and `finished` might be the
+	// zero time (check with t.IsZero()), when the job is not running or
+	// finished, respectively.
+	//
+	// If the job is finished, its result will be returned in `result`.
+	JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error)
 }
 
 var (

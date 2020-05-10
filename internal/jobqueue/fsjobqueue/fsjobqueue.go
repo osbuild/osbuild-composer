@@ -51,10 +51,9 @@ type job struct {
 	Dependencies []uuid.UUID     `json:"dependencies"`
 	Result       json.RawMessage `json:"result,omitempty"`
 
-	Status     jobqueue.JobStatus `json:"status"`
-	QueuedAt   time.Time          `json:"queued_at,omitempty"`
-	StartedAt  time.Time          `json:"started_at,omitempty"`
-	FinishedAt time.Time          `json:"finished_at,omitempty"`
+	QueuedAt   time.Time `json:"queued_at,omitempty"`
+	StartedAt  time.Time `json:"started_at,omitempty"`
+	FinishedAt time.Time `json:"finished_at,omitempty"`
 }
 
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
@@ -82,7 +81,7 @@ func New(dir string) (*fsJobQueue, error) {
 			return nil, err
 		}
 		// We only enqueue jobs that were previously pending.
-		if j.Status != jobqueue.JobPending {
+		if j.StartedAt.IsZero() {
 			continue
 		}
 		// Enqueue the job again if all dependencies have finished, or
@@ -112,7 +111,6 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		Id:           uuid.New(),
 		Type:         jobType,
 		Dependencies: uniqueUUIDList(dependencies),
-		Status:       jobqueue.JobPending,
 		QueuedAt:     time.Now(),
 	}
 
@@ -192,7 +190,6 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, args interf
 		return uuid.Nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", j.Id, err)
 	}
 
-	j.Status = jobqueue.JobRunning
 	j.StartedAt = time.Now()
 
 	err = q.db.Write(id.String(), j)
@@ -209,11 +206,10 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return err
 	}
 
-	if j.Status != jobqueue.JobRunning {
+	if j.StartedAt.IsZero() || !j.FinishedAt.IsZero() {
 		return jobqueue.ErrNotRunning
 	}
 
-	j.Status = jobqueue.JobFinished
 	j.FinishedAt = time.Now()
 
 	j.Result, err = json.Marshal(result)
@@ -247,7 +243,7 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	return nil
 }
 
-func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (status jobqueue.JobStatus, queued, started, finished time.Time, err error) {
+func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error) {
 	var j *job
 
 	j, err = q.readJob(id)
@@ -255,7 +251,7 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (status jobqueu
 		return
 	}
 
-	if j.Status == jobqueue.JobFinished {
+	if !j.FinishedAt.IsZero() {
 		err = json.Unmarshal(j.Result, result)
 		if err != nil {
 			err = fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
@@ -263,7 +259,6 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (status jobqueu
 		}
 	}
 
-	status = j.Status
 	queued = j.QueuedAt
 	started = j.StartedAt
 	finished = j.FinishedAt
@@ -279,7 +274,7 @@ func (q *fsJobQueue) countFinishedJobs(ids []uuid.UUID) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if j.Status == jobqueue.JobFinished {
+		if !j.FinishedAt.IsZero() {
 			n += 1
 		}
 	}
