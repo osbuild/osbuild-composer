@@ -102,7 +102,7 @@ func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]Compose {
 		}
 		for _, imgBuild := range composeStruct.ImageBuilds {
 			ib := ImageBuild{
-				Id:          imgBuild.ID,
+				ID:          imgBuild.ID,
 				ImageType:   imgBuild.ImageType,
 				Manifest:    imgBuild.Manifest,
 				Targets:     imgBuild.Targets,
@@ -110,7 +110,7 @@ func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]Compose {
 				JobStarted:  imgBuild.JobStarted,
 				JobFinished: imgBuild.JobFinished,
 				Size:        imgBuild.Size,
-				JobId:       imgBuild.JobID,
+				JobID:       imgBuild.JobID,
 				QueueStatus: imgBuild.QueueStatus,
 			}
 			c.ImageBuilds = append(c.ImageBuilds, ib)
@@ -239,7 +239,7 @@ func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 		}
 		for _, imgBuild := range compose.ImageBuilds {
 			ib := imageBuildV0{
-				ID:          imgBuild.Id,
+				ID:          imgBuild.ID,
 				ImageType:   imgBuild.ImageType,
 				Manifest:    imgBuild.Manifest,
 				Targets:     imgBuild.Targets,
@@ -247,7 +247,7 @@ func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 				JobStarted:  imgBuild.JobStarted,
 				JobFinished: imgBuild.JobFinished,
 				Size:        imgBuild.Size,
-				JobID:       imgBuild.JobId,
+				JobID:       imgBuild.JobID,
 				QueueStatus: imgBuild.QueueStatus,
 			}
 			c.ImageBuilds = append(c.ImageBuilds, ib)

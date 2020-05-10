@@ -150,7 +150,7 @@ func (api *API) getComposeState(compose store.Compose) (state common.ComposeStat
 		return
 	}
 
-	jobId := compose.ImageBuilds[0].JobId
+	jobId := compose.ImageBuilds[0].JobID
 
 	// backwards compatibility: composes that were around before splitting
 	// the job queue from the store still contain their valid status and

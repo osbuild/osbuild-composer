@@ -423,7 +423,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 					Targets:    targets,
 					JobCreated: time.Now(),
 					Size:       size,
-					JobId:      jobId,
+					JobID:      jobId,
 				},
 			},
 		}

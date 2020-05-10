@@ -20,7 +20,7 @@ func (ste *StateTransitionError) Error() string {
 
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
-	Id          int
+	ID          int
 	ImageType   common.ImageType
 	Manifest    *osbuild.Manifest
 	Targets     []*target.Target
@@ -28,7 +28,7 @@ type ImageBuild struct {
 	JobStarted  time.Time
 	JobFinished time.Time
 	Size        uint64
-	JobId       uuid.UUID
+	JobID       uuid.UUID
 	// Kept for backwards compatibility. Image builds which were done
 	// before the move to the job queue use this to store whether they
 	// finished successfully.
@@ -49,7 +49,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 	}
 	// Create new image build struct
 	return ImageBuild{
-		Id:          ib.Id,
+		ID:          ib.ID,
 		QueueStatus: ib.QueueStatus,
 		ImageType:   ib.ImageType,
 		Manifest:    newManifestPtr,
@@ -58,7 +58,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		JobStarted:  ib.JobStarted,
 		JobFinished: ib.JobFinished,
 		Size:        ib.Size,
-		JobId:       ib.JobId,
+		JobID:       ib.JobID,
 	}
 }
 
