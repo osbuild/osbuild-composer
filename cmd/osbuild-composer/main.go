@@ -125,7 +125,7 @@ func main() {
 		log.Fatalf("cannot create queue directory: %v", err)
 	}
 
-	jobs, err := fsjobqueue.New(queueDir)
+	jobs, err := fsjobqueue.New(queueDir, []string{"osbuild"})
 	if err != nil {
 		log.Fatalf("cannot create jobqueue: %v", err)
 	}

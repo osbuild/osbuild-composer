@@ -35,9 +35,7 @@ type fsJobQueue struct {
 
 	db *jsondb.JSONDatabase
 
-	// Maps job types to channels of job ids for that type. Only access
-	// through pendingChannel(), which ensures that a map for the given job
-	// typ exists.
+	// Maps job types to channels of job ids for that type.
 	pending map[string]chan uuid.UUID
 
 	// Maps job ids to the jobs that depend on it, if any of those
@@ -63,11 +61,15 @@ type job struct {
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
 // access to `dir`. If `dir` contains jobs created from previous runs, they are
 // loaded and rescheduled to run if necessary.
-func New(dir string) (*fsJobQueue, error) {
+func New(dir string, acceptedJobTypes []string) (*fsJobQueue, error) {
 	q := &fsJobQueue{
 		db:         jsondb.New(dir, 0600),
 		pending:    make(map[string]chan uuid.UUID),
 		dependants: make(map[uuid.UUID][]uuid.UUID),
+	}
+
+	for _, jt := range acceptedJobTypes {
+		q.pending[jt] = make(chan uuid.UUID, 100)
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
@@ -96,6 +98,10 @@ func New(dir string) (*fsJobQueue, error) {
 func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
+
+	if _, exists := q.pending[jobType]; !exists {
+		return uuid.Nil, fmt.Errorf("this queue does not accept job type '%s'", jobType)
+	}
 
 	var j = job{
 		Id:           uuid.New(),
@@ -146,7 +152,14 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, args interf
 		return uuid.Nil, err
 	}
 
-	chans := q.pendingChannels(jobTypes)
+	// Filter q.pending by the `jobTypes`. Ignore those job types that this
+	// queue doesn't accept.
+	chans := []chan uuid.UUID{}
+	for _, jt := range jobTypes {
+		if c, exists := q.pending[jt]; exists {
+			chans = append(chans, c)
+		}
+	}
 
 	// Unlock the mutex while polling channels, so that multiple goroutines
 	// can wait at the same time.
@@ -278,7 +291,11 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	}
 
 	if depsFinished {
-		q.pendingChannel(j.Type) <- j.Id
+		c, exists := q.pending[j.Type]
+		if !exists {
+			return fmt.Errorf("this queue doesn't accept job type '%s'", j.Type)
+		}
+		c <- j.Id
 	} else if updateDependants {
 		for _, id := range j.Dependencies {
 			q.dependants[id] = append(q.dependants[id], j.Id)
@@ -286,34 +303,6 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	}
 
 	return nil
-}
-
-// Safe access to the pending channel for `jobType`. Channels are created on
-// demand.
-func (q *fsJobQueue) pendingChannel(jobType string) chan uuid.UUID {
-	c, exists := q.pending[jobType]
-	if !exists {
-		c = make(chan uuid.UUID, 100)
-		q.pending[jobType] = c
-	}
-
-	return c
-}
-
-// Same as pendingChannel(), but for multiple job types.
-func (q *fsJobQueue) pendingChannels(jobTypes []string) []chan uuid.UUID {
-	chans := make([]chan uuid.UUID, len(jobTypes))
-
-	for i, jt := range jobTypes {
-		c, exists := q.pending[jt]
-		if !exists {
-			c = make(chan uuid.UUID, 100)
-			q.pending[jt] = c
-		}
-		chans[i] = c
-	}
-
-	return chans
 }
 
 // Sorts and removes duplicates from `ids`.
