@@ -85,20 +85,22 @@ func New(dir string) (*fsJobQueue, error) {
 		if j.Status != jobqueue.JobPending {
 			continue
 		}
-		// Initialize dependants for this job.
-		q.dependantsMutex.Lock()
-		defer q.dependantsMutex.Unlock()
-		for _, dep := range j.Dependencies {
-			q.dependants[dep] = append(q.dependants[dep], j.Id)
-		}
-		// Enqueue a job if all its dependencies (if there are any)
-		// have finished, but the job itself hasn't run yet.
+		// Enqueue the job again if all dependencies have finished, or
+		// there are none. Otherwise, update dependants so that this
+		// check is done again when FinishJob() is called for a
+		// dependency.
 		n, err := q.countFinishedJobs(j.Dependencies)
 		if err != nil {
 			return nil, err
 		}
 		if n == len(j.Dependencies) {
 			q.pendingChannel(j.Type) <- j.Id
+		} else {
+			q.dependantsMutex.Lock()
+			defer q.dependantsMutex.Unlock()
+			for _, dep := range j.Dependencies {
+				q.dependants[dep] = append(q.dependants[dep], j.Id)
+			}
 		}
 	}
 
