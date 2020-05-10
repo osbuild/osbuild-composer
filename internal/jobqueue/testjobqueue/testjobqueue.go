@@ -33,6 +33,7 @@ type job struct {
 	QueuedAt     time.Time
 	StartedAt    time.Time
 	FinishedAt   time.Time
+	Canceled     bool
 }
 
 func New() *testJobQueue {
@@ -134,9 +135,18 @@ func (q *testJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	return nil
 }
 
-func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error) {
-	var j *job
+func (q *testJobQueue) CancelJob(id uuid.UUID) error {
+	j, exists := q.jobs[id]
+	if !exists {
+		return jobqueue.ErrNotExist
+	}
 
+	j.Canceled = true
+
+	return nil
+}
+
+func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error) {
 	j, exists := q.jobs[id]
 	if !exists {
 		err = jobqueue.ErrNotExist
@@ -153,6 +163,7 @@ func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, star
 	queued = j.QueuedAt
 	started = j.StartedAt
 	finished = j.FinishedAt
+	canceled = j.Canceled
 
 	return
 }

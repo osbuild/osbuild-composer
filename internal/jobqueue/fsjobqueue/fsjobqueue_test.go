@@ -132,19 +132,21 @@ func TestDependencies(t *testing.T) {
 		require.ElementsMatch(t, []uuid.UUID{one, two}, r)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		queued, started, finished, err := q.JobStatus(j, nil)
+		queued, started, finished, canceled, err := q.JobStatus(j, nil)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, started.IsZero())
 		require.True(t, finished.IsZero())
+		require.False(t, canceled)
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}))
 
-		queued, started, finished, err = q.JobStatus(j, &testResult{})
+		queued, started, finished, canceled, err = q.JobStatus(j, &testResult{})
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, !started.IsZero())
 		require.True(t, !finished.IsZero())
+		require.False(t, canceled)
 	})
 
 	t.Run("done-after-pushing-dependant", func(t *testing.T) {
@@ -152,11 +154,12 @@ func TestDependencies(t *testing.T) {
 		two := pushTestJob(t, q, "test", nil, nil)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		queued, started, finished, err := q.JobStatus(j, nil)
+		queued, started, finished, canceled, err := q.JobStatus(j, nil)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, started.IsZero())
 		require.True(t, finished.IsZero())
+		require.False(t, canceled)
 
 		r := []uuid.UUID{}
 		r = append(r, finishNextTestJob(t, q, "test", testResult{}))
@@ -165,11 +168,12 @@ func TestDependencies(t *testing.T) {
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}))
 
-		queued, started, finished, err = q.JobStatus(j, &testResult{})
+		queued, started, finished, canceled, err = q.JobStatus(j, &testResult{})
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, !started.IsZero())
 		require.True(t, !finished.IsZero())
+		require.False(t, canceled)
 	})
 }
 
@@ -202,4 +206,52 @@ func TestMultipleWorkers(t *testing.T) {
 	// Now wake up the Dequeue() in the goroutine and wait for it to finish.
 	_ = pushTestJob(t, q, "octopus", nil, nil)
 	<-done
+}
+
+func TestCancel(t *testing.T) {
+	q, dir := newTemporaryQueue(t, []string{"octopus", "clownfish"})
+	defer cleanupTempDir(t, dir)
+
+	// Cancel a non-existing job
+	err := q.CancelJob(uuid.New())
+	require.Error(t, err)
+
+	// Cancel a pending job
+	id := pushTestJob(t, q, "clownfish", nil, nil)
+	require.NotEmpty(t, id)
+	err = q.CancelJob(id)
+	require.NoError(t, err)
+	_, _, _, canceled, err := q.JobStatus(id, &testResult{})
+	require.NoError(t, err)
+	require.True(t, canceled)
+	err = q.FinishJob(id, &testResult{})
+	require.Error(t, err)
+
+	// Cancel a running job, which should not dequeue the canceled job from above
+	id = pushTestJob(t, q, "clownfish", nil, nil)
+	require.NotEmpty(t, id)
+	r, err := q.Dequeue(context.Background(), []string{"clownfish"}, &json.RawMessage{})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+	err = q.CancelJob(id)
+	require.NoError(t, err)
+	_, _, _, canceled, err = q.JobStatus(id, &testResult{})
+	require.NoError(t, err)
+	require.True(t, canceled)
+	err = q.FinishJob(id, &testResult{})
+	require.Error(t, err)
+
+	// Cancel a finished job, which is a no-op
+	id = pushTestJob(t, q, "clownfish", nil, nil)
+	require.NotEmpty(t, id)
+	r, err = q.Dequeue(context.Background(), []string{"clownfish"}, &json.RawMessage{})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+	err = q.FinishJob(id, &testResult{})
+	require.NoError(t, err)
+	err = q.CancelJob(id)
+	require.NoError(t, err)
+	_, _, _, canceled, err = q.JobStatus(id, &testResult{})
+	require.NoError(t, err)
+	require.False(t, canceled)
 }

@@ -48,16 +48,20 @@ type JobQueue interface {
 	// job type and must be serializable to JSON.
 	FinishJob(id uuid.UUID, result interface{}) error
 
+	// Cancel a job. Does nothing if the job has already finished.
+	CancelJob(id uuid.UUID) error
+
 	// Returns the current status of the job, in the form of three times:
 	// queued, started, and finished. `started` and `finished` might be the
 	// zero time (check with t.IsZero()), when the job is not running or
 	// finished, respectively.
 	//
 	// If the job is finished, its result will be returned in `result`.
-	JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, err error)
+	JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error)
 }
 
 var (
 	ErrNotExist   = errors.New("job does not exist")
 	ErrNotRunning = errors.New("job is not running")
+	ErrCanceled   = errors.New("job ws canceled")
 )
