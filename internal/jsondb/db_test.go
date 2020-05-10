@@ -72,6 +72,39 @@ func TestCorrupt(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRead(t *testing.T) {
+	dir, err := ioutil.TempDir("", "jsondb-test-")
+	require.NoError(t, err)
+	defer cleanupTempDir(t, dir)
+
+	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("true"), 0755)
+	require.NoError(t, err)
+
+	db := jsondb.New(dir, 0755)
+
+	var b bool
+	exists, err := db.Read("one", &b)
+	require.NoError(t, err)
+	require.True(t, exists)
+	require.True(t, b)
+
+	// nil means don't deserialize
+	exists, err = db.Read("one", nil)
+	require.NoError(t, err)
+	require.True(t, exists)
+
+	b = false
+	exists, err = db.Read("two", &b)
+	require.NoError(t, err)
+	require.False(t, exists)
+	require.False(t, b)
+
+	// nil means don't deserialize
+	exists, err = db.Read("two", nil)
+	require.NoError(t, err)
+	require.False(t, exists)
+}
+
 func TestMultiple(t *testing.T) {
 	dir, err := ioutil.TempDir("", "jsondb-test-")
 	require.NoError(t, err)

@@ -36,7 +36,8 @@ func New(dir string, perm os.FileMode) *JSONDatabase {
 	return &JSONDatabase{dir, perm}
 }
 
-// Reads the value at `name`. `document` must deserializable from JSON. Returns
+// Reads the value at `name`. `document` must be a type that is deserializable
+// from the JSON document `name`, or nil to not deserialize at all. Returns
 // false if a document with `name` does not exist.
 func (db *JSONDatabase) Read(name string, document interface{}) (bool, error) {
 	f, err := os.Open(path.Join(db.dir, name+".json"))
@@ -48,9 +49,11 @@ func (db *JSONDatabase) Read(name string, document interface{}) (bool, error) {
 	}
 	defer f.Close()
 
-	err = json.NewDecoder(f).Decode(&document)
-	if err != nil {
-		return false, fmt.Errorf("error reading db file %s: %v", name, err)
+	if document != nil {
+		err = json.NewDecoder(f).Decode(&document)
+		if err != nil {
+			return false, fmt.Errorf("error reading db file %s: %v", name, err)
+		}
 	}
 
 	return true, nil
