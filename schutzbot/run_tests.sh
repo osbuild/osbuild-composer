@@ -8,6 +8,10 @@ sudo chmod -R 777 /opt/ansible_{local,remote}
 # Remove Fedora modular repositories to speed up dnf-json.
 sudo rm -rfv /etc/yum.repos.d/fedora*modular*
 
+# Ensure /tmp is mounted on tmpfs.
+sudo systemctl enable tmp.mount || \
+  sudo systemctl unmask tmp.mount && sudo systemctl start tmp.mount
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
