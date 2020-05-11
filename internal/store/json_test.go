@@ -1,4 +1,4 @@
-package common
+package store
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 
 func TestImageType_UnmarshalJSON(t *testing.T) {
 	dict := struct {
-		ImageTypes []ImageType `json:"image_types"`
+		ImageTypes []imageType `json:"image_types"`
 	}{}
 	input := `{"image_types":["qcow2", "Azure"]}`
 	err := json.Unmarshal([]byte(input), &dict)
