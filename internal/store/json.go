@@ -1,6 +1,9 @@
 package store
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -38,7 +41,7 @@ type composesV0 map[uuid.UUID]composeV0
 // ImageBuild represents a single image build inside a compose
 type imageBuildV0 struct {
 	ID          int               `json:"id"`
-	ImageType   common.ImageType  `json:"image_type"`
+	ImageType   imageType         `json:"image_type"`
 	Manifest    *osbuild.Manifest `json:"manifest"`
 	Targets     []*target.Target  `json:"targets"`
 	JobCreated  time.Time         `json:"job_created"`
@@ -99,7 +102,7 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 			Blueprint: composeStruct.Blueprint,
 		}
 		for _, imgBuild := range composeStruct.ImageBuilds {
-			imgTypeString, valid := imgBuild.ImageType.ToCompatString()
+			imgTypeString, valid := imgBuild.ImageType.toCompatString()
 			if !valid {
 				// Invalid type strings in serialization format, this may happen
 				// on upgrades. Ignore the image build.
@@ -251,7 +254,7 @@ func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 			panic("the was a compose with zero image builds, that is forbidden")
 		}
 		for _, imgBuild := range compose.ImageBuilds {
-			imgType, valid := common.ImageTypeFromCompatString(imgBuild.ImageType.Name())
+			imgType, valid := imageTypeFromCompatString(imgBuild.ImageType.Name())
 			if !valid {
 				panic("invalid image type")
 			}
@@ -316,4 +319,92 @@ func (store *Store) toStoreV0() *storeV0 {
 		Changes:    newChangesV0(store.blueprintsChanges),
 		Commits:    newCommitsV0(store.blueprintsCommits),
 	}
+}
+
+type imageType int
+
+// NOTE: If you want to add more constants here, don't forget to add a mapping below
+const (
+	Azure imageType = iota
+	Aws
+	LiveISO
+	OpenStack
+	Qcow2Generic
+	Vmware
+	RawFilesystem
+	PartitionedDisk
+	TarArchive
+)
+
+// getArchMapping is a helper function that defines the conversion from JSON string value
+// to ImageType.
+func getImageTypeMapping() map[string]int {
+	mapping := map[string]int{
+		"Azure":            int(Azure),
+		"AWS":              int(Aws),
+		"LiveISO":          int(LiveISO),
+		"OpenStack":        int(OpenStack),
+		"qcow2":            int(Qcow2Generic),
+		"VMWare":           int(Vmware),
+		"Raw-filesystem":   int(RawFilesystem),
+		"Partitioned-disk": int(PartitionedDisk),
+		"Tar":              int(TarArchive),
+	}
+	return mapping
+}
+
+// TODO: check the mapping here:
+func getCompatImageTypeMapping() map[int]string {
+	mapping := map[int]string{
+		int(Azure):           "vhd",
+		int(Aws):             "ami",
+		int(LiveISO):         "liveiso",
+		int(OpenStack):       "openstack",
+		int(Qcow2Generic):    "qcow2",
+		int(Vmware):          "vmdk",
+		int(RawFilesystem):   "ext4-filesystem",
+		int(PartitionedDisk): "partitioned-disk",
+		int(TarArchive):      "tar",
+	}
+	return mapping
+}
+
+func (imgType imageType) toCompatString() (string, bool) {
+	str, exists := getCompatImageTypeMapping()[int(imgType)]
+	return str, exists
+}
+
+func imageTypeFromCompatString(input string) (imageType, bool) {
+	for k, v := range getCompatImageTypeMapping() {
+		if v == input {
+			return imageType(k), true
+		}
+	}
+	return imageType(999), false
+}
+
+func (imgType *imageType) UnmarshalJSON(data []byte) error {
+	mapping := getImageTypeMapping()
+	var stringInput string
+	err := json.Unmarshal(data, &stringInput)
+	if err != nil {
+		return err
+	}
+	value, exists := mapping[stringInput]
+	if !exists {
+		return errors.New(stringInput + " is not a valid image type")
+	}
+	*imgType = imageType(value)
+	return nil
+}
+
+func (imgType imageType) MarshalJSON() ([]byte, error) {
+	mapping := getImageTypeMapping()
+	input := int(imgType)
+	for k, v := range mapping {
+		if v == input {
+			return json.Marshal(k)
+		}
+	}
+	return nil, fmt.Errorf("%d is not a valid image type tag", input)
 }

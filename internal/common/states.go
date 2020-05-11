@@ -17,6 +17,26 @@ const (
 	IBFailed
 )
 
+// CustomJsonConversionError is thrown when parsing strings into enumerations
+type CustomJsonConversionError struct {
+	reason string
+}
+
+// Error returns the error as a string
+func (err *CustomJsonConversionError) Error() string {
+	return err.reason
+}
+
+// CustomTypeError is thrown when parsing strings into enumerations
+type CustomTypeError struct {
+	reason string
+}
+
+// Error returns the error as a string
+func (err *CustomTypeError) Error() string {
+	return err.reason
+}
+
 // ToString converts ImageBuildState into a human readable string
 func (ibs ImageBuildState) ToString() string {
 	return getStateMapping()[int(ibs)]
