@@ -5,6 +5,9 @@ set -euxo pipefail
 sudo mkdir -vp /opt/ansible_{local,remote}
 sudo chmod -R 777 /opt/ansible_{local,remote}
 
+# Remove Fedora modular repositories to speed up dnf-json.
+sudo rm -rfv /etc/yum.repos.d/fedora*modular*
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
