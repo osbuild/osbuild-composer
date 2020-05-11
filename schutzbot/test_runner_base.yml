@@ -1,0 +1,36 @@
+---
+
+- block:
+
+    - name: "Run {{ test.name }} test"
+      command: "{{ tests_path }}/{{ test.name }} -test.v"
+      args:
+        chdir: "{{ tests_working_directory }}"
+      register: async_test
+      async: "{{ test.timeout * 60 }}"
+      poll: "{{ polling_interval }}"
+
+    - name: "Mark {{ test.name }} as passed"
+      set_fact:
+        passed_tests: "{{ passed_tests + [test.name] }}"
+
+  rescue:
+
+    - name: "Mark {{ test.name }} as failed"
+      set_fact:
+        failed_tests: "{{ failed_tests + [test.name] }}"
+
+  always:
+
+    - name: "Write log for {{ test.name }}"
+      copy:
+        dest: "{{ workspace }}/{{ test.name }}.log"
+        content: |
+          Logs from {{ test.name }}
+          ----------------------------------------------------------------------
+          stderr:
+          {{ async_test.stderr }}
+          ----------------------------------------------------------------------
+          stdout:
+          {{ async_test.stdout }}
+
