@@ -95,30 +95,7 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
-		c := Compose{
-			Blueprint: composeStruct.Blueprint,
-		}
-		for _, imgBuild := range composeStruct.ImageBuilds {
-			imgType := imageTypeFromCompatString(imgBuild.ImageType, arch)
-			if imgType == nil {
-				// Invalid type strings in serialization format, this may happen
-				// on upgrades. Ignore the image build.
-				continue
-			}
-			ib := ImageBuild{
-				ID:          imgBuild.ID,
-				ImageType:   imgType,
-				Manifest:    imgBuild.Manifest,
-				Targets:     imgBuild.Targets,
-				JobCreated:  imgBuild.JobCreated,
-				JobStarted:  imgBuild.JobStarted,
-				JobFinished: imgBuild.JobFinished,
-				Size:        imgBuild.Size,
-				JobID:       imgBuild.JobID,
-				QueueStatus: imgBuild.QueueStatus,
-			}
-			c.ImageBuilds = append(c.ImageBuilds, ib)
-		}
+		c := newComposeFromV0(composeStruct, arch)
 		if len(c.ImageBuilds) == 0 {
 			// In case no valid image builds were found, ignore the compose.
 			continue
@@ -127,6 +104,34 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 	}
 
 	return composes
+}
+
+func newComposeFromV0(composeStruct composeV0, arch distro.Arch) Compose {
+	c := Compose{
+		Blueprint: composeStruct.Blueprint,
+	}
+	for _, imgBuild := range composeStruct.ImageBuilds {
+		imgType := imageTypeFromCompatString(imgBuild.ImageType, arch)
+		if imgType == nil {
+			// Invalid type strings in serialization format, this may happen
+			// on upgrades. Ignore the image build.
+			continue
+		}
+		ib := ImageBuild{
+			ID:          imgBuild.ID,
+			ImageType:   imgType,
+			Manifest:    imgBuild.Manifest,
+			Targets:     imgBuild.Targets,
+			JobCreated:  imgBuild.JobCreated,
+			JobStarted:  imgBuild.JobStarted,
+			JobFinished: imgBuild.JobFinished,
+			Size:        imgBuild.Size,
+			JobID:       imgBuild.JobID,
+			QueueStatus: imgBuild.QueueStatus,
+		}
+		c.ImageBuilds = append(c.ImageBuilds, ib)
+	}
+	return c
 }
 
 func newSourceConfigsFromV0(sourcesStruct sourcesV0) map[string]SourceConfig {
