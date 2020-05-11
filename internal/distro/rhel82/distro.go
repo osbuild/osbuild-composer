@@ -57,6 +57,14 @@ type rhel82ImageType struct {
 	imageType *imageType
 }
 
+func (a *rhel82Arch) Distro() distro.Distro {
+	return a.distro
+}
+
+func (t *rhel82ImageType) Arch() distro.Arch {
+	return t.arch
+}
+
 func (d *RHEL82) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {

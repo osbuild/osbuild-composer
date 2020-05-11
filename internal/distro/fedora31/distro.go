@@ -47,6 +47,14 @@ type arch struct {
 	imageTypes         map[string]imageType
 }
 
+func (a *arch) Distro() distro.Distro {
+	return a.distro
+}
+
+func (t *imageType) Arch() distro.Arch {
+	return t.arch
+}
+
 func (d *Fedora31) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
