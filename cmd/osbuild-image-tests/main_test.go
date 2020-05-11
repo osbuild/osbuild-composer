@@ -42,8 +42,8 @@ type testcaseStruct struct {
 // mutex to enforce only one osbuild instance run at a time, see below
 var osbuildMutex sync.Mutex
 
-// runOsbuild runs osbuild with the specified manifest and store.
-func runOsbuild(manifest []byte, store string) (string, error) {
+// runOsbuild runs osbuild with the specified manifest and output-directory.
+func runOsbuild(manifest []byte, outputDirectory string) error {
 	// Osbuild crashes when multiple instances are run at a time.
 	// This mutex enforces that there's always just one osbuild instance.
 	// This should be removed once osbuild is fixed.
@@ -51,7 +51,7 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 	osbuildMutex.Lock()
 	defer osbuildMutex.Unlock()
 
-	cmd := constants.GetOsbuildCommand(store)
+	cmd := constants.GetOsbuildCommand(outputDirectory)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = bytes.NewReader(manifest)
@@ -64,21 +64,12 @@ func runOsbuild(manifest []byte, store string) (string, error) {
 		if _, ok := err.(*exec.ExitError); ok {
 			var formattedOutput bytes.Buffer
 			_ = json.Indent(&formattedOutput, outBuffer.Bytes(), "", "  ")
-			return "", fmt.Errorf("running osbuild failed: %s", formattedOutput.String())
+			return fmt.Errorf("running osbuild failed: %s", formattedOutput.String())
 		}
-		return "", fmt.Errorf("running osbuild failed from an unexpected reason: %#v", err)
+		return fmt.Errorf("running osbuild failed from an unexpected reason: %#v", err)
 	}
 
-	var result struct {
-		OutputID string `json:"output_id"`
-	}
-
-	err = json.NewDecoder(&outBuffer).Decode(&result)
-	if err != nil {
-		return "", fmt.Errorf("cannot decode osbuild output: %#v", err)
-	}
-
-	return result.OutputID, nil
+	return nil
 }
 
 // testImageInfo runs image-info on image specified by imageImage and
@@ -200,9 +191,9 @@ func testBootUsingQemu(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 }
 
-func testBootUsingNspawnImage(t *testing.T, imagePath string, outputID string) {
+func testBootUsingNspawnImage(t *testing.T, imagePath string) {
 	err := withNetworkNamespace(func(ns netNS) error {
-		return withBootedNspawnImage(imagePath, outputID, ns, func() error {
+		return withBootedNspawnImage(imagePath, ns, func() error {
 			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 			return nil
 		})
@@ -210,10 +201,10 @@ func testBootUsingNspawnImage(t *testing.T, imagePath string, outputID string) {
 	require.NoError(t, err)
 }
 
-func testBootUsingNspawnDirectory(t *testing.T, imagePath string, outputID string) {
+func testBootUsingNspawnDirectory(t *testing.T, imagePath string) {
 	err := withNetworkNamespace(func(ns netNS) error {
 		return withExtractedTarArchive(imagePath, func(dir string) error {
-			return withBootedNspawnDirectory(dir, outputID, ns, func() error {
+			return withBootedNspawnDirectory(dir, ns, func() error {
 				testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 				return nil
 			})
@@ -305,16 +296,16 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 // The test passes if the function is able to connect to the image via ssh
 // in defined number of attempts and systemd-is-running returns running
 // or degraded status.
-func testBoot(t *testing.T, imagePath string, bootType string, outputID string) {
+func testBoot(t *testing.T, imagePath string, bootType string) {
 	switch bootType {
 	case "qemu":
 		testBootUsingQemu(t, imagePath)
 
 	case "nspawn":
-		testBootUsingNspawnImage(t, imagePath, outputID)
+		testBootUsingNspawnImage(t, imagePath)
 
 	case "nspawn-extract":
-		testBootUsingNspawnDirectory(t, imagePath, outputID)
+		testBootUsingNspawnDirectory(t, imagePath)
 
 	case "aws":
 		testBootUsingAWS(t, imagePath)
@@ -344,7 +335,7 @@ func kvmAvailable() bool {
 
 // testImage performs a series of tests specified in the testcase
 // on an image
-func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string) {
+func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 	if testcase.ImageInfo != nil {
 		t.Run("image info", func(t *testing.T) {
 			testImageInfo(t, imagePath, testcase.ImageInfo)
@@ -357,7 +348,7 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string
 			return
 		}
 		t.Run("boot", func(t *testing.T) {
-			testBoot(t, imagePath, testcase.Boot.Type, outputID)
+			testBoot(t, imagePath, testcase.Boot.Type)
 		})
 	}
 }
@@ -365,22 +356,22 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath, outputID string
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct) {
-	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-")
-	require.NoErrorf(t, err, "cannot create temporary store: %#v", err)
+	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
+	require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
 
 	defer func() {
-		err := os.RemoveAll(store)
+		err := os.RemoveAll(outputDirectory)
 		if err != nil {
-			log.Printf("cannot remove temporary store: %#v\n", err)
+			log.Printf("cannot remove temporary output directory: %#v\n", err)
 		}
 	}()
 
-	outputID, err := runOsbuild(testcase.Manifest, store)
+	err = runOsbuild(testcase.Manifest, outputDirectory)
 	require.NoError(t, err)
 
-	imagePath := fmt.Sprintf("%s/refs/%s/%s", store, outputID, testcase.ComposeRequest.Filename)
+	imagePath := fmt.Sprintf("%s/%s", outputDirectory, testcase.ComposeRequest.Filename)
 
-	testImage(t, testcase, imagePath, outputID)
+	testImage(t, testcase, imagePath)
 }
 
 // getAllCases returns paths to all testcases in the testcase directory
