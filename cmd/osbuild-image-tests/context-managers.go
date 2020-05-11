@@ -169,11 +169,10 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 
 // withBootedNspawnImage boots the specified image in the specified namespace
 // using nspawn. The VM is killed immediately after function returns.
-func withBootedNspawnImage(image, name string, ns netNS, f func() error) error {
+func withBootedNspawnImage(image string, ns netNS, f func() error) error {
 	cmd := exec.Command(
 		"systemd-nspawn",
 		"--boot", "--register=no",
-		"-M", name,
 		"--image", image,
 		"--network-namespace-path", ns.Path(),
 	)
@@ -195,11 +194,10 @@ func withBootedNspawnImage(image, name string, ns netNS, f func() error) error {
 
 // withBootedNspawnImage boots the specified directory in the specified namespace
 // using nspawn. The VM is killed immediately after function returns.
-func withBootedNspawnDirectory(dir, name string, ns netNS, f func() error) error {
+func withBootedNspawnDirectory(dir string, ns netNS, f func() error) error {
 	cmd := exec.Command(
 		"systemd-nspawn",
 		"--boot", "--register=no",
-		"-M", name,
 		"--directory", dir,
 		"--network-namespace-path", ns.Path(),
 	)

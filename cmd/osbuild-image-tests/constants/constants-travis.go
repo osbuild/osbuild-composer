@@ -4,12 +4,12 @@ package constants
 
 import "os/exec"
 
-func GetOsbuildCommand(store string) *exec.Cmd {
+func GetOsbuildCommand(outputDirectory string) *exec.Cmd {
 	cmd := exec.Command(
 		"python3",
 		"-m", "osbuild",
 		"--libdir", ".",
-		"--store", store,
+		"--output-directory", outputDirectory,
 		"--json",
 		"-",
 	)
