@@ -13,7 +13,7 @@ type ComposeEntry struct {
 	ID          uuid.UUID              `json:"id"`
 	Blueprint   string                 `json:"blueprint"`
 	Version     string                 `json:"version"`
-	ComposeType common.ImageType       `json:"compose_type"`
+	ComposeType string                 `json:"compose_type"`
 	ImageSize   uint64                 `json:"image_size"` // This is user-provided image size, not actual file size
 	QueueStatus common.ImageBuildState `json:"queue_status"`
 	JobCreated  float64                `json:"job_created"`
@@ -28,13 +28,7 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, state common.Com
 	composeEntry.ID = id
 	composeEntry.Blueprint = compose.Blueprint.Name
 	composeEntry.Version = compose.Blueprint.Version
-
-	var valid bool
-	// BUG: this leads to the wrong image type string being returned, we want the compat strings here
-	composeEntry.ComposeType, valid = common.ImageTypeFromCompatString(compose.ImageBuilds[0].ImageType.Name())
-	if !valid {
-		panic("compose contains invalid image type: " + compose.ImageBuilds[0].ImageType.Name())
-	}
+	composeEntry.ComposeType = compose.ImageBuilds[0].ImageType.Name()
 
 	if includeUploads {
 		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
