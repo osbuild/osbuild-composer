@@ -45,6 +45,9 @@ type Arch interface {
 	// Returns an object representing a given image format for this architecture,
 	// on this distro.
 	GetImageType(imageType string) (ImageType, error)
+
+	// Returns the parent distro
+	Distro() Distro
 }
 
 // An ImageType represents a given distribution's support for a given Image Type
@@ -52,6 +55,9 @@ type Arch interface {
 type ImageType interface {
 	// Returns the name of the image type.
 	Name() string
+
+	// Returns the parent architecture
+	Arch() Arch
 
 	// Returns the canonical filename for the image type.
 	Filename() string

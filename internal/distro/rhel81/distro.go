@@ -57,6 +57,14 @@ type rhel81ImageType struct {
 	imageType *imageType
 }
 
+func (a *rhel81Arch) Distro() distro.Distro {
+	return a.distro
+}
+
+func (t *rhel81ImageType) Arch() distro.Arch {
+	return t.arch
+}
+
 func (d *RHEL81) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
@@ -66,14 +74,14 @@ func (d *RHEL81) ListArches() []string {
 	return archs
 }
 
-func (d *RHEL81) GetArch(arch string) (distro.Arch, error) {
-	a, exists := d.arches[arch]
+func (d *RHEL81) GetArch(name string) (distro.Arch, error) {
+	a, exists := d.arches[name]
 	if !exists {
-		return nil, errors.New("invalid architecture: " + arch)
+		return nil, errors.New("invalid architecture: " + name)
 	}
 
 	return &rhel81Arch{
-		name:   arch,
+		name:   name,
 		distro: d,
 		arch:   &a,
 	}, nil
@@ -92,14 +100,14 @@ func (a *rhel81Arch) ListImageTypes() []string {
 	return formats
 }
 
-func (a *rhel81Arch) GetImageType(imageType string) (distro.ImageType, error) {
-	t, exists := a.distro.imageTypes[imageType]
+func (a *rhel81Arch) GetImageType(name string) (distro.ImageType, error) {
+	t, exists := a.distro.imageTypes[name]
 	if !exists {
-		return nil, errors.New("invalid image type: " + imageType)
+		return nil, errors.New("invalid image type: " + name)
 	}
 
 	return &rhel81ImageType{
-		name:      imageType,
+		name:      name,
 		arch:      a,
 		imageType: &t,
 	}, nil

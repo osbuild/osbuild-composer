@@ -20,6 +20,14 @@ func (d *TestDistro) ListArches() []string {
 	return []string{"test_arch"}
 }
 
+func (a *testArch) Distro() distro.Distro {
+	return &TestDistro{}
+}
+
+func (t *testImageType) Arch() distro.Arch {
+	return &testArch{}
+}
+
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
 	if arch != "test_arch" {
 		return nil, errors.New("invalid arch: " + arch)

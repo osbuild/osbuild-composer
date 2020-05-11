@@ -48,6 +48,14 @@ type imageType struct {
 	assembler        func(uefi bool, size uint64) *osbuild.Assembler
 }
 
+func (a *arch) Distro() distro.Distro {
+	return a.distro
+}
+
+func (t *imageType) Arch() distro.Arch {
+	return t.arch
+}
+
 func (d *Fedora30) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {

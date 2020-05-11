@@ -14,75 +14,83 @@ const modulePlatformID = "platform:f30"
 
 type FedoraTestDistro struct{}
 
-type fedoraTestDistroArch struct {
+type arch struct {
 	name   string
 	distro *FedoraTestDistro
 }
 
-type fedoraTestDistroImageType struct {
+type imageType struct {
 	name string
-	arch *fedoraTestDistroArch
+	arch *arch
+}
+
+func (a *arch) Distro() distro.Distro {
+	return a.distro
+}
+
+func (t *imageType) Arch() distro.Arch {
+	return t.arch
 }
 
 func (d *FedoraTestDistro) ListArches() []string {
 	return []string{"x86_64"}
 }
 
-func (d *FedoraTestDistro) GetArch(arch string) (distro.Arch, error) {
-	if arch != "x86_64" {
-		return nil, errors.New("invalid architecture: " + arch)
+func (d *FedoraTestDistro) GetArch(name string) (distro.Arch, error) {
+	if name != "x86_64" {
+		return nil, errors.New("invalid architecture: " + name)
 	}
 
-	return &fedoraTestDistroArch{
-		name:   arch,
+	return &arch{
+		name:   name,
 		distro: d,
 	}, nil
 }
 
-func (a *fedoraTestDistroArch) Name() string {
+func (a *arch) Name() string {
 	return a.name
 }
 
-func (a *fedoraTestDistroArch) ListImageTypes() []string {
+func (a *arch) ListImageTypes() []string {
 	return []string{"qcow2"}
 }
 
-func (a *fedoraTestDistroArch) GetImageType(imageType string) (distro.ImageType, error) {
-	if imageType != "qcow2" {
-		return nil, errors.New("invalid image type: " + imageType)
+func (a *arch) GetImageType(name string) (distro.ImageType, error) {
+	if name != "qcow2" {
+		return nil, errors.New("invalid image type: " + name)
 	}
 
-	return &fedoraTestDistroImageType{
-		name: imageType,
+	return &imageType{
+		name: name,
 		arch: a,
 	}, nil
 }
 
-func (t *fedoraTestDistroImageType) Name() string {
+func (t *imageType) Name() string {
 	return t.name
 }
 
-func (t *fedoraTestDistroImageType) Filename() string {
+func (t *imageType) Filename() string {
 	return "test.img"
 }
 
-func (t *fedoraTestDistroImageType) MIMEType() string {
+func (t *imageType) MIMEType() string {
 	return "application/x-test"
 }
 
-func (t *fedoraTestDistroImageType) Size(size uint64) uint64 {
+func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *fedoraTestDistroImageType) BasePackages() ([]string, []string) {
+func (t *imageType) BasePackages() ([]string, []string) {
 	return nil, nil
 }
 
-func (t *fedoraTestDistroImageType) BuildPackages() []string {
+func (t *imageType) BuildPackages() []string {
 	return nil
 }
 
-func (t *fedoraTestDistroImageType) Manifest(c *blueprint.Customizations,
+func (t *imageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
 	buildPackageSpecs []rpmmd.PackageSpec,
