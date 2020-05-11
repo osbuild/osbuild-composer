@@ -10,8 +10,8 @@ import (
 )
 
 type TestDistro struct{}
-type testArch struct{}
-type testImageType struct{}
+type TestArch struct{}
+type TestImageType struct{}
 
 const name = "test-distro"
 const modulePlatformID = "platform:test"
@@ -20,61 +20,61 @@ func (d *TestDistro) ListArches() []string {
 	return []string{"test_arch"}
 }
 
-func (a *testArch) Distro() distro.Distro {
+func (a *TestArch) Distro() distro.Distro {
 	return &TestDistro{}
 }
 
-func (t *testImageType) Arch() distro.Arch {
-	return &testArch{}
+func (t *TestImageType) Arch() distro.Arch {
+	return &TestArch{}
 }
 
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
 	if arch != "test_arch" {
 		return nil, errors.New("invalid arch: " + arch)
 	}
-	return &testArch{}, nil
+	return &TestArch{}, nil
 }
 
-func (a *testArch) Name() string {
-	return "test_format"
+func (a *TestArch) Name() string {
+	return "test_arch"
 }
 
-func (a *testArch) ListImageTypes() []string {
-	return []string{"test-format"}
+func (a *TestArch) ListImageTypes() []string {
+	return []string{"test_type"}
 }
 
-func (a *testArch) GetImageType(imageType string) (distro.ImageType, error) {
-	if imageType != "test_output" {
+func (a *TestArch) GetImageType(imageType string) (distro.ImageType, error) {
+	if imageType != "test_type" {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
-	return &testImageType{}, nil
+	return &TestImageType{}, nil
 }
 
-func (t *testImageType) Name() string {
-	return "test-format"
+func (t *TestImageType) Name() string {
+	return "test_type"
 }
 
-func (t *testImageType) Filename() string {
+func (t *TestImageType) Filename() string {
 	return "test.img"
 }
 
-func (t *testImageType) MIMEType() string {
+func (t *TestImageType) MIMEType() string {
 	return "application/x-test"
 }
 
-func (t *testImageType) Size(size uint64) uint64 {
+func (t *TestImageType) Size(size uint64) uint64 {
 	return 0
 }
 
-func (t *testImageType) BasePackages() ([]string, []string) {
+func (t *TestImageType) BasePackages() ([]string, []string) {
 	return nil, nil
 }
 
-func (t *testImageType) BuildPackages() []string {
+func (t *TestImageType) BuildPackages() []string {
 	return nil
 }
 
-func (t *testImageType) Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error) {
+func (t *TestImageType) Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error) {
 	return &osbuild.Manifest{
 		Sources:  osbuild.Sources{},
 		Pipeline: osbuild.Pipeline{},
