@@ -1,4 +1,7 @@
 coverage:
+  project:
+    default:
+      treshold: 5%
   status:
     patch: no
 codecov:
