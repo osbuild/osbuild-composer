@@ -64,14 +64,14 @@ func (e *TargetsError) Error() string {
 }
 
 func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (*common.ComposeResult, error) {
-	tmpStore, err := ioutil.TempDir("/var/tmp", "osbuild-store")
+	tmpOutput, err := ioutil.TempDir("/var/tmp", "osbuild-output-*")
 	if err != nil {
-		return nil, fmt.Errorf("error setting up osbuild store: %v", err)
+		return nil, fmt.Errorf("error setting up osbuild output directory: %v", err)
 	}
 	// FIXME: how to handle errors in defer?
-	defer os.RemoveAll(tmpStore)
+	defer os.RemoveAll(tmpOutput)
 
-	result, err := RunOSBuild(job.Manifest, tmpStore, os.Stderr)
+	result, err := RunOSBuild(job.Manifest, tmpOutput, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			f, err := os.Open(path.Join(tmpStore, "refs", result.OutputID, options.Filename))
+			f, err := os.Open(path.Join(tmpOutput, options.Filename))
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -105,7 +105,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (
 				options.Key = job.Id.String()
 			}
 
-			_, err = a.Upload(path.Join(tmpStore, "refs", result.OutputID, options.Filename), options.Bucket, options.Key)
+			_, err = a.Upload(path.Join(tmpOutput, options.Filename), options.Bucket, options.Key)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -132,7 +132,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (
 			err := azure.UploadImage(
 				credentials,
 				metadata,
-				path.Join(tmpStore, "refs", result.OutputID, options.Filename),
+				path.Join(tmpOutput, options.Filename),
 				azureMaxUploadGoroutines,
 			)
 
