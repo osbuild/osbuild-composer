@@ -433,6 +433,10 @@ func TestBlueprintsDepsolve(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
+	arch, err := test_distro.New().GetArch("x86_64")
+	require.NoError(t, err)
+	imgType, err := arch.GetImageType("qcow2")
+	require.NoError(t, err)
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
@@ -445,7 +449,7 @@ func TestCompose(t *testing.T) {
 		ImageBuilds: []store.ImageBuild{
 			{
 				QueueStatus: common.IBWaiting,
-				ImageType:   common.Qcow2Generic,
+				ImageType:   imgType,
 				Targets: []*target.Target{
 					{
 						// skip Uuid and Created fields - they are ignored
@@ -470,7 +474,7 @@ func TestCompose(t *testing.T) {
 		ImageBuilds: []store.ImageBuild{
 			{
 				QueueStatus: common.IBWaiting,
-				ImageType:   common.Qcow2Generic,
+				ImageType:   imgType,
 				Targets: []*target.Target{
 					{
 						Name:      "org.osbuild.aws",
@@ -535,7 +539,7 @@ func TestCompose(t *testing.T) {
 		// TODO: find some (reasonable) way to verify the contents of the pipeline
 		composeStruct.ImageBuilds[0].Manifest = nil
 
-		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location")); diff != "" {
+		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location"), test.CompareImageTypes()); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
 

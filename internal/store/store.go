@@ -73,7 +73,7 @@ func (e *NoLocalTargetError) Error() string {
 	return e.message
 }
 
-func New(stateDir *string) *Store {
+func New(stateDir *string, arch distro.Arch) *Store {
 	var storeStruct storeV0
 	var db *jsondb.JSONDatabase
 
@@ -90,7 +90,7 @@ func New(stateDir *string) *Store {
 		}
 	}
 
-	store := newStoreFromV0(storeStruct)
+	store := newStoreFromV0(storeStruct, arch)
 
 	store.stateDir = stateDir
 	store.db = db
@@ -397,12 +397,6 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 		targets = []*target.Target{}
 	}
 
-	// Compatibility layer for image types in Weldr API v0
-	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
-	if !exists {
-		panic("fatal error, compose type does not exist")
-	}
-
 	if s.stateDir != nil {
 		outputDir := s.getImageBuildDirectory(composeID, 0)
 
@@ -419,7 +413,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 			ImageBuilds: []ImageBuild{
 				{
 					Manifest:   manifest,
-					ImageType:  imageTypeCommon,
+					ImageType:  imageType,
 					Targets:    targets,
 					JobCreated: time.Now(),
 					Size:       size,
@@ -438,12 +432,6 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
 	if targets == nil {
 		targets = []*target.Target{}
-	}
-
-	// Compatibility layer for image types in Weldr API v0
-	imageTypeCommon, exists := common.ImageTypeFromCompatString(imageType.Name())
-	if !exists {
-		panic("fatal error, compose type does not exist")
 	}
 
 	if s.stateDir != nil {
@@ -479,7 +467,7 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 				{
 					QueueStatus: status,
 					Manifest:    manifest,
-					ImageType:   imageTypeCommon,
+					ImageType:   imageType,
 					Targets:     targets,
 					JobCreated:  time.Now(),
 					JobStarted:  time.Now(),

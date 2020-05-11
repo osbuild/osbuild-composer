@@ -1800,7 +1800,7 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	filterStatus := q.Get("status")
-	filterImageType, filterImageTypeExists := common.ImageTypeFromCompatString(q.Get("type"))
+	filterImageType := q.Get("type")
 
 	filteredUUIDs := []uuid.UUID{}
 	for _, id := range uuids {
@@ -1813,7 +1813,7 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 			continue
 		} else if filterStatus != "" && state.ToString() != filterStatus {
 			continue
-		} else if filterImageTypeExists && compose.ImageBuilds[0].ImageType != filterImageType {
+		} else if filterImageType != "" && compose.ImageBuilds[0].ImageType.Name() != filterImageType {
 			continue
 		}
 		filteredUUIDs = append(filteredUUIDs, id)
@@ -1884,7 +1884,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	// Weldr API assumes only one image build per compose, that's why only the
 	// 1st build is considered
 	state, _, _, _ := api.getComposeState(compose)
-	reply.ComposeType, _ = compose.ImageBuilds[0].ImageType.ToCompatString()
+	reply.ComposeType = compose.ImageBuilds[0].ImageType.Name()
 	reply.QueueStatus = state.ToString()
 	reply.ImageSize = compose.ImageBuilds[0].Size
 
@@ -1932,20 +1932,8 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	imageBuild := compose.ImageBuilds[0]
-	imageType, _ := imageBuild.ImageType.ToCompatString()
-	imageTypeStruct, err := api.arch.GetImageType(imageType)
-	if err != nil {
-		errors := responseError{
-			ID: "BadCompose",
-			Msg: fmt.Sprintf("Compose %s is ill-formed: output type %v is invalid for distro %s on %s",
-				uuidString, imageBuild.ImageType, api.distro.Name(), api.arch.Name()),
-		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-	imageName := imageTypeStruct.Filename()
-	imageMime := imageTypeStruct.MIMEType()
+	imageName := compose.ImageBuilds[0].ImageType.Filename()
+	imageMime := compose.ImageBuilds[0].ImageType.MIMEType()
 
 	reader, fileSize, err := api.store.GetImageBuildImage(uuid, 0)
 

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 )
 
 //struct for sharing state between tests
@@ -50,8 +51,11 @@ func (suite *storeTest) SetupSuite() {
 func (suite *storeTest) SetupTest() {
 	tmpDir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
 	suite.NoError(err)
+	distro := test_distro.New()
+	arch, err := distro.GetArch("test_arch")
+	suite.NoError(err)
 	suite.dir = tmpDir
-	suite.myStore = New(&suite.dir)
+	suite.myStore = New(&suite.dir, arch)
 }
 
 //teardown after each test

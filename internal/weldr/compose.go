@@ -28,7 +28,13 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, state common.Com
 	composeEntry.ID = id
 	composeEntry.Blueprint = compose.Blueprint.Name
 	composeEntry.Version = compose.Blueprint.Version
-	composeEntry.ComposeType = compose.ImageBuilds[0].ImageType
+
+	var valid bool
+	// BUG: this leads to the wrong image type string being returned, we want the compat strings here
+	composeEntry.ComposeType, valid = common.ImageTypeFromCompatString(compose.ImageBuilds[0].ImageType.Name())
+	if !valid {
+		panic("compose contains invalid image type: " + compose.ImageBuilds[0].ImageType.Name())
+	}
 
 	if includeUploads {
 		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
