@@ -19,10 +19,10 @@ func (e *OSBuildError) Error() string {
 	return e.Message
 }
 
-func RunOSBuild(manifest *osbuild.Manifest, store string, errorWriter io.Writer) (*common.ComposeResult, error) {
+func RunOSBuild(manifest *osbuild.Manifest, outputDirectory string, errorWriter io.Writer) (*common.ComposeResult, error) {
 	cmd := exec.Command(
 		"osbuild",
-		"--store", store,
+		"--output-directory", outputDirectory,
 		"--json", "-",
 	)
 	cmd.Stderr = errorWriter
