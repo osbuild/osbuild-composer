@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -46,7 +47,16 @@ func FixtureBase() *Store {
 		},
 	}
 
-	s := New(nil)
+	d := test_distro.New()
+	arch, err := d.GetArch("x86_64")
+	if err != nil {
+		panic("invalid architecture x86_64 for fedoratest")
+	}
+	imgType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		panic("invalid image type qcow2 for x86_64 @ fedoratest")
+	}
+	s := New(nil, arch)
 
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
@@ -55,7 +65,7 @@ func FixtureBase() *Store {
 			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBWaiting,
-					ImageType:   common.Qcow2Generic,
+					ImageType:   imgType,
 					Targets:     []*target.Target{localTarget, awsTarget},
 					JobCreated:  date,
 				},
@@ -66,7 +76,7 @@ func FixtureBase() *Store {
 			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBRunning,
-					ImageType:   common.Qcow2Generic,
+					ImageType:   imgType,
 					Targets:     []*target.Target{localTarget},
 					JobCreated:  date,
 					JobStarted:  date,
@@ -78,7 +88,7 @@ func FixtureBase() *Store {
 			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBFinished,
-					ImageType:   common.Qcow2Generic,
+					ImageType:   imgType,
 					Targets:     []*target.Target{localTarget, awsTarget},
 					JobCreated:  date,
 					JobStarted:  date,
@@ -91,7 +101,7 @@ func FixtureBase() *Store {
 			ImageBuilds: []ImageBuild{
 				{
 					QueueStatus: common.IBFailed,
-					ImageType:   common.Qcow2Generic,
+					ImageType:   imgType,
 					Targets:     []*target.Target{localTarget, awsTarget},
 					JobCreated:  date,
 					JobStarted:  date,
@@ -115,7 +125,12 @@ func FixtureEmpty() *Store {
 		Customizations: nil,
 	}
 
-	s := New(nil)
+	d := test_distro.New()
+	arch, err := d.GetArch("x86_64")
+	if err != nil {
+		panic("invalid architecture x86_64 for fedoratest")
+	}
+	s := New(nil, arch)
 
 	s.blueprints[bName] = b
 

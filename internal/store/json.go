@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -90,20 +91,28 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]Compose {
+func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUID]Compose {
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
 		c := Compose{
 			Blueprint: composeStruct.Blueprint,
 		}
-		if len(composeStruct.ImageBuilds) == 0 {
-			panic("the was a compose with zero image builds, that is forbidden")
-		}
 		for _, imgBuild := range composeStruct.ImageBuilds {
+			imgTypeString, valid := imgBuild.ImageType.ToCompatString()
+			if !valid {
+				// Invalid type strings in serialization format, this may happen
+				// on upgrades. Ignore the image build.
+				continue
+			}
+			imgType, err := arch.GetImageType(imgTypeString)
+			if err != nil {
+				// Ditto.
+				continue
+			}
 			ib := ImageBuild{
 				ID:          imgBuild.ID,
-				ImageType:   imgBuild.ImageType,
+				ImageType:   imgType,
 				Manifest:    imgBuild.Manifest,
 				Targets:     imgBuild.Targets,
 				JobCreated:  imgBuild.JobCreated,
@@ -114,6 +123,10 @@ func newComposesFromV0(composesStruct composesV0) map[uuid.UUID]Compose {
 				QueueStatus: imgBuild.QueueStatus,
 			}
 			c.ImageBuilds = append(c.ImageBuilds, ib)
+		}
+		if len(c.ImageBuilds) == 0 {
+			// In case no valid image builds were found, ignore the compose.
+			continue
 		}
 		composes[composeID] = c
 	}
@@ -158,11 +171,11 @@ func newCommitsFromV0(commitsStruct commitsV0) map[string][]string {
 	return commits
 }
 
-func newStoreFromV0(storeStruct storeV0) *Store {
+func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
 	store := Store{
 		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
 		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
-		composes:          newComposesFromV0(storeStruct.Composes),
+		composes:          newComposesFromV0(storeStruct.Composes, arch),
 		sources:           newSourceConfigsFromV0(storeStruct.Sources),
 		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
 		blueprintsCommits: newCommitsFromV0(storeStruct.Commits),
@@ -238,9 +251,13 @@ func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 			panic("the was a compose with zero image builds, that is forbidden")
 		}
 		for _, imgBuild := range compose.ImageBuilds {
+			imgType, valid := common.ImageTypeFromCompatString(imgBuild.ImageType.Name())
+			if !valid {
+				panic("invalid image type")
+			}
 			ib := imageBuildV0{
 				ID:          imgBuild.ID,
-				ImageType:   imgBuild.ImageType,
+				ImageType:   imgType,
 				Manifest:    imgBuild.Manifest,
 				Targets:     imgBuild.Targets,
 				JobCreated:  imgBuild.JobCreated,
