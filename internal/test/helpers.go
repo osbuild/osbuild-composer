@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -155,6 +156,17 @@ func IgnoreUuids() cmp.Option {
 
 func Ignore(what string) cmp.Option {
 	return cmp.FilterPath(func(p cmp.Path) bool { return p.String() == what }, cmp.Ignore())
+}
+
+// CompareImageType considers two image type objects equal if and only if the names of their distro/arch/imagetype
+// are. The thinking is that the objects are static, and resolving by these three keys should always give equivalent
+// objects. Whether we actually have object equality, is an implementation detail, so we don't want to rely on that.
+func CompareImageTypes() cmp.Option {
+	return cmp.Comparer(func(x, y distro.ImageType) bool {
+		return x.Name() == y.Name() &&
+			x.Arch().Name() == y.Arch().Name() &&
+			x.Arch().Distro().Name() == y.Arch().Distro().Name()
+	})
 }
 
 // Create a temporary repository
