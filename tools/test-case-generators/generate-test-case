@@ -5,6 +5,7 @@ import subprocess
 import json
 import os
 import sys
+import tempfile
 
 '''
 This script generates a json test case. It accepts a test_case_request as input through standard input.
@@ -35,10 +36,14 @@ def get_subprocess_stdout(*args, **kwargs):
     return sp.stdout
 
 
-def run_osbuild(manifest, store):
-    osbuild_cmd = ["osbuild", "--store", store, "--json", "-"]
-    result = json.loads(get_subprocess_stdout(osbuild_cmd, encoding="utf-8", input=json.dumps(manifest)))
-    return result.get("output_id")
+def run_osbuild(manifest, store, output):
+    subprocess.run(["osbuild",
+                    "--store", store,
+                    "--output-directory", output,
+                    "--json", "-"],
+                   check=True,
+                   encoding="utf-8",
+                   input=json.dumps(manifest))
 
 
 def main(test_case, store):
@@ -52,9 +57,10 @@ def main(test_case, store):
     test_case["rpmmd"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
 
     if boot_type != "nspawn-extract":
-        output_id = run_osbuild(test_case["manifest"], store)
-        image_file = os.path.join(store, "refs", output_id, test_case["compose-request"]["filename"])
-        test_case["image-info"] = json.loads(get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8"))
+        with tempfile.TemporaryDirectory(dir=store, prefix="test-case-output-") as output:
+            run_osbuild(test_case["manifest"], store, output)
+            image_file = os.path.join(output, test_case["compose-request"]["filename"])
+            test_case["image-info"] = json.loads(get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8"))
 
     return test_case
 
