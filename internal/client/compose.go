@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
@@ -63,20 +63,20 @@ func GetFailedComposesV0(socket *http.Client) ([]weldr.ComposeEntryV0, *APIRespo
 func GetComposeStatusV0(socket *http.Client, uuids, blueprint, status, composeType string) ([]weldr.ComposeEntryV0, *APIResponse, error) {
 	// Build the query string
 	route := "/api/v0/compose/status/" + uuids
-	var filters []string
 
+	params := url.Values{}
 	if len(blueprint) > 0 {
-		filters = append(filters, "blueprint="+blueprint)
+		params.Add("blueprint", blueprint)
 	}
 	if len(status) > 0 {
-		filters = append(filters, "status="+status)
+		params.Add("status", status)
 	}
 	if len(composeType) > 0 {
-		filters = append(filters, "type="+composeType)
+		params.Add("type", composeType)
 	}
 
-	if len(filters) > 0 {
-		route = route + "?" + strings.Join(filters, "&")
+	if len(params) > 0 {
+		route = route + "?" + params.Encode()
 	}
 
 	body, resp, err := GetRaw(socket, "GET", route)
