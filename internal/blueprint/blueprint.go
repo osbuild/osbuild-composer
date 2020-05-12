@@ -40,7 +40,7 @@ type Group struct {
 
 // DeepCopy returns a deep copy of the blueprint
 // This uses json.Marshal and Unmarshal which are not very efficient
-func (b *Blueprint) DeepCopy() (Blueprint, error) {
+func (b *Blueprint) DeepCopy() Blueprint {
 	bpJSON, err := json.Marshal(b)
 	if err != nil {
 		panic(err)
@@ -51,7 +51,7 @@ func (b *Blueprint) DeepCopy() (Blueprint, error) {
 	if err != nil {
 		panic(err)
 	}
-	return bp, nil
+	return bp
 }
 
 // Initialize ensures that the blueprint has sane defaults for any missing fields
