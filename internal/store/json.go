@@ -5,7 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/coreos/go-semver/semver"
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -70,6 +69,7 @@ type changeV0 struct {
 	Message   string `json:"message"`
 	Revision  *int   `json:"revision"`
 	Timestamp string `json:"timestamp"`
+	// BUG: We are currently not (un)marshalling the Blueprint field.
 }
 
 type changesV0 map[string]map[string]changeV0
@@ -181,22 +181,12 @@ func newChangesFromV0(changesStruct changesV0) map[string]map[string]blueprint.C
 	return changes
 }
 
-func newCommitsFromV0(commitsStruct commitsV0) map[string][]string {
-	commits := make(map[string][]string)
-	for name, changes := range commitsStruct {
-		commits[name] = changes // TODO: deep copy
-	}
-	return commits
-}
-
-func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
-	store := Store{
-		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
-		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
-		composes:          newComposesFromV0(storeStruct.Composes, arch),
-		sources:           newSourceConfigsFromV0(storeStruct.Sources),
-		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
-		blueprintsCommits: newCommitsFromV0(storeStruct.Commits),
+func newCommitsFromV0(commitsMapStruct commitsV0, changesMapStruct changesV0) map[string][]string {
+	commitsMap := make(map[string][]string)
+	for name, commitsStruct := range commitsMapStruct {
+		commits := make([]string, 0, len(commitsStruct))
+		copy(commits, commitsStruct)
+		commitsMap[name] = commits
 	}
 
 	// Populate BlueprintsCommits for existing blueprints without commit history
@@ -205,41 +195,43 @@ func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
 	// This will sort the existing commits by timestamp and version to update
 	// the store. BUT since the timestamp resolution is only 1s it is possible
 	// that the order may be slightly wrong.
-	for name := range store.blueprintsChanges {
-		if len(store.blueprintsChanges[name]) != len(store.blueprintsCommits[name]) {
-			changes := make([]blueprint.Change, 0, len(store.blueprintsChanges[name]))
+	for name, changes := range changesMapStruct {
+		if _, exists := commitsMap[name]; !exists {
+			changesSlice := make([]changeV0, 0, len(changes))
 
-			for commit := range store.blueprintsChanges[name] {
-				changes = append(changes, store.blueprintsChanges[name][commit])
+			// Copy the change objects from a map to a sortable slice
+			for _, change := range changes {
+				changesSlice = append(changesSlice, change)
 			}
 
-			// Sort the changes by Timestamp then version, ascending
-			sort.Slice(changes, func(i, j int) bool {
-				if changes[i].Timestamp == changes[j].Timestamp {
-					vI, err := semver.NewVersion(changes[i].Blueprint.Version)
-					if err != nil {
-						vI = semver.New("0.0.0")
-					}
-					vJ, err := semver.NewVersion(changes[j].Blueprint.Version)
-					if err != nil {
-						vJ = semver.New("0.0.0")
-					}
-
-					return vI.LessThan(*vJ)
-				}
-				return changes[i].Timestamp < changes[j].Timestamp
+			// Sort the changes by Timestamp ascending
+			sort.Slice(changesSlice, func(i, j int) bool {
+				return changesSlice[i].Timestamp <= changesSlice[j].Timestamp
 			})
 
+			// Create a sorted list of commits based on the sorted list of change objects
 			commits := make([]string, 0, len(changes))
-			for _, c := range changes {
+			for _, c := range changesSlice {
 				commits = append(commits, c.Commit)
 			}
 
-			store.blueprintsCommits[name] = commits
+			// Assign the commits to the commit map, as an approximation of what we want
+			commitsMap[name] = commits
 		}
 	}
 
-	return &store
+	return commitsMap
+}
+
+func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
+	return &Store{
+		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
+		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
+		composes:          newComposesFromV0(storeStruct.Composes, arch),
+		sources:           newSourceConfigsFromV0(storeStruct.Sources),
+		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
+		blueprintsCommits: newCommitsFromV0(storeStruct.Commits, storeStruct.Changes),
+	}
 }
 
 func newBlueprintsV0(blueprints map[string]blueprint.Blueprint) blueprintsV0 {
