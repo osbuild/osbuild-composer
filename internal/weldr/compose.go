@@ -28,10 +28,10 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, state common.Com
 	composeEntry.ID = id
 	composeEntry.Blueprint = compose.Blueprint.Name
 	composeEntry.Version = compose.Blueprint.Version
-	composeEntry.ComposeType = compose.ImageBuilds[0].ImageType.Name()
+	composeEntry.ComposeType = compose.ImageBuild.ImageType.Name()
 
 	if includeUploads {
-		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
+		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets)
 	}
 
 	switch state {
@@ -46,7 +46,7 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, state common.Com
 
 	case common.CFinished:
 		composeEntry.QueueStatus = common.IBFinished
-		composeEntry.ImageSize = compose.ImageBuilds[0].Size
+		composeEntry.ImageSize = compose.ImageBuild.Size
 		composeEntry.JobCreated = float64(queued.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(started.UnixNano()) / 1000000000
 		composeEntry.JobFinished = float64(finished.UnixNano()) / 1000000000

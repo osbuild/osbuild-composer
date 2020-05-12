@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"sort"
 	"time"
 
@@ -95,9 +96,9 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
-		c := newComposeFromV0(composeStruct, arch)
-		if len(c.ImageBuilds) == 0 {
-			// In case no valid image builds were found, ignore the compose.
+		c, err := newComposeFromV0(composeStruct, arch)
+		if err != nil {
+			// Ignore invalid composes.
 			continue
 		}
 		composes[composeID] = c
@@ -106,7 +107,7 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 	return composes
 }
 
-func newComposeFromV0(composeStruct composeV0, arch distro.Arch) Compose {
+func newComposeFromV0(composeStruct composeV0, arch distro.Arch) (Compose, error) {
 	c := Compose{
 		Blueprint: composeStruct.Blueprint,
 	}
@@ -114,8 +115,8 @@ func newComposeFromV0(composeStruct composeV0, arch distro.Arch) Compose {
 		imgType := imageTypeFromCompatString(imgBuild.ImageType, arch)
 		if imgType == nil {
 			// Invalid type strings in serialization format, this may happen
-			// on upgrades. Ignore the image build.
-			continue
+			// on upgrades.
+			return Compose{}, errors.New("Invalid Image Type string.")
 		}
 		ib := ImageBuild{
 			ID:          imgBuild.ID,
@@ -129,9 +130,10 @@ func newComposeFromV0(composeStruct composeV0, arch distro.Arch) Compose {
 			JobID:       imgBuild.JobID,
 			QueueStatus: imgBuild.QueueStatus,
 		}
-		c.ImageBuilds = append(c.ImageBuilds, ib)
+		c.ImageBuild = ib
+		return c, nil
 	}
-	return c
+	return Compose{}, errors.New("No valid image build found in compose.")
 }
 
 func newSourceConfigsFromV0(sourcesStruct sourcesV0) map[string]SourceConfig {
@@ -186,15 +188,11 @@ func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
 	// (and the compose). The fields are kept so that previously
 	// succeeded builds still show up correctly.
 	for composeID, compose := range store.composes {
-		if len(compose.ImageBuilds) == 0 {
-			panic("the was a compose with zero image builds, that is forbidden")
-		}
-		for imgID, imgBuild := range compose.ImageBuilds {
-			switch imgBuild.QueueStatus {
-			case common.IBRunning, common.IBWaiting:
-				compose.ImageBuilds[imgID].QueueStatus = common.IBFailed
-				store.composes[composeID] = compose
-			}
+		switch compose.ImageBuild.QueueStatus {
+		case common.IBRunning, common.IBWaiting:
+			compose.ImageBuild.QueueStatus = common.IBFailed
+			store.composes[composeID] = compose
+
 		}
 	}
 
@@ -247,28 +245,23 @@ func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 		c := composeV0{
 			Blueprint: compose.Blueprint,
 		}
-		if len(compose.ImageBuilds) == 0 {
-			panic("the was a compose with zero image builds, that is forbidden")
+		imgType := imageTypeToCompatString(compose.ImageBuild.ImageType)
+		if imgType == "" {
+			panic("invalid image type: " + compose.ImageBuild.ImageType.Name())
 		}
-		for _, imgBuild := range compose.ImageBuilds {
-			imgType := imageTypeToCompatString(imgBuild.ImageType)
-			if imgType == "" {
-				panic("invalid image type: " + imgBuild.ImageType.Name())
-			}
-			ib := imageBuildV0{
-				ID:          imgBuild.ID,
-				ImageType:   imgType,
-				Manifest:    imgBuild.Manifest,
-				Targets:     imgBuild.Targets,
-				JobCreated:  imgBuild.JobCreated,
-				JobStarted:  imgBuild.JobStarted,
-				JobFinished: imgBuild.JobFinished,
-				Size:        imgBuild.Size,
-				JobID:       imgBuild.JobID,
-				QueueStatus: imgBuild.QueueStatus,
-			}
-			c.ImageBuilds = append(c.ImageBuilds, ib)
+		ib := imageBuildV0{
+			ID:          compose.ImageBuild.ID,
+			ImageType:   imgType,
+			Manifest:    compose.ImageBuild.Manifest,
+			Targets:     compose.ImageBuild.Targets,
+			JobCreated:  compose.ImageBuild.JobCreated,
+			JobStarted:  compose.ImageBuild.JobStarted,
+			JobFinished: compose.ImageBuild.JobFinished,
+			Size:        compose.ImageBuild.Size,
+			JobID:       compose.ImageBuild.JobID,
+			QueueStatus: compose.ImageBuild.QueueStatus,
 		}
+		c.ImageBuilds = append(c.ImageBuilds, ib)
 		composesStruct[composeID] = c
 	}
 	return composesStruct
