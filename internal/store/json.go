@@ -107,33 +107,40 @@ func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUI
 	return composes
 }
 
+func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (ImageBuild, error) {
+	imgType := imageTypeFromCompatString(imageBuildStruct.ImageType, arch)
+	if imgType == nil {
+		// Invalid type strings in serialization format, this may happen
+		// on upgrades.
+		return ImageBuild{}, errors.New("invalid Image Type string")
+	}
+	return ImageBuild{
+		ID:          imageBuildStruct.ID,
+		ImageType:   imgType,
+		Manifest:    imageBuildStruct.Manifest,
+		Targets:     imageBuildStruct.Targets,
+		JobCreated:  imageBuildStruct.JobCreated,
+		JobStarted:  imageBuildStruct.JobStarted,
+		JobFinished: imageBuildStruct.JobFinished,
+		Size:        imageBuildStruct.Size,
+		JobID:       imageBuildStruct.JobID,
+		QueueStatus: imageBuildStruct.QueueStatus,
+	}, nil
+}
+
 func newComposeFromV0(composeStruct composeV0, arch distro.Arch) (Compose, error) {
-	c := Compose{
-		Blueprint: composeStruct.Blueprint,
+	if len(composeStruct.ImageBuilds) != 1 {
+		return Compose{}, errors.New("compose with unsupported number of image builds")
 	}
-	for _, imgBuild := range composeStruct.ImageBuilds {
-		imgType := imageTypeFromCompatString(imgBuild.ImageType, arch)
-		if imgType == nil {
-			// Invalid type strings in serialization format, this may happen
-			// on upgrades.
-			return Compose{}, errors.New("Invalid Image Type string.")
-		}
-		ib := ImageBuild{
-			ID:          imgBuild.ID,
-			ImageType:   imgType,
-			Manifest:    imgBuild.Manifest,
-			Targets:     imgBuild.Targets,
-			JobCreated:  imgBuild.JobCreated,
-			JobStarted:  imgBuild.JobStarted,
-			JobFinished: imgBuild.JobFinished,
-			Size:        imgBuild.Size,
-			JobID:       imgBuild.JobID,
-			QueueStatus: imgBuild.QueueStatus,
-		}
-		c.ImageBuild = ib
-		return c, nil
+	ib, err := newImageBuildFromV0(composeStruct.ImageBuilds[0], arch)
+	if err != nil {
+		return Compose{}, err
 	}
-	return Compose{}, errors.New("No valid image build found in compose.")
+	bp := composeStruct.Blueprint.DeepCopy()
+	return Compose{
+		Blueprint:  &bp,
+		ImageBuild: ib,
+	}, nil
 }
 
 func newSourceConfigsFromV0(sourcesStruct sourcesV0) map[string]SourceConfig {
@@ -168,7 +175,7 @@ func newChangesFromV0(changesStruct changesV0) map[string]map[string]blueprint.C
 func newCommitsFromV0(commitsStruct commitsV0) map[string][]string {
 	commits := make(map[string][]string)
 	for name, changes := range commitsStruct {
-		commits[name] = changes
+		commits[name] = changes // TODO: deep copy
 	}
 	return commits
 }
@@ -239,30 +246,47 @@ func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
 	return &store
 }
 
+func newBlueprintsV0(blueprints map[string]blueprint.Blueprint) blueprintsV0 {
+	blueprintsStruct := make(blueprintsV0)
+	for name, blueprint := range blueprints {
+		blueprintsStruct[name] = blueprint.DeepCopy()
+	}
+	return blueprintsStruct
+}
+
+func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
+	workspaceStruct := make(workspaceV0)
+	for name, blueprint := range workspace {
+		workspaceStruct[name] = blueprint.DeepCopy()
+	}
+	return workspaceStruct
+}
+
+func newComposeV0(compose Compose) composeV0 {
+	bp := compose.Blueprint.DeepCopy()
+	return composeV0{
+		Blueprint: &bp,
+		ImageBuilds: []imageBuildV0{
+			imageBuildV0{
+				ID:          compose.ImageBuild.ID,
+				ImageType:   imageTypeToCompatString(compose.ImageBuild.ImageType),
+				Manifest:    compose.ImageBuild.Manifest,
+				Targets:     compose.ImageBuild.Targets,
+				JobCreated:  compose.ImageBuild.JobCreated,
+				JobStarted:  compose.ImageBuild.JobStarted,
+				JobFinished: compose.ImageBuild.JobFinished,
+				Size:        compose.ImageBuild.Size,
+				JobID:       compose.ImageBuild.JobID,
+				QueueStatus: compose.ImageBuild.QueueStatus,
+			},
+		},
+	}
+}
+
 func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
 	composesStruct := make(composesV0)
 	for composeID, compose := range composes {
-		c := composeV0{
-			Blueprint: compose.Blueprint,
-		}
-		imgType := imageTypeToCompatString(compose.ImageBuild.ImageType)
-		if imgType == "" {
-			panic("invalid image type: " + compose.ImageBuild.ImageType.Name())
-		}
-		ib := imageBuildV0{
-			ID:          compose.ImageBuild.ID,
-			ImageType:   imgType,
-			Manifest:    compose.ImageBuild.Manifest,
-			Targets:     compose.ImageBuild.Targets,
-			JobCreated:  compose.ImageBuild.JobCreated,
-			JobStarted:  compose.ImageBuild.JobStarted,
-			JobFinished: compose.ImageBuild.JobFinished,
-			Size:        compose.ImageBuild.Size,
-			JobID:       compose.ImageBuild.JobID,
-			QueueStatus: compose.ImageBuild.QueueStatus,
-		}
-		c.ImageBuilds = append(c.ImageBuilds, ib)
-		composesStruct[composeID] = c
+		composesStruct[composeID] = newComposeV0(compose)
 	}
 	return composesStruct
 }
@@ -302,8 +326,8 @@ func newCommitsV0(commits map[string][]string) commitsV0 {
 
 func (store *Store) toStoreV0() *storeV0 {
 	return &storeV0{
-		Blueprints: store.blueprints,
-		Workspace:  store.workspace,
+		Blueprints: newBlueprintsV0(store.blueprints),
+		Workspace:  newWorkspaceV0(store.workspace),
 		Composes:   newComposesV0(store.composes),
 		Sources:    newSourcesV0(store.sources),
 		Changes:    newChangesV0(store.blueprintsChanges),
@@ -312,20 +336,25 @@ func (store *Store) toStoreV0() *storeV0 {
 }
 
 var imageTypeCompatMapping = map[string]string{
-	"vhd":              "Azure",
-	"ami":              "AWS",
-	"liveiso":          "LiveISO",
-	"openstack":        "OpenStack",
-	"qcow2":            "qcow2",
-	"vmdk":             "VMWare",
-	"ext4-filesystem":  "Raw-filesystem",
-	"partitioned-disk": "Partitioned-disk",
-	"tar":              "Tar",
-	"test_type":        "test_type",
+	"vhd":               "Azure",
+	"ami":               "AWS",
+	"liveiso":           "LiveISO",
+	"openstack":         "OpenStack",
+	"qcow2":             "qcow2",
+	"vmdk":              "VMWare",
+	"ext4-filesystem":   "Raw-filesystem",
+	"partitioned-disk":  "Partitioned-disk",
+	"tar":               "Tar",
+	"test_type":         "test_type",         // used only in json_test.go
+	"test_type_invalid": "test_type_invalid", // used only in json_test.go
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
-	return imageTypeCompatMapping[imgType.Name()]
+	imgTypeString, exists := imageTypeCompatMapping[imgType.Name()]
+	if !exists {
+		panic("No mapping exists for " + imgType.Name())
+	}
+	return imgTypeString
 }
 
 func imageTypeFromCompatString(input string, arch distro.Arch) distro.ImageType {
