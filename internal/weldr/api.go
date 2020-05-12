@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -42,6 +43,8 @@ type API struct {
 	logger *log.Logger
 	router *httprouter.Router
 }
+
+var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server) *API {
 	api := &API{
@@ -230,6 +233,24 @@ type responseError struct {
 	Code int    `json:"code,omitempty"`
 	ID   string `json:"id"`
 	Msg  string `json:"msg"`
+}
+
+// verifyStringsWithRegex checks a slive of strings against a regex of allowed characters
+// it writes the InvalidChars error to the writer and returns false if any of them fail the check
+// It will also return an error if the string is empty
+func verifyStringsWithRegex(writer http.ResponseWriter, strings []string, re *regexp.Regexp) bool {
+	for _, s := range strings {
+		if len(s) > 0 && re.MatchString(s) {
+			continue
+		}
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: "Invalid characters in API path",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return false
+	}
+	return true
 }
 
 func statusResponseError(writer http.ResponseWriter, code int, errors ...responseError) {
@@ -807,6 +828,13 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	// Remove the leading / from the first entry (check above ensures it is not just a /
+	names[0] = names[0][1:]
+
+	if !verifyStringsWithRegex(writer, names, ValidBlueprintName) {
+		return
+	}
+
 	query, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
 		errors := responseError{
@@ -821,12 +849,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	changes := []change{}
 	blueprintErrors := []responseError{}
 
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
-
+	for _, name := range names {
 		blueprint, changed := api.store.GetBlueprint(name)
 		if blueprint == nil {
 			blueprintErrors = append(blueprintErrors, responseError{
@@ -902,13 +925,16 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		return
 	}
 
+	// Remove the leading / from the first entry (check above ensures it is not just a /
+	names[0] = names[0][1:]
+
+	if !verifyStringsWithRegex(writer, names, ValidBlueprintName) {
+		return
+	}
+
 	blueprints := []entry{}
 	blueprintsErrors := []responseError{}
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
+	for _, name := range names {
 		blueprint, _ := api.store.GetBlueprint(name)
 		if blueprint == nil {
 			blueprintsErrors = append(blueprintsErrors, responseError{
@@ -987,13 +1013,16 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
+	// Remove the leading / from the first entry (check above ensures it is not just a /
+	names[0] = names[0][1:]
+
+	if !verifyStringsWithRegex(writer, names, ValidBlueprintName) {
+		return
+	}
+
 	blueprints := []blueprintFrozen{}
 	errors := []responseError{}
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
+	for _, name := range names {
 		bp, _ := api.store.GetBlueprint(name)
 		if bp == nil {
 			rerr := responseError{
@@ -1076,8 +1105,19 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
 	fromCommit := params.ByName("from")
+	if !verifyStringsWithRegex(writer, []string{fromCommit}, ValidBlueprintName) {
+		return
+	}
+
 	toCommit := params.ByName("to")
+	if !verifyStringsWithRegex(writer, []string{toCommit}, ValidBlueprintName) {
+		return
+	}
 
 	if len(name) == 0 || len(fromCommit) == 0 || len(toCommit) == 0 {
 		errors := responseError{
@@ -1178,6 +1218,13 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 		return
 	}
 
+	// Remove the leading / from the first entry (check above ensures it is not just a /
+	names[0] = names[0][1:]
+
+	if !verifyStringsWithRegex(writer, names, ValidBlueprintName) {
+		return
+	}
+
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
 	if err != nil {
 		errors := responseError{
@@ -1190,11 +1237,7 @@ func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *ht
 
 	allChanges := []change{}
 	errors := []responseError{}
-	for i, name := range names {
-		// remove leading / from first name
-		if i == 0 {
-			name = name[1:]
-		}
+	for _, name := range names {
 		bpChanges := api.store.GetBlueprintChanges(name)
 		// Reverse the changes, newest first
 		reversed := make([]blueprint.Change, 0, len(bpChanges))
@@ -1269,6 +1312,10 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
+	if !verifyStringsWithRegex(writer, []string{blueprint.Name}, ValidBlueprintName) {
+		return
+	}
+
 	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
 	err = api.store.PushBlueprint(blueprint, commitMsg)
 	if err != nil {
@@ -1326,6 +1373,10 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		return
 	}
 
+	if !verifyStringsWithRegex(writer, []string{blueprint.Name}, ValidBlueprintName) {
+		return
+	}
+
 	err = api.store.PushBlueprintToWorkspace(blueprint)
 	if err != nil {
 		errors := responseError{
@@ -1345,7 +1396,15 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
 	commit := params.ByName("commit")
+	if !verifyStringsWithRegex(writer, []string{commit}, ValidBlueprintName) {
+		return
+	}
+
 	bpChange, err := api.store.GetBlueprintChange(name, commit)
 	if err != nil {
 		errors := responseError{
@@ -1375,7 +1434,12 @@ func (api *API) blueprintDeleteHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	if err := api.store.DeleteBlueprint(params.ByName("blueprint")); err != nil {
+	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
+	if err := api.store.DeleteBlueprint(name); err != nil {
 		errors := responseError{
 			ID:  "BlueprintsError",
 			Msg: err.Error(),
@@ -1391,7 +1455,12 @@ func (api *API) blueprintDeleteWorkspaceHandler(writer http.ResponseWriter, requ
 		return
 	}
 
-	if err := api.store.DeleteBlueprintFromWorkspace(params.ByName("blueprint")); err != nil {
+	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
+	if err := api.store.DeleteBlueprintFromWorkspace(name); err != nil {
 		errors := responseError{
 			ID:  "BlueprintsError",
 			Msg: err.Error(),
@@ -1408,7 +1477,12 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	err := api.store.TagBlueprint(params.ByName("blueprint"))
+	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
+	err := api.store.TagBlueprint(name)
 	if err != nil {
 		errors := responseError{
 			ID:  "BlueprintsError",
@@ -1469,6 +1543,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			Msg: fmt.Sprintf("Unknown compose type for architecture: %s", cr.ComposeType),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
 		return
 	}
 
@@ -1727,6 +1805,10 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	filterBlueprint := q.Get("blueprint")
+	if len(filterBlueprint) > 0 && !verifyStringsWithRegex(writer, []string{filterBlueprint}, ValidBlueprintName) {
+		return
+	}
+
 	filterStatus := q.Get("status")
 	filterImageType, filterImageTypeExists := common.ImageTypeFromCompatString(q.Get("type"))
 

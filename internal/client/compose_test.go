@@ -89,6 +89,36 @@ func TestComposeInvalidBlueprintV0(t *testing.T) {
 	require.Contains(t, resp.Errors[0].Msg, "test-invalid-bp-compose-v0")
 }
 
+// Test compose for empty blueprint fails
+func TestComposeEmptyBlueprintV0(t *testing.T) {
+	compose := `{
+		"blueprint_name": "",
+		"compose_type": "qcow2",
+		"branch": "master"
+	}`
+	resp, err := PostComposeV0(testState.socket, compose)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.False(t, resp.Status, "POST did not fail")
+	require.Equal(t, len(resp.Errors), 1)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// Test compose for blueprint with invalid characters fails
+func TestComposeInvalidCharsBlueprintV0(t *testing.T) {
+	compose := `{
+		"blueprint_name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
+		"compose_type": "qcow2",
+		"branch": "master"
+	}`
+	resp, err := PostComposeV0(testState.socket, compose)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.False(t, resp.Status, "POST did not fail")
+	require.Equal(t, len(resp.Errors), 1)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // Test compose cancel for unknown uuid fails
 // Is cancel implemented at all?
 
@@ -159,6 +189,24 @@ func TestComposeInvalidStatusV0(t *testing.T) {
 	status, resp, err := GetComposeStatusV0(testState.socket, "c91818f9-8025-47af-89d2-f030d7000c2c", "", "", "")
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
+	require.Equal(t, 0, len(status))
+}
+
+// Test status filter for unknown blueprint
+func TestComposeUnknownBlueprintStatusV0(t *testing.T) {
+	status, resp, err := GetComposeStatusV0(testState.socket, "*", "unknown-blueprint-test", "", "")
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.Equal(t, 0, len(status))
+}
+
+// Test status filter for blueprint with invalid characters
+func TestComposeInvalidBlueprintStatusV0(t *testing.T) {
+	status, resp, err := GetComposeStatusV0(testState.socket, "*", "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜", "", "")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
 	require.Equal(t, 0, len(status))
 }
 
