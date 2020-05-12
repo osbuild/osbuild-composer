@@ -3,12 +3,10 @@
 - block:
 
     - name: "Run {{ test.name }} test"
-      command: "{{ tests_path }}/{{ test.name }} -test.v"
+      command: "{{ tests_path }}/{{ test.name }} -test.v -test.timeout {{ test.timeout * 60 }}s"
       args:
         chdir: "{{ tests_working_directory }}"
-      register: async_test
-      async: "{{ test.timeout * 60 }}"
-      poll: "{{ polling_interval }}"
+      register: test_cmd
 
     - name: "Mark {{ test.name }} as passed"
       set_fact:
@@ -29,8 +27,8 @@
           Logs from {{ test.name }}
           ----------------------------------------------------------------------
           stderr:
-          {{ async_test.stderr }}
+          {{ test_cmd.stderr }}
           ----------------------------------------------------------------------
           stdout:
-          {{ async_test.stdout }}
+          {{ test_cmd.stdout }}
 
