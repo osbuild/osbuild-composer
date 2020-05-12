@@ -105,6 +105,90 @@ func FixtureBase() *Store {
 
 	return s
 }
+func FixtureFinished() *Store {
+	var bName = "test"
+	var b = blueprint.Blueprint{
+		Name:           bName,
+		Version:        "0.0.0",
+		Packages:       []blueprint.Package{},
+		Modules:        []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Customizations: nil,
+	}
+
+	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
+
+	var localTarget = &target.Target{
+		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
+		Name:      "org.osbuild.local",
+		ImageName: "localimage",
+		Created:   date,
+		Status:    common.IBWaiting,
+		Options:   &target.LocalTargetOptions{},
+	}
+
+	var awsTarget = &target.Target{
+		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
+		Name:      "org.osbuild.aws",
+		ImageName: "awsimage",
+		Created:   date,
+		Status:    common.IBWaiting,
+		Options: &target.AWSTargetOptions{
+			Region:          "frankfurt",
+			AccessKeyID:     "accesskey",
+			SecretAccessKey: "secretkey",
+			Bucket:          "clay",
+			Key:             "imagekey",
+		},
+	}
+
+	d := fedoratest.New()
+	arch, err := d.GetArch("x86_64")
+	if err != nil {
+		panic("invalid architecture x86_64 for fedoratest")
+	}
+	imgType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		panic("invalid image type qcow2 for x86_64 @ fedoratest")
+	}
+	s := New(nil, arch, nil)
+
+	s.blueprints[bName] = b
+	s.composes = map[uuid.UUID]Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): Compose{
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
+			},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): Compose{
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+			},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): Compose{
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFailed,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+			},
+		},
+	}
+
+	return s
+}
 
 func FixtureEmpty() *Store {
 	var bName = "test"
