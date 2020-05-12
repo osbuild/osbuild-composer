@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -47,7 +47,7 @@ func FixtureBase() *Store {
 		},
 	}
 
-	d := test_distro.New()
+	d := fedoratest.New()
 	arch, err := d.GetArch("x86_64")
 	if err != nil {
 		panic("invalid architecture x86_64 for fedoratest")
@@ -125,7 +125,7 @@ func FixtureEmpty() *Store {
 		Customizations: nil,
 	}
 
-	d := test_distro.New()
+	d := fedoratest.New()
 	arch, err := d.GetArch("x86_64")
 	if err != nil {
 		panic("invalid architecture x86_64 for fedoratest")
