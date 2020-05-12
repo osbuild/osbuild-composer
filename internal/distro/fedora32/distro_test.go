@@ -1,7 +1,6 @@
 package fedora32_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
@@ -136,7 +135,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 				t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)
 				continue
 			}
-			reflect.DeepEqual(itStruct.BuildPackages(), buildPackages[archLabel])
+			assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
 		}
 	}
 }
