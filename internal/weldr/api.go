@@ -1033,16 +1033,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			break
 		}
 		// Make a copy of the blueprint since we will be replacing the version globs
-		blueprint, err := bp.DeepCopy()
-		if err != nil {
-			rerr := responseError{
-				ID:  "BlueprintDeepCopyError",
-				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
-			}
-			errors = append(errors, rerr)
-			break
-		}
-
+		blueprint := bp.DeepCopy()
 		dependencies, _, err := api.depsolveBlueprint(&blueprint, nil)
 		if err != nil {
 			rerr := responseError{

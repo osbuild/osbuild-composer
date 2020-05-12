@@ -18,8 +18,7 @@ func TestDeepCopy(t *testing.T) {
 			{Name: "dep-package2", Version: "*"}},
 	}
 
-	bpCopy, err := bpOrig.DeepCopy()
-	require.NoError(t, err)
+	bpCopy := bpOrig.DeepCopy()
 	require.Equalf(t, bpOrig, bpCopy, "Blueprints.DeepCopy is different from original.")
 
 	// Modify the copy
