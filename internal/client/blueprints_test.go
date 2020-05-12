@@ -63,6 +63,42 @@ func TestPostEmptyTOMLBlueprintV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
+// POST a TOML blueprint with an empty name
+func TestPostEmptyNameTOMLBlueprintV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `
+		name=""
+		version="0.0.1"
+		[package]
+		name="bash"
+		version="*"
+		`
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// POST a TOML blueprint with an invalid name chars
+func TestPostInvalidNameTOMLBlueprintV0(t *testing.T) {
+	// Use a blueprint with invalid Name
+	bp := `
+		name="I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜"
+		version="0.0.1"
+		[package]
+		name="bash"
+		version="*"
+		`
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // POST a new JSON blueprint
 func TestPostJSONBlueprintV0(t *testing.T) {
 	bp := `{
@@ -98,6 +134,40 @@ func TestPostEmptyJSONBlueprintV0(t *testing.T) {
 	resp, err := PostJSONBlueprintV0(testState.socket, "")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
+}
+
+// POST a JSON blueprint with an empty name
+func TestPostEmptyNameJSONBlueprintV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `{
+		"name": "",
+		"version": "0.0.1",
+		"modules": [{"name": "util-linux", "version": "*"}]
+	}`
+
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// POST a JSON blueprint with invalid name chars
+func TestPostInvalidNameJSONBlueprintV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `{
+		"name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
+		"version": "0.0.1",
+		"modules": [{"name": "util-linux", "version": "*"}]
+	}`
+
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
 }
 
 // POST a blueprint to the workspace as TOML
@@ -145,6 +215,42 @@ func TestPostEmptyTOMLWorkspaceV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
+// POST a TOML blueprint with an empty name to the workspace
+func TestPostEmptyNameTOMLWorkspaceV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `
+		name=""
+		version="0.0.1"
+		[package]
+		name="bash"
+		version="*"
+		`
+	resp, err := PostTOMLWorkspaceV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// POST a TOML blueprint with an invalid name chars to the workspace
+func TestPostInvalidNameTOMLWorkspaceV0(t *testing.T) {
+	// Use a blueprint with invalid Name
+	bp := `
+		name="I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜"
+		version="0.0.1"
+		[package]
+		name="bash"
+		version="*"
+		`
+	resp, err := PostTOMLWorkspaceV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // POST a blueprint to the workspace as JSON
 func TestPostJSONWorkspaceV0(t *testing.T) {
 	bp := `{
@@ -182,6 +288,40 @@ func TestPostEmptyJSONWorkspaceV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
+// POST a JSON blueprint with an empty name to the workspace
+func TestPostEmptyNameJSONWorkspaceV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `{
+		"name": "",
+		"version": "0.0.1",
+		"modules": [{"name": "util-linux", "version": "*"}]
+	}`
+
+	resp, err := PostJSONWorkspaceV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// POST a JSON blueprint with invalid name chars to the workspace
+func TestPostInvalidNameJSONWorkspaceV0(t *testing.T) {
+	// Use a blueprint with an empty Name
+	bp := `{
+		"name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
+		"version": "0.0.1",
+		"modules": [{"name": "util-linux", "version": "*"}]
+	}`
+
+	resp, err := PostJSONWorkspaceV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // delete a blueprint
 func TestDeleteBlueprintV0(t *testing.T) {
 	// POST a blueprint to delete
@@ -209,6 +349,16 @@ func TestDeleteNonBlueprint0(t *testing.T) {
 	resp, err := DeleteBlueprintV0(testState.socket, "test-delete-non-blueprint-v0")
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
+}
+
+// delete a blueprint with invalid name characters
+func TestDeleteInvalidBlueprintV0(t *testing.T) {
+	resp, err := DeleteBlueprintV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
 }
 
 // delete a new blueprint from the workspace
@@ -291,6 +441,23 @@ func TestDeleteChangesWorkspaceV0(t *testing.T) {
 	require.Equal(t, "deleteBlueprintChangesWSV0", info.Blueprints[0].Description, "original blueprint not returned")
 }
 
+// delete a non-existent blueprint workspace
+func TestDeleteNonWorkspace0(t *testing.T) {
+	resp, err := DeleteWorkspaceV0(testState.socket, "test-delete-non-blueprint-ws-v0")
+	require.NoError(t, err, "failed with a client error")
+	require.False(t, resp.Status, "did not return an error")
+}
+
+// delete a blueprint with invalid name characters
+func TestDeleteInvalidWorkspaceV0(t *testing.T) {
+	resp, err := DeleteWorkspaceV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // list blueprints
 func TestListBlueprintsV0(t *testing.T) {
 	// Post a couple of blueprints
@@ -359,6 +526,16 @@ func TestGetNonTOMLBlueprintV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, api, "did not return an error")
 	require.False(t, api.Status, "wrong Status (true)")
+}
+
+// get blueprint with invalid name characters
+func TestGetInvalidTOMLBlueprintV0(t *testing.T) {
+	_, api, err := GetBlueprintInfoTOMLV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, api, "did not return an error")
+	require.False(t, api.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", api.Errors[0].ID)
+	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
 }
 
 // get blueprint contents as JSON
@@ -490,6 +667,16 @@ func TestBlueprintNonChangesV0(t *testing.T) {
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
 }
 
+// get changes with invalid name characters
+func TestInvalidBlueprintChangesV0(t *testing.T) {
+	_, api, err := GetBlueprintsChangesV0(testState.socket, []string{"I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜"})
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, api, "did not return an error")
+	require.False(t, api.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", api.Errors[0].ID)
+	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // Undo blueprint changes
 func TestUndoBlueprintV0(t *testing.T) {
 	bps := []string{`{
@@ -589,6 +776,26 @@ func TestUndoNonBlueprintV0(t *testing.T) {
 	require.False(t, resp.Status, "did not return an error")
 }
 
+// undo a blueprint with invalid name characters
+func TestUndoInvalidBlueprintV0(t *testing.T) {
+	resp, err := UndoBlueprintChangeV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜", "FFFF")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
+// undo a blueprint with invalid commit characters
+func TestUndoInvalidBlueprintCommitV0(t *testing.T) {
+	resp, err := UndoBlueprintChangeV0(testState.socket, "test-undo-non-blueprint-v0", "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // Tag a blueprint with a new revision
 // The blueprint revision tag cannot be reset, it always increments by one, and cannot be deleted.
 // So to test tagging we tag two blueprint changes and make sure the second is first +1
@@ -660,6 +867,16 @@ func TestNonBlueprintTagV0(t *testing.T) {
 	require.False(t, tagResp.Status, "did not return an error")
 }
 
+// tag a blueprint with invalid name characters
+func TestTagInvalidBlueprintV0(t *testing.T) {
+	resp, err := TagBlueprintV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp, "did not return an error")
+	require.False(t, resp.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
+}
+
 // depsolve a blueprint with packages and modules
 func TestBlueprintDepsolveV0(t *testing.T) {
 	bp := `{
@@ -693,6 +910,16 @@ func TestNonBlueprintDepsolveV0(t *testing.T) {
 	require.NoError(t, err, "Depsolve blueprint failed with a client error")
 	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
+}
+
+// depsolve a blueprint with invalid name characters
+func TestDepsolveInvalidBlueprintV0(t *testing.T) {
+	_, api, err := DepsolveBlueprintV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, api, "did not return an error")
+	require.False(t, api.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", api.Errors[0].ID)
+	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
 }
 
 // freeze a blueprint
@@ -756,6 +983,16 @@ func TestNonBlueprintFreezeV0(t *testing.T) {
 	require.NoError(t, err, "Freeze blueprint failed with a client error")
 	require.Nil(t, api, "FreezeBlueprint failed: %#v", api)
 	require.Greater(t, len(resp.Errors), 0, "failed with no error: %#v", resp)
+}
+
+// freeze a blueprint with invalid name characters
+func TestFreezeInvalidBlueprintV0(t *testing.T) {
+	_, api, err := FreezeBlueprintV0(testState.socket, "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, api, "did not return an error")
+	require.False(t, api.Status, "wrong Status (true)")
+	require.Equal(t, "InvalidChars", api.Errors[0].ID)
+	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
 }
 
 // TODO diff of blueprint changes
