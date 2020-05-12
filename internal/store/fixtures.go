@@ -62,51 +62,43 @@ func FixtureBase() *Store {
 	s.composes = map[uuid.UUID]Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []ImageBuild{
-				{
-					QueueStatus: common.IBWaiting,
-					ImageType:   imgType,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-				},
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBWaiting,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
 			},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []ImageBuild{
-				{
-					QueueStatus: common.IBRunning,
-					ImageType:   imgType,
-					Targets:     []*target.Target{localTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-				},
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBRunning,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget},
+				JobCreated:  date,
+				JobStarted:  date,
 			},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000002"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []ImageBuild{
-				{
-					QueueStatus: common.IBFinished,
-					ImageType:   imgType,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-					JobFinished: date,
-				},
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
 			},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): Compose{
 			Blueprint: &b,
-			ImageBuilds: []ImageBuild{
-				{
-					QueueStatus: common.IBFailed,
-					ImageType:   imgType,
-					Targets:     []*target.Target{localTarget, awsTarget},
-					JobCreated:  date,
-					JobStarted:  date,
-					JobFinished: date,
-				},
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFailed,
+				ImageType:   imgType,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
 			},
 		},
 	}

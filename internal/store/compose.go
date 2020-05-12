@@ -78,8 +78,8 @@ func (ib *ImageBuild) GetLocalTargetOptions() *target.LocalTargetOptions {
 // It contains all the information necessary to generate the inputs for the job, as
 // well as the job's state.
 type Compose struct {
-	Blueprint   *blueprint.Blueprint
-	ImageBuilds []ImageBuild
+	Blueprint  *blueprint.Blueprint
+	ImageBuild ImageBuild
 }
 
 // DeepCopy creates a copy of the Compose structure
@@ -89,12 +89,8 @@ func (c *Compose) DeepCopy() Compose {
 		bpCopy := *c.Blueprint
 		newBpPtr = &bpCopy
 	}
-	newImageBuilds := []ImageBuild{}
-	for _, ib := range c.ImageBuilds {
-		newImageBuilds = append(newImageBuilds, ib.DeepCopy())
-	}
 	return Compose{
-		Blueprint:   newBpPtr,
-		ImageBuilds: newImageBuilds,
+		Blueprint:  newBpPtr,
+		ImageBuild: c.ImageBuild.DeepCopy(),
 	}
 }

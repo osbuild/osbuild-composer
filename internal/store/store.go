@@ -342,27 +342,27 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) GetImageBuildResult(composeId uuid.UUID, imageBuildId int) (io.ReadCloser, error) {
+func (s *Store) GetImageBuildResult(composeId uuid.UUID) (io.ReadCloser, error) {
 	if s.stateDir == nil {
 		return ioutil.NopCloser(bytes.NewBuffer([]byte("{}"))), nil
 	}
 
-	return os.Open(s.getImageBuildDirectory(composeId, imageBuildId) + "/result.json")
+	return os.Open(s.getImageBuildDirectory(composeId) + "/result.json")
 }
 
-func (s *Store) GetImageBuildImage(composeId uuid.UUID, imageBuildId int) (io.ReadCloser, int64, error) {
+func (s *Store) GetImageBuildImage(composeId uuid.UUID) (io.ReadCloser, int64, error) {
 	c, ok := s.composes[composeId]
 
 	if !ok {
 		return nil, 0, &NotFoundError{"compose does not exist"}
 	}
 
-	localTargetOptions := c.ImageBuilds[imageBuildId].GetLocalTargetOptions()
+	localTargetOptions := c.ImageBuild.GetLocalTargetOptions()
 	if localTargetOptions == nil {
 		return nil, 0, &NoLocalTargetError{"compose does not have local target"}
 	}
 
-	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeId, imageBuildId), localTargetOptions.Filename)
+	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeId), localTargetOptions.Filename)
 
 	f, err := os.Open(path)
 
@@ -384,8 +384,9 @@ func (s *Store) getComposeDirectory(composeID uuid.UUID) string {
 	return fmt.Sprintf("%s/outputs/%s", *s.stateDir, composeID.String())
 }
 
-func (s *Store) getImageBuildDirectory(composeID uuid.UUID, imageBuildID int) string {
-	return fmt.Sprintf("%s/%d", s.getComposeDirectory(composeID), imageBuildID)
+func (s *Store) getImageBuildDirectory(composeID uuid.UUID) string {
+	// only one image build is supported per compose
+	return fmt.Sprintf("%s/0", s.getComposeDirectory(composeID))
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
@@ -398,7 +399,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 	}
 
 	if s.stateDir != nil {
-		outputDir := s.getImageBuildDirectory(composeID, 0)
+		outputDir := s.getImageBuildDirectory(composeID)
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
@@ -410,15 +411,13 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 	_ = s.change(func() error {
 		s.composes[composeID] = Compose{
 			Blueprint: bp,
-			ImageBuilds: []ImageBuild{
-				{
-					Manifest:   manifest,
-					ImageType:  imageType,
-					Targets:    targets,
-					JobCreated: time.Now(),
-					Size:       size,
-					JobID:      jobId,
-				},
+			ImageBuild: ImageBuild{
+				Manifest:   manifest,
+				ImageType:  imageType,
+				Targets:    targets,
+				JobCreated: time.Now(),
+				Size:       size,
+				JobID:      jobId,
 			},
 		}
 		return nil
@@ -435,14 +434,14 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 	}
 
 	if s.stateDir != nil {
-		outputDir := s.getImageBuildDirectory(composeID, 0)
+		outputDir := s.getImageBuildDirectory(composeID)
 
 		err := os.MkdirAll(outputDir, 0755)
 		if err != nil {
 			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
 		}
 
-		f, err := os.Create(s.getImageBuildDirectory(composeID, 0) + "/result.json")
+		f, err := os.Create(s.getImageBuildDirectory(composeID) + "/result.json")
 		if err != nil {
 			return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
 		}
@@ -463,17 +462,14 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest,
 	_ = s.change(func() error {
 		s.composes[composeID] = Compose{
 			Blueprint: bp,
-			ImageBuilds: []ImageBuild{
-				{
-					QueueStatus: status,
-					Manifest:    manifest,
-					ImageType:   imageType,
-					Targets:     targets,
-					JobCreated:  time.Now(),
-					JobStarted:  time.Now(),
-					JobFinished: time.Now(),
-					Size:        size,
-				},
+			ImageBuild: ImageBuild{
+				QueueStatus: status,
+				Manifest:    manifest,
+				ImageType:   imageType,
+				Targets:     targets,
+				JobCreated:  time.Now(),
+				JobStarted:  time.Now(),
+				Size:        size,
 			},
 		}
 		return nil
@@ -505,17 +501,21 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 }
 
 func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, reader io.Reader) error {
+	if imageBuildID != 0 {
+		return &NotFoundError{"image build does not exist"}
+	}
+
 	currentCompose, exists := s.composes[composeID]
 	if !exists {
 		return &NotFoundError{"compose does not exist"}
 	}
 
-	localTargetOptions := currentCompose.ImageBuilds[imageBuildID].GetLocalTargetOptions()
+	localTargetOptions := currentCompose.ImageBuild.GetLocalTargetOptions()
 	if localTargetOptions == nil {
-		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s and image build %d but it has no local target", composeID.String(), imageBuildID)}
+		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s, but it has no local target", composeID.String())}
 	}
 
-	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeID, imageBuildID), localTargetOptions.Filename)
+	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeID), localTargetOptions.Filename)
 	f, err := os.Create(path)
 
 	if err != nil {

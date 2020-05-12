@@ -446,17 +446,15 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuilds: []store.ImageBuild{
-			{
-				QueueStatus: common.IBWaiting,
-				ImageType:   imgType,
-				Targets: []*target.Target{
-					{
-						// skip Uuid and Created fields - they are ignored
-						Name: "org.osbuild.local",
-						Options: &target.LocalTargetOptions{
-							Filename: "test.img",
-						},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType,
+			Targets: []*target.Target{
+				{
+					// skip Uuid and Created fields - they are ignored
+					Name: "org.osbuild.local",
+					Options: &target.LocalTargetOptions{
+						Filename: "test.img",
 					},
 				},
 			},
@@ -471,30 +469,28 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuilds: []store.ImageBuild{
-			{
-				QueueStatus: common.IBWaiting,
-				ImageType:   imgType,
-				Targets: []*target.Target{
-					{
-						Name:      "org.osbuild.aws",
-						Status:    common.IBWaiting,
-						ImageName: "test_upload",
-						Options: &target.AWSTargetOptions{
-							Filename:        "test.img",
-							Region:          "frankfurt",
-							AccessKeyID:     "accesskey",
-							SecretAccessKey: "secretkey",
-							Bucket:          "clay",
-							Key:             "imagekey",
-						},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType,
+			Targets: []*target.Target{
+				{
+					Name:      "org.osbuild.aws",
+					Status:    common.IBWaiting,
+					ImageName: "test_upload",
+					Options: &target.AWSTargetOptions{
+						Filename:        "test.img",
+						Region:          "frankfurt",
+						AccessKeyID:     "accesskey",
+						SecretAccessKey: "secretkey",
+						Bucket:          "clay",
+						Key:             "imagekey",
 					},
-					{
-						// skip Uuid and Created fields - they are ignored
-						Name: "org.osbuild.local",
-						Options: &target.LocalTargetOptions{
-							Filename: "test.img",
-						},
+				},
+				{
+					// skip Uuid and Created fields - they are ignored
+					Name: "org.osbuild.local",
+					Options: &target.LocalTargetOptions{
+						Filename: "test.img",
 					},
 				},
 			},
@@ -535,9 +531,9 @@ func TestCompose(t *testing.T) {
 			break
 		}
 
-		require.NotNilf(t, composeStruct.ImageBuilds[0].Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
+		require.NotNilf(t, composeStruct.ImageBuild.Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
 		// TODO: find some (reasonable) way to verify the contents of the pipeline
-		composeStruct.ImageBuilds[0].Manifest = nil
+		composeStruct.ImageBuild.Manifest = nil
 
 		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location"), test.CompareImageTypes()); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)

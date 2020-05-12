@@ -146,17 +146,13 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // queued, started, and finished. Assumes that there's only one image in the
 // compose. Returns CWaiting on error.
 func (api *API) getComposeState(compose store.Compose) (state common.ComposeState, queued, started, finished time.Time) {
-	if len(compose.ImageBuilds) == 0 {
-		return
-	}
-
-	jobId := compose.ImageBuilds[0].JobID
+	jobId := compose.ImageBuild.JobID
 
 	// backwards compatibility: composes that were around before splitting
 	// the job queue from the store still contain their valid status and
 	// times. Return those here as a fallback.
 	if jobId == uuid.Nil {
-		switch compose.ImageBuilds[0].QueueStatus {
+		switch compose.ImageBuild.QueueStatus {
 		case common.IBWaiting:
 			state = common.CWaiting
 		case common.IBRunning:
@@ -166,9 +162,9 @@ func (api *API) getComposeState(compose store.Compose) (state common.ComposeStat
 		case common.IBFailed:
 			state = common.CFailed
 		}
-		queued = compose.ImageBuilds[0].JobCreated
-		started = compose.ImageBuilds[0].JobStarted
-		finished = compose.ImageBuilds[0].JobFinished
+		queued = compose.ImageBuild.JobCreated
+		started = compose.ImageBuild.JobStarted
+		finished = compose.ImageBuild.JobFinished
 		return
 	}
 
@@ -1813,7 +1809,7 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 			continue
 		} else if filterStatus != "" && state.ToString() != filterStatus {
 			continue
-		} else if filterImageType != "" && compose.ImageBuilds[0].ImageType.Name() != filterImageType {
+		} else if filterImageType != "" && compose.ImageBuild.ImageType.Name() != filterImageType {
 			continue
 		}
 		filteredUUIDs = append(filteredUUIDs, id)
@@ -1884,12 +1880,12 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	// Weldr API assumes only one image build per compose, that's why only the
 	// 1st build is considered
 	state, _, _, _ := api.getComposeState(compose)
-	reply.ComposeType = compose.ImageBuilds[0].ImageType.Name()
+	reply.ComposeType = compose.ImageBuild.ImageType.Name()
 	reply.QueueStatus = state.ToString()
-	reply.ImageSize = compose.ImageBuilds[0].Size
+	reply.ImageSize = compose.ImageBuild.Size
 
 	if isRequestVersionAtLeast(params, 1) {
-		reply.Uploads = targetsToUploadResponses(compose.ImageBuilds[0].Targets)
+		reply.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets)
 	}
 
 	err = json.NewEncoder(writer).Encode(reply)
@@ -1932,10 +1928,10 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	imageName := compose.ImageBuilds[0].ImageType.Filename()
-	imageMime := compose.ImageBuilds[0].ImageType.MIMEType()
+	imageName := compose.ImageBuild.ImageType.Filename()
+	imageMime := compose.ImageBuild.ImageType.MIMEType()
 
-	reader, fileSize, err := api.store.GetImageBuildImage(uuid, 0)
+	reader, fileSize, err := api.store.GetImageBuildImage(uuid)
 
 	// TODO: this might return misleading error
 	if err != nil {
@@ -1991,7 +1987,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	resultReader, err := api.store.GetImageBuildResult(id, 0)
+	resultReader, err := api.store.GetImageBuildResult(id)
 
 	if err != nil {
 		errors := responseError{
@@ -2084,7 +2080,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	resultReader, err := api.store.GetImageBuildResult(id, 0)
+	resultReader, err := api.store.GetImageBuildResult(id)
 
 	if err != nil {
 		errors := responseError{
