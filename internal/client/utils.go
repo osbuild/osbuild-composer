@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"time"
 )
 
 type TestState struct {
@@ -32,12 +31,10 @@ func isStringInSlice(slice []string, s string) bool {
 	return false
 }
 
-func setUpTestState(socketPath string, timeout time.Duration, unitTest bool) (*TestState, error) {
+func setUpTestState(socketPath string, unitTest bool) (*TestState, error) {
 	state := TestState{unitTest: unitTest}
 
 	state.socket = &http.Client{
-		// TODO This may be too short/simple for downloading images
-		Timeout: timeout,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial("unix", socketPath)

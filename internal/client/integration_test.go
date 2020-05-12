@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
@@ -21,7 +20,7 @@ var testState *TestState
 // Also makes sure there is a running server to test against
 func executeTests(m *testing.M) int {
 	var err error
-	testState, err = setUpTestState("/run/weldr/api.socket", 60*time.Second, false)
+	testState, err = setUpTestState("/run/weldr/api.socket", false)
 	if err != nil {
 		fmt.Printf("ERROR: Test setup failed: %s\n", err)
 		panic(err)
