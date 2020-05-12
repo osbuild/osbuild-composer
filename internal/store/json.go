@@ -114,6 +114,15 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 		// on upgrades.
 		return ImageBuild{}, errors.New("invalid Image Type string")
 	}
+	// Backwards compatibility: fail all builds that are queued or
+	// running. Jobs status is now handled outside of the store
+	// (and the compose). The fields are kept so that previously
+	// succeeded builds still show up correctly.
+	queueStatus := imageBuildStruct.QueueStatus
+	switch queueStatus {
+	case common.IBRunning, common.IBWaiting:
+		queueStatus = common.IBFailed
+	}
 	return ImageBuild{
 		ID:          imageBuildStruct.ID,
 		ImageType:   imgType,
@@ -124,7 +133,7 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 		JobFinished: imageBuildStruct.JobFinished,
 		Size:        imageBuildStruct.Size,
 		JobID:       imageBuildStruct.JobID,
-		QueueStatus: imageBuildStruct.QueueStatus,
+		QueueStatus: queueStatus,
 	}, nil
 }
 
@@ -188,19 +197,6 @@ func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
 		sources:           newSourceConfigsFromV0(storeStruct.Sources),
 		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
 		blueprintsCommits: newCommitsFromV0(storeStruct.Commits),
-	}
-
-	// Backwards compatibility: fail all builds that are queued or
-	// running. Jobs status is now handled outside of the store
-	// (and the compose). The fields are kept so that previously
-	// succeeded builds still show up correctly.
-	for composeID, compose := range store.composes {
-		switch compose.ImageBuild.QueueStatus {
-		case common.IBRunning, common.IBWaiting:
-			compose.ImageBuild.QueueStatus = common.IBFailed
-			store.composes[composeID] = compose
-
-		}
 	}
 
 	// Populate BlueprintsCommits for existing blueprints without commit history
