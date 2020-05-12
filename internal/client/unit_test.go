@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
@@ -58,7 +57,7 @@ func executeTests(m *testing.M) int {
 		}
 	}()
 
-	testState, err = setUpTestState(socketPath, 60*time.Second, true)
+	testState, err = setUpTestState(socketPath, true)
 	if err != nil {
 		log.Fatalf("ERROR: Test setup failed: %s\n", err)
 	}
