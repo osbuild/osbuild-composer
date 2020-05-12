@@ -24,7 +24,7 @@
     # upset and nobody likes it when that happens.
     - name: "Run image tests"
       command: |
-        {{ image_test_executable }} -test.v \
+        {{ image_test_executable }} -test.v -test.timeout {{image_test_timeout * 60}}s \
           {% for test_case in osbuild_composer_image_test_cases %}
             {% if loop.last %}
           {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }}
@@ -34,9 +34,7 @@
           {% endfor %}
       args:
         chdir: "{{ tests_working_directory }}"
-      register: async_test
-      async: "{{ image_test_timeout * 60 }}"
-      poll: "{{ polling_interval }}"
+      register: test_cmd
 
     - name: "Mark image tests as passed"
       set_fact:
@@ -57,8 +55,8 @@
           Logs from image test
           ----------------------------------------------------------------------
           stderr:
-          {{ async_test.stderr }}
+          {{ test_cmd.stderr }}
           ----------------------------------------------------------------------
           stdout:
-          {{ async_test.stdout }}
+          {{ test_cmd.stdout }}
 
