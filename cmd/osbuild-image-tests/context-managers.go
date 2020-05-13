@@ -114,53 +114,49 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 		}
 
 		var qemuCmd *exec.Cmd
-		// This command does not use KVM as I was unable to make it work in Beaker,
-		// once we have machines that can use KVM, enable it to make it faster
-		qemuAarch64Cmd := ns.NamespacedCommand(
-			"qemu-system-aarch64",
-			"-cpu", "host",
-			"-M", "virt",
-			"-m", "2048",
-			// As opposed to x86_64, aarch64 uses UEFI, this one comes from edk2-aarch64 package on Fedora
-			"-bios", "/usr/share/edk2/aarch64/QEMU_EFI.fd",
-			"-boot", "efi",
-			"-M", "accel=kvm",
-			"-snapshot",
-			"-cdrom", cloudInitFile.Name(),
-			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
-			"-nographic",
-			image,
-		)
-
-		hostDistroName, err := distro.GetHostDistroName()
-		if err != nil {
-			return fmt.Errorf("cannot determing the current distro: %v", err)
-		}
-
-		var qemuPath string
-		if strings.HasPrefix(hostDistroName, "rhel") {
-			qemuPath = "/usr/libexec/qemu-kvm"
-		} else {
-			qemuPath = "qemu-system-x86_64"
-		}
-
-		qemuX8664Cmd := ns.NamespacedCommand(
-			qemuPath,
-			"-cpu", "host",
-			"-smp", strconv.Itoa(runtime.NumCPU()),
-			"-m", "1024",
-			"-snapshot",
-			"-M", "accel=kvm",
-			"-cdrom", cloudInitFile.Name(),
-			"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
-			"-nographic",
-			image,
-		)
-
 		if common.CurrentArch() == "x86_64" {
-			qemuCmd = qemuX8664Cmd
+			hostDistroName, err := distro.GetHostDistroName()
+			if err != nil {
+				return fmt.Errorf("cannot determing the current distro: %v", err)
+			}
+
+			var qemuPath string
+			if strings.HasPrefix(hostDistroName, "rhel") {
+				qemuPath = "/usr/libexec/qemu-kvm"
+			} else {
+				qemuPath = "qemu-system-x86_64"
+			}
+
+			qemuCmd = ns.NamespacedCommand(
+				qemuPath,
+				"-cpu", "host",
+				"-smp", strconv.Itoa(runtime.NumCPU()),
+				"-m", "1024",
+				"-snapshot",
+				"-M", "accel=kvm",
+				"-cdrom", cloudInitFile.Name(),
+				"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
+				"-nographic",
+				image,
+			)
 		} else if common.CurrentArch() == "aarch64" {
-			qemuCmd = qemuAarch64Cmd
+			// This command does not use KVM as I was unable to make it work in Beaker,
+			// once we have machines that can use KVM, enable it to make it faster
+			qemuCmd = ns.NamespacedCommand(
+				"qemu-system-aarch64",
+				"-cpu", "host",
+				"-M", "virt",
+				"-m", "2048",
+				// As opposed to x86_64, aarch64 uses UEFI, this one comes from edk2-aarch64 package on Fedora
+				"-bios", "/usr/share/edk2/aarch64/QEMU_EFI.fd",
+				"-boot", "efi",
+				"-M", "accel=kvm",
+				"-snapshot",
+				"-cdrom", cloudInitFile.Name(),
+				"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
+				"-nographic",
+				image,
+			)
 		} else {
 			panic("Running on unknown architecture.")
 		}
