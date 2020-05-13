@@ -33,6 +33,12 @@ def dnfrepo(desc, parent_conf=None):
 
     if desc.get("ignoressl", False):
         repo.sslverify = False
+    if "sslcacert" in desc:
+        repo.sslcacert = desc["sslcacert"]
+    if "sslclientkey" in desc:
+        repo.sslclientkey = desc["sslclientkey"]
+    if "sslclientcert" in desc:
+        repo.sslclientcert = desc["sslclientcert"]
 
     # In dnf, the default metadata expiration time is 48 hours. However,
     # some repositories never expire the metadata, and others expire it much
