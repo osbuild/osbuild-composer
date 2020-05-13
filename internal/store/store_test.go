@@ -55,7 +55,7 @@ func (suite *storeTest) SetupTest() {
 	arch, err := distro.GetArch("test_arch")
 	suite.NoError(err)
 	suite.dir = tmpDir
-	suite.myStore = New(&suite.dir, arch)
+	suite.myStore = New(&suite.dir, arch, nil)
 }
 
 //teardown after each test

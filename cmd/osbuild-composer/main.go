@@ -117,7 +117,7 @@ func main() {
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	store := store.New(&stateDir, arch)
+	store := store.New(&stateDir, arch, logger)
 
 	queueDir := path.Join(stateDir, "jobs")
 	err = os.Mkdir(queueDir, 0700)
