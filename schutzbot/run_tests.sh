@@ -5,13 +5,6 @@ set -euxo pipefail
 sudo mkdir -vp /opt/ansible_{local,remote}
 sudo chmod -R 777 /opt/ansible_{local,remote}
 
-# Remove Fedora modular repositories to speed up dnf-json.
-sudo rm -rfv /etc/yum.repos.d/fedora*modular*
-
-# Ensure /tmp is mounted on tmpfs.
-sudo systemctl enable tmp.mount || \
-  sudo systemctl unmask tmp.mount && sudo systemctl start tmp.mount
-
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
@@ -25,23 +18,21 @@ preserve_journal() {
 }
 trap "preserve_journal" ERR
 
-# Ensure Ansible is installed.
-if ! rpm -q ansible; then
-  sudo dnf -y install ansible
-fi
-
 # Write a simple hosts file for Ansible.
 echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 
 # Set Ansible's config file location.
 export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 
-# Deploy the software.
+# Get the SHA of osbuild-composer which Jenkins checked out for us.
+OSBUILD_COMPOSER_VERSION=$(git rev-parse HEAD)
+
+# Deploy osbuild-composer and osbuild using RPMs built in a mock chroot.
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
-  -e osbuild_composer_repo=${WORKSPACE} \
-  -e osbuild_composer_version=$(git rev-parse HEAD) \
+  -e osbuild_composer_version=${OSBUILD_COMPOSER_VERSION} \
+  -e install_source=mock \
   ansible-osbuild/playbook.yml
 
 # Run the tests.
@@ -50,7 +41,7 @@ ansible-playbook \
   -e journald_cursor="${JOURNALD_CURSOR}" \
   -e test_type=${TEST_TYPE:-base} \
   -i hosts.ini \
-  jenkins/test.yml
+  schutzbot/test.yml
 
 # Collect the systemd journal anyway if we made it all the way to the end.
 sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
