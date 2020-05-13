@@ -32,7 +32,6 @@
 
         - Liberec, 2020-04-29
 
-
 ## CHANGES WITH 10:
 
         * The correct metadata_expire value is now passed to dnf. In the
