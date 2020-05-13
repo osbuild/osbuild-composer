@@ -73,7 +73,7 @@ func (e *NoLocalTargetError) Error() string {
 	return e.message
 }
 
-func New(stateDir *string, arch distro.Arch) *Store {
+func New(stateDir *string, arch distro.Arch, log *log.Logger) *Store {
 	var storeStruct storeV0
 	var db *jsondb.JSONDatabase
 
@@ -90,7 +90,7 @@ func New(stateDir *string, arch distro.Arch) *Store {
 		}
 	}
 
-	store := newStoreFromV0(storeStruct, arch)
+	store := newStoreFromV0(storeStruct, arch, log)
 
 	store.stateDir = stateDir
 	store.db = db

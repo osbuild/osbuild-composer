@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"log"
 	"sort"
 	"time"
 
@@ -92,13 +93,15 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0, arch distro.Arch) map[uuid.UUID]Compose {
+func newComposesFromV0(composesStruct composesV0, arch distro.Arch, log *log.Logger) map[uuid.UUID]Compose {
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
 		c, err := newComposeFromV0(composeStruct, arch)
 		if err != nil {
-			// Ignore invalid composes.
+			if log != nil {
+				log.Printf("ignoring compose: %v", err)
+			}
 			continue
 		}
 		composes[composeID] = c
@@ -223,11 +226,11 @@ func newCommitsFromV0(commitsMapStruct commitsV0, changesMapStruct changesV0) ma
 	return commitsMap
 }
 
-func newStoreFromV0(storeStruct storeV0, arch distro.Arch) *Store {
+func newStoreFromV0(storeStruct storeV0, arch distro.Arch, log *log.Logger) *Store {
 	return &Store{
 		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
 		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
-		composes:          newComposesFromV0(storeStruct.Composes, arch),
+		composes:          newComposesFromV0(storeStruct.Composes, arch, log),
 		sources:           newSourceConfigsFromV0(storeStruct.Sources),
 		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
 		blueprintsCommits: newCommitsFromV0(storeStruct.Commits, storeStruct.Changes),

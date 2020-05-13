@@ -56,7 +56,7 @@ func FixtureBase() *Store {
 	if err != nil {
 		panic("invalid image type qcow2 for x86_64 @ fedoratest")
 	}
-	s := New(nil, arch)
+	s := New(nil, arch, nil)
 
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
@@ -206,7 +206,7 @@ func FixtureEmpty() *Store {
 	if err != nil {
 		panic("invalid architecture x86_64 for fedoratest")
 	}
-	s := New(nil, arch)
+	s := New(nil, arch, nil)
 
 	s.blueprints[bName] = b
 

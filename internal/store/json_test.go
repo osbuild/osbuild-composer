@@ -171,12 +171,12 @@ func Test_newStoreFromV0(t *testing.T) {
 				storeStruct: storeV0{},
 				arch:        &test_distro.TestArch{},
 			},
-			want: New(nil, &test_distro.TestArch{}),
+			want: New(nil, &test_distro.TestArch{}, nil),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newStoreFromV0(tt.args.storeStruct, tt.args.arch); !reflect.DeepEqual(got, tt.want) {
+			if got := newStoreFromV0(tt.args.storeStruct, tt.args.arch, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newStoreFromV0() = %v, want %v", got, tt.want)
 			}
 		})
