@@ -25,4 +25,4 @@ script:
   - sudo sh -c 'mkdir /etc/rpm; echo "%_dbpath /var/lib/rpm" > /etc/rpm/macros'
   - export GO111MODULE=on
   - go test -c -tags 'travis integration' -o osbuild-image-tests ./cmd/osbuild-image-tests
-  - sudo ./osbuild-image-tests -test.v test/cases/${TRAVIS_JOB_NAME}*-x86_64-ami-boot.json test/cases/${TRAVIS_JOB_NAME}*-x86_64-vhd-boot.json
+  - travis_wait 30 sudo ./osbuild-image-tests -test.v test/cases/${TRAVIS_JOB_NAME}*-x86_64-ami-boot.json test/cases/${TRAVIS_JOB_NAME}*-x86_64-vhd-boot.json
