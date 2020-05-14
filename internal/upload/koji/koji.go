@@ -248,7 +248,11 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 		Size    int    `xmlrpc:"size"`
 		Adler32 string `xmlrpc:"hexdigest"`
 	}
-	xmlrpc.Response.Unmarshal(body, &reply)
+
+	err = xmlrpc.Response.Unmarshal(body, &reply)
+	if err != nil {
+		return fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
+	}
 
 	if reply.Size != len(chunk) {
 		return fmt.Errorf("Sent a chunk of %d bytes, but server got %d bytes", len(chunk), reply.Size)
