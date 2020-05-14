@@ -101,7 +101,7 @@ func testCompose(t *testing.T, outputType string) {
 	uuid := startCompose(t, "empty", outputType)
 	defer deleteCompose(t, uuid)
 	status := waitForCompose(t, uuid)
-	require.Equalf(t, status, "FINISHED", "Unexpected compose result: %s", status)
+	require.Equalf(t, "FINISHED", status, "Unexpected compose result: %s", status)
 
 	runComposerCLI(t, false, "compose", "image", uuid.String())
 }
@@ -132,7 +132,7 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Zerof(t, len(reply.Errors), "Unexpected errors")
-	require.Equalf(t, len(reply.IDs), 1, "Unexpected number of UUIDs returned: %d", len(reply.IDs))
+	require.Equalf(t, 1, len(reply.IDs), "Unexpected number of UUIDs returned: %d", len(reply.IDs))
 	require.Truef(t, reply.IDs[0].Status, "Unexpected status %v", reply.IDs[0].Status)
 }
 
