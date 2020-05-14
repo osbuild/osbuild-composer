@@ -23,8 +23,8 @@
 
   * As always, the team worked hard on improving the tests and the CI.
 
-Contributions from: David Rheinsberg, Jiri Kortus, Lars Karlitski,
-                    Major Hayden, Ondřej Budai
+Contributions from: Brian C. Lane, David Rheinsberg, Jiri Kortus, Lars
+                    Karlitski, Major Hayden, Ondřej Budai
 
 — Liberec, 2020-05-13
 
