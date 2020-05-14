@@ -6,12 +6,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 
 	"github.com/stretchr/testify/require"
@@ -101,7 +104,13 @@ func testCompose(t *testing.T, outputType string) {
 	uuid := startCompose(t, "empty", outputType)
 	defer deleteCompose(t, uuid)
 	status := waitForCompose(t, uuid)
-	require.Equalf(t, "FINISHED", status, "Unexpected compose result: %s", status)
+	logs := getLogs(t, uuid)
+	assert.NotEmpty(t, logs, "logs are empty after the build is finished/failed")
+
+	if !assert.Equalf(t, "FINISHED", status, "Unexpected compose result: %s", status) {
+		log.Print("logs from the build: ", logs)
+		t.FailNow()
+	}
 
 	runComposerCLI(t, false, "compose", "image", uuid.String())
 }
@@ -155,6 +164,25 @@ func getComposeStatus(t *testing.T, quiet bool, uuid uuid.UUID) string {
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 
 	return reply.QueueStatus
+}
+
+func getLogs(t *testing.T, uuid uuid.UUID) string {
+	cmd := exec.Command("composer-cli", "compose", "log", uuid.String())
+	cmd.Stderr = os.Stderr
+	stdoutReader, err := cmd.StdoutPipe()
+	require.NoError(t, err)
+
+	err = cmd.Start()
+	require.NoError(t, err)
+
+	var buffer bytes.Buffer
+	_, err = buffer.ReadFrom(stdoutReader)
+	require.NoError(t, err)
+
+	err = cmd.Wait()
+	require.NoError(t, err)
+
+	return buffer.String()
 }
 
 func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
