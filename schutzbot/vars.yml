@@ -31,6 +31,9 @@ image_test_timeout: 45
 # Location of image test case files.
 image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
+# Location of internal mirror for downloading Fedora RPMs.
+image_test_internal_fedora_mirror: http://download.eng.rdu.redhat.com/fedora/
+
 # List of image tests and their timeouts (in minutes).
 osbuild_composer_image_test_cases:
   - ext4_filesystem-boot.json
