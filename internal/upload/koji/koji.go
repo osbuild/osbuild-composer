@@ -238,6 +238,12 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	if err != nil {
 		return err
 	}
+
+	err = xmlrpc.Response.Err(body)
+	if err != nil {
+		return err
+	}
+
 	var reply struct {
 		Size    int    `xmlrpc:"size"`
 		Adler32 string `xmlrpc:"hexdigest"`
