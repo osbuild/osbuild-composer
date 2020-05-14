@@ -78,7 +78,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 
 
-%if %{with tests}
+%if %{with tests} || 0%{?rhel}
 
 # Build test binaries with `go test -c`, so that they can take advantage of
 # golang's testing package. The golang rpm macros don't support building them
@@ -118,7 +118,7 @@ install -m 0644 -vp distribution/osbuild-composer.conf      %{buildroot}%{_sysus
 
 install -m 0755 -vd                                         %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
-%if %{with tests}
+%if %{with tests} || 0%{?rhel}
 
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
@@ -226,7 +226,7 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
-%if %{with tests}
+%if %{with tests} || 0%{?rhel}
 
 %package tests
 Summary:    Integration tests
