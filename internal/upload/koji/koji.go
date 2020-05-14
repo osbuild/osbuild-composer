@@ -245,8 +245,8 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	}
 
 	var reply struct {
-		Size    int    `xmlrpc:"size"`
-		Adler32 string `xmlrpc:"hexdigest"`
+		Size      int    `xmlrpc:"size"`
+		HexDigest string `xmlrpc:"hexdigest"`
 	}
 
 	err = xmlrpc.Response.Unmarshal(body, &reply)
@@ -259,8 +259,8 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	}
 
 	digest := fmt.Sprintf("%08x", adler32.Checksum(chunk))
-	if reply.Adler32 != digest {
-		return fmt.Errorf("Sent a chunk with Adler32 digest %s, but server computed digest %s", digest, reply.Adler32)
+	if reply.HexDigest != digest {
+		return fmt.Errorf("Sent a chunk with Adler32 digest %s, but server computed digest %s", digest, reply.HexDigest)
 	}
 
 	return nil
