@@ -57,6 +57,30 @@ pipeline {
                         }
                     }
                 }
+                stage('RHEL 8.2 base') {
+                    agent { label "rhel82" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel82-base')
+                        }
+                    }
+                }
+                stage('RHEL 8.2 image') {
+                    agent { label "rhel82" }
+                    environment { TEST_TYPE = "image" }
+                    steps {
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel82-image')
+                        }
+                    }
+                }
             }
         }
     }
