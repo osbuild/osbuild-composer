@@ -147,6 +147,7 @@ type composeStatus struct {
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
+	Result   *common.ComposeResult
 }
 
 // Returns the state of the image in `compose` and the times the job was
@@ -175,6 +176,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 			Queued:   compose.ImageBuild.JobCreated,
 			Started:  compose.ImageBuild.JobStarted,
 			Finished: compose.ImageBuild.JobFinished,
+			Result:   &common.ComposeResult{},
 		}
 	}
 
@@ -185,6 +187,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 		Queued:   jobStatus.Queued,
 		Started:  jobStatus.Started,
 		Finished: jobStatus.Finished,
+		Result:   jobStatus.Result.OSBuildOutput,
 	}
 }
 
