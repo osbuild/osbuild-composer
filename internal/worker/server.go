@@ -32,6 +32,7 @@ type JobStatus struct {
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
+	Result   OSBuildJobResult
 }
 
 type WriteImageFunc func(composeID uuid.UUID, imageBuildID int, reader io.Reader) error
@@ -111,6 +112,7 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 		Queued:   queued,
 		Started:  started,
 		Finished: finished,
+		Result:   result,
 	}, nil
 }
 
