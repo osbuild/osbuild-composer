@@ -103,7 +103,7 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 	if canceled {
 		state = common.CFailed
 	} else if !finished.IsZero() {
-		if result.OSBuildOutput.Success {
+		if result.OSBuildOutput != nil && result.OSBuildOutput.Success {
 			state = common.CFinished
 		} else {
 			state = common.CFailed
