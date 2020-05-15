@@ -3,15 +3,12 @@
 package store
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"sort"
@@ -342,14 +339,6 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) GetImageBuildResult(composeId uuid.UUID) (io.ReadCloser, error) {
-	if s.stateDir == nil {
-		return ioutil.NopCloser(bytes.NewBuffer([]byte("{}"))), nil
-	}
-
-	return os.Open(s.getImageBuildDirectory(composeId) + "/result.json")
-}
-
 func (s *Store) GetImageBuildImage(composeId uuid.UUID) (io.ReadCloser, int64, error) {
 	c, ok := s.composes[composeId]
 
@@ -431,24 +420,6 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 func (s *Store) PushTestCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
 	if targets == nil {
 		targets = []*target.Target{}
-	}
-
-	if s.stateDir != nil {
-		outputDir := s.getImageBuildDirectory(composeID)
-
-		err := os.MkdirAll(outputDir, 0755)
-		if err != nil {
-			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
-		}
-
-		f, err := os.Create(s.getImageBuildDirectory(composeID) + "/result.json")
-		if err != nil {
-			return fmt.Errorf("cannot open result.json for job %v: %#v", composeID, err)
-		}
-		err = json.NewEncoder(f).Encode(common.ComposeResult{Success: testSuccess})
-		if err != nil {
-			return fmt.Errorf("cannot write to result.json for job %v: %#v", composeID, err)
-		}
 	}
 
 	var status common.ImageBuildState
