@@ -136,3 +136,54 @@ jobs:
 
       - name: "🔎 Test RPM installation"
         run: dnf -y install $(ls rpms/*.x86_64.rpm)
+
+  koji:
+    name: "麹 Koji test"
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: docker.io/library/postgres:12-alpine
+        env:
+          POSTGRES_USER:     koji
+          POSTGRES_PASSWORD: kojipass
+          POSTGRES_DB:       koji
+      koji:
+        image: quay.io/osbuild/ghci-koji:v1
+        env:
+          POSTGRES_USER:     koji
+          POSTGRES_PASSWORD: kojipass
+          POSTGRES_DB:       koji
+          POSTGRES_HOST:     postgres
+        ports:
+          - 8080:80
+    steps:
+      - name: Set up Go 1.12
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.12
+        id: go
+
+        # We need python for koji client.
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+        # Koji from pip is missing its config file.
+        # To fix this, the default Fedora 32 config is included in the repo
+        # and installed here. See the last line of the script.
+      - name: Install koji client
+        run: |
+          sudo apt-get install -y libkrb5-dev
+          python -m pip install --upgrade pip
+          pip install koji
+          sudo cp .github/koji.conf /etc/koji.conf
+
+      - name: Run unit tests
+        run: go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
+
+      - name: Send coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
