@@ -1,9 +1,14 @@
 pipeline {
     agent none
 
+    environment {
+        OPENSTACK_CONTAINER = "osbuildci-artifacts"
+        OPENSTACK_CREDS = credentials('openstack-psi-imagebuilder')
+    }
+
     options {
-        timestamps()
         ansiColor('xterm')
+        timestamps()
     }
 
     stages {
@@ -17,7 +22,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('fedora31-base')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -29,7 +34,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('fedora31-image')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -41,7 +46,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('fedora32-base')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -53,7 +58,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('fedora32-image')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -65,7 +70,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('rhel82-base')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -77,7 +82,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('rhel82-image')
+                            preserve_artifacts()
                         }
                     }
                 }
@@ -90,22 +95,17 @@ pipeline {
 // need to copy/paste the same lines over and over above.
 void run_tests() {
 
+    sh "printenv | sed 's;=.*;;' | sort"
+
     // Run the tests from the repository.
     sh "schutzbot/run_tests.sh"
 
 }
 
-// Move logs to a unique location and tell Jenkins to capture them on success
-// or failure.
-void preserve_logs(test_slug) {
+// Keep artifacts from the job for further review.
+void preserve_artifacts() {
 
-    // Make a directory for the log files and move the logs there.
-    sh "mkdir ${test_slug} && mv *.log ${test_slug}/"
-
-    // Artifact the logs.
-    archiveArtifacts (
-        allowEmptyArchive: true,
-        artifacts: "${test_slug}/*.log"
-    )
+    // Run a script to preserve artifacts in OpenStack Swift.
+    sh "schutzbot/preserve_artifacts.sh"
 
 }
