@@ -2006,31 +2006,6 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	resultReader, err := api.store.GetImageBuildResult(id)
-
-	if err != nil {
-		errors := responseError{
-			ID:  "ComposeError",
-			Msg: fmt.Sprintf("Opening log for compose %s failed", uuidString),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	var result common.ComposeResult
-	err = json.NewDecoder(resultReader).Decode(&result)
-	if err != nil {
-		errors := responseError{
-			ID:  "ComposeError",
-			Msg: fmt.Sprintf("Parsing log for compose %s failed", uuidString),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	err = resultReader.Close()
-	common.PanicOnError(err)
-
 	writer.Header().Set("Content-Disposition", "attachment; filename="+id.String()+"-logs.tar")
 	writer.Header().Set("Content-Type", "application/x-tar")
 
@@ -2038,7 +2013,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 
 	// tar format needs to contain file size before the actual file content, therefore the intermediate buffer
 	var fileContents bytes.Buffer
-	err = result.Write(&fileContents)
+	err = composeStatus.Result.Write(&fileContents)
 	common.PanicOnError(err)
 
 	header := &tar.Header{
@@ -2099,32 +2074,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	resultReader, err := api.store.GetImageBuildResult(id)
-
-	if err != nil {
-		errors := responseError{
-			ID:  "ComposeError",
-			Msg: fmt.Sprintf("Opening log for compose %s failed", uuidString),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	var result common.ComposeResult
-	err = json.NewDecoder(resultReader).Decode(&result)
-	if err != nil {
-		errors := responseError{
-			ID:  "ComposeError",
-			Msg: fmt.Sprintf("Parsing log for compose %s failed", uuidString),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	err = resultReader.Close()
-	common.PanicOnError(err)
-
-	err = result.Write(writer)
+	err = composeStatus.Result.Write(writer)
 	common.PanicOnError(err)
 }
 
