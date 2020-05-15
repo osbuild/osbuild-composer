@@ -1752,9 +1752,9 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 		composeStatus := api.getComposeStatus(compose)
 		switch composeStatus.State {
 		case common.CWaiting:
-			reply.New = append(reply.New, composeToComposeEntry(id, compose, common.CWaiting, composeStatus.Queued, composeStatus.Started, composeStatus.Finished, includeUploads))
+			reply.New = append(reply.New, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 		case common.CRunning:
-			reply.Run = append(reply.Run, composeToComposeEntry(id, compose, common.CRunning, composeStatus.Queued, composeStatus.Started, composeStatus.Finished, includeUploads))
+			reply.Run = append(reply.Run, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 		}
 	}
 
@@ -1836,7 +1836,7 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	for _, id := range filteredUUIDs {
 		if compose, exists := composes[id]; exists {
 			composeStatus := api.getComposeStatus(compose)
-			reply.UUIDs = append(reply.UUIDs, composeToComposeEntry(id, compose, composeStatus.State, composeStatus.Queued, composeStatus.Started, composeStatus.Finished, includeUploads))
+			reply.UUIDs = append(reply.UUIDs, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 		}
 	}
 	sortComposeEntries(reply.UUIDs)
@@ -2140,7 +2140,7 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 		if composeStatus.State != common.CFinished {
 			continue
 		}
-		reply.Finished = append(reply.Finished, composeToComposeEntry(id, compose, common.CFinished, composeStatus.Queued, composeStatus.Started, composeStatus.Finished, includeUploads))
+		reply.Finished = append(reply.Finished, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 	}
 	sortComposeEntries(reply.Finished)
 
@@ -2163,7 +2163,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 		if composeStatus.State != common.CFailed {
 			continue
 		}
-		reply.Failed = append(reply.Failed, composeToComposeEntry(id, compose, common.CFailed, composeStatus.Queued, composeStatus.Started, composeStatus.Finished, includeUploads))
+		reply.Failed = append(reply.Failed, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 	}
 	sortComposeEntries(reply.Failed)
 
