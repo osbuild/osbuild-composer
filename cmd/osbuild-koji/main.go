@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -48,7 +49,12 @@ func main() {
 		println(err.Error())
 		return
 	}
-	defer k.Logout()
+	defer func() {
+		err := k.Logout()
+		if err != nil {
+			log.Print("logging out of koji failed ", err)
+		}
+	}()
 
 	hash, length, err := k.Upload(file, dir, path.Base(filename))
 	if err != nil {
