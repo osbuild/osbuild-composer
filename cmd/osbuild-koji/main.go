@@ -100,11 +100,11 @@ func main() {
 		},
 	}
 
-	err = k.CGImport(build, buildRoots, output, dir)
+	result, err := k.CGImport(build, buildRoots, output, dir)
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
-	fmt.Printf("Success!\n")
+	fmt.Printf("Success, build id: %d\n", result.BuildID)
 }
