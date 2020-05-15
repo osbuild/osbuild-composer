@@ -53,7 +53,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			name: "files-empty",
 			fields: fields{
 				Name:   "org.osbuild.files",
-				Source: &FilesSource{URLs: map[string]string{}},
+				Source: &FilesSource{URLs: map[string]FileSource{}},
 			},
 			args: args{
 				data: []byte(`{"org.osbuild.files":{"urls":{}}}`),
@@ -62,11 +62,14 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		{
 			name: "files",
 			fields: fields{
-				Name:   "org.osbuild.files",
-				Source: &FilesSource{URLs: map[string]string{"checksum1": "url1", "checksum2": "url2"}},
+				Name: "org.osbuild.files",
+				Source: &FilesSource{URLs: map[string]FileSource{
+					"checksum1": FileSource{URL: "url1"},
+					"checksum2": FileSource{URL: "url2"},
+				}},
 			},
 			args: args{
-				data: []byte(`{"org.osbuild.files":{"urls":{"checksum1":"url1","checksum2":"url2"}}}`),
+				data: []byte(`{"org.osbuild.files":{"urls":{"checksum1":{"url":"url1"},"checksum2":{"url":"url2"}}}}`),
 			},
 		},
 	}

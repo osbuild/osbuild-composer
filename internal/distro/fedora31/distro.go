@@ -395,10 +395,13 @@ func (r *Fedora31) ModulePlatformID() string {
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	files := &osbuild.FilesSource{
-		URLs: make(map[string]string),
+		URLs: make(map[string]osbuild.FileSource),
 	}
 	for _, pkg := range packages {
-		files.URLs[pkg.Checksum] = pkg.RemoteLocation
+		fileSource := osbuild.FileSource{
+			URL: pkg.RemoteLocation,
+		}
+		files.URLs[pkg.Checksum] = fileSource
 	}
 	return &osbuild.Sources{
 		"org.osbuild.files": files,
