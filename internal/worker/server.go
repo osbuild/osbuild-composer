@@ -27,6 +27,13 @@ type Server struct {
 	imageWriter WriteImageFunc
 }
 
+type JobStatus struct {
+	State    common.ComposeState
+	Queued   time.Time
+	Started  time.Time
+	Finished time.Time
+}
+
 type WriteImageFunc func(composeID uuid.UUID, imageBuildID int, reader io.Reader) error
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, imageWriter WriteImageFunc) *Server {
@@ -78,15 +85,15 @@ func (s *Server) Enqueue(manifest *osbuild.Manifest, targets []*target.Target) (
 	return s.jobs.Enqueue("osbuild", job, nil)
 }
 
-func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, started, finished time.Time, err error) {
+func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 	var canceled bool
 	var result OSBuildJobResult
 
-	queued, started, finished, canceled, err = s.jobs.JobStatus(id, &result)
+	queued, started, finished, canceled, err := s.jobs.JobStatus(id, &result)
 	if err != nil {
-		return
+		return nil, err
 	}
-
+	state := common.CWaiting
 	if canceled {
 		state = common.CFailed
 	} else if !finished.IsZero() {
@@ -97,11 +104,14 @@ func (s *Server) JobStatus(id uuid.UUID) (state common.ComposeState, queued, sta
 		}
 	} else if !started.IsZero() {
 		state = common.CRunning
-	} else {
-		state = common.CWaiting
 	}
 
-	return
+	return &JobStatus{
+		State:    state,
+		Queued:   queued,
+		Started:  started,
+		Finished: finished,
+	}, nil
 }
 
 func (s *Server) JobResult(id uuid.UUID) (common.ComposeState, *common.ComposeResult, error) {
