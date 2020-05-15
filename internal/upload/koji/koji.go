@@ -104,6 +104,10 @@ type Metadata struct {
 	Output          []Output    `json:"output"`
 }
 
+type CGImportResult struct {
+	BuildID int `xmlrpc:"build_id"`
+}
+
 // RoundTrip implements the RoundTripper interface, using the default
 // transport. When a session has been established, also pass along the
 // session credentials. This may not be how the RoundTripper interface
@@ -185,7 +189,7 @@ func (k *Koji) Logout() error {
 
 // CGImport imports previously uploaded content, by specifying its metadata, and the temporary
 // directory where it is located.
-func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, output []Output, directory string) error {
+func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, output []Output, directory string) (*CGImportResult, error) {
 	m := &Metadata{
 		Build:      build,
 		BuildRoots: buildRoots,
@@ -193,16 +197,16 @@ func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, output []Output, di
 	}
 	metadata, err := json.Marshal(m)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var result interface{}
+	var result CGImportResult
 	err = k.xmlrpc.Call("CGImport", []interface{}{string(metadata), directory}, &result)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &result, nil
 }
 
 // uploadChunk uploads a byte slice to a given filepath/filname at a given offset
