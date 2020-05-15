@@ -116,31 +116,6 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 	}, nil
 }
 
-func (s *Server) JobResult(id uuid.UUID) (common.ComposeState, *common.ComposeResult, error) {
-	var canceled bool
-	var result OSBuildJobResult
-
-	_, started, finished, canceled, err := s.jobs.JobStatus(id, &result)
-	if err != nil {
-		return common.CWaiting, nil, err
-	}
-
-	state := common.CWaiting
-	if canceled {
-		state = common.CFailed
-	} else if !finished.IsZero() {
-		if result.OSBuildOutput.Success {
-			state = common.CFinished
-		} else {
-			state = common.CFailed
-		}
-	} else if !started.IsZero() {
-		state = common.CRunning
-	}
-
-	return state, result.OSBuildOutput, nil
-}
-
 // jsonErrorf() is similar to http.Error(), but returns the message in a json
 // object with a "message" field.
 func jsonErrorf(writer http.ResponseWriter, code int, message string, args ...interface{}) {
