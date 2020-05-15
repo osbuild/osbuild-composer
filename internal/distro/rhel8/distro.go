@@ -498,10 +498,18 @@ func (r *RHEL8) BuildPackages(outputArchitecture string) ([]string, error) {
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	files := &osbuild.FilesSource{
-		URLs: make(map[string]string),
+		URLs: make(map[string]osbuild.FileSource),
 	}
 	for _, pkg := range packages {
-		files.URLs[pkg.Checksum] = pkg.RemoteLocation
+		FileSource := osbuild.FileSource{
+			URL: pkg.RemoteLocation,
+		}
+		if pkg.Secrets == "org.osbuild.rhsm" {
+			FileSource.Secrets = &osbuild.Secret{
+				Name: "org.osbuild.rhsm",
+			}
+		}
+		files.URLs[pkg.Checksum] = FileSource
 	}
 	return &osbuild.Sources{
 		"org.osbuild.files": files,
