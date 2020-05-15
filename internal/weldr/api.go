@@ -168,8 +168,9 @@ func (api *API) getComposeState(compose store.Compose) (state common.ComposeStat
 		return
 	}
 
-	state, queued, started, finished, _ = api.workers.JobStatus(jobId)
-	return
+	// is it ok to ignore this error?
+	jobStatus, _ := api.workers.JobStatus(jobId)
+	return jobStatus.State, jobStatus.Queued, jobStatus.Started, jobStatus.Finished
 }
 
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
