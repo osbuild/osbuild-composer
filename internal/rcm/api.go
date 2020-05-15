@@ -252,7 +252,7 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	}
 
 	// Check that the compose exists
-	status, _, err := api.workers.JobResult(id)
+	status, err := api.workers.JobStatus(id)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		errorReason.Error = err.Error()
@@ -267,5 +267,5 @@ func (api *API) status(writer http.ResponseWriter, request *http.Request, params
 	}
 
 	// TODO: handle error
-	_ = json.NewEncoder(writer).Encode(reply{Status: status.ToString()})
+	_ = json.NewEncoder(writer).Encode(reply{Status: status.State.ToString()})
 }
