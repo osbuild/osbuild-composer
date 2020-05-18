@@ -108,6 +108,19 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 			},
 			data: []byte(`{"name":"org.osbuild.rawfs","options":{"filename":"filesystem.img","root_fs_uuid":"76a22bf4-f153-4541-b6c7-0332c0dfaeac","size":2147483648}}`),
 		},
+		{
+			name: "ostree commit assembler",
+			assembler: Assembler{
+				Name: "org.osbuild.ostree.commit",
+				Options: &OSTreeCommitAssemblerOptions{
+					Ref: "foo",
+					Tar: OSTreeCommitAssemblerTarOptions{
+						Filename: "foo.tar",
+					},
+				},
+			},
+			data: []byte(`{"name":"org.osbuild.ostree.commit","options":{"ref":"foo","tar":{"filename":"foo.tar"}}}`),
+		},
 	}
 
 	assert := assert.New(t)
