@@ -196,6 +196,20 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "rpm-ostree",
+			fields: fields{
+				Name: "org.osbuild.rpm-ostree",
+				Options: &RPMOSTreeStageOptions{
+					EtcGroupMembers: []string{
+						"wheel",
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.rpm-ostree","options":{"etc_group_members":["wheel"]}}`),
+			},
+		},
+		{
 			name: "script",
 			fields: fields{
 				Name:    "org.osbuild.script",
