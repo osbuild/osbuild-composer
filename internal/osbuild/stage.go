@@ -62,6 +62,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(FirewallStageOptions)
 	case "org.osbuild.rpm":
 		options = new(RPMStageOptions)
+	case "org.osbuild.rpm-ostree":
+		options = new(RPMOSTreeStageOptions)
 	case "org.osbuild.systemd":
 		options = new(SystemdStageOptions)
 	case "org.osbuild.script":
