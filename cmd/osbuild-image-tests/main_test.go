@@ -356,13 +356,26 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct) {
-	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
-	require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
+	// Check for an out directory environment variable since some testing
+	// setups may prefer to use tmpfs for testing.
+	imageTestOutputDir, odExists := os.LookupEnv("IMAGE_TEST_OUTPUT_DIRECTORY")
 
+	// Use the provided output directory if provided, otherwise use a
+	// directory we generate randomly.
+	if odExists {
+		outputDirectory := imageTestOutputDir
+	} else {
+		outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
+		require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
+	}
+
+	// Delete the output directory if we generated a temporary one.
 	defer func() {
-		err := os.RemoveAll(outputDirectory)
-		if err != nil {
-			log.Printf("cannot remove temporary output directory: %#v\n", err)
+		if ! odExists {
+			err := os.RemoveAll(outputDirectory)
+			if err != nil {
+				log.Printf("cannot remove temporary output directory: %#v\n", err)
+			}
 		}
 	}()
 
