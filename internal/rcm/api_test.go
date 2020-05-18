@@ -131,7 +131,7 @@ func TestSubmit(t *testing.T) {
 						"repositories":
 						[
 							{
-								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+								"baseurl": "http://download.eng.rdu.redhat.com/pub/fedora/linux/releases/30/Everything/x86_64/os/"
 							}
 						]
 					}
@@ -153,7 +153,7 @@ func TestSubmit(t *testing.T) {
 						"repositories":
 						[
 							{
-								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+								"baseurl": "http://download.eng.rdu.redhat.com/pub/fedora/linux/releases/30/Everything/x86_64/os/"
 							}
 						]
 					}
@@ -175,7 +175,7 @@ func TestSubmit(t *testing.T) {
 						"repositories":
 						[
 							{
-								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+								"baseurl": "http://download.eng.rdu.redhat.com/pub/fedora/linux/releases/30/Everything/x86_64/os/"
 							}
 						]
 					}
@@ -197,7 +197,7 @@ func TestSubmit(t *testing.T) {
 						"repositories":
 						[
 							{
-								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+								"baseurl": "http://download.eng.rdu.redhat.com/pub/fedora/linux/releases/30/Everything/x86_64/os/"
 							}
 						]
 					}
@@ -260,7 +260,7 @@ func TestStatus(t *testing.T) {
 						"repositories":
 						[
 							{
-								"baseurl": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/"
+								"baseurl": "http://download.eng.rdu.redhat.com/pub/fedora/linux/releases/30/Everything/x86_64/os/"
 							}
 						]
 					}
