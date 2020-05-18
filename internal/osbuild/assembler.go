@@ -32,12 +32,14 @@ func (assembler *Assembler) UnmarshalJSON(data []byte) error {
 	}
 	var options AssemblerOptions
 	switch rawAssembler.Name {
-	case "org.osbuild.tar":
-		options = new(TarAssemblerOptions)
+	case "org.osbuild.ostree.commit":
+		options = new(OSTreeCommitAssemblerOptions)
 	case "org.osbuild.qemu":
 		options = new(QEMUAssemblerOptions)
 	case "org.osbuild.rawfs":
 		options = new(RawFSAssemblerOptions)
+	case "org.osbuild.tar":
+		options = new(TarAssemblerOptions)
 	default:
 		return errors.New("unexpected assembler name")
 	}
