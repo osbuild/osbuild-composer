@@ -1,6 +1,10 @@
 pipeline {
     agent none
 
+	// storageAccount, saExists := loadEnvVar(t, "AZURE_STORAGE_ACCOUNT")
+	// storageAccessKey, sakExists := loadEnvVar(t, "AZURE_STORAGE_ACCESS_KEY")
+	// containerName, cnExists := loadEnvVar(t, "AZURE_STORAGE_CONTAINER")
+
     options {
         timestamps()
         ansiColor('xterm')
@@ -14,95 +18,112 @@ pipeline {
     stages {
         stage("Functional Testing") {
             parallel {
-                stage('Fedora 31 base') {
-                    agent { label "fedora31" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-base')
-                        }
-                    }
-                }
-                stage('Fedora 31 image') {
-                    agent { label "fedora31" }
-                    environment { TEST_TYPE = "image" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-image')
-                        }
-                    }
-                }
-                stage('Fedora 32 base') {
-                    agent { label "fedora32" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-base')
-                        }
-                    }
-                }
-                stage('Fedora 32 image') {
-                    agent { label "fedora32" }
-                    environment { TEST_TYPE = "image" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-image')
-                        }
-                    }
-                }
-                stage('Fedora 32 AWS') {
+                // stage('Fedora 31 base') {
+                //     agent { label "fedora31" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora31-base')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 31 image') {
+                //     agent { label "fedora31" }
+                //     environment { TEST_TYPE = "image" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora31-image')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 32 base') {
+                //     agent { label "fedora32" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-base')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 32 image') {
+                //     agent { label "fedora32" }
+                //     environment { TEST_TYPE = "image" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-image')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 32 AWS') {
+                //     agent { label "fedora32" }
+                //     environment {
+                //         TEST_TYPE = "aws"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //         AWS_REGION = "us-east-2"
+                //         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                //     }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-image')
+                //         }
+                //     }
+                // }
+                stage('Fedora 32 Azure') {
                     agent { label "fedora32" }
                     environment {
-                        TEST_TYPE = "aws"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_REGION = "us-east-2"
-                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                        TEST_TYPE = "azure"
+                        AZURE_STORAGE_ACCESS_KEY = credentials('azure-credentials-composerimageuploads')
+                        AZURE_STORAGE_ACCOUNT = "composerimageuploads"
+                        AZURE_STORAGE_CONTAINER = "image-uploads-disks"
                     }
                     steps {
                         run_tests()
                     }
                     post {
                         always {
-                            preserve_logs('fedora32-image')
+                            preserve_logs('fedora32-azure')
                         }
                     }
                 }
-                stage('RHEL 8.2 base') {
-                    agent { label "rhel82" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel82-base')
-                        }
-                    }
-                }
-                stage('RHEL 8.2 image') {
-                    agent { label "rhel82" }
-                    environment { TEST_TYPE = "image" }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel82-image')
-                        }
-                    }
-                }
+                // stage('RHEL 8.2 base') {
+                //     agent { label "rhel82" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel82-base')
+                //         }
+                //     }
+                // }
+                // stage('RHEL 8.2 image') {
+                //     agent { label "rhel82" }
+                //     environment { TEST_TYPE = "image" }
+                //     steps {
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel82-image')
+                //         }
+                //     }
+                // }
             }
         }
     }

@@ -54,3 +54,14 @@ osbuild_composer_aws_env_vars:
   AWS_REGION: "{{ lookup('env', 'AWS_REGION') }}"
   AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
   AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+
+# List of Azure test cases and their timeout (in minutes).
+osbuild_composer_azure_timeout: 60
+osbuild_composer_azure_test_cases:
+  - vhd-boot.json
+
+# Environment variables for AWS tests.
+osbuild_composer_azure_env_vars:
+  AZURE_STORAGE_ACCESS_KEY: "{{ lookup('env', 'AZURE_STORAGE_ACCESS_KEY') }}"
+  AZURE_STORAGE_ACCOUNT: "{{ lookup('env', 'AZURE_STORAGE_ACCOUNT') }}"
+  AZURE_STORAGE_CONTAINER: "{{ lookup('env', 'AZURE_STORAGE_CONTAINER') }}"

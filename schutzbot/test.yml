@@ -39,6 +39,17 @@
       when:
         - test_type == 'aws'
 
+    - name: Run osbuild-composer Azure tests
+      include_tasks: test_runner_image.yml
+      loop: "{{ osbuild_composer_azure_test_cases }}"
+      vars:
+        test_timeout: "{{ osbuild_composer_azure_timeout }}"
+        env_vars: "{{ osbuild_composer_azure_env_vars }}"
+      loop_control:
+        loop_var: test_case
+      when:
+        - test_type == 'azure'
+
     - name: Show failed and passed tests
       debug:
         msg: |
