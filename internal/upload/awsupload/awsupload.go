@@ -72,13 +72,14 @@ func WaitUntilImportSnapshotTaskCompleted(c *ec2.EC2, input *ec2.DescribeImportS
 // sub-contexts for http.Requests. See https://golang.org/pkg/context/
 // for more information on using Contexts.
 //
-// NOTE(mhayden): Wait for 45 minutes for the snapshot to import.
-// Some AWS regions are fairly busy with image imports and they can
-// sometimes take a long time.
+// NOTE(mhayden): The MaxAttempts is set to zero here so that we will keep
+// checking the status of the image import until it succeeds or fails. This
+// process can take anywhere from 5 to 60+ minutes depending on how quickly
+// AWS can import the snapshot.
 func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context, input *ec2.DescribeImportSnapshotTasksInput, opts ...request.WaiterOption) error {
 	w := request.Waiter{
 		Name:        "WaitUntilImportSnapshotTaskCompleted",
-		MaxAttempts: 180,
+		MaxAttempts: 0,
 		Delay:       request.ConstantWaiterDelay(15 * time.Second),
 		Acceptors: []request.WaiterAcceptor{
 			{
