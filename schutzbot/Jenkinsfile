@@ -62,6 +62,23 @@ pipeline {
                         }
                     }
                 }
+                stage('Fedora 32 AWS') {
+                    agent { label "fedora32" }
+                    environment {
+                        TEST_TYPE = "aws"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_REGION = "us-east-2"
+                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                    }
+                    steps {
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-image')
+                        }
+                    }
+                }
                 stage('RHEL 8.2 base') {
                     agent { label "rhel82" }
                     environment { TEST_TYPE = "base" }
