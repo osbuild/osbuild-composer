@@ -137,7 +137,7 @@ func main() {
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
-	rpmmd := rpmmd.NewRPMMD(path.Join(homeDir, ".cache/osbuild-composer/rpmmd"))
+	rpmmd := rpmmd.NewRPMMD(path.Join(homeDir, ".cache/osbuild-composer/rpmmd"), "./dnf-json")
 
 	s := store.New(&cwd, a, nil)
 	if s == nil {

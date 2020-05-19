@@ -132,7 +132,7 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
+	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"), "./dnf-json")
 	packageSpecs, checksums, err := rpmmd.Depsolve(packages, excludePkgs, repos, d.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())

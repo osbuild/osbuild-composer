@@ -34,7 +34,8 @@ func TestFetchChecksum(t *testing.T) {
 		BaseURL:   fmt.Sprintf("file://%s", dir),
 		IgnoreSSL: true,
 	}
-	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
+
+	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"), "./dnf-json")
 	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64")
 	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
 	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
@@ -58,7 +59,8 @@ func TestCrossArchDepsolve(t *testing.T) {
 			dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
 			require.Nilf(t, err, "Failed to create tmp dir for depsolve test: %v", err)
 			defer os.RemoveAll(dir)
-			rpm := rpmmd.NewRPMMD(dir)
+
+			rpm := rpmmd.NewRPMMD(dir, "./dnf-json")
 
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
