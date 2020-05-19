@@ -89,7 +89,7 @@ func main() {
 
 	// osbuild-composer must be run in /usr/libexec/osbuild-composer directory,
 	// therefore use ./dnf-json as the path to dnf-json.
-	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"), "./dnf-json")
+	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
 	distros, err := distro.NewRegistry(fedora31.New(), fedora32.New(), rhel8.New())
 	if err != nil {
