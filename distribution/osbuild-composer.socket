@@ -4,6 +4,8 @@ Description=OSBuild Composer API sockets
 [Socket]
 ListenStream=/run/weldr/api.socket
 ListenStream=/run/osbuild-composer/job.socket
+SocketGroup=weldr
+SocketMode=660
 
 [Install]
 WantedBy=sockets.target
