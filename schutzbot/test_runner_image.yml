@@ -1,6 +1,6 @@
 ---
 
-- name: Setup test case prefix based on distro and release
+- name: "{{ (test_case | splitext)[0] }} : Set up facts"
   set_fact:
     test_case_prefix: >-
       {%- if ansible_distribution == "Fedora" -%}
@@ -8,10 +8,39 @@
       {%- else -%}
       rhel_{{ ansible_distribution_version }}-{{ ansible_machine }}
       {%- endif -%}
+    test_case_short_name: "{{ (test_case | splitext)[0] }}"
+
+- name: "{{ test_case_short_name }} : Read test case JSON"
+  set_fact:
+    test_case_json: "{{ lookup('file', image_test_case_path+'/'+test_case_prefix+'-'+test_case ) | from_json }}"
+
+- name: "{{ test_case_short_name }} : Inspect the test case manifest with osbuild"
+  command: "osbuild --json --inspect -"
+  args:
+    chdir: "{{ tests_working_directory }}"
+    stdin: "{{ test_case_json.manifest | to_nice_json }}"
+  changed_when: false
+  register: inspected_output
+
+- name: "{{ test_case_short_name }} : Get the tree_id of the build stage"
+  set_fact:
+    build_stage_checkpoint_id: "{{ (inspected_output.stdout | from_json).pipeline.build.pipeline.stages[0].id }}"
+
+- name: "{{ test_case_short_name }} : Check if the tree_id is cached"
+  stat:
+    path: "{{ tests_working_directory }}/.osbuild/refs/{{ build_stage_checkpoint_id }}"
+  register: tree_id_check
+
+- name: "{{ test_case_short_name }} : Cache the build stage (tree_id: {{ build_stage_checkpoint_id }})"
+  command: "osbuild --json --checkpoint={{ build_stage_checkpoint_id }} -"
+  args:
+    chdir: "{{ tests_working_directory }}"
+    stdin: "{{ test_case_json.manifest | to_nice_json }}"
+  when: not tree_id_check.stat.exists
 
 - block:
 
-    - name: "Run image test case: {{ test_case_prefix }}-{{ test_case }}"
+    - name: "{{ test_case_short_name }} : Run image test case"
       command: |
         {{ image_test_executable }} -test.v \
           -test.timeout {{ test_timeout * 60 }}s \
@@ -21,23 +50,23 @@
       environment: "{{ env_vars }}"
       register: test_cmd
 
-    - name: "Mark test case as passed: {{ test_case_prefix }}-{{ test_case }}"
+    - name: "{{ test_case_short_name }} : Mark test case as passed"
       set_fact:
         passed_tests: "{{ passed_tests + [ test_case_prefix + '-' + test_case ] }}"
 
   rescue:
 
-    - name: "Mark test case as failed: {{ test_case_prefix }}-{{ test_case }}"
+    - name: "{{ test_case_short_name }} : Mark test case as failed"
       set_fact:
         failed_tests: "{{ failed_tests + [ test_case_prefix + '-' + test_case ] }}"
 
   always:
 
-    - name: "Write log for test case: {{ test_case_prefix }}-{{ test_case }}"
+    - name: "{{ test_case_short_name }} : Write log for test case"
       copy:
-        dest: "{{ workspace }}/{{ test_case_prefix }}-{{ test_case }}.log"
+        dest: "{{ workspace }}/{{ test_case_prefix }}-{{ test_case_short_name }}.log"
         content: |
-          Logs from test case: {{ test_case_prefix }}-{{ test_case }}
+          Logs from test case: {{ test_case_prefix }}-{{ test_case_short_name }}
           ----------------------------------------------------------------------
           stderr:
           {{ test_cmd.stderr }}
