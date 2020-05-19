@@ -357,14 +357,15 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
-	require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
+	// require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
+	outputDirectory = "/var/tmp/osbuild"
 
-	defer func() {
-		err := os.RemoveAll(outputDirectory)
-		if err != nil {
-			log.Printf("cannot remove temporary output directory: %#v\n", err)
-		}
-	}()
+	// defer func() {
+	// 	err := os.RemoveAll(outputDirectory)
+	// 	if err != nil {
+	// 		log.Printf("cannot remove temporary output directory: %#v\n", err)
+	// 	}
+	// }()
 
 	err = runOsbuild(testcase.Manifest, outputDirectory)
 	require.NoError(t, err)
