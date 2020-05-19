@@ -10,16 +10,12 @@ tests_path: /usr/libexec/tests/osbuild-composer
 polling_interval: 15
 
 ## Non-image test variables.
-# List of base tests and their timeouts (in minutes)
+# List of base tests
 osbuild_composer_base_tests:
-  - name: osbuild-rcm-tests
-    timeout: 5
-  - name: osbuild-weldr-tests
-    timeout: 5
-  - name: osbuild-dnf-json-tests
-    timeout: 15
-  - name: osbuild-tests
-    timeout: 30
+  - osbuild-rcm-tests
+  - osbuild-weldr-tests
+  - osbuild-dnf-json-tests
+  - osbuild-tests
 
 ## Image test variables.
 # Executable that runs image tests.
@@ -28,8 +24,7 @@ image_test_executable: "{{ tests_path }}/osbuild-image-tests"
 # Location of image test case files.
 image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
-# List of image tests and their timeout (in minutes).
-osbuild_composer_image_timeout: 15
+# List of image tests
 osbuild_composer_image_test_cases:
   - ami-boot.json
   - ext4_filesystem-boot.json
@@ -43,8 +38,7 @@ osbuild_composer_image_test_cases:
 # Environment variables for image tests.
 osbuild_composer_image_env_vars: {}
 
-# List of AWS test cases and their timeout (in minutes).
-osbuild_composer_aws_timeout: 60
+# List of AWS test cases
 osbuild_composer_aws_test_cases:
   - ami-boot.json
 
