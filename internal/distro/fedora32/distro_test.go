@@ -135,7 +135,14 @@ func TestImageType_BuildPackages(t *testing.T) {
 				t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)
 				continue
 			}
-			assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
+			if itLabel == "fedora-iot-commit" {
+				// For now we only include rpm-ostree when building fedora-iot-commit image types, this we may want
+				// to reconsider. The only reason to specia-case it is that it might pull in a lot of dependencies
+				// for a niche usecase.
+				assert.ElementsMatch(t, append(buildPackages[archLabel], "rpm-ostree"), itStruct.BuildPackages())
+			} else {
+				assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
+			}
 		}
 	}
 }

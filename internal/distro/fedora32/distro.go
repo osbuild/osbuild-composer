@@ -2,6 +2,7 @@ package fedora32
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -44,6 +45,7 @@ type imageType struct {
 	disabledServices []string
 	kernelOptions    string
 	bootable         bool
+	rpmOstree        bool
 	defaultSize      uint64
 	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
@@ -124,6 +126,7 @@ func (a *arch) setImageTypes(imageTypes ...imageType) {
 			disabledServices: it.disabledServices,
 			kernelOptions:    it.kernelOptions,
 			bootable:         it.bootable,
+			rpmOstree:        it.rpmOstree,
 			defaultSize:      it.defaultSize,
 			assembler:        it.assembler,
 		}
@@ -164,7 +167,11 @@ func (t *imageType) BasePackages() ([]string, []string) {
 }
 
 func (t *imageType) BuildPackages() []string {
-	return append(t.arch.distro.buildPackages, t.arch.buildPackages...)
+	packages := append(t.arch.distro.buildPackages, t.arch.buildPackages...)
+	if t.rpmOstree {
+		packages = append(packages, "rpm-ostree")
+	}
+	return packages
 }
 
 func (t *imageType) Manifest(c *blueprint.Customizations,
@@ -186,6 +193,65 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 func New() *Fedora32 {
 	const GigaByte = 1024 * 1024 * 1024
 
+	iotImgType := imageType{
+		name:     "fedora-iot-commit",
+		filename: "commit.tar",
+		mimeType: "application/x-tar",
+		packages: []string{
+			"fedora-release-iot",
+			"glibc", "glibc-minimal-langpack", "nss-altfiles",
+			"sssd-client", "libsss_sudo", "shadow-utils",
+			"kernel",
+			"dracut-config-generic", "dracut-network",
+			"rpm-ostree", "polkit", "lvm2",
+			"chrony", "zram",
+			"cryptsetup", "pinentry",
+			"keyutils",
+			"e2fsprogs", "dosfstools",
+			"gnupg2",
+			"basesystem", "python3", "bash",
+			"xz", "gzip",
+			"coreutils", "which", "curl",
+			"firewalld", "iptables",
+			"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
+			"wpa_supplicant", "iwd",
+			"dnsmasq", "traceroute",
+			"hostname", "iproute", "iputils",
+			"openssh-clients", "openssh-server", "passwd",
+			"policycoreutils", "procps-ng", "rootfiles", "rpm",
+			"selinux-policy-targeted", "setup", "shadow-utils",
+			"sudo", "systemd", "util-linux", "vim-minimal",
+			"less", "tar",
+			"fwupd", // "usbguard", BUG: this fails due to an SELinux policy issue
+			"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
+			"ignition",
+			"rsync",
+			"ima-evm-utils",
+			"bash-completion",
+			"tmux", "screen",
+			"policycoreutils-python-utils",
+			"setools-console",
+			"audit", "rng-tools",
+			"bluez", "bluez-libs", "bluez-mesh", "wpan-tools",
+			"kernel-tools", "libgpiod-utils",
+			"podman", "container-selinux", "skopeo", "criu",
+			"slirp4netns",
+			"clevis", "clevis-dracut", "clevis-luks",
+			"attr",
+			// x86 specific
+			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
+			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
+		},
+		enabledServices: []string{
+			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service", "zram-swap.service",
+		},
+		rpmOstree: true,
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return ostreeCommitAssembler(options, arch)
+		},
+	}
 	amiImgType := imageType{
 		name:     "ami",
 		filename: "image.vhdx",
@@ -426,6 +492,7 @@ func New() *Fedora32 {
 		},
 	}
 	x8664.setImageTypes(
+		iotImgType,
 		amiImgType,
 		ext4FilesystemType,
 		partitionedDisk,
@@ -532,6 +599,8 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
 		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+	} else if t.rpmOstree {
+		p.AddStage(osbuild.NewFSTabStage(t.fsOstreeTabStageOptions()))
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil {
@@ -543,6 +612,15 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
+
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewRPMOSTreeStage(&osbuild.RPMOSTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: should this somehow be configurable? How does it relate to regular group options?
+				"wheel", "docker",
+			},
+		}))
+	}
 
 	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
 
@@ -668,6 +746,37 @@ func (r *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	return &options
 }
 
+func (t *imageType) fsOstreeTabStageOptions() *osbuild.FSTabStageOptions {
+	return &osbuild.FSTabStageOptions{
+		FileSystems: []*osbuild.FSTabEntry{
+			{
+				Label:   "root",
+				VFSType: "ext4",
+				Path:    "/",
+				Options: "defaults",
+				Freq:    1,
+				PassNo:  1,
+			},
+			{
+				Label:   "boot",
+				VFSType: "ext4",
+				Path:    "/boot",
+				Options: "defaults",
+				Freq:    1,
+				PassNo:  1,
+			},
+			{
+				Label:   "EFI-SYSTEM",
+				VFSType: "vfat",
+				Path:    "/boot/efi",
+				Options: "umask=0077,shortname=winnt",
+				Freq:    0,
+				PassNo:  2,
+			},
+		},
+	}
+}
+
 func (r *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
@@ -769,4 +878,20 @@ func rawFSAssembler(filename string, options distro.ImageOptions) *osbuild.Assem
 			RootFilesystemUUID: id,
 			Size:               options.Size,
 		})
+}
+
+func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	ref := options.OSTree.Ref
+	if ref == "" {
+		ref = fmt.Sprintf("fedora/32/%s/iot", arch.Name())
+	}
+	return osbuild.NewOSTreeCommitAssembler(
+		&osbuild.OSTreeCommitAssemblerOptions{
+			Ref:    ref,
+			Parent: options.OSTree.Parent,
+			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
+				Filename: "commit.tar",
+			},
+		},
+	)
 }
