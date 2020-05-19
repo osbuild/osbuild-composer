@@ -35,7 +35,7 @@
       loop_control:
         loop_var: test_case
       when:
-        - test_type == 'aws'
+        - test_type == 'image'
 
     - name: Show failed and passed tests
       debug:

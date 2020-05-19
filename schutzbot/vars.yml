@@ -26,7 +26,6 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
 # List of image tests
 osbuild_composer_image_test_cases:
-  - ami-boot.json
   - ext4_filesystem-boot.json
   - openstack-boot.json
   - partitioned_disk-boot.json
