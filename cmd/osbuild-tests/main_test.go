@@ -21,24 +21,71 @@ import (
 	"testing"
 )
 
+func TestComposeCommands(t *testing.T) {
+	// common setup
+	tmpdir := NewTemporaryWorkDir(t, "osbuild-tests-")
+	defer tmpdir.Close(t)
+
+	bp := blueprint.Blueprint{
+		Name:        "empty",
+		Description: "Test empty blueprint in toml format",
+	}
+	pushBlueprint(t, &bp)
+	defer deleteBlueprint(t, &bp)
+
+	runComposerCLIPlainText(t, "blueprints", "save", "empty")
+	_, err := os.Stat("empty.toml")
+	require.NoError(t, err, "Error accessing 'empty.toml: %v'", err)
+
+	runComposerCLIPlainText(t, "compose", "types")
+	runComposerCLIPlainText(t, "compose", "status")
+	runComposerCLIPlainText(t, "compose", "list")
+	runComposerCLIPlainText(t, "compose", "list", "waiting")
+	runComposerCLIPlainText(t, "compose", "list", "running")
+	runComposerCLIPlainText(t, "compose", "list", "finished")
+	runComposerCLIPlainText(t, "compose", "list", "failed")
+
+	// Full integration tests
+	uuid := buildCompose(t, "empty", "ami")
+	defer deleteCompose(t, uuid)
+
+	runComposerCLIPlainText(t, "compose", "info", uuid.String())
+
+	// https://github.com/osbuild/osbuild-composer/issues/643
+	// runComposerCLIPlainText(t, "compose", "metadata", uuid.String())
+	// _, err := os.Stat(uuid.String() + "-metadata.tar")
+	// require.NoError(t, err, "'%s-metadata.tar' not found", uuid.String())
+	// defer os.Remove(uuid.String() + "-metadata.tar")
+
+	// https://github.com/osbuild/osbuild-composer/issues/644
+	// runComposerCLIPlainText(t, "compose", "results", uuid.String())
+	// _, err = os.Stat(uuid.String() + ".tar")
+	// require.NoError(t, err, "'%s.tar' not found", uuid.String())
+	// defer os.Remove(uuid.String() + ".tar")
+
+	// Just assert that result wasn't empty
+	result := runComposerCLIPlainText(t, "compose", "log", uuid.String())
+	require.NotNil(t, result)
+	result = runComposerCLIPlainText(t, "compose", "log", uuid.String(), "1024")
+	require.NotNil(t, result)
+
+	runComposerCLIPlainText(t, "compose", "logs", uuid.String())
+	_, err = os.Stat(uuid.String() + "-logs.tar")
+	require.NoError(t, err, "'%s-logs.tar' not found", uuid.String())
+	defer os.Remove(uuid.String() + "-logs.tar")
+
+	runComposerCLIPlainText(t, "compose", "image", uuid.String())
+	_, err = os.Stat(uuid.String() + "-image.vhdx")
+	require.NoError(t, err, "'%s-image.vhdx' not found", uuid.String())
+	defer os.Remove(uuid.String() + "-image.vhdx")
+
+	// https://github.com/osbuild/osbuild-composer/pull/180
+	// uuid = startCompose(t, "empty", "tar")
+	// time.Sleep(time.Second)
+	// runComposerCLIPlainText(t, "compose", "cancel", uuid.String())
+}
+
 func TestEverything(t *testing.T) {
-	// Smoke tests, until functionality tested fully
-	// that the calls succeed and return valid output
-	runComposerCLI(t, false, "compose", "types")
-	runComposerCLI(t, false, "compose", "status")
-	runComposerCLI(t, false, "compose", "list")
-	runComposerCLI(t, false, "compose", "list", "waiting")
-	runComposerCLI(t, false, "compose", "list", "running")
-	runComposerCLI(t, false, "compose", "list", "finished")
-	runComposerCLI(t, false, "compose", "list", "failed")
-	// runCommand(false, "compose", "log", UUID, [<SIZE>])
-	// runCommand(false, "compose", "cancel", UUID)
-	// runCommand(false, "compose", "delete", UUID)
-	// runCommand(false, "compose", "info", UUID)
-	// runCommand(false, "compose", "metadata", UUID)
-	// runCommand(false, "compose", "logs", UUID)
-	// runCommand(false, "compose", "results", UUID)
-	// runCommand(false, "compose", "image", UUID)
 	runComposerCLI(t, false, "blueprints", "list")
 	// runCommand(false, "blueprints", "show", BLUEPRINT,....)
 	// runCommand(false, "blueprints", "changes", BLUEPRINT,....)
@@ -58,9 +105,6 @@ func TestEverything(t *testing.T) {
 	runComposerCLI(t, false, "projects", "info", "filesystem")
 	runComposerCLI(t, false, "projects", "info", "filesystem", "kernel")
 	runComposerCLI(t, false, "status", "show")
-
-	// Full integration tests
-	testCompose(t, "ami")
 }
 
 func TestSourcesCommands(t *testing.T) {
@@ -85,23 +129,8 @@ gpgkey_urls = ["https://url/path/to/gpg-key"]
 	runComposerCLI(t, false, "sources", "delete", "osbuild-test-addon-source")
 }
 
-func testCompose(t *testing.T, outputType string) {
-	tmpdir := NewTemporaryWorkDir(t, "osbuild-tests-")
-	defer tmpdir.Close(t)
-
-	bp := blueprint.Blueprint{
-		Name:        "empty",
-		Description: "Test empty blueprint in toml format",
-	}
-	pushBlueprint(t, &bp)
-	defer deleteBlueprint(t, &bp)
-
-	runComposerCLI(t, false, "blueprints", "save", "empty")
-	_, err := os.Stat("empty.toml")
-	require.Nilf(t, err, "Error accessing 'empty.toml: %v'", err)
-
-	uuid := startCompose(t, "empty", outputType)
-	defer deleteCompose(t, uuid)
+func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
+	uuid := startCompose(t, bpName, outputType)
 	status := waitForCompose(t, uuid)
 	logs := getLogs(t, uuid)
 	assert.NotEmpty(t, logs, "logs are empty after the build is finished/failed")
@@ -111,7 +140,7 @@ func testCompose(t *testing.T, outputType string) {
 		t.FailNow()
 	}
 
-	runComposerCLI(t, false, "compose", "image", uuid.String())
+	return uuid
 }
 
 func startCompose(t *testing.T, name, outputType string) uuid.UUID {
@@ -213,7 +242,7 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
 }
 
-func runComposerCLIPlainText(t *testing.T, quiet bool, command ...string) []byte {
+func runComposerCLIPlainText(t *testing.T, command ...string) []byte {
 	cmd := exec.Command("composer-cli", command...)
 	stdout, err := cmd.StdoutPipe()
 	require.Nilf(t, err, "Could not create command: %v", err)
@@ -232,7 +261,7 @@ func runComposerCLIPlainText(t *testing.T, quiet bool, command ...string) []byte
 
 func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage {
 	command = append([]string{"--json"}, command...)
-	contents := runComposerCLIPlainText(t, quiet, command...)
+	contents := runComposerCLIPlainText(t, command...)
 
 	var result json.RawMessage
 
