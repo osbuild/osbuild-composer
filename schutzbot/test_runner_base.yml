@@ -2,29 +2,29 @@
 
 - block:
 
-    - name: "Run {{ test.name }} test"
-      command: "{{ tests_path }}/{{ test.name }} -test.v -test.timeout {{ test.timeout * 60 }}s"
+    - name: "Run {{ test }} test"
+      command: "{{ tests_path }}/{{ test }} -test.v"
       args:
         chdir: "{{ tests_working_directory }}"
       register: test_cmd
 
-    - name: "Mark {{ test.name }} as passed"
+    - name: "Mark {{ test }} as passed"
       set_fact:
-        passed_tests: "{{ passed_tests + [test.name] }}"
+        passed_tests: "{{ passed_tests + [test] }}"
 
   rescue:
 
-    - name: "Mark {{ test.name }} as failed"
+    - name: "Mark {{ test }} as failed"
       set_fact:
-        failed_tests: "{{ failed_tests + [test.name] }}"
+        failed_tests: "{{ failed_tests + [test] }}"
 
   always:
 
-    - name: "Write log for {{ test.name }}"
+    - name: "Write log for {{ test }}"
       copy:
-        dest: "{{ workspace }}/{{ test.name }}.log"
+        dest: "{{ workspace }}/{{ test }}.log"
         content: |
-          Logs from {{ test.name }}
+          Logs from {{ test }}
           ----------------------------------------------------------------------
           stderr:
           {{ test_cmd.stderr }}

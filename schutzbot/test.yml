@@ -23,7 +23,6 @@
       loop_control:
         loop_var: test_case
       vars:
-        test_timeout: "{{ osbuild_composer_image_timeout }}"
         env_vars: "{{ osbuild_composer_image_env_vars }}"
       when:
         - test_type == 'image'
@@ -32,7 +31,6 @@
       include_tasks: test_runner_image.yml
       loop: "{{ osbuild_composer_aws_test_cases }}"
       vars:
-        test_timeout: "{{ osbuild_composer_aws_timeout }}"
         env_vars: "{{ osbuild_composer_aws_env_vars }}"
       loop_control:
         loop_var: test_case

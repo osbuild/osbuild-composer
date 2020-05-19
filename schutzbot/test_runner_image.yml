@@ -14,7 +14,6 @@
     - name: "Run image test case: {{ test_case_prefix }}-{{ test_case }}"
       command: |
         {{ image_test_executable }} -test.v \
-          -test.timeout {{ test_timeout * 60 }}s \
           {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }}
       args:
         chdir: "{{ tests_working_directory }}"
