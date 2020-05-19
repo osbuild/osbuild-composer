@@ -30,6 +30,65 @@ boot-test the image.
 To (re)generate these test cases use the tool
 `tools/test-case-generators/generate-test-cases`.
 
+### Setting up Azure upload tests
+
+By default, the vhd images are run locally using qemu. However, when
+the right set of environment flags is passed to the osbuild-image-tests,
+it uploads the image to Azure, boots it and tries to ssh into it.
+
+#### Required flags
+- `AZURE_STORAGE_ACCOUNT`
+- `AZURE_STORAGE_ACCESS_KEY`
+- `AZURE_CONTAINER_NAME`
+- `AZURE_SUBSCRIPTION_ID`
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+- `AZURE_TENANT_ID`
+- `AZURE_LOCATION`
+- `AZURE_RESOURCE_GROUP`
+
+#### Setting up all the required resources
+
+1) Firstly, go to *Subscriptions* in the left-side menu. Here you can find
+   the `AZURE_SUBSCRIPTION_ID`.
+
+2) Now, you need to create a new resource group. In the left-side menu,
+   select *Resource groups*. Click on *Add* above the resource group list.
+   The name you choose is your `AZURE_RESOURCE_GROUP`. The region you choose
+   is your `AZURE_LOCATION`. However, it must be in the "machine-readable
+   form". You can list all the locations with their machine-readable names
+   using Azure CLI: `az account list-locations -o table`.
+   E.g. the machine-readable name of US East location is `eastus`.
+   
+   Note that terms *location* and *region* are synonyms in Azure's context.
+
+3) Storage time! Go to Storage accounts in the left-side menu. Click on
+   *Add* above the list. Use the resource group you created in
+   the previous step. Also, the region should be the same. The name you
+   choose is your `AZURE_STORAGE_ACCOUNT`.
+
+   After the storage account is created, open it.
+   Select *Settings > Access keys*. Choose one of the keys, this is your
+   `AZURE_STORAGE_ACCESS_KEY`. Select *Blob service > Containers* and create
+   a new one. Its name is your `AZURE_CONTAINER_NAME`.
+
+4) Now it’s time to create an application. This is needed because Azure uses
+   OAuth to do authorization. In the left-side menu, choose *Azure Active
+   Directory*. Go to *Manage > App registrations* and register a new
+   application.
+
+   When it’s created, open it. In the overview, you can see
+   the Application (client) ID and the Directory (tenant) ID. These are your
+   `AZURE_CLIENT_ID` and `AZURE_TENANT_ID`.
+
+   Now, go to *Manage > Certificates & Secrets* under your new application
+   and create a new client secret. The is your `AZURE_CLIENT_SECRET`.
+
+5) The last step is to give the new application access to the resource group.
+   This step must be done by Azure administrator (@larskarlitski): Go to
+   the *Access control (IAM)* section under the newly created resource group.
+   Here, add the new application with the *Developer* role.
+
 ## Notes on asserts and comparing expected values
 
 When comparing for expected values in test functions you should use the
