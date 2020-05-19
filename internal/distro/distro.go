@@ -84,7 +84,14 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	Size uint64
+	OSTree OSTreeImageOptions
+	Size   uint64
+}
+
+// The OSTreeImageOptions specify ostree-specific image options
+type OSTreeImageOptions struct {
+	Ref    string
+	Parent string
 }
 
 type Registry struct {

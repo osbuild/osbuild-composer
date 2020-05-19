@@ -336,6 +336,7 @@ var imageTypeCompatMapping = map[string]string{
 	"ext4-filesystem":   "Raw-filesystem",
 	"partitioned-disk":  "Partitioned-disk",
 	"tar":               "Tar",
+	"fedora-iot-commit": "fedora-iot-commit",
 	"test_type":         "test_type",         // used only in json_test.go
 	"test_type_invalid": "test_type_invalid", // used only in json_test.go
 }
