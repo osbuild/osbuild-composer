@@ -232,7 +232,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	return repoConfigs, nil
 }
 
-func runDNF(command string, arguments interface{}, result interface{}) error {
+func runDNF(dnfJsonPath string, command string, arguments interface{}, result interface{}) error {
 	var call = struct {
 		Command   string      `json:"command"`
 		Arguments interface{} `json:"arguments,omitempty"`
@@ -241,7 +241,7 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 		arguments,
 	}
 
-	cmd := exec.Command("python3", "dnf-json")
+	cmd := exec.Command("python3", dnfJsonPath)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -293,14 +293,16 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 }
 
 type rpmmdImpl struct {
-	CacheDir string
-	RHSM     *RHSMSecrets
+	CacheDir    string
+	RHSM        *RHSMSecrets
+	dnfJsonPath string
 }
 
-func NewRPMMD(cacheDir string) RPMMD {
+func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
 	return &rpmmdImpl{
-		CacheDir: cacheDir,
-		RHSM:     getRHSMSecrets(),
+		CacheDir:    cacheDir,
+		RHSM:        getRHSMSecrets(),
+		dnfJsonPath: dnfJsonPath,
 	}
 }
 
@@ -347,7 +349,7 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 		Packages  PackageList       `json:"packages"`
 	}
 
-	err := runDNF("dump", arguments, &reply)
+	err := runDNF(r.dnfJsonPath, "dump", arguments, &reply)
 
 	sort.Slice(reply.Packages, func(i, j int) bool {
 		return reply.Packages[i].Name < reply.Packages[j].Name
@@ -382,7 +384,7 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []PackageSpec     `json:"dependencies"`
 	}
-	err := runDNF("depsolve", arguments, &reply)
+	err := runDNF(r.dnfJsonPath, "depsolve", arguments, &reply)
 
 	for i, pack := range reply.Dependencies {
 		id, err := strconv.Atoi(pack.RepoID)

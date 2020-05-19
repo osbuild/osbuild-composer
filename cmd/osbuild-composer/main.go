@@ -87,7 +87,9 @@ func main() {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 
-	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
+	// osbuild-composer must be run in /usr/libexec/osbuild-composer directory,
+	// therefore use ./dnf-json as the path to dnf-json.
+	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"), "./dnf-json")
 
 	distros, err := distro.NewRegistry(fedora31.New(), fedora32.New(), rhel8.New())
 	if err != nil {
