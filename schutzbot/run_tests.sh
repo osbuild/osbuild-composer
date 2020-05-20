@@ -1,6 +1,23 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Get OS details.
+source /etc/os-release
+
+# Set up a dnf repository for the RPMs we built via mock.
+sudo tee /etc/yum.repos.d/osbuild-mock.repo > /dev/null << EOF
+[osbuild-mock]
+name=osbuild mock ${BUILD_TAG} ${ID}${VERSION_ID//./}
+baseurl=${MOCK_REPO_BASE_URL}/${BUILD_TAG}/${ID}${VERSION_ID//./}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority.
+priority=5
+EOF
+
+# Verify that the repository we added is working properly.
+dnf list all | grep osbuild-mock
+
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
 sudo chmod -R 777 /opt/ansible_{local,remote}
@@ -21,24 +38,19 @@ trap "preserve_journal" ERR
 # Write a simple hosts file for Ansible.
 echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 
-# Set Ansible's config file location.
-export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
-
 # Get the SHA of osbuild-composer which Jenkins checked out for us.
 OSBUILD_COMPOSER_VERSION=$(git rev-parse HEAD)
 
-# Deploy osbuild-composer and osbuild using RPMs built in a mock chroot.
-# NOTE(mhayden): Jenkins clones the repository and then merges the code from
-# the pull request into the repo. This creates a new SHA that exists only in
-# Jenkins. We use ${WORKSPACE} below to tell ansible-osbuild to use the clone
-# that Jenkins made for testing osbuild-composer.
+# Deploy osbuild/osbuild-composer via the repository we created.
+export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
-  -e osbuild_composer_repo_url=${WORKSPACE} \
-  -e osbuild_composer_version=${OSBUILD_COMPOSER_VERSION} \
-  -e install_source=mock \
+  -e install_source=os \
   ansible-osbuild/playbook.yml
+
+# Ensure the testing package is installed.
+sudo dnf -y install osbuild-composer-tests
 
 # Run the tests.
 ansible-playbook \
