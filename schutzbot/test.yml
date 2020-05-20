@@ -36,6 +36,8 @@
         loop_var: test_case
       when:
         - test_type == 'image'
+        # Don't run the AWS test if the bucket env var is not set.
+        - (lookup('env', 'AWS_BUCKET') | default(false)) | bool
 
     - name: Show failed and passed tests
       debug:
