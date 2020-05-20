@@ -57,24 +57,24 @@ jobs:
       matrix:
         fedora_release: ["31"]
     container:
-      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
     steps:
       - name: "📥 Prepare container"
         run: |
           echo "fastestmirror=1" >> /etc/dnf/dnf.conf
           echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
           rm -fv /etc/yum.repos.d/fedora*modular*
-          dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
+          dnf -qy upgrade
+          dnf -qy install dnf-plugins-core findutils git make rpm-build rpmdevtools
 
       - name: "🗄️ Clone the repository"
         uses: actions/checkout@v2
 
       - name: "🧱 Pre-install osbuild from updates-testing repo"
-        run: dnf -y --enablerepo=updates-testing install osbuild
+        run: dnf -qy --enablerepo=updates-testing install osbuild
 
       - name: "🛒 Install RPM build dependencies"
-        run: dnf -y builddep golang-github-osbuild-composer.spec
+        run: dnf -qy builddep golang-github-osbuild-composer.spec
 
       - name: "🛠️ Build RPMs"
         run: |
@@ -101,24 +101,24 @@ jobs:
       matrix:
         fedora_release: ["32", "33"]
     container:
-      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
     steps:
       - name: "📥 Prepare container"
         run: |
           echo "fastestmirror=1" >> /etc/dnf/dnf.conf
           echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
           rm -fv /etc/yum.repos.d/fedora*modular*
-          dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
+          dnf -qy upgrade
+          dnf -qy install dnf-plugins-core findutils git make rpm-build rpmdevtools
 
       - name: "🗄️ Clone the repository"
         uses: actions/checkout@v2
 
       - name: "🧱 Pre-install osbuild from updates-testing repo"
-        run: dnf -y --enablerepo=updates-testing install osbuild
+        run: dnf -qy --enablerepo=updates-testing install osbuild
 
       - name: "🛒 Install RPM build dependencies"
-        run: dnf -y builddep osbuild-composer.spec
+        run: dnf -qy builddep osbuild-composer.spec
 
       - name: "🛠️ Build RPMs"
         run: |
