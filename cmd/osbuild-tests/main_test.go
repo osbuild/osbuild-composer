@@ -57,14 +57,13 @@ func TestEverything(t *testing.T) {
 	runComposerCLI(t, false, "projects", "list")
 	runComposerCLI(t, false, "projects", "info", "filesystem")
 	runComposerCLI(t, false, "projects", "info", "filesystem", "kernel")
-	runComposerCLI(t, false, "sources", "list")
 	runComposerCLI(t, false, "status", "show")
 
 	// Full integration tests
 	testCompose(t, "ami")
 }
 
-func TestSources(t *testing.T) {
+func TestSourcesCommands(t *testing.T) {
 	sources_toml, err := ioutil.TempFile("", "SOURCES-*.TOML")
 	require.NoErrorf(t, err, "Could not create temporary file: %v", err)
 	defer os.Remove(sources_toml.Name())
