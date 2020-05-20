@@ -11,179 +11,118 @@ on:
       - master
 
 jobs:
-  lint:
-    name: "🛃 Checks"
-    runs-on: ubuntu-latest
-    steps:
+  # lint:
+  #   name: "🛃 Checks"
+  #   runs-on: ubuntu-latest
+  #   steps:
 
-      - name: Set up Go 1.12
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.12
-        id: go
+  #     - name: Set up Go 1.12
+  #       uses: actions/setup-go@v1
+  #       with:
+  #         go-version: 1.12
+  #       id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Check that source has been prepared
-        run: |
-          ./tools/prepare-source.sh
-          if [ -n "$(git status --porcelain)" ]; then
-            echo
-            echo "Please include these changes in your branch: "
-            git status -vv
-            exit "1"
-          else
-            exit "0"
-          fi
+  #     - name: Check that source has been prepared
+  #       run: |
+  #         ./tools/prepare-source.sh
+  #         if [ -n "$(git status --porcelain)" ]; then
+  #           echo
+  #           echo "Please include these changes in your branch: "
+  #           git status -vv
+  #           exit "1"
+  #         else
+  #           exit "0"
+  #         fi
 
-      - name: Install golangci-lint
-        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.7
+  #     - name: Install golangci-lint
+  #       run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.7
 
-      - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run
+  #     - name: Run golangci-lint
+  #       run: $(go env GOPATH)/bin/golangci-lint run
 
-      - name: Run unit tests
-        run: go test -v -race -covermode atomic -coverprofile=coverage.txt ./...
+  #     - name: Run unit tests
+  #       run: go test -v -race -covermode atomic -coverprofile=coverage.txt ./...
 
-      - name: Send coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
+  #     - name: Send coverage to codecov.io
+  #       run: bash <(curl -s https://codecov.io/bash)
 
   old_rpm_build:
-    name: "📦 RPM (golang-github-osbuild-composer)"
+    name: "📦 RPM"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        fedora_release: ["31"]
+        container:
+          - repo: docker.io/library/fedora:31
+            rpm_pkg: golang-github-osbuild-composer
+          - repo: docker.io/library/fedora:32
+            rpm_pkg: osbuild-composer
+          - repo: docker.io/library/fedora:33
+            rpm_pkg: osbuild-composer
+          - repo: registry.redhat.io/ubi8/ubi
+            rpm_pkg: osbuild-composer
     container:
-      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
+      image: "${{ matrix.container.repo }}"
     steps:
-      - name: "📥 Prepare container"
-        run: |
-          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
-          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
-          rm -fv /etc/yum.repos.d/fedora*modular*
-          dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
-
-      - name: "🗄️ Clone the repository"
+      - name: "Clone the repository"
         uses: actions/checkout@v2
-
-      - name: "🧱 Pre-install osbuild from updates-testing repo"
-        run: dnf -y --enablerepo=updates-testing install osbuild
-
-      - name: "🛒 Install RPM build dependencies"
-        run: dnf -y builddep golang-github-osbuild-composer.spec
-
-      - name: "🛠️ Build RPMs"
-        run: |
-          mkdir rpms
-          make old-srpm
-          cp -av rpmbuild/SRPMS/*.rpm rpms/
-          make old-rpm
-          cp -av rpmbuild/RPMS/*/*.rpm rpms/
-
-      - name: "📤 Upload artifacts"
-        uses: actions/upload-artifact@v1
         with:
-          name: rpms
-          path: rpms/
+          path: 'temp'
 
-      - name: "🔎 Test RPM installation"
-        run: dnf -y install $(ls rpms/*.x86_64.rpm)
+      - name: Build RPMs
+        run: temp/.github/build_rpms.sh
 
-  rpm_build:
-    name: "📦 RPM (osbuild-composer)"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        fedora_release: ["32", "33"]
-    container:
-      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
-    steps:
-      - name: "📥 Prepare container"
-        run: |
-          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
-          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
-          rm -fv /etc/yum.repos.d/fedora*modular*
-          dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
 
-      - name: "🗄️ Clone the repository"
-        uses: actions/checkout@v2
+  # koji:
+  #   name: "麹 Koji test"
+  #   runs-on: ubuntu-latest
+  #   services:
+  #     postgres:
+  #       image: docker.io/library/postgres:12-alpine
+  #       env:
+  #         POSTGRES_USER:     koji
+  #         POSTGRES_PASSWORD: kojipass
+  #         POSTGRES_DB:       koji
+  #     koji:
+  #       image: quay.io/osbuild/ghci-koji:v1
+  #       env:
+  #         POSTGRES_USER:     koji
+  #         POSTGRES_PASSWORD: kojipass
+  #         POSTGRES_DB:       koji
+  #         POSTGRES_HOST:     postgres
+  #       ports:
+  #         - 8080:80
+  #   steps:
+  #     - name: Set up Go 1.12
+  #       uses: actions/setup-go@v1
+  #       with:
+  #         go-version: 1.12
+  #       id: go
 
-      - name: "🧱 Pre-install osbuild from updates-testing repo"
-        run: dnf -y --enablerepo=updates-testing install osbuild
+  #       # We need python for koji client.
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.8
 
-      - name: "🛒 Install RPM build dependencies"
-        run: dnf -y builddep osbuild-composer.spec
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: "🛠️ Build RPMs"
-        run: |
-          mkdir rpms
-          make srpm
-          cp -av rpmbuild/SRPMS/*.rpm rpms/
-          make rpm
-          cp -av rpmbuild/RPMS/*/*.rpm rpms/
+  #       # Koji from pip is missing its config file.
+  #       # To fix this, the default Fedora 32 config is included in the repo
+  #       # and installed here. See the last line of the script.
+  #     - name: Install koji client
+  #       run: |
+  #         sudo apt-get install -y libkrb5-dev
+  #         python -m pip install --upgrade pip
+  #         pip install koji
+  #         sudo cp .github/koji.conf /etc/koji.conf
 
-      - name: "📤 Upload artifacts"
-        uses: actions/upload-artifact@v1
-        with:
-          name: rpms
-          path: rpms/
+  #     - name: Run unit tests
+  #       run: go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
 
-      - name: "🔎 Test RPM installation"
-        run: dnf -y install $(ls rpms/*.x86_64.rpm)
-
-  koji:
-    name: "麹 Koji test"
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: docker.io/library/postgres:12-alpine
-        env:
-          POSTGRES_USER:     koji
-          POSTGRES_PASSWORD: kojipass
-          POSTGRES_DB:       koji
-      koji:
-        image: quay.io/osbuild/ghci-koji:v1
-        env:
-          POSTGRES_USER:     koji
-          POSTGRES_PASSWORD: kojipass
-          POSTGRES_DB:       koji
-          POSTGRES_HOST:     postgres
-        ports:
-          - 8080:80
-    steps:
-      - name: Set up Go 1.12
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.12
-        id: go
-
-        # We need python for koji client.
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-        # Koji from pip is missing its config file.
-        # To fix this, the default Fedora 32 config is included in the repo
-        # and installed here. See the last line of the script.
-      - name: Install koji client
-        run: |
-          sudo apt-get install -y libkrb5-dev
-          python -m pip install --upgrade pip
-          pip install koji
-          sudo cp .github/koji.conf /etc/koji.conf
-
-      - name: Run unit tests
-        run: go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
-
-      - name: Send coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
+  #     - name: Send coverage to codecov.io
+  #       run: bash <(curl -s https://codecov.io/bash)
