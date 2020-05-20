@@ -12,9 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel81"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel83"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -72,7 +70,7 @@ func main() {
 		}
 	}
 
-	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel81.New(), rhel82.New(), rhel83.New())
+	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel8.New())
 	if err != nil {
 		panic(err)
 	}

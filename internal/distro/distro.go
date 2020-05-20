@@ -144,7 +144,9 @@ func GetHostDistroName() (string, error) {
 		return "", err
 	}
 
-	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
+	// NOTE: We only consider major releases
+	version := strings.Split(osrelease["VERSION_ID"], ".")
+	name := osrelease["ID"] + "-" + version[0]
 	return name, nil
 }
 

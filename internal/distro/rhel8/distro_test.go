@@ -1,10 +1,10 @@
-package rhel82_test
+package rhel8_test
 
 import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel82"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -75,7 +75,7 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dist := rhel82.New()
+			dist := rhel8.New()
 			arch, _ := dist.GetArch("x86_64")
 			imgType, err := arch.GetImageType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
@@ -122,7 +122,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"x86_64":  x8664BuildPackages,
 		"aarch64": aarch64BuildPackages,
 	}
-	d := rhel82.New()
+	d := rhel8.New()
 	for _, archLabel := range d.ListArches() {
 		archStruct, err := d.GetArch(archLabel)
 		if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
@@ -139,7 +139,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 }
 
 func TestImageType_Name(t *testing.T) {
-	distro := rhel82.New()
+	distro := rhel8.New()
 	imgMap := []struct {
 		arch     string
 		imgNames []string
@@ -211,7 +211,7 @@ func TestImageType_Size(t *testing.T) {
 		},
 	}
 
-	distro := rhel82.New()
+	distro := rhel8.New()
 	arch, err := distro.GetArch("x86_64")
 	if assert.NoError(t, err) {
 		for _, mapping := range sizeMap {
@@ -345,7 +345,7 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootable: true,
 		},
 	}
-	distro := rhel82.New()
+	distro := rhel8.New()
 	arch, err := distro.GetArch("x86_64")
 	assert.NoError(t, err)
 
@@ -365,17 +365,17 @@ func TestImageType_BasePackages(t *testing.T) {
 }
 
 func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../test/cases/", "rhel_8.2*", rhel82.New())
+	distro_test_common.TestDistro_Manifest(t, "../../../test/cases/", "rhel_8*", rhel8.New())
 }
 
-func TestRhel82_ListArches(t *testing.T) {
-	distro := rhel82.New()
+func TestRhel8_ListArches(t *testing.T) {
+	distro := rhel8.New()
 	arches := distro.ListArches()
 	assert.Equal(t, []string{"aarch64", "x86_64"}, arches)
 }
 
-func TestRhel82_GetArch(t *testing.T) {
-	distro := rhel82.New()
+func TestRhel8_GetArch(t *testing.T) {
+	distro := rhel8.New()
 	arches := []struct {
 		name          string
 		errorExpected bool
@@ -404,12 +404,12 @@ func TestRhel82_GetArch(t *testing.T) {
 	}
 }
 
-func TestRhel82_Name(t *testing.T) {
-	distro := rhel82.New()
-	assert.Equal(t, "rhel-8.2", distro.Name())
+func TestRhel8_Name(t *testing.T) {
+	distro := rhel8.New()
+	assert.Equal(t, "rhel-8", distro.Name())
 }
 
-func TestRhel82_ModulePlatformID(t *testing.T) {
-	distro := rhel82.New()
+func TestRhel8_ModulePlatformID(t *testing.T) {
+	distro := rhel8.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
 }
