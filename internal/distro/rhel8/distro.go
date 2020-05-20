@@ -1,4 +1,4 @@
-package rhel82
+package rhel8
 
 import (
 	"errors"
@@ -15,17 +15,16 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "rhel-8.2"
+const name = "rhel-8"
 const modulePlatformID = "platform:el8"
 
-type RHEL82 struct {
+type RHEL8 struct {
 	arches        map[string]arch
 	imageTypes    map[string]imageType
 	buildPackages []string
 }
 
 type arch struct {
-	name               string
 	bootloaderPackages []string
 	buildPackages      []string
 	uefi               bool
@@ -45,27 +44,27 @@ type imageType struct {
 	assembler        func(uefi bool, size uint64) *osbuild.Assembler
 }
 
-type rhel82Arch struct {
+type rhel8Arch struct {
 	name   string
-	distro *RHEL82
+	distro *RHEL8
 	arch   *arch
 }
 
-type rhel82ImageType struct {
+type rhel8ImageType struct {
 	name      string
-	arch      *rhel82Arch
+	arch      *rhel8Arch
 	imageType *imageType
 }
 
-func (a *rhel82Arch) Distro() distro.Distro {
+func (a *rhel8Arch) Distro() distro.Distro {
 	return a.distro
 }
 
-func (t *rhel82ImageType) Arch() distro.Arch {
+func (t *rhel8ImageType) Arch() distro.Arch {
 	return t.arch
 }
 
-func (d *RHEL82) ListArches() []string {
+func (d *RHEL8) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
 		archs = append(archs, name)
@@ -74,24 +73,24 @@ func (d *RHEL82) ListArches() []string {
 	return archs
 }
 
-func (d *RHEL82) GetArch(arch string) (distro.Arch, error) {
+func (d *RHEL8) GetArch(arch string) (distro.Arch, error) {
 	a, exists := d.arches[arch]
 	if !exists {
 		return nil, errors.New("invalid architecture: " + arch)
 	}
 
-	return &rhel82Arch{
+	return &rhel8Arch{
 		name:   arch,
 		distro: d,
 		arch:   &a,
 	}, nil
 }
 
-func (a *rhel82Arch) Name() string {
+func (a *rhel8Arch) Name() string {
 	return a.name
 }
 
-func (a *rhel82Arch) ListImageTypes() []string {
+func (a *rhel8Arch) ListImageTypes() []string {
 	formats := make([]string, 0, len(a.distro.imageTypes))
 	for name := range a.distro.imageTypes {
 		formats = append(formats, name)
@@ -100,32 +99,32 @@ func (a *rhel82Arch) ListImageTypes() []string {
 	return formats
 }
 
-func (a *rhel82Arch) GetImageType(imageType string) (distro.ImageType, error) {
+func (a *rhel8Arch) GetImageType(imageType string) (distro.ImageType, error) {
 	t, exists := a.distro.imageTypes[imageType]
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
 
-	return &rhel82ImageType{
+	return &rhel8ImageType{
 		name:      imageType,
 		arch:      a,
 		imageType: &t,
 	}, nil
 }
 
-func (t *rhel82ImageType) Name() string {
+func (t *rhel8ImageType) Name() string {
 	return t.name
 }
 
-func (t *rhel82ImageType) Filename() string {
+func (t *rhel8ImageType) Filename() string {
 	return t.imageType.name
 }
 
-func (t *rhel82ImageType) MIMEType() string {
+func (t *rhel8ImageType) MIMEType() string {
 	return t.imageType.mimeType
 }
 
-func (t *rhel82ImageType) Size(size uint64) uint64 {
+func (t *rhel8ImageType) Size(size uint64) uint64 {
 	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
 	if t.name == "vhd" && size%MegaByte != 0 {
@@ -137,7 +136,7 @@ func (t *rhel82ImageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *rhel82ImageType) BasePackages() ([]string, []string) {
+func (t *rhel8ImageType) BasePackages() ([]string, []string) {
 	packages := t.imageType.packages
 	if t.imageType.bootable {
 		packages = append(packages, t.arch.arch.bootloaderPackages...)
@@ -146,11 +145,11 @@ func (t *rhel82ImageType) BasePackages() ([]string, []string) {
 	return packages, t.imageType.excludedPackages
 }
 
-func (t *rhel82ImageType) BuildPackages() []string {
+func (t *rhel8ImageType) BuildPackages() []string {
 	return append(t.arch.distro.buildPackages, t.arch.arch.buildPackages...)
 }
 
-func (t *rhel82ImageType) Manifest(c *blueprint.Customizations,
+func (t *rhel8ImageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
 	buildPackageSpecs []rpmmd.PackageSpec,
@@ -166,10 +165,10 @@ func (t *rhel82ImageType) Manifest(c *blueprint.Customizations,
 	}, nil
 }
 
-func New() *RHEL82 {
+func New() *RHEL8 {
 	const GigaByte = 1024 * 1024 * 1024
 
-	r := RHEL82{
+	r := RHEL8{
 		imageTypes: map[string]imageType{},
 		buildPackages: []string{
 			"dnf",
@@ -185,8 +184,7 @@ func New() *RHEL82 {
 			"xz",
 		},
 		arches: map[string]arch{
-			"x86_64": arch{
-				name: "x86_64",
+			"x86_64": {
 				bootloaderPackages: []string{
 					"dracut-config-generic",
 					"grub2-pc",
@@ -195,8 +193,7 @@ func New() *RHEL82 {
 					"grub2-pc",
 				},
 			},
-			"aarch64": arch{
-				name: "aarch64",
+			"aarch64": {
 				bootloaderPackages: []string{
 					"dracut-config-generic",
 					"efibootmgr",
@@ -536,15 +533,15 @@ func New() *RHEL82 {
 	return &r
 }
 
-func (r *RHEL82) Name() string {
+func (r *RHEL8) Name() string {
 	return name
 }
 
-func (r *RHEL82) ModulePlatformID() string {
+func (r *RHEL8) ModulePlatformID() string {
 	return modulePlatformID
 }
 
-func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
+func (r *RHEL8) BasePackages(outputFormat string, outputArchitecture string) ([]string, []string, error) {
 	output, exists := r.imageTypes[outputFormat]
 	if !exists {
 		return nil, nil, errors.New("invalid output format: " + outputFormat)
@@ -563,7 +560,7 @@ func (r *RHEL82) BasePackages(outputFormat string, outputArchitecture string) ([
 	return packages, output.excludedPackages, nil
 }
 
-func (r *RHEL82) BuildPackages(outputArchitecture string) ([]string, error) {
+func (r *RHEL8) BuildPackages(outputArchitecture string) ([]string, error) {
 	arch, exists := r.arches[outputArchitecture]
 	if !exists {
 		return nil, errors.New("invalid architecture: " + outputArchitecture)
@@ -584,7 +581,7 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (t *rhel82ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
+func (t *rhel8ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch.arch, buildPackageSpecs), "org.osbuild.rhel82")
 
@@ -656,13 +653,13 @@ func (t *rhel82ImageType) pipeline(c *blueprint.Customizations, repos []rpmmd.Re
 	return p, nil
 }
 
-func (r *rhel82ImageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+func (r *rhel8ImageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, buildPackageSpecs)))
 	return p
 }
 
-func (r *rhel82ImageType) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+func (r *rhel8ImageType) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
 	var gpgKeys []string
 	for _, repo := range repos {
 		if repo.GPGKey == "" {
@@ -681,7 +678,7 @@ func (r *rhel82ImageType) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, s
 		Packages: packages,
 	}
 }
-func (r *rhel82ImageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+func (r *rhel8ImageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
 	options := osbuild.UsersStageOptions{
 		Users: make(map[string]osbuild.UsersStageOptionsUser),
 	}
@@ -721,7 +718,7 @@ func (r *rhel82ImageType) userStageOptions(users []blueprint.UserCustomization) 
 	return &options, nil
 }
 
-func (r *rhel82ImageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+func (r *rhel8ImageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
 	options := osbuild.GroupsStageOptions{
 		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
 	}
@@ -741,7 +738,7 @@ func (r *rhel82ImageType) groupStageOptions(groups []blueprint.GroupCustomizatio
 	return &options
 }
 
-func (r *rhel82ImageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
+func (r *rhel8ImageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
 	options := osbuild.FirewallStageOptions{
 		Ports: firewall.Ports,
 	}
@@ -754,7 +751,7 @@ func (r *rhel82ImageType) firewallStageOptions(firewall *blueprint.FirewallCusto
 	return &options
 }
 
-func (r *rhel82ImageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *osbuild.SystemdStageOptions {
+func (r *rhel8ImageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *osbuild.SystemdStageOptions {
 	if s != nil {
 		enabledServices = append(enabledServices, s.Enabled...)
 		disabledServices = append(disabledServices, s.Disabled...)
@@ -766,7 +763,7 @@ func (r *rhel82ImageType) systemdStageOptions(enabledServices, disabledServices 
 	}
 }
 
-func (r *rhel82ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+func (r *rhel8ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	options := osbuild.FSTabStageOptions{}
 	options.AddFilesystem("0bd700f8-090f-4556-b797-b340297ea1bd", "xfs", "/", "defaults", 0, 0)
 	if uefi {
@@ -775,7 +772,7 @@ func (r *rhel82ImageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOption
 	return &options
 }
 
-func (r *rhel82ImageType) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRUB2StageOptions {
+func (r *rhel8ImageType) grub2StageOptions(kernelOptions string, uefi bool) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("0bd700f8-090f-4556-b797-b340297ea1bd")
 
 	var uefiOptions *osbuild.GRUB2UEFI
@@ -793,13 +790,13 @@ func (r *rhel82ImageType) grub2StageOptions(kernelOptions string, uefi bool) *os
 	}
 }
 
-func (r *rhel82ImageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
+func (r *rhel8ImageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	return &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}
 }
 
-func (r *RHEL82) qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
+func (r *RHEL8) qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
@@ -854,7 +851,7 @@ func (r *RHEL82) qemuAssembler(format string, filename string, uefi bool, size u
 	return osbuild.NewQEMUAssembler(&options)
 }
 
-func (r *RHEL82) tarAssembler(filename, compression string) *osbuild.Assembler {
+func (r *RHEL8) tarAssembler(filename, compression string) *osbuild.Assembler {
 	return osbuild.NewTarAssembler(
 		&osbuild.TarAssemblerOptions{
 			Filename:    filename,
@@ -862,7 +859,7 @@ func (r *RHEL82) tarAssembler(filename, compression string) *osbuild.Assembler {
 		})
 }
 
-func (r *RHEL82) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
+func (r *RHEL8) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
 	id := uuid.MustParse("0bd700f8-090f-4556-b797-b340297ea1bd")
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
