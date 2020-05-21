@@ -1506,11 +1506,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	type OSTreeRequest struct {
+		Ref    string `json:"ref"`
+		Parent string `json:"parent"`
+	}
+
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
 		BlueprintName string         `json:"blueprint_name"`
 		ComposeType   string         `json:"compose_type"`
 		Size          uint64         `json:"size"`
+		OSTree        OSTreeRequest  `json:"ostree"`
 		Branch        string         `json:"branch"`
 		Upload        *uploadRequest `json:"upload"`
 	}
@@ -1606,6 +1612,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
 			Size: size,
+			OSTree: distro.OSTreeImageOptions{
+				Ref:    cr.OSTree.Ref,
+				Parent: cr.OSTree.Parent,
+			},
 		},
 		api.allRepositories(),
 		packages,
