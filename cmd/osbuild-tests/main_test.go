@@ -29,7 +29,8 @@ func TestComposeCommands(t *testing.T) {
 
 	bp := blueprint.Blueprint{
 		Name:        "empty",
-		Description: "Test empty blueprint in toml format",
+		Description: "Test blueprint in toml format",
+		Packages: []blueprint.Package{{Name: "bash", Version: "*"}},
 	}
 	pushBlueprint(t, &bp)
 	defer deleteBlueprint(t, &bp)
