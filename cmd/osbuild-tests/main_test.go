@@ -214,8 +214,7 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
 }
 
-func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage {
-	command = append([]string{"--json"}, command...)
+func runComposerCLIPlainText(t *testing.T, quiet bool, command ...string) []byte {
 	cmd := exec.Command("composer-cli", command...)
 	stdout, err := cmd.StdoutPipe()
 	require.Nilf(t, err, "Could not create command: %v", err)
@@ -223,13 +222,23 @@ func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage
 	err = cmd.Start()
 	require.Nilf(t, err, "Could not start command: %v", err)
 
+	contents, err := ioutil.ReadAll(stdout)
+	require.NoError(t, err, "Could not read stdout from command")
+
+	err = cmd.Wait()
+	require.NoErrorf(t, err, "Command failed: %v", err)
+
+	return contents
+}
+
+func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage {
+	command = append([]string{"--json"}, command...)
+	contents := runComposerCLIPlainText(t, quiet, command...)
+
 	var result json.RawMessage
 
-	contents, err := ioutil.ReadAll(stdout)
-	require.Nilf(t, err, "Could not read stdout from command: %v", err)
-
 	if len(contents) != 0 {
-		err = json.Unmarshal(contents, &result)
+		err := json.Unmarshal(contents, &result)
 		if err != nil {
 			// We did not get JSON, try interpreting it as TOML
 			var data interface{}
@@ -243,13 +252,10 @@ func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage
 		}
 	}
 
-	err = cmd.Wait()
-	require.Nilf(t, err, "Command failed: %v", err)
-
 	buffer := bytes.Buffer{}
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "  ")
-	err = encoder.Encode(result)
+	err := encoder.Encode(result)
 	require.Nilf(t, err, "Could not remarshal the recevied JSON: %v", err)
 
 	return result
