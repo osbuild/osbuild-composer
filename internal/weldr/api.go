@@ -112,6 +112,7 @@ func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmm
 	api.router.GET("/api/v:version/compose/finished", api.composeFinishedHandler)
 	api.router.GET("/api/v:version/compose/failed", api.composeFailedHandler)
 	api.router.GET("/api/v:version/compose/image/:uuid", api.composeImageHandler)
+	api.router.GET("/api/v:version/compose/metadata/:uuid", api.composeMetadataHandler)
 	api.router.GET("/api/v:version/compose/logs/:uuid", api.composeLogsHandler)
 	api.router.GET("/api/v:version/compose/log/:uuid", api.composeLogHandler)
 	api.router.POST("/api/v:version/compose/uploads/schedule/:uuid", api.uploadsScheduleHandler)
@@ -2022,6 +2023,76 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	writer.Header().Set("Content-Length", fmt.Sprintf("%d", fileSize))
 
 	_, err = io.Copy(writer, reader)
+	common.PanicOnError(err)
+}
+
+// composeMetadataHandler returns a tar of the metadata used to compose the requested UUID
+func (api *API) composeMetadataHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	uuidString := params.ByName("uuid")
+	uuid, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	compose, exists := api.store.GetCompose(uuid)
+	if !exists {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	composeStatus := api.getComposeStatus(compose)
+	if composeStatus.State != common.CFinished && composeStatus.State != common.CFailed {
+		errors := responseError{
+			ID:  "BuildInWrongState",
+			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, composeStatus.State.ToString()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// Return the Manifest, if it exists
+	if compose.ImageBuild.Manifest == nil {
+		errors := responseError{
+			ID:  "EmptyManifest",
+			Msg: fmt.Sprintf("Manifest unexpectedly empty."),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	metadata, err := json.Marshal(compose.ImageBuild.Manifest)
+	common.PanicOnError(err)
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-metadata.tar")
+	writer.Header().Set("Content-Type", "application/x-tar")
+	// NOTE: Do not set Content-Length, it will use chunked transfer encoding automatically
+
+	tw := tar.NewWriter(writer)
+	hdr := &tar.Header{
+		Name:    uuid.String() + ".json",
+		Mode:    0600,
+		Size:    int64(len(metadata)),
+		ModTime: time.Now(),
+	}
+	err = tw.WriteHeader(hdr)
+	common.PanicOnError(err)
+
+	_, err = tw.Write(metadata)
+	common.PanicOnError(err)
+
+	err = tw.Close()
 	common.PanicOnError(err)
 }
 
