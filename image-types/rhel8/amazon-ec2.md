@@ -1,7 +1,5 @@
 # Amazon EC2 Image
 
-Owner: *None*
-
 This image is meant to be used in [Amazon Elastic Compute Cloud (EC2)][ec2], a
 popular cloud computing platform. It has to follow Amazon’s
 [guidelines][guidelines] and [requirements][requirements] for shared AMIs.

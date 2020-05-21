@@ -1,7 +1,5 @@
 # OpenStack Image
 
-Owner: *None*
-
 This image is meant to be run in an OpenStack environment. It has to conform to
 OpenStack’s [image requirements][requirements].
 

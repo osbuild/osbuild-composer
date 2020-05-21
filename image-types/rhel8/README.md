@@ -1,7 +1,5 @@
 # Red Hat Enterprise Linux 8
 
-Owner: *None*
-
 *osbuild-composer* can create [Red Hat Enterprise Linux 8][rhel] images.
 
 ## Architectures
