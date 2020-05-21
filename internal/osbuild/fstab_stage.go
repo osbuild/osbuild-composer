@@ -22,7 +22,8 @@ func NewFSTabStage(options *FSTabStageOptions) *Stage {
 // An FSTabEntry represents one line in /etc/fstab. With the one exception
 // that the the spec field must be represented as an UUID.
 type FSTabEntry struct {
-	UUID    string `json:"uuid"`
+	UUID    string `json:"uuid,omitempty"`
+	Label   string `json:"label,omitempty"`
 	VFSType string `json:"vfs_type"`
 	Path    string `json:"path,omitempty"`
 	Options string `json:"options,omitempty"`
