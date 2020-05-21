@@ -45,7 +45,7 @@ type imageType struct {
 	kernelOptions    string
 	bootable         bool
 	defaultSize      uint64
-	assembler        func(uefi bool, size uint64) *osbuild.Assembler
+	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
 func (a *arch) Distro() distro.Distro {
@@ -172,7 +172,7 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
 	buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
-	pipeline, err := t.pipeline(c, repos, packageSpecs, buildPackageSpecs, options.Size)
+	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs)
 	if err != nil {
 		return nil, err
 	}
@@ -211,8 +211,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("vhdx", "image.vhdx", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("vhdx", "image.vhdx", uefi, options)
 		},
 	}
 
@@ -234,7 +234,9 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      false,
 		defaultSize:   2 * GigaByte,
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return rawFSAssembler("filesystem.img", size) },
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return rawFSAssembler("filesystem.img", options)
+		},
 	}
 
 	partitionedDisk := imageType{
@@ -255,8 +257,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("raw", "disk.img", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("raw", "disk.img", uefi, options)
 		},
 	}
 
@@ -283,8 +285,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
 		},
 	}
 
@@ -310,8 +312,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
 		},
 	}
 
@@ -333,7 +335,9 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      false,
 		defaultSize:   2 * GigaByte,
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return tarAssembler("root.tar.xz", "xz") },
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return tarAssembler("root.tar.xz", "xz")
+		},
 	}
 
 	vhdImgType := imageType{
@@ -368,8 +372,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("vpc", "disk.vhd", uefi, options)
 		},
 	}
 
@@ -392,8 +396,8 @@ func New() *Fedora32 {
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, size)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("vmdk", "disk.vmdk", uefi, options)
 		},
 	}
 
@@ -478,7 +482,7 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Pipeline, error) {
+func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora32")
 
@@ -540,7 +544,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConf
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
-	p.Assembler = t.assembler(t.arch.uefi, size)
+	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
 
 	return p, nil
 }
@@ -692,14 +696,14 @@ func (r *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     size,
+			Size:     imageOptions.Size,
 			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
 			PTType:   "gpt",
 			Partitions: []osbuild.QEMUPartition{
@@ -730,7 +734,7 @@ func qemuAssembler(format string, filename string, uefi bool, size uint64) *osbu
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     size,
+			Size:     imageOptions.Size,
 			PTUUID:   "0x14fc63d2",
 			PTType:   "mbr",
 			Partitions: []osbuild.QEMUPartition{
@@ -757,12 +761,12 @@ func tarAssembler(filename, compression string) *osbuild.Assembler {
 		})
 }
 
-func rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
+func rawFSAssembler(filename string, options distro.ImageOptions) *osbuild.Assembler {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 	return osbuild.NewRawFSAssembler(
 		&osbuild.RawFSAssemblerOptions{
 			Filename:           filename,
 			RootFilesystemUUID: id,
-			Size:               size,
+			Size:               options.Size,
 		})
 }
