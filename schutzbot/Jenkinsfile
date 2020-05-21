@@ -53,6 +53,15 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
+                stage('RHEL 8.3') {
+                    agent { label "rhel83" }
+                    environment {
+                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                    }
+                    steps {
+                        sh "schutzbot/mockbuild.sh"
+                    }
+                }
             }
         }
         stage("Functional Testing") {
