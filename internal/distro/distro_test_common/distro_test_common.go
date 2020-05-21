@@ -82,10 +82,12 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				return
 			}
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
+				distro.ImageOptions{
+					Size: imageType.Size(0),
+				},
 				repos,
 				tt.RpmMD.Packages,
-				tt.RpmMD.BuildPackages,
-				imageType.Size(0))
+				tt.RpmMD.BuildPackages)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)

@@ -75,8 +75,8 @@ func main() {
 		panic(err)
 	}
 
-	distro := distros.GetDistro(composeRequest.Distro)
-	if distro == nil {
+	d := distros.GetDistro(composeRequest.Distro)
+	if d == nil {
 		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution '%s' is not supported. Use one of these:\n", composeRequest.Distro)
 		for _, d := range distros.List() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", d)
@@ -84,10 +84,10 @@ func main() {
 		return
 	}
 
-	arch, err := distro.GetArch(composeRequest.Arch)
+	arch, err := d.GetArch(composeRequest.Arch)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", composeRequest.Arch, distro.Name())
-		for _, a := range distro.ListArches() {
+		fmt.Fprintf(os.Stderr, "The provided architecture '%s' is not supported by %s. Use one of these:\n", composeRequest.Arch, d.Name())
+		for _, a := range d.ListArches() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", a)
 		}
 		return
@@ -95,7 +95,7 @@ func main() {
 
 	imageType, err := arch.GetImageType(composeRequest.ImageType)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "The provided image type '%s' is not supported by %s for %s. Use one of these:\n", composeRequest.ImageType, distro.Name(), arch.Name())
+		fmt.Fprintf(os.Stderr, "The provided image type '%s' is not supported by %s for %s. Use one of these:\n", composeRequest.ImageType, d.Name(), arch.Name())
 		for _, t := range arch.ListImageTypes() {
 			_, _ = fmt.Fprintln(os.Stderr, " *", t)
 		}
@@ -134,13 +134,13 @@ func main() {
 	}
 
 	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, excludePkgs, repos, distro.ModulePlatformID(), arch.Name())
+	packageSpecs, checksums, err := rpmmd.Depsolve(packages, excludePkgs, repos, d.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve: " + err.Error())
 	}
 
 	buildPkgs := imageType.BuildPackages()
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos, distro.ModulePlatformID(), arch.Name())
+	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos, d.ModulePlatformID(), arch.Name())
 	if err != nil {
 		panic("Could not depsolve build packages: " + err.Error())
 	}
@@ -157,7 +157,13 @@ func main() {
 			panic(err)
 		}
 	} else {
-		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations, repos, packageSpecs, buildPackageSpecs, imageType.Size(0))
+		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
+			distro.ImageOptions{
+				Size: imageType.Size(0),
+			},
+			repos,
+			packageSpecs,
+			buildPackageSpecs)
 		if err != nil {
 			panic(err.Error())
 		}

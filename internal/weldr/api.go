@@ -1603,7 +1603,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	size := imageType.Size(cr.Size)
-	manifest, err := imageType.Manifest(bp.Customizations, api.allRepositories(), packages, buildPackages, size)
+	manifest, err := imageType.Manifest(bp.Customizations,
+		distro.ImageOptions{
+			Size: size,
+		},
+		api.allRepositories(),
+		packages,
+		buildPackages)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",

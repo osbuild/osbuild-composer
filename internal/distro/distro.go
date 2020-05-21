@@ -79,7 +79,12 @@ type ImageType interface {
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to build an image, given output format with all packages and customizations
 	// specified in the given blueprint.
-	Manifest(b *blueprint.Customizations, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, size uint64) (*osbuild.Manifest, error)
+	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error)
+}
+
+// The ImageOptions specify options for a specific image build
+type ImageOptions struct {
+	Size uint64
 }
 
 type Registry struct {

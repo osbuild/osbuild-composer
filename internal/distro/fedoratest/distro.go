@@ -91,10 +91,10 @@ func (t *imageType) BuildPackages() []string {
 }
 
 func (t *imageType) Manifest(c *blueprint.Customizations,
+	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec,
-	size uint64) (*osbuild.Manifest, error) {
+	buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
 	return &osbuild.Manifest{
 		Pipeline: osbuild.Pipeline{},
 		Sources:  osbuild.Sources{},
