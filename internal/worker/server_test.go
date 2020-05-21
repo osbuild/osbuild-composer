@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -52,7 +53,7 @@ func TestCreate(t *testing.T) {
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), nil)
 
-	manifest, err := imageType.Manifest(nil, nil, nil, nil, imageType.Size(0))
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -78,7 +79,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 
 	id := uuid.Nil
 	if from != "VOID" {
-		manifest, err := imageType.Manifest(nil, nil, nil, nil, imageType.Size(0))
+		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
 		if err != nil {
 			t.Fatalf("error creating osbuild manifest")
 		}

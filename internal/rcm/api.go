@@ -151,8 +151,8 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 
 	buildRequest := composeRequest.ImageBuilds[0]
 
-	distro := api.distros.GetDistro(buildRequest.Distribution)
-	if distro == nil {
+	d := api.distros.GetDistro(buildRequest.Distribution)
+	if d == nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte("unknown distro"))
 		if err != nil {
@@ -161,7 +161,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	arch, err := distro.GetArch(buildRequest.Architecture)
+	arch, err := d.GetArch(buildRequest.Architecture)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte("unknown architecture for distro"))
@@ -193,7 +193,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		})
 	}
 
-	packages, buildPackages, err := depsolve(api.rpmMetadata, distro, imageType, repoConfigs, arch)
+	packages, buildPackages, err := depsolve(api.rpmMetadata, d, imageType, repoConfigs, arch)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))
@@ -203,8 +203,13 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 		return
 	}
 
-	size := imageType.Size(0)
-	manifest, err := imageType.Manifest(nil, repoConfigs, packages, buildPackages, size)
+	manifest, err := imageType.Manifest(nil,
+		distro.ImageOptions{
+			Size: imageType.Size(0),
+		},
+		repoConfigs,
+		packages,
+		buildPackages)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		_, err := writer.Write([]byte(err.Error()))

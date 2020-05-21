@@ -150,11 +150,11 @@ func (t *rhel8ImageType) BuildPackages() []string {
 }
 
 func (t *rhel8ImageType) Manifest(c *blueprint.Customizations,
+	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec,
-	size uint64) (*osbuild.Manifest, error) {
-	pipeline, err := t.pipeline(c, repos, packageSpecs, buildPackageSpecs, size)
+	buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
+	pipeline, err := t.pipeline(c, repos, packageSpecs, buildPackageSpecs, options.Size)
 	if err != nil {
 		return nil, err
 	}
