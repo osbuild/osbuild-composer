@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -65,6 +66,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
+				Manifest:    &osbuild.Manifest{},
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 			},
@@ -74,6 +76,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
+				Manifest:    &osbuild.Manifest{},
 				Targets:     []*target.Target{localTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -84,6 +87,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
+				Manifest:    &osbuild.Manifest{},
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -95,6 +99,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
+				Manifest:    &osbuild.Manifest{},
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
