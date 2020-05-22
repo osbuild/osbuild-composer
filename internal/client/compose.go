@@ -186,3 +186,27 @@ func WriteComposeLogV0(socket *http.Client, w io.Writer, uuid string) (*APIRespo
 
 	return nil, err
 }
+
+// WriteComposeMetadataV0 requests the metadata for a compose and writes it to an io.Writer
+func WriteComposeMetadataV0(socket *http.Client, w io.Writer, uuid string) (*APIResponse, error) {
+	body, resp, err := GetRawBody(socket, "GET", "/api/v0/compose/metadata/"+uuid)
+	if resp != nil || err != nil {
+		return resp, err
+	}
+	_, err = io.Copy(w, body)
+	body.Close()
+
+	return nil, err
+}
+
+// WriteComposeResultsV0 requests the results for a compose and writes it to an io.Writer
+func WriteComposeResultsV0(socket *http.Client, w io.Writer, uuid string) (*APIResponse, error) {
+	body, resp, err := GetRawBody(socket, "GET", "/api/v0/compose/metadata/"+uuid)
+	if resp != nil || err != nil {
+		return resp, err
+	}
+	_, err = io.Copy(w, body)
+	body.Close()
+
+	return nil, err
+}
