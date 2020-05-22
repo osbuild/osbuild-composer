@@ -184,6 +184,28 @@ func TestComposeInvalidLogV0(t *testing.T) {
 	require.Contains(t, resp.Errors[0].Msg, "c91818f9-8025-47af-89d2-f030d7000c2c")
 }
 
+// Test compose metadata for unknown uuid
+func TestComposeInvalidMetadataV0(t *testing.T) {
+	resp, err := WriteComposeMetadataV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.False(t, resp.Status)
+	require.Equal(t, 1, len(resp.Errors))
+	require.Equal(t, "UnknownUUID", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "c91818f9-8025-47af-89d2-f030d7000c2c")
+}
+
+// Test compose results for unknown uuid
+func TestComposeInvalidResultsV0(t *testing.T) {
+	resp, err := WriteComposeResultsV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.False(t, resp.Status)
+	require.Equal(t, 1, len(resp.Errors))
+	require.Equal(t, "UnknownUUID", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "c91818f9-8025-47af-89d2-f030d7000c2c")
+}
+
 // Test status filter for unknown uuid
 func TestComposeInvalidStatusV0(t *testing.T) {
 	status, resp, err := GetComposeStatusV0(testState.socket, "c91818f9-8025-47af-89d2-f030d7000c2c", "", "", "")
@@ -317,6 +339,21 @@ func TestFailedComposeV0(t *testing.T) {
 	require.Nil(t, resp)
 	require.Equal(t, "FAILED", info.QueueStatus)
 	require.Equal(t, buildID, info.ID)
+
+	// Test requesting the compose logs for the failed build
+	resp, err = WriteComposeLogsV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	// Test requesting the compose metadata for the failed build
+	resp, err = WriteComposeMetadataV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	// Test requesting the compose results for the failed build
+	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
 }
 
 // Setup and run the finished compose tests
@@ -397,4 +434,19 @@ func TestFinishedComposeV0(t *testing.T) {
 	require.Nil(t, resp)
 	require.Equal(t, "FINISHED", info.QueueStatus)
 	require.Equal(t, buildID, info.ID)
+
+	// Test requesting the compose logs for the finished build
+	resp, err = WriteComposeLogsV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	// Test requesting the compose metadata for the finished build
+	resp, err = WriteComposeMetadataV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	// Test requesting the compose results for the finished build
+	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
 }
