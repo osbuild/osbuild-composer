@@ -53,7 +53,7 @@ func generatePackageList() rpmmd.PackageList {
 }
 
 func createBaseWorkersFixture() *worker.Server {
-	return worker.NewServer(nil, testjobqueue.New(), nil)
+	return worker.NewServer(nil, testjobqueue.New(), "")
 }
 
 func createBaseDepsolveFixture() []rpmmd.PackageSpec {

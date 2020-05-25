@@ -8,7 +8,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strconv"
+	"os"
+	"path"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,10 +22,10 @@ import (
 )
 
 type Server struct {
-	logger      *log.Logger
-	jobs        jobqueue.JobQueue
-	router      *httprouter.Router
-	imageWriter WriteImageFunc
+	logger       *log.Logger
+	jobs         jobqueue.JobQueue
+	router       *httprouter.Router
+	artifactsDir string
 }
 
 type JobStatus struct {
@@ -35,13 +36,11 @@ type JobStatus struct {
 	Result   OSBuildJobResult
 }
 
-type WriteImageFunc func(composeID uuid.UUID, imageBuildID int, reader io.Reader) error
-
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, imageWriter WriteImageFunc) *Server {
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
 	s := &Server{
-		logger:      logger,
-		jobs:        jobs,
-		imageWriter: imageWriter,
+		logger:       logger,
+		jobs:         jobs,
+		artifactsDir: artifactsDir,
 	}
 
 	s.router = httprouter.New()
@@ -52,7 +51,7 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, imageWriter WriteImag
 
 	s.router.POST("/job-queue/v1/jobs", s.addJobHandler)
 	s.router.PATCH("/job-queue/v1/jobs/:job_id", s.updateJobHandler)
-	s.router.POST("/job-queue/v1/jobs/:job_id/builds/:build_id/image", s.addJobImageHandler)
+	s.router.POST("/job-queue/v1/jobs/:job_id/artifacts/:name", s.addJobImageHandler)
 
 	return s
 }
@@ -216,18 +215,35 @@ func (s *Server) addJobImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	imageBuildId, err := strconv.Atoi(params.ByName("build_id"))
-	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse image build id: %v", err)
+	name := params.ByName("name")
+	if name == "" {
+		jsonErrorf(writer, http.StatusBadRequest, "invalid artifact name")
 		return
 	}
 
-	if s.imageWriter == nil {
-		_, err = io.Copy(ioutil.Discard, request.Body)
-	} else {
-		err = s.imageWriter(id, imageBuildId, request.Body)
+	if s.artifactsDir == "" {
+		_, err := io.Copy(ioutil.Discard, request.Body)
+		if err != nil {
+			jsonErrorf(writer, http.StatusInternalServerError, "error discarding artifact: %v", err)
+		}
+		return
 	}
+
+	err = os.Mkdir(path.Join(s.artifactsDir, id.String()), 0700)
 	if err != nil {
-		jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+		jsonErrorf(writer, http.StatusInternalServerError, "cannot create artifact directory: %v", err)
+		return
+	}
+
+	f, err := os.Create(path.Join(s.artifactsDir, id.String(), name))
+	if err != nil {
+		jsonErrorf(writer, http.StatusInternalServerError, "cannot create artifact file: %v", err)
+		return
+	}
+
+	_, err = io.Copy(f, request.Body)
+	if err != nil {
+		jsonErrorf(writer, http.StatusInternalServerError, "error writing artifact file: %v", err)
+		return
 	}
 }

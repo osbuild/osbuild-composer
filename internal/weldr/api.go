@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -41,19 +43,24 @@ type API struct {
 
 	logger *log.Logger
 	router *httprouter.Router
+
+	artifactsDir    string
+	compatOutputDir string
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server) *API {
+func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, artifactsDir, compatOutputDir string) *API {
 	api := &API{
-		store:   store,
-		workers: workers,
-		rpmmd:   rpmmd,
-		arch:    arch,
-		distro:  distro,
-		repos:   repos,
-		logger:  logger,
+		store:           store,
+		workers:         workers,
+		rpmmd:           rpmmd,
+		arch:            arch,
+		distro:          distro,
+		repos:           repos,
+		logger:          logger,
+		artifactsDir:    artifactsDir,
+		compatOutputDir: compatOutputDir,
 	}
 
 	api.router = httprouter.New()
@@ -189,6 +196,32 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 		Finished: jobStatus.Finished,
 		Result:   jobStatus.Result.OSBuildOutput,
 	}
+}
+
+// Opens the image file for `compose`. This looks under `{artifacts}/{jobId}`
+// first, and then under `{outputs}/{composeId}/{imageBuildId}` for backwards
+// compatibility.
+func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Reader, int64, error) {
+	p := path.Join(api.artifactsDir, compose.ImageBuild.JobID.String(), compose.ImageBuild.ImageType.Filename())
+
+	f, err := os.Open(p)
+	if err != nil {
+		if api.compatOutputDir == "" || !os.IsNotExist(err) {
+			return nil, 0, err
+		}
+		p = path.Join(api.compatOutputDir, composeId.String(), "0")
+		f, err = os.Open(p)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	info, err := f.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return f, info.Size(), nil
 }
 
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
@@ -1705,6 +1738,14 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 			continue
 		}
 
+		// Delete artifacts from jobs and the compat output dir. Ignore
+		// errors, because there's no point of reporting them to the
+		// client after the compose itself has already been deleted.
+		_ = os.RemoveAll(path.Join(api.artifactsDir, compose.ImageBuild.JobID.String()))
+		if api.compatOutputDir != "" {
+			_ = os.RemoveAll(path.Join(api.compatOutputDir, id.String()))
+		}
+
 		results = append(results, composeDeleteStatus{id, true})
 	}
 
@@ -1950,13 +1991,11 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	imageName := compose.ImageBuild.ImageType.Filename()
 	imageMime := compose.ImageBuild.ImageType.MIMEType()
 
-	reader, fileSize, err := api.store.GetImageBuildImage(uuid)
-
-	// TODO: this might return misleading error
+	reader, fileSize, err := api.openImageFile(uuid, compose)
 	if err != nil {
 		errors := responseError{
-			ID:  "BuildMissingFile",
-			Msg: fmt.Sprintf("Build %s is missing file %s!", uuidString, imageName),
+			ID:  "InternalServerError",
+			Msg: fmt.Sprintf("Error accessing image file for compose %s: %v", uuid, err),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return

@@ -118,9 +118,8 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *comm
 	return nil
 }
 
-func (c *Client) UploadImage(composeId uuid.UUID, imageBuildId int, reader io.Reader) error {
-	// content type doesn't really matter
-	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/builds/%d/image", composeId, imageBuildId))
+func (c *Client) UploadImage(job uuid.UUID, name string, reader io.Reader) error {
+	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/artifacts/%s", job, name))
 	_, err := c.client.Post(url, "application/octet-stream", reader)
 
 	return err

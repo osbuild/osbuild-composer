@@ -8,9 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"os"
 	"sort"
 	"sync"
 	"time"
@@ -75,13 +73,8 @@ func New(stateDir *string, arch distro.Arch, log *log.Logger) *Store {
 	var db *jsondb.JSONDatabase
 
 	if stateDir != nil {
-		err := os.Mkdir(*stateDir+"/"+"outputs", 0700)
-		if err != nil && !os.IsExist(err) {
-			log.Fatalf("cannot create output directory")
-		}
-
 		db = jsondb.New(*stateDir, 0600)
-		_, err = db.Read(StoreDBName, &storeStruct)
+		_, err := db.Read(StoreDBName, &storeStruct)
 		if err != nil {
 			log.Fatalf("cannot read state: %v", err)
 		}
@@ -339,45 +332,6 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) GetImageBuildImage(composeId uuid.UUID) (io.ReadCloser, int64, error) {
-	c, ok := s.composes[composeId]
-
-	if !ok {
-		return nil, 0, &NotFoundError{"compose does not exist"}
-	}
-
-	localTargetOptions := c.ImageBuild.GetLocalTargetOptions()
-	if localTargetOptions == nil {
-		return nil, 0, &NoLocalTargetError{"compose does not have local target"}
-	}
-
-	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeId), localTargetOptions.Filename)
-
-	f, err := os.Open(path)
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	fileInfo, err := f.Stat()
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return f, fileInfo.Size(), err
-
-}
-
-func (s *Store) getComposeDirectory(composeID uuid.UUID) string {
-	return fmt.Sprintf("%s/outputs/%s", *s.stateDir, composeID.String())
-}
-
-func (s *Store) getImageBuildDirectory(composeID uuid.UUID) string {
-	// only one image build is supported per compose
-	return fmt.Sprintf("%s/0", s.getComposeDirectory(composeID))
-}
-
 func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
 	if _, exists := s.GetCompose(composeID); exists {
 		panic("a compose with this id already exists")
@@ -385,15 +339,6 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest *osbuild.Manifest, ima
 
 	if targets == nil {
 		targets = []*target.Target{}
-	}
-
-	if s.stateDir != nil {
-		outputDir := s.getImageBuildDirectory(composeID)
-
-		err := os.MkdirAll(outputDir, 0755)
-		if err != nil {
-			return fmt.Errorf("cannot create output directory for job %v: %#v", composeID, err)
-		}
 	}
 
 	// FIXME: handle or comment this possible error
@@ -459,47 +404,8 @@ func (s *Store) DeleteCompose(id uuid.UUID) error {
 
 		delete(s.composes, id)
 
-		var err error
-		if s.stateDir != nil {
-			err = os.RemoveAll(s.getComposeDirectory(id))
-			if err != nil {
-				return err
-			}
-		}
-
-		return err
+		return nil
 	})
-}
-
-func (s *Store) AddImageToImageUpload(composeID uuid.UUID, imageBuildID int, reader io.Reader) error {
-	if imageBuildID != 0 {
-		return &NotFoundError{"image build does not exist"}
-	}
-
-	currentCompose, exists := s.composes[composeID]
-	if !exists {
-		return &NotFoundError{"compose does not exist"}
-	}
-
-	localTargetOptions := currentCompose.ImageBuild.GetLocalTargetOptions()
-	if localTargetOptions == nil {
-		return &NoLocalTargetError{fmt.Sprintf("image upload requested for compse %s, but it has no local target", composeID.String())}
-	}
-
-	path := fmt.Sprintf("%s/%s", s.getImageBuildDirectory(composeID), localTargetOptions.Filename)
-	f, err := os.Create(path)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(f, reader)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *Store) PushSource(source SourceConfig) {
