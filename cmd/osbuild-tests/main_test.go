@@ -33,48 +33,48 @@ func TestComposeCommands(t *testing.T) {
 	pushBlueprint(t, &bp)
 	defer deleteBlueprint(t, &bp)
 
-	runComposerCLIPlainText(t, "blueprints", "save", "empty")
+	runComposer(t, "blueprints", "save", "empty")
 	_, err := os.Stat("empty.toml")
 	require.NoError(t, err, "Error accessing 'empty.toml: %v'", err)
 
-	runComposerCLIPlainText(t, "compose", "types")
-	runComposerCLIPlainText(t, "compose", "status")
-	runComposerCLIPlainText(t, "compose", "list")
-	runComposerCLIPlainText(t, "compose", "list", "waiting")
-	runComposerCLIPlainText(t, "compose", "list", "running")
-	runComposerCLIPlainText(t, "compose", "list", "finished")
-	runComposerCLIPlainText(t, "compose", "list", "failed")
+	runComposer(t, "compose", "types")
+	runComposer(t, "compose", "status")
+	runComposer(t, "compose", "list")
+	runComposer(t, "compose", "list", "waiting")
+	runComposer(t, "compose", "list", "running")
+	runComposer(t, "compose", "list", "finished")
+	runComposer(t, "compose", "list", "failed")
 
 	// Full integration tests
 	uuid := buildCompose(t, "empty", "ami")
 	defer deleteCompose(t, uuid)
 
-	runComposerCLIPlainText(t, "compose", "info", uuid.String())
+	runComposer(t, "compose", "info", uuid.String())
 
 	// https://github.com/osbuild/osbuild-composer/issues/643
-	// runComposerCLIPlainText(t, "compose", "metadata", uuid.String())
+	// runComposer(t, "compose", "metadata", uuid.String())
 	// _, err := os.Stat(uuid.String() + "-metadata.tar")
 	// require.NoError(t, err, "'%s-metadata.tar' not found", uuid.String())
 	// defer os.Remove(uuid.String() + "-metadata.tar")
 
 	// https://github.com/osbuild/osbuild-composer/issues/644
-	// runComposerCLIPlainText(t, "compose", "results", uuid.String())
+	// runComposer(t, "compose", "results", uuid.String())
 	// _, err = os.Stat(uuid.String() + ".tar")
 	// require.NoError(t, err, "'%s.tar' not found", uuid.String())
 	// defer os.Remove(uuid.String() + ".tar")
 
 	// Just assert that result wasn't empty
-	result := runComposerCLIPlainText(t, "compose", "log", uuid.String())
+	result := runComposer(t, "compose", "log", uuid.String())
 	require.NotNil(t, result)
-	result = runComposerCLIPlainText(t, "compose", "log", uuid.String(), "1024")
+	result = runComposer(t, "compose", "log", uuid.String(), "1024")
 	require.NotNil(t, result)
 
-	runComposerCLIPlainText(t, "compose", "logs", uuid.String())
+	runComposer(t, "compose", "logs", uuid.String())
 	_, err = os.Stat(uuid.String() + "-logs.tar")
 	require.NoError(t, err, "'%s-logs.tar' not found", uuid.String())
 	defer os.Remove(uuid.String() + "-logs.tar")
 
-	runComposerCLIPlainText(t, "compose", "image", uuid.String())
+	runComposer(t, "compose", "image", uuid.String())
 	_, err = os.Stat(uuid.String() + "-image.vhdx")
 	require.NoError(t, err, "'%s-image.vhdx' not found", uuid.String())
 	defer os.Remove(uuid.String() + "-image.vhdx")
@@ -82,11 +82,11 @@ func TestComposeCommands(t *testing.T) {
 	// https://github.com/osbuild/osbuild-composer/pull/180
 	// uuid = startCompose(t, "empty", "tar")
 	// time.Sleep(time.Second)
-	// runComposerCLIPlainText(t, "compose", "cancel", uuid.String())
+	// runComposer(t, "compose", "cancel", uuid.String())
 }
 
 func TestEverything(t *testing.T) {
-	runComposerCLI(t, false, "blueprints", "list")
+	runComposerJSON(t, false, "blueprints", "list")
 	// runCommand(false, "blueprints", "show", BLUEPRINT,....)
 	// runCommand(false, "blueprints", "changes", BLUEPRINT,....)
 	// runCommand(false, "blueprints", "diff", BLUEPRINT, FROM/NEWEST, TO/NEWEST/WORKSPACE)
@@ -100,11 +100,11 @@ func TestEverything(t *testing.T) {
 	// runCommand(false, "blueprints", "tag", BLUEPRINT)
 	// runCommand(false, "blueprints", "undo", BLUEPRINT, COMMIT)
 	// runCommand(false, "blueprints", "workspace", BLUEPRINT)
-	runComposerCLI(t, false, "modules", "list")
-	runComposerCLI(t, false, "projects", "list")
-	runComposerCLI(t, false, "projects", "info", "filesystem")
-	runComposerCLI(t, false, "projects", "info", "filesystem", "kernel")
-	runComposerCLI(t, false, "status", "show")
+	runComposerJSON(t, false, "modules", "list")
+	runComposerJSON(t, false, "projects", "list")
+	runComposerJSON(t, false, "projects", "info", "filesystem")
+	runComposerJSON(t, false, "projects", "info", "filesystem", "kernel")
+	runComposerJSON(t, false, "status", "show")
 }
 
 func TestSourcesCommands(t *testing.T) {
@@ -123,11 +123,11 @@ gpgkey_urls = ["https://url/path/to/gpg-key"]
 `))
 	require.NoError(t, err)
 
-	runComposerCLI(t, false, "sources", "list")
-	runComposerCLI(t, false, "sources", "add", sources_toml.Name())
-	runComposerCLI(t, false, "sources", "info", "osbuild-test-addon-source")
-	runComposerCLI(t, false, "sources", "change", sources_toml.Name())
-	runComposerCLI(t, false, "sources", "delete", "osbuild-test-addon-source")
+	runComposerJSON(t, false, "sources", "list")
+	runComposerJSON(t, false, "sources", "add", sources_toml.Name())
+	runComposerJSON(t, false, "sources", "info", "osbuild-test-addon-source")
+	runComposerJSON(t, false, "sources", "change", sources_toml.Name())
+	runComposerJSON(t, false, "sources", "delete", "osbuild-test-addon-source")
 }
 
 func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
@@ -149,7 +149,7 @@ func startCompose(t *testing.T, name, outputType string) uuid.UUID {
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
-	rawReply := runComposerCLI(t, false, "compose", "start", name, outputType)
+	rawReply := runComposerJSON(t, false, "compose", "start", name, outputType)
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
@@ -166,7 +166,7 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		IDs    []deleteUUID  `json:"uuids"`
 		Errors []interface{} `json:"errors"`
 	}
-	rawReply := runComposerCLI(t, false, "compose", "delete", id.String())
+	rawReply := runComposerJSON(t, false, "compose", "delete", id.String())
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Zerof(t, len(reply.Errors), "Unexpected errors")
@@ -188,7 +188,7 @@ func getComposeStatus(t *testing.T, quiet bool, uuid uuid.UUID) string {
 	var reply struct {
 		QueueStatus string `json:"queue_status"`
 	}
-	rawReply := runComposerCLI(t, quiet, "compose", "info", uuid.String())
+	rawReply := runComposerJSON(t, quiet, "compose", "info", uuid.String())
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 
@@ -227,7 +227,7 @@ func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	var reply struct {
 		Status bool `json:"status"`
 	}
-	rawReply := runComposerCLI(t, false, "blueprints", "push", tmpfile.Name())
+	rawReply := runComposerJSON(t, false, "blueprints", "push", tmpfile.Name())
 	err = json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
@@ -237,13 +237,13 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	var reply struct {
 		Status bool `json:"status"`
 	}
-	rawReply := runComposerCLI(t, false, "blueprints", "delete", bp.Name)
+	rawReply := runComposerJSON(t, false, "blueprints", "delete", bp.Name)
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
 }
 
-func runComposerCLIPlainText(t *testing.T, command ...string) []byte {
+func runComposer(t *testing.T, command ...string) []byte {
 	cmd := exec.Command("composer-cli", command...)
 	stdout, err := cmd.StdoutPipe()
 	require.Nilf(t, err, "Could not create command: %v", err)
@@ -260,9 +260,9 @@ func runComposerCLIPlainText(t *testing.T, command ...string) []byte {
 	return contents
 }
 
-func runComposerCLI(t *testing.T, quiet bool, command ...string) json.RawMessage {
+func runComposerJSON(t *testing.T, quiet bool, command ...string) json.RawMessage {
 	command = append([]string{"--json"}, command...)
-	contents := runComposerCLIPlainText(t, command...)
+	contents := runComposer(t, command...)
 
 	var result json.RawMessage
 
