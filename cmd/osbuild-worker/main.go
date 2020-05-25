@@ -63,7 +63,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (*common.ComposeResult, error) {
+func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
 	tmpOutput, err := ioutil.TempDir("/var/tmp", "osbuild-output-*")
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild output directory: %v", err)
@@ -87,7 +87,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, int, io.Reader) error) (
 				continue
 			}
 
-			err = uploadFunc(options.ComposeId, options.ImageBuildId, f)
+			err = uploadFunc(job.Id, options.Filename, f)
 			if err != nil {
 				r = append(r, err)
 				continue

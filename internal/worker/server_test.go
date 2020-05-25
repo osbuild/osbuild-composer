@@ -36,7 +36,7 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		server := worker.NewServer(nil, testjobqueue.New(), nil)
+		server := worker.NewServer(nil, testjobqueue.New(), "")
 		test.TestRoute(t, server, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
@@ -51,7 +51,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), nil)
+	server := worker.NewServer(nil, testjobqueue.New(), "")
 
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
 	if err != nil {
@@ -75,7 +75,7 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), nil)
+	server := worker.NewServer(nil, testjobqueue.New(), "")
 
 	id := uuid.Nil
 	if from != "VOID" {

@@ -37,7 +37,7 @@ func newTestWorkerServer(t *testing.T) (*worker.Server, string) {
 	dir, err := ioutil.TempDir("", "rcm-test-")
 	require.NoError(t, err)
 
-	w := worker.NewServer(nil, testjobqueue.New(), nil)
+	w := worker.NewServer(nil, testjobqueue.New(), "")
 	require.NotNil(t, w)
 
 	return w, dir

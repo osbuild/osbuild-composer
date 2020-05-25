@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
@@ -36,6 +37,12 @@ func executeTests(m *testing.M) int {
 		panic(err)
 	}
 
+	artifactsDir := path.Join(tmpdir, "artifacts")
+	err = os.Mkdir(artifactsDir, 0755)
+	if err != nil {
+		panic(err)
+	}
+
 	// Create a mock API server listening on the temporary socket
 	fixture := rpmmd_mock.BaseFixture()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
@@ -46,7 +53,7 @@ func executeTests(m *testing.M) int {
 	}
 	repos := []rpmmd.RepoConfig{{Id: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"}}
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.New(rpm, arch, distro, repos, logger, fixture.Store, fixture.Workers)
+	api := weldr.New(rpm, arch, distro, repos, logger, fixture.Store, fixture.Workers, artifactsDir, "")
 	server := http.Server{Handler: api}
 	defer server.Close()
 

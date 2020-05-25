@@ -128,14 +128,16 @@ func main() {
 		log.Fatalf("cannot create jobqueue: %v", err)
 	}
 
-	outputDir := path.Join(stateDir, "outputs")
-	err = os.Mkdir(outputDir, 0755)
+	artifactsDir := path.Join(stateDir, "artifacts")
+	err = os.Mkdir(artifactsDir, 0755)
 	if err != nil && !os.IsExist(err) {
-		log.Fatalf("cannot create output directory: %v", err)
+		log.Fatalf("cannot create artifacts directory: %v", err)
 	}
 
-	workers := worker.NewServer(logger, jobs, store.AddImageToImageUpload)
-	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store, workers)
+	compatOutputDir := path.Join(stateDir, "outputs")
+
+	workers := worker.NewServer(logger, jobs, artifactsDir)
+	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store, workers, artifactsDir, compatOutputDir)
 
 	go func() {
 		err := workers.Serve(jobListener)
