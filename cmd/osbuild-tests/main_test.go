@@ -85,8 +85,8 @@ func TestComposeCommands(t *testing.T) {
 	// runComposer(t, "compose", "cancel", uuid.String())
 }
 
-func TestEverything(t *testing.T) {
-	runComposerJSON(t, false, "blueprints", "list")
+func TestEverythingElse(t *testing.T) {
+	runComposer(t, "blueprints", "list")
 	// runCommand(false, "blueprints", "show", BLUEPRINT,....)
 	// runCommand(false, "blueprints", "changes", BLUEPRINT,....)
 	// runCommand(false, "blueprints", "diff", BLUEPRINT, FROM/NEWEST, TO/NEWEST/WORKSPACE)
@@ -100,11 +100,11 @@ func TestEverything(t *testing.T) {
 	// runCommand(false, "blueprints", "tag", BLUEPRINT)
 	// runCommand(false, "blueprints", "undo", BLUEPRINT, COMMIT)
 	// runCommand(false, "blueprints", "workspace", BLUEPRINT)
-	runComposerJSON(t, false, "modules", "list")
-	runComposerJSON(t, false, "projects", "list")
-	runComposerJSON(t, false, "projects", "info", "filesystem")
-	runComposerJSON(t, false, "projects", "info", "filesystem", "kernel")
-	runComposerJSON(t, false, "status", "show")
+	runComposer(t, "modules", "list")
+	runComposer(t, "projects", "list")
+	runComposer(t, "projects", "info", "filesystem")
+	runComposer(t, "projects", "info", "filesystem", "kernel")
+	runComposer(t, "status", "show")
 }
 
 func TestSourcesCommands(t *testing.T) {
@@ -123,11 +123,11 @@ gpgkey_urls = ["https://url/path/to/gpg-key"]
 `))
 	require.NoError(t, err)
 
-	runComposerJSON(t, false, "sources", "list")
-	runComposerJSON(t, false, "sources", "add", sources_toml.Name())
-	runComposerJSON(t, false, "sources", "info", "osbuild-test-addon-source")
-	runComposerJSON(t, false, "sources", "change", sources_toml.Name())
-	runComposerJSON(t, false, "sources", "delete", "osbuild-test-addon-source")
+	runComposer(t, "sources", "list")
+	runComposer(t, "sources", "add", sources_toml.Name())
+	runComposer(t, "sources", "info", "osbuild-test-addon-source")
+	runComposer(t, "sources", "change", sources_toml.Name())
+	runComposer(t, "sources", "delete", "osbuild-test-addon-source")
 }
 
 func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
@@ -149,7 +149,7 @@ func startCompose(t *testing.T, name, outputType string) uuid.UUID {
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
-	rawReply := runComposerJSON(t, false, "compose", "start", name, outputType)
+	rawReply := runComposerJSON(t, "compose", "start", name, outputType)
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
@@ -166,7 +166,7 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		IDs    []deleteUUID  `json:"uuids"`
 		Errors []interface{} `json:"errors"`
 	}
-	rawReply := runComposerJSON(t, false, "compose", "delete", id.String())
+	rawReply := runComposerJSON(t, "compose", "delete", id.String())
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Zerof(t, len(reply.Errors), "Unexpected errors")
@@ -176,7 +176,7 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 
 func waitForCompose(t *testing.T, uuid uuid.UUID) string {
 	for {
-		status := getComposeStatus(t, true, uuid)
+		status := getComposeStatus(t, uuid)
 		if status == "FINISHED" || status == "FAILED" {
 			return status
 		}
@@ -184,11 +184,11 @@ func waitForCompose(t *testing.T, uuid uuid.UUID) string {
 	}
 }
 
-func getComposeStatus(t *testing.T, quiet bool, uuid uuid.UUID) string {
+func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
 	var reply struct {
 		QueueStatus string `json:"queue_status"`
 	}
-	rawReply := runComposerJSON(t, quiet, "compose", "info", uuid.String())
+	rawReply := runComposerJSON(t, "compose", "info", uuid.String())
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 
@@ -227,7 +227,7 @@ func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	var reply struct {
 		Status bool `json:"status"`
 	}
-	rawReply := runComposerJSON(t, false, "blueprints", "push", tmpfile.Name())
+	rawReply := runComposerJSON(t, "blueprints", "push", tmpfile.Name())
 	err = json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
@@ -237,7 +237,7 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	var reply struct {
 		Status bool `json:"status"`
 	}
-	rawReply := runComposerJSON(t, false, "blueprints", "delete", bp.Name)
+	rawReply := runComposerJSON(t, "blueprints", "delete", bp.Name)
 	err := json.Unmarshal(rawReply, &reply)
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, reply.Status, "Unexpected status %v", reply.Status)
@@ -260,7 +260,7 @@ func runComposer(t *testing.T, command ...string) []byte {
 	return contents
 }
 
-func runComposerJSON(t *testing.T, quiet bool, command ...string) json.RawMessage {
+func runComposerJSON(t *testing.T, command ...string) json.RawMessage {
 	command = append([]string{"--json"}, command...)
 	contents := runComposer(t, command...)
 
