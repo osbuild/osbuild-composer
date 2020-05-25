@@ -286,7 +286,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		SchemaVersion string   `json:"schema_version"`
 		Backend       string   `json:"backend"`
 		Build         string   `json:"build"`
-		Messages      []string `json:"messages"`
+		Messages      []string `json:"msgs"`
 	}
 
 	err := json.NewEncoder(writer).Encode(reply{
