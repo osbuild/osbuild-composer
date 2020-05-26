@@ -26,6 +26,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -44,13 +45,12 @@ type API struct {
 	logger *log.Logger
 	router *httprouter.Router
 
-	artifactsDir    string
 	compatOutputDir string
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, artifactsDir, compatOutputDir string) *API {
+func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
 	api := &API{
 		store:           store,
 		workers:         workers,
@@ -59,7 +59,6 @@ func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmm
 		distro:          distro,
 		repos:           repos,
 		logger:          logger,
-		artifactsDir:    artifactsDir,
 		compatOutputDir: compatOutputDir,
 	}
 
@@ -198,30 +197,34 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 	}
 }
 
-// Opens the image file for `compose`. This looks under `{artifacts}/{jobId}`
-// first, and then under `{outputs}/{composeId}/{imageBuildId}` for backwards
-// compatibility.
+// Opens the image file for `compose`. This asks the worker server for the
+// artifact first, and then falls back to looking in
+// `{outputs}/{composeId}/{imageBuildId}` for backwards compatibility.
 func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Reader, int64, error) {
-	p := path.Join(api.artifactsDir, compose.ImageBuild.JobID.String(), compose.ImageBuild.ImageType.Filename())
+	name := compose.ImageBuild.ImageType.Filename()
 
-	f, err := os.Open(p)
+	reader, size, err := api.workers.JobArtifact(compose.ImageBuild.JobID, name)
 	if err != nil {
-		if api.compatOutputDir == "" || !os.IsNotExist(err) {
+		if api.compatOutputDir == "" || err != jobqueue.ErrNotExist {
 			return nil, 0, err
 		}
-		p = path.Join(api.compatOutputDir, composeId.String(), "0")
-		f, err = os.Open(p)
+
+		p := path.Join(api.compatOutputDir, composeId.String(), "0", name)
+		f, err := os.Open(p)
 		if err != nil {
 			return nil, 0, err
 		}
+
+		info, err := f.Stat()
+		if err != nil {
+			return nil, 0, err
+		}
+
+		reader = f
+		size = info.Size()
 	}
 
-	info, err := f.Stat()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return f, info.Size(), nil
+	return reader, size, nil
 }
 
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
@@ -1754,11 +1757,12 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 			continue
 		}
 
-		// Delete artifacts from jobs and the compat output dir. Ignore
-		// errors, because there's no point of reporting them to the
-		// client after the compose itself has already been deleted.
-		_ = os.RemoveAll(path.Join(api.artifactsDir, compose.ImageBuild.JobID.String()))
-		if api.compatOutputDir != "" {
+		// Delete artifacts from the worker server or — if that doesn't
+		// have this job — the compat output dir. Ignore errors,
+		// because there's no point of reporting them to the client
+		// after the compose itself has already been deleted.
+		err = api.workers.DeleteArtifacts(compose.ImageBuild.JobID)
+		if err == jobqueue.ErrNotExist && api.compatOutputDir != "" {
 			_ = os.RemoveAll(path.Join(api.compatOutputDir, id.String()))
 		}
 

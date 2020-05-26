@@ -137,7 +137,7 @@ func main() {
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	workers := worker.NewServer(logger, jobs, artifactsDir)
-	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store, workers, artifactsDir, compatOutputDir)
+	weldrAPI := weldr.New(rpm, arch, distribution, repoMap[common.CurrentArch()], logger, store, workers, compatOutputDir)
 
 	go func() {
 		err := workers.Serve(jobListener)
