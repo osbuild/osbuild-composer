@@ -64,18 +64,21 @@ func (e *TargetsError) Error() string {
 }
 
 func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
-	tmpOutput, err := ioutil.TempDir("/var/tmp", "osbuild-output-*")
+	tmpdir, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild output directory: %v", err)
 	}
 	defer func() {
-		err := os.RemoveAll(tmpOutput)
+		err := os.RemoveAll(tmpdir)
 		if err != nil {
-			log.Printf("Error removing temporary directory %s for job %s: %v", tmpOutput, job.Id, err)
+			log.Printf("Error removing temporary directory %s for job %s: %v", tmpdir, job.Id, err)
 		}
 	}()
 
-	result, err := RunOSBuild(job.Manifest, tmpOutput, os.Stderr)
+	outputDirectory := path.Join(tmpdir, "output")
+	store := path.Join(tmpdir, "store")
+
+	result, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +88,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			f, err := os.Open(path.Join(tmpOutput, options.Filename))
+			f, err := os.Open(path.Join(outputDirectory, options.Filename))
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -109,7 +112,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error
 				options.Key = job.Id.String()
 			}
 
-			_, err = a.Upload(path.Join(tmpOutput, options.Filename), options.Bucket, options.Key)
+			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -136,7 +139,7 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error
 			err := azure.UploadImage(
 				credentials,
 				metadata,
-				path.Join(tmpOutput, options.Filename),
+				path.Join(outputDirectory, options.Filename),
 				azureMaxUploadGoroutines,
 			)
 
