@@ -68,8 +68,12 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error
 	if err != nil {
 		return nil, fmt.Errorf("error setting up osbuild output directory: %v", err)
 	}
-	// FIXME: how to handle errors in defer?
-	defer os.RemoveAll(tmpOutput)
+	defer func() {
+		err := os.RemoveAll(tmpOutput)
+		if err != nil {
+			log.Printf("Error removing temporary directory %s for job %s: %v", tmpOutput, job.Id, err)
+		}
+	}()
 
 	result, err := RunOSBuild(job.Manifest, tmpOutput, os.Stderr)
 	if err != nil {
