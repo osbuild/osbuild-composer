@@ -115,6 +115,46 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 	}, nil
 }
 
+// Provides access to artifacts of a job. Returns an io.Reader for the artifact
+// and the artifact's size.
+func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error) {
+	status, err := s.JobStatus(id)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if status.Finished.IsZero() {
+		return nil, 0, fmt.Errorf("Cannot access artifacts before job is finished: %s", id)
+	}
+
+	p := path.Join(s.artifactsDir, id.String(), name)
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, 0, fmt.Errorf("Error accessing artifact %s for job %s: %v", name, id, err)
+	}
+
+	info, err := f.Stat()
+	if err != nil {
+		return nil, 0, fmt.Errorf("Error getting size of artifact %s for job %s: %v", name, id, err)
+	}
+
+	return f, info.Size(), nil
+}
+
+// Deletes all artifacts for job `id`.
+func (s *Server) DeleteArtifacts(id uuid.UUID) error {
+	status, err := s.JobStatus(id)
+	if err != nil {
+		return err
+	}
+
+	if status.Finished.IsZero() {
+		return fmt.Errorf("Cannot delete artifacts before job is finished: %s", id)
+	}
+
+	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
+}
+
 // jsonErrorf() is similar to http.Error(), but returns the message in a json
 // object with a "message" field.
 func jsonErrorf(writer http.ResponseWriter, code int, message string, args ...interface{}) {

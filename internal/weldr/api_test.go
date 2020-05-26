@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -38,13 +37,7 @@ func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.
 		panic(err)
 	}
 
-	artifactsDir, err := ioutil.TempDir("", "client_test-")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(artifactsDir)
-
-	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, artifactsDir, ""), fixture.Store
+	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
