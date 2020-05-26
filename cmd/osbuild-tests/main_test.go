@@ -85,21 +85,44 @@ func TestComposeCommands(t *testing.T) {
 	// runComposer(t, "compose", "cancel", uuid.String())
 }
 
-func TestEverythingElse(t *testing.T) {
+func TestBlueprintCommands(t *testing.T) {
+	// common setup
+	tmpdir := NewTemporaryWorkDir(t, "osbuild-tests-")
+	defer tmpdir.Close(t)
+
+	bp := blueprint.Blueprint{
+		Name:        "empty",
+		Description: "Test empty blueprint in toml format",
+	}
+	pushBlueprint(t, &bp)
+	defer deleteBlueprint(t, &bp)
+
 	runComposer(t, "blueprints", "list")
-	// runCommand(false, "blueprints", "show", BLUEPRINT,....)
-	// runCommand(false, "blueprints", "changes", BLUEPRINT,....)
-	// runCommand(false, "blueprints", "diff", BLUEPRINT, FROM/NEWEST, TO/NEWEST/WORKSPACE)
-	// runCommand(false, "blueprints", "save", BLUEPRINT,...)
-	// runCommand(false, "blueprints", "delete", BLUEPRINT)
-	// runCommand(false, "blueprints", "depsolve", BLUEPRINT,...)
-	// runCommand(false, "blueprints", "push", BLUEPRINT.TOML)
-	// runCommand(false, "blueprints", "freeze", BLUEPRINT,...)
-	// runCommand(false, "blueprints", "freeze", "show", BLUEPRINT,...)
-	// runCommand(false, "blueprints", "freeze", "save", BLUEPRINT,...)
-	// runCommand(false, "blueprints", "tag", BLUEPRINT)
-	// runCommand(false, "blueprints", "undo", BLUEPRINT, COMMIT)
-	// runCommand(false, "blueprints", "workspace", BLUEPRINT)
+	runComposer(t, "blueprints", "show", "empty")
+
+	runComposer(t, "blueprints", "changes", "empty")
+	runComposer(t, "blueprints", "diff", "empty", "NEWEST", "WORKSPACE")
+
+	runComposer(t, "blueprints", "save", "empty")
+	_, err := os.Stat("empty.toml")
+	require.NoError(t, err, "'empty.toml' not found")
+	defer os.Remove("empty.toml")
+
+	runComposer(t, "blueprints", "depsolve", "empty")
+	runComposer(t, "blueprints", "freeze", "empty")
+	runComposer(t, "blueprints", "freeze", "show", "empty")
+	runComposer(t, "blueprints", "freeze", "save", "empty")
+	_, err = os.Stat("empty.frozen.toml")
+	require.NoError(t, err, "'empty.frozen.toml' not found")
+	defer os.Remove("empty.frozen.toml")
+
+	runComposer(t, "blueprints", "tag", "empty")
+	// todo: we need a commit reference here
+	// runComposer(t, "blueprints", "undo", BLUEPRINT, COMMIT)
+	runComposer(t, "blueprints", "workspace", "empty")
+}
+
+func TestEverythingElse(t *testing.T) {
 	runComposer(t, "modules", "list")
 	runComposer(t, "projects", "list")
 	runComposer(t, "projects", "info", "filesystem")
