@@ -282,56 +282,6 @@ func New() *RHEL8 {
 		},
 	}
 
-	r.imageTypes["ext4-filesystem"] = imageType{
-		name:     "filesystem.img",
-		mimeType: "application/octet-stream",
-		packages: []string{
-			"policycoreutils",
-			"selinux-policy-targeted",
-			"kernel",
-			"firewalld",
-			"chrony",
-			"langpacks-en",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-
-			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
-			// https://errata.devel.redhat.com/advisory/47339 lands
-			"timedatex",
-		},
-		bootable:      false,
-		kernelOptions: "ro net.ifnames=0",
-		defaultSize:   2 * GigaByte,
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.rawFSAssembler("filesystem.img", size) },
-	}
-
-	r.imageTypes["partitioned-disk"] = imageType{
-		name:     "disk.img",
-		mimeType: "application/octet-stream",
-		packages: []string{
-			"@core",
-			"chrony",
-			"firewalld",
-			"kernel",
-			"langpacks-en",
-			"selinux-policy-targeted",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-
-			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
-			// https://errata.devel.redhat.com/advisory/47339 lands
-			"timedatex",
-		},
-		bootable:      true,
-		kernelOptions: "ro net.ifnames=0",
-		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return r.qemuAssembler("raw", "disk.img", uefi, size)
-		},
-	}
-
 	r.imageTypes["qcow2"] = imageType{
 		name:     "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
@@ -439,29 +389,6 @@ func New() *RHEL8 {
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
 			return r.qemuAssembler("qcow2", "disk.qcow2", uefi, size)
 		},
-	}
-
-	r.imageTypes["tar"] = imageType{
-		name:     "root.tar.xz",
-		mimeType: "application/x-tar",
-		packages: []string{
-			"policycoreutils",
-			"selinux-policy-targeted",
-			"kernel",
-			"firewalld",
-			"chrony",
-			"langpacks-en",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-
-			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
-			// https://errata.devel.redhat.com/advisory/47339 lands
-			"timedatex",
-		},
-		bootable:      false,
-		kernelOptions: "ro net.ifnames=0",
-		assembler:     func(uefi bool, size uint64) *osbuild.Assembler { return r.tarAssembler("root.tar.xz", "xz") },
 	}
 
 	r.imageTypes["vhd"] = imageType{
@@ -849,23 +776,4 @@ func (r *RHEL8) qemuAssembler(format string, filename string, uefi bool, size ui
 		}
 	}
 	return osbuild.NewQEMUAssembler(&options)
-}
-
-func (r *RHEL8) tarAssembler(filename, compression string) *osbuild.Assembler {
-	return osbuild.NewTarAssembler(
-		&osbuild.TarAssemblerOptions{
-			Filename:    filename,
-			Compression: compression,
-		})
-}
-
-func (r *RHEL8) rawFSAssembler(filename string, size uint64) *osbuild.Assembler {
-	id := uuid.MustParse("0bd700f8-090f-4556-b797-b340297ea1bd")
-	return osbuild.NewRawFSAssembler(
-		&osbuild.RawFSAssemblerOptions{
-			Filename:           filename,
-			RootFilesystemUUID: id,
-			Size:               size,
-			FilesystemType:     "xfs",
-		})
 }
