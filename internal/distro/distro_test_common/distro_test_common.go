@@ -56,7 +56,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 		repos := make([]rpmmd.RepoConfig, len(tt.ComposeRequest.Repositories))
 		for i, repo := range tt.ComposeRequest.Repositories {
 			repos[i] = rpmmd.RepoConfig{
-				Id:         fmt.Sprintf("repo-%d", i),
+				Name:       fmt.Sprintf("repo-%d", i),
 				BaseURL:    repo.BaseURL,
 				Metalink:   repo.Metalink,
 				MirrorList: repo.MirrorList,

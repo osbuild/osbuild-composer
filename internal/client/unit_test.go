@@ -44,7 +44,7 @@ func executeTests(m *testing.M) int {
 	if err != nil {
 		panic(err)
 	}
-	repos := []rpmmd.RepoConfig{{Id: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"}}
+	repos := []rpmmd.RepoConfig{{Name: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"}}
 	logger := log.New(os.Stdout, "", 0)
 	api := weldr.New(rpm, arch, distro, repos, logger, fixture.Store, fixture.Workers, "")
 	server := http.Server{Handler: api}

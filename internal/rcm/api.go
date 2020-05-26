@@ -185,7 +185,7 @@ func (api *API) submit(writer http.ResponseWriter, request *http.Request, _ http
 	repoConfigs := []rpmmd.RepoConfig{}
 	for n, repo := range buildRequest.Repositories {
 		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
-			Id:         fmt.Sprintf("repo-%d", n),
+			Name:       fmt.Sprintf("repo-%d", n),
 			BaseURL:    repo.BaseURL,
 			Metalink:   repo.Metalink,
 			MirrorList: repo.MirrorList,

@@ -104,7 +104,7 @@ func main() {
 	repos := make([]rpmmd.RepoConfig, len(composeRequest.Repositories))
 	for i, repo := range composeRequest.Repositories {
 		repos[i] = rpmmd.RepoConfig{
-			Id:         fmt.Sprintf("repo-%d", i),
+			Name:       fmt.Sprintf("repo-%d", i),
 			BaseURL:    repo.BaseURL,
 			Metalink:   repo.Metalink,
 			MirrorList: repo.MirrorList,

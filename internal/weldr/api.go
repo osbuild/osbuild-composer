@@ -349,7 +349,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	names := api.store.ListSources()
 
 	for _, repo := range api.repos {
-		names = append(names, repo.Id)
+		names = append(names, repo.Name)
 	}
 
 	err := json.NewEncoder(writer).Encode(reply{
@@ -392,15 +392,15 @@ func (api *API) sourceInfoHandler(writer http.ResponseWriter, request *http.Requ
 	if names == "*" {
 		sources = api.store.GetAllSources()
 		for _, repo := range api.repos {
-			sources[repo.Id] = store.NewSourceConfig(repo, true)
+			sources[repo.Name] = store.NewSourceConfig(repo, true)
 		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
 			found := false
 			for _, repo := range api.repos {
-				if name == repo.Id {
-					sources[repo.Id] = store.NewSourceConfig(repo, true)
+				if name == repo.Name {
+					sources[repo.Name] = store.NewSourceConfig(repo, true)
 					found = true
 					break
 				}

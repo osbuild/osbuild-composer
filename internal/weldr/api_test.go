@@ -30,7 +30,7 @@ import (
 func createWeldrAPI(fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.Store) {
 	fixture := fixtureGenerator()
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	repos := []rpmmd.RepoConfig{{Id: "test-id", BaseURL: "http://example.com/test/os/x86_64"}}
+	repos := []rpmmd.RepoConfig{{Name: "test-id", BaseURL: "http://example.com/test/os/x86_64"}}
 	d := test_distro.New()
 	arch, err := d.GetArch("x86_64")
 	if err != nil {
