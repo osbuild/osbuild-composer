@@ -25,6 +25,10 @@ type OSBuildJobResult struct {
 // JSON-serializable types for the HTTP API
 //
 
+type statusResponse struct {
+	Status string `json:"status"`
+}
+
 type errorResponse struct {
 	Message string `json:"message"`
 }

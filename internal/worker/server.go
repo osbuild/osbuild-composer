@@ -49,6 +49,10 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 	s.router.MethodNotAllowed = http.HandlerFunc(methodNotAllowedHandler)
 	s.router.NotFound = http.HandlerFunc(notFoundHandler)
 
+	// Add a basic status handler for checking if osbuild-composer is alive.
+	s.router.GET("/status", s.statusHandler)
+
+	// Add handlers for managing jobs.
 	s.router.POST("/job-queue/v1/jobs", s.addJobHandler)
 	s.router.PATCH("/job-queue/v1/jobs/:job_id", s.updateJobHandler)
 	s.router.POST("/job-queue/v1/jobs/:job_id/artifacts/:name", s.addJobImageHandler)
@@ -132,6 +136,15 @@ func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) 
 
 func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 	jsonErrorf(writer, http.StatusNotFound, "not found")
+}
+
+func (s *Server) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	writer.WriteHeader(http.StatusOK)
+
+	// Send back a status message.
+	_ = json.NewEncoder(writer).Encode(&statusResponse{
+		Status: "OK",
+	})
 }
 
 func (s *Server) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
