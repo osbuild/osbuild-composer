@@ -16,12 +16,13 @@ import (
 )
 
 type repository struct {
-	Name       string `json:"name"`
-	BaseURL    string `json:"baseurl,omitempty"`
-	Metalink   string `json:"metalink,omitempty"`
-	MirrorList string `json:"mirrorlist,omitempty"`
-	GPGKey     string `json:"gpgkey,omitempty"`
-	RHSM       bool   `json:"rhsm,omitempty"`
+	Name           string `json:"name"`
+	BaseURL        string `json:"baseurl,omitempty"`
+	Metalink       string `json:"metalink,omitempty"`
+	MirrorList     string `json:"mirrorlist,omitempty"`
+	GPGKey         string `json:"gpgkey,omitempty"`
+	RHSM           bool   `json:"rhsm,omitempty"`
+	MetadataExpire string `json:"metadata_expire,omitempty"`
 }
 
 type dnfRepoConfig struct {
@@ -210,12 +211,13 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	for arch, repos := range reposMap {
 		for _, repo := range repos {
 			config := RepoConfig{
-				Name:       repo.Name,
-				BaseURL:    repo.BaseURL,
-				Metalink:   repo.Metalink,
-				MirrorList: repo.MirrorList,
-				GPGKey:     repo.GPGKey,
-				RHSM:       repo.RHSM,
+				Name:           repo.Name,
+				BaseURL:        repo.BaseURL,
+				Metalink:       repo.Metalink,
+				MirrorList:     repo.MirrorList,
+				GPGKey:         repo.GPGKey,
+				RHSM:           repo.RHSM,
+				MetadataExpire: repo.MetadataExpire,
 			}
 
 			repoConfigs[arch] = append(repoConfigs[arch], config)
