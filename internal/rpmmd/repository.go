@@ -159,27 +159,22 @@ type RHSMSecrets struct {
 	SSLClientCert string `json:"sslclientcert,omitempty"`
 }
 
-var rhsmSecrets RHSMSecrets
-
-func getRHSMSecrets() (RHSMSecrets, error) {
-	if rhsmSecrets == (RHSMSecrets{}) {
-		keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
-		if err != nil {
-			return rhsmSecrets, &RepositoryError{fmt.Sprintf("unable to find client key in /etc/pki/entitlement/: %v", err)}
-		}
-		for _, key := range keys {
-			cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
-			if _, err := os.Stat(cert); err == nil {
-				rhsmSecrets = RHSMSecrets{
-					SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
-					SSLClientKey:  key,
-					SSLClientCert: cert,
-				}
-				break
+func getRHSMSecrets() *RHSMSecrets {
+	keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
+	if err != nil {
+		return nil
+	}
+	for _, key := range keys {
+		cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
+		if _, err := os.Stat(cert); err == nil {
+			return &RHSMSecrets{
+				SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
+				SSLClientKey:  key,
+				SSLClientCert: cert,
 			}
 		}
 	}
-	return rhsmSecrets, nil
+	return nil
 }
 
 func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
@@ -288,15 +283,17 @@ func runDNF(command string, arguments interface{}, result interface{}) error {
 
 type rpmmdImpl struct {
 	CacheDir string
+	RHSM     *RHSMSecrets
 }
 
 func NewRPMMD(cacheDir string) RPMMD {
 	return &rpmmdImpl{
 		CacheDir: cacheDir,
+		RHSM:     getRHSMSecrets(),
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig(i int) (dnfRepoConfig, error) {
+func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int) (dnfRepoConfig, error) {
 	id := strconv.Itoa(i)
 	dnfRepo := dnfRepoConfig{
 		ID:             id,
@@ -308,13 +305,12 @@ func (repo RepoConfig) toDNFRepoConfig(i int) (dnfRepoConfig, error) {
 		MetadataExpire: repo.MetadataExpire,
 	}
 	if repo.RHSM {
-		secrets, err := getRHSMSecrets()
-		if err != nil {
-			return dnfRepoConfig{}, err
+		if rpmmd.RHSM == nil {
+			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not fonud on host")
 		}
-		dnfRepo.SSLCACert = secrets.SSLCACert
-		dnfRepo.SSLClientKey = secrets.SSLClientKey
-		dnfRepo.SSLClientCert = secrets.SSLClientCert
+		dnfRepo.SSLCACert = rpmmd.RHSM.SSLCACert
+		dnfRepo.SSLClientKey = rpmmd.RHSM.SSLClientKey
+		dnfRepo.SSLClientCert = rpmmd.RHSM.SSLClientCert
 	}
 	return dnfRepo, nil
 }
@@ -322,7 +318,7 @@ func (repo RepoConfig) toDNFRepoConfig(i int) (dnfRepoConfig, error) {
 func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, arch string) (PackageList, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(i)
+		dnfRepo, err := repo.toDNFRepoConfig(r, i)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -352,7 +348,7 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 	var dnfRepoConfigs []dnfRepoConfig
 
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(i)
+		dnfRepo, err := repo.toDNFRepoConfig(r, i)
 		if err != nil {
 			return nil, nil, err
 		}
