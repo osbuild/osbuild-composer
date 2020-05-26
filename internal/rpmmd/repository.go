@@ -16,7 +16,7 @@ import (
 )
 
 type repository struct {
-	Id         string `json:"id"`
+	Name       string `json:"name"`
 	BaseURL    string `json:"baseurl,omitempty"`
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`
@@ -210,7 +210,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	for arch, repos := range reposMap {
 		for _, repo := range repos {
 			config := RepoConfig{
-				Name:       repo.Id,
+				Name:       repo.Name,
 				BaseURL:    repo.BaseURL,
 				Metalink:   repo.Metalink,
 				MirrorList: repo.MirrorList,
