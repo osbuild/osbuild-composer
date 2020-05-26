@@ -30,7 +30,7 @@ func TestFetchChecksum(t *testing.T) {
 	assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
 
 	repoCfg := rpmmd.RepoConfig{
-		Id:        "repo",
+		Name:      "repo",
 		BaseURL:   fmt.Sprintf("file://%s", dir),
 		IgnoreSSL: true,
 	}

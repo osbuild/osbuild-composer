@@ -38,7 +38,7 @@ type dnfRepoConfig struct {
 }
 
 type RepoConfig struct {
-	Id             string
+	Name           string
 	BaseURL        string
 	Metalink       string
 	MirrorList     string
@@ -210,7 +210,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	for arch, repos := range reposMap {
 		for _, repo := range repos {
 			config := RepoConfig{
-				Id:         repo.Id,
+				Name:       repo.Id,
 				BaseURL:    repo.BaseURL,
 				Metalink:   repo.Metalink,
 				MirrorList: repo.MirrorList,
