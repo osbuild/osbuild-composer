@@ -26,34 +26,16 @@ func TestFilenameFromType(t *testing.T) {
 			want1: "application/octet-stream",
 		},
 		{
-			name:  "ext4",
-			args:  args{"ext4-filesystem"},
-			want:  "filesystem.img",
-			want1: "application/octet-stream",
-		},
-		{
 			name:  "openstack",
 			args:  args{"openstack"},
 			want:  "disk.qcow2",
 			want1: "application/x-qemu-disk",
 		},
 		{
-			name:  "partitioned-disk",
-			args:  args{"partitioned-disk"},
-			want:  "disk.img",
-			want1: "application/octet-stream",
-		},
-		{
 			name:  "qcow2",
 			args:  args{"qcow2"},
 			want:  "disk.qcow2",
 			want1: "application/x-qemu-disk",
-		},
-		{
-			name:  "tar",
-			args:  args{"tar"},
-			want:  "root.tar.xz",
-			want1: "application/x-tar",
 		},
 		{
 			name:  "vhd",
@@ -157,11 +139,8 @@ func TestImageType_Name(t *testing.T) {
 			arch: "x86_64",
 			imgNames: []string{
 				"ami",
-				"ext4-filesystem",
-				"partitioned-disk",
 				"qcow2",
 				"openstack",
-				"tar",
 				"vhd",
 				"vmdk",
 			},
@@ -170,11 +149,8 @@ func TestImageType_Name(t *testing.T) {
 			arch: "aarch64",
 			imgNames: []string{
 				"ami",
-				"ext4-filesystem",
-				"partitioned-disk",
 				"qcow2",
 				"openstack",
-				"tar",
 			},
 		},
 	}
@@ -259,21 +235,6 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootloaderPackages: []string{
 				"dracut-config-generic",
 				"grub2-pc",
-			},
-			excludedPackages: []string{
-				"dracut-config-rescue",
-			},
-			bootable: true,
-		},
-		{
-			name: "ext4-filesystem",
-			basePackages: []string{
-				"policycoreutils",
-				"selinux-policy-targeted",
-				"kernel",
-				"firewalld",
-				"chrony",
-				"langpacks-en",
 			},
 			excludedPackages: []string{
 				"dracut-config-rescue",

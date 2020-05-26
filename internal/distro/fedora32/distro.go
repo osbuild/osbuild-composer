@@ -282,52 +282,6 @@ func New() *Fedora32 {
 		},
 	}
 
-	ext4FilesystemType := imageType{
-		name:     "ext4-filesystem",
-		filename: "filesystem.img",
-		mimeType: "application/octet-stream",
-		packages: []string{
-			"policycoreutils",
-			"selinux-policy-targeted",
-			"kernel",
-			"firewalld",
-			"chrony",
-			"langpacks-en",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-		},
-		kernelOptions: "ro biosdevname=0 net.ifnames=0",
-		bootable:      false,
-		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return rawFSAssembler("filesystem.img", options)
-		},
-	}
-
-	partitionedDisk := imageType{
-		name:     "partitioned-disk",
-		filename: "disk.img",
-		mimeType: "application/octet-stream",
-		packages: []string{
-			"@core",
-			"chrony",
-			"firewalld",
-			"kernel",
-			"langpacks-en",
-			"selinux-policy-targeted",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-		},
-		kernelOptions: "ro biosdevname=0 net.ifnames=0",
-		bootable:      true,
-		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("raw", "disk.img", uefi, options)
-		},
-	}
-
 	qcow2ImageType := imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
@@ -380,29 +334,6 @@ func New() *Fedora32 {
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
-		},
-	}
-
-	tarImgType := imageType{
-		name:     "tar",
-		filename: "root.tar.xz",
-		mimeType: "application/x-tar",
-		packages: []string{
-			"policycoreutils",
-			"selinux-policy-targeted",
-			"kernel",
-			"firewalld",
-			"chrony",
-			"langpacks-en",
-		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-		},
-		kernelOptions: "ro biosdevname=0 net.ifnames=0",
-		bootable:      false,
-		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return tarAssembler("root.tar.xz", "xz")
 		},
 	}
 
@@ -494,11 +425,8 @@ func New() *Fedora32 {
 	x8664.setImageTypes(
 		iotImgType,
 		amiImgType,
-		ext4FilesystemType,
-		partitionedDisk,
 		qcow2ImageType,
 		openstackImgType,
-		tarImgType,
 		vhdImgType,
 		vmdkImgType,
 	)
@@ -517,11 +445,8 @@ func New() *Fedora32 {
 	}
 	aarch64.setImageTypes(
 		amiImgType,
-		ext4FilesystemType,
-		partitionedDisk,
 		qcow2ImageType,
 		openstackImgType,
-		tarImgType,
 	)
 
 	r.setArches(x8664, aarch64)
@@ -860,24 +785,6 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 		}
 	}
 	return osbuild.NewQEMUAssembler(&options)
-}
-
-func tarAssembler(filename, compression string) *osbuild.Assembler {
-	return osbuild.NewTarAssembler(
-		&osbuild.TarAssemblerOptions{
-			Filename:    filename,
-			Compression: compression,
-		})
-}
-
-func rawFSAssembler(filename string, options distro.ImageOptions) *osbuild.Assembler {
-	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-	return osbuild.NewRawFSAssembler(
-		&osbuild.RawFSAssemblerOptions{
-			Filename:           filename,
-			RootFilesystemUUID: id,
-			Size:               options.Size,
-		})
 }
 
 func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {

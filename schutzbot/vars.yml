@@ -26,11 +26,8 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 
 # List of image tests
 osbuild_composer_image_test_cases:
-  - ext4_filesystem-boot.json
   - openstack-boot.json
-  - partitioned_disk-boot.json
   - qcow2-boot.json
-  - tar-boot.json
   - vhd-boot.json
   - vmdk-boot.json
 
