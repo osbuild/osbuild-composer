@@ -347,13 +347,9 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 }
 
 func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
-	repoMap := make(map[string]RepoConfig)
 	var dnfRepoConfigs []dnfRepoConfig
 
 	for i, repo := range repos {
-		id := repo.Id
-		repoMap[id] = repo
-
 		dnfRepo, err := repo.toDNFRepoConfig(i)
 		if err != nil {
 			return nil, nil, err
@@ -376,8 +372,11 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 	err := runDNF("depsolve", arguments, &reply)
 
 	for i, pack := range reply.Dependencies {
-		id := pack.RepoID
-		if repoMap[id].RHSM {
+		id, err := strconv.Atoi(pack.RepoID)
+		if err != nil {
+			panic(err)
+		}
+		if repos[id].RHSM {
 			reply.Dependencies[i].Secrets = "org.osbuild.rhsm"
 		}
 	}
