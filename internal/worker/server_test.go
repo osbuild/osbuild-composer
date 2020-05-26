@@ -14,6 +14,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+// Ensure that the status request returns OK.
+func TestStatus(t *testing.T) {
+	server := worker.NewServer(nil, testjobqueue.New(), "")
+	test.TestRoute(t, server, false, "GET", "/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
+}
+
 func TestErrors(t *testing.T) {
 	var cases = []struct {
 		Method         string
