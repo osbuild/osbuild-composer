@@ -19,420 +19,1248 @@
     "sources": {
       "org.osbuild.files": {
         "urls": {
-          "sha256:0064998ad79a6250297b379852b5a06932d8e074270bea02d75888758755bd23": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gtk-update-icon-cache-3.24.12-3.fc31.aarch64.rpm",
-          "sha256:0064a42567b657d85831ec162a314cd00f7befe48ce634387463754677206c9c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gettext-0.20.1-2.fc31.aarch64.rpm",
-          "sha256:00e59535d45094b7d47e25c93d21179f3138839968776107df99fa0678f1440f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-libelf-0.177-1.fc31.aarch64.rpm",
-          "sha256:01ea4ecad746f1309b5c943f2b2709f7e5400d33e4d51c85401205ed18d61621": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libX11-1.6.8-3.fc31.aarch64.rpm",
-          "sha256:02301d2744b96674019251b6c8d2199790960e4cc79d90fbdb946a298fc2c4ea": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-data-4.2.9-5.fc31.noarch.rpm",
-          "sha256:02f7f1cdd5cbe11b16e093686db5c584a68db4e6b1015c4d36c0246a54f801bb": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_certmap-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:03559557dbf64805e44d7e956f6b228c90831766fd1f485eecdfddf7a646a220": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-2.0.4-14.fc31.aarch64.rpm",
-          "sha256:037522f3495c556e09cb7d72d3c8c7ae1e1d037f7084020b2b875cfd43649e47": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-firmware-20190923-102.fc31.noarch.rpm",
-          "sha256:03b9d49b78b7e758eecce6a25782767ec5dc921d28f053b17a651b1c8bb96d7b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXtst-1.2.3-10.fc31.aarch64.rpm",
-          "sha256:0458f6a42cd644322b6eb24b01f0f75de47d5e10ae077797dfada1ce2a1f7fcd": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dconf-0.34.0-1.fc31.aarch64.rpm",
-          "sha256:047f9e29fcfa56be98ca3f42249f3ccb2a93df99f2438e3983e2064025f0d79d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonschema-3.0.2-1.fc31.noarch.rpm",
-          "sha256:04826477197ec239d756f81cb6d38fde2f65e71499a8dbaf0c666d93084f1ea3": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdatrie-0.2.9-10.fc31.aarch64.rpm",
-          "sha256:048e8325a759219a66788676c167a784534c8b1f81b1ae13f8617f7b7c5b79cd": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-4.2.9-5.fc31.noarch.rpm",
-          "sha256:054f0851c8b42292ac5c24ea649764b022dacc6d40a00e333abacc67e2c2a215": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-client-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:05539ce4b011cc2113fa9e99636f71b7855f979d78eedd597fd0be86dd540711": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libreport-filesystem-2.10.1-2.fc31.noarch.rpm",
-          "sha256:06cf2f5439e0ce2c7fc655bdf4868d3c47a5fbe5b71e9dc305232a7732896e14": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/w/which-2.21-15.fc31.aarch64.rpm",
-          "sha256:06e204f4b8ee2287a7ee2ae20fb8796e6866ba5d4733aa66d361e1ba8d138142": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-six-1.12.0-2.fc31.noarch.rpm",
-          "sha256:077e72f02d2eef2a2bfd8ab057527a02005806e731303fbff1e28f61716f2943": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-nfs-idmap-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:07cd9ddc7f7a16dc9739647af90706cfbcf70b281f5474e622b0769e211e0dc8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/u/util-linux-2.34-3.fc31.aarch64.rpm",
-          "sha256:07f4ccd9f3cb20ceb4483adb673adfef15394b246bd93a84f169eb07acb68d71": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/passwd-0.80-6.fc31.aarch64.rpm",
-          "sha256:089d4c5c48e89cd1444f283571fce20fbf5f1b20f3a5ff1ce74266bbc2cd0fec": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/checkpolicy-2.9-2.fc31.aarch64.rpm",
-          "sha256:0a4100f50b31df500afc5d255dd87117553df7032447f3e226196fd64f9c3f47": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnupg2-smime-2.2.17-2.fc31.aarch64.rpm",
-          "sha256:0a80e2a0ede76c98337c220f01dfadacace037b48f09fe072c5d33f356e50b8e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-server-8.0p1-8.fc31.1.aarch64.rpm",
-          "sha256:0ae87f94df2e114f287d60e9041ac159349f51322e32eeefa19a96db0acb78e7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pigz-2.4-5.fc31.aarch64.rpm",
-          "sha256:0b109cfab724680af15e7be85cf9f4f4828cd8290f0aa8fcebcbb14cd176be94": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/initscripts-10.02-2.fc31.aarch64.rpm",
-          "sha256:0b1ddcc8c3096814bc5027133fb077ef587b49a1a4e4d6426327c75cf2066b11": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/alternatives-1.11-5.fc31.aarch64.rpm",
-          "sha256:0b2a6b7e3b62ff9c02ec3012f08fbf396a7990bf9599b49b75eecbee3b257f7f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgpg-error-1.36-2.fc31.aarch64.rpm",
-          "sha256:0b8baef3612880639ed59ae79475086aac8ce236fd35977e0d87305d0bb9a529": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pixman-0.38.4-1.fc31.aarch64.rpm",
-          "sha256:0c49f27ae0aaf95fbdc52cfb9406c41eefff41b205f85fdc6ef6787ec3af5146": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libselinux-2.9-5.fc31.aarch64.rpm",
-          "sha256:0cb1a66cb3bb44797a8aeb47db85db1f6c0fcf4d4571d8a5f8981f83b51c08af": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/graphite2-1.3.13-1.fc31.aarch64.rpm",
-          "sha256:0edff1a5f04f7f5d47537b4c049b95331f9ad33963c9c63ca4b13345a37296d4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fipscheck-1.5.0-7.fc31.aarch64.rpm",
-          "sha256:0f3591f036f0be85a9d28e9099d43a8b2e5a500a9588825c1dd994d1a323ceba": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/coreutils-8.31-4.fc31.aarch64.rpm",
-          "sha256:0f661b922a9e9cbe82e948ec1d83c6fca6e61e08de50815a5b6c069a64f4e883": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXrandr-1.5.2-2.fc31.aarch64.rpm",
-          "sha256:0ff534e46d982b5a213eb562e3cb30d1935a25a9f433d325457069eec9131217": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-bootchart-233-5.fc31.aarch64.rpm",
-          "sha256:1088699171a35873eb5a776f0212ceff2bc9d67e3f1d8f2e107bbf751c36ca90": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cracklib-2.9.6-21.fc31.aarch64.rpm",
-          "sha256:1135e96b6f9ed29e4ed4c0f060876891a244442a503f0b18ab238589da20d464": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jinja2-2.10.1-2.fc31.noarch.rpm",
-          "sha256:1138343dfb107de07f54d4723aee2686fdd1af3e4532d14bd399b9b6b7873040": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jansson-2.12-4.fc31.aarch64.rpm",
-          "sha256:11e8ee935d9c9d349f4c081d035fc4ee34539af23ef8122e6901b22cf97f346f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsigsegv-2.11-8.fc31.aarch64.rpm",
-          "sha256:121e2a4e79f6dbf37af2182cb12ff28345db993a7f83de344f6f5fbcf5a705a5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-kcm-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:12c732f4a960848bd4fbc8111c2c0cf584799b1fdf0eb89c2cdcb26da5bc03b8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnupg2-2.2.17-2.fc31.aarch64.rpm",
-          "sha256:143c50c0663f963c7689c1cec43b81cf1433d5d3b67eb8233ba06506c1b3e095": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jwt-1.7.1-3.fc31.noarch.rpm",
-          "sha256:1472adb267192ca8a323e544fd9749c4765334fc5779e8de4ee583eff77fc078": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-client-1.17.0-2.fc31.aarch64.rpm",
-          "sha256:14a759b4daf287d66f5b803b0fbb52621f8429607be109e5d3c313a57cc276e2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtirpc-1.1.4-2.rc3.fc31.aarch64.rpm",
-          "sha256:159972ccc01cd5840c2aad04818efc965b64c5120b1fcce92a47f45ab1abf4a5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXcomposite-0.4.4-17.fc31.aarch64.rpm",
-          "sha256:16ea1e6ba5bbf16cb6a052b2326d25b9980971fd72c46e7d701e09f267d33063": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-plugins-core-4.0.9-1.fc31.noarch.rpm",
-          "sha256:1738cf24111bcd0bff08880c4d5efa624c09a2080c901f67ab032ed201a8751e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdb-5.3.28-38.fc31.aarch64.rpm",
-          "sha256:17858593b13d7f42c4fa57b1f5954619c8a98762f5486c038ea8344300aeab65": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/ca-certificates-2019.2.32-3.fc31.noarch.rpm",
-          "sha256:181173a9353f593105978b8e4038b7bf53fd22c63f4514fd271a74d48f9c59f8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/bash-5.0.7-3.fc31.aarch64.rpm",
-          "sha256:19217c1730a3f16e15eedd95e3f97471097a1bd066f7783fd273cfb392f4042e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-2.02-100.fc31.aarch64.rpm",
-          "sha256:1b65944efe48ba0cca34011891480a1db29a7e95dad058376bfca34d68fb0791": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-ply-3.11-3.fc31.noarch.rpm",
-          "sha256:1b85657077726361a4b157a909796649fe93131fdc4aa67fd5329adc8d2fc833": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cyrus-sasl-lib-2.1.27-2.fc31.aarch64.rpm",
-          "sha256:1bdeed5fd5907e0cacd5706ebc93ade09462a0c71e2316d9841e33a896b99b87": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/c-ares-1.15.0-4.fc31.aarch64.rpm",
-          "sha256:1c2edf26d16b55bac2824452c1c584ff52acf8477920f384f6019f647c241450": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lz4-libs-1.9.1-1.fc31.aarch64.rpm",
-          "sha256:1d530a23a8ea2b831068593fe6aa7a32923c6276504def5a85ad065aaac9ac5f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-6.1-12.20190803.fc31.aarch64.rpm",
-          "sha256:1dac3ea14f3a0b4e023e1d11e4a7102437009dda5b4d41a8b33775ccbd4aa560": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-misc-2.0.4-14.fc31.noarch.rpm",
-          "sha256:1e049e86c5dd5c4d6737d47dd194d553ffbd65c81a4077cf6e1029a0fde80fb5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-requests-2.22.0-3.fc31.noarch.rpm",
-          "sha256:1f44142da3bf5e09b98488b40ed8a2d5dbd841c36bb4553749e6d65d7fe5c15c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-setools-4.2.2-1.fc31.aarch64.rpm",
-          "sha256:20cc74172d531506391309e8f82c6512404ada35f22c68fcd0b83a01dc6e0ca8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpwquality-1.4.1-1.fc31.aarch64.rpm",
-          "sha256:20ef955e5f735233a425725b9af41d960b5602dfb0ae812ae720e37c9bf8a292": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/basesystem-11-8.fc31.noarch.rpm",
-          "sha256:21d9ceffd6fb52d235a95e4d7708d719eac758a9dfd80ba2d6119dfdc46c80ff": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/chrony-3.5-4.fc31.aarch64.rpm",
-          "sha256:23908e2eae2ccfd2efb1d19cdf46e3dca4680ac2d562c1c96f7fb0d22859fc82": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cairo-gobject-1.16.0-6.fc31.aarch64.rpm",
-          "sha256:23e335d288f55da26dc77e0d1ceb7cbe4e3890b4e28ff4a2435fc4481a6e737f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libref_array-0.1.5-43.fc31.aarch64.rpm",
-          "sha256:23e8c23c89737665a5288a3a171548e94898be9ed4a24c056d8bc851c6800090": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtasn1-4.14-2.fc31.aarch64.rpm",
-          "sha256:253f9f540248a0bdd537ee8ea4f670752af74d85be98ea81593a30710e1e5808": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-atm-libs-2.5.1-25.fc31.aarch64.rpm",
-          "sha256:2575f8d1fb953934730b9fe6803bf3de12669dcee78852057ea4e88f9d4d76a4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libevent-2.1.8-7.fc31.aarch64.rpm",
-          "sha256:264828f11342a94f056fb27a2e78fc5e14226230b3dbac8bdad6a4c8598fd24f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-libs-6.1-12.20190803.fc31.aarch64.rpm",
-          "sha256:26da63b51fc7b85d1a30098bfb9c2fa276b2d2129a28cee8cc80acd2eabe96e0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-5.3.7-301.fc31.aarch64.rpm",
-          "sha256:284d46ebd3d3fd4a915b624a75e9931c948807fcb13fed01681e623d0ba7b1ce": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lmdb-libs-0.9.23-3.fc31.aarch64.rpm",
-          "sha256:28cdab6faa95e1d7d1c32d977627ef5a86b262e2b0e20e76ddd73f598ee126e4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-all-langpacks-2.30-5.fc31.aarch64.rpm",
-          "sha256:2a4edc7c8f839d7714134cb5ebbcfd33656e7e699eef57fd7f6658b02003dc7a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dejavu-sans-fonts-2.37-2.fc31.noarch.rpm",
-          "sha256:2aafea82072ad28a8b662e32902f66b47166a00b5c9cf19b1dd589f39776560f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXi-1.7.10-2.fc31.aarch64.rpm",
-          "sha256:2ad8824aa48378aa741fbd863104d950ad4f669566af2d4f433be6d9afd8ead6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shadow-utils-4.6-16.fc31.aarch64.rpm",
-          "sha256:2b1052455234b751e869f22c496bb660dec53eafe198673bab25053e394e41cb": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_idmap-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:2b24b5729cd74e3b1efe261bfd732fd1995b0e64d76587a3d90762d77cc58c77": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libunistring-0.9.10-6.fc31.aarch64.rpm",
-          "sha256:2cb4bf18b759143cf2aeb6041e8b2edcaa1444d5f1eff8a6681ba8ca9da2a91c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-rpm-macros-243-4.gitef67743.fc31.noarch.rpm",
-          "sha256:2d37070a684785bc9dc72ff008ede02166816609242dbf98f96c80514d9c0850": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/hicolor-icon-theme-0.17-7.fc31.noarch.rpm",
-          "sha256:2d9a2e736dd5231df3c5c748ce0ba5a75a409dacfe73f14676781f32d565a7df": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonpointer-1.10-16.fc31.noarch.rpm",
-          "sha256:2dd8505a96714cdb79829a1377e36a53e05cc9b65a7f35a258ca3e4aaa76c700": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/e2fsprogs-libs-1.45.3-1.fc31.aarch64.rpm",
-          "sha256:2efe5f560e0c56dec38c9456ae8482a5a9006833d257de4a2a6246d261f647e2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-core-libs-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm",
-          "sha256:2f167a2ae4a8c29b627918c1b0f89e0b38418c394a2e373f314dbf25449a167c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-common-1.12.16-3.fc31.noarch.rpm",
-          "sha256:2fc552b80866318c0ac934f5385fd2090743701639c318b75138ae985ff5606a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libarchive-3.4.0-1.fc31.aarch64.rpm",
-          "sha256:30672b7650d66796acd7b68434755a29d38427aa4702e87d05e2a63e93ad250b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/langpacks-en-2.0-7.fc31.noarch.rpm",
-          "sha256:30e07680d23bfb5d4b2727893337619c56f13b46daec2f13f8985f642bf84250": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/device-mapper-libs-1.02.163-2.fc31.aarch64.rpm",
-          "sha256:311729a146f8833ff882370348d69313322dcf7586b68d5eed192eb633dcd58a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libndp-1.7-4.fc31.aarch64.rpm",
-          "sha256:31dacda6745f326be70d854d50ae5d3cd0c9d4f19aeab6b4d09920e1436d8bdc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libini_config-1.3.1-43.fc31.aarch64.rpm",
-          "sha256:32cc0c295cd013db597cd31868736be3708edb25ab1952fdd0ed879ec5e8d191": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libsemanage-2.9-3.fc31.aarch64.rpm",
-          "sha256:32cc578c8da626a8c1a5316a59d482967a32547be6c077f73fb90e11fb0f1e6a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyserial-3.4-3.fc31.noarch.rpm",
-          "sha256:32d56c08f75c7626f1a0efd7aa05ca2ea3649d55445b5ac42a2f7f10fad8b46b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyrsistent-0.15.4-1.fc31.aarch64.rpm",
-          "sha256:3308454f1353d5aced0a9574bc969ae272923ef1faa425bd9080de6e56e1bcbb": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmaxminddb-1.2.0-8.fc31.aarch64.rpm",
-          "sha256:332ef2695e27190536747f53bab03ba5df0ca903564f6071623d99fa524d6d2f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mokutil-0.3.0-11.fc30.aarch64.rpm",
-          "sha256:339895e6b901ff4c81966893ec7da9848da3acea26e5b202033bfb79dfcbb6cb": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mpfr-3.1.6-5.fc31.aarch64.rpm",
-          "sha256:34f7954cf6c6ceb4385fdcc587dced94405913ddfe5e3213fcbd72562f286fbc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dejavu-fonts-common-2.37-2.fc31.noarch.rpm",
-          "sha256:35413dd963ebd9e61467067c18a53c7027dcd95ebcae5a5ffaf4727507e37c8c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-unversioned-command-3.7.4-5.fc31.noarch.rpm",
-          "sha256:359d74d5f3988e1c2c5327f9d4ea59d0c49a2383541928084ef00383d70b6d55": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/publicsuffix-list-dafsa-20190417-2.fc31.noarch.rpm",
-          "sha256:36ce07aa1f90dfdf5ae9824acff24fc3aafe5633b07a022732ca06258e0255b6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsemanage-2.9-3.fc31.aarch64.rpm",
-          "sha256:3975c15d461cebe50d1f179fb86d288c18f643c32f179bbab13425596ab64001": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/keyutils-libs-1.6-3.fc31.aarch64.rpm",
-          "sha256:3976706367650c755852d995bbe8c4e6bbd13b6e8e0148b7beddb4aba3679d8a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libedit-3.1-28.20190324cvs.fc31.aarch64.rpm",
-          "sha256:3a7d7619061a4adb275ef4b41d993375ad7863863741624186add801800e524f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-1.12.16-3.fc31.aarch64.rpm",
-          "sha256:3ad68b7569e311a1ca7da4da7b42021a7acb001ab4b2cc6e63b3ba0f87cbd55c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/harfbuzz-2.6.1-2.fc31.aarch64.rpm",
-          "sha256:3b16753c7590bc968a693e97ce9d318d58e1483fd2999a874becd95abc9d35ff": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gcr-3.33.4-1.fc31.aarch64.rpm",
-          "sha256:3d5e22e2c2d20d409cc9a878a88dc088d6f02c81652eb0957f95d1abb185f7b7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-modules-5.3.7-301.fc31.aarch64.rpm",
-          "sha256:3e6b2cfce9c4a62f7cde13bb6ae135d5f6f0d6cb179ab3dbd61ba1533477f257": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipcalc-0.2.5-3.fc31.aarch64.rpm",
-          "sha256:3fb9cec5d598a549e97041993399d49c5943821b1f3441881cf15cb26f38e437": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libkcapi-1.1.5-1.fc31.aarch64.rpm",
-          "sha256:40eee4e4234c781277a202aa0e834c2be8afc28a3e4012b07d6c24058b0f4add": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-release-31-1.noarch.rpm",
-          "sha256:424e1777ae71117d20055ffa5f0ed2ead59a8076528450cf7536e18c70624bd8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-8.0p1-8.fc31.1.aarch64.rpm",
-          "sha256:4290088d905017724f6c909cb1b3193055a6aff62cd20e39ea196694f90753c8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gpgme-1.13.1-3.fc31.aarch64.rpm",
-          "sha256:42945876fb8932bad3e50b50349af4bdabe713d7be1c8efc1b0f7b042e556aa5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tss2-1331-2.fc31.aarch64.rpm",
-          "sha256:429cf175b6c3b2bedcabf3391ad3166fe6e62259877f309e57500d2c7f1f1882": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmount-2.34-3.fc31.aarch64.rpm",
-          "sha256:42a4e01c47e28b71cafb658a5993b7f4b7692ac6b916878d580fecab7ae9d16c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/at-spi2-core-2.34.0-1.fc31.aarch64.rpm",
-          "sha256:42ae595f75734daaed3430e1117d3cb05bd9a18108506bb9600125693d3d1688": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-langpack-en-2.30-5.fc31.aarch64.rpm",
-          "sha256:436c2f09d2de629da293ab82af47b7697f4a8c151127cbd993d0e8605a4f423c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libdnf-0.35.3-6.fc31.aarch64.rpm",
-          "sha256:44a92faf198bf015f5e94cf42ae615215fe0a6c0697b1f6c32d205bd450e7ce4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pcre-8.43-2.fc31.1.aarch64.rpm",
-          "sha256:4549e51322d0b10016f1daa8dedc807fddf7d2d4e77719baa696de15b88821bb": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jbigkit-libs-2.1-17.fc31.aarch64.rpm",
-          "sha256:46acc45e148eea376c3aa8e83a4d3bf1cf66fa35ccc670f592017428ce75ca77": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-sign-libs-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:46b0c36e90fd16371444eb5376fc01232b6e64073e42ed1f141344a9aadbe568": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXcursor-1.1.15-6.fc31.aarch64.rpm",
-          "sha256:47383173cbb135c2590998a4e82c6f9d40a516450d2fbd1e169ace92337b7fd5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-markupsafe-1.1.1-2.fc31.aarch64.rpm",
-          "sha256:477474e74c5f30884f0a4571445ecf987b521f61139fc0ba7d516e075f47e7ce": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/v/vim-minimal-8.1.2102-1.fc31.aarch64.rpm",
-          "sha256:48ee663f069c5019c842f316216ef3bf8dfcbbec479c98d1f2b24749c22e57f3": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtalloc-2.3.0-1.fc31.aarch64.rpm",
-          "sha256:4b4febd60db5cab8951bd33bafb2242fe2be067bee174d0307bd9f161b835070": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libssh-config-0.9.0-6.fc31.noarch.rpm",
-          "sha256:4bb03b2162523fa694e0e44f46b04263ff0f5dab22c3e93124ec9b5650af2002": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/deltarpm-3.6.2-2.fc31.aarch64.rpm",
-          "sha256:4c55460197fe24d0a105e3071824a933069e0b655910fd7ee7335e2396de15dc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXft-2.3.3-2.fc31.aarch64.rpm",
-          "sha256:4c859170bc4705a8ff4592f7376918fd2a97435c13cde79f24475c0a0866251d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/setup-2.13.3-2.fc31.noarch.rpm",
-          "sha256:4c9d72211343338b208c7d99c96ec07996478b38c5340bddbe77e5bdcf8cd814": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pip-19.1.1-4.fc31.noarch.rpm",
-          "sha256:4cca3f986ddbd38cfbfb6d1c8d336a1aaed78f7da1f38356ce1e034ba35ec492": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-attrs-19.1.0-2.fc31.noarch.rpm",
-          "sha256:4d4853ac550a0cfc5b3bcbcb7f12c81461393a6aa0e96a23648985f8a7f2e8e2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/os-prober-1.77-3.fc31.aarch64.rpm",
-          "sha256:4de89d25d09c57b09a51ab93fdf84ade211e835c16d3ba6e4e261dcc0c4e50a1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gzip-1.10-1.fc31.aarch64.rpm",
-          "sha256:4e365f48d5c85b82f71e8d000d00cdf7ed3c23cd94c31fbf3543572413541c3d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcap-ng-0.7.9-8.fc31.aarch64.rpm",
-          "sha256:4f37b1e322e3001b076e0128541cc82c180d7054b1c0b7200f46fda4d654cd71": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/librepo-1.10.5-1.fc31.aarch64.rpm",
-          "sha256:4fe97b617adfa7c0f97ba5b2b6e1c0d2e2b15c54ba8db66fc389cacc0f1b2b60": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libuser-0.62-21.fc31.aarch64.rpm",
-          "sha256:500d0a1b49962ec79ca00224528d6e599d3845eb60b8b13a678d03edfaa755ec": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXfixes-5.0.3-10.fc31.aarch64.rpm",
-          "sha256:504971d079493a49afb8fb7f067f5dfcc59f3e007afcc63734c15fe1066e4b4d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-broker-21-6.fc31.aarch64.rpm",
-          "sha256:504b334756e12eefb42d44e53da61fb4321b860e3b5f380b5c21c5c3784a8c75": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/net-tools-2.0-0.55.20160912git.fc31.aarch64.rpm",
-          "sha256:513e24bc56f483b171664ea4dec51cc0cce1f9cc8f4939cde8a65ea976ed952d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-rpm-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:51f15beba5e5bfc6ff646741b3fbaa3a484ebb40fd8c6c59b8f1f6346dd93e93": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libssh-0.9.0-6.fc31.aarch64.rpm",
-          "sha256:54c024db70df7966590050dfc5dcc1315174e10c3a57e118ea10178238d70889": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-1.1.1d-2.fc31.aarch64.rpm",
-          "sha256:54e3cbeb4ee379f886dfa4f64faf791001a901148f9490c76e2afcde11de07e9": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xkeyboard-config-2.27-2.fc31.noarch.rpm",
-          "sha256:563f82b7c56043ed5a5ff55dcc643bcc5ac2a1e9ae940481f1c21595a83ba60a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efi-filesystem-4-3.fc31.noarch.rpm",
-          "sha256:566a389a620f634ab341a9a39cffdb1c607b4682224cf3d5ac530b6c57c78d0f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcap-2.26-6.fc31.aarch64.rpm",
-          "sha256:56f3d59b74bf8ceafea695d10fb7ad4672ec93f824ef9b0508c7bcdedeffb101": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnghttp2-1.39.2-1.fc31.aarch64.rpm",
-          "sha256:5745966147d1651d663d9e7d37a740ebbb4daee49b5cb7a2e61375ea6b37404e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/expat-2.2.8-1.fc31.aarch64.rpm",
-          "sha256:575640462a8c2d0687ea225cc7b6bbf7aa0814e311619ddf6cd16e1bc22f9513": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libksba-1.3.5-10.fc31.aarch64.rpm",
-          "sha256:57a9aff6b8d5ecdb66015e4dfcec0a171ae18751e1d5f9a339361cc45b9a8e2f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxkbcommon-0.8.4-2.fc31.aarch64.rpm",
-          "sha256:57bb6739fb8635dfe5300d0e361b99caedce2fb7142db37394734e13d4fa48f8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcrypt-compat-4.4.10-1.fc31.aarch64.rpm",
-          "sha256:57bd1ce5d776daca117795bc8e3852f1d29a6fc3fc1edd21729d161de2d7798d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtiff-4.0.10-6.fc31.aarch64.rpm",
-          "sha256:58a44f9472918a511d3eee0b3f08926dab2ebf4994584403bd196e6c92a06f5a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xz-5.2.4-6.fc31.aarch64.rpm",
-          "sha256:58c8a3d4ac7c8c318b5596b192dbd0350a1122983b69bfc1cb5eb3ecec5b7cf6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXext-1.3.4-2.fc31.aarch64.rpm",
-          "sha256:59f289c6f3b0180ae3eddaa974e2f972bf15c48135a2abed9eb2f72dfdae1be4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXau-1.0.9-2.fc31.aarch64.rpm",
-          "sha256:5a32c492b921e9287422006f255833605b328f3efd071609673be161bb4e7f04": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libstdc++-9.2.1-1.fc31.aarch64.rpm",
-          "sha256:5a7e957102a23c9924398fe45f5cdec66edcd10adcad7130d6ebf02c2706ad49": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-policycoreutils-2.9-5.fc31.noarch.rpm",
-          "sha256:5b75073853ff34026cf180d7466314783a7a81defaa43e6b7416a38d9f19230b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libepoxy-1.5.3-4.fc31.aarch64.rpm",
-          "sha256:5ba547e1c2c515b3ca091e04c0a6b15b297e25b567a6613a07bd2bee41f39684": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pango-1.44.6-1.fc31.aarch64.rpm",
-          "sha256:5d87d829a1d939c520b25f1c790cd1f3bd6c8b769f4f21303ec5e16a3b509445": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sed-4.5-4.fc31.aarch64.rpm",
-          "sha256:5e2a37ee7e1147a446be67d63b1be55f2e82c0ae0a84dd1afc6a3fec64e62804": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libblkid-2.34-3.fc31.aarch64.rpm",
-          "sha256:5ef4f8487a78a43f7502c055ac77c047ce159da5641e5b61c2669395ae1efe62": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdb-utils-5.3.28-38.fc31.aarch64.rpm",
-          "sha256:5f2bdb8f9a18257ee80a243e1be96e3ef6fa660e37fdf7b4443d8e8f7abf86ef": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/q/qrencode-libs-4.0.2-4.fc31.aarch64.rpm",
-          "sha256:608a967cbdbad6b7320060e986bf8f8e7f6b61bff5ae6571006397b46a60771c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libbasicobjects-0.1.1-43.fc31.aarch64.rpm",
-          "sha256:611b0995f8475747341db33373ec0178afcb724183aada71b5d3a2c437d19527": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dhcp-client-4.4.1-15.fc31.aarch64.rpm",
-          "sha256:618e9a7e3f1f8191beee70d3ad1c8754870887d251480e7e6dd1f3de2d8226d1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libjpeg-turbo-2.0.2-4.fc31.aarch64.rpm",
-          "sha256:63ff108f557096a9724053c37e37d3c2af1a1ec0b33124480b3742ff3da46292": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-decorator-4.4.0-2.fc31.noarch.rpm",
-          "sha256:64206147fbbabe1e050f17442a2a3d1458b27beea0d8f3ff9e258a2842dd7a01": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/q/qemu-img-4.1.0-2.fc31.aarch64.rpm",
-          "sha256:64b0063f6b3a42b712c0ee622328e36ddf94a15da547e3c8da3a4191e0941c92": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libassuan-2.5.3-2.fc31.aarch64.rpm",
-          "sha256:6728ee255cb8c80b85f6d610bfd795025939a77d2591ad61fe1c4f9d657c386e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/trousers-lib-0.3.13-13.fc31.aarch64.rpm",
-          "sha256:67bbf2a262929b1b4c2fb9532c471da5ab2c0f642b0df770cf947c0131a9e1ad": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libselinux-2.9-5.fc31.aarch64.rpm",
-          "sha256:682af90a049fa78429d5ebd194700609f762e59ceb6c4ca28b17e7f4fd1683aa": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-prettytable-0.7.2-18.fc31.noarch.rpm",
-          "sha256:69f2c758068234b1abc39ffaf94c8825ae4baa9810cc54e5d49a5c891fa98435": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libkcapi-hmaccalc-1.1.5-1.fc31.aarch64.rpm",
-          "sha256:6ad56e7cd4cd7d7face0f8287784bf64ce77a8ec378af218b11c0ccf1669eea1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-pip-wheel-19.1.1-4.fc31.noarch.rpm",
-          "sha256:6b11c1e14d4a02edf8beee776f9f896729bd0f28c66cb4c1d2bd021cdffc6aa0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gtk3-3.24.12-3.fc31.aarch64.rpm",
-          "sha256:6b2e3b36c2a3e988f40548688b32ef3ce2e4c7906127215c82736189684a95a6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgomp-9.2.1-1.fc31.aarch64.rpm",
-          "sha256:6b983575f1280a583f8b6f3bd61958b177b12bdc3dd76efba72e530f4fc14e89": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libX11-common-1.6.8-3.fc31.noarch.rpm",
-          "sha256:6bc6909c53c0eb2bad7640b3fb79da5cacf5fd8951dee08347b8d18df1b004f8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdnf-0.35.3-6.fc31.aarch64.rpm",
-          "sha256:6c6f1152899318bdc0500cfb0b0cdbbc19ba0e017b5888ece1358250caa2629f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pytz-2019.2-1.fc31.noarch.rpm",
-          "sha256:6ce37675749741e4ea05e934aa5b7376d596cc117bd317199d0a15e2236aa058": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-plugin-selinux-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:6d4c3ae013d07e50d085b3419dfd41ac79ba11ada62d8c4570d21764ef6f11ec": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/p11-kit-0.23.16.1-2.fc31.aarch64.rpm",
-          "sha256:6e76674266f1e136186e3f005ddbf13791b1fea78cd30e8501f3dd1b209fa9f2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cryptsetup-libs-2.2.1-1.fc31.aarch64.rpm",
-          "sha256:6e78ce3d460b7e1377f487fed5563999fb44d310c441798a4d23d34960e23d45": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdk-pixbuf2-2.40.0-1.fc31.aarch64.rpm",
-          "sha256:6ed7f318c5e93b59254d7b7652131f33db713eeb61f52413f21e533069ed24bf": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pycparser-2.14-20.fc31.noarch.rpm",
-          "sha256:6f7bd7a58d5aed77bbab94aa38edcbc4cac924d72ab6c72ce718f24b6528e1a5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdhash-0.5.0-43.fc31.aarch64.rpm",
-          "sha256:700acef9fc8051726700645696fd67b0fc3b7fec08290ef9c2964fe7a9d3e8cd": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-audit-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm",
-          "sha256:7027d2c6a004469720e3c64eb7fcb2ace1fffd61ec4380afbf875d59a3876f3a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libuuid-2.34-3.fc31.aarch64.rpm",
-          "sha256:70ea69b3f7c94f069b3ab4d7cb9ed7d3592d5e5487edc5cd6d5fb96049df6524": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/abattis-cantarell-fonts-0.111-3.fc31.noarch.rpm",
-          "sha256:7102de1c840d5b915a40fde5c408f182d677ecdd5126dedf033ebb63b5419607": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grep-3.3-3.fc31.aarch64.rpm",
-          "sha256:71ec6fd79756af905e474553f4ca7ae6985e32615df0ee2f2f487c8496e7160f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/avahi-libs-0.7-20.fc31.aarch64.rpm",
-          "sha256:7292bf1d13ef336ef411ef695f87c7c7ecd21a13e05c86cc475930ca61117503": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-libs-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:72bc6a2b459ee27dcd7c213d3aab5a993fc90fcffba2ef02fab7ae3857d379f7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/freetype-2.10.0-3.fc31.aarch64.rpm",
-          "sha256:73a7249de97f0ad66bc1a867ac5b5d08b741ab152d4dd7ce45cc231d64126b58": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-asn1crypto-0.24.0-7.fc31.noarch.rpm",
-          "sha256:7487afe052c79100e906a4d2cb2ee1043410ca10a8e60a65d95776f63a513595": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-libs-243-4.gitef67743.fc31.aarch64.rpm",
-          "sha256:750b46d07f3395ea86a89bcf0cae02adc64f5b995800ea6c8eab58be4e9d6e8d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dhcp-common-4.4.1-15.fc31.noarch.rpm",
-          "sha256:752016cb8a601956579cf9b22e4c1d6cdc225307f925f1def3c0cd550452a488": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/y/yum-4.2.9-5.fc31.noarch.rpm",
-          "sha256:7623bcecb8340ed57e1aa2951b13a1c5b1dfefa80eb226f269294df29cb40c08": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libseccomp-2.4.1-1.fc31.aarch64.rpm",
-          "sha256:7637132d543741e8c5b581523ca5db24adc6eb6d78530944881c360da694cf15": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-efi-aa64-2.02-100.fc31.aarch64.rpm",
-          "sha256:763bbd8d0e3e80b56041273dd412f0c3708c90cd0affd929d474ae61f7c3798c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iptables-1.8.3-5.fc31.aarch64.rpm",
-          "sha256:768cc2c561bd6476df45fbd9280bbaeb87d2addcd0c51601d2226a590d7dc872": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsmartcols-2.34-3.fc31.aarch64.rpm",
-          "sha256:77ff28552aba96ce4b80d51a9c390ef4958afad18ede879bf31022f2509e2d90": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpng-1.6.37-2.fc31.aarch64.rpm",
-          "sha256:78b600621e00f4a0acc8f58de056ae9393ce4e1cded56837b4e557c1bc84b06b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-urllib3-1.25.3-4.fc31.noarch.rpm",
-          "sha256:798376bc628acd54407d945702dce73ab90633919f88fe9b7ecde3f38ebc2fe9": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cpio-2.12-12.fc31.aarch64.rpm",
-          "sha256:79db5a94baa6acad360b52fdf6d49cf91d7b6290e0d55f457b2820937d2739f4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efivar-libs-37-1.fc30.aarch64.rpm",
-          "sha256:7a5aadb5da769b563cf1e548d8cabd26c00720a67df7e4a445a5a9ae5b0891b8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libcomps-0.1.11-3.fc31.aarch64.rpm",
-          "sha256:7ae36bfe222068561cf0259400b54e210ad628aaa66dd4b87e20a2291996c71d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dracut-049-27.git20181204.fc31.1.aarch64.rpm",
-          "sha256:7b01a3bf09861003bd9524e9d460ed68b8d2de4233a09f7af731cb07f75ef913": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iputils-20190515-3.fc31.aarch64.rpm",
-          "sha256:7bd78cde4202401947dea928274579074bc78fdae096057e788c1b6a86a10ecc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/trousers-0.3.13-13.fc31.aarch64.rpm",
-          "sha256:7c66a9a33e131200e13a638613ec054a94be901399424df27a0b4f94532ee36d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxml2-2.9.9-3.fc31.aarch64.rpm",
-          "sha256:7d0ec23fb8dab882db8b7ec9a9cbb2728d6df2af5c02ee06cc6fa357f210ff09": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/krb5-libs-1.17-45.fc31.aarch64.rpm",
-          "sha256:7f23849dcd356019c4e83058e9e49d544300ad7b9a6f6a7528831e393ca1197c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fuse-libs-2.9.9-8.fc31.aarch64.rpm",
-          "sha256:80434d5f64abdd521330153fc0c983c5923a833ab59f57ec3bc3a8cf1d748c8c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libyaml-0.2.2-2.fc31.aarch64.rpm",
-          "sha256:80cca68bc5a904fbb0123a57d22938cb42d33bf94cf7daf404b5033752081552": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/langpacks-core-en-2.0-7.fc31.noarch.rpm",
-          "sha256:81100039c817e2f3703fb365c63d6d891f3f977dd9e670c3c9b12662de3c255b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fipscheck-lib-1.5.0-7.fc31.aarch64.rpm",
-          "sha256:81169dd168c02aed3b1e57e5af16ec3dbdfb74c15373ee40e9eec5aac60a3d25": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sqlite-libs-3.29.0-2.fc31.aarch64.rpm",
-          "sha256:811b8cf02991087a50664df5606348f2c4d48a534b0436caeedb3afbcc1882e0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-common-2.02-100.fc31.noarch.rpm",
-          "sha256:816fe17af41a66dd718eb247273be824b75f53fb539455b58b892528ca12cde5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpsl-0.21.0-2.fc31.aarch64.rpm",
-          "sha256:81f5b3786ab1b634016c0c066379dda739386b4b1d639111b4575748e27caa56": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnome-keyring-3.34.0-1.fc31.aarch64.rpm",
-          "sha256:8221111dc9a9aa5c68805f153c3fbe5314c8a0f335af29685733b958253dd278": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-idna-2.8-2.fc31.noarch.rpm",
-          "sha256:82bc08ef5d8049d3d07a5eb00f61d3f94d7577ef814f6791352f75835bff477a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gsettings-desktop-schemas-3.34.0-1.fc31.aarch64.rpm",
-          "sha256:82cc8c43bfe0e731ec78e31c8af6250ec1f13989978105a1b38d518470cf5bde": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsolv-0.7.5-3.fc31.aarch64.rpm",
-          "sha256:8323e1b19cb904a26b3e394e2aee81d5a73dbe136e317e1ea490bceef250c427": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-default-yama-scope-0.177-1.fc31.noarch.rpm",
-          "sha256:84365601f93db7fda27e4d89826d4893830572e98df35275abdf15659cfe3fc5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-3.7.4-5.fc31.aarch64.rpm",
-          "sha256:84fa6157b3e986b9ce67cc03bfed4e2b96fa7d075df70e038fbcd2b486737d35": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/man-db-2.8.4-5.fc31.aarch64.rpm",
-          "sha256:854568bdd1df94ca174ab21d724831230f5c57efa52f11e00124c07bc44eba78": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/w/whois-nls-5.5.2-1.fc31.noarch.rpm",
-          "sha256:855131926b9a3764835de3e7171b9ce579847ce161f3ba8406a5b6fdfa781f55": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/parted-3.2.153-1.fc31.aarch64.rpm",
-          "sha256:859b03ef657a7c682ff7f341145a7c2ba9025fd5430f36ecb020eeafc55bba2d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnftnl-1.1.3-2.fc31.aarch64.rpm",
-          "sha256:88831a57114969801a557d700451a70337f944b868a3d792d47e6e9e91961f3c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/audit-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm",
-          "sha256:8891f85ba3caf6de4b6b234c6aa7a98d347228937a378d04da7af56556799bd1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipset-7.3-1.fc31.aarch64.rpm",
-          "sha256:898a918a7adfefc3ce13d10b30b2ec7ccada96155afa15ee3f4e589b3f1baa38": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcurl-7.66.0-1.fc31.aarch64.rpm",
-          "sha256:89a35174435a790c0fbf3bc4306d51c867ecce66fb65bae0e7706a9f8f9a19b3": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/groff-base-1.22.3-20.fc31.aarch64.rpm",
-          "sha256:8bce4002b36540d966f0f8b95ab41486901ddd23a067729591de801b1689956c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dnf-4.2.9-5.fc31.noarch.rpm",
-          "sha256:8c4b392a5e1ed79b7a5b302d8fb14d0470b3a6306a7b36aee275acf0daa61537": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fribidi-1.0.5-4.fc31.aarch64.rpm",
-          "sha256:8d00fa6cdfcc955dc4e14d0f8b6ba6217d2dd0334ea0e1aa44694c9e0ad0b06d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rest-0.8.1-6.fc31.aarch64.rpm",
-          "sha256:8d17464a13f79b54c8dfe76d716a42d6c875bce408e29344c1ecf916957a649e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcroco-0.6.13-2.fc31.aarch64.rpm",
-          "sha256:8d21bbf2063bb50cf3d12281731fbd8b26dece5f154d7a50f0952695fea6751f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnsl2-1.2.0-5.20180605git4a062cf.fc31.aarch64.rpm",
-          "sha256:8dbcbe9e8936e6e7cace19b20beade285862e1c65851dc67f2af440ce0c2d3fc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fontpackages-filesystem-1.44-25.fc31.noarch.rpm",
-          "sha256:8dbce1e34a19be338f49b792874abc861fd64acc5653f7f5cd523d5e5865897e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/brotli-1.0.7-6.fc31.aarch64.rpm",
-          "sha256:8e10cf2b0645e342b001338a4463c5a02a8a302c25affba37da700a987e2c064": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnutls-3.6.10-1.fc31.aarch64.rpm",
-          "sha256:8fd19268d460d7f49f3dd96644a2b8a3076a7a7ccbe3e35e27eeafc6ab8d9c95": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-libs-1.12.16-3.fc31.aarch64.rpm",
-          "sha256:91d628d3e4a82976361ecb306d4f0049aa65c811fdd5051b3f8423b75e4a10e9": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtdb-1.4.2-1.fc31.aarch64.rpm",
-          "sha256:920d2d8df80fb92e358f4925bbd2891977c98e0b9d2f69b44f1e74bec26d6a1e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cups-libs-2.2.12-2.fc31.aarch64.rpm",
-          "sha256:93733a7e6e3ad601ef5bbd54efda1e8d73e98c0de64b8bb747875911782f5c70": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-firmware-whence-20190923-102.fc31.noarch.rpm",
-          "sha256:9404d90bbb474b30b80c90719df01d784b925127e9710f12c44c72d14c2708fc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gcr-base-3.33.4-1.fc31.aarch64.rpm",
-          "sha256:974bdde5f821c071bcbe0de191677981685cb8290952be75a7ab15747988a99e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/policycoreutils-2.9-5.fc31.aarch64.rpm",
-          "sha256:98d811216e2e0e4ad49925489824210fc3e9b57bb09eefcd4047886375d34f57": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcom_err-1.45.3-1.fc31.aarch64.rpm",
-          "sha256:995ee9636461072248d5c6792d3852fb1ab277a622b18eb7d3c231133446dd7d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/bzip2-libs-1.0.8-1.fc31.aarch64.rpm",
-          "sha256:99a6e2861b7eb51684d1b83901a7e54caf649b711556a660d93bfef114eab72c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libattr-2.4.48-7.fc31.aarch64.rpm",
-          "sha256:99c0e924fa7eb70fc9301b692d4ba72ec480af840498b8251f68a419317bd108": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_sudo-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:99e8930364200470ee5bd065dccb7c4c1caa4863c6f8975740643fe9d2485c18": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cracklib-dicts-2.9.6-21.fc31.aarch64.rpm",
-          "sha256:9ac1ef0ef80d7ff65903120f8b2a5a2a5723dce7c9c131e17cea3572cb81d0f4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXinerama-1.1.4-4.fc31.aarch64.rpm",
-          "sha256:9bf695c87aa5acc7695251a4c75c576375c45c5b043af00a7ddf503223030309": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-core-5.3.7-301.fc31.aarch64.rpm",
-          "sha256:9c039f6f6e5385344ea56a6490a472b0f475d8d7612b422191d2152b8e1fc55a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/curl-7.66.0-1.fc31.aarch64.rpm",
-          "sha256:9c08d246ce73d8741777f290e7110ff9dae97a15e09f3469317ed7c8e9fb64ce": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/atk-2.34.1-1.fc31.aarch64.rpm",
-          "sha256:9c8771c8c5eb38351dd30f994133bc9149ec93813d1a7c2cd2dd8f7dc7431d49": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/nettle-3.5.1-3.fc31.aarch64.rpm",
-          "sha256:9c9250ccd816e5d8c2bfdee14d16e9e71d2038707009e36e7642c136d7c62e4c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-repos-31-1.noarch.rpm",
-          "sha256:9cc3e6534ae34343e7e4d056d46b9551da7d0a82c7bad378c3626d4b70d1bf62": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cloud-init-17.1-11.fc31.noarch.rpm",
-          "sha256:9e55df3ed10b427229a2927af635910933a7a39ae3354143ac2f474d855d4653": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dateutil-2.8.0-3.fc31.noarch.rpm",
-          "sha256:9ec2a643accfd8843a0ce2dd96ba349bfa474daea14099810a95ae65d929f2b5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adwaita-cursor-theme-3.34.0-1.fc31.noarch.rpm",
-          "sha256:9ed0b44834b6a637c70aa00ab243aecb534f9aea461e1388652ab039898239c8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xz-libs-5.2.4-6.fc31.aarch64.rpm",
-          "sha256:9ff53c6f07da3adeaa20da76c1c78b886710b460db7a316415f8bc9182096fb0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/procps-ng-3.3.15-6.fc31.aarch64.rpm",
-          "sha256:9ffb9a376d1df3d3d394ec2f8533f939547d8ccd634f1f77db52970630215d71": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cairo-1.16.0-6.fc31.aarch64.rpm",
-          "sha256:a00e85fb7902d8869492e32816c7834830682745eeab1efba264bdd3185f479d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/diffutils-3.7-3.fc31.aarch64.rpm",
-          "sha256:a084b365795c7262fa09b2fc590dfbabbbf30cb9c1c7f9b5274eae4c5d761482": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lua-libs-5.3.5-6.fc31.aarch64.rpm",
-          "sha256:a108fbc1ba9886604483ec05ef2150c961adb0906db5f9ea46c239bfcdf06b55": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/filesystem-3.12-2.fc31.aarch64.rpm",
-          "sha256:a2f6ae2742a2aac3f5bb5f1ad5cfa4d9b8fdf7cfd01033246027db7064abaa1f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcb-1.13.1-3.fc31.aarch64.rpm",
-          "sha256:a314b2a8ed8a9e7e80aedfb1f76c75910d0da9549d072c424c2dddbe63a09874": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dbus-1.2.8-6.fc31.aarch64.rpm",
-          "sha256:a349c40034b5a181cab1bd409384ddb901c274e110b16721d434f5bf42e92c0f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-firewall-0.7.2-1.fc31.noarch.rpm",
-          "sha256:a39fb89e06572d188309dc4daf1d23e21be190e59f9ef8ff3c3ccceaefe505da": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libzstd-1.4.2-1.fc31.aarch64.rpm",
-          "sha256:a3be2e9e42d68f5e5e58f1dd86d5b6e4fc1ff91e98f44d26221d6bda38c9f372": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/hostname-3.20-9.fc31.aarch64.rpm",
-          "sha256:a40b4873535c2b0b826063e5248981d1ce0d04ef5ec6d9c21facc07ce2446b40": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpipeline-1.5.1-3.fc31.aarch64.rpm",
-          "sha256:a436dca481707ca10a0c5bb189d9a25ff76c4f66f1d32b0847dc6d13ba46c17a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-udev-243-4.gitef67743.fc31.aarch64.rpm",
-          "sha256:a4f7846fb262ad61885f64b8a354f9303fe5ce129378e4781eefa0bffdef828e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xfsprogs-5.1.0-2.fc31.aarch64.rpm",
-          "sha256:a516dfa62a327d440fe38b93af81dbecb112fe45fff0f227583c451631479122": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/acl-2.2.53-4.fc31.aarch64.rpm",
-          "sha256:a5fa076ed2c83974cacf4ce386bfdc576ce532fba4f8645dda5c2b67efc5d501": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmodman-2.0.1-20.fc31.aarch64.rpm",
-          "sha256:a61e3fed8d1c860bf09b5ec5586e30b88b1b1dea157cd371def9fcf72e313a3d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcollection-0.7.0-43.fc31.aarch64.rpm",
-          "sha256:a63ae4aa727a4b75b602a67f1e42946e39dc124e9f1aeb3e795af40ad4e15cbf": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcomps-0.1.11-3.fc31.aarch64.rpm",
-          "sha256:a6caaef9bed1bd17292e1fdde4efee9730f8cff5826a9cb6c952e6f3cd052243": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/at-spi2-atk-2.34.1-1.fc31.aarch64.rpm",
-          "sha256:a7f5877c9ebfb44347765c7deb266e53fdd62403ccc0a7ff17fdb101bc28caff": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-libs-1.1.1d-2.fc31.aarch64.rpm",
-          "sha256:a96e76f00865249f70a3f2ef293946e9786150faa83e37185e61592290817cb4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libacl-2.2.53-4.fc31.aarch64.rpm",
-          "sha256:a9f81157c1f977adf96403fe534e2fecc9f3a82a58c5b53fd58aad9954873790": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/nftables-0.9.1-3.fc31.aarch64.rpm",
-          "sha256:aa3658efc21bcc6d79344eeeaf20285407f6f3b90d905a66a37a8cfc835b2a61": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-egl-1.17.0-2.fc31.aarch64.rpm",
-          "sha256:ab35a2d7f21aac1f33f9521607789e1c303fb63e4ea0681e9f724f86a1cc15c5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/firewalld-0.7.2-1.fc31.noarch.rpm",
-          "sha256:abf022d05aa55e7aa8d0736b899d86613d30a7e1751b04666920f367d4311a1a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-2.30-5.fc31.aarch64.rpm",
-          "sha256:ac3230db1dfd77c5a90b1eda2c002e75f6abe1aa2d4416aea12515c956211e4f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gobject-introspection-1.62.0-1.fc31.aarch64.rpm",
-          "sha256:ac7985d2591bc2bd1d90efdb68751a3d7435cf902b3895cb308e830ce48f1f44": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shim-aa64-15-8.aarch64.rpm",
-          "sha256:acd149c4bf17a15db75fca1f19e34784a9ed275e19c0721aa78f5eb94797a685": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/u/unbound-libs-1.9.3-1.fc31.aarch64.rpm",
-          "sha256:ae9a3e144f31b6172d266b984c8385fba94bdcf3002d3182a4118f8d29f5f718": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:aeac986c84b8038eccd191310bb09f3d396f7c05171ac0fb8691182918459c90": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/less-551-2.fc31.aarch64.rpm",
-          "sha256:af00a0b026235e70f7cb7606166dfcaea0d227a3de70363ff67a644036ed8bfc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-extra-2.02-100.fc31.aarch64.rpm",
-          "sha256:af2501d5d8d857f43d0c08658ce3d49ab787e9f61773883256fb933dc271cdd6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/crypto-policies-20190816-4.gitbb9bf99.fc31.noarch.rpm",
-          "sha256:af589a85af85270c027bacb5ccaf88c93378d364a7c1436ee7bca1290cf762f7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libverto-0.3.0-8.fc31.aarch64.rpm",
-          "sha256:af594688a568ec4db7dae9d60390dce1ab547527bbf2415752f211de3748b97f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-243-4.gitef67743.fc31.aarch64.rpm",
-          "sha256:b04fecd603225051ca56c6674cb72f12f4de0cc1cbbfda0ab7d0af0e655b2c99": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libthai-0.1.28-3.fc31.aarch64.rpm",
-          "sha256:b0d153ea83902561a9e60c9c244a497c3b19a9c4e40cf9e8437d0221af0f2ca3": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pcre2-10.33-14.fc31.aarch64.rpm",
-          "sha256:b1094a9a9725546315d6eac7f792d5875a5f0c950cd84e43fc2fbb3e639ee43e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-slip-0.6.4-16.fc31.noarch.rpm",
-          "sha256:b25f063f82484e4fa42d1ad31a2cf23e882a99dc1ccb191b24e14a6a789d87a0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/audit-libs-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm",
-          "sha256:b37d963f89a7e0d466e1317da6cd2c20b3ce3ec9789e1027c16176734f88c4fc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/NetworkManager-1.20.4-1.fc31.aarch64.rpm",
-          "sha256:b3d8740cee57c5025ef88e9d71df141a6600fdf26215969acae393a2b052892d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdk-pixbuf2-modules-2.40.0-1.fc31.aarch64.rpm",
-          "sha256:b6498a7a8056483e1d42362b1fb27bd6c54ed7cc7bd180cae20d64a13ae4c88c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-unbound-1.9.3-1.fc31.aarch64.rpm",
-          "sha256:b8a0701a9acc6618cb04454787f032be5033cf0bcfa960ac0d785753e43a8d6d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-setuptools-41.2.0-1.fc31.noarch.rpm",
-          "sha256:b9ad5c82b3b83871269ee705ee12896efd1e3485b0d2005c9cff2a100100cd34": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gmp-6.1.2-10.fc31.aarch64.rpm",
-          "sha256:b9b609d17e9274c1551ac6ebab4b53f6e4a5ae9253db5465c65fdb8c919a09dd": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libffi-3.1-23.fc31.aarch64.rpm",
-          "sha256:bb305f3ddc74c4c30ae838a2bbff3cd325eea8427622c7f82e4d06a564bace6f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/coreutils-common-8.31-4.fc31.aarch64.rpm",
-          "sha256:bd2e7c9e3df976723ade08f16667b31044b678e62ee29e024ad193af6d9a28e1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-slip-dbus-0.6.4-16.fc31.noarch.rpm",
-          "sha256:be8bf30729c71aabe30f2c4cf8e5c43ce3cdf892c218fadf53c0af29a76fd6b3": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgcc-9.2.1-1.fc31.aarch64.rpm",
-          "sha256:bf92fc95c282da9c76018679d9180fb6c98aaf864f66bbef630941040579f92b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/p11-kit-trust-0.23.16.1-2.fc31.aarch64.rpm",
-          "sha256:c0287bc7c1f54bcd19c43904f9a5c7c0cc4c82eae2c455071f6d7ea50714668f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbxtool-8-10.fc31.aarch64.rpm",
-          "sha256:c05d42fba4fc1ebc2df9ee49f971c744937d8b307626c90b3cf79bf91619863a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shared-mime-info-1.14-1.fc31.aarch64.rpm",
-          "sha256:c0bd22ca961643f57356d5a50c8bed6d70b0dd6e2e30af5f70c03ebd8cde2e4f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-distro-1.4.0-2.fc31.noarch.rpm",
-          "sha256:c1590c5cdfc7aad868c75c54c11a2c7d692001f758ead33aa10f9838955148c4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsoup-2.68.2-1.fc31.aarch64.rpm",
-          "sha256:c1893a7c51ebb0371b87e2179d6e0e5d0fbb71acb4234cf4adc293af11c75578": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/z/zchunk-libs-1.1.2-3.fc31.aarch64.rpm",
-          "sha256:c2e96724fe6aa2ca5b87451583c55a6174598e31bedd00a0efe44df35097a41a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/selinux-policy-targeted-3.14.4-37.fc31.noarch.rpm",
-          "sha256:c36dd24858c4e8d207eb0f87af16e4c599a16bb981416d47db467b70a841fe08": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dosfstools-4.1-9.fc31.aarch64.rpm",
-          "sha256:c45162d6aeab69ce8f58353c88e7e068c59f36921989aa49ac23738f7c9cea82": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-gobject-base-3.34.0-3.fc31.aarch64.rpm",
-          "sha256:c599ffa97fde329ff872bd6db99e8c218601df6549302f89ff747d34ca24042c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libproxy-0.4.15-14.fc31.aarch64.rpm",
-          "sha256:c68bed5b576d7baa67a59c726d2340f7c0df7e9b93f90b3a22d3f62e9f99456a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kmod-libs-26-4.fc31.aarch64.rpm",
-          "sha256:c6de19d0d4b8f67957ca6122462090895034495852814f36396bc134905f5f5e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libss-1.45.3-1.fc31.aarch64.rpm",
-          "sha256:c6ffcbd829ea30ef40fa61095cef03f2b6eafa3228187a478d6d027911f12e2f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libidn2-2.2.0-2.fc31.aarch64.rpm",
-          "sha256:c80fbc5228457b9b1978b098f47d2a66ca5636526965847078edb6f1c302e392": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libusbx-1.0.22-4.fc31.aarch64.rpm",
-          "sha256:c84f89f65e2a691d7fcbc7021c3c5d796e0f39483e3fe95e83579c630575b78a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glib-networking-2.62.1-1.fc31.aarch64.rpm",
-          "sha256:c8fc5b492af902894b927e79314b52bbdd8e45b2d2018abd8113d8e1807adeca": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gettext-libs-0.20.1-2.fc31.aarch64.rpm",
-          "sha256:c935f74584d7289ca58d1b23cbdacd38450d351dbc3dcd0bc713723c4d50a545": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ima-evm-utils-1.2.1-2.fc31.aarch64.rpm",
-          "sha256:c958419128c1330b50c741113394b147da1ccda055ab1ee19fabc199f68971ea": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-build-libs-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:cb478c89af0caac9a40c32a2b4a48242b16ff9e2e6daa375b2de88e396f524dd": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sudo-1.8.28-1.fc31.aarch64.rpm",
-          "sha256:cbd9d78da00aea6c1e98398fe883d5566971b3bc6764a07c5e945cd317013686": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-base-6.1-12.20190803.fc31.noarch.rpm",
-          "sha256:cdc526097cd2fecb75e44ad11a69b10eb7804f310298c064c3b931515d4f3d5c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-configobj-5.0.6-16.fc31.noarch.rpm",
-          "sha256:cddb050897cd8666090b172711fb7947b3bf844f5a190f8c689fd79a222e1761": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lcms2-2.9-6.fc31.aarch64.rpm",
-          "sha256:ce421671bfd14a427771eb3c78b060352a61cca889b1bf1b342c328dd521623d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_autofs-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:cf480f0df368b3cc9f36e42d5d573afa93fcb3889614dee172c0ad367785f520": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/polkit-libs-0.116-4.fc31.aarch64.rpm",
-          "sha256:d01f7e794c3dd3f38de1b69fd360db4b858826eba4e6fd4edc79c8a74774ab00": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-plugin-systemd-inhibit-4.15.0-6.fc31.aarch64.rpm",
-          "sha256:d02489175567be57a48a3edf5deb66d100e99df73a37b26062fea4d6af014cbc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/readline-8.0-3.fc31.aarch64.rpm",
-          "sha256:d1520137d9cb96cd10a63893b45b4794b120502bdbab0862e001ac2486195aa6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsecret-0.19.1-1.fc31.aarch64.rpm",
-          "sha256:d1ce6a69f0c2d96a97a04036a5c59deda82b5e1b0843c114f0fb896279ec7bbc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnfsidmap-2.4.1-1.rc1.fc31.aarch64.rpm",
-          "sha256:d22fbf5e32d176db1414b0854c78f0ea1b5f489a83490ee4e3f67bc5e98905af": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libaio-0.3.111-6.fc31.aarch64.rpm",
-          "sha256:d25bc4ae557b402ec151cbf70cb8f63e985c456ed7f0347505cf6cf171d15565": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/geolite2-city-20190806-1.fc31.noarch.rpm",
-          "sha256:d287bfdcebb9fbb31d5f58cc71311f48a85970d0fd92f5beb0193270c155faac": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmetalink-0.1.3-9.fc31.aarch64.rpm",
-          "sha256:d2be7b0f17350a8a0f301617cb1d7b024076bc16986abaab94453ec1cee1f1f2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/popt-1.16-18.fc31.aarch64.rpm",
-          "sha256:d2d3b613de0ecf3ae022e5d5d1576858c91b203af6a52a7a9aa36245f0cdbd05": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libldb-2.0.7-1.fc31.aarch64.rpm",
-          "sha256:d2f7d49bd565c2fec4ca945ae97ac3b8a607f114d3a7558b90b2caaa5871459b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgcrypt-1.8.5-1.fc31.aarch64.rpm",
-          "sha256:d35fe17711337362bdf09540523bddbdc16406d0ff7650043a3cdd1cfc222ae8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-cryptography-2.6.1-2.fc31.aarch64.rpm",
-          "sha256:d3da31400c3b9277ec828ceea8a56e2dcfd0ebca0541c3ac8426a082bc17e647": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adobe-source-code-pro-fonts-2.030.1.050-7.fc31.noarch.rpm",
-          "sha256:d429648fe5b233a46fdbfc31a283ca4b6be5177ae84f3e7e63fec5f9bebd17d1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-gpg-1.13.1-3.fc31.aarch64.rpm",
-          "sha256:d45b8157ccb1d538f06120150470433ddaa714680e10ffe97bfc5853b5a0321e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/ebtables-legacy-2.0.10-37.fc31.aarch64.rpm",
-          "sha256:d54d16ad9e5b80cdf93f09d67c52ff64bd7f7c5e8aece4257ad2615f807fae02": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dnf-plugins-core-4.0.9-1.fc31.noarch.rpm",
-          "sha256:d54f02fc39b3e87253808f665918d26ffe901f1228e25121c908661b47ba266b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pysocks-1.7.0-2.fc31.noarch.rpm",
-          "sha256:d5fbbd9fed99da8f9c8ca5d4a735f91bcf8d464ee2f82c82ff34e18480a02108": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/selinux-policy-3.14.4-37.fc31.noarch.rpm",
-          "sha256:d6b491f91a567b4245d07d28a0547cb1b8e97a1f814e3f7d76dd685bb6658b64": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iptables-libs-1.8.3-5.fc31.aarch64.rpm",
-          "sha256:d877864e501fe38a1b0c7e11572e61c5d9eb9857436541f1c2d5ad2f8bd29b83": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libargon2-20171227-3.fc31.aarch64.rpm",
-          "sha256:d8d28daa56fa4894a767957aa9948cad6d274e2b70d8b10aa69d9356c8a22eff": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openldap-2.4.47-3.fc31.aarch64.rpm",
-          "sha256:d8e448aea6836b8a577ac6d342b52e20f9c52f51a28042fc78a7f30224f7b663": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rootfiles-8.1-25.fc31.noarch.rpm",
-          "sha256:d9641a59b33831e32fa61f3479152d5eac33e0526b32e67ae33f1c1102c69d4b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-common-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:d96bdfbaba63ac6755a20d8a4d954bc5010695d671ba305a54362c1d3c69fc37": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efibootmgr-16-6.fc31.aarch64.rpm",
-          "sha256:dc6b772101df9f3029c2cd80a10663663ad877e129c8d724902f5cc9f1785e60": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-pkcs11-0.4.10-2.fc31.aarch64.rpm",
-          "sha256:dc8a707761f45962518e251f87a5e1d83199fbd1fe1e249f89ed457528c1fba1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm",
-          "sha256:dcc584a55c425c26a62fe579beead8488589c3892c34e8fab95c7fd7ec1cf6c6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/findutils-4.6.0-24.fc31.aarch64.rpm",
-          "sha256:ddd0635b899826bed59036ba17f8112c35660b32f3d1639266f5e394166a9dbf": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-minimal-2.02-100.fc31.aarch64.rpm",
-          "sha256:ddd9b320e97d333bb4b7ccbdf70e401693065177a7d9317c6d7d1b69318209f7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnetfilter_conntrack-1.0.7-3.fc31.aarch64.rpm",
-          "sha256:df3b6938e2fc743284b4aeeefb2533a91acff7e4b70962fb8b0fc9c792116db9": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-setuptools-wheel-41.2.0-1.fc31.noarch.rpm",
-          "sha256:e0408a5020069e7a4585e3bb4d1bba1b8bf0afe481ff63b70e2221e9c5464cad": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kpartx-0.8.0-3.fc31.aarch64.rpm",
-          "sha256:e0af6b40e51fe0b9f68367355219aa56717888d2a07c10a001cc8667de1a5a2f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tar-1.32-2.fc31.aarch64.rpm",
-          "sha256:e17ef6f7d4f1869ff5813d6f8f2983cd6f5cd23d4a666b7ae19154636e911644": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-babel-2.7.0-2.fc31.noarch.rpm",
-          "sha256:e1deab5e887a199233f9a439d2d20d864d434e9a4ac7fe460f230d368fb3779f": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsepol-2.9-2.fc31.aarch64.rpm",
-          "sha256:e1e5250ea932beac32caf373ae55b4655c50ae8a1bd9d42e3ceac590a13031ef": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgusb-0.3.0-5.fc31.aarch64.rpm",
-          "sha256:e29356f3ea2554e8be23401a08a941f406d337cf6b38e7ee99926fb9b3f1f541": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-pam-243-4.gitef67743.fc31.aarch64.rpm",
-          "sha256:e3046e1e508453e332277ab86ebf67df0106edca2c6e8e54ba2bffb76f9ed4d7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-common-2.30-5.fc31.aarch64.rpm",
-          "sha256:e30906c30d3dea50c62e74bc7aa870eb928af4c6fb474c894f55ef6ba41f5841": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fontconfig-2.13.92-3.fc31.aarch64.rpm",
-          "sha256:e35e30f6477652a93d3c02ec86faa233884aefb2ff9fcf4058909d9736fb2d15": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcrypt-4.4.10-1.fc31.aarch64.rpm",
-          "sha256:e4e6a5e014442aa8d7768555da9d44e6381569e0c44e61d2d2a06d6692748945": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtextstyle-0.20.1-2.fc31.aarch64.rpm",
-          "sha256:e566c03caeeaa58db28c0b257f5d36ea92adfe2a18884208f03611c35397a6a1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-release-common-31-1.noarch.rpm",
-          "sha256:e63f82e1a97f9b3ff079f2329ddc22e4b37c892972ead5807c242fca61ac6076": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-legacy-2.0.4-14.fc31.noarch.rpm",
-          "sha256:e6a986f10b17ba67e86c417251d855e1eeac0ca1c85c2ee7ae3bfc7d6c966087": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gawk-5.0.1-5.fc31.aarch64.rpm",
-          "sha256:e76b3b9d14a0016542f61d0ab2981fbf2d779e522d0c36d9095a1cffecbf9272": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/firewalld-filesystem-0.7.2-1.fc31.noarch.rpm",
-          "sha256:e78343046ae389b1c11d36f8de0b8bfbb9ded7bdc39fb52b3f719a39047bf42a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libselinux-utils-2.9-5.fc31.aarch64.rpm",
-          "sha256:e7e629e7e89f970660407fb22c8b706c4c9a65a5f43286ddeef1e165b446fcaa": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/device-mapper-1.02.163-2.fc31.aarch64.rpm",
-          "sha256:e88e27b7ac16c753e20f65cd13ed163019ac702c4195eb75d766acd44cb55263": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kmod-26-4.fc31.aarch64.rpm",
-          "sha256:e8a13bb46e5149142a1e0a359460c1c65b2cbcbff20f2d0c50f9adbad57538a1": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libfdisk-2.34-3.fc31.aarch64.rpm",
-          "sha256:e98119ac7a707287668e7a9a74ef2809ee5f555af04f52775367e428e08dbb33": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonpatch-1.21-8.fc31.noarch.rpm",
-          "sha256:e9c1fa22b0b6d6b7ac782ba60d4c6a2c747bd683f075720a4d82aec45adbd905": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iproute-5.3.0-1.fc31.aarch64.rpm",
-          "sha256:e9c7f59547a9eec5304db7a312b435592f07f7aee4f3db617e5ddfac0f4d048c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmodulemd1-1.8.15-3.fc31.aarch64.rpm",
-          "sha256:ea35fa3f5c16e074a59d66ff9037e48ca7c0126444e09daf640b7a37dacd76ad": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jasper-libs-2.0.14-9.fc31.aarch64.rpm",
-          "sha256:ea68ed6fc06f142c95e907b619a9696146dff1bba308773df12e412d8277eec0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libutempter-1.1.6-17.fc31.aarch64.rpm",
-          "sha256:ead6cd0d8e509f07e36456aff75eca8433821813d675382d28fe4e7dbecc48dc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmnl-1.0.4-10.fc31.aarch64.rpm",
-          "sha256:eb1992de281538771ba578a65eabe620dc35aef6c621d8c5351a2ba38ac440f4": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pam-1.3.1-18.fc31.aarch64.rpm",
-          "sha256:eb35167d6095465a58611b80853213af5838f271b75fa1a5e3c051a04a9078a7": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-clients-8.0p1-8.fc31.1.aarch64.rpm",
-          "sha256:ec305ea347ab987f5a00574bc3eaebaf2412483ed1b79615fdd86ca18ab146bc": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/e2fsprogs-1.45.3-1.fc31.aarch64.rpm",
-          "sha256:ec48b0cd759656b4c5d8d13dcc81c6fa23914f8e214b4cda1ed08e1896177fe9": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXrender-0.9.10-10.fc31.aarch64.rpm",
-          "sha256:edee134762456246cd8de577597e350b60a04bc43ac4a47622b9a263ddd74cf2": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-hawkey-0.35.3-6.fc31.aarch64.rpm",
-          "sha256:ee2f71a3a318270e9cc55aa9dde8889f2e664fec681f9fd5719361f8e4a1afac": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iproute-tc-5.3.0-1.fc31.aarch64.rpm",
-          "sha256:ee3977f4ee783225903f964c60932795d8c11307043e73527b394dec02487047": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pinentry-1.1.0-6.fc31.aarch64.rpm",
-          "sha256:ee5ed9701778c4cb91af4c2e2ef996b9c178d32b652edf4506394cac72fefb96": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnl3-3.5.0-1.fc31.aarch64.rpm",
-          "sha256:ee6dbb4914a35ee8a816ecde34d29221e3f4622324f6287c328e8ac22ae572ad": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-chardet-3.0.4-10.fc31.noarch.rpm",
-          "sha256:f0847b05feed5f47260e38b9ea40935644c061ccde2b82da5c68874190d59034": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tzdata-2019c-1.fc31.noarch.rpm",
-          "sha256:f0b9a02ed639d2cff7a85262d440c65f2fa2ba318166b45d969a2802f102535b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-cffi-1.12.3-1.fc31.aarch64.rpm",
-          "sha256:f11d53128f33f9e73dc21c01159a283cc3fcd2e39f2712dbfa930018ae67fb69": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpath_utils-0.2.1-43.fc31.aarch64.rpm",
-          "sha256:f1419585dbb27e3bf76aab5a5f8fb9580816a7a0e7fc93377b97646a0259a794": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/npth-1.6-3.fc31.aarch64.rpm",
-          "sha256:f195c83de6568cf550a3b2d70725697196c1a9269cddb9b825f5a887de9d6eed": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/NetworkManager-libnm-1.20.4-1.fc31.aarch64.rpm",
-          "sha256:f23f467c4099be4cb4dfdc1be13b7a7bb6e8c6da7c21182658a034827b64df39": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/z/zlib-1.2.11-19.fc31.aarch64.rpm",
-          "sha256:f2471f1b946309f419a2bf1b4b3ad473d53f7ac0ee15b9c2426eb2e6cb4e87c0": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnfnetlink-1.0.1-16.fc31.aarch64.rpm",
-          "sha256:f2ae011207332ac90d0cf50b1f0b9eb0ce8be1d4d4c7186463dff38a90af0f3d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-gpg-keys-31-1.noarch.rpm",
-          "sha256:f2d11878777b28a284e9a571a6a9cf893a97f0935291b10686eb93a2a3dfdfb8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_nss_idmap-2.2.2-1.fc31.aarch64.rpm",
-          "sha256:f34cde4c2bd6ab93a697d8c350e98f4d70f897f74fee35a06c25eb4b98f46c9a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-cursor-1.17.0-2.fc31.aarch64.rpm",
-          "sha256:f369cbc73e31dbae49565c6acfcc8ce4ea0158d1480121b5c6dcc1d224998a62": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipset-libs-7.3-1.fc31.aarch64.rpm",
-          "sha256:f3d5fd211e3faf1b61be64fd3f1659dd640a873c66747a5cc341f888e4179dea": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glib2-2.62.1-1.fc31.aarch64.rpm",
-          "sha256:f43fa8496a54ad89eef4f48c3813190b5509a21c873bc1d5fcd0dda80ae2b425": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/file-5.37-3.fc31.aarch64.rpm",
-          "sha256:f63c88d8b294addf2791a5b291e3ab13750a24fe92fec65c96d365edad767f57": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/file-libs-5.37-3.fc31.aarch64.rpm",
-          "sha256:f6b2aa7fe304420261fe558377d1c498654dd0caaf964406cd9a462fee450b26": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adwaita-icon-theme-3.34.0-1.fc31.noarch.rpm",
-          "sha256:f6d37f25fa7215b7ae185b12f687d60c4363cfb8e35d591595a9b0f379488fc6": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtevent-0.10.1-1.fc31.aarch64.rpm",
-          "sha256:f74b53f33812f65d12377946d363a773e48cf6bc6c4bb2acec5bb4a048861b88": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdbm-libs-1.18.1-1.fc31.aarch64.rpm",
-          "sha256:f7954ba55d833c6341ec87b0cf57817084c705673b8b50aff3e3606fcbdcfbb5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXdamage-1.1.4-17.fc31.aarch64.rpm",
-          "sha256:f85438d6cb268c431f3aed5c678f1632b56d57393a3eb52e31d75bc6462bc88d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dracut-config-generic-049-27.git20181204.fc31.1.aarch64.rpm",
-          "sha256:f85469c0c19ce86e8fdd0dd5a3e6e5c9b78e3436ae9ce70ba86b2b4a3794f693": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-oauthlib-3.0.2-2.fc31.noarch.rpm",
-          "sha256:f8e118c35bb5f8ae3dca517ef38c7a38bbdd491011af9e1c4c5c7523f13e6f9c": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mkpasswd-5.5.2-1.fc31.aarch64.rpm",
-          "sha256:f958a85509e118c832458a5f502e5d59695eb3df96ae0bd603203a82d188b2ae": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyyaml-5.1.2-1.fc31.aarch64.rpm",
-          "sha256:fabb9a86711308b3dbf146e8f155ab8e857172455e805aab912500bf157368ac": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-scripts-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm",
-          "sha256:fb2b070b96ed58a31da7889452ce3cdbfb60f6161a3e2f0ce2738b4d3facfd2d": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/json-glib-1.4.4-3.fc31.aarch64.rpm",
-          "sha256:fb6b61cabfce21597c33c62743c13dd96bcea39aa806a144bc2b2665b48273a8": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpcap-1.9.0-4.fc31.aarch64.rpm",
-          "sha256:fd9ac175e5af929bb942528904d6e6e48caed800e22a7a45825d535bdc1537ba": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/json-c-0.13.1-6.fc31.aarch64.rpm",
-          "sha256:fe6afcdab2793cd75a838a758a282d4581f1272f3f32df6a58777c0721e54b2e": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-libs-0.177-1.fc31.aarch64.rpm",
-          "sha256:fe6f4202a8e7e52add27c6d2e2af65884a974bcde4b5e89979badb782719ca1a": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libs-3.7.4-5.fc31.aarch64.rpm",
-          "sha256:fe7b068f7f0840245e41844bcb98a2e438b33fd91d19bbf88bcbcd608109360b": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/geolite2-country-20190806-1.fc31.noarch.rpm",
-          "sha256:ffa75117ea710fef320f1ae878e8c81e7a056386dea78aa5787dc091c5a100a5": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/colord-libs-1.4.4-2.fc31.aarch64.rpm"
+          "sha256:0064998ad79a6250297b379852b5a06932d8e074270bea02d75888758755bd23": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gtk-update-icon-cache-3.24.12-3.fc31.aarch64.rpm"
+          },
+          "sha256:0064a42567b657d85831ec162a314cd00f7befe48ce634387463754677206c9c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gettext-0.20.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:00e59535d45094b7d47e25c93d21179f3138839968776107df99fa0678f1440f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-libelf-0.177-1.fc31.aarch64.rpm"
+          },
+          "sha256:01ea4ecad746f1309b5c943f2b2709f7e5400d33e4d51c85401205ed18d61621": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libX11-1.6.8-3.fc31.aarch64.rpm"
+          },
+          "sha256:02301d2744b96674019251b6c8d2199790960e4cc79d90fbdb946a298fc2c4ea": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-data-4.2.9-5.fc31.noarch.rpm"
+          },
+          "sha256:02f7f1cdd5cbe11b16e093686db5c584a68db4e6b1015c4d36c0246a54f801bb": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_certmap-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:03559557dbf64805e44d7e956f6b228c90831766fd1f485eecdfddf7a646a220": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-2.0.4-14.fc31.aarch64.rpm"
+          },
+          "sha256:037522f3495c556e09cb7d72d3c8c7ae1e1d037f7084020b2b875cfd43649e47": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-firmware-20190923-102.fc31.noarch.rpm"
+          },
+          "sha256:03b9d49b78b7e758eecce6a25782767ec5dc921d28f053b17a651b1c8bb96d7b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXtst-1.2.3-10.fc31.aarch64.rpm"
+          },
+          "sha256:0458f6a42cd644322b6eb24b01f0f75de47d5e10ae077797dfada1ce2a1f7fcd": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dconf-0.34.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:047f9e29fcfa56be98ca3f42249f3ccb2a93df99f2438e3983e2064025f0d79d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonschema-3.0.2-1.fc31.noarch.rpm"
+          },
+          "sha256:04826477197ec239d756f81cb6d38fde2f65e71499a8dbaf0c666d93084f1ea3": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdatrie-0.2.9-10.fc31.aarch64.rpm"
+          },
+          "sha256:048e8325a759219a66788676c167a784534c8b1f81b1ae13f8617f7b7c5b79cd": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-4.2.9-5.fc31.noarch.rpm"
+          },
+          "sha256:054f0851c8b42292ac5c24ea649764b022dacc6d40a00e333abacc67e2c2a215": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-client-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:05539ce4b011cc2113fa9e99636f71b7855f979d78eedd597fd0be86dd540711": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libreport-filesystem-2.10.1-2.fc31.noarch.rpm"
+          },
+          "sha256:06cf2f5439e0ce2c7fc655bdf4868d3c47a5fbe5b71e9dc305232a7732896e14": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/w/which-2.21-15.fc31.aarch64.rpm"
+          },
+          "sha256:06e204f4b8ee2287a7ee2ae20fb8796e6866ba5d4733aa66d361e1ba8d138142": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-six-1.12.0-2.fc31.noarch.rpm"
+          },
+          "sha256:077e72f02d2eef2a2bfd8ab057527a02005806e731303fbff1e28f61716f2943": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-nfs-idmap-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:07cd9ddc7f7a16dc9739647af90706cfbcf70b281f5474e622b0769e211e0dc8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/u/util-linux-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:07f4ccd9f3cb20ceb4483adb673adfef15394b246bd93a84f169eb07acb68d71": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/passwd-0.80-6.fc31.aarch64.rpm"
+          },
+          "sha256:089d4c5c48e89cd1444f283571fce20fbf5f1b20f3a5ff1ce74266bbc2cd0fec": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/checkpolicy-2.9-2.fc31.aarch64.rpm"
+          },
+          "sha256:0a4100f50b31df500afc5d255dd87117553df7032447f3e226196fd64f9c3f47": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnupg2-smime-2.2.17-2.fc31.aarch64.rpm"
+          },
+          "sha256:0a80e2a0ede76c98337c220f01dfadacace037b48f09fe072c5d33f356e50b8e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-server-8.0p1-8.fc31.1.aarch64.rpm"
+          },
+          "sha256:0ae87f94df2e114f287d60e9041ac159349f51322e32eeefa19a96db0acb78e7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pigz-2.4-5.fc31.aarch64.rpm"
+          },
+          "sha256:0b109cfab724680af15e7be85cf9f4f4828cd8290f0aa8fcebcbb14cd176be94": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/initscripts-10.02-2.fc31.aarch64.rpm"
+          },
+          "sha256:0b1ddcc8c3096814bc5027133fb077ef587b49a1a4e4d6426327c75cf2066b11": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/alternatives-1.11-5.fc31.aarch64.rpm"
+          },
+          "sha256:0b2a6b7e3b62ff9c02ec3012f08fbf396a7990bf9599b49b75eecbee3b257f7f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgpg-error-1.36-2.fc31.aarch64.rpm"
+          },
+          "sha256:0b8baef3612880639ed59ae79475086aac8ce236fd35977e0d87305d0bb9a529": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pixman-0.38.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:0c49f27ae0aaf95fbdc52cfb9406c41eefff41b205f85fdc6ef6787ec3af5146": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libselinux-2.9-5.fc31.aarch64.rpm"
+          },
+          "sha256:0cb1a66cb3bb44797a8aeb47db85db1f6c0fcf4d4571d8a5f8981f83b51c08af": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/graphite2-1.3.13-1.fc31.aarch64.rpm"
+          },
+          "sha256:0edff1a5f04f7f5d47537b4c049b95331f9ad33963c9c63ca4b13345a37296d4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fipscheck-1.5.0-7.fc31.aarch64.rpm"
+          },
+          "sha256:0f3591f036f0be85a9d28e9099d43a8b2e5a500a9588825c1dd994d1a323ceba": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/coreutils-8.31-4.fc31.aarch64.rpm"
+          },
+          "sha256:0f661b922a9e9cbe82e948ec1d83c6fca6e61e08de50815a5b6c069a64f4e883": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXrandr-1.5.2-2.fc31.aarch64.rpm"
+          },
+          "sha256:0ff534e46d982b5a213eb562e3cb30d1935a25a9f433d325457069eec9131217": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-bootchart-233-5.fc31.aarch64.rpm"
+          },
+          "sha256:1088699171a35873eb5a776f0212ceff2bc9d67e3f1d8f2e107bbf751c36ca90": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cracklib-2.9.6-21.fc31.aarch64.rpm"
+          },
+          "sha256:1135e96b6f9ed29e4ed4c0f060876891a244442a503f0b18ab238589da20d464": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jinja2-2.10.1-2.fc31.noarch.rpm"
+          },
+          "sha256:1138343dfb107de07f54d4723aee2686fdd1af3e4532d14bd399b9b6b7873040": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jansson-2.12-4.fc31.aarch64.rpm"
+          },
+          "sha256:11e8ee935d9c9d349f4c081d035fc4ee34539af23ef8122e6901b22cf97f346f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsigsegv-2.11-8.fc31.aarch64.rpm"
+          },
+          "sha256:121e2a4e79f6dbf37af2182cb12ff28345db993a7f83de344f6f5fbcf5a705a5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-kcm-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:12c732f4a960848bd4fbc8111c2c0cf584799b1fdf0eb89c2cdcb26da5bc03b8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnupg2-2.2.17-2.fc31.aarch64.rpm"
+          },
+          "sha256:143c50c0663f963c7689c1cec43b81cf1433d5d3b67eb8233ba06506c1b3e095": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jwt-1.7.1-3.fc31.noarch.rpm"
+          },
+          "sha256:1472adb267192ca8a323e544fd9749c4765334fc5779e8de4ee583eff77fc078": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-client-1.17.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:14a759b4daf287d66f5b803b0fbb52621f8429607be109e5d3c313a57cc276e2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtirpc-1.1.4-2.rc3.fc31.aarch64.rpm"
+          },
+          "sha256:159972ccc01cd5840c2aad04818efc965b64c5120b1fcce92a47f45ab1abf4a5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXcomposite-0.4.4-17.fc31.aarch64.rpm"
+          },
+          "sha256:16ea1e6ba5bbf16cb6a052b2326d25b9980971fd72c46e7d701e09f267d33063": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dnf-plugins-core-4.0.9-1.fc31.noarch.rpm"
+          },
+          "sha256:1738cf24111bcd0bff08880c4d5efa624c09a2080c901f67ab032ed201a8751e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdb-5.3.28-38.fc31.aarch64.rpm"
+          },
+          "sha256:17858593b13d7f42c4fa57b1f5954619c8a98762f5486c038ea8344300aeab65": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/ca-certificates-2019.2.32-3.fc31.noarch.rpm"
+          },
+          "sha256:181173a9353f593105978b8e4038b7bf53fd22c63f4514fd271a74d48f9c59f8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/bash-5.0.7-3.fc31.aarch64.rpm"
+          },
+          "sha256:19217c1730a3f16e15eedd95e3f97471097a1bd066f7783fd273cfb392f4042e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-2.02-100.fc31.aarch64.rpm"
+          },
+          "sha256:1b65944efe48ba0cca34011891480a1db29a7e95dad058376bfca34d68fb0791": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-ply-3.11-3.fc31.noarch.rpm"
+          },
+          "sha256:1b85657077726361a4b157a909796649fe93131fdc4aa67fd5329adc8d2fc833": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cyrus-sasl-lib-2.1.27-2.fc31.aarch64.rpm"
+          },
+          "sha256:1bdeed5fd5907e0cacd5706ebc93ade09462a0c71e2316d9841e33a896b99b87": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/c-ares-1.15.0-4.fc31.aarch64.rpm"
+          },
+          "sha256:1c2edf26d16b55bac2824452c1c584ff52acf8477920f384f6019f647c241450": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lz4-libs-1.9.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:1d530a23a8ea2b831068593fe6aa7a32923c6276504def5a85ad065aaac9ac5f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-6.1-12.20190803.fc31.aarch64.rpm"
+          },
+          "sha256:1dac3ea14f3a0b4e023e1d11e4a7102437009dda5b4d41a8b33775ccbd4aa560": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-misc-2.0.4-14.fc31.noarch.rpm"
+          },
+          "sha256:1e049e86c5dd5c4d6737d47dd194d553ffbd65c81a4077cf6e1029a0fde80fb5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-requests-2.22.0-3.fc31.noarch.rpm"
+          },
+          "sha256:1f44142da3bf5e09b98488b40ed8a2d5dbd841c36bb4553749e6d65d7fe5c15c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-setools-4.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:20cc74172d531506391309e8f82c6512404ada35f22c68fcd0b83a01dc6e0ca8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpwquality-1.4.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:20ef955e5f735233a425725b9af41d960b5602dfb0ae812ae720e37c9bf8a292": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/basesystem-11-8.fc31.noarch.rpm"
+          },
+          "sha256:21d9ceffd6fb52d235a95e4d7708d719eac758a9dfd80ba2d6119dfdc46c80ff": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/chrony-3.5-4.fc31.aarch64.rpm"
+          },
+          "sha256:23908e2eae2ccfd2efb1d19cdf46e3dca4680ac2d562c1c96f7fb0d22859fc82": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cairo-gobject-1.16.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:23e335d288f55da26dc77e0d1ceb7cbe4e3890b4e28ff4a2435fc4481a6e737f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libref_array-0.1.5-43.fc31.aarch64.rpm"
+          },
+          "sha256:23e8c23c89737665a5288a3a171548e94898be9ed4a24c056d8bc851c6800090": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtasn1-4.14-2.fc31.aarch64.rpm"
+          },
+          "sha256:253f9f540248a0bdd537ee8ea4f670752af74d85be98ea81593a30710e1e5808": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-atm-libs-2.5.1-25.fc31.aarch64.rpm"
+          },
+          "sha256:2575f8d1fb953934730b9fe6803bf3de12669dcee78852057ea4e88f9d4d76a4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libevent-2.1.8-7.fc31.aarch64.rpm"
+          },
+          "sha256:264828f11342a94f056fb27a2e78fc5e14226230b3dbac8bdad6a4c8598fd24f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-libs-6.1-12.20190803.fc31.aarch64.rpm"
+          },
+          "sha256:26da63b51fc7b85d1a30098bfb9c2fa276b2d2129a28cee8cc80acd2eabe96e0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-5.3.7-301.fc31.aarch64.rpm"
+          },
+          "sha256:284d46ebd3d3fd4a915b624a75e9931c948807fcb13fed01681e623d0ba7b1ce": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lmdb-libs-0.9.23-3.fc31.aarch64.rpm"
+          },
+          "sha256:28cdab6faa95e1d7d1c32d977627ef5a86b262e2b0e20e76ddd73f598ee126e4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-all-langpacks-2.30-5.fc31.aarch64.rpm"
+          },
+          "sha256:2a4edc7c8f839d7714134cb5ebbcfd33656e7e699eef57fd7f6658b02003dc7a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dejavu-sans-fonts-2.37-2.fc31.noarch.rpm"
+          },
+          "sha256:2aafea82072ad28a8b662e32902f66b47166a00b5c9cf19b1dd589f39776560f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXi-1.7.10-2.fc31.aarch64.rpm"
+          },
+          "sha256:2ad8824aa48378aa741fbd863104d950ad4f669566af2d4f433be6d9afd8ead6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shadow-utils-4.6-16.fc31.aarch64.rpm"
+          },
+          "sha256:2b1052455234b751e869f22c496bb660dec53eafe198673bab25053e394e41cb": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_idmap-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:2b24b5729cd74e3b1efe261bfd732fd1995b0e64d76587a3d90762d77cc58c77": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libunistring-0.9.10-6.fc31.aarch64.rpm"
+          },
+          "sha256:2cb4bf18b759143cf2aeb6041e8b2edcaa1444d5f1eff8a6681ba8ca9da2a91c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-rpm-macros-243-4.gitef67743.fc31.noarch.rpm"
+          },
+          "sha256:2d37070a684785bc9dc72ff008ede02166816609242dbf98f96c80514d9c0850": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/hicolor-icon-theme-0.17-7.fc31.noarch.rpm"
+          },
+          "sha256:2d9a2e736dd5231df3c5c748ce0ba5a75a409dacfe73f14676781f32d565a7df": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonpointer-1.10-16.fc31.noarch.rpm"
+          },
+          "sha256:2dd8505a96714cdb79829a1377e36a53e05cc9b65a7f35a258ca3e4aaa76c700": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/e2fsprogs-libs-1.45.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:2efe5f560e0c56dec38c9456ae8482a5a9006833d257de4a2a6246d261f647e2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-core-libs-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm"
+          },
+          "sha256:2f167a2ae4a8c29b627918c1b0f89e0b38418c394a2e373f314dbf25449a167c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-common-1.12.16-3.fc31.noarch.rpm"
+          },
+          "sha256:2fc552b80866318c0ac934f5385fd2090743701639c318b75138ae985ff5606a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libarchive-3.4.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:30672b7650d66796acd7b68434755a29d38427aa4702e87d05e2a63e93ad250b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/langpacks-en-2.0-7.fc31.noarch.rpm"
+          },
+          "sha256:30e07680d23bfb5d4b2727893337619c56f13b46daec2f13f8985f642bf84250": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/device-mapper-libs-1.02.163-2.fc31.aarch64.rpm"
+          },
+          "sha256:311729a146f8833ff882370348d69313322dcf7586b68d5eed192eb633dcd58a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libndp-1.7-4.fc31.aarch64.rpm"
+          },
+          "sha256:31dacda6745f326be70d854d50ae5d3cd0c9d4f19aeab6b4d09920e1436d8bdc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libini_config-1.3.1-43.fc31.aarch64.rpm"
+          },
+          "sha256:32cc0c295cd013db597cd31868736be3708edb25ab1952fdd0ed879ec5e8d191": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libsemanage-2.9-3.fc31.aarch64.rpm"
+          },
+          "sha256:32cc578c8da626a8c1a5316a59d482967a32547be6c077f73fb90e11fb0f1e6a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyserial-3.4-3.fc31.noarch.rpm"
+          },
+          "sha256:32d56c08f75c7626f1a0efd7aa05ca2ea3649d55445b5ac42a2f7f10fad8b46b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyrsistent-0.15.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:3308454f1353d5aced0a9574bc969ae272923ef1faa425bd9080de6e56e1bcbb": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmaxminddb-1.2.0-8.fc31.aarch64.rpm"
+          },
+          "sha256:332ef2695e27190536747f53bab03ba5df0ca903564f6071623d99fa524d6d2f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mokutil-0.3.0-11.fc30.aarch64.rpm"
+          },
+          "sha256:339895e6b901ff4c81966893ec7da9848da3acea26e5b202033bfb79dfcbb6cb": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mpfr-3.1.6-5.fc31.aarch64.rpm"
+          },
+          "sha256:34f7954cf6c6ceb4385fdcc587dced94405913ddfe5e3213fcbd72562f286fbc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dejavu-fonts-common-2.37-2.fc31.noarch.rpm"
+          },
+          "sha256:35413dd963ebd9e61467067c18a53c7027dcd95ebcae5a5ffaf4727507e37c8c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-unversioned-command-3.7.4-5.fc31.noarch.rpm"
+          },
+          "sha256:359d74d5f3988e1c2c5327f9d4ea59d0c49a2383541928084ef00383d70b6d55": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/publicsuffix-list-dafsa-20190417-2.fc31.noarch.rpm"
+          },
+          "sha256:36ce07aa1f90dfdf5ae9824acff24fc3aafe5633b07a022732ca06258e0255b6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsemanage-2.9-3.fc31.aarch64.rpm"
+          },
+          "sha256:3975c15d461cebe50d1f179fb86d288c18f643c32f179bbab13425596ab64001": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/keyutils-libs-1.6-3.fc31.aarch64.rpm"
+          },
+          "sha256:3976706367650c755852d995bbe8c4e6bbd13b6e8e0148b7beddb4aba3679d8a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libedit-3.1-28.20190324cvs.fc31.aarch64.rpm"
+          },
+          "sha256:3a7d7619061a4adb275ef4b41d993375ad7863863741624186add801800e524f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-1.12.16-3.fc31.aarch64.rpm"
+          },
+          "sha256:3ad68b7569e311a1ca7da4da7b42021a7acb001ab4b2cc6e63b3ba0f87cbd55c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/harfbuzz-2.6.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:3b16753c7590bc968a693e97ce9d318d58e1483fd2999a874becd95abc9d35ff": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gcr-3.33.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:3d5e22e2c2d20d409cc9a878a88dc088d6f02c81652eb0957f95d1abb185f7b7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-modules-5.3.7-301.fc31.aarch64.rpm"
+          },
+          "sha256:3e6b2cfce9c4a62f7cde13bb6ae135d5f6f0d6cb179ab3dbd61ba1533477f257": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipcalc-0.2.5-3.fc31.aarch64.rpm"
+          },
+          "sha256:3fb9cec5d598a549e97041993399d49c5943821b1f3441881cf15cb26f38e437": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libkcapi-1.1.5-1.fc31.aarch64.rpm"
+          },
+          "sha256:40eee4e4234c781277a202aa0e834c2be8afc28a3e4012b07d6c24058b0f4add": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-release-31-1.noarch.rpm"
+          },
+          "sha256:424e1777ae71117d20055ffa5f0ed2ead59a8076528450cf7536e18c70624bd8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-8.0p1-8.fc31.1.aarch64.rpm"
+          },
+          "sha256:4290088d905017724f6c909cb1b3193055a6aff62cd20e39ea196694f90753c8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gpgme-1.13.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:42945876fb8932bad3e50b50349af4bdabe713d7be1c8efc1b0f7b042e556aa5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tss2-1331-2.fc31.aarch64.rpm"
+          },
+          "sha256:429cf175b6c3b2bedcabf3391ad3166fe6e62259877f309e57500d2c7f1f1882": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmount-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:42a4e01c47e28b71cafb658a5993b7f4b7692ac6b916878d580fecab7ae9d16c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/at-spi2-core-2.34.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:42ae595f75734daaed3430e1117d3cb05bd9a18108506bb9600125693d3d1688": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-langpack-en-2.30-5.fc31.aarch64.rpm"
+          },
+          "sha256:436c2f09d2de629da293ab82af47b7697f4a8c151127cbd993d0e8605a4f423c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libdnf-0.35.3-6.fc31.aarch64.rpm"
+          },
+          "sha256:44a92faf198bf015f5e94cf42ae615215fe0a6c0697b1f6c32d205bd450e7ce4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pcre-8.43-2.fc31.1.aarch64.rpm"
+          },
+          "sha256:4549e51322d0b10016f1daa8dedc807fddf7d2d4e77719baa696de15b88821bb": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jbigkit-libs-2.1-17.fc31.aarch64.rpm"
+          },
+          "sha256:46acc45e148eea376c3aa8e83a4d3bf1cf66fa35ccc670f592017428ce75ca77": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-sign-libs-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:46b0c36e90fd16371444eb5376fc01232b6e64073e42ed1f141344a9aadbe568": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXcursor-1.1.15-6.fc31.aarch64.rpm"
+          },
+          "sha256:47383173cbb135c2590998a4e82c6f9d40a516450d2fbd1e169ace92337b7fd5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-markupsafe-1.1.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:477474e74c5f30884f0a4571445ecf987b521f61139fc0ba7d516e075f47e7ce": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/v/vim-minimal-8.1.2102-1.fc31.aarch64.rpm"
+          },
+          "sha256:48ee663f069c5019c842f316216ef3bf8dfcbbec479c98d1f2b24749c22e57f3": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtalloc-2.3.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:4b4febd60db5cab8951bd33bafb2242fe2be067bee174d0307bd9f161b835070": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libssh-config-0.9.0-6.fc31.noarch.rpm"
+          },
+          "sha256:4bb03b2162523fa694e0e44f46b04263ff0f5dab22c3e93124ec9b5650af2002": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/deltarpm-3.6.2-2.fc31.aarch64.rpm"
+          },
+          "sha256:4c55460197fe24d0a105e3071824a933069e0b655910fd7ee7335e2396de15dc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXft-2.3.3-2.fc31.aarch64.rpm"
+          },
+          "sha256:4c859170bc4705a8ff4592f7376918fd2a97435c13cde79f24475c0a0866251d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/setup-2.13.3-2.fc31.noarch.rpm"
+          },
+          "sha256:4c9d72211343338b208c7d99c96ec07996478b38c5340bddbe77e5bdcf8cd814": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pip-19.1.1-4.fc31.noarch.rpm"
+          },
+          "sha256:4cca3f986ddbd38cfbfb6d1c8d336a1aaed78f7da1f38356ce1e034ba35ec492": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-attrs-19.1.0-2.fc31.noarch.rpm"
+          },
+          "sha256:4d4853ac550a0cfc5b3bcbcb7f12c81461393a6aa0e96a23648985f8a7f2e8e2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/os-prober-1.77-3.fc31.aarch64.rpm"
+          },
+          "sha256:4de89d25d09c57b09a51ab93fdf84ade211e835c16d3ba6e4e261dcc0c4e50a1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gzip-1.10-1.fc31.aarch64.rpm"
+          },
+          "sha256:4e365f48d5c85b82f71e8d000d00cdf7ed3c23cd94c31fbf3543572413541c3d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcap-ng-0.7.9-8.fc31.aarch64.rpm"
+          },
+          "sha256:4f37b1e322e3001b076e0128541cc82c180d7054b1c0b7200f46fda4d654cd71": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/librepo-1.10.5-1.fc31.aarch64.rpm"
+          },
+          "sha256:4fe97b617adfa7c0f97ba5b2b6e1c0d2e2b15c54ba8db66fc389cacc0f1b2b60": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libuser-0.62-21.fc31.aarch64.rpm"
+          },
+          "sha256:500d0a1b49962ec79ca00224528d6e599d3845eb60b8b13a678d03edfaa755ec": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXfixes-5.0.3-10.fc31.aarch64.rpm"
+          },
+          "sha256:504971d079493a49afb8fb7f067f5dfcc59f3e007afcc63734c15fe1066e4b4d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-broker-21-6.fc31.aarch64.rpm"
+          },
+          "sha256:504b334756e12eefb42d44e53da61fb4321b860e3b5f380b5c21c5c3784a8c75": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/net-tools-2.0-0.55.20160912git.fc31.aarch64.rpm"
+          },
+          "sha256:513e24bc56f483b171664ea4dec51cc0cce1f9cc8f4939cde8a65ea976ed952d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-rpm-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:51f15beba5e5bfc6ff646741b3fbaa3a484ebb40fd8c6c59b8f1f6346dd93e93": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libssh-0.9.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:54c024db70df7966590050dfc5dcc1315174e10c3a57e118ea10178238d70889": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-1.1.1d-2.fc31.aarch64.rpm"
+          },
+          "sha256:54e3cbeb4ee379f886dfa4f64faf791001a901148f9490c76e2afcde11de07e9": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xkeyboard-config-2.27-2.fc31.noarch.rpm"
+          },
+          "sha256:563f82b7c56043ed5a5ff55dcc643bcc5ac2a1e9ae940481f1c21595a83ba60a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efi-filesystem-4-3.fc31.noarch.rpm"
+          },
+          "sha256:566a389a620f634ab341a9a39cffdb1c607b4682224cf3d5ac530b6c57c78d0f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcap-2.26-6.fc31.aarch64.rpm"
+          },
+          "sha256:56f3d59b74bf8ceafea695d10fb7ad4672ec93f824ef9b0508c7bcdedeffb101": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnghttp2-1.39.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:5745966147d1651d663d9e7d37a740ebbb4daee49b5cb7a2e61375ea6b37404e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/expat-2.2.8-1.fc31.aarch64.rpm"
+          },
+          "sha256:575640462a8c2d0687ea225cc7b6bbf7aa0814e311619ddf6cd16e1bc22f9513": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libksba-1.3.5-10.fc31.aarch64.rpm"
+          },
+          "sha256:57a9aff6b8d5ecdb66015e4dfcec0a171ae18751e1d5f9a339361cc45b9a8e2f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxkbcommon-0.8.4-2.fc31.aarch64.rpm"
+          },
+          "sha256:57bb6739fb8635dfe5300d0e361b99caedce2fb7142db37394734e13d4fa48f8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcrypt-compat-4.4.10-1.fc31.aarch64.rpm"
+          },
+          "sha256:57bd1ce5d776daca117795bc8e3852f1d29a6fc3fc1edd21729d161de2d7798d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtiff-4.0.10-6.fc31.aarch64.rpm"
+          },
+          "sha256:58a44f9472918a511d3eee0b3f08926dab2ebf4994584403bd196e6c92a06f5a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xz-5.2.4-6.fc31.aarch64.rpm"
+          },
+          "sha256:58c8a3d4ac7c8c318b5596b192dbd0350a1122983b69bfc1cb5eb3ecec5b7cf6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXext-1.3.4-2.fc31.aarch64.rpm"
+          },
+          "sha256:59f289c6f3b0180ae3eddaa974e2f972bf15c48135a2abed9eb2f72dfdae1be4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXau-1.0.9-2.fc31.aarch64.rpm"
+          },
+          "sha256:5a32c492b921e9287422006f255833605b328f3efd071609673be161bb4e7f04": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libstdc++-9.2.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:5a7e957102a23c9924398fe45f5cdec66edcd10adcad7130d6ebf02c2706ad49": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-policycoreutils-2.9-5.fc31.noarch.rpm"
+          },
+          "sha256:5b75073853ff34026cf180d7466314783a7a81defaa43e6b7416a38d9f19230b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libepoxy-1.5.3-4.fc31.aarch64.rpm"
+          },
+          "sha256:5ba547e1c2c515b3ca091e04c0a6b15b297e25b567a6613a07bd2bee41f39684": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pango-1.44.6-1.fc31.aarch64.rpm"
+          },
+          "sha256:5d87d829a1d939c520b25f1c790cd1f3bd6c8b769f4f21303ec5e16a3b509445": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sed-4.5-4.fc31.aarch64.rpm"
+          },
+          "sha256:5e2a37ee7e1147a446be67d63b1be55f2e82c0ae0a84dd1afc6a3fec64e62804": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libblkid-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:5ef4f8487a78a43f7502c055ac77c047ce159da5641e5b61c2669395ae1efe62": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdb-utils-5.3.28-38.fc31.aarch64.rpm"
+          },
+          "sha256:5f2bdb8f9a18257ee80a243e1be96e3ef6fa660e37fdf7b4443d8e8f7abf86ef": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/q/qrencode-libs-4.0.2-4.fc31.aarch64.rpm"
+          },
+          "sha256:608a967cbdbad6b7320060e986bf8f8e7f6b61bff5ae6571006397b46a60771c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libbasicobjects-0.1.1-43.fc31.aarch64.rpm"
+          },
+          "sha256:611b0995f8475747341db33373ec0178afcb724183aada71b5d3a2c437d19527": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dhcp-client-4.4.1-15.fc31.aarch64.rpm"
+          },
+          "sha256:618e9a7e3f1f8191beee70d3ad1c8754870887d251480e7e6dd1f3de2d8226d1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libjpeg-turbo-2.0.2-4.fc31.aarch64.rpm"
+          },
+          "sha256:63ff108f557096a9724053c37e37d3c2af1a1ec0b33124480b3742ff3da46292": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-decorator-4.4.0-2.fc31.noarch.rpm"
+          },
+          "sha256:64206147fbbabe1e050f17442a2a3d1458b27beea0d8f3ff9e258a2842dd7a01": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/q/qemu-img-4.1.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:64b0063f6b3a42b712c0ee622328e36ddf94a15da547e3c8da3a4191e0941c92": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libassuan-2.5.3-2.fc31.aarch64.rpm"
+          },
+          "sha256:6728ee255cb8c80b85f6d610bfd795025939a77d2591ad61fe1c4f9d657c386e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/trousers-lib-0.3.13-13.fc31.aarch64.rpm"
+          },
+          "sha256:67bbf2a262929b1b4c2fb9532c471da5ab2c0f642b0df770cf947c0131a9e1ad": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libselinux-2.9-5.fc31.aarch64.rpm"
+          },
+          "sha256:682af90a049fa78429d5ebd194700609f762e59ceb6c4ca28b17e7f4fd1683aa": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-prettytable-0.7.2-18.fc31.noarch.rpm"
+          },
+          "sha256:69f2c758068234b1abc39ffaf94c8825ae4baa9810cc54e5d49a5c891fa98435": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libkcapi-hmaccalc-1.1.5-1.fc31.aarch64.rpm"
+          },
+          "sha256:6ad56e7cd4cd7d7face0f8287784bf64ce77a8ec378af218b11c0ccf1669eea1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-pip-wheel-19.1.1-4.fc31.noarch.rpm"
+          },
+          "sha256:6b11c1e14d4a02edf8beee776f9f896729bd0f28c66cb4c1d2bd021cdffc6aa0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gtk3-3.24.12-3.fc31.aarch64.rpm"
+          },
+          "sha256:6b2e3b36c2a3e988f40548688b32ef3ce2e4c7906127215c82736189684a95a6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgomp-9.2.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:6b983575f1280a583f8b6f3bd61958b177b12bdc3dd76efba72e530f4fc14e89": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libX11-common-1.6.8-3.fc31.noarch.rpm"
+          },
+          "sha256:6bc6909c53c0eb2bad7640b3fb79da5cacf5fd8951dee08347b8d18df1b004f8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdnf-0.35.3-6.fc31.aarch64.rpm"
+          },
+          "sha256:6c6f1152899318bdc0500cfb0b0cdbbc19ba0e017b5888ece1358250caa2629f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pytz-2019.2-1.fc31.noarch.rpm"
+          },
+          "sha256:6ce37675749741e4ea05e934aa5b7376d596cc117bd317199d0a15e2236aa058": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-plugin-selinux-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:6d4c3ae013d07e50d085b3419dfd41ac79ba11ada62d8c4570d21764ef6f11ec": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/p11-kit-0.23.16.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:6e76674266f1e136186e3f005ddbf13791b1fea78cd30e8501f3dd1b209fa9f2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cryptsetup-libs-2.2.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:6e78ce3d460b7e1377f487fed5563999fb44d310c441798a4d23d34960e23d45": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdk-pixbuf2-2.40.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:6ed7f318c5e93b59254d7b7652131f33db713eeb61f52413f21e533069ed24bf": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pycparser-2.14-20.fc31.noarch.rpm"
+          },
+          "sha256:6f7bd7a58d5aed77bbab94aa38edcbc4cac924d72ab6c72ce718f24b6528e1a5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libdhash-0.5.0-43.fc31.aarch64.rpm"
+          },
+          "sha256:700acef9fc8051726700645696fd67b0fc3b7fec08290ef9c2964fe7a9d3e8cd": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-audit-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm"
+          },
+          "sha256:7027d2c6a004469720e3c64eb7fcb2ace1fffd61ec4380afbf875d59a3876f3a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libuuid-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:70ea69b3f7c94f069b3ab4d7cb9ed7d3592d5e5487edc5cd6d5fb96049df6524": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/abattis-cantarell-fonts-0.111-3.fc31.noarch.rpm"
+          },
+          "sha256:7102de1c840d5b915a40fde5c408f182d677ecdd5126dedf033ebb63b5419607": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grep-3.3-3.fc31.aarch64.rpm"
+          },
+          "sha256:71ec6fd79756af905e474553f4ca7ae6985e32615df0ee2f2f487c8496e7160f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/avahi-libs-0.7-20.fc31.aarch64.rpm"
+          },
+          "sha256:7292bf1d13ef336ef411ef695f87c7c7ecd21a13e05c86cc475930ca61117503": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-libs-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:72bc6a2b459ee27dcd7c213d3aab5a993fc90fcffba2ef02fab7ae3857d379f7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/freetype-2.10.0-3.fc31.aarch64.rpm"
+          },
+          "sha256:73a7249de97f0ad66bc1a867ac5b5d08b741ab152d4dd7ce45cc231d64126b58": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-asn1crypto-0.24.0-7.fc31.noarch.rpm"
+          },
+          "sha256:7487afe052c79100e906a4d2cb2ee1043410ca10a8e60a65d95776f63a513595": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-libs-243-4.gitef67743.fc31.aarch64.rpm"
+          },
+          "sha256:750b46d07f3395ea86a89bcf0cae02adc64f5b995800ea6c8eab58be4e9d6e8d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dhcp-common-4.4.1-15.fc31.noarch.rpm"
+          },
+          "sha256:752016cb8a601956579cf9b22e4c1d6cdc225307f925f1def3c0cd550452a488": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/y/yum-4.2.9-5.fc31.noarch.rpm"
+          },
+          "sha256:7623bcecb8340ed57e1aa2951b13a1c5b1dfefa80eb226f269294df29cb40c08": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libseccomp-2.4.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:7637132d543741e8c5b581523ca5db24adc6eb6d78530944881c360da694cf15": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-efi-aa64-2.02-100.fc31.aarch64.rpm"
+          },
+          "sha256:763bbd8d0e3e80b56041273dd412f0c3708c90cd0affd929d474ae61f7c3798c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iptables-1.8.3-5.fc31.aarch64.rpm"
+          },
+          "sha256:768cc2c561bd6476df45fbd9280bbaeb87d2addcd0c51601d2226a590d7dc872": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsmartcols-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:77ff28552aba96ce4b80d51a9c390ef4958afad18ede879bf31022f2509e2d90": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpng-1.6.37-2.fc31.aarch64.rpm"
+          },
+          "sha256:78b600621e00f4a0acc8f58de056ae9393ce4e1cded56837b4e557c1bc84b06b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-urllib3-1.25.3-4.fc31.noarch.rpm"
+          },
+          "sha256:798376bc628acd54407d945702dce73ab90633919f88fe9b7ecde3f38ebc2fe9": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cpio-2.12-12.fc31.aarch64.rpm"
+          },
+          "sha256:79db5a94baa6acad360b52fdf6d49cf91d7b6290e0d55f457b2820937d2739f4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efivar-libs-37-1.fc30.aarch64.rpm"
+          },
+          "sha256:7a5aadb5da769b563cf1e548d8cabd26c00720a67df7e4a445a5a9ae5b0891b8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libcomps-0.1.11-3.fc31.aarch64.rpm"
+          },
+          "sha256:7ae36bfe222068561cf0259400b54e210ad628aaa66dd4b87e20a2291996c71d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dracut-049-27.git20181204.fc31.1.aarch64.rpm"
+          },
+          "sha256:7b01a3bf09861003bd9524e9d460ed68b8d2de4233a09f7af731cb07f75ef913": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iputils-20190515-3.fc31.aarch64.rpm"
+          },
+          "sha256:7bd78cde4202401947dea928274579074bc78fdae096057e788c1b6a86a10ecc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/trousers-0.3.13-13.fc31.aarch64.rpm"
+          },
+          "sha256:7c66a9a33e131200e13a638613ec054a94be901399424df27a0b4f94532ee36d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxml2-2.9.9-3.fc31.aarch64.rpm"
+          },
+          "sha256:7d0ec23fb8dab882db8b7ec9a9cbb2728d6df2af5c02ee06cc6fa357f210ff09": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/krb5-libs-1.17-45.fc31.aarch64.rpm"
+          },
+          "sha256:7f23849dcd356019c4e83058e9e49d544300ad7b9a6f6a7528831e393ca1197c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fuse-libs-2.9.9-8.fc31.aarch64.rpm"
+          },
+          "sha256:80434d5f64abdd521330153fc0c983c5923a833ab59f57ec3bc3a8cf1d748c8c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libyaml-0.2.2-2.fc31.aarch64.rpm"
+          },
+          "sha256:80cca68bc5a904fbb0123a57d22938cb42d33bf94cf7daf404b5033752081552": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/langpacks-core-en-2.0-7.fc31.noarch.rpm"
+          },
+          "sha256:81100039c817e2f3703fb365c63d6d891f3f977dd9e670c3c9b12662de3c255b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fipscheck-lib-1.5.0-7.fc31.aarch64.rpm"
+          },
+          "sha256:81169dd168c02aed3b1e57e5af16ec3dbdfb74c15373ee40e9eec5aac60a3d25": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sqlite-libs-3.29.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:811b8cf02991087a50664df5606348f2c4d48a534b0436caeedb3afbcc1882e0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-common-2.02-100.fc31.noarch.rpm"
+          },
+          "sha256:816fe17af41a66dd718eb247273be824b75f53fb539455b58b892528ca12cde5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpsl-0.21.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:81f5b3786ab1b634016c0c066379dda739386b4b1d639111b4575748e27caa56": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnome-keyring-3.34.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:8221111dc9a9aa5c68805f153c3fbe5314c8a0f335af29685733b958253dd278": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-idna-2.8-2.fc31.noarch.rpm"
+          },
+          "sha256:82bc08ef5d8049d3d07a5eb00f61d3f94d7577ef814f6791352f75835bff477a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gsettings-desktop-schemas-3.34.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:82cc8c43bfe0e731ec78e31c8af6250ec1f13989978105a1b38d518470cf5bde": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsolv-0.7.5-3.fc31.aarch64.rpm"
+          },
+          "sha256:8323e1b19cb904a26b3e394e2aee81d5a73dbe136e317e1ea490bceef250c427": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-default-yama-scope-0.177-1.fc31.noarch.rpm"
+          },
+          "sha256:84365601f93db7fda27e4d89826d4893830572e98df35275abdf15659cfe3fc5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-3.7.4-5.fc31.aarch64.rpm"
+          },
+          "sha256:84fa6157b3e986b9ce67cc03bfed4e2b96fa7d075df70e038fbcd2b486737d35": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/man-db-2.8.4-5.fc31.aarch64.rpm"
+          },
+          "sha256:854568bdd1df94ca174ab21d724831230f5c57efa52f11e00124c07bc44eba78": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/w/whois-nls-5.5.2-1.fc31.noarch.rpm"
+          },
+          "sha256:855131926b9a3764835de3e7171b9ce579847ce161f3ba8406a5b6fdfa781f55": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/parted-3.2.153-1.fc31.aarch64.rpm"
+          },
+          "sha256:859b03ef657a7c682ff7f341145a7c2ba9025fd5430f36ecb020eeafc55bba2d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnftnl-1.1.3-2.fc31.aarch64.rpm"
+          },
+          "sha256:88831a57114969801a557d700451a70337f944b868a3d792d47e6e9e91961f3c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/audit-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm"
+          },
+          "sha256:8891f85ba3caf6de4b6b234c6aa7a98d347228937a378d04da7af56556799bd1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipset-7.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:898a918a7adfefc3ce13d10b30b2ec7ccada96155afa15ee3f4e589b3f1baa38": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcurl-7.66.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:89a35174435a790c0fbf3bc4306d51c867ecce66fb65bae0e7706a9f8f9a19b3": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/groff-base-1.22.3-20.fc31.aarch64.rpm"
+          },
+          "sha256:8bce4002b36540d966f0f8b95ab41486901ddd23a067729591de801b1689956c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dnf-4.2.9-5.fc31.noarch.rpm"
+          },
+          "sha256:8c4b392a5e1ed79b7a5b302d8fb14d0470b3a6306a7b36aee275acf0daa61537": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fribidi-1.0.5-4.fc31.aarch64.rpm"
+          },
+          "sha256:8d00fa6cdfcc955dc4e14d0f8b6ba6217d2dd0334ea0e1aa44694c9e0ad0b06d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rest-0.8.1-6.fc31.aarch64.rpm"
+          },
+          "sha256:8d17464a13f79b54c8dfe76d716a42d6c875bce408e29344c1ecf916957a649e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcroco-0.6.13-2.fc31.aarch64.rpm"
+          },
+          "sha256:8d21bbf2063bb50cf3d12281731fbd8b26dece5f154d7a50f0952695fea6751f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnsl2-1.2.0-5.20180605git4a062cf.fc31.aarch64.rpm"
+          },
+          "sha256:8dbcbe9e8936e6e7cace19b20beade285862e1c65851dc67f2af440ce0c2d3fc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fontpackages-filesystem-1.44-25.fc31.noarch.rpm"
+          },
+          "sha256:8dbce1e34a19be338f49b792874abc861fd64acc5653f7f5cd523d5e5865897e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/brotli-1.0.7-6.fc31.aarch64.rpm"
+          },
+          "sha256:8e10cf2b0645e342b001338a4463c5a02a8a302c25affba37da700a987e2c064": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gnutls-3.6.10-1.fc31.aarch64.rpm"
+          },
+          "sha256:8fd19268d460d7f49f3dd96644a2b8a3076a7a7ccbe3e35e27eeafc6ab8d9c95": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbus-libs-1.12.16-3.fc31.aarch64.rpm"
+          },
+          "sha256:91d628d3e4a82976361ecb306d4f0049aa65c811fdd5051b3f8423b75e4a10e9": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtdb-1.4.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:920d2d8df80fb92e358f4925bbd2891977c98e0b9d2f69b44f1e74bec26d6a1e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cups-libs-2.2.12-2.fc31.aarch64.rpm"
+          },
+          "sha256:93733a7e6e3ad601ef5bbd54efda1e8d73e98c0de64b8bb747875911782f5c70": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/linux-firmware-whence-20190923-102.fc31.noarch.rpm"
+          },
+          "sha256:9404d90bbb474b30b80c90719df01d784b925127e9710f12c44c72d14c2708fc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gcr-base-3.33.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:974bdde5f821c071bcbe0de191677981685cb8290952be75a7ab15747988a99e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/policycoreutils-2.9-5.fc31.aarch64.rpm"
+          },
+          "sha256:98d811216e2e0e4ad49925489824210fc3e9b57bb09eefcd4047886375d34f57": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcom_err-1.45.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:995ee9636461072248d5c6792d3852fb1ab277a622b18eb7d3c231133446dd7d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/b/bzip2-libs-1.0.8-1.fc31.aarch64.rpm"
+          },
+          "sha256:99a6e2861b7eb51684d1b83901a7e54caf649b711556a660d93bfef114eab72c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libattr-2.4.48-7.fc31.aarch64.rpm"
+          },
+          "sha256:99c0e924fa7eb70fc9301b692d4ba72ec480af840498b8251f68a419317bd108": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_sudo-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:99e8930364200470ee5bd065dccb7c4c1caa4863c6f8975740643fe9d2485c18": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cracklib-dicts-2.9.6-21.fc31.aarch64.rpm"
+          },
+          "sha256:9ac1ef0ef80d7ff65903120f8b2a5a2a5723dce7c9c131e17cea3572cb81d0f4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXinerama-1.1.4-4.fc31.aarch64.rpm"
+          },
+          "sha256:9bf695c87aa5acc7695251a4c75c576375c45c5b043af00a7ddf503223030309": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kernel-core-5.3.7-301.fc31.aarch64.rpm"
+          },
+          "sha256:9c039f6f6e5385344ea56a6490a472b0f475d8d7612b422191d2152b8e1fc55a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/curl-7.66.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:9c08d246ce73d8741777f290e7110ff9dae97a15e09f3469317ed7c8e9fb64ce": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/atk-2.34.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:9c8771c8c5eb38351dd30f994133bc9149ec93813d1a7c2cd2dd8f7dc7431d49": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/nettle-3.5.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:9c9250ccd816e5d8c2bfdee14d16e9e71d2038707009e36e7642c136d7c62e4c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-repos-31-1.noarch.rpm"
+          },
+          "sha256:9cc3e6534ae34343e7e4d056d46b9551da7d0a82c7bad378c3626d4b70d1bf62": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cloud-init-17.1-11.fc31.noarch.rpm"
+          },
+          "sha256:9e55df3ed10b427229a2927af635910933a7a39ae3354143ac2f474d855d4653": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dateutil-2.8.0-3.fc31.noarch.rpm"
+          },
+          "sha256:9ec2a643accfd8843a0ce2dd96ba349bfa474daea14099810a95ae65d929f2b5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adwaita-cursor-theme-3.34.0-1.fc31.noarch.rpm"
+          },
+          "sha256:9ed0b44834b6a637c70aa00ab243aecb534f9aea461e1388652ab039898239c8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xz-libs-5.2.4-6.fc31.aarch64.rpm"
+          },
+          "sha256:9ff53c6f07da3adeaa20da76c1c78b886710b460db7a316415f8bc9182096fb0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/procps-ng-3.3.15-6.fc31.aarch64.rpm"
+          },
+          "sha256:9ffb9a376d1df3d3d394ec2f8533f939547d8ccd634f1f77db52970630215d71": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/cairo-1.16.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:a00e85fb7902d8869492e32816c7834830682745eeab1efba264bdd3185f479d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/diffutils-3.7-3.fc31.aarch64.rpm"
+          },
+          "sha256:a084b365795c7262fa09b2fc590dfbabbbf30cb9c1c7f9b5274eae4c5d761482": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lua-libs-5.3.5-6.fc31.aarch64.rpm"
+          },
+          "sha256:a108fbc1ba9886604483ec05ef2150c961adb0906db5f9ea46c239bfcdf06b55": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/filesystem-3.12-2.fc31.aarch64.rpm"
+          },
+          "sha256:a2f6ae2742a2aac3f5bb5f1ad5cfa4d9b8fdf7cfd01033246027db7064abaa1f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcb-1.13.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:a314b2a8ed8a9e7e80aedfb1f76c75910d0da9549d072c424c2dddbe63a09874": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dbus-1.2.8-6.fc31.aarch64.rpm"
+          },
+          "sha256:a349c40034b5a181cab1bd409384ddb901c274e110b16721d434f5bf42e92c0f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-firewall-0.7.2-1.fc31.noarch.rpm"
+          },
+          "sha256:a39fb89e06572d188309dc4daf1d23e21be190e59f9ef8ff3c3ccceaefe505da": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libzstd-1.4.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:a3be2e9e42d68f5e5e58f1dd86d5b6e4fc1ff91e98f44d26221d6bda38c9f372": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/h/hostname-3.20-9.fc31.aarch64.rpm"
+          },
+          "sha256:a40b4873535c2b0b826063e5248981d1ce0d04ef5ec6d9c21facc07ce2446b40": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpipeline-1.5.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:a436dca481707ca10a0c5bb189d9a25ff76c4f66f1d32b0847dc6d13ba46c17a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-udev-243-4.gitef67743.fc31.aarch64.rpm"
+          },
+          "sha256:a4f7846fb262ad61885f64b8a354f9303fe5ce129378e4781eefa0bffdef828e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/x/xfsprogs-5.1.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:a516dfa62a327d440fe38b93af81dbecb112fe45fff0f227583c451631479122": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/acl-2.2.53-4.fc31.aarch64.rpm"
+          },
+          "sha256:a5fa076ed2c83974cacf4ce386bfdc576ce532fba4f8645dda5c2b67efc5d501": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmodman-2.0.1-20.fc31.aarch64.rpm"
+          },
+          "sha256:a61e3fed8d1c860bf09b5ec5586e30b88b1b1dea157cd371def9fcf72e313a3d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcollection-0.7.0-43.fc31.aarch64.rpm"
+          },
+          "sha256:a63ae4aa727a4b75b602a67f1e42946e39dc124e9f1aeb3e795af40ad4e15cbf": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libcomps-0.1.11-3.fc31.aarch64.rpm"
+          },
+          "sha256:a6caaef9bed1bd17292e1fdde4efee9730f8cff5826a9cb6c952e6f3cd052243": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/at-spi2-atk-2.34.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:a7f5877c9ebfb44347765c7deb266e53fdd62403ccc0a7ff17fdb101bc28caff": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-libs-1.1.1d-2.fc31.aarch64.rpm"
+          },
+          "sha256:a96e76f00865249f70a3f2ef293946e9786150faa83e37185e61592290817cb4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libacl-2.2.53-4.fc31.aarch64.rpm"
+          },
+          "sha256:a9f81157c1f977adf96403fe534e2fecc9f3a82a58c5b53fd58aad9954873790": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/nftables-0.9.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:aa3658efc21bcc6d79344eeeaf20285407f6f3b90d905a66a37a8cfc835b2a61": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-egl-1.17.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:ab35a2d7f21aac1f33f9521607789e1c303fb63e4ea0681e9f724f86a1cc15c5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/firewalld-0.7.2-1.fc31.noarch.rpm"
+          },
+          "sha256:abf022d05aa55e7aa8d0736b899d86613d30a7e1751b04666920f367d4311a1a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-2.30-5.fc31.aarch64.rpm"
+          },
+          "sha256:ac3230db1dfd77c5a90b1eda2c002e75f6abe1aa2d4416aea12515c956211e4f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gobject-introspection-1.62.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:ac7985d2591bc2bd1d90efdb68751a3d7435cf902b3895cb308e830ce48f1f44": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shim-aa64-15-8.aarch64.rpm"
+          },
+          "sha256:acd149c4bf17a15db75fca1f19e34784a9ed275e19c0721aa78f5eb94797a685": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/u/unbound-libs-1.9.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:ae9a3e144f31b6172d266b984c8385fba94bdcf3002d3182a4118f8d29f5f718": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:aeac986c84b8038eccd191310bb09f3d396f7c05171ac0fb8691182918459c90": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/less-551-2.fc31.aarch64.rpm"
+          },
+          "sha256:af00a0b026235e70f7cb7606166dfcaea0d227a3de70363ff67a644036ed8bfc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-extra-2.02-100.fc31.aarch64.rpm"
+          },
+          "sha256:af2501d5d8d857f43d0c08658ce3d49ab787e9f61773883256fb933dc271cdd6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/crypto-policies-20190816-4.gitbb9bf99.fc31.noarch.rpm"
+          },
+          "sha256:af589a85af85270c027bacb5ccaf88c93378d364a7c1436ee7bca1290cf762f7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libverto-0.3.0-8.fc31.aarch64.rpm"
+          },
+          "sha256:af594688a568ec4db7dae9d60390dce1ab547527bbf2415752f211de3748b97f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-243-4.gitef67743.fc31.aarch64.rpm"
+          },
+          "sha256:b04fecd603225051ca56c6674cb72f12f4de0cc1cbbfda0ab7d0af0e655b2c99": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libthai-0.1.28-3.fc31.aarch64.rpm"
+          },
+          "sha256:b0d153ea83902561a9e60c9c244a497c3b19a9c4e40cf9e8437d0221af0f2ca3": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pcre2-10.33-14.fc31.aarch64.rpm"
+          },
+          "sha256:b1094a9a9725546315d6eac7f792d5875a5f0c950cd84e43fc2fbb3e639ee43e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-slip-0.6.4-16.fc31.noarch.rpm"
+          },
+          "sha256:b25f063f82484e4fa42d1ad31a2cf23e882a99dc1ccb191b24e14a6a789d87a0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/audit-libs-3.0-0.12.20190507gitf58ec40.fc31.aarch64.rpm"
+          },
+          "sha256:b37d963f89a7e0d466e1317da6cd2c20b3ce3ec9789e1027c16176734f88c4fc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/NetworkManager-1.20.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:b3d8740cee57c5025ef88e9d71df141a6600fdf26215969acae393a2b052892d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdk-pixbuf2-modules-2.40.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:b6498a7a8056483e1d42362b1fb27bd6c54ed7cc7bd180cae20d64a13ae4c88c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-unbound-1.9.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:b8a0701a9acc6618cb04454787f032be5033cf0bcfa960ac0d785753e43a8d6d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-setuptools-41.2.0-1.fc31.noarch.rpm"
+          },
+          "sha256:b9ad5c82b3b83871269ee705ee12896efd1e3485b0d2005c9cff2a100100cd34": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gmp-6.1.2-10.fc31.aarch64.rpm"
+          },
+          "sha256:b9b609d17e9274c1551ac6ebab4b53f6e4a5ae9253db5465c65fdb8c919a09dd": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libffi-3.1-23.fc31.aarch64.rpm"
+          },
+          "sha256:bb305f3ddc74c4c30ae838a2bbff3cd325eea8427622c7f82e4d06a564bace6f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/coreutils-common-8.31-4.fc31.aarch64.rpm"
+          },
+          "sha256:bd2e7c9e3df976723ade08f16667b31044b678e62ee29e024ad193af6d9a28e1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-slip-dbus-0.6.4-16.fc31.noarch.rpm"
+          },
+          "sha256:be8bf30729c71aabe30f2c4cf8e5c43ce3cdf892c218fadf53c0af29a76fd6b3": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgcc-9.2.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:bf92fc95c282da9c76018679d9180fb6c98aaf864f66bbef630941040579f92b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/p11-kit-trust-0.23.16.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:c0287bc7c1f54bcd19c43904f9a5c7c0cc4c82eae2c455071f6d7ea50714668f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dbxtool-8-10.fc31.aarch64.rpm"
+          },
+          "sha256:c05d42fba4fc1ebc2df9ee49f971c744937d8b307626c90b3cf79bf91619863a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/shared-mime-info-1.14-1.fc31.aarch64.rpm"
+          },
+          "sha256:c0bd22ca961643f57356d5a50c8bed6d70b0dd6e2e30af5f70c03ebd8cde2e4f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-distro-1.4.0-2.fc31.noarch.rpm"
+          },
+          "sha256:c1590c5cdfc7aad868c75c54c11a2c7d692001f758ead33aa10f9838955148c4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsoup-2.68.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:c1893a7c51ebb0371b87e2179d6e0e5d0fbb71acb4234cf4adc293af11c75578": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/z/zchunk-libs-1.1.2-3.fc31.aarch64.rpm"
+          },
+          "sha256:c2e96724fe6aa2ca5b87451583c55a6174598e31bedd00a0efe44df35097a41a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/selinux-policy-targeted-3.14.4-37.fc31.noarch.rpm"
+          },
+          "sha256:c36dd24858c4e8d207eb0f87af16e4c599a16bb981416d47db467b70a841fe08": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dosfstools-4.1-9.fc31.aarch64.rpm"
+          },
+          "sha256:c45162d6aeab69ce8f58353c88e7e068c59f36921989aa49ac23738f7c9cea82": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-gobject-base-3.34.0-3.fc31.aarch64.rpm"
+          },
+          "sha256:c599ffa97fde329ff872bd6db99e8c218601df6549302f89ff747d34ca24042c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libproxy-0.4.15-14.fc31.aarch64.rpm"
+          },
+          "sha256:c68bed5b576d7baa67a59c726d2340f7c0df7e9b93f90b3a22d3f62e9f99456a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kmod-libs-26-4.fc31.aarch64.rpm"
+          },
+          "sha256:c6de19d0d4b8f67957ca6122462090895034495852814f36396bc134905f5f5e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libss-1.45.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:c6ffcbd829ea30ef40fa61095cef03f2b6eafa3228187a478d6d027911f12e2f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libidn2-2.2.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:c80fbc5228457b9b1978b098f47d2a66ca5636526965847078edb6f1c302e392": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libusbx-1.0.22-4.fc31.aarch64.rpm"
+          },
+          "sha256:c84f89f65e2a691d7fcbc7021c3c5d796e0f39483e3fe95e83579c630575b78a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glib-networking-2.62.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:c8fc5b492af902894b927e79314b52bbdd8e45b2d2018abd8113d8e1807adeca": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gettext-libs-0.20.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:c935f74584d7289ca58d1b23cbdacd38450d351dbc3dcd0bc713723c4d50a545": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ima-evm-utils-1.2.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:c958419128c1330b50c741113394b147da1ccda055ab1ee19fabc199f68971ea": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-build-libs-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:cb478c89af0caac9a40c32a2b4a48242b16ff9e2e6daa375b2de88e396f524dd": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sudo-1.8.28-1.fc31.aarch64.rpm"
+          },
+          "sha256:cbd9d78da00aea6c1e98398fe883d5566971b3bc6764a07c5e945cd317013686": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/ncurses-base-6.1-12.20190803.fc31.noarch.rpm"
+          },
+          "sha256:cdc526097cd2fecb75e44ad11a69b10eb7804f310298c064c3b931515d4f3d5c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-configobj-5.0.6-16.fc31.noarch.rpm"
+          },
+          "sha256:cddb050897cd8666090b172711fb7947b3bf844f5a190f8c689fd79a222e1761": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/lcms2-2.9-6.fc31.aarch64.rpm"
+          },
+          "sha256:ce421671bfd14a427771eb3c78b060352a61cca889b1bf1b342c328dd521623d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_autofs-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:cf480f0df368b3cc9f36e42d5d573afa93fcb3889614dee172c0ad367785f520": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/polkit-libs-0.116-4.fc31.aarch64.rpm"
+          },
+          "sha256:d01f7e794c3dd3f38de1b69fd360db4b858826eba4e6fd4edc79c8a74774ab00": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rpm-plugin-systemd-inhibit-4.15.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:d02489175567be57a48a3edf5deb66d100e99df73a37b26062fea4d6af014cbc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/readline-8.0-3.fc31.aarch64.rpm"
+          },
+          "sha256:d1520137d9cb96cd10a63893b45b4794b120502bdbab0862e001ac2486195aa6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsecret-0.19.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:d1ce6a69f0c2d96a97a04036a5c59deda82b5e1b0843c114f0fb896279ec7bbc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnfsidmap-2.4.1-1.rc1.fc31.aarch64.rpm"
+          },
+          "sha256:d22fbf5e32d176db1414b0854c78f0ea1b5f489a83490ee4e3f67bc5e98905af": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libaio-0.3.111-6.fc31.aarch64.rpm"
+          },
+          "sha256:d25bc4ae557b402ec151cbf70cb8f63e985c456ed7f0347505cf6cf171d15565": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/geolite2-city-20190806-1.fc31.noarch.rpm"
+          },
+          "sha256:d287bfdcebb9fbb31d5f58cc71311f48a85970d0fd92f5beb0193270c155faac": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmetalink-0.1.3-9.fc31.aarch64.rpm"
+          },
+          "sha256:d2be7b0f17350a8a0f301617cb1d7b024076bc16986abaab94453ec1cee1f1f2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/popt-1.16-18.fc31.aarch64.rpm"
+          },
+          "sha256:d2d3b613de0ecf3ae022e5d5d1576858c91b203af6a52a7a9aa36245f0cdbd05": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libldb-2.0.7-1.fc31.aarch64.rpm"
+          },
+          "sha256:d2f7d49bd565c2fec4ca945ae97ac3b8a607f114d3a7558b90b2caaa5871459b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgcrypt-1.8.5-1.fc31.aarch64.rpm"
+          },
+          "sha256:d35fe17711337362bdf09540523bddbdc16406d0ff7650043a3cdd1cfc222ae8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-cryptography-2.6.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:d3da31400c3b9277ec828ceea8a56e2dcfd0ebca0541c3ac8426a082bc17e647": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adobe-source-code-pro-fonts-2.030.1.050-7.fc31.noarch.rpm"
+          },
+          "sha256:d429648fe5b233a46fdbfc31a283ca4b6be5177ae84f3e7e63fec5f9bebd17d1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-gpg-1.13.1-3.fc31.aarch64.rpm"
+          },
+          "sha256:d45b8157ccb1d538f06120150470433ddaa714680e10ffe97bfc5853b5a0321e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/ebtables-legacy-2.0.10-37.fc31.aarch64.rpm"
+          },
+          "sha256:d54d16ad9e5b80cdf93f09d67c52ff64bd7f7c5e8aece4257ad2615f807fae02": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-dnf-plugins-core-4.0.9-1.fc31.noarch.rpm"
+          },
+          "sha256:d54f02fc39b3e87253808f665918d26ffe901f1228e25121c908661b47ba266b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pysocks-1.7.0-2.fc31.noarch.rpm"
+          },
+          "sha256:d5fbbd9fed99da8f9c8ca5d4a735f91bcf8d464ee2f82c82ff34e18480a02108": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/selinux-policy-3.14.4-37.fc31.noarch.rpm"
+          },
+          "sha256:d6b491f91a567b4245d07d28a0547cb1b8e97a1f814e3f7d76dd685bb6658b64": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iptables-libs-1.8.3-5.fc31.aarch64.rpm"
+          },
+          "sha256:d877864e501fe38a1b0c7e11572e61c5d9eb9857436541f1c2d5ad2f8bd29b83": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libargon2-20171227-3.fc31.aarch64.rpm"
+          },
+          "sha256:d8d28daa56fa4894a767957aa9948cad6d274e2b70d8b10aa69d9356c8a22eff": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openldap-2.4.47-3.fc31.aarch64.rpm"
+          },
+          "sha256:d8e448aea6836b8a577ac6d342b52e20f9c52f51a28042fc78a7f30224f7b663": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/r/rootfiles-8.1-25.fc31.noarch.rpm"
+          },
+          "sha256:d9641a59b33831e32fa61f3479152d5eac33e0526b32e67ae33f1c1102c69d4b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/sssd-common-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:d96bdfbaba63ac6755a20d8a4d954bc5010695d671ba305a54362c1d3c69fc37": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/efibootmgr-16-6.fc31.aarch64.rpm"
+          },
+          "sha256:dc6b772101df9f3029c2cd80a10663663ad877e129c8d724902f5cc9f1785e60": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssl-pkcs11-0.4.10-2.fc31.aarch64.rpm"
+          },
+          "sha256:dc8a707761f45962518e251f87a5e1d83199fbd1fe1e249f89ed457528c1fba1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm"
+          },
+          "sha256:dcc584a55c425c26a62fe579beead8488589c3892c34e8fab95c7fd7ec1cf6c6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/findutils-4.6.0-24.fc31.aarch64.rpm"
+          },
+          "sha256:ddd0635b899826bed59036ba17f8112c35660b32f3d1639266f5e394166a9dbf": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/grub2-tools-minimal-2.02-100.fc31.aarch64.rpm"
+          },
+          "sha256:ddd9b320e97d333bb4b7ccbdf70e401693065177a7d9317c6d7d1b69318209f7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnetfilter_conntrack-1.0.7-3.fc31.aarch64.rpm"
+          },
+          "sha256:df3b6938e2fc743284b4aeeefb2533a91acff7e4b70962fb8b0fc9c792116db9": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python-setuptools-wheel-41.2.0-1.fc31.noarch.rpm"
+          },
+          "sha256:e0408a5020069e7a4585e3bb4d1bba1b8bf0afe481ff63b70e2221e9c5464cad": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kpartx-0.8.0-3.fc31.aarch64.rpm"
+          },
+          "sha256:e0af6b40e51fe0b9f68367355219aa56717888d2a07c10a001cc8667de1a5a2f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tar-1.32-2.fc31.aarch64.rpm"
+          },
+          "sha256:e17ef6f7d4f1869ff5813d6f8f2983cd6f5cd23d4a666b7ae19154636e911644": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-babel-2.7.0-2.fc31.noarch.rpm"
+          },
+          "sha256:e1deab5e887a199233f9a439d2d20d864d434e9a4ac7fe460f230d368fb3779f": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsepol-2.9-2.fc31.aarch64.rpm"
+          },
+          "sha256:e1e5250ea932beac32caf373ae55b4655c50ae8a1bd9d42e3ceac590a13031ef": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libgusb-0.3.0-5.fc31.aarch64.rpm"
+          },
+          "sha256:e29356f3ea2554e8be23401a08a941f406d337cf6b38e7ee99926fb9b3f1f541": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/s/systemd-pam-243-4.gitef67743.fc31.aarch64.rpm"
+          },
+          "sha256:e3046e1e508453e332277ab86ebf67df0106edca2c6e8e54ba2bffb76f9ed4d7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glibc-common-2.30-5.fc31.aarch64.rpm"
+          },
+          "sha256:e30906c30d3dea50c62e74bc7aa870eb928af4c6fb474c894f55ef6ba41f5841": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fontconfig-2.13.92-3.fc31.aarch64.rpm"
+          },
+          "sha256:e35e30f6477652a93d3c02ec86faa233884aefb2ff9fcf4058909d9736fb2d15": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libxcrypt-4.4.10-1.fc31.aarch64.rpm"
+          },
+          "sha256:e4e6a5e014442aa8d7768555da9d44e6381569e0c44e61d2d2a06d6692748945": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtextstyle-0.20.1-2.fc31.aarch64.rpm"
+          },
+          "sha256:e566c03caeeaa58db28c0b257f5d36ea92adfe2a18884208f03611c35397a6a1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-release-common-31-1.noarch.rpm"
+          },
+          "sha256:e63f82e1a97f9b3ff079f2329ddc22e4b37c892972ead5807c242fca61ac6076": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kbd-legacy-2.0.4-14.fc31.noarch.rpm"
+          },
+          "sha256:e6a986f10b17ba67e86c417251d855e1eeac0ca1c85c2ee7ae3bfc7d6c966087": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gawk-5.0.1-5.fc31.aarch64.rpm"
+          },
+          "sha256:e76b3b9d14a0016542f61d0ab2981fbf2d779e522d0c36d9095a1cffecbf9272": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/firewalld-filesystem-0.7.2-1.fc31.noarch.rpm"
+          },
+          "sha256:e78343046ae389b1c11d36f8de0b8bfbb9ded7bdc39fb52b3f719a39047bf42a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libselinux-utils-2.9-5.fc31.aarch64.rpm"
+          },
+          "sha256:e7e629e7e89f970660407fb22c8b706c4c9a65a5f43286ddeef1e165b446fcaa": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/device-mapper-1.02.163-2.fc31.aarch64.rpm"
+          },
+          "sha256:e88e27b7ac16c753e20f65cd13ed163019ac702c4195eb75d766acd44cb55263": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/k/kmod-26-4.fc31.aarch64.rpm"
+          },
+          "sha256:e8a13bb46e5149142a1e0a359460c1c65b2cbcbff20f2d0c50f9adbad57538a1": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libfdisk-2.34-3.fc31.aarch64.rpm"
+          },
+          "sha256:e98119ac7a707287668e7a9a74ef2809ee5f555af04f52775367e428e08dbb33": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-jsonpatch-1.21-8.fc31.noarch.rpm"
+          },
+          "sha256:e9c1fa22b0b6d6b7ac782ba60d4c6a2c747bd683f075720a4d82aec45adbd905": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iproute-5.3.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:e9c7f59547a9eec5304db7a312b435592f07f7aee4f3db617e5ddfac0f4d048c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmodulemd1-1.8.15-3.fc31.aarch64.rpm"
+          },
+          "sha256:ea35fa3f5c16e074a59d66ff9037e48ca7c0126444e09daf640b7a37dacd76ad": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/jasper-libs-2.0.14-9.fc31.aarch64.rpm"
+          },
+          "sha256:ea68ed6fc06f142c95e907b619a9696146dff1bba308773df12e412d8277eec0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libutempter-1.1.6-17.fc31.aarch64.rpm"
+          },
+          "sha256:ead6cd0d8e509f07e36456aff75eca8433821813d675382d28fe4e7dbecc48dc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libmnl-1.0.4-10.fc31.aarch64.rpm"
+          },
+          "sha256:eb1992de281538771ba578a65eabe620dc35aef6c621d8c5351a2ba38ac440f4": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pam-1.3.1-18.fc31.aarch64.rpm"
+          },
+          "sha256:eb35167d6095465a58611b80853213af5838f271b75fa1a5e3c051a04a9078a7": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/o/openssh-clients-8.0p1-8.fc31.1.aarch64.rpm"
+          },
+          "sha256:ec305ea347ab987f5a00574bc3eaebaf2412483ed1b79615fdd86ca18ab146bc": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/e2fsprogs-1.45.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:ec48b0cd759656b4c5d8d13dcc81c6fa23914f8e214b4cda1ed08e1896177fe9": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXrender-0.9.10-10.fc31.aarch64.rpm"
+          },
+          "sha256:edee134762456246cd8de577597e350b60a04bc43ac4a47622b9a263ddd74cf2": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-hawkey-0.35.3-6.fc31.aarch64.rpm"
+          },
+          "sha256:ee2f71a3a318270e9cc55aa9dde8889f2e664fec681f9fd5719361f8e4a1afac": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/iproute-tc-5.3.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:ee3977f4ee783225903f964c60932795d8c11307043e73527b394dec02487047": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/pinentry-1.1.0-6.fc31.aarch64.rpm"
+          },
+          "sha256:ee5ed9701778c4cb91af4c2e2ef996b9c178d32b652edf4506394cac72fefb96": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnl3-3.5.0-1.fc31.aarch64.rpm"
+          },
+          "sha256:ee6dbb4914a35ee8a816ecde34d29221e3f4622324f6287c328e8ac22ae572ad": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-chardet-3.0.4-10.fc31.noarch.rpm"
+          },
+          "sha256:f0847b05feed5f47260e38b9ea40935644c061ccde2b82da5c68874190d59034": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/t/tzdata-2019c-1.fc31.noarch.rpm"
+          },
+          "sha256:f0b9a02ed639d2cff7a85262d440c65f2fa2ba318166b45d969a2802f102535b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-cffi-1.12.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:f11d53128f33f9e73dc21c01159a283cc3fcd2e39f2712dbfa930018ae67fb69": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpath_utils-0.2.1-43.fc31.aarch64.rpm"
+          },
+          "sha256:f1419585dbb27e3bf76aab5a5f8fb9580816a7a0e7fc93377b97646a0259a794": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/npth-1.6-3.fc31.aarch64.rpm"
+          },
+          "sha256:f195c83de6568cf550a3b2d70725697196c1a9269cddb9b825f5a887de9d6eed": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/n/NetworkManager-libnm-1.20.4-1.fc31.aarch64.rpm"
+          },
+          "sha256:f23f467c4099be4cb4dfdc1be13b7a7bb6e8c6da7c21182658a034827b64df39": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/z/zlib-1.2.11-19.fc31.aarch64.rpm"
+          },
+          "sha256:f2471f1b946309f419a2bf1b4b3ad473d53f7ac0ee15b9c2426eb2e6cb4e87c0": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libnfnetlink-1.0.1-16.fc31.aarch64.rpm"
+          },
+          "sha256:f2ae011207332ac90d0cf50b1f0b9eb0ce8be1d4d4c7186463dff38a90af0f3d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/fedora-gpg-keys-31-1.noarch.rpm"
+          },
+          "sha256:f2d11878777b28a284e9a571a6a9cf893a97f0935291b10686eb93a2a3dfdfb8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libsss_nss_idmap-2.2.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:f34cde4c2bd6ab93a697d8c350e98f4d70f897f74fee35a06c25eb4b98f46c9a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libwayland-cursor-1.17.0-2.fc31.aarch64.rpm"
+          },
+          "sha256:f369cbc73e31dbae49565c6acfcc8ce4ea0158d1480121b5c6dcc1d224998a62": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/i/ipset-libs-7.3-1.fc31.aarch64.rpm"
+          },
+          "sha256:f3d5fd211e3faf1b61be64fd3f1659dd640a873c66747a5cc341f888e4179dea": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/glib2-2.62.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:f43fa8496a54ad89eef4f48c3813190b5509a21c873bc1d5fcd0dda80ae2b425": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/file-5.37-3.fc31.aarch64.rpm"
+          },
+          "sha256:f63c88d8b294addf2791a5b291e3ab13750a24fe92fec65c96d365edad767f57": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/f/file-libs-5.37-3.fc31.aarch64.rpm"
+          },
+          "sha256:f6b2aa7fe304420261fe558377d1c498654dd0caaf964406cd9a462fee450b26": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/a/adwaita-icon-theme-3.34.0-1.fc31.noarch.rpm"
+          },
+          "sha256:f6d37f25fa7215b7ae185b12f687d60c4363cfb8e35d591595a9b0f379488fc6": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libtevent-0.10.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:f74b53f33812f65d12377946d363a773e48cf6bc6c4bb2acec5bb4a048861b88": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/gdbm-libs-1.18.1-1.fc31.aarch64.rpm"
+          },
+          "sha256:f7954ba55d833c6341ec87b0cf57817084c705673b8b50aff3e3606fcbdcfbb5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libXdamage-1.1.4-17.fc31.aarch64.rpm"
+          },
+          "sha256:f85438d6cb268c431f3aed5c678f1632b56d57393a3eb52e31d75bc6462bc88d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/d/dracut-config-generic-049-27.git20181204.fc31.1.aarch64.rpm"
+          },
+          "sha256:f85469c0c19ce86e8fdd0dd5a3e6e5c9b78e3436ae9ce70ba86b2b4a3794f693": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-oauthlib-3.0.2-2.fc31.noarch.rpm"
+          },
+          "sha256:f8e118c35bb5f8ae3dca517ef38c7a38bbdd491011af9e1c4c5c7523f13e6f9c": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/m/mkpasswd-5.5.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:f958a85509e118c832458a5f502e5d59695eb3df96ae0bd603203a82d188b2ae": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-pyyaml-5.1.2-1.fc31.aarch64.rpm"
+          },
+          "sha256:fabb9a86711308b3dbf146e8f155ab8e857172455e805aab912500bf157368ac": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/plymouth-scripts-0.9.4-10.20191001gita8aad27.fc31.aarch64.rpm"
+          },
+          "sha256:fb2b070b96ed58a31da7889452ce3cdbfb60f6161a3e2f0ce2738b4d3facfd2d": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/json-glib-1.4.4-3.fc31.aarch64.rpm"
+          },
+          "sha256:fb6b61cabfce21597c33c62743c13dd96bcea39aa806a144bc2b2665b48273a8": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/l/libpcap-1.9.0-4.fc31.aarch64.rpm"
+          },
+          "sha256:fd9ac175e5af929bb942528904d6e6e48caed800e22a7a45825d535bdc1537ba": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/j/json-c-0.13.1-6.fc31.aarch64.rpm"
+          },
+          "sha256:fe6afcdab2793cd75a838a758a282d4581f1272f3f32df6a58777c0721e54b2e": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/e/elfutils-libs-0.177-1.fc31.aarch64.rpm"
+          },
+          "sha256:fe6f4202a8e7e52add27c6d2e2af65884a974bcde4b5e89979badb782719ca1a": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/p/python3-libs-3.7.4-5.fc31.aarch64.rpm"
+          },
+          "sha256:fe7b068f7f0840245e41844bcb98a2e438b33fd91d19bbf88bcbcd608109360b": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/g/geolite2-country-20190806-1.fc31.noarch.rpm"
+          },
+          "sha256:ffa75117ea710fef320f1ae878e8c81e7a056386dea78aa5787dc091c5a100a5": {
+            "url": "http://download.fedoraproject.org/pub/fedora/linux/releases/31/Everything/aarch64/os/Packages/c/colord-libs-1.4.4-2.fc31.aarch64.rpm"
+          }
         }
       }
     },
