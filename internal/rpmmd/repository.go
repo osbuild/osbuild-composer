@@ -8,11 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gobwas/glob"
-	"github.com/google/uuid"
 )
 
 type repository struct {
@@ -25,7 +25,7 @@ type repository struct {
 }
 
 type dnfRepoConfig struct {
-	Id             string `json:"id"`
+	ID             string `json:"id"`
 	BaseURL        string `json:"baseurl,omitempty"`
 	Metalink       string `json:"metalink,omitempty"`
 	MirrorList     string `json:"mirrorlist,omitempty"`
@@ -294,10 +294,10 @@ func NewRPMMD(cacheDir string) RPMMD {
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig() (dnfRepoConfig, error) {
-	id := uuid.New().String()
+func (repo RepoConfig) toDNFRepoConfig(i int) (dnfRepoConfig, error) {
+	id := strconv.Itoa(i)
 	dnfRepo := dnfRepoConfig{
-		Id:             id,
+		ID:             id,
 		BaseURL:        repo.BaseURL,
 		Metalink:       repo.Metalink,
 		MirrorList:     repo.MirrorList,
@@ -319,8 +319,8 @@ func (repo RepoConfig) toDNFRepoConfig() (dnfRepoConfig, error) {
 
 func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, arch string) (PackageList, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
-	for _, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig()
+	for i, repo := range repos {
+		dnfRepo, err := repo.toDNFRepoConfig(i)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -350,11 +350,11 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 	repoMap := make(map[string]RepoConfig)
 	var dnfRepoConfigs []dnfRepoConfig
 
-	for _, repo := range repos {
+	for i, repo := range repos {
 		id := repo.Id
 		repoMap[id] = repo
 
-		dnfRepo, err := repo.toDNFRepoConfig()
+		dnfRepo, err := repo.toDNFRepoConfig(i)
 		if err != nil {
 			return nil, nil, err
 		}
