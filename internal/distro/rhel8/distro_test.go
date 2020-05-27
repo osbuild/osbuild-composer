@@ -103,6 +103,8 @@ func TestImageType_BuildPackages(t *testing.T) {
 	buildPackages := map[string][]string{
 		"x86_64":  x8664BuildPackages,
 		"aarch64": aarch64BuildPackages,
+		"ppc64le": nil,
+		"s390x":   nil,
 	}
 	d := rhel8.New()
 	for _, archLabel := range d.ListArches() {
@@ -143,6 +145,12 @@ func TestImageType_Name(t *testing.T) {
 				"qcow2",
 				"openstack",
 			},
+		},
+		{
+			arch: "ppc64le",
+		},
+		{
+			arch: "s390x",
 		},
 	}
 	for _, mapping := range imgMap {
@@ -328,7 +336,7 @@ func TestDistro_Manifest(t *testing.T) {
 func TestRhel8_ListArches(t *testing.T) {
 	distro := rhel8.New()
 	arches := distro.ListArches()
-	assert.Equal(t, []string{"aarch64", "x86_64"}, arches)
+	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
 }
 
 func TestRhel8_GetArch(t *testing.T) {
@@ -342,6 +350,12 @@ func TestRhel8_GetArch(t *testing.T) {
 		},
 		{
 			name: "aarch64",
+		},
+		{
+			name: "ppc64le",
+		},
+		{
+			name: "s390x",
 		},
 		{
 			name:          "foo-arch",
