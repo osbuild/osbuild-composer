@@ -44,8 +44,8 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
-                stage('RHEL 8.2') {
-                    agent { label "rhel82" }
+                stage('RHEL 8 CDN') {
+                    agent { label "rhel8" }
                     environment {
                         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
                     }
@@ -53,15 +53,15 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
-                stage('RHEL 8.3') {
-                    agent { label "rhel83" }
-                    environment {
-                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
-                    }
-                    steps {
-                        sh "schutzbot/mockbuild.sh"
-                    }
-                }
+                // stage('RHEL 8.3 Nightly') {
+                //     agent { label "rhel83" }
+                //     environment {
+                //         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                //     }
+                //     steps {
+                //         sh "schutzbot/mockbuild.sh"
+                //     }
+                // }
             }
         }
         stage("Functional Testing") {
@@ -127,20 +127,20 @@ pipeline {
                         }
                     }
                 }
-                stage('RHEL 8.2 base') {
-                    agent { label "rhel82" }
+                stage('RHEL 8 CDN Base') {
+                    agent { label "rhel8" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         run_tests()
                     }
                     post {
                         always {
-                            preserve_logs('rhel82-base')
+                            preserve_logs('rhel8-base')
                         }
                     }
                 }
-                stage('RHEL 8.2 image') {
-                    agent { label "rhel82" }
+                stage('RHEL 8 CDN Image') {
+                    agent { label "rhel8" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -152,7 +152,7 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('rhel82-image')
+                            preserve_logs('rhel8-image')
                         }
                     }
                 }

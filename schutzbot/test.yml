@@ -1,6 +1,7 @@
 ---
 
-- hosts: localhost
+- name: Run osbuild-composer tests
+  hosts: localhost
   become: yes
   vars:
     passed_tests: []
@@ -8,6 +9,11 @@
   vars_files:
     - vars.yml
   tasks:
+
+    - name: Install osbuild-composer-tests
+      dnf:
+        name: osbuild-composer-tests
+        state: present
 
     - name: Run osbuild-composer base tests
       include_tasks: test_runner_base.yml

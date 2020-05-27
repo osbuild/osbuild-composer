@@ -38,9 +38,6 @@ trap "preserve_journal" ERR
 # Write a simple hosts file for Ansible.
 echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 
-# Get the SHA of osbuild-composer which Jenkins checked out for us.
-OSBUILD_COMPOSER_VERSION=$(git rev-parse HEAD)
-
 # Deploy osbuild/osbuild-composer via the repository we created.
 export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
@@ -48,9 +45,6 @@ ansible-playbook \
   -i hosts.ini \
   -e install_source=os \
   ansible-osbuild/playbook.yml
-
-# Ensure the testing package is installed.
-sudo dnf -y install osbuild-composer-tests
 
 # Run the tests.
 ansible-playbook \
