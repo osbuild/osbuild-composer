@@ -19,14 +19,14 @@ import (
 const name = "fedora-32"
 const modulePlatformID = "platform:f32"
 
-type Fedora32 struct {
-	arches        map[string]arch
+type distribution struct {
+	arches        map[string]architecture
 	imageTypes    map[string]imageType
 	buildPackages []string
 }
 
-type arch struct {
-	distro             *Fedora32
+type architecture struct {
+	distro             *distribution
 	name               string
 	bootloaderPackages []string
 	buildPackages      []string
@@ -35,7 +35,7 @@ type arch struct {
 }
 
 type imageType struct {
-	arch             *arch
+	arch             *architecture
 	name             string
 	filename         string
 	mimeType         string
@@ -50,7 +50,7 @@ type imageType struct {
 	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
-func (a *arch) Distro() distro.Distro {
+func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
@@ -58,7 +58,7 @@ func (t *imageType) Arch() distro.Arch {
 	return t.arch
 }
 
-func (d *Fedora32) ListArches() []string {
+func (d *distribution) ListArches() []string {
 	archs := make([]string, 0, len(d.arches))
 	for name := range d.arches {
 		archs = append(archs, name)
@@ -67,7 +67,7 @@ func (d *Fedora32) ListArches() []string {
 	return archs
 }
 
-func (d *Fedora32) GetArch(arch string) (distro.Arch, error) {
+func (d *distribution) GetArch(arch string) (distro.Arch, error) {
 	a, exists := d.arches[arch]
 	if !exists {
 		return nil, errors.New("invalid architecture: " + arch)
@@ -76,10 +76,10 @@ func (d *Fedora32) GetArch(arch string) (distro.Arch, error) {
 	return &a, nil
 }
 
-func (d *Fedora32) setArches(arches ...arch) {
-	d.arches = map[string]arch{}
+func (d *distribution) setArches(arches ...architecture) {
+	d.arches = map[string]architecture{}
 	for _, a := range arches {
-		d.arches[a.name] = arch{
+		d.arches[a.name] = architecture{
 			distro:             d,
 			name:               a.name,
 			bootloaderPackages: a.bootloaderPackages,
@@ -90,11 +90,11 @@ func (d *Fedora32) setArches(arches ...arch) {
 	}
 }
 
-func (a *arch) Name() string {
+func (a *architecture) Name() string {
 	return a.name
 }
 
-func (a *arch) ListImageTypes() []string {
+func (a *architecture) ListImageTypes() []string {
 	formats := make([]string, 0, len(a.imageTypes))
 	for name := range a.imageTypes {
 		formats = append(formats, name)
@@ -103,7 +103,7 @@ func (a *arch) ListImageTypes() []string {
 	return formats
 }
 
-func (a *arch) GetImageType(imageType string) (distro.ImageType, error) {
+func (a *architecture) GetImageType(imageType string) (distro.ImageType, error) {
 	t, exists := a.imageTypes[imageType]
 	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
@@ -112,7 +112,7 @@ func (a *arch) GetImageType(imageType string) (distro.ImageType, error) {
 	return &t, nil
 }
 
-func (a *arch) setImageTypes(imageTypes ...imageType) {
+func (a *architecture) setImageTypes(imageTypes ...imageType) {
 	a.imageTypes = map[string]imageType{}
 	for _, it := range imageTypes {
 		a.imageTypes[it.name] = imageType{
@@ -190,7 +190,360 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	}, nil
 }
 
-func New() *Fedora32 {
+func (d *distribution) Name() string {
+	return name
+}
+
+func (d *distribution) ModulePlatformID() string {
+	return modulePlatformID
+}
+
+func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
+	files := &osbuild.FilesSource{
+		URLs: make(map[string]osbuild.FileSource),
+	}
+	for _, pkg := range packages {
+		fileSource := osbuild.FileSource{
+			URL: pkg.RemoteLocation,
+		}
+		files.URLs[pkg.Checksum] = fileSource
+	}
+	return &osbuild.Sources{
+		"org.osbuild.files": files,
+	}
+}
+
+func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
+	p := &osbuild.Pipeline{}
+	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora32")
+
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
+	p.AddStage(osbuild.NewFixBLSStage())
+
+	// TODO support setting all languages and install corresponding langpack-* package
+	language, keyboard := c.GetPrimaryLocale()
+
+	if language != nil {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+	} else {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US"}))
+	}
+
+	if keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	}
+
+	if hostname := c.GetHostname(); hostname != nil {
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+	}
+
+	timezone, ntpServers := c.GetTimezoneSettings()
+
+	// TODO install chrony when this is set?
+	if timezone != nil {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+	}
+
+	if len(ntpServers) > 0 {
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	}
+
+	if users := c.GetUsers(); len(users) > 0 {
+		options, err := t.userStageOptions(users)
+		if err != nil {
+			return nil, err
+		}
+		p.AddStage(osbuild.NewUsersStage(options))
+	}
+
+	if groups := c.GetGroups(); len(groups) > 0 {
+		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
+	}
+
+	if t.bootable {
+		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
+		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+	} else if t.rpmOstree {
+		p.AddStage(osbuild.NewFSTabStage(t.fsOstreeTabStageOptions()))
+	}
+
+	if services := c.GetServices(); services != nil || t.enabledServices != nil {
+		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services)))
+	}
+
+	if firewall := c.GetFirewall(); firewall != nil {
+		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
+	}
+
+	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
+
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewRPMOSTreeStage(&osbuild.RPMOSTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: We may want to make this configurable.
+				"wheel", "docker",
+			},
+		}))
+	}
+
+	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
+
+	return p, nil
+}
+
+func (t *imageType) buildPipeline(repos []rpmmd.RepoConfig, arch architecture, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
+	p := &osbuild.Pipeline{}
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(arch, repos, buildPackageSpecs)))
+	return p
+}
+
+func (t *imageType) rpmStageOptions(arch architecture, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
+	var gpgKeys []string
+	for _, repo := range repos {
+		if repo.GPGKey == "" {
+			continue
+		}
+		gpgKeys = append(gpgKeys, repo.GPGKey)
+	}
+
+	var packages []string
+	for _, spec := range specs {
+		packages = append(packages, spec.Checksum)
+	}
+
+	return &osbuild.RPMStageOptions{
+		GPGKeys:  gpgKeys,
+		Packages: packages,
+	}
+}
+
+func (t *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+	options := osbuild.UsersStageOptions{
+		Users: make(map[string]osbuild.UsersStageOptionsUser),
+	}
+
+	for _, c := range users {
+		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
+			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
+			if err != nil {
+				return nil, err
+			}
+
+			c.Password = &cryptedPassword
+		}
+
+		user := osbuild.UsersStageOptionsUser{
+			Groups:      c.Groups,
+			Description: c.Description,
+			Home:        c.Home,
+			Shell:       c.Shell,
+			Password:    c.Password,
+			Key:         c.Key,
+		}
+
+		if c.UID != nil {
+			uid := strconv.Itoa(*c.UID)
+			user.UID = &uid
+		}
+
+		if c.GID != nil {
+			gid := strconv.Itoa(*c.GID)
+			user.GID = &gid
+		}
+
+		options.Users[c.Name] = user
+	}
+
+	return &options, nil
+}
+
+func (t *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+	options := osbuild.GroupsStageOptions{
+		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
+	}
+
+	for _, group := range groups {
+		groupData := osbuild.GroupsStageOptionsGroup{
+			Name: group.Name,
+		}
+		if group.GID != nil {
+			gid := strconv.Itoa(*group.GID)
+			groupData.GID = &gid
+		}
+
+		options.Groups[group.Name] = groupData
+	}
+
+	return &options
+}
+
+func (t *imageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
+	options := osbuild.FirewallStageOptions{
+		Ports: firewall.Ports,
+	}
+
+	if firewall.Services != nil {
+		options.EnabledServices = firewall.Services.Enabled
+		options.DisabledServices = firewall.Services.Disabled
+	}
+
+	return &options
+}
+
+func (t *imageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *osbuild.SystemdStageOptions {
+	if s != nil {
+		enabledServices = append(enabledServices, s.Enabled...)
+		disabledServices = append(disabledServices, s.Disabled...)
+	}
+	return &osbuild.SystemdStageOptions{
+		EnabledServices:  enabledServices,
+		DisabledServices: disabledServices,
+	}
+}
+
+func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+	options := osbuild.FSTabStageOptions{}
+	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
+	if uefi {
+		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
+	}
+	return &options
+}
+
+func (t *imageType) fsOstreeTabStageOptions() *osbuild.FSTabStageOptions {
+	return &osbuild.FSTabStageOptions{
+		FileSystems: []*osbuild.FSTabEntry{
+			{
+				Label:   "root",
+				VFSType: "ext4",
+				Path:    "/",
+				Options: "defaults",
+				Freq:    1,
+				PassNo:  1,
+			},
+			{
+				Label:   "boot",
+				VFSType: "ext4",
+				Path:    "/boot",
+				Options: "defaults",
+				Freq:    1,
+				PassNo:  1,
+			},
+			{
+				Label:   "EFI-SYSTEM",
+				VFSType: "vfat",
+				Path:    "/boot/efi",
+				Options: "umask=0077,shortname=winnt",
+				Freq:    0,
+				PassNo:  2,
+			},
+		},
+	}
+}
+
+func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
+	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
+
+	if kernel != nil {
+		kernelOptions += " " + kernel.Append
+	}
+
+	var uefiOptions *osbuild.GRUB2UEFI
+	if uefi {
+		uefiOptions = &osbuild.GRUB2UEFI{
+			Vendor: "fedora",
+		}
+	}
+
+	return &osbuild.GRUB2StageOptions{
+		RootFilesystemUUID: id,
+		KernelOptions:      kernelOptions,
+		Legacy:             !uefi,
+		UEFI:               uefiOptions,
+	}
+}
+
+func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
+	return &osbuild.SELinuxStageOptions{
+		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+	}
+}
+
+func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
+	var options osbuild.QEMUAssemblerOptions
+	if uefi {
+		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
+		options = osbuild.QEMUAssemblerOptions{
+			Format:   format,
+			Filename: filename,
+			Size:     imageOptions.Size,
+			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
+			PTType:   "gpt",
+			Partitions: []osbuild.QEMUPartition{
+				{
+					Start: 2048,
+					Size:  972800,
+					Type:  &fstype,
+					UUID:  "02C1E068-1D2F-4DA3-91FD-8DD76A955C9D",
+					Filesystem: osbuild.QEMUFilesystem{
+						Type:       "vfat",
+						UUID:       "46BB-8120",
+						Label:      "EFI System Partition",
+						Mountpoint: "/boot/efi",
+					},
+				},
+				{
+					Start: 976896,
+					UUID:  "8D760010-FAAE-46D1-9E5B-4A2EAC5030CD",
+					Filesystem: osbuild.QEMUFilesystem{
+						Type:       "ext4",
+						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+						Mountpoint: "/",
+					},
+				},
+			},
+		}
+	} else {
+		options = osbuild.QEMUAssemblerOptions{
+			Format:   format,
+			Filename: filename,
+			Size:     imageOptions.Size,
+			PTUUID:   "0x14fc63d2",
+			PTType:   "mbr",
+			Partitions: []osbuild.QEMUPartition{
+				{
+					Start:    2048,
+					Bootable: true,
+					Filesystem: osbuild.QEMUFilesystem{
+						Type:       "ext4",
+						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+						Mountpoint: "/",
+					},
+				},
+			},
+		}
+	}
+	return osbuild.NewQEMUAssembler(&options)
+}
+
+func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	ref := options.OSTree.Ref
+	if ref == "" {
+		ref = fmt.Sprintf("fedora/32/%s/iot", arch.Name())
+	}
+	return osbuild.NewOSTreeCommitAssembler(
+		&osbuild.OSTreeCommitAssemblerOptions{
+			Ref:    ref,
+			Parent: options.OSTree.Parent,
+			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
+				Filename: "commit.tar",
+			},
+		},
+	)
+}
+
+// New creates a new distro object, defining the supported architectures and image types
+func New() distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	iotImgType := imageType{
@@ -398,7 +751,7 @@ func New() *Fedora32 {
 		},
 	}
 
-	r := Fedora32{
+	r := distribution{
 		imageTypes: map[string]imageType{},
 		buildPackages: []string{
 			"dnf",
@@ -411,7 +764,7 @@ func New() *Fedora32 {
 			"xz",
 		},
 	}
-	x8664 := arch{
+	x8664 := architecture{
 		distro: &r,
 		name:   "x86_64",
 		bootloaderPackages: []string{
@@ -431,7 +784,7 @@ func New() *Fedora32 {
 		vmdkImgType,
 	)
 
-	aarch64 := arch{
+	aarch64 := architecture{
 		distro: &r,
 		name:   "aarch64",
 		bootloaderPackages: []string{
@@ -452,356 +805,4 @@ func New() *Fedora32 {
 	r.setArches(x8664, aarch64)
 
 	return &r
-}
-
-func (r *Fedora32) Name() string {
-	return name
-}
-
-func (r *Fedora32) ModulePlatformID() string {
-	return modulePlatformID
-}
-
-func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
-	files := &osbuild.FilesSource{
-		URLs: make(map[string]osbuild.FileSource),
-	}
-	for _, pkg := range packages {
-		fileSource := osbuild.FileSource{
-			URL: pkg.RemoteLocation,
-		}
-		files.URLs[pkg.Checksum] = fileSource
-	}
-	return &osbuild.Sources{
-		"org.osbuild.files": files,
-	}
-}
-
-func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
-	p := &osbuild.Pipeline{}
-	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora32")
-
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
-	p.AddStage(osbuild.NewFixBLSStage())
-
-	// TODO support setting all languages and install corresponding langpack-* package
-	language, keyboard := c.GetPrimaryLocale()
-
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{*language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{"en_US"}))
-	}
-
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{*keyboard}))
-	}
-
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{*hostname}))
-	}
-
-	timezone, ntpServers := c.GetTimezoneSettings()
-
-	// TODO install chrony when this is set?
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{*timezone}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{ntpServers}))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		options, err := t.userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(options))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
-	}
-
-	if t.bootable {
-		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
-		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
-	} else if t.rpmOstree {
-		p.AddStage(osbuild.NewFSTabStage(t.fsOstreeTabStageOptions()))
-	}
-
-	if services := c.GetServices(); services != nil || t.enabledServices != nil {
-		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services)))
-	}
-
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
-	}
-
-	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
-
-	if t.rpmOstree {
-		p.AddStage(osbuild.NewRPMOSTreeStage(&osbuild.RPMOSTreeStageOptions{
-			EtcGroupMembers: []string{
-				// NOTE: should this somehow be configurable? How does it relate to regular group options?
-				"wheel", "docker",
-			},
-		}))
-	}
-
-	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
-
-	return p, nil
-}
-
-func (r *imageType) buildPipeline(repos []rpmmd.RepoConfig, arch arch, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
-	p := &osbuild.Pipeline{}
-	p.AddStage(osbuild.NewRPMStage(r.rpmStageOptions(arch, repos, buildPackageSpecs)))
-	return p
-}
-
-func (r *imageType) rpmStageOptions(arch arch, repos []rpmmd.RepoConfig, specs []rpmmd.PackageSpec) *osbuild.RPMStageOptions {
-	var gpgKeys []string
-	for _, repo := range repos {
-		if repo.GPGKey == "" {
-			continue
-		}
-		gpgKeys = append(gpgKeys, repo.GPGKey)
-	}
-
-	var packages []string
-	for _, spec := range specs {
-		packages = append(packages, spec.Checksum)
-	}
-
-	return &osbuild.RPMStageOptions{
-		GPGKeys:  gpgKeys,
-		Packages: packages,
-	}
-}
-
-func (r *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
-
-	for _, c := range users {
-		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			c.Password = &cryptedPassword
-		}
-
-		user := osbuild.UsersStageOptionsUser{
-			Groups:      c.Groups,
-			Description: c.Description,
-			Home:        c.Home,
-			Shell:       c.Shell,
-			Password:    c.Password,
-			Key:         c.Key,
-		}
-
-		if c.UID != nil {
-			uid := strconv.Itoa(*c.UID)
-			user.UID = &uid
-		}
-
-		if c.GID != nil {
-			gid := strconv.Itoa(*c.GID)
-			user.GID = &gid
-		}
-
-		options.Users[c.Name] = user
-	}
-
-	return &options, nil
-}
-
-func (r *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
-	options := osbuild.GroupsStageOptions{
-		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
-	}
-
-	for _, group := range groups {
-		groupData := osbuild.GroupsStageOptionsGroup{
-			Name: group.Name,
-		}
-		if group.GID != nil {
-			gid := strconv.Itoa(*group.GID)
-			groupData.GID = &gid
-		}
-
-		options.Groups[group.Name] = groupData
-	}
-
-	return &options
-}
-
-func (r *imageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
-	options := osbuild.FirewallStageOptions{
-		Ports: firewall.Ports,
-	}
-
-	if firewall.Services != nil {
-		options.EnabledServices = firewall.Services.Enabled
-		options.DisabledServices = firewall.Services.Disabled
-	}
-
-	return &options
-}
-
-func (r *imageType) systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization) *osbuild.SystemdStageOptions {
-	if s != nil {
-		enabledServices = append(enabledServices, s.Enabled...)
-		disabledServices = append(disabledServices, s.Disabled...)
-	}
-	return &osbuild.SystemdStageOptions{
-		EnabledServices:  enabledServices,
-		DisabledServices: disabledServices,
-	}
-}
-
-func (r *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
-	options := osbuild.FSTabStageOptions{}
-	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
-	if uefi {
-		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
-	}
-	return &options
-}
-
-func (t *imageType) fsOstreeTabStageOptions() *osbuild.FSTabStageOptions {
-	return &osbuild.FSTabStageOptions{
-		FileSystems: []*osbuild.FSTabEntry{
-			{
-				Label:   "root",
-				VFSType: "ext4",
-				Path:    "/",
-				Options: "defaults",
-				Freq:    1,
-				PassNo:  1,
-			},
-			{
-				Label:   "boot",
-				VFSType: "ext4",
-				Path:    "/boot",
-				Options: "defaults",
-				Freq:    1,
-				PassNo:  1,
-			},
-			{
-				Label:   "EFI-SYSTEM",
-				VFSType: "vfat",
-				Path:    "/boot/efi",
-				Options: "umask=0077,shortname=winnt",
-				Freq:    0,
-				PassNo:  2,
-			},
-		},
-	}
-}
-
-func (r *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
-	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
-
-	if kernel != nil {
-		kernelOptions += " " + kernel.Append
-	}
-
-	var uefiOptions *osbuild.GRUB2UEFI
-	if uefi {
-		uefiOptions = &osbuild.GRUB2UEFI{
-			Vendor: "fedora",
-		}
-	}
-
-	return &osbuild.GRUB2StageOptions{
-		RootFilesystemUUID: id,
-		KernelOptions:      kernelOptions,
-		Legacy:             !uefi,
-		UEFI:               uefiOptions,
-	}
-}
-
-func (r *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
-	return &osbuild.SELinuxStageOptions{
-		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-	}
-}
-
-func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
-	var options osbuild.QEMUAssemblerOptions
-	if uefi {
-		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
-		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
-			PTType:   "gpt",
-			Partitions: []osbuild.QEMUPartition{
-				{
-					Start: 2048,
-					Size:  972800,
-					Type:  &fstype,
-					UUID:  "02C1E068-1D2F-4DA3-91FD-8DD76A955C9D",
-					Filesystem: osbuild.QEMUFilesystem{
-						Type:       "vfat",
-						UUID:       "46BB-8120",
-						Label:      "EFI System Partition",
-						Mountpoint: "/boot/efi",
-					},
-				},
-				{
-					Start: 976896,
-					UUID:  "8D760010-FAAE-46D1-9E5B-4A2EAC5030CD",
-					Filesystem: osbuild.QEMUFilesystem{
-						Type:       "ext4",
-						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-						Mountpoint: "/",
-					},
-				},
-			},
-		}
-	} else {
-		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "0x14fc63d2",
-			PTType:   "mbr",
-			Partitions: []osbuild.QEMUPartition{
-				{
-					Start:    2048,
-					Bootable: true,
-					Filesystem: osbuild.QEMUFilesystem{
-						Type:       "ext4",
-						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-						Mountpoint: "/",
-					},
-				},
-			},
-		}
-	}
-	return osbuild.NewQEMUAssembler(&options)
-}
-
-func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-	ref := options.OSTree.Ref
-	if ref == "" {
-		ref = fmt.Sprintf("fedora/32/%s/iot", arch.Name())
-	}
-	return osbuild.NewOSTreeCommitAssembler(
-		&osbuild.OSTreeCommitAssemblerOptions{
-			Ref:    ref,
-			Parent: options.OSTree.Parent,
-			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
-				Filename: "commit.tar",
-			},
-		},
-	)
 }
