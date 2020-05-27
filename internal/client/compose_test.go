@@ -100,7 +100,7 @@ func TestComposeEmptyBlueprintV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status, "POST did not fail")
-	require.Equal(t, len(resp.Errors), 1)
+	require.Greater(t, len(resp.Errors), 0)
 	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
 }
 
@@ -115,7 +115,7 @@ func TestComposeInvalidCharsBlueprintV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status, "POST did not fail")
-	require.Equal(t, len(resp.Errors), 1)
+	require.Greater(t, len(resp.Errors), 0)
 	require.Contains(t, resp.Errors[0].Msg, "Invalid characters in API path")
 }
 
