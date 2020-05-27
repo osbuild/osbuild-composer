@@ -10,8 +10,6 @@ addons:
       - systemd-container
 matrix:
   include:
-    - name: fedora_30
-      arch: amd64
     - name: fedora_31
       arch: amd64
     - name: fedora_32
