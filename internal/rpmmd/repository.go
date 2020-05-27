@@ -341,7 +341,11 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 	sort.Slice(reply.Packages, func(i, j int) bool {
 		return reply.Packages[i].Name < reply.Packages[j].Name
 	})
-	return reply.Packages, reply.Checksums, err
+	checksums := make(map[string]string)
+	for i, repo := range repos {
+		checksums[repo.Name] = reply.Checksums[strconv.Itoa(i)]
+	}
+	return reply.Packages, checksums, err
 }
 
 func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
