@@ -53,20 +53,15 @@ func runOsbuild(manifest []byte, outputDirectory string) error {
 
 	cmd := constants.GetOsbuildCommand(outputDirectory)
 
-	cmd.Stderr = os.Stderr
 	cmd.Stdin = bytes.NewReader(manifest)
 	var outBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
+	cmd.Stderr = &outBuffer
 
 	err := cmd.Run()
-
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			var formattedOutput bytes.Buffer
-			_ = json.Indent(&formattedOutput, outBuffer.Bytes(), "", "  ")
-			return fmt.Errorf("running osbuild failed: %s", formattedOutput.String())
-		}
-		return fmt.Errorf("running osbuild failed from an unexpected reason: %#v", err)
+		fmt.Println(outBuffer.String())
+		return fmt.Errorf("running osbuild failed: %v", err)
 	}
 
 	return nil
