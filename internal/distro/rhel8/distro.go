@@ -844,7 +844,17 @@ func New() distro.Distro {
 		openstackImgType,
 	)
 
-	r.setArches(x8664, aarch64)
+	ppc64le := architecture{
+		distro: &r,
+		name:   "ppc64le",
+	}
+
+	s390x := architecture{
+		distro: &r,
+		name:   "s390x",
+	}
+
+	r.setArches(x8664, aarch64, ppc64le, s390x)
 
 	return &r
 }
