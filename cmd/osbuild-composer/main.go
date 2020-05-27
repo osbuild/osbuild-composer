@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
@@ -90,7 +89,7 @@ func main() {
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"))
 
-	distros, err := distro.NewRegistry(fedora30.New(), fedora31.New(), fedora32.New(), rhel8.New())
+	distros, err := distro.NewRegistry(fedora31.New(), fedora32.New(), rhel8.New())
 	if err != nil {
 		log.Fatalf("Error loading distros: %v", err)
 	}

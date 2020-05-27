@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora30"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -49,7 +48,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 	repoDir := "/usr/share/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	for _, distroStruct := range []distro.Distro{fedora30.New(), fedora31.New(), fedora32.New()} {
+	for _, distroStruct := range []distro.Distro{fedora31.New(), fedora32.New()} {
 		t.Run(distroStruct.Name(), func(t *testing.T) {
 
 			// Run tests in parallel to speed up run times.
