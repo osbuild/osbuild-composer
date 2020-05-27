@@ -11,6 +11,3 @@ Restart=on-failure
 RestartSec=10s
 CPUSchedulingPolicy=batch
 IOSchedulingClass=idle
-
-[Install]
-WantedBy=osbuild-composer.service
