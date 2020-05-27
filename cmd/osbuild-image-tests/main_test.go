@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
 	"testing"
@@ -397,16 +398,16 @@ func runTests(t *testing.T, cases []string) {
 		require.NoError(t, err, "error removing temporary store")
 	}()
 
-	for _, path := range cases {
-		t.Run(path, func(t *testing.T) {
-			f, err := os.Open(path)
+	for _, p := range cases {
+		t.Run(path.Base(p), func(t *testing.T) {
+			f, err := os.Open(p)
 			if err != nil {
-				t.Skipf("%s: cannot open test case: %#v", path, err)
+				t.Skipf("%s: cannot open test case: %#v", p, err)
 			}
 
 			var testcase testcaseStruct
 			err = json.NewDecoder(f).Decode(&testcase)
-			require.NoErrorf(t, err, "%s: cannot decode test case: %#v", path, err)
+			require.NoErrorf(t, err, "%s: cannot decode test case", p)
 
 			currentArch := common.CurrentArch()
 			if testcase.ComposeRequest.Arch != currentArch {
