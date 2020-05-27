@@ -4,14 +4,6 @@ set -euxo pipefail
 # Get OS details.
 source /etc/os-release
 
-# Install packages.
-sudo dnf -qy install createrepo_c mock
-if [[ $ID == 'fedora' ]]; then
-    sudo dnf -qy install python3-openstackclient
-else
-    sudo pip3 -qq install python-openstackclient
-fi
-
 # Set variables.
 CONTAINER=osbuildci-artifacts
 WORKSPACE=${WORKSPACE:-$(pwd)}
@@ -22,13 +14,11 @@ REPO_DIR=repo/${BUILD_TAG}/${ID}${VERSION_ID//./}
 make srpm
 make -C osbuild srpm
 
-# Fix RHEL 8 mock template.
-sudo curl --retry 5 -Lsko /etc/mock/templates/rhel-8.tpl \
-    https://gitlab.cee.redhat.com/snippets/2208/raw
-
-# Add fastestmirror to the Fedora template.
-sudo sed -i '/^install_weak_deps.*/a fastestmirror=1' \
-    /etc/mock/templates/fedora-branched.tpl
+# Fix RHEL 8 mock template for non-subscribed images.
+if [[ $NODE_NAME == "rhel82*" ]] || [[ $NODE_NAME == "rhel83*" ]]; then
+    sudo curl --retry 5 -Lsko /etc/mock/templates/rhel-8.tpl \
+        https://gitlab.cee.redhat.com/snippets/2208/raw
+fi
 
 # Compile RPMs in a mock chroot
 sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
