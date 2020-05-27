@@ -40,7 +40,7 @@ BuildRequires:  golang(github.com/stretchr/testify)
 
 Requires: golang-github-osbuild-composer-worker
 Requires: systemd
-Requires: osbuild >= 12
+Requires: osbuild >= 15
 
 Provides: osbuild-composer
 Provides: weldr
