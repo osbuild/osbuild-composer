@@ -47,6 +47,7 @@ func TestPostInvalidTOMLBlueprintV0(t *testing.T) {
 	bp := `
 		name="test-invalid-toml-blueprint-v0"
 		version="0.0.1"
+		description="postInvalidTOMLBlueprintV0"
 		[package
 		name="bash"
 		version="*"
@@ -69,6 +70,7 @@ func TestPostEmptyNameTOMLBlueprintV0(t *testing.T) {
 	bp := `
 		name=""
 		version="0.0.1"
+		description="postEmptyNameTOMLBlueprintV0"
 		[package]
 		name="bash"
 		version="*"
@@ -87,6 +89,7 @@ func TestPostInvalidNameTOMLBlueprintV0(t *testing.T) {
 	bp := `
 		name="I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜"
 		version="0.0.1"
+		description="postInvalidNameTOMLBlueprintV0"
 		[package]
 		name="bash"
 		version="*"
@@ -121,6 +124,7 @@ func TestPostInvalidJSONBlueprintV0(t *testing.T) {
 	bp := `{
 		"name": "test-invalid-json-blueprint-v0",
 		"version": "0.0.1",
+		"description": "postInvalidJSONBlueprintV0",
 		"modules": [{"name: "util-linux", "version": "*"}],
 	}`
 
@@ -142,6 +146,7 @@ func TestPostEmptyNameJSONBlueprintV0(t *testing.T) {
 	bp := `{
 		"name": "",
 		"version": "0.0.1",
+		"description": "postEmptyNameJSONBlueprintV0",
 		"modules": [{"name": "util-linux", "version": "*"}]
 	}`
 
@@ -158,6 +163,7 @@ func TestPostInvalidNameJSONBlueprintV0(t *testing.T) {
 	// Use a blueprint with an empty Name
 	bp := `{
 		"name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
+		"description": "postInvalidNameJSONBlueprintV0",
 		"version": "0.0.1",
 		"modules": [{"name": "util-linux", "version": "*"}]
 	}`
@@ -199,6 +205,7 @@ func TestPostInvalidTOMLWorkspaceV0(t *testing.T) {
 	bp := `
 		name="test-invalid-toml-blueprint-ws-v0"
 		version="0.0.1"
+		description="postInvalidTOMLWorkspaceV0"
 		[package
 		name="bash"
 		version="*"
@@ -221,6 +228,7 @@ func TestPostEmptyNameTOMLWorkspaceV0(t *testing.T) {
 	bp := `
 		name=""
 		version="0.0.1"
+		description="postEmptyNameTOMLWorkspaceV0"
 		[package]
 		name="bash"
 		version="*"
@@ -239,6 +247,7 @@ func TestPostInvalidNameTOMLWorkspaceV0(t *testing.T) {
 	bp := `
 		name="I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜"
 		version="0.0.1"
+		description="postInvalidNameTOMLWorkspaceV0"
 		[package]
 		name="bash"
 		version="*"
@@ -273,6 +282,7 @@ func TestPostInvalidJSONWorkspaceV0(t *testing.T) {
 	bp := `{
 		"name": "test-invalid-json-blueprint-ws-v0",
 		"version": "0.0.1",
+		"description": "TestPostInvalidJSONWorkspaceV0",
 		"modules": [{"name: "util-linux", "version": "*"}],
 	}`
 
@@ -294,6 +304,7 @@ func TestPostEmptyNameJSONWorkspaceV0(t *testing.T) {
 	bp := `{
 		"name": "",
 		"version": "0.0.1",
+		"description": "TestPostEmptyNameJSONWorkspaceV0",
 		"modules": [{"name": "util-linux", "version": "*"}]
 	}`
 
@@ -311,6 +322,7 @@ func TestPostInvalidNameJSONWorkspaceV0(t *testing.T) {
 	bp := `{
 		"name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
 		"version": "0.0.1",
+		"description": "TestPostInvalidNameJSONWorkspaceV0",
 		"modules": [{"name": "util-linux", "version": "*"}]
 	}`
 
