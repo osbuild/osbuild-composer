@@ -526,7 +526,7 @@ func TestDeleteSystemSourcesV0(t *testing.T) {
 		// try removing system source
 		resp, err := DeleteSourceV0(testState.socket, repo_name)
 		require.NoError(t, err, "DELETE source failed with a client error")
-		require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+		require.False(t, resp.Status, "DELETE system source test failed: %#v", resp)
 
 		// verify that system sources are still there
 		list, api, err := ListSourcesV0(testState.socket)
@@ -552,7 +552,7 @@ func TestDeleteSystemSourcesV1(t *testing.T) {
 		// try removing system source
 		resp, err := DeleteSourceV1(testState.socket, repo_name)
 		require.NoError(t, err, "DELETE source failed with a client error")
-		require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+		require.False(t, resp.Status, "DELETE system source test failed: %#v", resp)
 
 		// verify that system sources are still there
 		list, api, err := ListSourcesV1(testState.socket)

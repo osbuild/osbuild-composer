@@ -48,6 +48,15 @@ type API struct {
 	compatOutputDir string
 }
 
+// systemRepoIDs returns a list of the system repos
+// NOTE: The system repos have no concept of id vs. name so the id is returned
+func (api *API) systemRepoNames() (names []string) {
+	for _, repo := range api.repos {
+		names = append(names, repo.Name)
+	}
+	return names
+}
+
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
@@ -356,10 +365,7 @@ func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Requ
 	} else {
 		names = api.store.ListSourcesByName()
 	}
-
-	for _, repo := range api.repos {
-		names = append(names, repo.Name)
-	}
+	names = append(names, api.systemRepoNames()...)
 
 	err := json.NewEncoder(writer).Encode(reply{
 		Sources: names,
@@ -623,6 +629,18 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 		}
 		statusResponseError(writer, http.StatusNotFound, errors)
 		return
+	}
+
+	// Check for system repos and return an error
+	for _, id := range api.systemRepoNames() {
+		if id == name[0][1:] {
+			errors := responseError{
+				ID:  "SystemSource",
+				Msg: id + " is a system source, it cannot be deleted.",
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
 	}
 
 	// Only delete the first name, which will have a / at the start because of the /*source route
