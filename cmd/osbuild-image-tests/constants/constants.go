@@ -4,9 +4,10 @@ package constants
 
 import "os/exec"
 
-func GetOsbuildCommand(outputDirectory string) *exec.Cmd {
+func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
 	return exec.Command(
 		"osbuild",
+		"--store", store,
 		"--output-directory", outputDirectory,
 		"--json",
 		"-",
