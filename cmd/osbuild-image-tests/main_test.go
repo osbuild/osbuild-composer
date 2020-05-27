@@ -43,7 +43,7 @@ type testcaseStruct struct {
 var osbuildMutex sync.Mutex
 
 // runOsbuild runs osbuild with the specified manifest and output-directory.
-func runOsbuild(manifest []byte, outputDirectory string) error {
+func runOsbuild(manifest []byte, store, outputDirectory string) error {
 	// Osbuild crashes when multiple instances are run at a time.
 	// This mutex enforces that there's always just one osbuild instance.
 	// This should be removed once osbuild is fixed.
@@ -51,7 +51,7 @@ func runOsbuild(manifest []byte, outputDirectory string) error {
 	osbuildMutex.Lock()
 	defer osbuildMutex.Unlock()
 
-	cmd := constants.GetOsbuildCommand(outputDirectory)
+	cmd := constants.GetOsbuildCommand(store, outputDirectory)
 
 	cmd.Stdin = bytes.NewReader(manifest)
 	var outBuffer bytes.Buffer
@@ -350,18 +350,16 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
-func runTestcase(t *testing.T, testcase testcaseStruct) {
+func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
-	require.NoErrorf(t, err, "cannot create temporary output directory: %#v", err)
+	require.NoError(t, err, "error creating temporary output directory")
 
 	defer func() {
 		err := os.RemoveAll(outputDirectory)
-		if err != nil {
-			log.Printf("cannot remove temporary output directory: %#v\n", err)
-		}
+		require.NoError(t, err, "error removing temporary output directory")
 	}()
 
-	err = runOsbuild(testcase.Manifest, outputDirectory)
+	err = runOsbuild(testcase.Manifest, store, outputDirectory)
 	require.NoError(t, err)
 
 	imagePath := fmt.Sprintf("%s/%s", outputDirectory, testcase.ComposeRequest.Filename)
@@ -391,6 +389,14 @@ func getAllCases() ([]string, error) {
 
 // runTests opens, parses and runs all the specified testcases
 func runTests(t *testing.T, cases []string) {
+	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
+	require.NoError(t, err, "error creating temporary store")
+
+	defer func() {
+		err := os.RemoveAll(store)
+		require.NoError(t, err, "error removing temporary store")
+	}()
+
 	for _, path := range cases {
 		t.Run(path, func(t *testing.T) {
 			f, err := os.Open(path)
@@ -414,7 +420,7 @@ func runTests(t *testing.T, cases []string) {
 			// Also the output is clearer this way.
 			t.Parallel()
 
-			runTestcase(t, testcase)
+			runTestcase(t, testcase, store)
 		})
 
 	}
