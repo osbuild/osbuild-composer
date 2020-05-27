@@ -49,7 +49,6 @@ ansible-playbook \
 # Run the tests.
 ansible-playbook \
   -e workspace=${WORKSPACE} \
-  -e journald_cursor="${JOURNALD_CURSOR}" \
   -e test_type=${TEST_TYPE:-base} \
   -i hosts.ini \
   schutzbot/test.yml
