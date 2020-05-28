@@ -33,6 +33,10 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora31'
+                        )
                     }
                 }
                 stage('Fedora 32') {
@@ -42,6 +46,10 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora32'
+                        )
                     }
                 }
                 stage('RHEL 8 CDN') {
@@ -51,17 +59,25 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel8cdn'
+                        )
                     }
                 }
-                // stage('RHEL 8.3 Nightly') {
-                //     agent { label "rhel83" }
-                //     environment {
-                //         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
-                //     }
-                //     steps {
-                //         sh "schutzbot/mockbuild.sh"
-                //     }
-                // }
+                stage('RHEL 8.3 Nightly') {
+                    agent { label "rhel83" }
+                    environment {
+                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                    }
+                    steps {
+                        sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel83'
+                        )
+                    }
+                }
             }
         }
         stage("Functional Testing") {
@@ -73,6 +89,7 @@ pipeline {
                     agent { label "fedora31" }
                     environment { TEST_TYPE = "base" }
                     steps {
+                        unstash 'fedora31'
                         run_tests()
                     }
                     post {
@@ -90,6 +107,7 @@ pipeline {
                         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
+                        unstash 'fedora31'
                         run_tests()
                     }
                     post {
@@ -102,6 +120,7 @@ pipeline {
                     agent { label "fedora32" }
                     environment { TEST_TYPE = "base" }
                     steps {
+                        unstash 'fedora32'
                         run_tests()
                     }
                     post {
@@ -119,6 +138,7 @@ pipeline {
                         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
+                        unstash 'fedora32'
                         run_tests()
                     }
                     post {
@@ -131,6 +151,7 @@ pipeline {
                     agent { label "rhel8" }
                     environment { TEST_TYPE = "base" }
                     steps {
+                        unstash 'rhel8cdn'
                         run_tests()
                     }
                     post {
@@ -148,6 +169,7 @@ pipeline {
                         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
+                        unstash 'rhel8cdn'
                         run_tests()
                     }
                     post {
