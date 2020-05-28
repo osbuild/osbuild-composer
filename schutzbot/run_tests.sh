@@ -5,18 +5,8 @@ set -euxo pipefail
 source /etc/os-release
 
 # Set up a dnf repository for the RPMs we built via mock.
-sudo tee /etc/yum.repos.d/osbuild-mock.repo > /dev/null << EOF
-[osbuild-mock]
-name=osbuild mock ${BUILD_TAG} ${ID}${VERSION_ID//./}
-baseurl=${MOCK_REPO_BASE_URL}/${BUILD_TAG}/${ID}${VERSION_ID//./}
-enabled=1
-gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
-EOF
-
-# Verify that the repository we added is working properly.
-sudo dnf list all | grep osbuild-mock
+sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+dnf repository-packages osbuild-mock list
 
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
