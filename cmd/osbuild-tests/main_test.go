@@ -51,17 +51,15 @@ func TestComposeCommands(t *testing.T) {
 
 	runComposer(t, "compose", "info", uuid.String())
 
-	// https://github.com/osbuild/osbuild-composer/issues/643
-	// runComposer(t, "compose", "metadata", uuid.String())
-	// _, err := os.Stat(uuid.String() + "-metadata.tar")
-	// require.NoError(t, err, "'%s-metadata.tar' not found", uuid.String())
-	// defer os.Remove(uuid.String() + "-metadata.tar")
+	runComposer(t, "compose", "metadata", uuid.String())
+	_, err = os.Stat(uuid.String() + "-metadata.tar")
+	require.NoError(t, err, "'%s-metadata.tar' not found", uuid.String())
+	defer os.Remove(uuid.String() + "-metadata.tar")
 
-	// https://github.com/osbuild/osbuild-composer/issues/644
-	// runComposer(t, "compose", "results", uuid.String())
-	// _, err = os.Stat(uuid.String() + ".tar")
-	// require.NoError(t, err, "'%s.tar' not found", uuid.String())
-	// defer os.Remove(uuid.String() + ".tar")
+	runComposer(t, "compose", "results", uuid.String())
+	_, err = os.Stat(uuid.String() + ".tar")
+	require.NoError(t, err, "'%s.tar' not found", uuid.String())
+	defer os.Remove(uuid.String() + ".tar")
 
 	// Just assert that result wasn't empty
 	result := runComposer(t, "compose", "log", uuid.String())
