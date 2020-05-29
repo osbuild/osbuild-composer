@@ -20,8 +20,8 @@ $ cd osbuild-composer
 2. To install the build-requirements for Fedora and friends, use:
 
 ```
-$ dnf group install 'RPM Development Tools'        # Install rpmbuild
-$ dnf builddep osbuild-composer.spec               # Install build-time dependencies
+$ sudo dnf group install 'RPM Development Tools'   # Install rpmbuild
+$ sudo dnf builddep osbuild-composer.spec          # Install build-time dependencies
 $ sudo dnf -y install cockpit-composer             # Optional: Install cockpit integration
 $ sudo systemctl start cockpit.socket              # Optional: Start cockpit
 ```
@@ -30,6 +30,7 @@ $ sudo systemctl start cockpit.socket              # Optional: Start cockpit
 directory, install it, and then run it:
 
 ```
+$ rm -rf rpmbuild/
 $ make rpm
 $ sudo dnf -y install rpmbuild/RPMS/x86_64/*
 $ sudo systemctl start osbuild-composer.socket
