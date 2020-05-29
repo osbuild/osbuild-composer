@@ -75,7 +75,7 @@ func New(stateDir *string, arch distro.Arch, log *log.Logger) *Store {
 	if stateDir != nil {
 		db = jsondb.New(*stateDir, 0600)
 		_, err := db.Read(StoreDBName, &storeStruct)
-		if err != nil {
+		if err != nil && log != nil {
 			log.Fatalf("cannot read state: %v", err)
 		}
 	}
