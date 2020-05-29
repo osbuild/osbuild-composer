@@ -2,6 +2,7 @@ package rhel8
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -531,10 +532,85 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 	return osbuild.NewQEMUAssembler(&options)
 }
 
+func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	ref := options.OSTree.Ref
+	if ref == "" {
+		ref = fmt.Sprintf("rhel/8/%s/edge", arch.Name())
+	}
+	return osbuild.NewOSTreeCommitAssembler(
+		&osbuild.OSTreeCommitAssemblerOptions{
+			Ref:    ref,
+			Parent: options.OSTree.Parent,
+			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
+				Filename: "commit.tar",
+			},
+		},
+	)
+}
+
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
+	edgeImgType := imageType{
+		name:     "rhel-edge-commit",
+		filename: "commit.tar",
+		mimeType: "application/x-tar",
+		packages: []string{
+			"redhat-release", // TODO: is this correct for Edge?
+			"glibc", "glibc-minimal-langpack", "nss-altfiles",
+			"sssd-client", "libsss_sudo", "shadow-utils",
+			"kernel",
+			"dracut-config-generic", "dracut-network",
+			"rpm-ostree", "polkit", "lvm2",
+			"chrony", //"zram",
+			"cryptsetup", "pinentry",
+			"keyutils",
+			"e2fsprogs", "dosfstools",
+			"gnupg2",
+			"basesystem", "bash", //"python3",
+			"xz", "gzip",
+			"coreutils", "which", "curl",
+			"firewalld", "iptables",
+			"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
+			"wpa_supplicant", //"iwd",
+			"dnsmasq", "traceroute",
+			"hostname", "iproute", "iputils",
+			"openssh-clients", "openssh-server", "passwd",
+			"policycoreutils", "procps-ng", "rootfiles", "rpm",
+			"selinux-policy-targeted", "setup", "shadow-utils",
+			"sudo", "systemd", "util-linux", "vim-minimal",
+			"less", "tar",
+			"fwupd", // "usbguard", BUG: this fails due to an SELinux policy issue
+			//"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
+			//"ignition",
+			"rsync",
+			"ima-evm-utils",
+			"bash-completion",
+			"tmux", //"screen",
+			"policycoreutils-python-utils",
+			"setools-console",
+			"audit", "rng-tools",
+			"bluez", "bluez-libs", //"bluez-mesh", "wpan-tools",
+			"kernel-tools", //"libgpiod-utils",
+			"podman", "container-selinux", "skopeo", "criu",
+			"slirp4netns",
+			"clevis", "clevis-dracut", "clevis-luks",
+			"attr",
+			// x86 specific
+			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
+			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
+		},
+		enabledServices: []string{
+			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service", "zram-swap.service",
+		},
+		rpmOstree: true,
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return ostreeCommitAssembler(options, arch)
+		},
+	}
 	amiImgType := imageType{
 		name:     "ami",
 		filename: "image.vhdx",
@@ -820,6 +896,7 @@ func New() distro.Distro {
 	}
 	x8664.setImageTypes(
 		amiImgType,
+		edgeImgType,
 		qcow2ImageType,
 		openstackImgType,
 		vhdImgType,
