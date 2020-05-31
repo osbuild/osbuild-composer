@@ -1670,16 +1670,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	testMode := q.Get("test")
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false)
+		err = api.store.PushTestCompose(composeID, *manifest, imageType, bp, size, targets, false)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true)
+		err = api.store.PushTestCompose(composeID, *manifest, imageType, bp, size, targets, true)
 	} else {
 		var jobId uuid.UUID
 
 		jobId, err = api.workers.Enqueue(manifest, targets)
 		if err == nil {
-			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId)
+			err = api.store.PushCompose(composeID, *manifest, imageType, bp, size, targets, jobId)
 		}
 	}
 
@@ -2068,16 +2068,7 @@ func (api *API) composeMetadataHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	// Return the Manifest, if it exists
-	if compose.ImageBuild.Manifest == nil {
-		errors := responseError{
-			ID:  "EmptyManifest",
-			Msg: fmt.Sprintf("Manifest unexpectedly empty."),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-	metadata, err := json.Marshal(compose.ImageBuild.Manifest)
+	metadata, err := json.Marshal(&compose.ImageBuild.Manifest)
 	common.PanicOnError(err)
 
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+"-metadata.tar")
@@ -2138,16 +2129,7 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	// Return the Manifest, if it exists
-	if compose.ImageBuild.Manifest == nil {
-		errors := responseError{
-			ID:  "EmptyManifest",
-			Msg: fmt.Sprintf("Manifest unexpectedly empty."),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-	metadata, err := json.Marshal(compose.ImageBuild.Manifest)
+	metadata, err := json.Marshal(&compose.ImageBuild.Manifest)
 	common.PanicOnError(err)
 
 	writer.Header().Set("Content-Disposition", "attachment; filename="+uuid.String()+".tar")

@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -57,49 +57,53 @@ func FixtureBase() *Store {
 	if err != nil {
 		panic("invalid image type qcow2 for x86_64 @ fedoratest")
 	}
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil)
+	if err != nil {
+		panic("could not create manifest")
+	}
 	s := New(nil, arch, nil)
 
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
-		uuid.MustParse("30000000-0000-0000-0000-000000000000"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
-				Manifest:    &osbuild.Manifest{},
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000001"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
-				Manifest:    &osbuild.Manifest{},
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000002"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000002"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    &osbuild.Manifest{},
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 				JobFinished: date,
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000003"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
-				Manifest:    &osbuild.Manifest{},
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -156,34 +160,41 @@ func FixtureFinished() *Store {
 	if err != nil {
 		panic("invalid image type qcow2 for x86_64 @ fedoratest")
 	}
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil)
+	if err != nil {
+		panic("could not create manifest")
+	}
 	s := New(nil, arch, nil)
 
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
-		uuid.MustParse("30000000-0000-0000-0000-000000000000"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000001"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 			},
 		},
-		uuid.MustParse("30000000-0000-0000-0000-000000000003"): Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
+				Manifest:    *manifest,
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
