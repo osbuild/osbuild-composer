@@ -7,10 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,9 +38,9 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			Packages      []rpmmd.PackageSpec `json:"packages"`
 		}
 		var tt struct {
-			ComposeRequest *composeRequest   `json:"compose-request"`
-			RpmMD          *rpmMD            `json:"rpmmd"`
-			Manifest       *osbuild.Manifest `json:"manifest,omitempty"`
+			ComposeRequest *composeRequest `json:"compose-request"`
+			RpmMD          *rpmMD          `json:"rpmmd"`
+			Manifest       distro.Manifest `json:"manifest,omitempty"`
 		}
 		file, err := ioutil.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -94,8 +92,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				return
 			}
 			if tt.Manifest != nil {
-				diff := cmp.Diff(got, tt.Manifest)
-				assert.Empty(diff, "d.Manifest() different from expected: %v", diff)
+				require.JSONEq(t, string(tt.Manifest), string(got))
 			}
 		})
 	}

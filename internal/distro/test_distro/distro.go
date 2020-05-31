@@ -1,6 +1,7 @@
 package test_distro
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -74,11 +75,13 @@ func (t *TestImageType) BuildPackages() []string {
 	return nil
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
-	return &osbuild.Manifest{
-		Sources:  osbuild.Sources{},
-		Pipeline: osbuild.Pipeline{},
-	}, nil
+func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
+	return json.Marshal(
+		osbuild.Manifest{
+			Sources:  osbuild.Sources{},
+			Pipeline: osbuild.Pipeline{},
+		},
+	)
 }
 
 func New() *TestDistro {
