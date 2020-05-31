@@ -41,7 +41,7 @@ type composesV0 map[uuid.UUID]composeV0
 type imageBuildV0 struct {
 	ID          int              `json:"id"`
 	ImageType   string           `json:"image_type"`
-	Manifest    *json.RawMessage `json:"manifest"`
+	Manifest    json.RawMessage  `json:"manifest"`
 	Targets     []*target.Target `json:"targets"`
 	JobCreated  time.Time        `json:"job_created"`
 	JobStarted  time.Time        `json:"job_started"`
@@ -118,15 +118,11 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 		// on upgrades.
 		return ImageBuild{}, errors.New("invalid Image Type string")
 	}
-	var manifestPtr *osbuild.Manifest
-	if imageBuildStruct.Manifest != nil {
-		var manifest osbuild.Manifest
-		err := json.Unmarshal(*imageBuildStruct.Manifest, &manifest)
-		if err != nil {
-			// The JSON object is not a valid manifest, this may happen on upgrades.
-			return ImageBuild{}, errors.New("invalid manifest")
-		}
-		manifestPtr = &manifest
+	var manifest osbuild.Manifest
+	err := json.Unmarshal(imageBuildStruct.Manifest, &manifest)
+	if err != nil {
+		// The JSON object is not a valid manifest, this may happen on upgrades.
+		return ImageBuild{}, errors.New("invalid manifest")
 	}
 	// Backwards compatibility: fail all builds that are queued or
 	// running. Jobs status is now handled outside of the store
@@ -140,7 +136,7 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	return ImageBuild{
 		ID:          imageBuildStruct.ID,
 		ImageType:   imgType,
-		Manifest:    manifestPtr,
+		Manifest:    manifest,
 		Targets:     imageBuildStruct.Targets,
 		JobCreated:  imageBuildStruct.JobCreated,
 		JobStarted:  imageBuildStruct.JobStarted,
@@ -266,22 +262,18 @@ func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
 
 func newComposeV0(compose Compose) composeV0 {
 	bp := compose.Blueprint.DeepCopy()
-	var rawManifestPtr *json.RawMessage
-	if compose.ImageBuild.Manifest != nil {
-		manifest, err := json.Marshal(compose.ImageBuild.Manifest)
-		if err != nil {
-			panic(err)
-		}
-		rawManifest := json.RawMessage(manifest)
-		rawManifestPtr = &rawManifest
+	manifest, err := json.Marshal(compose.ImageBuild.Manifest)
+	if err != nil {
+		panic(err)
 	}
+	rawManifest := json.RawMessage(manifest)
 	return composeV0{
 		Blueprint: &bp,
 		ImageBuilds: []imageBuildV0{
 			{
 				ID:          compose.ImageBuild.ID,
 				ImageType:   imageTypeToCompatString(compose.ImageBuild.ImageType),
-				Manifest:    rawManifestPtr,
+				Manifest:    rawManifest,
 				Targets:     compose.ImageBuild.Targets,
 				JobCreated:  compose.ImageBuild.JobCreated,
 				JobStarted:  compose.ImageBuild.JobStarted,

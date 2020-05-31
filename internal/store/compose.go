@@ -23,7 +23,7 @@ func (ste *StateTransitionError) Error() string {
 type ImageBuild struct {
 	ID          int
 	ImageType   distro.ImageType
-	Manifest    *osbuild.Manifest
+	Manifest    osbuild.Manifest
 	Targets     []*target.Target
 	JobCreated  time.Time
 	JobStarted  time.Time
@@ -38,11 +38,6 @@ type ImageBuild struct {
 
 // DeepCopy creates a copy of the ImageBuild structure
 func (ib *ImageBuild) DeepCopy() ImageBuild {
-	var newManifestPtr *osbuild.Manifest = nil
-	if ib.Manifest != nil {
-		manifestCopy := *ib.Manifest
-		newManifestPtr = &manifestCopy
-	}
 	var newTargets []*target.Target
 	for _, t := range ib.Targets {
 		newTarget := *t
@@ -53,7 +48,7 @@ func (ib *ImageBuild) DeepCopy() ImageBuild {
 		ID:          ib.ID,
 		QueueStatus: ib.QueueStatus,
 		ImageType:   ib.ImageType,
-		Manifest:    newManifestPtr,
+		Manifest:    ib.Manifest,
 		Targets:     newTargets,
 		JobCreated:  ib.JobCreated,
 		JobStarted:  ib.JobStarted,
