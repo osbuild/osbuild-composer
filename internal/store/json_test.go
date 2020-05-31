@@ -1,14 +1,20 @@
 package store
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_imageTypeToCompatString(t *testing.T) {
@@ -200,5 +206,29 @@ func Test_newCommitsV0(t *testing.T) {
 				t.Errorf("newCommitsV0() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func Test_upgrade(t *testing.T) {
+	assert := assert.New(t)
+	testPath, err := filepath.Abs("./test/*.json")
+	require.NoError(t, err)
+	fileNames, err := filepath.Glob(testPath)
+	assert.NoErrorf(err, "Could not read test store directory '%s': %v", testPath, err)
+	require.Greaterf(t, len(fileNames), 0, "No test stores found in %s", testPath)
+	for _, fileName := range fileNames {
+		var storeStruct storeV0
+		file, err := ioutil.ReadFile(fileName)
+		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
+		err = json.Unmarshal([]byte(file), &storeStruct)
+		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
+		arch, err := fedora32.New().GetArch("x86_64")
+		assert.NoError(err)
+		store := newStoreFromV0(storeStruct, arch, nil)
+		assert.Equal(1, len(store.blueprints))
+		assert.Equal(1, len(store.blueprintsChanges))
+		assert.Equal(1, len(store.blueprintsCommits))
+		assert.LessOrEqual(1, len(store.composes))
+		assert.Equal(1, len(store.workspace))
 	}
 }
