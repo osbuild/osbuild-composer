@@ -57,12 +57,11 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
-
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
+	server := worker.NewServer(nil, testjobqueue.New(), "")
 
 	id, err := server.Enqueue(manifest, nil)
 	require.NoError(t, err)

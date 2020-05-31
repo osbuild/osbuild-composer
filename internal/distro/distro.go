@@ -2,14 +2,13 @@ package distro
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 	"strings"
-
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -79,7 +78,7 @@ type ImageType interface {
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to build an image, given output format with all packages and customizations
 	// specified in the given blueprint.
-	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error)
+	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (Manifest, error)
 }
 
 // The ImageOptions specify options for a specific image build
@@ -92,6 +91,23 @@ type ImageOptions struct {
 type OSTreeImageOptions struct {
 	Ref    string
 	Parent string
+}
+
+// A Manifest is an opaque JSON object, which is a valid input to osbuild
+type Manifest []byte
+
+func (m Manifest) MarshalJSON() ([]byte, error) {
+	return json.RawMessage(m).MarshalJSON()
+}
+
+func (m *Manifest) UnmarshalJSON(payload []byte) error {
+	var raw json.RawMessage
+	err := (&raw).UnmarshalJSON(payload)
+	if err != nil {
+		return err
+	}
+	*m = Manifest(raw)
+	return nil
 }
 
 type Registry struct {

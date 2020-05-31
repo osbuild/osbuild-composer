@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -438,6 +438,8 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType("qcow2")
 	require.NoError(t, err)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil)
+	require.NoError(t, err)
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
@@ -450,6 +452,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
+			Manifest:    manifest,
 			Targets: []*target.Target{
 				{
 					// skip Uuid and Created fields - they are ignored
@@ -473,6 +476,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
+			Manifest:    manifest,
 			Targets: []*target.Target{
 				{
 					Name:      "org.osbuild.aws",
@@ -533,8 +537,6 @@ func TestCompose(t *testing.T) {
 		}
 
 		require.NotNilf(t, composeStruct.ImageBuild.Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
-		// TODO: find some (reasonable) way to verify the contents of the pipeline
-		composeStruct.ImageBuild.Manifest = osbuild.Manifest{}
 
 		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location"), test.CompareImageTypes()); diff != "" {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)

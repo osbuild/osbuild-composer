@@ -1,6 +1,7 @@
 package fedora32
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -178,16 +179,18 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
+	buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
 	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs)
 	if err != nil {
-		return nil, err
+		return distro.Manifest{}, err
 	}
 
-	return &osbuild.Manifest{
-		Sources:  *sources(append(packageSpecs, buildPackageSpecs...)),
-		Pipeline: *pipeline,
-	}, nil
+	return json.Marshal(
+		osbuild.Manifest{
+			Sources:  *sources(append(packageSpecs, buildPackageSpecs...)),
+			Pipeline: *pipeline,
+		},
+	)
 }
 
 func (d *distribution) Name() string {

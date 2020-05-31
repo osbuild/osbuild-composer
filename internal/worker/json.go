@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -13,8 +13,8 @@ import (
 //
 
 type OSBuildJob struct {
-	Manifest *osbuild.Manifest `json:"manifest"`
-	Targets  []*target.Target  `json:"targets,omitempty"`
+	Manifest distro.Manifest  `json:"manifest"`
+	Targets  []*target.Target `json:"targets,omitempty"`
 }
 
 type OSBuildJobResult struct {
@@ -37,9 +37,9 @@ type addJobRequest struct {
 }
 
 type addJobResponse struct {
-	Id       uuid.UUID         `json:"id"`
-	Manifest *osbuild.Manifest `json:"manifest"`
-	Targets  []*target.Target  `json:"targets,omitempty"`
+	Id       uuid.UUID        `json:"id"`
+	Manifest distro.Manifest  `json:"manifest"`
+	Targets  []*target.Target `json:"targets,omitempty"`
 }
 
 type updateJobRequest struct {

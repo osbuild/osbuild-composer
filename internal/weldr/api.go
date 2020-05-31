@@ -1670,16 +1670,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	testMode := q.Get("test")
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, *manifest, imageType, bp, size, targets, false)
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, *manifest, imageType, bp, size, targets, true)
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true)
 	} else {
 		var jobId uuid.UUID
 
 		jobId, err = api.workers.Enqueue(manifest, targets)
 		if err == nil {
-			err = api.store.PushCompose(composeID, *manifest, imageType, bp, size, targets, jobId)
+			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId)
 		}
 	}
 

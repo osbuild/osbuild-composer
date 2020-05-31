@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -23,7 +22,7 @@ func (ste *StateTransitionError) Error() string {
 type ImageBuild struct {
 	ID          int
 	ImageType   distro.ImageType
-	Manifest    osbuild.Manifest
+	Manifest    distro.Manifest
 	Targets     []*target.Target
 	JobCreated  time.Time
 	JobStarted  time.Time

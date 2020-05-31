@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 type OSBuildError struct {
@@ -19,7 +19,7 @@ func (e *OSBuildError) Error() string {
 	return e.Message
 }
 
-func RunOSBuild(manifest *osbuild.Manifest, store, outputDirectory string, errorWriter io.Writer) (*common.ComposeResult, error) {
+func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*common.ComposeResult, error) {
 	cmd := exec.Command(
 		"osbuild",
 		"--store", store,

@@ -1,6 +1,7 @@
 package fedoratest
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -94,11 +95,14 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Manifest, error) {
-	return &osbuild.Manifest{
-		Pipeline: osbuild.Pipeline{},
-		Sources:  osbuild.Sources{},
-	}, nil
+	buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
+
+	return json.Marshal(
+		osbuild.Manifest{
+			Sources:  osbuild.Sources{},
+			Pipeline: osbuild.Pipeline{},
+		},
+	)
 }
 
 func New() *FedoraTestDistro {

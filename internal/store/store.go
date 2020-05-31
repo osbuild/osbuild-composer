@@ -15,7 +15,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -332,7 +331,7 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, manifest osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
+func (s *Store) PushCompose(composeID uuid.UUID, manifest distro.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
 	if _, exists := s.GetCompose(composeID); exists {
 		panic("a compose with this id already exists")
 	}
@@ -362,7 +361,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest osbuild.Manifest, imag
 // PushTestCompose is used for testing
 // Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
 // It does not actually run a compose job
-func (s *Store) PushTestCompose(composeID uuid.UUID, manifest osbuild.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
+func (s *Store) PushTestCompose(composeID uuid.UUID, manifest distro.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
 	if targets == nil {
 		targets = []*target.Target{}
 	}

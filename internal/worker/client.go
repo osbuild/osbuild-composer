@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -26,7 +26,7 @@ type Client struct {
 
 type Job struct {
 	Id       uuid.UUID
-	Manifest *osbuild.Manifest
+	Manifest distro.Manifest
 	Targets  []*target.Target
 }
 
