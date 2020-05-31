@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"sort"
@@ -38,15 +39,15 @@ type composesV0 map[uuid.UUID]composeV0
 
 // ImageBuild represents a single image build inside a compose
 type imageBuildV0 struct {
-	ID          int               `json:"id"`
-	ImageType   string            `json:"image_type"`
-	Manifest    *osbuild.Manifest `json:"manifest"`
-	Targets     []*target.Target  `json:"targets"`
-	JobCreated  time.Time         `json:"job_created"`
-	JobStarted  time.Time         `json:"job_started"`
-	JobFinished time.Time         `json:"job_finished"`
-	Size        uint64            `json:"size"`
-	JobID       uuid.UUID         `json:"jobid,omitempty"`
+	ID          int              `json:"id"`
+	ImageType   string           `json:"image_type"`
+	Manifest    *json.RawMessage `json:"manifest"`
+	Targets     []*target.Target `json:"targets"`
+	JobCreated  time.Time        `json:"job_created"`
+	JobStarted  time.Time        `json:"job_started"`
+	JobFinished time.Time        `json:"job_finished"`
+	Size        uint64           `json:"size"`
+	JobID       uuid.UUID        `json:"jobid,omitempty"`
 
 	// Kept for backwards compatibility. Image builds which were done
 	// before the move to the job queue use this to store whether they
@@ -117,6 +118,16 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 		// on upgrades.
 		return ImageBuild{}, errors.New("invalid Image Type string")
 	}
+	var manifestPtr *osbuild.Manifest
+	if imageBuildStruct.Manifest != nil {
+		var manifest osbuild.Manifest
+		err := json.Unmarshal(*imageBuildStruct.Manifest, &manifest)
+		if err != nil {
+			// The JSON object is not a valid manifest, this may happen on upgrades.
+			return ImageBuild{}, errors.New("invalid manifest")
+		}
+		manifestPtr = &manifest
+	}
 	// Backwards compatibility: fail all builds that are queued or
 	// running. Jobs status is now handled outside of the store
 	// (and the compose). The fields are kept so that previously
@@ -129,7 +140,7 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	return ImageBuild{
 		ID:          imageBuildStruct.ID,
 		ImageType:   imgType,
-		Manifest:    imageBuildStruct.Manifest,
+		Manifest:    manifestPtr,
 		Targets:     imageBuildStruct.Targets,
 		JobCreated:  imageBuildStruct.JobCreated,
 		JobStarted:  imageBuildStruct.JobStarted,
@@ -255,13 +266,22 @@ func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
 
 func newComposeV0(compose Compose) composeV0 {
 	bp := compose.Blueprint.DeepCopy()
+	var rawManifestPtr *json.RawMessage
+	if compose.ImageBuild.Manifest != nil {
+		manifest, err := json.Marshal(compose.ImageBuild.Manifest)
+		if err != nil {
+			panic(err)
+		}
+		rawManifest := json.RawMessage(manifest)
+		rawManifestPtr = &rawManifest
+	}
 	return composeV0{
 		Blueprint: &bp,
 		ImageBuilds: []imageBuildV0{
-			imageBuildV0{
+			{
 				ID:          compose.ImageBuild.ID,
 				ImageType:   imageTypeToCompatString(compose.ImageBuild.ImageType),
-				Manifest:    compose.ImageBuild.Manifest,
+				Manifest:    rawManifestPtr,
 				Targets:     compose.ImageBuild.Targets,
 				JobCreated:  compose.ImageBuild.JobCreated,
 				JobStarted:  compose.ImageBuild.JobStarted,
