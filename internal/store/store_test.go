@@ -4,11 +4,18 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 //struct for sharing state between tests
@@ -20,10 +27,42 @@ type storeTest struct {
 	myBP             blueprint.Blueprint
 	CommitHash       string
 	myChange         blueprint.Change
+	myTarget         *target.Target
+	mySources        map[string]osbuild.Source
+	myCompose        Compose
+	myImageBuild     ImageBuild
+	mySourceConfig   SourceConfig
+	myDistro         *test_distro.TestDistro
+	myArch           distro.Arch
+	myImageType      distro.ImageType
+	myManifest       distro.Manifest
+	myRepoConfig     []rpmmd.RepoConfig
+	myPackageSpec    []rpmmd.PackageSpec
+	myImageOptions   distro.ImageOptions
 }
 
 //func to initialize some default values before the suite is ran
 func (suite *storeTest) SetupSuite() {
+	suite.myRepoConfig = []rpmmd.RepoConfig{rpmmd.RepoConfig{
+		Name:       "testRepo",
+		MirrorList: "testURL",
+	}}
+	suite.myPackageSpec = []rpmmd.PackageSpec{rpmmd.PackageSpec{}}
+	suite.myDistro = test_distro.New()
+	suite.myArch, _ = suite.myDistro.GetArch("test_arch")
+	suite.myImageType, _ = suite.myArch.GetImageType("test_type")
+	suite.myManifest, _ = suite.myImageType.Manifest(&suite.myCustomizations, suite.myImageOptions, suite.myRepoConfig, nil, suite.myPackageSpec)
+	suite.mySourceConfig = SourceConfig{
+		Name: "testSourceConfig",
+	}
+	suite.myCompose = Compose{
+		Blueprint:  &suite.myBP,
+		ImageBuild: suite.myImageBuild,
+	}
+	suite.myImageBuild = ImageBuild{
+		ID: 123,
+	}
+	suite.mySources = make(map[string]osbuild.Source)
 	suite.myCustomizations = blueprint.Customizations{}
 	suite.myBP = blueprint.Blueprint{
 		Name:        "testBP",
@@ -45,6 +84,14 @@ func (suite *storeTest) SetupSuite() {
 		Timestamp: "now",
 		Blueprint: suite.myBP,
 	}
+	suite.myTarget = &target.Target{
+		Uuid:      uuid.New(),
+		ImageName: "ImageName",
+		Name:      "Name",
+		Created:   time.Now(),
+		Options:   nil,
+	}
+
 }
 
 //setup before each test
@@ -195,6 +242,160 @@ func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
 	suite.EqualError(suite.myStore.DeleteBlueprintFromWorkspace("WIPtestBP"), "Unknown blueprint: WIPtestBP")
 }
 
+func (suite *storeTest) TestPushCompose() {
+	testID := uuid.New()
+	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New())
+	suite.NoError(err)
+	suite.Panics(func() {
+		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New())
+	})
+	suite.NoError(err)
+	testID = uuid.New()
+}
+
+func (suite *storeTest) TestPushTestCompose() {
+	ID := uuid.New()
+	err := suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true)
+	suite.NoError(err)
+	suite.Equal(common.ImageBuildState(2), suite.myStore.composes[ID].ImageBuild.QueueStatus)
+	ID = uuid.New()
+	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false)
+	suite.NoError(err)
+	suite.Equal(common.ImageBuildState(3), suite.myStore.composes[ID].ImageBuild.QueueStatus)
+
+}
+
+func (suite *storeTest) TestGetAllComposes() {
+	suite.myStore.composes = make(map[uuid.UUID]Compose)
+	suite.myStore.composes[uuid.New()] = suite.myCompose
+	compose := suite.myStore.GetAllComposes()
+	suite.Equal(suite.myStore.composes, compose)
+}
+
+func (suite *storeTest) TestDeleteCompose() {
+	ID := uuid.New()
+	suite.myStore.composes = make(map[uuid.UUID]Compose)
+	suite.myStore.composes[ID] = suite.myCompose
+	err := suite.myStore.DeleteCompose(ID)
+	suite.NoError(err)
+	suite.Equal(suite.myStore.composes, map[uuid.UUID]Compose{})
+	err = suite.myStore.DeleteCompose(ID)
+	suite.Error(err)
+}
+
+func (suite *storeTest) TestDeleteSourceByName() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	suite.myStore.DeleteSourceByName("testSourceConfig")
+	suite.Equal(map[string]SourceConfig{}, suite.myStore.sources)
+}
+
+func (suite *storeTest) TestDeleteSourceByID() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	suite.myStore.DeleteSourceByID("testSource")
+	suite.Equal(map[string]SourceConfig{}, suite.myStore.sources)
+}
+
+func (suite *storeTest) TestPushSource() {
+	expectedSource := map[string]SourceConfig{"testKey": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	suite.myStore.PushSource("testKey", suite.mySourceConfig)
+	suite.Equal(expectedSource, suite.myStore.sources)
+}
+
+func (suite *storeTest) TestListSourcesByName() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	actualSources := suite.myStore.ListSourcesByName()
+	suite.Equal([]string([]string{"testSourceConfig"}), actualSources)
+}
+
+func (suite *storeTest) TestListSourcesById() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	actualSources := suite.myStore.ListSourcesById()
+	suite.Equal([]string([]string{"testSource"}), actualSources)
+}
+
+func (suite *storeTest) TestGetSource() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	expectedSource := SourceConfig(SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false})
+	actualSource := suite.myStore.GetSource("testSource")
+	suite.Equal(&expectedSource, actualSource)
+	actualSource = suite.myStore.GetSource("nonExistingSource")
+	suite.Nil(actualSource)
+}
+
+func (suite *storeTest) TestGetAllSourcesByName() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	expectedSource := map[string]SourceConfig{"testSourceConfig": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	actualSource := suite.myStore.GetAllSourcesByName()
+	suite.Equal(expectedSource, actualSource)
+}
+
+func (suite *storeTest) TestGetAllSourcesByID() {
+	suite.myStore.sources = make(map[string]SourceConfig)
+	suite.myStore.sources["testSource"] = suite.mySourceConfig
+	expectedSource := map[string]SourceConfig{"testSource": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	actualSource := suite.myStore.GetAllSourcesByID()
+	suite.Equal(expectedSource, actualSource)
+}
+
+func (suite *storeTest) TestNewSourceConfigWithBaseURL() {
+	myRepoConfig := rpmmd.RepoConfig{
+		Name:    "testRepo",
+		BaseURL: "testURL",
+	}
+	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-baseurl", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
+	actualSource := NewSourceConfig(myRepoConfig, true)
+	suite.Equal(expectedSource, actualSource)
+}
+
+func (suite *storeTest) TestNewSourceConfigWithMetaLink() {
+	myRepoConfig := rpmmd.RepoConfig{
+		Name:     "testRepo",
+		Metalink: "testURL",
+	}
+	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-metalink", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
+	actualSource := NewSourceConfig(myRepoConfig, true)
+	suite.Equal(expectedSource, actualSource)
+}
+
+func (suite *storeTest) TestNewSourceConfigWithMirrorList() {
+	myRepoConfig := rpmmd.RepoConfig{
+		Name:       "testRepo",
+		MirrorList: "testURL",
+	}
+	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-mirrorlist", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
+	actualSource := NewSourceConfig(myRepoConfig, true)
+	suite.Equal(expectedSource, actualSource)
+}
+
+func (suite *storeTest) TestRepoConfigBaseURL() {
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "testURL", Metalink: "", MirrorList: "", GPGKey: "", IgnoreSSL: true, MetadataExpire: ""}
+	suite.mySourceConfig.Type = "yum-baseurl"
+	suite.mySourceConfig.URL = "testURL"
+	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
+	suite.Equal(expectedRepo, actualRepo)
+}
+
+func (suite *storeTest) TestRepoConfigMetalink() {
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "", Metalink: "testURL", MirrorList: "", GPGKey: "", IgnoreSSL: true, MetadataExpire: ""}
+	suite.mySourceConfig.Type = "yum-metalink"
+	suite.mySourceConfig.URL = "testURL"
+	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
+	suite.Equal(expectedRepo, actualRepo)
+}
+
+func (suite *storeTest) TestRepoConfigMirrorlist() {
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "", Metalink: "", MirrorList: "testURL", GPGKey: "", IgnoreSSL: true, MetadataExpire: ""}
+	suite.mySourceConfig.Type = "yum-mirrorlist"
+	suite.mySourceConfig.URL = "testURL"
+	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
+	suite.Equal(expectedRepo, actualRepo)
+}
 func TestStore(t *testing.T) {
 	suite.Run(t, new(storeTest))
 }
