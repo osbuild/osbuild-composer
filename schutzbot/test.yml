@@ -43,7 +43,7 @@
       when:
         - test_type == 'image'
         # Don't run the AWS test if the bucket env var is not set.
-        - (lookup('env', 'AWS_BUCKET') | default(false)) | bool
+        - lookup('env', 'AWS_BUCKET') | length > 0
 
     - name: Show failed and passed tests
       debug:
