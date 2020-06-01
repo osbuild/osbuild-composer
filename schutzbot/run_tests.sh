@@ -37,6 +37,7 @@ ansible-playbook \
   ansible-osbuild/playbook.yml
 
 # Run the tests.
+echo "The AWS_BUCKET env var is set to: ${AWS_BUCKET:-}"
 ansible-playbook \
   -e workspace=${WORKSPACE} \
   -e test_type=${TEST_TYPE:-base} \
