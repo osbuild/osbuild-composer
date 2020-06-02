@@ -111,7 +111,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false}}`),
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false,"uefi":{"vendor":"vendor"}}}`),
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","uefi":{"vendor":"vendor"}}}`),
 			},
 		},
 		{
@@ -139,7 +139,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000","legacy":false}}`),
+				data: []byte(`{"name":"org.osbuild.grub2","options":{"root_fs_uuid":"00000000-0000-0000-0000-000000000000","boot_fs_uuid":"00000000-0000-0000-0000-000000000000"}}`),
 			},
 		},
 		{

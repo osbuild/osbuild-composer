@@ -14,7 +14,7 @@ type GRUB2StageOptions struct {
 	RootFilesystemUUID uuid.UUID  `json:"root_fs_uuid"`
 	BootFilesystemUUID *uuid.UUID `json:"boot_fs_uuid,omitempty"`
 	KernelOptions      string     `json:"kernel_opts,omitempty"`
-	Legacy             bool       `json:"legacy"`
+	Legacy             string     `json:"legacy,omitempty"`
 	UEFI               *GRUB2UEFI `json:"uefi,omitempty"`
 }
 
