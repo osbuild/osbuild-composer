@@ -114,7 +114,6 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 					S3Bucket: aws.String(bucket),
 					S3Key:    aws.String(key),
 				},
-				Format: aws.String("vhdx"),
 			},
 		},
 	)
