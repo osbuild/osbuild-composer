@@ -2086,7 +2086,7 @@
           "options": {
             "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
             "kernel_opts": "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
-            "legacy": true
+            "legacy": "i386-pc"
           }
         },
         {
