@@ -85,26 +85,26 @@ pipeline {
             failFast false
 
             parallel {
-                stage('Fedora 31 base') {
-                    agent { label "fedora31" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-base')
-                        }
-                    }
-                }
+                // stage('Fedora 31 base') {
+                //     agent { label "fedora31" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'fedora31'
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora31-base')
+                //         }
+                //     }
+                // }
                 stage('Fedora 31 image') {
                     agent { label "fedora31" }
                     environment {
                         TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_REGION = "us-east-2"
-                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                        // AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        // AWS_REGION = "us-east-2"
+                        // AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
                         unstash 'fedora31'
@@ -116,26 +116,26 @@ pipeline {
                         }
                     }
                 }
-                stage('Fedora 32 base') {
-                    agent { label "fedora32" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-base')
-                        }
-                    }
-                }
+                // stage('Fedora 32 base') {
+                //     agent { label "fedora32" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'fedora32'
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-base')
+                //         }
+                //     }
+                // }
                 stage('Fedora 32 image') {
                     agent { label "fedora32" }
                     environment {
                         TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_REGION = "us-east-2"
-                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                        // AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        // AWS_REGION = "us-east-2"
+                        // AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
                         unstash 'fedora32'
@@ -147,26 +147,26 @@ pipeline {
                         }
                     }
                 }
-                stage('RHEL 8 CDN Base') {
-                    agent { label "rhel8" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-base')
-                        }
-                    }
-                }
+                // stage('RHEL 8 CDN Base') {
+                //     agent { label "rhel8" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'rhel8cdn'
+                //         run_tests()
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel8-base')
+                //         }
+                //     }
+                // }
                 stage('RHEL 8 CDN Image') {
                     agent { label "rhel8" }
                     environment {
                         TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_REGION = "us-east-2"
-                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                        // AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        // AWS_REGION = "us-east-2"
+                        // AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
                     }
                     steps {
                         unstash 'rhel8cdn'

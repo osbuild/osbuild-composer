@@ -23,27 +23,27 @@
       when:
         - test_type == 'base'
 
-    - name: Run osbuild-composer image tests
-      include_tasks: test_runner_image.yml
-      loop: "{{ osbuild_composer_image_test_cases }}"
-      loop_control:
-        loop_var: test_case
-      vars:
-        env_vars: "{{ osbuild_composer_image_env_vars }}"
-      when:
-        - test_type == 'image'
+    # - name: Run osbuild-composer image tests
+    #   include_tasks: test_runner_image.yml
+    #   loop: "{{ osbuild_composer_image_test_cases }}"
+    #   loop_control:
+    #     loop_var: test_case
+    #   vars:
+    #     env_vars: "{{ osbuild_composer_image_env_vars }}"
+    #   when:
+    #     - test_type == 'image'
 
+    # Don't pass any AWS environment variables if the AWS_BUCKET env var is
+    # not set.
     - name: Run osbuild-composer AWS tests
       include_tasks: test_runner_image.yml
       loop: "{{ osbuild_composer_aws_test_cases }}"
       vars:
-        env_vars: "{{ osbuild_composer_aws_env_vars }}"
+        env_vars: "{{ (lookup('env', 'AWS_BUCKET') | length > 0) | ternary(osbuild_composer_aws_env_vars, {}) }}"
       loop_control:
         loop_var: test_case
       when:
         - test_type == 'image'
-        # Don't run the AWS test if the bucket env var is not set.
-        - lookup('env', 'AWS_BUCKET') | length > 0
 
     - name: Show failed and passed tests
       debug:

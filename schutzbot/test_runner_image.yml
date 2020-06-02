@@ -11,6 +11,7 @@
 
 - block:
 
+    # Don't pass any AWS environment variables if the AWS_BUCKET is not set.
     - name: "Run image test case: {{ test_case_prefix }}-{{ test_case }}"
       command: |
         {{ image_test_executable }} -test.v \
@@ -18,6 +19,14 @@
       args:
         chdir: "{{ tests_working_directory }}"
       environment: "{{ env_vars }}"
+      register: test_cmd
+
+    - name: "Run image test case with AWS upload: {{ test_case_prefix }}-{{ test_case }}"
+      command: |
+        {{ image_test_executable }} -test.v \
+          {{ image_test_case_path }}/{{ test_case_prefix }}-{{ test_case }}
+      args:
+        chdir: "{{ tests_working_directory }}"
       register: test_cmd
 
     - name: "Mark test case as passed: {{ test_case_prefix }}-{{ test_case }}"
