@@ -83,14 +83,29 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-func targetsToUploadResponses(targets []*target.Target) []uploadResponse {
+// Converts a `Target` to a serializable `uploadResponse`.
+//
+// This ignore the status in `targets`, because that's never set correctly.
+// Instead, it sets each target's status to the ImageBuildState equivalent of
+// `state`.
+func targetsToUploadResponses(targets []*target.Target, state common.ComposeState) []uploadResponse {
 	var uploads []uploadResponse
 	for _, t := range targets {
 		upload := uploadResponse{
 			UUID:         t.Uuid,
-			Status:       t.Status,
 			ImageName:    t.ImageName,
 			CreationTime: float64(t.Created.UnixNano()) / 1000000000,
+		}
+
+		switch state {
+		case common.CWaiting:
+			upload.Status = common.IBWaiting
+		case common.CRunning:
+			upload.Status = common.IBRunning
+		case common.CFinished:
+			upload.Status = common.IBFinished
+		case common.CFailed:
+			upload.Status = common.IBFailed
 		}
 
 		switch options := t.Options.(type) {

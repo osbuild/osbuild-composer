@@ -1967,7 +1967,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	reply.ImageSize = compose.ImageBuild.Size
 
 	if isRequestVersionAtLeast(params, 1) {
-		reply.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets)
+		reply.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets, composeStatus.State)
 	}
 
 	err = json.NewEncoder(writer).Encode(reply)
