@@ -31,7 +31,7 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, status *composeS
 	composeEntry.ComposeType = compose.ImageBuild.ImageType.Name()
 
 	if includeUploads {
-		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets)
+		composeEntry.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets, status.State)
 	}
 
 	switch status.State {
