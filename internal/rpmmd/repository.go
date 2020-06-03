@@ -106,6 +106,7 @@ type PackageSpec struct {
 	RemoteLocation string `json:"remote_location,omitempty"`
 	Checksum       string `json:"checksum,omitempty"`
 	Secrets        string `json:"secrets,omitempty"`
+	CheckGPG       bool   `json:"check_gpg,omitempty"`
 }
 
 type dnfPackageSpec struct {
@@ -416,6 +417,7 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 		dependencies[i].Arch = dep.Arch
 		dependencies[i].RemoteLocation = dep.RemoteLocation
 		dependencies[i].Checksum = dep.Checksum
+		dependencies[i].CheckGPG = repo.CheckGPG
 		if repo.RHSM {
 			dependencies[i].Secrets = "org.osbuild.rhsm"
 		}
