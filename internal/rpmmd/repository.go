@@ -96,7 +96,19 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 	}
 }
 
+// TODO: the public API of this package should not be reused for serialization.
 type PackageSpec struct {
+	Name           string `json:"name"`
+	Epoch          uint   `json:"epoch"`
+	Version        string `json:"version,omitempty"`
+	Release        string `json:"release,omitempty"`
+	Arch           string `json:"arch,omitempty"`
+	RemoteLocation string `json:"remote_location,omitempty"`
+	Checksum       string `json:"checksum,omitempty"`
+	Secrets        string `json:"secrets,omitempty"`
+}
+
+type dnfPackageSpec struct {
 	Name           string `json:"name"`
 	Epoch          uint   `json:"epoch"`
 	Version        string `json:"version,omitempty"`
@@ -385,22 +397,31 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 	}{specs, excludeSpecs, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
-		Dependencies []PackageSpec     `json:"dependencies"`
+		Dependencies []dnfPackageSpec  `json:"dependencies"`
 	}
 	err := runDNF(r.dnfJsonPath, "depsolve", arguments, &reply)
 
+	dependencies := make([]PackageSpec, len(reply.Dependencies))
 	for i, pack := range reply.Dependencies {
 		id, err := strconv.Atoi(pack.RepoID)
 		if err != nil {
 			panic(err)
 		}
 		repo := repos[id]
+		dep := reply.Dependencies[i]
+		dependencies[i].Name = dep.Name
+		dependencies[i].Epoch = dep.Epoch
+		dependencies[i].Version = dep.Version
+		dependencies[i].Release = dep.Release
+		dependencies[i].Arch = dep.Arch
+		dependencies[i].RemoteLocation = dep.RemoteLocation
+		dependencies[i].Checksum = dep.Checksum
 		if repo.RHSM {
-			reply.Dependencies[i].Secrets = "org.osbuild.rhsm"
+			dependencies[i].Secrets = "org.osbuild.rhsm"
 		}
 	}
 
-	return reply.Dependencies, reply.Checksums, err
+	return dependencies, reply.Checksums, err
 }
 
 func (packages PackageList) Search(globPatterns ...string) (PackageList, error) {
