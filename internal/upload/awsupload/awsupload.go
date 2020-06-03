@@ -1,6 +1,7 @@
 package awsupload
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -45,6 +46,7 @@ func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, err
 		return nil, err
 	}
 
+	log.Printf("[AWS] Uploading image to S3: %s/%s", bucket, key)
 	return a.uploader.Upload(
 		&s3manager.UploadInput{
 			Bucket: aws.String(bucket),
@@ -107,6 +109,7 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 }
 
 func (a *AWS) Register(name, bucket, key string) (*string, error) {
+	log.Printf("[AWS] Importing snapshot from image: %s/%s", bucket, key)
 	importTaskOutput, err := a.importer.ImportSnapshot(
 		&ec2.ImportSnapshotInput{
 			DiskContainer: &ec2.SnapshotDiskContainer{
@@ -121,6 +124,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
+	log.Printf("[AWS] Waiting for snapshot to finish importing: %v", importTaskOutput.ImportTaskId)
 	err = WaitUntilImportSnapshotTaskCompleted(
 		a.importer,
 		&ec2.DescribeImportSnapshotTasksInput{
@@ -134,6 +138,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	}
 
 	// we no longer need the object in s3, let's just delete it
+	log.Printf("[AWS] Deleting image from S3: %s/%s", bucket, key)
 	_, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -155,6 +160,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 
 	snapshotId := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
 
+	log.Printf("[AWS] Registering AMI from imported snapshot: %v", snapshotId)
 	registerOutput, err := a.importer.RegisterImage(
 		&ec2.RegisterImageInput{
 			Architecture:       aws.String("x86_64"),
@@ -176,5 +182,6 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
+	log.Printf("[AWS] 🎉 AMI registered: %v", registerOutput.ImageId)
 	return registerOutput.ImageId, nil
 }
