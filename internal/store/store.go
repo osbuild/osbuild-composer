@@ -509,7 +509,7 @@ func (s *Store) GetAllSourcesByID() map[string]SourceConfig {
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
 		Name:     repo.Name,
-		CheckGPG: true,
+		CheckGPG: repo.CheckGPG,
 		CheckSSL: !repo.IgnoreSSL,
 		System:   system,
 	}
@@ -533,6 +533,7 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 
 	repo.Name = name
 	repo.IgnoreSSL = !s.CheckSSL
+	repo.CheckGPG = s.CheckGPG
 
 	if s.Type == "yum-baseurl" {
 		repo.BaseURL = s.URL

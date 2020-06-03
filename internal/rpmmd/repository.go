@@ -21,6 +21,7 @@ type repository struct {
 	Metalink       string `json:"metalink,omitempty"`
 	MirrorList     string `json:"mirrorlist,omitempty"`
 	GPGKey         string `json:"gpgkey,omitempty"`
+	CheckGPG       bool   `json:"check_gpg,omitempty"`
 	RHSM           bool   `json:"rhsm,omitempty"`
 	MetadataExpire string `json:"metadata_expire,omitempty"`
 }
@@ -44,6 +45,7 @@ type RepoConfig struct {
 	Metalink       string
 	MirrorList     string
 	GPGKey         string
+	CheckGPG       bool
 	IgnoreSSL      bool
 	MetadataExpire string
 	RHSM           bool
@@ -222,6 +224,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 				Metalink:       repo.Metalink,
 				MirrorList:     repo.MirrorList,
 				GPGKey:         repo.GPGKey,
+				CheckGPG:       repo.CheckGPG,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,
 			}
@@ -391,7 +394,8 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 		if err != nil {
 			panic(err)
 		}
-		if repos[id].RHSM {
+		repo := repos[id]
+		if repo.RHSM {
 			reply.Dependencies[i].Secrets = "org.osbuild.rhsm"
 		}
 	}
