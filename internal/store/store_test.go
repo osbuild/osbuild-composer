@@ -345,8 +345,9 @@ func (suite *storeTest) TestGetAllSourcesByID() {
 
 func (suite *storeTest) TestNewSourceConfigWithBaseURL() {
 	myRepoConfig := rpmmd.RepoConfig{
-		Name:    "testRepo",
-		BaseURL: "testURL",
+		Name:     "testRepo",
+		BaseURL:  "testURL",
+		CheckGPG: true,
 	}
 	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-baseurl", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
 	actualSource := NewSourceConfig(myRepoConfig, true)
@@ -357,6 +358,7 @@ func (suite *storeTest) TestNewSourceConfigWithMetaLink() {
 	myRepoConfig := rpmmd.RepoConfig{
 		Name:     "testRepo",
 		Metalink: "testURL",
+		CheckGPG: true,
 	}
 	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-metalink", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
 	actualSource := NewSourceConfig(myRepoConfig, true)
@@ -368,7 +370,7 @@ func (suite *storeTest) TestNewSourceConfigWithMirrorList() {
 		Name:       "testRepo",
 		MirrorList: "testURL",
 	}
-	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-mirrorlist", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
+	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-mirrorlist", URL: "testURL", CheckGPG: false, CheckSSL: true, System: true}
 	actualSource := NewSourceConfig(myRepoConfig, true)
 	suite.Equal(expectedSource, actualSource)
 }
