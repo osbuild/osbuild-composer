@@ -129,7 +129,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	log.Printf("[AWS] Waiting for snapshot to finish importing: %v", importTaskOutput.ImportTaskId)
+	log.Printf("[AWS] Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
 	err = WaitUntilImportSnapshotTaskCompleted(
 		a.importer,
 		&ec2.DescribeImportSnapshotTasksInput{
@@ -163,9 +163,8 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	snapshotId := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
-
-	log.Printf("[AWS] Registering AMI from imported snapshot: %v", snapshotId)
+	snapshotID := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
+	log.Printf("[AWS] Registering AMI from imported snapshot: %s", *snapshotID)
 	registerOutput, err := a.importer.RegisterImage(
 		&ec2.RegisterImageInput{
 			Architecture:       aws.String("x86_64"),
@@ -177,7 +176,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 				{
 					DeviceName: aws.String("/dev/sda1"),
 					Ebs: &ec2.EbsBlockDevice{
-						SnapshotId: snapshotId,
+						SnapshotId: snapshotID,
 					},
 				},
 			},
@@ -187,6 +186,6 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	log.Printf("[AWS] 🎉 AMI registered: %v", registerOutput.ImageId)
+	log.Printf("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
 	return registerOutput.ImageId, nil
 }
