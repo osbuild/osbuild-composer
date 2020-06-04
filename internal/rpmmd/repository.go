@@ -306,7 +306,7 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int) (dnfRepoConfig, 
 	}
 	if repo.RHSM {
 		if rpmmd.RHSM == nil {
-			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not fonud on host")
+			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on host")
 		}
 		dnfRepo.SSLCACert = rpmmd.RHSM.SSLCACert
 		dnfRepo.SSLClientKey = rpmmd.RHSM.SSLClientKey
