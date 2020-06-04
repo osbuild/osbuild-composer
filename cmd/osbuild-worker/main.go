@@ -63,20 +63,9 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
-	tmpdir, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
-	if err != nil {
-		return nil, fmt.Errorf("error setting up osbuild output directory: %v", err)
-	}
-	defer func() {
-		err := os.RemoveAll(tmpdir)
-		if err != nil {
-			log.Printf("Error removing temporary directory %s for job %s: %v", tmpdir, job.Id, err)
-		}
-	}()
-
-	outputDirectory := path.Join(tmpdir, "output")
-	store := path.Join(tmpdir, "store")
+func RunJob(job *worker.Job, cacheDir string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
+	outputDirectory := path.Join(cacheDir, "output")
+	store := path.Join(cacheDir, "store")
 
 	result, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
@@ -152,6 +141,11 @@ func RunJob(job *worker.Job, uploadFunc func(uuid.UUID, string, io.Reader) error
 		}
 	}
 
+	err = os.RemoveAll(outputDirectory)
+	if err != nil {
+		log.Printf("Error removing osbuild output directory (%s): %v", outputDirectory, err)
+	}
+
 	if len(r) > 0 {
 		return result, &TargetsError{r}
 	}
@@ -176,6 +170,11 @@ func main() {
 		flag.Usage()
 	}
 
+	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
+	if !ok {
+		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+	}
+
 	var client *worker.Client
 	if unix {
 		client = worker.NewClientUnix(address)
@@ -192,6 +191,17 @@ func main() {
 		client = worker.NewClient(address, conf)
 	}
 
+	tmpdir, err := ioutil.TempDir(cacheDirectory, "osbuild-worker-*")
+	if err != nil {
+		log.Fatalf("error setting up osbuild output directory: %v", err)
+	}
+	defer func() {
+		err := os.RemoveAll(tmpdir)
+		if err != nil {
+			log.Printf("Error removing osbuild-worker cache (%s): %v", tmpdir, err)
+		}
+	}()
+
 	for {
 		fmt.Println("Waiting for a new job...")
 		job, err := client.AddJob()
@@ -202,7 +212,7 @@ func main() {
 		fmt.Printf("Running job %s\n", job.Id)
 
 		var status common.ImageBuildState
-		result, err := RunJob(job, client.UploadImage)
+		result, err := RunJob(job, tmpdir, client.UploadImage)
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
