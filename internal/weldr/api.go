@@ -1240,11 +1240,32 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		blueprints = append(blueprints, blueprintFrozen{blueprint})
 	}
 
-	err := json.NewEncoder(writer).Encode(reply{
-		Blueprints: blueprints,
-		Errors:     errors,
-	})
-	common.PanicOnError(err)
+	format := request.URL.Query().Get("format")
+
+	if format == "toml" {
+		// lorax concatenates multiple blueprints with `\n\n` here,
+		// which is never useful. Deviate by only returning the first
+		// blueprint.
+		if len(blueprints) > 1 {
+			errors := responseError{
+				ID:  "HTTPError",
+				Msg: "toml format only supported when requesting one blueprint",
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+
+		encoder := toml.NewEncoder(writer)
+		encoder.Indent = ""
+		err := encoder.Encode(blueprints[0].Blueprint)
+		common.PanicOnError(err)
+	} else {
+		err := json.NewEncoder(writer).Encode(reply{
+			Blueprints: blueprints,
+			Errors:     errors,
+		})
+		common.PanicOnError(err)
+	}
 }
 
 func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
