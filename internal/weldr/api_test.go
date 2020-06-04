@@ -12,15 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/target"
-
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	test_distro "github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 
 	"github.com/BurntSushi/toml"
@@ -326,21 +325,58 @@ func TestSetPkgEVRA(t *testing.T) {
 }
 
 func TestBlueprintsFreeze(t *testing.T) {
-	var cases = []struct {
-		Fixture        rpmmd_mock.FixtureGenerator
-		Path           string
-		ExpectedStatus int
-		ExpectedJSON   string
-	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"7:3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}}],"errors":[]}`},
-	}
+	t.Run("json", func(t *testing.T) {
+		var cases = []struct {
+			Fixture        rpmmd_mock.FixtureGenerator
+			Path           string
+			ExpectedStatus int
+			ExpectedJSON   string
+		}{
+			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test,test2", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"7:3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}},{"blueprint":{"name":"test2","description":"Test","version":"0.0.0","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"7:3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}}],"errors":[]}`},
+		}
 
-	for _, c := range cases {
-		api, _ := createWeldrAPI(c.Fixture)
-		test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
-		test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
-		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
-	}
+		for _, c := range cases {
+			api, _ := createWeldrAPI(c.Fixture)
+			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+			test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+		}
+	})
+
+	t.Run("toml", func(t *testing.T) {
+		var cases = []struct {
+			Fixture        rpmmd_mock.FixtureGenerator
+			Path           string
+			ExpectedStatus int
+			ExpectedTOML   string
+		}{
+			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test?format=toml", http.StatusOK, "name=\"test\"\n description=\"Test\"\n version=\"0.0.1\"\n groups = []\n [[packages]]\n name=\"dep-package1\"\n version=\"1.33-2.fc30.x86_64\"\n [[packages]]\n name=\"dep-package3\"\n version=\"7:3.0.3-1.fc30.x86_64\"\n [[modules]]\n name=\"dep-package2\"\n version=\"2.9-1.fc30.x86_64\""},
+		}
+
+		for _, c := range cases {
+			api, _ := createWeldrAPI(c.Fixture)
+			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+			test.TestTOMLRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedTOML)
+		}
+	})
+
+	t.Run("toml-multiple", func(t *testing.T) {
+		var cases = []struct {
+			Fixture        rpmmd_mock.FixtureGenerator
+			Path           string
+			ExpectedStatus int
+			ExpectedJSON   string
+		}{
+			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test,test2?format=toml", http.StatusBadRequest, "{\"status\":false,\"errors\":[{\"id\":\"HTTPError\",\"msg\":\"toml format only supported when requesting one blueprint\"}]}"},
+		}
+
+		for _, c := range cases {
+			api, _ := createWeldrAPI(c.Fixture)
+			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+			test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+		}
+	})
 }
 
 func TestBlueprintsDiff(t *testing.T) {

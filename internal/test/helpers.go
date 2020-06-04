@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -128,6 +129,40 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 
 	err = json.Unmarshal([]byte(expectedJSON), &expected)
 	require.NoErrorf(t, err, "%s: expected JSON is invalid", path)
+
+	dropFields(reply, ignoreFields...)
+	dropFields(expected, ignoreFields...)
+
+	require.Equal(t, expected, reply)
+}
+
+func TestTOMLRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedTOML string, ignoreFields ...string) {
+	t.Helper()
+
+	resp := SendHTTP(api, external, method, path, body)
+	if resp == nil {
+		t.Skip("This test is for internal testing only")
+	}
+
+	replyTOML, err := ioutil.ReadAll(resp.Body)
+	require.NoErrorf(t, err, "%s: could not read response body", path)
+
+	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyTOML))
+
+	if expectedTOML == "" {
+		require.Lenf(t, replyTOML, 0, "%s: expected no response body, but got:\n%s", path, replyTOML)
+	}
+
+	var reply, expected interface{}
+	err = toml.Unmarshal(replyTOML, &reply)
+	require.NoErrorf(t, err, "%s: json.Unmarshal failed for\n%s", path, string(replyTOML))
+
+	if expectedTOML == "*" {
+		return
+	}
+
+	err = toml.Unmarshal([]byte(expectedTOML), &expected)
+	require.NoErrorf(t, err, "%s: expected TOML is invalid", path)
 
 	dropFields(reply, ignoreFields...)
 	dropFields(expected, ignoreFields...)
