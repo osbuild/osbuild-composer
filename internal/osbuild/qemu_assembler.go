@@ -9,6 +9,7 @@ import "github.com/google/uuid"
 // containing the indicated partitions. Finally, the image is converted into
 // the target format and stored with the given filename.
 type QEMUAssemblerOptions struct {
+	Bootloader *QEMUBootloader `json:"bootloader,omitempty"`
 	Format     string          `json:"format"`
 	Filename   string          `json:"filename"`
 	Size       uint64          `json:"size"`
@@ -31,6 +32,11 @@ type QEMUFilesystem struct {
 	UUID       string `json:"uuid"`
 	Label      string `json:"label,omitempty"`
 	Mountpoint string `json:"mountpoint"`
+}
+
+type QEMUBootloader struct {
+	Type     string `json:"type"`
+	Platform string `json:"platform"`
 }
 
 func (QEMUAssemblerOptions) isAssemblerOptions() {}
