@@ -17,12 +17,12 @@ type QEMUAssemblerOptions struct {
 }
 
 type QEMUPartition struct {
-	Start      uint64         `json:"start"`
-	Size       uint64         `json:"size,omitempty"`
-	Type       string         `json:"type,omitempty"`
-	Bootable   bool           `json:"bootable,omitempty"`
-	UUID       string         `json:"uuid,omitempty"`
-	Filesystem QEMUFilesystem `json:"filesystem"`
+	Start      uint64          `json:"start"`
+	Size       uint64          `json:"size,omitempty"`
+	Type       string          `json:"type,omitempty"`
+	Bootable   bool            `json:"bootable,omitempty"`
+	UUID       string          `json:"uuid,omitempty"`
+	Filesystem *QEMUFilesystem `json:"filesystem,omitempty"`
 }
 
 type QEMUFilesystem struct {
