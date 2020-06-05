@@ -41,9 +41,10 @@ def run_osbuild(manifest, store, output):
                     "--store", store,
                     "--output-directory", output,
                     "--json", "-"],
-                   check=True,
-                   encoding="utf-8",
-                   input=json.dumps(manifest))
+                    stdout=subprocess.DEVNULL,
+                    check=True,
+                    encoding="utf-8",
+                    input=json.dumps(manifest))
 
 
 def main(test_case, store):
