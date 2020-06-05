@@ -493,7 +493,7 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 					Size:  972800,
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "02C1E068-1D2F-4DA3-91FD-8DD76A955C9D",
-					Filesystem: osbuild.QEMUFilesystem{
+					Filesystem: &osbuild.QEMUFilesystem{
 						Type:       "vfat",
 						UUID:       "46BB-8120",
 						Label:      "EFI System Partition",
@@ -503,7 +503,7 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 				{
 					Start: 976896,
 					UUID:  "8D760010-FAAE-46D1-9E5B-4A2EAC5030CD",
-					Filesystem: osbuild.QEMUFilesystem{
+					Filesystem: &osbuild.QEMUFilesystem{
 						Type:       "ext4",
 						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
 						Mountpoint: "/",
@@ -522,7 +522,7 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 				{
 					Start:    2048,
 					Bootable: true,
-					Filesystem: osbuild.QEMUFilesystem{
+					Filesystem: &osbuild.QEMUFilesystem{
 						Type:       "ext4",
 						UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
 						Mountpoint: "/",

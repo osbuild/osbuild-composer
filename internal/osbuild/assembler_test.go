@@ -58,7 +58,7 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 					Partitions: []QEMUPartition{QEMUPartition{
 						Start:    2048,
 						Bootable: true,
-						Filesystem: QEMUFilesystem{
+						Filesystem: &QEMUFilesystem{
 							Type:       "ext4",
 							UUID:       "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
 							Label:      "root",
