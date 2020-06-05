@@ -485,7 +485,7 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		options = osbuild.QEMUAssemblerOptions{
@@ -517,23 +517,52 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 			},
 		}
 	} else {
-		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "0x14fc63d2",
-			PTType:   "mbr",
-			Partitions: []osbuild.QEMUPartition{
-				{
-					Start:    2048,
-					Bootable: true,
-					Filesystem: &osbuild.QEMUFilesystem{
-						Type:       "xfs",
-						UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
-						Mountpoint: "/",
+		if arch.Name() == "ppc64le" {
+			options = osbuild.QEMUAssemblerOptions{
+				Bootloader: &osbuild.QEMUBootloader{
+					Type:     "grub2",
+					Platform: "powerpc-ieee1275",
+				},
+				Format:   format,
+				Filename: filename,
+				Size:     imageOptions.Size,
+				PTUUID:   "0x14fc63d2",
+				PTType:   "dos",
+				Partitions: []osbuild.QEMUPartition{
+					{
+						Size:     8192,
+						Type:     "41",
+						Bootable: true,
+					},
+					{
+						Start: 10240,
+						Filesystem: &osbuild.QEMUFilesystem{
+							Type:       "xfs",
+							UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
+							Mountpoint: "/",
+						},
 					},
 				},
-			},
+			}
+		} else {
+			options = osbuild.QEMUAssemblerOptions{
+				Format:   format,
+				Filename: filename,
+				Size:     imageOptions.Size,
+				PTUUID:   "0x14fc63d2",
+				PTType:   "mbr",
+				Partitions: []osbuild.QEMUPartition{
+					{
+						Start:    2048,
+						Bootable: true,
+						Filesystem: &osbuild.QEMUFilesystem{
+							Type:       "xfs",
+							UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
+							Mountpoint: "/",
+						},
+					},
+				},
+			}
 		}
 	}
 	return osbuild.NewQEMUAssembler(&options)
@@ -616,7 +645,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vhdx", "image.vhdx", uefi, options)
+			return qemuAssembler("vhdx", "image.vhdx", uefi, options, arch)
 		},
 	}
 
@@ -700,7 +729,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
 		},
 	}
 
@@ -727,7 +756,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
 		},
 	}
 
@@ -767,7 +796,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, options)
+			return qemuAssembler("vpc", "disk.vhd", uefi, options, arch)
 		},
 	}
 
@@ -795,7 +824,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, options)
+			return qemuAssembler("vmdk", "disk.vmdk", uefi, options, arch)
 		},
 	}
 
@@ -856,7 +885,22 @@ func New() distro.Distro {
 	ppc64le := architecture{
 		distro: &r,
 		name:   "ppc64le",
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"powerpc-utils",
+			"grub2-ppc64le",
+			"grub2-ppc64le-modules",
+		},
+		buildPackages: []string{
+			"grub2-ppc64le",
+			"grub2-ppc64le-modules",
+		},
+		legacy: "powerpc-ieee1275",
+		uefi:   false,
 	}
+	ppc64le.setImageTypes(
+		qcow2ImageType,
+	)
 
 	s390x := architecture{
 		distro: &r,
