@@ -635,7 +635,6 @@ func (r *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 func qemuAssembler(format string, filename string, uefi bool, size uint64) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
-		fstype := uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
@@ -646,7 +645,7 @@ func qemuAssembler(format string, filename string, uefi bool, size uint64) *osbu
 				{
 					Start: 2048,
 					Size:  972800,
-					Type:  &fstype,
+					Type:  "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
 					UUID:  "02C1E068-1D2F-4DA3-91FD-8DD76A955C9D",
 					Filesystem: osbuild.QEMUFilesystem{
 						Type:       "vfat",
