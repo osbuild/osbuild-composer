@@ -101,7 +101,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 31 image') {
-                    agent { label "fedora31" }
+                    agent { label "fedora31 && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -130,7 +130,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 image') {
-                    agent { label "fedora32" }
+                    agent { label "fedora32 && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -159,7 +159,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN Image') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8 && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
