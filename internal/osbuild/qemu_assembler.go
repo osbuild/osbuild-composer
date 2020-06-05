@@ -1,7 +1,5 @@
 package osbuild
 
-import "github.com/google/uuid"
-
 // QEMUAssemblerOptions desrcibe how to assemble a tree into an image using qemu.
 //
 // The assembler creates an image of the given size, adds a GRUB2 bootloader
@@ -21,7 +19,7 @@ type QEMUAssemblerOptions struct {
 type QEMUPartition struct {
 	Start      uint64         `json:"start"`
 	Size       uint64         `json:"size,omitempty"`
-	Type       *uuid.UUID     `json:"type,omitempty"`
+	Type       string         `json:"type,omitempty"`
 	Bootable   bool           `json:"bootable,omitempty"`
 	UUID       string         `json:"uuid,omitempty"`
 	Filesystem QEMUFilesystem `json:"filesystem"`
