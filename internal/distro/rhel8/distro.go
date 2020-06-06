@@ -3,6 +3,7 @@ package rhel8
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -540,10 +541,81 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 	return osbuild.NewQEMUAssembler(&options)
 }
 
+func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	ref := options.OSTree.Ref
+	if ref == "" {
+		ref = fmt.Sprintf("rhel/8/%s/edge", arch.Name())
+	}
+	return osbuild.NewOSTreeCommitAssembler(
+		&osbuild.OSTreeCommitAssemblerOptions{
+			Ref:    ref,
+			Parent: options.OSTree.Parent,
+			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
+				Filename: "commit.tar",
+			},
+		},
+	)
+}
+
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
+	edgeImgType := imageType{
+		name:     "rhel-edge-commit",
+		filename: "commit.tar",
+		mimeType: "application/x-tar",
+		packages: []string{
+			"redhat-release", // TODO: is this correct for Edge?
+			"glibc", "glibc-minimal-langpack", "nss-altfiles",
+			"kernel",
+			"dracut-config-generic", "dracut-network",
+			"basesystem", "bash", "platform-python",
+			"shadow-utils", "chrony", "setup", "shadow-utils",
+			"sudo", "systemd", "coreutils", "util-linux",
+			"curl", "vim-minimal",
+			"rpm", "rpm-ostree", "polkit",
+			"lvm2", "cryptsetup", "pinentry",
+			"e2fsprogs", "dosfstools",
+			"keyutils", "gnupg2",
+			"attr", "xz", "gzip",
+			"firewalld", "iptables",
+			"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
+			"wpa_supplicant",
+			"dnsmasq", "traceroute",
+			"hostname", "iproute", "iputils",
+			"openssh-clients", "procps-ng", "rootfiles",
+			"openssh-server", "passwd",
+			"policycoreutils", "policycoreutils-python-utils",
+			"selinux-policy-targeted", "setools-console",
+			"less", "tar", "rsync",
+			"fwupd", "usbguard",
+			"bash-completion", "tmux",
+			"ima-evm-utils",
+			"audit", "rng-tools",
+			"podman", "container-selinux", "skopeo", "criu",
+			"slirp4netns", "fuse-overlayfs",
+			"clevis", "clevis-dracut", "clevis-luks",
+			// x86 specific
+			// This needs to be fixed, we need aarch64 support too
+			"grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
+			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
+			// aarch64 specific
+			/*
+				"grub2-efi-aa64", "efibootmgr", "shim-aa64",
+				"iwl7260-firmware",
+			*/
+		},
+		enabledServices: []string{
+			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+		},
+		rpmOstree: true,
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return ostreeCommitAssembler(options, arch)
+		},
+	}
 	amiImgType := imageType{
 		name:     "ami",
 		filename: "image.vhdx",
@@ -830,6 +902,7 @@ func New() distro.Distro {
 	}
 	x8664.setImageTypes(
 		amiImgType,
+		edgeImgType,
 		qcow2ImageType,
 		openstackImgType,
 		vhdImgType,
