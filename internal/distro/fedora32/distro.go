@@ -310,9 +310,13 @@ func (t *imageType) rpmStageOptions(arch architecture, repos []rpmmd.RepoConfig,
 		gpgKeys = append(gpgKeys, repo.GPGKey)
 	}
 
-	var packages []string
+	var packages []osbuild.RPMPackage
 	for _, spec := range specs {
-		packages = append(packages, spec.Checksum)
+		pkg := osbuild.RPMPackage{
+			Checksum: spec.Checksum,
+			CheckGPG: spec.CheckGPG,
+		}
+		packages = append(packages, pkg)
 	}
 
 	return &osbuild.RPMStageOptions{
