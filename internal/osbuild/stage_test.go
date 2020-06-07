@@ -187,12 +187,20 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Name: "org.osbuild.rpm",
 				Options: &RPMStageOptions{
-					GPGKeys:  []string{"key1", "key2"},
-					Packages: []string{"checksum1", "checksum2"},
+					GPGKeys: []string{"key1", "key2"},
+					Packages: []RPMPackage{
+						{
+							Checksum: "checksum1",
+						},
+						{
+							Checksum: "checksum2",
+							CheckGPG: true,
+						},
+					},
 				},
 			},
 			args: args{
-				data: []byte(`{"name":"org.osbuild.rpm","options":{"gpgkeys":["key1","key2"],"packages":["checksum1","checksum2"]}}`),
+				data: []byte(`{"name":"org.osbuild.rpm","options":{"gpgkeys":["key1","key2"],"packages":[{"checksum":"checksum1"},{"checksum":"checksum2","check_gpg":true}]}}`),
 			},
 		},
 		{
