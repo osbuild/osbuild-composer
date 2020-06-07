@@ -12,38 +12,6 @@
       "blueprint": {}
     }
   },
-  "ext4-filesystem": {
-    "boot": {
-      "type": "nspawn"
-    },
-    "compose-request": {
-      "distro": "",
-      "arch": "",
-      "image-type": "ext4-filesystem",
-      "repositories": [],
-      "filename": "filesystem.img",
-      "blueprint": {
-        "name": "ext4-filesystem-boot-test",
-        "description": "Image for boot test",
-        "packages": [
-          {
-            "name": "openssh-server",
-            "version": "*"
-          }
-        ],
-        "modules": [],
-        "groups": [],
-        "customizations": {
-          "user": [
-            {
-              "name": "redhat",
-              "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-            }
-          ]
-        }
-      }
-    }
-  },
   "openstack": {
     "boot": {
       "type": "qemu"
@@ -56,33 +24,6 @@
       "filename": "disk.qcow2",
       "blueprint": {
         "name": "openstack-boot-test",
-        "description": "Image for boot test",
-        "packages": [],
-        "modules": [],
-        "groups": [],
-        "customizations": {
-          "user": [
-            {
-              "name": "redhat",
-              "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-            }
-          ]
-        }
-      }
-    }
-  },
-  "partitioned-disk": {
-    "boot": {
-      "type": "nspawn"
-    },
-    "compose-request": {
-      "distro": "",
-      "arch": "",
-      "image-type": "partitioned-disk",
-      "filename": "disk.img",
-      "repositories": [],
-      "blueprint": {
-        "name": "partitioned-disk-boot-test",
         "description": "Image for boot test",
         "packages": [],
         "modules": [],

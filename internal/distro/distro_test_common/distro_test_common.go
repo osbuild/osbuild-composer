@@ -25,6 +25,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			Metalink   string `json:"metalink,omitempty"`
 			MirrorList string `json:"mirrorlist,omitempty"`
 			GPGKey     string `json:"gpgkey,omitempty"`
+			CheckGPG   bool   `json:"check_gpg,omitempty"`
 		}
 		type composeRequest struct {
 			Distro       string               `json:"distro"`
@@ -59,6 +60,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				Metalink:   repo.Metalink,
 				MirrorList: repo.MirrorList,
 				GPGKey:     repo.GPGKey,
+				CheckGPG:   repo.CheckGPG,
 			}
 		}
 		t.Run(tt.ComposeRequest.ImageType, func(t *testing.T) {
