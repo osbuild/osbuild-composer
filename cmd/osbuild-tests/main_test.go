@@ -46,7 +46,7 @@ func TestComposeCommands(t *testing.T) {
 	runComposer(t, "compose", "list", "failed")
 
 	// Full integration tests
-	uuid := buildCompose(t, "empty", "ami")
+	uuid := buildCompose(t, "empty", "qcow2")
 	defer deleteCompose(t, uuid)
 
 	runComposer(t, "compose", "info", uuid.String())
@@ -73,9 +73,13 @@ func TestComposeCommands(t *testing.T) {
 	defer os.Remove(uuid.String() + "-logs.tar")
 
 	runComposer(t, "compose", "image", uuid.String())
-	_, err = os.Stat(uuid.String() + "-image.vhdx")
-	require.NoError(t, err, "'%s-image.vhdx' not found", uuid.String())
-	defer os.Remove(uuid.String() + "-image.vhdx")
+	_, err = os.Stat(uuid.String() + "-disk.qcow2")
+	require.NoError(t, err, "'%s-disk.qcow2' not found", uuid.String())
+	defer os.Remove(uuid.String() + "-disk.qcow2")
+
+	// Check that reusing the cache works ok
+	uuid = buildCompose(t, "empty", "qcow2")
+	defer deleteCompose(t, uuid)
 
 	// https://github.com/osbuild/osbuild-composer/pull/180
 	// uuid = startCompose(t, "empty", "tar")
