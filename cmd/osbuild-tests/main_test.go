@@ -120,11 +120,17 @@ func TestBlueprintCommands(t *testing.T) {
 	runComposer(t, "blueprints", "workspace", "empty")
 }
 
-func TestEverythingElse(t *testing.T) {
+func TestModulesCommands(t *testing.T) {
 	runComposer(t, "modules", "list")
+}
+
+func TestProjectsCommands(t *testing.T) {
 	runComposer(t, "projects", "list")
 	runComposer(t, "projects", "info", "filesystem")
 	runComposer(t, "projects", "info", "filesystem", "kernel")
+}
+
+func TestStatusCommands(t *testing.T) {
 	runComposer(t, "status", "show")
 }
 
