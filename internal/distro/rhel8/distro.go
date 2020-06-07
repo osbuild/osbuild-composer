@@ -568,6 +568,14 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 	return osbuild.NewQEMUAssembler(&options)
 }
 
+func tarAssembler(filename, compression string) *osbuild.Assembler {
+	return osbuild.NewTarAssembler(
+		&osbuild.TarAssemblerOptions{
+			Filename:    filename,
+			Compression: compression,
+		})
+}
+
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
@@ -760,6 +768,21 @@ func New() distro.Distro {
 		},
 	}
 
+	tarImgType := imageType{
+		name:     "tar",
+		filename: "root.tar.xz",
+		mimeType: "application/x-tar",
+		packages: []string{
+			"policycoreutils",
+			"selinux-policy-targeted",
+		},
+		bootable:      false,
+		kernelOptions: "ro net.ifnames=0",
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return tarAssembler("root.tar.xz", "xz")
+		},
+	}
+
 	vhdImgType := imageType{
 		name:     "vhd",
 		filename: "disk.vhd",
@@ -860,6 +883,7 @@ func New() distro.Distro {
 		amiImgType,
 		qcow2ImageType,
 		openstackImgType,
+		tarImgType,
 		vhdImgType,
 		vmdkImgType,
 	)
@@ -880,6 +904,7 @@ func New() distro.Distro {
 		amiImgType,
 		qcow2ImageType,
 		openstackImgType,
+		tarImgType,
 	)
 
 	ppc64le := architecture{
@@ -900,12 +925,16 @@ func New() distro.Distro {
 	}
 	ppc64le.setImageTypes(
 		qcow2ImageType,
+		tarImgType,
 	)
 
 	s390x := architecture{
 		distro: &r,
 		name:   "s390x",
 	}
+	s390x.setImageTypes(
+		tarImgType,
+	)
 
 	r.setArches(x8664, aarch64, ppc64le, s390x)
 

@@ -38,6 +38,13 @@ func TestFilenameFromType(t *testing.T) {
 			want1: "application/x-qemu-disk",
 		},
 		{
+			name:  "tar",
+			args:  args{"tar"},
+			want:  "root.tar.xz",
+			want1: "application/x-tar",
+		},
+
+		{
 			name:  "vhd",
 			args:  args{"vhd"},
 			want:  "disk.vhd",
@@ -134,6 +141,7 @@ func TestImageType_Name(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
+				"tar",
 				"vhd",
 				"vmdk",
 			},
@@ -144,13 +152,21 @@ func TestImageType_Name(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
+				"tar",
 			},
 		},
 		{
 			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
 		},
 		{
 			arch: "s390x",
+			imgNames: []string{
+				"tar",
+			},
 		},
 	}
 	for _, mapping := range imgMap {
