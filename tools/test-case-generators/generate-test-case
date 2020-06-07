@@ -37,17 +37,22 @@ def get_subprocess_stdout(*args, **kwargs):
 
 
 def run_osbuild(manifest, store, output):
-    subprocess.run(["osbuild",
-                    "--store", store,
-                    "--output-directory", output,
-                    "--json", "-"],
-                    stdout=subprocess.DEVNULL,
-                    check=True,
-                    encoding="utf-8",
-                    input=json.dumps(manifest))
+    with tempfile.TemporaryFile(dir="/tmp", prefix="osbuild-test-case-generator-", suffix=".log") as log:
+        try:
+            subprocess.run(["osbuild",
+                            "--store", store,
+                            "--output-directory", output,
+                            "-"],
+                            stdout=log,
+                            stderr=subprocess.STDOUT,
+                            check=True,
+                            encoding="utf-8",
+                            input=json.dumps(manifest))
+        except:
+            print(log.read())
 
 
-def main(test_case, store):
+def main(test_case, no_image_info, store):
     boot_type = test_case["boot"]["type"]
     compose_request = json.dumps(test_case["compose-request"])
 
@@ -57,7 +62,7 @@ def main(test_case, store):
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-rpmmd", "-"]
     test_case["rpmmd"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
 
-    if boot_type != "nspawn-extract":
+    if boot_type != "nspawn-extract" and no_image_info == False:
         with tempfile.TemporaryDirectory(dir=store, prefix="test-case-output-") as output:
             run_osbuild(test_case["manifest"], store, output)
             image_file = os.path.join(output, test_case["compose-request"]["filename"])
@@ -69,8 +74,9 @@ def main(test_case, store):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate test cases")
     parser.add_argument("store", metavar="DIRECTORY", type=os.path.abspath, help="path to the osbuild store")
+    parser.add_argument("--no-image-info", action='store_true', help="skip image info (re)generation")
     args = parser.parse_args()
     test_case_request = json.load(sys.stdin)
-    test_case = main(test_case_request, args.store)
+    test_case = main(test_case_request, args.no_image_info, args.store)
     sys.stdout.write(json.dumps(test_case))
     sys.exit()
