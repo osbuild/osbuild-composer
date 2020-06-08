@@ -36,8 +36,12 @@ ansible-playbook \
   -e install_source=os \
   ansible-osbuild/playbook.yml
 
+# Run the AWS test.
+if [[ ${TEST_TYPE:-} == image ]]; then
+  test/image-tests/aws.sh
+fi
+
 # Run the tests.
-echo "The AWS_BUCKET env var is set to: ${AWS_BUCKET:-}"
 ansible-playbook \
   -e workspace=${WORKSPACE} \
   -e test_type=${TEST_TYPE:-base} \

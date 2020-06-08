@@ -34,14 +34,3 @@ osbuild_composer_image_test_cases:
 
 # Environment variables for image tests.
 osbuild_composer_image_env_vars: {}
-
-# List of AWS test cases
-osbuild_composer_aws_test_cases:
-  - ami-boot.json
-
-# Environment variables for AWS tests.
-osbuild_composer_aws_env_vars:
-  AWS_BUCKET: "{{ lookup('env', 'AWS_BUCKET') }}"
-  AWS_REGION: "{{ lookup('env', 'AWS_REGION') }}"
-  AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
-  AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
