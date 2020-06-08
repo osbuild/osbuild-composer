@@ -164,6 +164,11 @@ def rpm_verify(tree):
     }
 
 
+def rpm_packages(tree):
+    pkgs = subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split)
+    return list(sorted(pkgs))
+
+
 def read_services(tree, state):
     return subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
 
@@ -190,7 +195,7 @@ def read_firewall_zone(tree):
 
 def append_filesystem(report, tree):
     if os.path.exists(f"{tree}/etc/os-release"):
-        report["packages"] = sorted(subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split))
+        report["packages"] = rpm_packages(tree)
         report["rpm-verify"] = rpm_verify(tree)
 
         with open(f"{tree}/etc/os-release") as f:
