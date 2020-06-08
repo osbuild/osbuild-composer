@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import functools
 import glob
+import mimetypes
 import json
 import os
 import subprocess
@@ -361,6 +362,28 @@ def analyse_directory(path):
     return report
 
 
+def is_tarball(path):
+    mtype, encoding = mimetypes.guess_type(path)
+    return mtype == "application/x-tar"
+
+
+def analyse_tarball(path):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tree = os.path.join(tmpdir, "root")
+        os.makedirs(tree)
+        command = [
+            "tar",
+            "-x",
+            "--auto-compress",
+            "-f", path,
+            "-C", tree
+        ]
+        subprocess.run(command,
+                       stdout=sys.stderr,
+                       check=True)
+        return analyse_directory(tree)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
     parser.add_argument("target",  help="The file or directory to analyse")
@@ -370,6 +393,8 @@ def main():
 
     if os.path.isdir(target):
         report = analyse_directory(target)
+    elif is_tarball(target):
+        report = analyse_tarball(target)
     else:
         report = analyse_image(target)
 
