@@ -33,8 +33,8 @@ type QEMUFilesystem struct {
 }
 
 type QEMUBootloader struct {
-	Type     string `json:"type"`
-	Platform string `json:"platform"`
+	Type     string `json:"type,omitempty"`
+	Platform string `json:"platform,omitempty"`
 }
 
 func (QEMUAssemblerOptions) isAssemblerOptions() {}
