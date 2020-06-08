@@ -92,7 +92,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora31'
-                        run_tests()
+                        run_tests('base')
                     }
                     post {
                         always {
@@ -108,11 +108,27 @@ pipeline {
                     }
                     steps {
                         unstash 'fedora31'
-                        run_tests()
+                        run_tests('image')
                     }
                     post {
                         always {
                             preserve_logs('fedora31-image')
+                        }
+                    }
+                }
+                stage('Fedora 31 integration') {
+                    agent { label "fedora31 && psi" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'fedora31'
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora31-integration')
                         }
                     }
                 }
@@ -121,7 +137,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora32'
-                        run_tests()
+                        run_tests('base')
                     }
                     post {
                         always {
@@ -137,11 +153,27 @@ pipeline {
                     }
                     steps {
                         unstash 'fedora32'
-                        run_tests()
+                        run_tests('image')
                     }
                     post {
                         always {
                             preserve_logs('fedora32-image')
+                        }
+                    }
+                }
+                stage('Fedora 32 integration') {
+                    agent { label "fedora32" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'fedora32'
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-integration')
                         }
                     }
                 }
@@ -150,7 +182,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests()
+                        run_tests('base')
                     }
                     post {
                         always {
@@ -166,11 +198,27 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests()
+                        run_tests('image')
                     }
                     post {
                         always {
                             preserve_logs('rhel8-image')
+                        }
+                    }
+                }
+                stage('RHEL 8 CDN integration') {
+                    agent { label "rhel8" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'rhel8cdn'
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-integration')
                         }
                     }
                 }
@@ -181,19 +229,63 @@ pipeline {
 
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
-void run_tests() {
+void run_tests(test_type) {
 
     // Get CI machine details.
-    sh "schutzbot/ci_details.sh"
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
 
     // Run the tests from the repository.
-    sh "schutzbot/run_tests.sh"
+    sh (
+        label: "Deploy",
+        script: "schutzbot/run_tests.sh"
+    )
+
+    // Run the base tests.
+    if (test_type == 'base') {
+        sh (
+            label: "Base tests",
+            script: "ansible-playbook -e workspace=${WORKSPACE} -e test_type=base -i hosts.ini schutzbot/test.yml"
+        )
+    }
+
+    if (test_type == 'image') {
+        sh (
+            label: "Image tests",
+            script: "ansible-playbook -e workspace=${WORKSPACE} -e test_type=image -i hosts.ini schutzbot/test.yml"
+        )
+    }
+
+    if (test_type == 'integration') {
+        // Run the qcow2 test.
+        sh (
+            label: "Integration test: QCOW2",
+            script: "test/image-tests/qcow2.sh qcow2"
+        )
+
+        // Run the openstack test.
+        sh (
+            label: "Integration test: OpenStack",
+            script: "test/image-tests/qcow2.sh openstack"
+        )
+
+        // Run the AWS test.
+        sh (
+            label: "Integration test: AWS",
+            script: "test/image-tests/aws.sh"
+        )
+    }
 
 }
 
 // Move logs to a unique location and tell Jenkins to capture them on success
 // or failure.
 void preserve_logs(test_slug) {
+
+    // Save the systemd journal.
+    sh "journalctl --boot > systemd-journald.log"
 
     // Make a directory for the log files and move the logs there.
     sh "mkdir ${test_slug} && mv *.log *.jpg ${test_slug}/ || true"

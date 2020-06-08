@@ -15,16 +15,6 @@ sudo chmod -R 777 /opt/ansible_{local,remote}
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
-# Get the current journald cursor.
-export JOURNALD_CURSOR=$(sudo journalctl --quiet -n 1 --show-cursor | tail -n 1 | grep -oP 's\=.*$')
-
-# Add a function to preserve the system journal if something goes wrong.
-preserve_journal() {
-  sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
-  exit 1
-}
-trap "preserve_journal" ERR
-
 # Write a simple hosts file for Ansible.
 echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 
@@ -35,18 +25,3 @@ ansible-playbook \
   -i hosts.ini \
   -e install_source=os \
   ansible-osbuild/playbook.yml
-
-# Run the AWS test.
-if [[ ${TEST_TYPE:-} == image ]]; then
-  test/image-tests/aws.sh
-fi
-
-# Run the tests.
-ansible-playbook \
-  -e workspace=${WORKSPACE} \
-  -e test_type=${TEST_TYPE:-base} \
-  -i hosts.ini \
-  schutzbot/test.yml
-
-# Collect the systemd journal anyway if we made it all the way to the end.
-sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
