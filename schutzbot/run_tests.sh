@@ -6,7 +6,7 @@ source /etc/os-release
 
 # Set up a dnf repository for the RPMs we built via mock.
 sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
-dnf repository-packages osbuild-mock list
+sudo dnf repository-packages osbuild-mock list
 
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
