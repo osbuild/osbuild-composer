@@ -6,7 +6,7 @@ source /etc/os-release
 
 # Set up a dnf repository for the RPMs we built via mock.
 sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
-dnf repository-packages osbuild-mock list
+sudo dnf repository-packages osbuild-mock list
 
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
@@ -36,8 +36,12 @@ ansible-playbook \
   -e install_source=os \
   ansible-osbuild/playbook.yml
 
+# Run the AWS test.
+if [[ ${TEST_TYPE:-} == image ]]; then
+  test/image-tests/aws.sh
+fi
+
 # Run the tests.
-echo "The AWS_BUCKET env var is set to: ${AWS_BUCKET:-}"
 ansible-playbook \
   -e workspace=${WORKSPACE} \
   -e test_type=${TEST_TYPE:-base} \
