@@ -228,12 +228,21 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel82")
 
+	if t.arch.Name() == "s390x" {
+		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{
+			RootFsUUID: "0bd700f8-090f-4556-b797-b340297ea1bd",
+			KernelOpts: "net.ifnames=0 crashkernel=auto",
+		}))
+	}
+
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
-		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+		if t.arch.Name() != "s390x" {
+			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+		}
 	} else if t.rpmOstree {
 		p.AddStage(osbuild.NewFSTabStage(t.fsOstreeTabStageOptions()))
 	}
@@ -284,6 +293,10 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
+	}
+
+	if t.arch.Name() == "s390x" {
+		p.AddStage(osbuild.NewZiplStage(&osbuild.ZiplStageOptions{}))
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
@@ -542,6 +555,28 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 					},
 					{
 						Start: 10240,
+						Filesystem: &osbuild.QEMUFilesystem{
+							Type:       "xfs",
+							UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
+							Mountpoint: "/",
+						},
+					},
+				},
+			}
+		} else if arch.Name() == "s390x" {
+			options = osbuild.QEMUAssemblerOptions{
+				Bootloader: &osbuild.QEMUBootloader{
+					Type: "zipl",
+				},
+				Format:   format,
+				Filename: filename,
+				Size:     imageOptions.Size,
+				PTUUID:   "0x14fc63d2",
+				PTType:   "dos",
+				Partitions: []osbuild.QEMUPartition{
+					{
+						Start:    2048,
+						Bootable: true,
 						Filesystem: &osbuild.QEMUFilesystem{
 							Type:       "xfs",
 							UUID:       "0bd700f8-090f-4556-b797-b340297ea1bd",
@@ -1052,9 +1087,15 @@ func New() distro.Distro {
 	s390x := architecture{
 		distro: &r,
 		name:   "s390x",
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"s390utils-base",
+		},
+		uefi: false,
 	}
 	s390x.setImageTypes(
 		tarImgType,
+		qcow2ImageType,
 	)
 
 	r.setArches(x8664, aarch64, ppc64le, s390x)

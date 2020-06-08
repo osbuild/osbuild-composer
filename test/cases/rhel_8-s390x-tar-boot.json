@@ -1554,6 +1554,13 @@
       },
       "stages": [
         {
+          "name": "org.osbuild.kernel-cmdline",
+          "options": {
+            "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
+            "kernel_opts": "net.ifnames=0 crashkernel=auto"
+          }
+        },
+        {
           "name": "org.osbuild.rpm",
           "options": {
             "gpgkeys": [
@@ -2195,6 +2202,10 @@
               }
             }
           }
+        },
+        {
+          "name": "org.osbuild.zipl",
+          "options": {}
         },
         {
           "name": "org.osbuild.selinux",
