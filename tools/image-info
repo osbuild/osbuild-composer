@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import contextlib
 import glob
 import json
@@ -255,7 +256,9 @@ def find_esp(partitions):
     return None, 0
 
 
-def main(image):
+def analyse_image(image):
+    subprocess.run(["modprobe", "nbd"], check=True)
+
     report = {}
     with nbd_connect(image) as device:
         report["image-format"] = read_image_format(image)
@@ -279,8 +282,17 @@ def main(image):
 
     return report
 
-if __name__ == "__main__":
-    subprocess.run(["modprobe", "nbd"], check=True)
 
-    report = main(sys.argv[1])
+def main():
+    parser = argparse.ArgumentParser(description="Inspect an image")
+    parser.add_argument("target",  help="The file or directory to analyse")
+
+    args = parser.parse_args()
+    report = analyse_image(args.target)
+
     json.dump(report, sys.stdout, sort_keys=True, indent=2)
+
+
+if __name__ == "__main__":
+    main()
+
