@@ -231,12 +231,14 @@ done
 
 # Check for our smoke test file.
 greenprint "🛃 Checking for smoke test file"
-RESULTS="$(smoke_test_check $PUBLIC_IP)"
-if [[ $RESULTS == "1" ]]; then
-    echo "Smoke test passed! 🥳"
-else
-    echo "Smoke test failed! 😭"
-fi
+for LOOP_COUNTER in {0..10}; do
+    RESULTS="$(smoke_test_check $PUBLIC_IP)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "Smoke test passed! 🥳"
+        break
+    fi
+    sleep 5
+done
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
