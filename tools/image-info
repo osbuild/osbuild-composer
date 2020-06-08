@@ -2,6 +2,7 @@
 
 import argparse
 import contextlib
+import functools
 import glob
 import json
 import os
@@ -9,6 +10,17 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree
+
+
+def run_ostree(*args, _input=None, _check=True, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    res = subprocess.run(["ostree"] + args,
+                         encoding="utf-8",
+                         stdout=subprocess.PIPE,
+                         input=_input,
+                         check=_check)
+    return res
 
 
 @contextlib.contextmanager
@@ -26,9 +38,9 @@ def nbd_connect(image):
 
 
 @contextlib.contextmanager
-def mount_at(device, mountpoint, options=[]):
+def mount_at(device, mountpoint, options=[], extra=[]):
     opts = ",".join(["ro"] + options)
-    subprocess.run(["mount", "-o", opts, device, mountpoint], check=True)
+    subprocess.run(["mount", "-o", opts] + extra + [device, mountpoint], check=True)
     try:
         yield mountpoint
     finally:
@@ -164,8 +176,11 @@ def rpm_verify(tree):
     }
 
 
-def rpm_packages(tree):
-    pkgs = subprocess_check_output(["rpm", "--root", tree, "-qa"], str.split)
+def rpm_packages(tree, is_ostree):
+    cmd = ["rpm", "--root", tree, "-qa"]
+    if is_ostree:
+        cmd += ["--dbpath", "/usr/share/rpm"]
+    pkgs = subprocess_check_output(cmd, str.split)
     return list(sorted(pkgs))
 
 
@@ -193,10 +208,11 @@ def read_firewall_zone(tree):
     return r
 
 
-def append_filesystem(report, tree):
+def append_filesystem(report, tree, *, is_ostree=False):
     if os.path.exists(f"{tree}/etc/os-release"):
-        report["packages"] = rpm_packages(tree)
-        report["rpm-verify"] = rpm_verify(tree)
+        report["packages"] = rpm_packages(tree, is_ostree)
+        if not is_ostree:
+            report["rpm-verify"] = rpm_verify(tree)
 
         with open(f"{tree}/etc/os-release") as f:
             report["os-release"] = parse_environment_vars(f.read())
@@ -288,12 +304,67 @@ def analyse_image(image):
     return report
 
 
+def append_directory(report, tree):
+    if os.path.lexists(f"{tree}/ostree"):
+        os.makedirs(f"{tree}/etc", exist_ok=True)
+        with mount_at(f"{tree}/usr/etc", f"{tree}/etc", extra=["--bind"]):
+            append_filesystem(report, tree, is_ostree=True)
+    else:
+        append_filesystem(report, tree)
+
+
+def append_ostree_repo(report, repo):
+    ostree = functools.partial(run_ostree, repo=repo)
+
+    r = ostree("config", "get", "core.mode")
+    report["ostree"] = {
+        "repo": {
+            "core.mode": r.stdout.strip()
+        }
+    }
+
+    r = ostree("refs")
+    refs = r.stdout.strip().split("\n")
+    resolved = {r: ostree("rev-parse", r).stdout.strip() for r in refs}
+    print(resolved)
+
+    commit = resolved[refs[0]]
+    report["ostree"]["refs"] = resolved
+    report["ostree"]["commit"] = commit
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tree = os.path.join(tmpdir, "tree")
+        ostree("checkout", "--force-copy", commit, tree)
+        append_directory(report, tree)
+
+
+def analyse_directory(path):
+    report = {}
+
+    if os.path.exists(os.path.join(path, "compose.json")):
+        report["type"] = "ostree/commit"
+        repo = os.path.join(path, "repo")
+        append_ostree_repo(report, repo)
+    elif os.path.isdir(os.path.join(path, "refs")):
+        report["type"] = "ostree/repo"
+        append_ostree_repo(report, repo)
+    else:
+        append_directory(report, path)
+
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
     parser.add_argument("target",  help="The file or directory to analyse")
 
     args = parser.parse_args()
-    report = analyse_image(args.target)
+    target = args.target
+
+    if os.path.isdir(target):
+        report = analyse_directory(target)
+    else:
+        report = analyse_image(target)
 
     json.dump(report, sys.stdout, sort_keys=True, indent=2)
 
