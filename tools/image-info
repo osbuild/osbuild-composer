@@ -248,6 +248,13 @@ def append_filesystem(report, tree, *, is_ostree=False):
         with open(f"{tree}/etc/group") as f:
             report["groups"] = sorted(f.read().strip().split("\n"))
 
+        if is_ostree:
+            with open(f"{tree}/usr/lib/passwd") as f:
+                report["passwd-system"] = sorted(f.read().strip().split("\n"))
+
+            with open(f"{tree}/usr/lib/group") as f:
+                report["groups-system"] = sorted(f.read().strip().split("\n"))
+
         if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
             assert "bootmenu" not in report
             try:
