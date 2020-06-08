@@ -76,7 +76,7 @@ store_instance_screenshot () {
     SCREENSHOT_FILE=${WORKSPACE}/console-screenshot-${ID}-${VERSION_ID}-${LOOP_COUNTER}.jpg
 
     $AWS_CMD ec2 get-console-screenshot --instance-id ${1} > $INSTANCE_CONSOLE
-    jq -r '.ImageData' | base64 -d - > $SCREENSHOT_FILE
+    jq -r '.ImageData' $INSTANCE_CONSOLE | base64 -d - > $SCREENSHOT_FILE
 }
 
 # Write an AWS TOML file
