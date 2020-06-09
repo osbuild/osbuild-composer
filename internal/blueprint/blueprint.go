@@ -108,7 +108,7 @@ func (b *Blueprint) GetPackages() []string {
 
 func (p Package) ToNameVersion() string {
 	// Omit version to prevent all packages with prefix of name to be installed
-	if p.Version == "*" {
+	if p.Version == "*" || p.Version == "" {
 		return p.Name
 	}
 
