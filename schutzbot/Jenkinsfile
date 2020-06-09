@@ -65,6 +65,20 @@ pipeline {
                         )
                     }
                 }
+                stage('RHEL 8 CDN aarch64') {
+                    agent { label "rhel8aarch64" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel8cdn'
+                        )
+                    }
+                }
                 // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
                 stage('RHEL 8.3 Nightly') {
                     agent { label "rhel83 && psi" }
