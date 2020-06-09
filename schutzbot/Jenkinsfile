@@ -233,6 +233,72 @@ pipeline {
                         }
                     }
                 }
+                stage('RHEL 8.3 Base') {
+                    agent { label "rhel83" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        unstash 'rhel83'
+                        // If RHEL 8.3 fails, let the stage fail without
+                        // marking the entire pipeline as a failure. Once
+                        // RHEL 8.3 calms down and tests begin to pass,
+                        // remove this wrapper and make this test look like
+                        // the others.
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            run_tests('base')
+                        }
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel83-base')
+                        }
+                    }
+                }
+                stage('RHEL 8.3 Image') {
+                    agent { label "rhel83 && psi" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'rhel83'
+                        // If RHEL 8.3 fails, let the stage fail without
+                        // marking the entire pipeline as a failure. Once
+                        // RHEL 8.3 calms down and tests begin to pass,
+                        // remove this wrapper and make this test look like
+                        // the others.
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            run_tests('image')
+                        }
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel83-image')
+                        }
+                    }
+                }
+                stage('RHEL 8.3 integration') {
+                    agent { label "rhel83" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'rhel83'
+                        // If RHEL 8.3 fails, let the stage fail without
+                        // marking the entire pipeline as a failure. Once
+                        // RHEL 8.3 calms down and tests begin to pass,
+                        // remove this wrapper and make this test look like
+                        // the others.
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            run_tests('integration')
+                        }
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel83-integration')
+                        }
+                    }
+                }
             }
         }
     }
