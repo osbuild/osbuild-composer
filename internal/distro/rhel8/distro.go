@@ -304,6 +304,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 func (t *imageType) buildPipeline(repos []rpmmd.RepoConfig, arch architecture, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(arch, repos, buildPackageSpecs)))
+	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 	return p
 }
 
@@ -865,6 +866,7 @@ func New() distro.Distro {
 			"policycoreutils",
 			"python36",
 			"qemu-img",
+			"selinux-policy-targeted",
 			"systemd",
 			"tar",
 			"xfsprogs",
