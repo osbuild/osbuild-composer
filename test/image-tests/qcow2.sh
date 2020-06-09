@@ -172,7 +172,6 @@ sudo virt-install \
     --import \
     --os-variant rhel8-unknown \
     --noautoconsole \
-    --cpu host-passthrough \
     --network network=default
 
 # Wait for the image to make a DHCP request.
