@@ -1,12 +1,25 @@
 #!/bin/bash
 set -euo pipefail
 
-# Booting an OpenStack and QCOW2 instance is almost identical, so we can
-# handle both with the same script.
-IMAGE_TYPE=${1:-qcow2}
-
 # Get OS data.
 source /etc/os-release
+
+# Take the image type passed to the script or use qcow2 by default if nothing
+# was passed.
+IMAGE_TYPE=${1:-qcow2}
+
+# Select the file extension based on the image that we are building.
+if [[ $IMAGE_TYPE == 'openstack' ]]; then
+    IMAGE_EXTENSION=qcow2
+else
+    IMAGE_EXTENSION=$IMAGE_TYPE
+fi
+
+# RHEL 8 cannot boot a VMDK using libvirt. See BZ 999789.
+if [[ $IMAGE_TYPE == vmdk ]] && [[ $ID == rhel ]]; then
+    echo "🤷 RHEL 8 cannot boot a VMDK. See BZ 999789."
+    exit 0
+fi
 
 # Colorful output.
 function greenprint {
@@ -61,7 +74,6 @@ IMAGE_KEY=osbuild-composer-aws-test-${TEST_UUID}
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
-AWS_CONFIG=${TEMPDIR}/aws.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
@@ -81,9 +93,29 @@ smoke_test_check () {
     fi
 }
 
+# Get the compose logs and store them as artifacts.
+get_compose_logs () {
+    COMPOSE_ID=$1
+
+    # Download the logs.
+    sudo composer-cli compose logs $COMPOSE_ID
+
+    # Find the log tarball and extract it.
+    LOG_TAR=$(basename $(find . -maxdepth 1 -type f -name "*logs.tar"))
+    tar xf $LOG_TAR
+
+    # Move the log into the workspace so it can be artifacted.
+    mv logs/osbuild.log ${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
+
+    # Clean up.
+    rm -rf $LOG_TAR logs
+}
+
 # Write a basic blueprint for our image.
 # NOTE(mhayden): The service customization will always be required for QCOW2
 # but it is needed for OpenStack due to issue #698 in osbuild-composer. 😭
+# NOTE(mhayden): The cloud-init package isn't included in VHD/Azure images
+# by default and it must be added here.
 tee $BLUEPRINT_FILE > /dev/null << EOF
 name = "bash"
 description = "A base system with bash"
@@ -91,6 +123,9 @@ version = "0.0.1"
 
 [[packages]]
 name = "bash"
+
+[[packages]]
+name = "cloud-init"
 
 [customizations.services]
 enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
@@ -135,6 +170,10 @@ while true; do
     sleep 30
 done
 
+# Capture the compose logs from osbuild.
+greenprint "💬 Getting logs for compose"
+get_compose_logs $COMPOSE_ID
+
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
@@ -147,9 +186,9 @@ sudo kill ${WORKER_JOURNAL_PID}
 # Download the image.
 greenprint "📥 Downloading the image"
 sudo composer-cli compose image ${COMPOSE_ID} > /dev/null
-IMAGE_FILENAME=$(basename $(find . -maxdepth 1 -type f -name '*.qcow2'))
-QCOW_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
-sudo mv $IMAGE_FILENAME $QCOW_IMAGE_PATH
+IMAGE_FILENAME=$(basename $(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}"))
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
+sudo mv $IMAGE_FILENAME $LIBVIRT_IMAGE_PATH
 
 # Set up a cloud-init ISO.
 greenprint "💿 Creating a cloud-init ISO"
@@ -167,8 +206,8 @@ sudo virt-install \
     --name $IMAGE_KEY \
     --memory 2048 \
     --vcpus 2 \
-    --disk path=${QCOW_IMAGE_PATH} \
-    --disk path=${CLOUD_INIT_PATH} \
+    --disk path=${LIBVIRT_IMAGE_PATH} \
+    --disk path=${CLOUD_INIT_PATH},device=cdrom \
     --import \
     --os-variant rhel8-unknown \
     --noautoconsole \
@@ -214,15 +253,11 @@ for LOOP_COUNTER in {0..10}; do
     sleep 5
 done
 
-if [[ $RESULTS != 1 ]]; then
-    sleep 3600
-fi
-
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
 sudo virsh destroy ${IMAGE_KEY}
 sudo virsh undefine ${IMAGE_KEY}
-sudo rm -fv $QCOW_IMAGE_PATH $CLOUD_INIT_PATH
+sudo rm -f $LIBVIRT_IMAGE_PATH $CLOUD_INIT_PATH
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
