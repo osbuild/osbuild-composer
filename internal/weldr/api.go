@@ -2504,13 +2504,8 @@ func (api *API) allRepositories() []rpmmd.RepoConfig {
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
 	repos := api.allRepositories()
-	var specs []string = []string{}
-	for _, pkg := range bp.Packages {
-		specs = append(specs, getPkgNameGlob(pkg))
-	}
-	for _, mod := range bp.Modules {
-		specs = append(specs, getPkgNameGlob(mod))
-	}
+	specs := bp.GetPackages()
+
 	excludeSpecs := []string{}
 	if imageType != nil {
 		// When the output type is known, include the base packages in the depsolve
