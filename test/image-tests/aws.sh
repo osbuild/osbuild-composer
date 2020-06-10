@@ -125,7 +125,7 @@ WORKER_JOURNAL_PID=$!
 
 # Start the compose and upload to AWS.
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash ami $IMAGE_KEY $AWS_CONFIG | tee $COMPOSE_START > /dev/null
+sudo composer-cli --json compose start bash ami $IMAGE_KEY $AWS_CONFIG | tee $COMPOSE_START
 COMPOSE_ID=$(jq -r '.build_id' $COMPOSE_START)
 
 # Wait for the compose to finish.
@@ -216,16 +216,19 @@ PUBLIC_IP=$(jq -r '.Reservations[].Instances[].PublicIpAddress' $INSTANCE_DATA)
 # Wait for the node to come online.
 greenprint "⏱ Waiting for AWS instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan $PUBLIC_IP; then
-      ssh-keyscan $PUBLIC_IP >> ~/.ssh/known_hosts
-      break
+    if ssh-keyscan $PUBLIC_IP 2>&1 > /dev/null; then
+        echo "SSH is up!"
+        ssh-keyscan $PUBLIC_IP >> ~/.ssh/known_hosts
+        break
     fi
 
     # Get a screenshot of the instance console.
+    echo "Getting instance screenshot..."
     store_instance_screenshot $INSTANCE_ID $LOOP_COUNTER || true
 
     # ssh-keyscan has a 5 second timeout by default, so the pause per loop
     # is 10 seconds when you include the following `sleep`.
+    echo "Retrying in 5 seconds..."
     sleep 5
 done
 

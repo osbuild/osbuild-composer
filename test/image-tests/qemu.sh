@@ -9,10 +9,9 @@ source /etc/os-release
 IMAGE_TYPE=${1:-qcow2}
 
 # Select the file extension based on the image that we are building.
+IMAGE_EXTENSION=$IMAGE_TYPE
 if [[ $IMAGE_TYPE == 'openstack' ]]; then
     IMAGE_EXTENSION=qcow2
-else
-    IMAGE_EXTENSION=$IMAGE_TYPE
 fi
 
 # RHEL 8 cannot boot a VMDK using libvirt. See BZ 999789.
@@ -152,7 +151,7 @@ WORKER_JOURNAL_PID=$!
 
 # Start the compose
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash $IMAGE_TYPE | tee $COMPOSE_START > /dev/null
+sudo composer-cli --json compose start bash $IMAGE_TYPE | tee $COMPOSE_START
 COMPOSE_ID=$(jq -r '.build_id' $COMPOSE_START)
 
 # Wait for the compose to finish.
@@ -194,7 +193,7 @@ sudo mv $IMAGE_FILENAME $LIBVIRT_IMAGE_PATH
 greenprint "💿 Creating a cloud-init ISO"
 CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 cp ${WORKSPACE}/test/cloud-init/*-data .
-sudo genisoimage -o $CLOUD_INIT_PATH -V cidata -r -J user-data meta-data > /dev/null
+sudo genisoimage -o $CLOUD_INIT_PATH -V cidata -r -J user-data meta-data 2>&1 > /dev/null
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
@@ -232,13 +231,15 @@ done
 # Wait for SSH to start.
 greenprint "⏱ Waiting for instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan $INSTANCE_ADDRESS > /dev/null; then
-      ssh-keyscan $INSTANCE_ADDRESS >> ~/.ssh/known_hosts
-      break
+    if ssh-keyscan $INSTANCE_ADDRESS 2>&1 > /dev/null; then
+        echo "SSH is up!"
+        ssh-keyscan $INSTANCE_ADDRESS >> ~/.ssh/known_hosts
+        break
     fi
 
     # ssh-keyscan has a 5 second timeout by default, so the pause per loop
     # is 10 seconds when you include the following `sleep`.
+    echo "Retrying in 5 seconds..."
     sleep 5
 done
 
