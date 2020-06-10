@@ -324,7 +324,7 @@ void run_tests(test_type) {
     if (test_type == 'base') {
         sh (
             label: "Base tests",
-            script: "ansible-playbook -e workspace=${WORKSPACE} -e test_type=base -i hosts.ini schutzbot/test.yml"
+            script: "schutzbot/run_base_tests.sh"
         )
     }
 
