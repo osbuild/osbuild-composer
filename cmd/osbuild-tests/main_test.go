@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -18,7 +20,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestComposeCommands(t *testing.T) {
@@ -159,6 +160,43 @@ gpgkey_urls = ["https://url/path/to/gpg-key"]
 	runComposer(t, "sources", "info", "osbuild-test-addon-source")
 	runComposer(t, "sources", "change", sources_toml.Name())
 	runComposer(t, "sources", "delete", "osbuild-test-addon-source")
+}
+
+// When jq with version * was specified in the blueprint,
+// composer depsolved both x86_64 and i686 version of jq.
+// This test case should prevent this from happening.
+// jq is used because it has x86_64 and i686 versions on both RHEL and Fedora.
+func TestWildcardDepsolve(t *testing.T) {
+	versionStrings := []string{"*", "1.*", ""}
+	for _, versionString := range versionStrings {
+		t.Run(versionString, func(t *testing.T) {
+			pushBlueprint(t, &blueprint.Blueprint{
+				Name:    "multilib",
+				Version: "0.0.1",
+				Packages: []blueprint.Package{
+					{
+						Name:    "jq",
+						Version: versionString,
+					},
+				},
+			})
+
+			output := string(runComposer(t, "blueprints", "depsolve", "multilib"))
+			jqCount := 0
+			lines := strings.Split(output, "\n")
+			for _, line := range lines {
+				trimmedLine := strings.Trim(line, " ")
+				if strings.HasPrefix(trimmedLine, "jq-") {
+					jqCount += 1
+				}
+			}
+
+			if !assert.Equalf(t, 1, jqCount, "jq is specified %d-times in the depsolve, should be there only once", jqCount) {
+				t.Logf("depsolve output:\n%s", output)
+				t.FailNow()
+			}
+		})
+	}
 }
 
 func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
