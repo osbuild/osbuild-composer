@@ -23,6 +23,7 @@ type repository struct {
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`
 	GPGKey     string `json:"gpgkey,omitempty"`
+	CheckGPG   bool   `json:"check_gpg,omitempty"`
 }
 
 type composeRequest struct {
@@ -109,6 +110,7 @@ func main() {
 			Metalink:   repo.Metalink,
 			MirrorList: repo.MirrorList,
 			GPGKey:     repo.GPGKey,
+			CheckGPG:   repo.CheckGPG,
 		}
 	}
 
