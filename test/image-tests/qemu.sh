@@ -92,22 +92,30 @@ smoke_test_check () {
     fi
 }
 
-# Get the compose logs and store them as artifacts.
-get_compose_logs () {
+# Get the compose log.
+get_compose_log () {
     COMPOSE_ID=$1
+    LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
 
     # Download the logs.
-    sudo composer-cli compose logs $COMPOSE_ID
+    sudo composer-cli compose log $COMPOSE_ID | tee $LOG_FILE > /dev/null
+}
 
-    # Find the log tarball and extract it.
-    LOG_TAR=$(basename $(find . -maxdepth 1 -type f -name "*logs.tar"))
-    tar xf $LOG_TAR
+# Get the compose metadata.
+get_compose_metadata () {
+    COMPOSE_ID=$1
+    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
 
-    # Move the log into the workspace so it can be artifacted.
-    mv logs/osbuild.log ${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
+    # Download the metadata.
+    sudo composer-cli compose metadata $COMPOSE_ID > /dev/null
 
-    # Clean up.
-    rm -rf $LOG_TAR logs
+    # Find the tarball and extract it.
+    TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
+    tar -xf $TARBALL
+    rm -f $TARBALL
+
+    # Move the JSON file into place.
+    cat ${COMPOSE_ID}.json | jq -M '.' | tee $METADATA_FILE > /dev/null
 }
 
 # Write a basic blueprint for our image.
@@ -170,8 +178,9 @@ while true; do
 done
 
 # Capture the compose logs from osbuild.
-greenprint "💬 Getting logs for compose"
-get_compose_logs $COMPOSE_ID
+greenprint "💬 Getting compose log and metadata"
+get_compose_log $COMPOSE_ID
+get_compose_metadata $COMPOSE_ID
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then

@@ -69,6 +69,32 @@ smoke_test_check () {
     fi
 }
 
+# Get the compose log.
+get_compose_log () {
+    COMPOSE_ID=$1
+    LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
+
+    # Download the logs.
+    sudo composer-cli compose log $COMPOSE_ID | tee $LOG_FILE > /dev/null
+}
+
+# Get the compose metadata.
+get_compose_metadata () {
+    COMPOSE_ID=$1
+    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
+
+    # Download the metadata.
+    sudo composer-cli compose metadata $COMPOSE_ID > /dev/null
+
+    # Find the tarball and extract it.
+    TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
+    tar -xf $TARBALL
+    rm -f $TARBALL
+
+    # Move the JSON file into place.
+    cat ${COMPOSE_ID}.json | jq -M '.' | tee $METADATA_FILE > /dev/null
+}
+
 # Get the console screenshot from the AWS instance.
 store_instance_screenshot () {
     INSTANCE_ID=${1}
@@ -142,6 +168,11 @@ while true; do
     # Wait 30 seconds and try again.
     sleep 30
 done
+
+# Capture the compose logs from osbuild.
+greenprint "💬 Getting compose log and metadata"
+get_compose_log $COMPOSE_ID
+get_compose_metadata $COMPOSE_ID
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
