@@ -434,22 +434,6 @@ func TestBlueprintsChanges(t *testing.T) {
 	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/"+id, ``)
 }
 
-func TestGetPkgNameGlob(t *testing.T) {
-	var cases = []struct {
-		pkg    blueprint.Package
-		result string
-	}{
-		{blueprint.Package{Name: "dep-package1", Version: "*"}, "dep-package1-*-*.*"},
-		{blueprint.Package{Name: "dep-package2", Version: "1.23"}, "dep-package2-1.23"},
-		{blueprint.Package{Name: "dep-package3", Version: ""}, "dep-package3"},
-	}
-
-	for _, c := range cases {
-		result := getPkgNameGlob(c.pkg)
-		require.Equalf(t, c.result, result, "getPkgNameGlob failed for %s", c.pkg.Name)
-	}
-}
-
 func TestBlueprintsDepsolve(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator

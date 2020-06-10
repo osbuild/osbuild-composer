@@ -2482,17 +2482,6 @@ func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
 	return packages, err
 }
 
-func getPkgNameGlob(pkg blueprint.Package) string {
-	// If a package has version "*" the package name suffix must be equal to "-*-*.*"
-	// Using just "-*" would find any other package containing the package name
-	if pkg.Version == "*" {
-		return fmt.Sprintf("%s-*-*.*", pkg.Name)
-	} else if pkg.Version != "" {
-		return fmt.Sprintf("%s-%s", pkg.Name, pkg.Version)
-	}
-	return pkg.Name
-}
-
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
 func (api *API) allRepositories() []rpmmd.RepoConfig {
 	repos := append([]rpmmd.RepoConfig{}, api.repos...)
