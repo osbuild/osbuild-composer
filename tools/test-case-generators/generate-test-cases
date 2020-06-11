@@ -14,14 +14,13 @@ def get_subprocess_stdout(*args, **kwargs):
     
     return sp.stdout
 
-def main(distro, arch, image_type, keep_image_info, store, output):
+def main(distro, arch, image_types, keep_image_info, store, output):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
         format_request_dict = json.load(format_request_json)
     with open("tools/test-case-generators/repos.json") as repos_json:
         repos_dict = json.load(repos_json)
     for output_format, test_case_request in format_request_dict.items():
-        if image_type:
-            if image_type != test_case_request["compose-request"]["image-type"]:
+        if test_case_request["compose-request"]["image-type"] not in image_types:
                 continue
         print(f"generating test case for {output_format}")
         test_case_request["compose-request"]["distro"] = distro
@@ -50,11 +49,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate test cases")
     parser.add_argument("--distro", help="distribution for test cases", required=True)
     parser.add_argument("--arch", help="architecture for test cases", required=True)
-    parser.add_argument("--image-type", help="image type for test case, defaults to generate all")
+    parser.add_argument("--image-types", help="image types for test cases", required=True, nargs='*')
     parser.add_argument("--keep-image-info", action='store_true', help="skip image info (re)generation, but keep the one found in the existing test case")
     parser.add_argument("--store", metavar="STORE_DIRECTORY", type=os.path.abspath, help="path to the osbuild store", required=True)
     parser.add_argument("--output", metavar="OUTPUT_DIRECTORY", type=os.path.abspath, help="path to the output directory", required=True)
     args = parser.parse_args()
 
-    main(args.distro, args.arch, args.image_type, args.keep_image_info, args.store, args.output)
+    main(args.distro, args.arch, args.image_types, args.keep_image_info, args.store, args.output)
     sys.exit()
