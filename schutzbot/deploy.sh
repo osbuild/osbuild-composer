@@ -19,6 +19,29 @@ sudo dnf -y install composer-cli osbuild osbuild-ostree \
     osbuild-composer osbuild-composer-rcm osbuild-composer-tests \
     osbuild-composer-worker python3-osbuild
 
+# Copy the internal repositories into place when needed.
+if curl -fs http://download.devel.redhat.com > /dev/null; then
+
+    # Set up a directory to hold repository overrides.
+    sudo mkdir -p /etc/osbuild-composer/repositories
+
+    case "${ID}${VERSION_ID}" in
+        fedora31)
+            sudo cp ${WORKSPACE}/test/internal-repos/fedora-31.json \
+                /etc/osbuild-composer/repositories/fedora-31.json
+        ;;
+        fedora32)
+            sudo cp ${WORKSPACE}/test/internal-repos/fedora-32.json \
+                /etc/osbuild-composer/repositories/fedora-32.json
+        ;;
+        rhel8.3)
+            sudo cp ${WORKSPACE}/test/internal-repos/rhel-8.json \
+                /etc/osbuild-composer/repositories/rhel-8.json
+        ;;
+    esac
+
+fi
+
 # Start services.
 sudo systemctl enable --now osbuild-rcm.socket
 sudo systemctl enable --now osbuild-composer.socket
