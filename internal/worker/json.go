@@ -42,6 +42,11 @@ type addJobResponse struct {
 	Targets  []*target.Target `json:"targets,omitempty"`
 }
 
+type jobResponse struct {
+	Id       uuid.UUID `json:"id"`
+	Canceled bool      `json:"canceled"`
+}
+
 type updateJobRequest struct {
 	Status common.ImageBuildState `json:"status"`
 	Result *common.ComposeResult  `json:"result"`

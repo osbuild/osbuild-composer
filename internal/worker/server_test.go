@@ -1,6 +1,7 @@
 package worker_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -68,6 +69,38 @@ func TestCreate(t *testing.T) {
 
 	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
 		`{"id":"`+id.String()+`","manifest":{"sources":{},"pipeline":{}}}`, "created")
+
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/job-queue/v1/jobs/%s", id), `{}`, http.StatusOK,
+		`{"id":"`+id.String()+`","canceled":false}`)
+}
+
+func TestCancel(t *testing.T) {
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	if err != nil {
+		t.Fatalf("error getting arch from distro")
+	}
+	imageType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		t.Fatalf("error getting image type from arch")
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest")
+	}
+	server := worker.NewServer(nil, testjobqueue.New(), "")
+
+	id, err := server.Enqueue(manifest, nil)
+	require.NoError(t, err)
+
+	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
+		`{"id":"`+id.String()+`","manifest":{"sources":{},"pipeline":{}}}`, "created")
+
+	err = server.Cancel(id)
+	require.NoError(t, err)
+
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/job-queue/v1/jobs/%s", id), `{}`, http.StatusOK,
+		`{"id":"`+id.String()+`","canceled":true}`)
 }
 
 func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
