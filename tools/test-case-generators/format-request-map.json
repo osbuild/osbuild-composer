@@ -12,6 +12,26 @@
       "blueprint": {}
     }
   },
+  "rhel-edge-commit": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "rhel-edge-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {}
+    }
+  },
+  "fedora-iot-commit": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "fedora-iot-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {}
+    }
+  },
   "openstack": {
     "boot": {
       "type": "qemu"
