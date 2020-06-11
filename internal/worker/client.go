@@ -91,6 +91,26 @@ func (c *Client) AddJob() (*Job, error) {
 	}, nil
 }
 
+func (c *Client) JobCanceled(job *Job) bool {
+	response, err := c.client.Get(c.createURL("/job-queue/v1/jobs/" + job.Id.String()))
+	if err != nil {
+		return true
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return true
+	}
+
+	var jr jobResponse
+	err = json.NewDecoder(response.Body).Decode(&jr)
+	if err != nil {
+		return true
+	}
+
+	return jr.Canceled
+}
+
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
 	var b bytes.Buffer
 	err := json.NewEncoder(&b).Encode(&updateJobRequest{status, result})

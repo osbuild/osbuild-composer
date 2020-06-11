@@ -33,6 +33,7 @@ type JobStatus struct {
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
+	Canceled bool
 	Result   OSBuildJobResult
 }
 
@@ -54,6 +55,7 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 
 	// Add handlers for managing jobs.
 	s.router.POST("/job-queue/v1/jobs", s.addJobHandler)
+	s.router.GET("/job-queue/v1/jobs/:job_id", s.jobHandler)
 	s.router.PATCH("/job-queue/v1/jobs/:job_id", s.updateJobHandler)
 	s.router.POST("/job-queue/v1/jobs/:job_id/artifacts/:name", s.addJobImageHandler)
 
@@ -115,8 +117,13 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 		Queued:   queued,
 		Started:  started,
 		Finished: finished,
+		Canceled: canceled,
 		Result:   result,
 	}, nil
+}
+
+func (s *Server) Cancel(id uuid.UUID) error {
+	return s.jobs.CancelJob(id)
 }
 
 // Provides access to artifacts of a job. Returns an io.Reader for the artifact
@@ -184,6 +191,30 @@ func (s *Server) statusHandler(writer http.ResponseWriter, request *http.Request
 	// Send back a status message.
 	_ = json.NewEncoder(writer).Encode(&statusResponse{
 		Status: "OK",
+	})
+}
+
+func (s *Server) jobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	id, err := uuid.Parse(params.ByName("job_id"))
+	if err != nil {
+		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
+		return
+	}
+
+	status, err := s.JobStatus(id)
+	if err != nil {
+		switch err {
+		case jobqueue.ErrNotExist:
+			jsonErrorf(writer, http.StatusNotFound, "job does not exist: %s", id)
+		default:
+			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+		}
+		return
+	}
+
+	_ = json.NewEncoder(writer).Encode(jobResponse{
+		Id:       id,
+		Canceled: status.Canceled,
 	})
 }
 
