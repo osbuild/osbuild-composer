@@ -28,6 +28,7 @@ image_test_case_path: /usr/share/tests/osbuild-composer/cases
 osbuild_composer_image_test_cases:
   - openstack-boot.json
   - qcow2-boot.json
+  - rhel_edge_commit-boot.json
   - tar-boot.json
   - vhd-boot.json
   - vmdk-boot.json
