@@ -334,7 +334,6 @@ def append_ostree_repo(report, repo):
     r = ostree("refs")
     refs = r.stdout.strip().split("\n")
     resolved = {r: ostree("rev-parse", r).stdout.strip() for r in refs}
-    print(resolved)
 
     commit = resolved[refs[0]]
     report["ostree"]["refs"] = resolved
