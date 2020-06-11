@@ -324,6 +324,11 @@ type DeleteComposeResponseV0 struct {
 	Errors []ResponseError         `json:"errors"`
 }
 
+type CancelComposeStatusV0 struct {
+	UUID   uuid.UUID `json:"uuid"`
+	Status bool      `json:"status"`
+}
+
 // NOTE: This does not include the lorax-composer specific 'config' field
 type ComposeInfoResponseV0 struct {
 	ID        uuid.UUID            `json:"id"`
