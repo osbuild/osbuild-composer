@@ -63,9 +63,17 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, cacheDir string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
-	outputDirectory := path.Join(cacheDir, "output")
-	store := path.Join(cacheDir, "store")
+func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
+	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
+	}
+	defer func() {
+		err := os.RemoveAll(outputDirectory)
+		if err != nil {
+			log.Printf("Error removing temporary output directory (%s): %v", outputDirectory, err)
+		}
+	}()
 
 	result, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
@@ -174,6 +182,7 @@ func main() {
 	if !ok {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
+	store := path.Join(cacheDirectory, "osbuild-store")
 
 	var client *worker.Client
 	if unix {
@@ -191,17 +200,6 @@ func main() {
 		client = worker.NewClient(address, conf)
 	}
 
-	tmpdir, err := ioutil.TempDir(cacheDirectory, "osbuild-worker-*")
-	if err != nil {
-		log.Fatalf("error setting up osbuild output directory: %v", err)
-	}
-	defer func() {
-		err := os.RemoveAll(tmpdir)
-		if err != nil {
-			log.Printf("Error removing osbuild-worker cache (%s): %v", tmpdir, err)
-		}
-	}()
-
 	for {
 		fmt.Println("Waiting for a new job...")
 		job, err := client.AddJob()
@@ -212,7 +210,7 @@ func main() {
 		fmt.Printf("Running job %s\n", job.Id)
 
 		var status common.ImageBuildState
-		result, err := RunJob(job, tmpdir, client.UploadImage)
+		result, err := RunJob(job, store, client.UploadImage)
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
