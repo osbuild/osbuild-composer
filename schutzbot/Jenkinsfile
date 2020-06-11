@@ -331,7 +331,7 @@ void run_tests(test_type) {
     if (test_type == 'image') {
         sh (
             label: "Image tests",
-            script: "ansible-playbook -e workspace=${WORKSPACE} -e test_type=image -i hosts.ini schutzbot/test.yml"
+            script: "schutzbot/run_image_tests.sh"
         )
     }
 
