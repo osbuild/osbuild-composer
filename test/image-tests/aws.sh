@@ -130,15 +130,6 @@ name = "bash"
 enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
 EOF
 
-# Copy the internal Fedora repository into place.
-if curl -fs http://download.devel.redhat.com > /dev/null; then
-    sudo cp ${WORKSPACE}/test/internal-repos/fedora-31.json \
-        /usr/share/osbuild-composer/repositories/fedora-31.json
-    sudo cp ${WORKSPACE}/test/internal-repos/fedora-32.json \
-        /usr/share/osbuild-composer/repositories/fedora-32.json
-    sudo systemctl stop osbuild-composer.service
-fi
-
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing blueprint"
 sudo composer-cli blueprints push $BLUEPRINT_FILE
