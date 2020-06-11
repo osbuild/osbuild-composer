@@ -8882,9 +8882,10 @@
       "VERSION_ID": "8.2"
     },
     "ostree": {
-      "commit": "3ce9eb458244c79f125153a362451f8b8cb9d2594c8c58c19e02cb32fc9fe2d3",
       "refs": {
-        "rhel/8/x86_64/edge": "3ce9eb458244c79f125153a362451f8b8cb9d2594c8c58c19e02cb32fc9fe2d3"
+        "rhel/8/x86_64/edge": {
+          "inputhash": "b458ad7246fbf8126d2ff81bf3ec24d70b1c573d26e178da5545bc3d27c7c193"
+        }
       },
       "repo": {
         "core.mode": "archive-z2"
