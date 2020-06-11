@@ -314,10 +314,10 @@ void run_tests(test_type) {
         script: "schutzbot/ci_details.sh"
     )
 
-    // Run the tests from the repository.
+    // Deploy the Image Builder packages and services.
     sh (
         label: "Deploy",
-        script: "schutzbot/run_tests.sh"
+        script: "schutzbot/deploy.sh"
     )
 
     // Run the base tests.
