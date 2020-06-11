@@ -14,10 +14,10 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -81,10 +81,14 @@ func TestComposeCommands(t *testing.T) {
 	uuid = buildCompose(t, "empty", "qcow2")
 	defer deleteCompose(t, uuid)
 
-	// https://github.com/osbuild/osbuild-composer/pull/180
-	// uuid = startCompose(t, "empty", "tar")
-	// time.Sleep(time.Second)
-	// runComposer(t, "compose", "cancel", uuid.String())
+	// workers ask the composer every 15 seconds if a compose was canceled.
+	// Use 20 seconds here to be sure this is hit.
+	uuid = startCompose(t, "empty", "tar")
+	defer deleteCompose(t, uuid)
+	runComposer(t, "compose", "cancel", uuid.String())
+	time.Sleep(20 * time.Second)
+	status := waitForCompose(t, uuid)
+	assert.Equal(t, "FAILED", status)
 }
 
 func TestBlueprintCommands(t *testing.T) {
