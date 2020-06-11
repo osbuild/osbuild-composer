@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/weldr"
 
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -119,8 +120,14 @@ func TestBlueprintCommands(t *testing.T) {
 	defer os.Remove("empty.frozen.toml")
 
 	runComposer(t, "blueprints", "tag", "empty")
-	// todo: we need a commit reference here
-	// runComposer(t, "blueprints", "undo", BLUEPRINT, COMMIT)
+
+	// undo the latest commit we can find
+	var changes weldr.BlueprintsChangesV0
+	rawReply := runComposerJSON(t, "blueprints", "changes", "empty")
+	err = json.Unmarshal(rawReply, &changes)
+	require.Nilf(t, err, "Error searching for commits to undo: %v", err)
+	runComposer(t, "blueprints", "undo", "empty", changes.BlueprintsChanges[0].Changes[0].Commit)
+
 	runComposer(t, "blueprints", "workspace", "empty")
 }
 
