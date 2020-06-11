@@ -125,6 +125,7 @@ func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmm
 	api.router.GET("/api/v:version/compose/logs/:uuid", api.composeLogsHandler)
 	api.router.GET("/api/v:version/compose/log/:uuid", api.composeLogHandler)
 	api.router.POST("/api/v:version/compose/uploads/schedule/:uuid", api.uploadsScheduleHandler)
+	api.router.DELETE("/api/v:version/compose/cancel/:uuid", api.composeCancelHandler)
 
 	api.router.DELETE("/api/v:version/upload/delete/:uuid", api.uploadsDeleteHandler)
 	api.router.GET("/api/v:version/upload/info/:uuid", api.uploadsInfoHandler)
@@ -1917,6 +1918,56 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 
 	err := json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
+}
+
+func (api *API) composeCancelHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 0) {
+		return
+	}
+
+	uuidString := params.ByName("uuid")
+	id, err := uuid.Parse(uuidString)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("%s is not a valid build uuid", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	compose, exists := api.store.GetCompose(id)
+	if !exists {
+		errors := responseError{
+			ID:  "UnknownUUID",
+			Msg: fmt.Sprintf("Compose %s doesn't exist", uuidString),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	composeStatus := api.getComposeStatus(compose)
+	if composeStatus.State == common.CWaiting {
+		errors := responseError{
+			ID:  "BuildInWrongState",
+			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
+		}
+		statusResponseError(writer, http.StatusOK, errors) // weirdly, Lorax returns 200 in this case
+		return
+	}
+
+	err = api.workers.Cancel(compose.ImageBuild.JobID)
+	if err != nil {
+		errors := responseError{
+			ID:  "InternalServerError",
+			Msg: fmt.Sprintf("Internal server error: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	reply := CancelComposeStatusV0{id, true}
+	_ = json.NewEncoder(writer).Encode(reply)
 }
 
 func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
