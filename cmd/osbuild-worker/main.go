@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -161,6 +163,25 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 	return result, nil
 }
 
+// Regularly ask osbuild-composer if the compose we're currently working on was
+// canceled and exit the process if it was.
+// It would be cleaner to kill the osbuild process using (`exec.CommandContext`
+// or similar), but osbuild does not currently support this. Exiting here will
+// make systemd clean up the whole cgroup and restart this service.
+func WatchJob(ctx context.Context, client *worker.Client, job *worker.Job) {
+	for {
+		select {
+		case <-time.After(15 * time.Second):
+			if client.JobCanceled(job) {
+				log.Println("Job was canceled. Exiting.")
+				os.Exit(0)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func main() {
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -209,6 +230,9 @@ func main() {
 
 		fmt.Printf("Running job %s\n", job.Id)
 
+		ctx, cancel := context.WithCancel(context.Background())
+		go WatchJob(ctx, client, job)
+
 		var status common.ImageBuildState
 		result, err := RunJob(job, store, client.UploadImage)
 		if err != nil {
@@ -222,6 +246,9 @@ func main() {
 		} else {
 			status = common.IBFinished
 		}
+
+		// signal to WatchJob() that it can stop watching
+		cancel()
 
 		err = client.UpdateJob(job, status, result)
 		if err != nil {
