@@ -53,7 +53,6 @@ def run_osbuild(manifest, store, output):
 
 
 def main(test_case, no_image_info, store):
-    boot_type = test_case["boot"]["type"]
     compose_request = json.dumps(test_case["compose-request"])
 
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-"]
@@ -62,11 +61,12 @@ def main(test_case, no_image_info, store):
     pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-rpmmd", "-"]
     test_case["rpmmd"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
 
-    if boot_type != "nspawn-extract" and no_image_info == False:
+    if no_image_info == False:
         with tempfile.TemporaryDirectory(dir=store, prefix="test-case-output-") as output:
             run_osbuild(test_case["manifest"], store, output)
             image_file = os.path.join(output, test_case["compose-request"]["filename"])
-            test_case["image-info"] = json.loads(get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8"))
+            image_info = get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8")
+            test_case["image-info"] = json.loads(image_info)
 
     return test_case
 
