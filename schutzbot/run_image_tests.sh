@@ -26,7 +26,7 @@ test_divider () {
 
 # Get the full test case name based on distro and architecture.
 get_full_test_case () {
-    echo "${IMAGE_TEST_CASES_PATH}/${ID}_${VERSION_ID}-$(uname -m)-${1}"
+    echo "${IMAGE_TEST_CASES_PATH}/${ID}_${VERSION_ID%.*}-$(uname -m)-${1}"
 }
 
 # Run a test case and store the result as passed or failed.
