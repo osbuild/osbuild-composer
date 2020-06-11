@@ -40,6 +40,8 @@ type testcaseStruct struct {
 	}
 }
 
+var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is given, no images are booted locally using qemu (this does not affect testing in clouds)")
+
 // mutex to enforce only one osbuild instance run at a time, see below
 var osbuildMutex sync.Mutex
 
@@ -178,6 +180,9 @@ func testSSH(t *testing.T, address string, privateKey string, ns *netNS) {
 }
 
 func testBootUsingQemu(t *testing.T, imagePath string) {
+	if *disableLocalBoot {
+		t.Skip("local booting was disabled by -disable-local-boot, skipping")
+	}
 	err := withNetworkNamespace(func(ns netNS) error {
 		return withBootedQemuImage(imagePath, ns, func() error {
 			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
