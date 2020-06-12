@@ -80,7 +80,7 @@ func TestComposeCommands(t *testing.T) {
 
 	// workers ask the composer every 15 seconds if a compose was canceled.
 	// Use 20 seconds here to be sure this is hit.
-	uuid = startCompose(t, "empty", "tar")
+	uuid = startCompose(t, "empty", "qcow2")
 	defer deleteCompose(t, uuid)
 	runComposer(t, "compose", "cancel", uuid.String())
 	time.Sleep(20 * time.Second)
