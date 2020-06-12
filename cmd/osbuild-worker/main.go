@@ -250,6 +250,15 @@ func main() {
 		// signal to WatchJob() that it can stop watching
 		cancel()
 
+		// Ensure we always have a non-nil result, composer doesn't like nils.
+		// This can happen in cases when OSBuild crashes and doesn't produce
+		// a meaningful output. E.g. when the machine runs of disk space.
+		if result == nil {
+			result = &common.ComposeResult{
+				Success: false,
+			}
+		}
+
 		err = client.UpdateJob(job, status, result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
