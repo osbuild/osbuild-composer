@@ -448,16 +448,16 @@ func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConf
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{ntpServers}))
 	}
 
+	if groups := c.GetGroups(); len(groups) > 0 {
+		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
+	}
+
 	if users := c.GetUsers(); len(users) > 0 {
 		options, err := t.userStageOptions(users)
 		if err != nil {
 			return nil, err
 		}
 		p.AddStage(osbuild.NewUsersStage(options))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
 	if t.bootable {

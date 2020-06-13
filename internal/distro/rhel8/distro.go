@@ -273,16 +273,16 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
 	}
 
+	if groups := c.GetGroups(); len(groups) > 0 {
+		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
+	}
+
 	if users := c.GetUsers(); len(users) > 0 {
 		options, err := t.userStageOptions(users)
 		if err != nil {
 			return nil, err
 		}
 		p.AddStage(osbuild.NewUsersStage(options))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil {
