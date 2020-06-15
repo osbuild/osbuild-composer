@@ -81,7 +81,7 @@ get_compose_log () {
 # Get the compose metadata.
 get_compose_metadata () {
     COMPOSE_ID=$1
-    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
+    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.json
 
     # Download the metadata.
     sudo composer-cli compose metadata $COMPOSE_ID > /dev/null
