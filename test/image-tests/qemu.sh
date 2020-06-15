@@ -231,14 +231,12 @@ done
 # Wait for SSH to start.
 greenprint "⏱ Waiting for instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan $INSTANCE_ADDRESS 2>&1 > /dev/null; then
+    if ssh-keyscan -T 5 $INSTANCE_ADDRESS 2>&1 > /dev/null; then
         echo "SSH is up!"
         ssh-keyscan $INSTANCE_ADDRESS >> ~/.ssh/known_hosts
         break
     fi
 
-    # ssh-keyscan has a 5 second timeout by default, so the pause per loop
-    # is 10 seconds when you include the following `sleep`.
     echo "Retrying in 5 seconds..."
     sleep 5
 done
