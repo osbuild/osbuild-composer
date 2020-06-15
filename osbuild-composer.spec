@@ -46,7 +46,7 @@ BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 %endif
 
-Requires: osbuild-composer-worker
+Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
 Requires: osbuild >= 17
 Requires: osbuild-ostree >= 17
@@ -177,7 +177,7 @@ export GOPATH=$PWD/_build:%{gopath}
 
 %package rcm
 Summary:    RCM-specific version of osbuild-composer
-Requires:   osbuild-composer
+Requires:   %{name} = %{version}-%{release}
 
 # remove in F34
 Obsoletes: golang-github-osbuild-composer-rcm < %{version}-%{release}
@@ -235,7 +235,7 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
 %package tests
 Summary:    Integration tests
-Requires:   osbuild-composer
+Requires:   %{name} = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
