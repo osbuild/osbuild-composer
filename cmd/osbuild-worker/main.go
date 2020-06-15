@@ -244,6 +244,7 @@ func main() {
 				result = osbuildError.Result
 			}
 		} else {
+			log.Printf("  🎉 Job completed successfully: %s", job.Id)
 			status = common.IBFinished
 		}
 
