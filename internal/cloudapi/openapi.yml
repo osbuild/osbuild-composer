@@ -1,0 +1,241 @@
+---
+openapi: 3.0.1
+info:
+  version: '1'
+  title: OSBuild Composer cloud api
+  description: Service to build and install images.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+paths:
+  /compose/{id}:
+    get:
+      summary: The status of a compose
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: ID of compose status to get
+      description: Get the status of a running or completed compose. This includes whether or not it succeeded, and also meta information about the result.
+      operationId: compose_status
+      responses:
+        '200':
+          description: compose status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeStatus'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+  /compose:
+    post:
+      summary: Create compose
+      description: Create a new compose, potentially consisting of several images and upload each to their destinations.
+      operationId: compose
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '201':
+          description: Compose has started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeResult'
+
+components:
+  schemas:
+    ComposeStatus:
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending']
+          example: 'success'
+        image_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageStatus'
+    ImageStatus:
+      required:
+       - status
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']
+          example: 'success'
+        upload_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadStatus'
+    UploadStatus:
+      oneOf:
+       - $ref: '#/components/schemas/AWSUploadStatus'
+    AWSUploadStatus:
+      type: object
+      properties:
+        ami_id:
+          type: string
+          example: 'ami-0c830793775595d4b'
+    ComposeRequest:
+      type: object
+      required:
+        - distribution
+        - image_requests
+      properties:
+        distribution:
+          type: string
+          example: 'rhel-8'
+        image_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRequest'
+        customizations:
+          $ref: '#/components/schemas/Customizations'
+    ImageRequest:
+      required:
+        - architecture
+        - image_type
+        - repositories
+        - upload_requests
+      properties:
+        architecture:
+          type: string
+          example: 'x86_64'
+        image_type:
+          type: string
+          example: 'ami'
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        upload_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadRequest'
+    Repository:
+      type: object
+      required:
+        - baseurl
+      properties:
+        baseurl:
+          type: string
+          format: url
+          example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+    UploadRequest:
+      type: object
+      required:
+        - type
+        - options
+      properties:
+        type:
+          type: string
+          enum: ['aws']
+        options:
+          oneOf:
+            -  $ref: '#/components/schemas/AWSUploadRequestOptions'
+    AWSUploadRequestOptions:
+      type: object
+      required:
+        - region
+        - s3
+        - ec2
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+        s3:
+          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
+        ec2:
+          $ref: '#/components/schemas/AWSUploadRequestOptionsEc2'
+    AWSUploadRequestOptionsS3:
+      type: object
+      required:
+        - access_key_id
+        - secret_access_key
+        - bucket
+      properties:
+        access_key_id:
+          type: string
+          example: 'AKIAIOSFODNN7EXAMPLE'
+        secret_access_key:
+          type: string
+          format: password
+          example: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+        bucket:
+          type: string
+          example: 'my-bucket'
+    AWSUploadRequestOptionsEc2:
+      type: object
+      required:
+        - access_key_id
+        - secret_access_key
+      properties:
+        access_key_id:
+          type: string
+          example: 'AKIAIOSFODNN7EXAMPLE'
+        secret_access_key:
+          type: string
+          format: password
+          example: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+        snapshot_name:
+          type: string
+          example: 'my-snapshot'
+    Customizations:
+      type: object
+      properties:
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+    Subscription:
+      type: object
+      required:
+        - organization
+        - activation-key
+        - server-url
+        - base-url
+        - insights
+      properties:
+        organization:
+          type: integer
+          example: 2040324
+        activation-key:
+          type: string
+          format: password
+          example: 'my-secret-key'
+        server-url:
+          type: string
+          example: 'subscription.rhsm.redhat.com'
+        base-url:
+          type: string
+          format: url
+          example: http://cdn.redhat.com/
+        insights:
+          type: boolean
+          example: true
+    ComposeResult:
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'

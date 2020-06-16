@@ -77,6 +77,10 @@ sudo make worker-key-pair
 sudo systemctl enable --now osbuild-composer.socket
 sudo systemctl enable --now osbuild-composer-koji.socket
 
+if [[ $ID == rhel ]]; then
+    sudo systemctl enable --now osbuild-composer-cloud.socket
+fi
+
 # Verify that the API is running.
 sudo composer-cli status show
 sudo composer-cli sources list

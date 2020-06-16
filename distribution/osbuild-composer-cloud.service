@@ -1,0 +1,19 @@
+[Unit]
+Description=OSBuild Composer cloud
+After=multi-user.target
+Requires=osbuild-composer-cloud.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/osbuild-composer/osbuild-composer-cloud
+CacheDirectory=osbuild-composer-cloud
+StateDirectory=osbuild-composer-cloud
+WorkingDirectory=/usr/libexec/osbuild-composer/
+Restart=on-failure
+
+# systemd >= 240 sets this, but osbuild-composer runs on earlier versions
+Environment="CACHE_DIRECTORY=/var/cache/osbuild-composer-cloud"
+Environment="STATE_DIRECTORY=/var/lib/osbuild-composer-cloud"
+
+[Install]
+WantedBy=multi-user.target

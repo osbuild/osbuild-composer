@@ -95,6 +95,8 @@ type OSTreeImageOptions struct {
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
+// ServerUrl denotes the host to register the system with
+// BaseUrl specifies the repository URL for DNF
 type SubscriptionImageOptions struct {
 	Organization  int
 	ActivationKey string

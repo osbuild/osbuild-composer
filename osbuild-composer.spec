@@ -40,6 +40,7 @@ BuildRequires:  golang(github.com/BurntSushi/toml)
 BuildRequires:  golang(github.com/coreos/go-semver/semver)
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
+BuildRequires:  golang(github.com/go-chi/chi)
 BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
 BuildRequires:  golang(github.com/kolo/xmlrpc)
@@ -94,6 +95,7 @@ export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
+%gobuild -o _bin/osbuild-composer-cloud %{goipath}/cmd/osbuild-composer-cloud
 
 
 %if %{with tests} || 0%{?rhel}
@@ -115,6 +117,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-tests %{
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cloud-tests %{goipath}/cmd/osbuild-composer-cloud-tests
 
 %endif
 
@@ -134,11 +137,17 @@ install -m 0644 -vp distribution/osbuild-remote-worker.socket   %{buildroot}%{_u
 install -m 0644 -vp distribution/osbuild-remote-worker@.service %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-worker@.service        %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-composer-koji.socket   %{buildroot}%{_unitdir}/
+install -m 0755 -vd                                         %{buildroot}%{_unitdir}
+install -m 0644 -vp distribution/osbuild-composer.{service,socket} %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-*worker*.{service,socket} %{buildroot}%{_unitdir}/
 
 install -m 0755 -vd                                             %{buildroot}%{_sysusersdir}
 install -m 0644 -vp distribution/osbuild-composer.conf          %{buildroot}%{_sysusersdir}/
 
 install -m 0755 -vd                                             %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
+
+install -m 0755 -vp _bin/osbuild-composer-cloud             %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0644 -vp distribution/osbuild-composer-cloud.{service,socket} %{buildroot}%{_unitdir}/
 
 %if %{with tests} || 0%{?rhel}
 
@@ -148,6 +157,7 @@ install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-composer-cloud-tests       %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer
 install -m 0644 -vp test/azure-deployment-template.json         %{buildroot}%{_datadir}/tests/osbuild-composer/
@@ -223,6 +233,27 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %postun worker
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
+
+%package cloud
+Summary:    The osbuild-composer cloud api
+Requires:   systemd
+
+%description cloud
+The cloud api for osbuild-composer
+
+%files cloud
+%{_libexecdir}/osbuild-composer/osbuild-composer-cloud
+%{_unitdir}/osbuild-composer-cloud.socket
+%{_unitdir}/osbuild-composer-cloud.service
+
+%post cloud
+%systemd_post osbuild-composer-cloud.socket osbuild-composer-cloud.service
+
+%preun cloud
+%systemd_preun osbuild-composer-cloud.socket osbuild-composer-cloud.service
+
+%postun cloud
+%systemd_postun_with_restart osbuild-composer-cloud.socket osbuild-composer-cloud.service
 
 %if %{with tests} || 0%{?rhel}
 
