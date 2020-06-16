@@ -1,0 +1,10 @@
+[Unit]
+Description=OSBuild Composer cloud API sockets
+
+[Socket]
+Service=osbuild-composer-cloud.service
+ListenStream=8703
+ListenStream=8704
+
+[Install]
+WantedBy=sockets.target

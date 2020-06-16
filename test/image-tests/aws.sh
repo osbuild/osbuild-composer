@@ -280,6 +280,96 @@ $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 
 # Use the return code of the smoke test to determine if we passed or failed.
+# On rhel continue with the cloudapi test
+if [[ $RESULTS == 1 ]] && [[ $ID != rhel ]]; then
+    greenprint "💚 Success"
+    exit 0
+elif [[ $RESULTS != 1 ]]; then
+    greenprint "❌ Failed"
+    exit 1
+fi
+
+CLOUD_REQUEST_FILE=${TEMPDIR}/image_request.json
+REPOSITORY_RHEL=repositories/rhel-8.json
+if [[ $VERSION_ID == 8.3 ]]; then
+    REPOSITORY_RHEL=repositories/rhel-8-beta.json
+fi
+
+sudo systemctl stop osbuild-worker*
+sudo systemctl start osbuild-remote-worker@localhost:8704
+
+BASE_URL=$(jq -r '.x86_64[0].baseurl' "$REPOSITORY_RHEL")
+APPSTREAM_URL=$(jq -r '.x86_64[1].baseurl' "$REPOSITORY_RHEL")
+SNAPSHOT_NAME=$(cat /proc/sys/kernel/random/uuid)
+
+tee "$CLOUD_REQUEST_FILE" > /dev/null << EOF
+{
+  "distribution": "rhel-8",
+  "image_requests": [
+    {
+      "architecture": "x86_64",
+      "image_type": "qcow2",
+      "repositories": [
+        { "baseurl": "${BASE_URL}" },
+        { "baseurl": "${APPSTREAM_URL}" }
+      ],
+      "upload_requests": [
+        {
+          "type": "aws",
+          "options": {
+            "region": "${AWS_REGION}",
+            "s3": {
+              "access_key_id": "${AWS_ACCESS_KEY_ID}",
+              "secret_access_key": "${AWS_SECRET_ACCESS_KEY}",
+              "bucket": "${AWS_BUCKET}"
+            },
+            "ec2": {
+              "access_key_id": "${AWS_ACCESS_KEY_ID}",
+              "secret_access_key": "${AWS_SECRET_ACCESS_KEY}",
+              "snapshot_name": "${SNAPSHOT_NAME}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+EOF
+
+COMPOSE_ID=$(curl -sS -H 'Content-Type: application/json' -X POST -d @"$CLOUD_REQUEST_FILE" http://localhost:8703/compose | jq -r '.id')
+# Wait for the compose to finish.
+greenprint "⏱ Waiting for cloud compose to finish: ${COMPOSE_ID}"
+
+for LOOP_COUNTER in {0..40}; do
+    COMPOSE_STATUS=$(curl -sS http://localhost:8703/compose/"$COMPOSE_ID" | jq -r '.status')
+
+    echo "Cloud compose $COMPOSE_ID status: $COMPOSE_STATUS"
+    if [[ $COMPOSE_STATUS == FAILED ]]; then
+        echo "Something went wrong with the cloudapi compose. 😢"
+        exit 1
+    elif [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
+        break
+    fi
+
+    sleep 30
+done
+
+# Find the image that we made in AWS.
+greenprint "🔍 Search for created AMI"
+$AWS_CMD ec2 describe-images \
+    --owners self \
+    --filters Name=name,Values="$SNAPSHOT_NAME" \
+    | tee "$AMI_DATA" > /dev/null
+
+AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$AMI_DATA")
+SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$AMI_DATA")
+
+# Delete the image without running it
+greenprint "🧼 Cleaning up composer cloud image"
+$AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
+$AWS_CMD ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
+
+# Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
   greenprint "💚 Success"
 else
