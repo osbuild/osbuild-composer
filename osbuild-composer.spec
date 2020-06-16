@@ -43,6 +43,7 @@ BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
 BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
+BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 %endif
 

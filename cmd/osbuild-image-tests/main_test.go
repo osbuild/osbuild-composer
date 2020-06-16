@@ -21,8 +21,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
 
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/azuretest"
+	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/openstacktest"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
@@ -296,6 +299,49 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 }
 
+func testBootUsingOpenStack(t *testing.T, imagePath string) {
+	creds, err := openstack.AuthOptionsFromEnv()
+
+	// if no credentials are given, fall back to qemu
+	if (creds == gophercloud.AuthOptions{}) {
+		log.Print("No OpenStack credentials given, falling back to booting using qemu")
+		testBootUsingQemu(t, imagePath)
+		return
+	}
+	require.NoError(t, err)
+
+	// provider is the top-level client that all OpenStack services derive from
+	provider, err := openstack.AuthenticatedClient(creds)
+	require.NoError(t, err)
+
+	// create a random test id to name all the resources used in this test
+	imageName, err := generateRandomString("osbuild-image-tests-openstack-image-")
+	require.NoError(t, err)
+
+	// the following line should be done by osbuild-composer at some point
+	image, err := openstacktest.UploadImageToOpenStack(provider, imagePath, imageName)
+	require.NoErrorf(t, err, "Upload to OpenStack failed, resources could have been leaked")
+	require.NotNil(t, image)
+
+	// delete the image after the test is over
+	defer func() {
+		err = openstacktest.DeleteImageFromOpenStack(provider, image.ID)
+		require.NoErrorf(t, err, "Cannot delete OpenStack image, resources could have been leaked")
+	}()
+
+	// boot the uploaded image and try to connect to it
+	err = withSSHKeyPair(func(privateKey, publicKey string) error {
+		userData, err := createUserData(publicKey)
+		require.NoErrorf(t, err, "Creating user data failed: %v", err)
+
+		return openstacktest.WithBootedImageInOpenStack(provider, image.ID, userData, func(address string) error {
+			testSSH(t, address, privateKey, nil)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
 // testBoot tests if the image is able to successfully boot
 // Before the test it boots the image respecting the specified bootType.
 // The test passes if the function is able to connect to the image via ssh
@@ -317,6 +363,9 @@ func testBoot(t *testing.T, imagePath string, bootType string) {
 
 	case "azure":
 		testBootUsingAzure(t, imagePath)
+
+	case "openstack":
+		testBootUsingOpenStack(t, imagePath)
 
 	default:
 		panic("unknown boot type!")
