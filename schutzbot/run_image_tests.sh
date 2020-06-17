@@ -53,6 +53,23 @@ run_test_case () {
 # Ensure osbuild-composer-tests is installed.
 sudo dnf -y install osbuild-composer-tests
 
+# Get a list of the RPMs we need for these tests.
+egrep -h -o "http.**.rpm" ${IMAGE_TEST_CASES_PATH}/${ID}_${VERSION_ID%.*}-$(uname -m)-* | sort | uniq > /tmp/package_urls.txt
+xargs -n 1 basename < /tmp/package_urls.txt | sed 's/\.rpm$//' > /tmp/packages_stripped.txt
+
+# Adjust the RPM URLs to point to localhost.
+sudo sed -i 's#http://mirrors.kernel.org/.*/#http://localhost:8000/#' ${IMAGE_TEST_CASES_PATH}/${ID}_${VERSION_ID%.*}-$(uname -m)-*
+
+# Download the cached RPMs, create a repo, and start a simple web server.
+sudo dnf -y install createrepo_c dnf-plugins-core
+mkdir -p /tmp/cached_rpms
+pushd /tmp/cached_rpms
+    dnf -y download --downloaddir . $(cat /tmp/packages_stripped.txt)
+    createrepo_c .
+    python -m SimpleHTTPServer 8000 > /dev/null &
+    WEBSERVER_PID=$!
+popd
+
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
@@ -61,6 +78,9 @@ for TEST_CASE in "${TEST_CASES[@]}"; do
     TEST_CASE_FILENAME=$(get_full_test_case $TEST_CASE)
     run_test_case $IMAGE_TEST_CASE_RUNNER $TEST_CASE_FILENAME
 done
+
+# Stop the caching webserver we created.
+kill $WEBSERVER_PID
 
 # Print a report of the test results.
 test_divider
