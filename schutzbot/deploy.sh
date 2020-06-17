@@ -1,6 +1,23 @@
 #!/bin/bash
 set -euxo pipefail
 
+function retry {
+    local count=0
+    local retries=5
+    until "$@"; do
+        exit=$?
+        count=$(($count + 1))
+        if [[ $count -lt $retries ]]; then
+            echo "Retrying command..."
+            sleep 1
+        else
+            echo "Command failed after ${retries} retries. Giving up."
+            return $exit
+        fi
+    done
+    return 0
+}
+
 # Get OS details.
 source /etc/os-release
 
@@ -15,7 +32,7 @@ sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
-sudo dnf -y install composer-cli osbuild osbuild-ostree \
+retry sudo dnf -y install composer-cli osbuild osbuild-ostree \
     osbuild-composer osbuild-composer-rcm osbuild-composer-tests \
     osbuild-composer-worker python3-osbuild
 
