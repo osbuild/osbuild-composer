@@ -63,7 +63,11 @@ func runOsbuild(manifest []byte, store, outputDirectory string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(outBuffer.String())
+		// Pretty print the osbuild error output.
+		buf := new(bytes.Buffer)
+		_ = json.Indent(buf, outBuffer.Bytes(), "", "    ")
+		fmt.Println(buf)
+
 		return fmt.Errorf("running osbuild failed: %v", err)
 	}
 
