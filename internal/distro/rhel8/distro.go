@@ -243,8 +243,6 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		if t.arch.Name() != "s390x" {
 			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
 		}
-	} else if t.rpmOstree {
-		p.AddStage(osbuild.NewFSTabStage(t.fsOstreeTabStageOptions()))
 	}
 
 	// TODO support setting all languages and install corresponding langpack-* package
@@ -438,37 +436,6 @@ func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
 	}
 	return &options
-}
-
-func (t *imageType) fsOstreeTabStageOptions() *osbuild.FSTabStageOptions {
-	return &osbuild.FSTabStageOptions{
-		FileSystems: []*osbuild.FSTabEntry{
-			{
-				Label:   "root",
-				VFSType: "ext4",
-				Path:    "/",
-				Options: "defaults",
-				Freq:    1,
-				PassNo:  1,
-			},
-			{
-				Label:   "boot",
-				VFSType: "ext4",
-				Path:    "/boot",
-				Options: "defaults",
-				Freq:    1,
-				PassNo:  1,
-			},
-			{
-				Label:   "EFI-SYSTEM",
-				VFSType: "vfat",
-				Path:    "/boot/efi",
-				Options: "umask=0077,shortname=winnt",
-				Freq:    0,
-				PassNo:  2,
-			},
-		},
-	}
 }
 
 func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
