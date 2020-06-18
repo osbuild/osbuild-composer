@@ -9,11 +9,22 @@ function greenprint {
 # Get OS details.
 source /etc/os-release
 
-# Install s3cmd if it is not present.
-if ! s3cmd --version; then
-    greenprint "📦 Installing s3cmd"
-    sudo pip3 install s3cmd
+# Install EPEL for RHEL so we can get mock.
+if [[ $ID == rhel ]]; then
+    greenprint "📦 Installing EPEL for RHEL"
+    sudo curl -Ls --retry 5 --output /tmp/epel.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo rpm -Uvh /tmp/epel.rpm
+    sudo dnf makecache
 fi
+
+# Install packages.
+greenprint "📦 Installing packages for mock build"
+sudo dnf -qy install createrepo_c make mock rpm-build
+
+# Install s3cmd if it is not present.
+greenprint "📦 Installing s3cmd"
+sudo pip3 -qq install s3cmd
 
 # Jenkins sets a workspace variable as the root of its working directory.
 WORKSPACE=${WORKSPACE:-$(pwd)}

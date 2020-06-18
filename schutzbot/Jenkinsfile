@@ -4,18 +4,6 @@ pipeline {
     environment {
         AWS_REGION = "us-east-2"
         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
-        // Colorful Ansible always looks nicer.
-        ANSIBLE_FORCE_COLOR="True"
-        // Time each task and display stdout as YAML (easier to read).
-        ANSIBLE_LOAD_CALLBACK_PLUGINS="True"
-        ANSIBLE_CALLBACK_WHITELIST="profile_tasks"
-        ANSIBLE_STDOUT_CALLBACK="yaml"
-        // Don't display those ugly purple deprecation warnings.
-        ANSIBLE_DEPRECATION_WARNINGS="False"
-        // Our host keys are constantly changing.
-        ANSIBLE_HOST_KEY_CHECKING="False"
-        // Enable ssh pipelining for faster deployments to remote nodes.
-        ANSIBLE_PIPELINING="True"
     }
 
     options {
@@ -36,7 +24,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31') {
-                    agent { label "fedora31" }
+                    agent { label "f31 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -50,7 +38,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32') {
-                    agent { label "fedora32" }
+                    agent { label "f32 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -64,7 +52,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8cdn && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -79,7 +67,7 @@ pipeline {
                 }
                 // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
                 stage('RHEL 8.3 Nightly') {
-                    agent { label "rhel83 && psi" }
+                    agent { label "rhel83nightly && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
