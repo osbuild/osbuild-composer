@@ -3131,36 +3131,6 @@
           "options": {}
         },
         {
-          "name": "org.osbuild.fstab",
-          "options": {
-            "filesystems": [
-              {
-                "label": "root",
-                "vfs_type": "ext4",
-                "path": "/",
-                "options": "defaults",
-                "freq": 1,
-                "passno": 1
-              },
-              {
-                "label": "boot",
-                "vfs_type": "ext4",
-                "path": "/boot",
-                "options": "defaults",
-                "freq": 1,
-                "passno": 1
-              },
-              {
-                "label": "EFI-SYSTEM",
-                "vfs_type": "vfat",
-                "path": "/boot/efi",
-                "options": "umask=0077,shortname=winnt",
-                "passno": 2
-              }
-            ]
-          }
-        },
-        {
           "name": "org.osbuild.locale",
           "options": {
             "language": "en_US"
@@ -8791,32 +8761,6 @@
       "dhcpv6-client",
       "cockpit"
     ],
-    "fstab": [
-      [
-        "LABEL=EFI-SYSTEM",
-        "/boot/efi",
-        "vfat",
-        "umask=0077,shortname=winnt",
-        "0",
-        "2"
-      ],
-      [
-        "LABEL=boot",
-        "/boot",
-        "ext4",
-        "defaults",
-        "1",
-        "1"
-      ],
-      [
-        "LABEL=root",
-        "/",
-        "ext4",
-        "defaults",
-        "1",
-        "1"
-      ]
-    ],
     "groups": [
       "root:x:0:",
       "wheel:x:10:"
@@ -8884,7 +8828,7 @@
     "ostree": {
       "refs": {
         "rhel/8/x86_64/edge": {
-          "inputhash": "b458ad7246fbf8126d2ff81bf3ec24d70b1c573d26e178da5545bc3d27c7c193"
+          "inputhash": "4a6ade151f1a98ff6304ebb8c7df8de307fea23ad415bfc34b9e268b70f760fc"
         }
       },
       "repo": {
