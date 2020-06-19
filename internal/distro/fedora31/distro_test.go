@@ -3,6 +3,7 @@ package fedora31_test
 import (
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/stretchr/testify/assert"
@@ -227,7 +228,7 @@ func TestImageType_BasePackages(t *testing.T) {
 	for _, pkgMap := range pkgMaps {
 		imgType, err := arch.GetImageType(pkgMap.name)
 		assert.NoError(t, err)
-		basePackages, excludedPackages := imgType.BasePackages()
+		basePackages, excludedPackages := imgType.Packages(blueprint.Blueprint{})
 		assert.Equalf(
 			t,
 			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),

@@ -2544,15 +2544,13 @@ func (api *API) allRepositories() []rpmmd.RepoConfig {
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
 	repos := api.allRepositories()
-	specs := bp.GetPackages()
 
+	specs := bp.GetPackages()
 	excludeSpecs := []string{}
 	if imageType != nil {
 		// When the output type is known, include the base packages in the depsolve
 		// transaction.
-		packages, excludePackages := imageType.BasePackages()
-		specs = append(specs, packages...)
-		excludeSpecs = append(excludePackages, excludeSpecs...)
+		specs, excludeSpecs = imageType.Packages(*bp)
 	}
 
 	packages, _, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID(), api.arch.Name())

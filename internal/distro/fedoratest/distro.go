@@ -83,7 +83,7 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *imageType) BasePackages() ([]string, []string) {
+func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	return nil, nil
 }
 

@@ -114,20 +114,7 @@ func main() {
 		}
 	}
 
-	packages := make([]string, len(composeRequest.Blueprint.Packages))
-	for i, pkg := range composeRequest.Blueprint.Packages {
-		packages[i] = pkg.Name
-		// If a package has version "*" the package name suffix must be equal to "-*-*.*"
-		// Using just "-*" would find any other package containing the package name
-		if pkg.Version != "" && pkg.Version != "*" {
-			packages[i] += "-" + pkg.Version
-		} else if pkg.Version == "*" {
-			packages[i] += "-*-*.*"
-		}
-	}
-
-	pkgs, excludePkgs := imageType.BasePackages()
-	packages = append(pkgs, packages...)
+	packages, excludePkgs := imageType.Packages(composeRequest.Blueprint)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
