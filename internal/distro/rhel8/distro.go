@@ -310,6 +310,21 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		}))
 	}
 
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+
+		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		},
+		))
+	}
+
 	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
 
 	return p, nil
