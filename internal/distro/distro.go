@@ -83,14 +83,24 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	OSTree OSTreeImageOptions
-	Size   uint64
+	OSTree       OSTreeImageOptions
+	Size         uint64
+	Subscription *SubscriptionImageOptions
 }
 
 // The OSTreeImageOptions specify ostree-specific image options
 type OSTreeImageOptions struct {
 	Ref    string
 	Parent string
+}
+
+// The SubscriptionImageOptions specify subscription-specific image options
+type SubscriptionImageOptions struct {
+	Organization  int
+	ActivationKey string
+	ServerUrl     string
+	BaseUrl       string
+	Insights      bool
 }
 
 // A Manifest is an opaque JSON object, which is a valid input to osbuild
