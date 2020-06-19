@@ -17,7 +17,7 @@ import (
 )
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpmmd rpmmd.RPMMD, repos []rpmmd.RepoConfig) distro.Manifest {
-	packages, excludePackages := t.BasePackages()
+	packages, excludePackages := t.Packages(bp)
 	pkgs, _, err := rpmmd.Depsolve(packages, excludePackages, repos, d.ModulePlatformID(), a.Name())
 	if err != nil {
 		panic(err)

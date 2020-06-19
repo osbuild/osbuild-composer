@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
@@ -83,7 +84,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 							_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
 
-							basePackagesInclude, basePackagesExclude := imgType.BasePackages()
+							basePackagesInclude, basePackagesExclude := imgType.Packages(blueprint.Blueprint{})
 							_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
 						})

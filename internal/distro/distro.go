@@ -70,7 +70,7 @@ type ImageType interface {
 
 	// Returns the default packages to include and exclude when making the image
 	// type.
-	BasePackages() ([]string, []string)
+	Packages(bp blueprint.Blueprint) ([]string, []string)
 
 	// Returns the build packages for the output type.
 	BuildPackages() []string

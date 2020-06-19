@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 
@@ -82,7 +83,7 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 // Depsolves packages and build packages for building an image for a given
 // distro, in the given architecture
 func depsolve(rpmmd rpmmd.RPMMD, distro distro.Distro, imageType distro.ImageType, repos []rpmmd.RepoConfig, arch distro.Arch) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
-	specs, excludeSpecs := imageType.BasePackages()
+	specs, excludeSpecs := imageType.Packages(blueprint.Blueprint{})
 	packages, _, err := rpmmd.Depsolve(specs, excludeSpecs, repos, distro.ModulePlatformID(), arch.Name())
 	if err != nil {
 		return nil, nil, fmt.Errorf("RPMMD.Depsolve: %v", err)

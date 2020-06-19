@@ -155,8 +155,12 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *imageType) BasePackages() ([]string, []string) {
-	packages := t.packages
+func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
+	packages := append(t.packages, bp.GetPackages()...)
+	timezone, _ := bp.Customizations.GetTimezoneSettings()
+	if timezone != nil {
+		packages = append(packages, "chrony")
+	}
 	if t.bootable {
 		packages = append(packages, t.arch.bootloaderPackages...)
 	}
@@ -439,7 +443,6 @@ func (t *imageType) pipeline(c *blueprint.Customizations, repos []rpmmd.RepoConf
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 
-	// TODO install chrony when this is set?
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{*timezone}))
 	}
