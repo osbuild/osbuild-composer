@@ -32,9 +32,8 @@ sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
-retry sudo dnf -y install composer-cli osbuild osbuild-ostree \
-    osbuild-composer osbuild-composer-rcm osbuild-composer-tests \
-    osbuild-composer-worker python3-osbuild
+# Note: installing only -tests to catch missing dependencies
+retry sudo dnf -y install osbuild-composer-tests
 
 # Copy the internal repositories into place when needed.
 if curl -fs http://download.devel.redhat.com > /dev/null; then
