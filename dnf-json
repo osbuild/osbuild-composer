@@ -66,8 +66,12 @@ def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     return base
 
 
-def exit_with_dnf_error(kind: str, reason: str):
+def print_dnf_error(kind: str, reason: str):
     json.dump({"kind": kind, "reason": reason}, sys.stdout)
+
+
+def exit_with_dnf_error(kind: str, reason: str):
+    print_dnf_error(kind, reason)
     sys.exit(DNF_ERROR_EXIT_CODE)
 
 
@@ -104,10 +108,17 @@ cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
-    try:
-        base = create_base(repos, module_platform_id, persistdir, cachedir, arch)
-    except dnf.exceptions.Error as e:
-        exit_with_dnf_error(type(e).__name__, f"Error occurred when setting up repo: {e}")
+    # This is running within a context of a single endpoint handler, so we need to retry as
+    # fast as possible so that the client connection does not timeout
+    RETRY = 3
+    for i in range(RETRY):
+        try:
+            base = create_base(repos, module_platform_id, persistdir, cachedir, arch)
+            break
+        except dnf.exceptions.Error as e:
+            print_dnf_error(type(e).__name__, f"Error occurred when setting up repo: {e}")
+    else:
+        exit_with_dnf_error("Error", f"Repository setup failed after {RETRY} retries.")
 
     if command == "dump":
         packages = []
