@@ -234,18 +234,14 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		go WatchJob(ctx, client, job)
 
-		var status common.ImageBuildState
 		result, err := RunJob(job, store, client.UploadImage)
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
-			status = common.IBFailed
 
 			// If the error comes from osbuild, retrieve the result
 			if osbuildError, ok := err.(*OSBuildError); ok {
 				result = &worker.OSBuildJobResult{OSBuildOutput: osbuildError.Result}
 			}
-		} else {
-			status = common.IBFinished
 		}
 
 		// signal to WatchJob() that it can stop watching
@@ -262,7 +258,7 @@ func main() {
 			}
 		}
 
-		err = client.UpdateJob(job, status, result)
+		err = client.UpdateJob(job, result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
 		}

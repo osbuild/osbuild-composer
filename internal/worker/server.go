@@ -268,14 +268,6 @@ func (s *Server) updateJobHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	// The jobqueue doesn't support setting the status before a job is
-	// finished. This branch should never be hit, because the worker
-	// doesn't attempt this. Change the API to remove this awkwardness.
-	if body.Status != common.IBFinished && body.Status != common.IBFailed {
-		jsonErrorf(writer, http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
-		return
-	}
-
 	err = s.jobs.FinishJob(id, body.Result)
 	if err != nil {
 		switch err {

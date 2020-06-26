@@ -48,8 +48,7 @@ type jobResponse struct {
 }
 
 type updateJobRequest struct {
-	Status common.ImageBuildState `json:"status"`
-	Result *OSBuildJobResult      `json:"result"`
+	Result *OSBuildJobResult `json:"result"`
 }
 
 type updateJobResponse struct {
