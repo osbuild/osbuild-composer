@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -24,6 +26,10 @@ type TargetError struct {
 
 func (e *TargetError) Error() string {
 	return e.Message
+}
+
+func NewTargetError(format string, a ...interface{}) *TargetError {
+	return &TargetError{fmt.Sprintf(format, a...)}
 }
 
 type TargetResult struct {

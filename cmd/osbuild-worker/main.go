@@ -56,19 +56,20 @@ func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, upload
 	case *target.LocalTargetOptions:
 		f, err := os.Open(path.Join(outputDirectory, options.Filename))
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			// clearly our mistake, let's just panic
+			panic(err)
 		}
 
 		err = uploadFunc(jobId, options.Filename, f)
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			return worker.NewTargetError("cannot upload the image to composer: %v", err)
 		}
 
 	case *target.AWSTargetOptions:
 
 		a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			return worker.NewTargetError("cannot create aws uploader: %v", err)
 		}
 
 		if options.Key == "" {
@@ -77,13 +78,13 @@ func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, upload
 
 		_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			return worker.NewTargetError("cannot upload the image to aws: %v", err)
 		}
 
 		/* TODO: communicate back the AMI */
 		_, err = a.Register(t.ImageName, options.Bucket, options.Key)
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			return worker.NewTargetError("cannot register the image in aws: %v", err)
 		}
 	case *target.AzureTargetOptions:
 
@@ -105,10 +106,10 @@ func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, upload
 		)
 
 		if err != nil {
-			return &worker.TargetError{err.Error()}
+			return worker.NewTargetError("cannot upload the image to azure: %v", err)
 		}
 	default:
-		return &worker.TargetError{"invalid target type"}
+		return worker.NewTargetError("invalid target type")
 	}
 
 	return nil
