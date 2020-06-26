@@ -51,38 +51,24 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	}, nil
 }
 
-type TargetsError struct {
-	Errors []error
-}
-
-func (e *TargetsError) Error() string {
-	errString := fmt.Sprintf("%d target(s) errored:\n", len(e.Errors))
-
-	for _, err := range e.Errors {
-		errString += err.Error() + "\n"
-	}
-
-	return errString
-}
-
-func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, uploadFunc func(uuid.UUID, string, io.Reader) error) error {
+func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, uploadFunc func(uuid.UUID, string, io.Reader) error) *worker.TargetError {
 	switch options := t.Options.(type) {
 	case *target.LocalTargetOptions:
 		f, err := os.Open(path.Join(outputDirectory, options.Filename))
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 
 		err = uploadFunc(jobId, options.Filename, f)
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 
 	case *target.AWSTargetOptions:
 
 		a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 
 		if options.Key == "" {
@@ -91,13 +77,13 @@ func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, upload
 
 		_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 
 		/* TODO: communicate back the AMI */
 		_, err = a.Register(t.ImageName, options.Bucket, options.Key)
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 	case *target.AzureTargetOptions:
 
@@ -119,10 +105,10 @@ func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, upload
 		)
 
 		if err != nil {
-			return err
+			return &worker.TargetError{err.Error()}
 		}
 	default:
-		return fmt.Errorf("invalid target type")
+		return &worker.TargetError{"invalid target type"}
 	}
 
 	return nil
@@ -154,22 +140,14 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 
 	result.OSBuildOutput = osBuildOutput
 
-	var r []error
-
 	for _, t := range job.Targets {
-		err := RunTarget(t, job.Id, outputDirectory, uploadFunc)
-		if err != nil {
-			r = append(r, err)
-		}
+		targetErr := RunTarget(t, job.Id, outputDirectory, uploadFunc)
+		result.Targets = append(result.Targets, worker.TargetResult{Target: *t, Error: targetErr})
 	}
 
 	err = os.RemoveAll(outputDirectory)
 	if err != nil {
 		log.Printf("Error removing osbuild output directory (%s): %v", outputDirectory, err)
-	}
-
-	if len(r) > 0 {
-		result.GenericError = (&TargetsError{Errors: r}).Error() // temporary, will be refactored
 	}
 
 	return

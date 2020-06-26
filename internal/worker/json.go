@@ -17,8 +17,23 @@ type OSBuildJob struct {
 	Targets  []*target.Target `json:"targets,omitempty"`
 }
 
+// must be serializable!
+type TargetError struct {
+	Message string `json:"err"`
+}
+
+func (e *TargetError) Error() string {
+	return e.Message
+}
+
+type TargetResult struct {
+	Target target.Target `json:"target"`
+	Error  *TargetError  `json:"error,omitempty"`
+}
+
 type OSBuildJobResult struct {
 	OSBuildOutput *common.ComposeResult `json:"osbuild_output,omitempty"`
+	Targets       []TargetResult        `json:"targets,omitempty"`
 	GenericError  string                `json:"generic_error,omitempty"`
 }
 
