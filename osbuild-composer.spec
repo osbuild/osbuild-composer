@@ -54,6 +54,11 @@ Requires: osbuild-ostree >= 17
 
 Provides: weldr
 
+%if 0%{?rhel}
+Obsoletes: lorax-composer <= 28
+Conflicts: lorax-composer
+%endif
+
 # remove in F34
 Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
