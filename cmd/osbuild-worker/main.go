@@ -65,6 +65,69 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
+func RunTarget(t *target.Target, jobId uuid.UUID, outputDirectory string, uploadFunc func(uuid.UUID, string, io.Reader) error) error {
+	switch options := t.Options.(type) {
+	case *target.LocalTargetOptions:
+		f, err := os.Open(path.Join(outputDirectory, options.Filename))
+		if err != nil {
+			return err
+		}
+
+		err = uploadFunc(jobId, options.Filename, f)
+		if err != nil {
+			return err
+		}
+
+	case *target.AWSTargetOptions:
+
+		a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
+		if err != nil {
+			return err
+		}
+
+		if options.Key == "" {
+			options.Key = jobId.String()
+		}
+
+		_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
+		if err != nil {
+			return err
+		}
+
+		/* TODO: communicate back the AMI */
+		_, err = a.Register(t.ImageName, options.Bucket, options.Key)
+		if err != nil {
+			return err
+		}
+	case *target.AzureTargetOptions:
+
+		credentials := azure.Credentials{
+			StorageAccount:   options.StorageAccount,
+			StorageAccessKey: options.StorageAccessKey,
+		}
+		metadata := azure.ImageMetadata{
+			ContainerName: options.Container,
+			ImageName:     t.ImageName,
+		}
+
+		const azureMaxUploadGoroutines = 4
+		err := azure.UploadImage(
+			credentials,
+			metadata,
+			path.Join(outputDirectory, options.Filename),
+			azureMaxUploadGoroutines,
+		)
+
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid target type")
+	}
+
+	return nil
+}
+
 func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (result worker.OSBuildJobResult) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
@@ -94,69 +157,9 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 	var r []error
 
 	for _, t := range job.Targets {
-		switch options := t.Options.(type) {
-		case *target.LocalTargetOptions:
-			f, err := os.Open(path.Join(outputDirectory, options.Filename))
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			err = uploadFunc(job.Id, options.Filename, f)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-		case *target.AWSTargetOptions:
-
-			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			if options.Key == "" {
-				options.Key = job.Id.String()
-			}
-
-			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			/* TODO: communicate back the AMI */
-			_, err = a.Register(t.ImageName, options.Bucket, options.Key)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-		case *target.AzureTargetOptions:
-
-			credentials := azure.Credentials{
-				StorageAccount:   options.StorageAccount,
-				StorageAccessKey: options.StorageAccessKey,
-			}
-			metadata := azure.ImageMetadata{
-				ContainerName: options.Container,
-				ImageName:     t.ImageName,
-			}
-
-			const azureMaxUploadGoroutines = 4
-			err := azure.UploadImage(
-				credentials,
-				metadata,
-				path.Join(outputDirectory, options.Filename),
-				azureMaxUploadGoroutines,
-			)
-
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-		default:
-			r = append(r, fmt.Errorf("invalid target type"))
+		err := RunTarget(t, job.Id, outputDirectory, uploadFunc)
+		if err != nil {
+			r = append(r, err)
 		}
 	}
 
