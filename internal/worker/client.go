@@ -111,7 +111,7 @@ func (c *Client) JobCanceled(job *Job) bool {
 	return jr.Canceled
 }
 
-func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
+func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *OSBuildJobResult) error {
 	var b bytes.Buffer
 	err := json.NewEncoder(&b).Encode(&updateJobRequest{status, result})
 	if err != nil {

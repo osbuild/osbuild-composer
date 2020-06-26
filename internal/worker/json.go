@@ -49,7 +49,7 @@ type jobResponse struct {
 
 type updateJobRequest struct {
 	Status common.ImageBuildState `json:"status"`
-	Result *common.ComposeResult  `json:"result"`
+	Result *OSBuildJobResult      `json:"result"`
 }
 
 type updateJobResponse struct {

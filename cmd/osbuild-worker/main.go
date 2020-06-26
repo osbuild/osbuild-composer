@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -65,7 +66,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
+func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*worker.OSBuildJobResult, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
@@ -157,10 +158,10 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 	}
 
 	if len(r) > 0 {
-		return result, &TargetsError{r}
+		return &worker.OSBuildJobResult{OSBuildOutput: result}, &TargetsError{r}
 	}
 
-	return result, nil
+	return &worker.OSBuildJobResult{OSBuildOutput: result}, nil
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
@@ -241,7 +242,7 @@ func main() {
 
 			// If the error comes from osbuild, retrieve the result
 			if osbuildError, ok := err.(*OSBuildError); ok {
-				result = osbuildError.Result
+				result = &worker.OSBuildJobResult{OSBuildOutput: osbuildError.Result}
 			}
 		} else {
 			status = common.IBFinished
@@ -254,8 +255,10 @@ func main() {
 		// This can happen in cases when OSBuild crashes and doesn't produce
 		// a meaningful output. E.g. when the machine runs of disk space.
 		if result == nil {
-			result = &common.ComposeResult{
-				Success: false,
+			result = &worker.OSBuildJobResult{
+				OSBuildOutput: &common.ComposeResult{
+					Success: false,
+				},
 			}
 		}
 

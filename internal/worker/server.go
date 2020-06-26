@@ -276,7 +276,7 @@ func (s *Server) updateJobHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	err = s.jobs.FinishJob(id, OSBuildJobResult{OSBuildOutput: body.Result})
+	err = s.jobs.FinishJob(id, body.Result)
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotExist:
