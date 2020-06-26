@@ -43,6 +43,20 @@ type OSBuildJobResult struct {
 	GenericError  string                `json:"generic_error,omitempty"`
 }
 
+func (r *OSBuildJobResult) Successful() bool {
+	if r.OSBuildOutput != nil && !r.OSBuildOutput.Success {
+		return false
+	}
+
+	for _, t := range r.Targets {
+		if t.Error != nil {
+			return false
+		}
+	}
+
+	return r.GenericError == ""
+}
+
 //
 // JSON-serializable types for the HTTP API
 //
