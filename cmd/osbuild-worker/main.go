@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -225,8 +226,13 @@ func main() {
 		go WatchJob(ctx, client, job)
 
 		result := RunJob(job, store, client.UploadImage)
-		// TODO: print at least something here in case of failure
-		// log.Printf("  Job failed: %v", err)
+		if !result.Successful() {
+			resultJson, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("Job failed, dumping the whole result:\n%s", string(resultJson))
+		}
 
 		// signal to WatchJob() that it can stop watching
 		cancel()
