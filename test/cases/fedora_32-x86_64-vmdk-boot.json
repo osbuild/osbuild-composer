@@ -1811,6 +1811,10 @@
                     "check_gpg": true
                   },
                   {
+                    "checksum": "sha256:27dd9c78e41c04b5151a2b9ac150d3ebb89f2ca7a23e4896dfc718f19a000be3",
+                    "check_gpg": true
+                  },
+                  {
                     "checksum": "sha256:e2a04f4de125ff60a3cdc3d2b3718a4530a9c9240c9cf14f55938444c229539f",
                     "check_gpg": true
                   },
@@ -1820,6 +1824,14 @@
                   },
                   {
                     "checksum": "sha256:ffe5076b9018efdb1612c487f637af39ab6c3c79ec37311978935cfa357ecd61",
+                    "check_gpg": true
+                  },
+                  {
+                    "checksum": "sha256:932a37ddd2a990a22a1ee7811d204552e8860e39a3e0c050ed618a535ae8c78c",
+                    "check_gpg": true
+                  },
+                  {
+                    "checksum": "sha256:684aae86de55bd42215c136777613211f596788d3b6405d8fa645fb967904354",
                     "check_gpg": true
                   },
                   {
@@ -1915,6 +1927,12 @@
                     "check_gpg": true
                   }
                 ]
+              }
+            },
+            {
+              "name": "org.osbuild.selinux",
+              "options": {
+                "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
               }
             }
           ]
@@ -5228,6 +5246,16 @@
         "check_gpg": true
       },
       {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "arch": "x86_64",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/r/rpm-plugin-selinux-4.15.1-2.fc32.1.x86_64.rpm",
+        "checksum": "sha256:27dd9c78e41c04b5151a2b9ac150d3ebb89f2ca7a23e4896dfc718f19a000be3",
+        "check_gpg": true
+      },
+      {
         "name": "rpm-plugin-systemd-inhibit",
         "epoch": 0,
         "version": "4.15.1",
@@ -5255,6 +5283,26 @@
         "arch": "x86_64",
         "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/s/sed-4.5-5.fc32.x86_64.rpm",
         "checksum": "sha256:ffe5076b9018efdb1612c487f637af39ab6c3c79ec37311978935cfa357ecd61",
+        "check_gpg": true
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "3.14.5",
+        "release": "32.fc32",
+        "arch": "noarch",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/s/selinux-policy-3.14.5-32.fc32.noarch.rpm",
+        "checksum": "sha256:932a37ddd2a990a22a1ee7811d204552e8860e39a3e0c050ed618a535ae8c78c",
+        "check_gpg": true
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "3.14.5",
+        "release": "32.fc32",
+        "arch": "noarch",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/s/selinux-policy-targeted-3.14.5-32.fc32.noarch.rpm",
+        "checksum": "sha256:684aae86de55bd42215c136777613211f596788d3b6405d8fa645fb967904354",
         "check_gpg": true
       },
       {
