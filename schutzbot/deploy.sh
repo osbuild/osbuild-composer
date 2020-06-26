@@ -50,6 +50,10 @@ if curl -fs http://download.devel.redhat.com > /dev/null; then
             sudo cp ${WORKSPACE}/test/internal-repos/fedora-32.json \
                 /etc/osbuild-composer/repositories/fedora-32.json
         ;;
+        rhel8.2)
+            sudo cp ${WORKSPACE}/test/external-repos/rhel-8.json \
+                /etc/osbuild-composer/repositories/rhel-8.json
+        ;;
         rhel8.3)
             sudo cp ${WORKSPACE}/test/internal-repos/rhel-8.json \
                 /etc/osbuild-composer/repositories/rhel-8.json
