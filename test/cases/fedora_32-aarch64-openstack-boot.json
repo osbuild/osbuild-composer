@@ -339,6 +339,9 @@
           "sha256:3c09e6de4c9dda4020c0f4ca732a4d564c3688399cbb0f94a64999fa4b479585": {
             "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/d/dnf-plugins-core-4.0.16-1.fc32.noarch.rpm"
           },
+          "sha256:3c263340038fdd392971e72305a279a0d8a0974e05e18d71c86a51433c55525f": {
+            "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/l/libnfsidmap-2.5.1-0.fc32.aarch64.rpm"
+          },
           "sha256:3d6ec574fe2c612bcc45395f7ee87c68f45016f005c6d7aeee6b37897f41b8d2": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/q/qrencode-libs-4.0.2-5.fc32.aarch64.rpm"
           },
@@ -371,6 +374,9 @@
           },
           "sha256:45e2c1c76a0a0b6e1164c457307250a54a7de5905992b4351a84183c2e9f2633": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/m/mkpasswd-5.5.6-1.fc32.aarch64.rpm"
+          },
+          "sha256:47719d5547c637a03553cd04f8c7197eee5b6e165e8aca5194cf87c096d471e5": {
+            "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-10.fc32.aarch64.rpm"
           },
           "sha256:48381163a3f2c524697efc07538f040fde0b69d4e0fdcbe3bcfbc9924dd7d5dd": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/x/xz-libs-5.2.5-1.fc32.aarch64.rpm"
@@ -473,9 +479,6 @@
           },
           "sha256:60774007011889671c28158f599032f0db253c153ccae70f5e2f5840f2dc490b": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/k/kbd-misc-2.2.0-1.fc32.noarch.rpm"
-          },
-          "sha256:612ba480fae16370d8efd7d8be5cd81ef6774724ad8ad35b1eac381f9d0ee7b9": {
-            "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/l/libnfsidmap-2.4.3-1.rc2.fc32.aarch64.rpm"
           },
           "sha256:61c51596cc97f35177efe8dc5e2ca52d8fd528570f33c184497f419259b73c90": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/p/python3-idna-2.8-6.fc32.noarch.rpm"
@@ -1034,9 +1037,6 @@
           },
           "sha256:e36a47ff624d27a0a7059bde2fe022302ffe335571ba8cf84e7e5e3646000557": {
             "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/d/dbus-1.12.20-1.fc32.aarch64.rpm"
-          },
-          "sha256:e3e9485ac4a0383fbcc48a46cb4e03c59ebce219bbc734972bda6feea41da184": {
-            "url": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-9.fc32.aarch64.rpm"
           },
           "sha256:e7b49bf8e3183d7604c7f7f51dfbc1e03bc599ddd7eac459a86f4ffdc8432533": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/aarch64/os/Packages/l/libaio-0.3.111-7.fc32.aarch64.rpm"
@@ -1800,7 +1800,7 @@
                     "check_gpg": true
                   },
                   {
-                    "checksum": "sha256:e3e9485ac4a0383fbcc48a46cb4e03c59ebce219bbc734972bda6feea41da184",
+                    "checksum": "sha256:47719d5547c637a03553cd04f8c7197eee5b6e165e8aca5194cf87c096d471e5",
                     "check_gpg": true
                   },
                   {
@@ -1988,11 +1988,23 @@
                     "check_gpg": true
                   },
                   {
+                    "checksum": "sha256:ca215bab929641bb4a875c70c741eaadbc1a321a8b65f723494339a3fc3a3085",
+                    "check_gpg": true
+                  },
+                  {
                     "checksum": "sha256:d24ab66ce52e5471345071c3c445392639c287be91c19b21fd500cc3980dc65b",
                     "check_gpg": true
                   },
                   {
                     "checksum": "sha256:2c5e2d6dd5bd36a56744b162c633f1564bd9494f2fe71092ab39414dd846554f",
+                    "check_gpg": true
+                  },
+                  {
+                    "checksum": "sha256:04d6a0611b51f3b01baebcae7d64ccff0c15dfa548fbe19acfcd14a15f351df0",
+                    "check_gpg": true
+                  },
+                  {
+                    "checksum": "sha256:8a4d7e56d61fbd05beede2dc1b3dfc4ee515bf9883983f1c59c798f9fb17987e",
                     "check_gpg": true
                   },
                   {
@@ -3156,7 +3168,7 @@
                 "check_gpg": true
               },
               {
-                "checksum": "sha256:e3e9485ac4a0383fbcc48a46cb4e03c59ebce219bbc734972bda6feea41da184",
+                "checksum": "sha256:47719d5547c637a03553cd04f8c7197eee5b6e165e8aca5194cf87c096d471e5",
                 "check_gpg": true
               },
               {
@@ -3212,7 +3224,7 @@
                 "check_gpg": true
               },
               {
-                "checksum": "sha256:612ba480fae16370d8efd7d8be5cd81ef6774724ad8ad35b1eac381f9d0ee7b9",
+                "checksum": "sha256:3c263340038fdd392971e72305a279a0d8a0974e05e18d71c86a51433c55525f",
                 "check_gpg": true
               },
               {
@@ -5199,10 +5211,10 @@
         "name": "krb5-libs",
         "epoch": 0,
         "version": "1.18.2",
-        "release": "9.fc32",
+        "release": "10.fc32",
         "arch": "aarch64",
-        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-9.fc32.aarch64.rpm",
-        "checksum": "sha256:e3e9485ac4a0383fbcc48a46cb4e03c59ebce219bbc734972bda6feea41da184",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-10.fc32.aarch64.rpm",
+        "checksum": "sha256:47719d5547c637a03553cd04f8c7197eee5b6e165e8aca5194cf87c096d471e5",
         "check_gpg": true
       },
       {
@@ -5666,6 +5678,16 @@
         "check_gpg": true
       },
       {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.15.1",
+        "release": "3.fc32.1",
+        "arch": "aarch64",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/r/rpm-plugin-selinux-4.15.1-3.fc32.1.aarch64.rpm",
+        "checksum": "sha256:ca215bab929641bb4a875c70c741eaadbc1a321a8b65f723494339a3fc3a3085",
+        "check_gpg": true
+      },
+      {
         "name": "rpm-plugin-systemd-inhibit",
         "epoch": 0,
         "version": "4.15.1",
@@ -5683,6 +5705,26 @@
         "arch": "aarch64",
         "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/r/rpm-sign-libs-4.15.1-3.fc32.1.aarch64.rpm",
         "checksum": "sha256:2c5e2d6dd5bd36a56744b162c633f1564bd9494f2fe71092ab39414dd846554f",
+        "check_gpg": true
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "3.14.5",
+        "release": "42.fc32",
+        "arch": "noarch",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/s/selinux-policy-3.14.5-42.fc32.noarch.rpm",
+        "checksum": "sha256:04d6a0611b51f3b01baebcae7d64ccff0c15dfa548fbe19acfcd14a15f351df0",
+        "check_gpg": true
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "3.14.5",
+        "release": "42.fc32",
+        "arch": "noarch",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/s/selinux-policy-targeted-3.14.5-42.fc32.noarch.rpm",
+        "checksum": "sha256:8a4d7e56d61fbd05beede2dc1b3dfc4ee515bf9883983f1c59c798f9fb17987e",
         "check_gpg": true
       },
       {
@@ -8551,10 +8593,10 @@
         "name": "krb5-libs",
         "epoch": 0,
         "version": "1.18.2",
-        "release": "9.fc32",
+        "release": "10.fc32",
         "arch": "aarch64",
-        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-9.fc32.aarch64.rpm",
-        "checksum": "sha256:e3e9485ac4a0383fbcc48a46cb4e03c59ebce219bbc734972bda6feea41da184",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/k/krb5-libs-1.18.2-10.fc32.aarch64.rpm",
+        "checksum": "sha256:47719d5547c637a03553cd04f8c7197eee5b6e165e8aca5194cf87c096d471e5",
         "check_gpg": true
       },
       {
@@ -8690,11 +8732,11 @@
       {
         "name": "libnfsidmap",
         "epoch": 1,
-        "version": "2.4.3",
-        "release": "1.rc2.fc32",
+        "version": "2.5.1",
+        "release": "0.fc32",
         "arch": "aarch64",
-        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/l/libnfsidmap-2.4.3-1.rc2.fc32.aarch64.rpm",
-        "checksum": "sha256:612ba480fae16370d8efd7d8be5cd81ef6774724ad8ad35b1eac381f9d0ee7b9",
+        "remote_location": "http://mirrors.kernel.org/fedora/updates/32/Everything/aarch64/Packages/l/libnfsidmap-2.5.1-0.fc32.aarch64.rpm",
+        "checksum": "sha256:3c263340038fdd392971e72305a279a0d8a0974e05e18d71c86a51433c55525f",
         "check_gpg": true
       },
       {
@@ -9500,7 +9542,7 @@
     ],
     "checksums": {
       "0": "sha256:f56d50d2c120f5fe150f53a3f72d2b8df93d0c4c51e9ae866dfa08f1d5517fb1",
-      "1": "sha256:aa5653a600eb79cf5b9867a2431b0d58a82a445c0ab942cafff3134e1a720874"
+      "1": "sha256:a1439de08af904b6248c7ee68e40d3283cb1a187ee0dca05afed02577e1715fd"
     }
   },
   "image-info": {
@@ -9725,7 +9767,7 @@
       "kmod-27-1.fc32.aarch64",
       "kmod-libs-27-1.fc32.aarch64",
       "kpartx-0.8.2-4.fc32.aarch64",
-      "krb5-libs-1.18.2-9.fc32.aarch64",
+      "krb5-libs-1.18.2-10.fc32.aarch64",
       "langpacks-core-en-3.0-3.fc32.noarch",
       "langpacks-core-font-en-3.0-3.fc32.noarch",
       "langpacks-en-3.0-3.fc32.noarch",
@@ -9783,7 +9825,7 @@
       "libndp-1.7-5.fc32.aarch64",
       "libnetfilter_conntrack-1.0.7-4.fc32.aarch64",
       "libnfnetlink-1.0.1-17.fc32.aarch64",
-      "libnfsidmap-2.4.3-1.rc2.fc32.aarch64",
+      "libnfsidmap-2.5.1-0.fc32.aarch64",
       "libnftnl-1.1.5-2.fc32.aarch64",
       "libnghttp2-1.41.0-1.fc32.aarch64",
       "libnl3-3.5.0-2.fc32.aarch64",
