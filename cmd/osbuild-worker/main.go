@@ -16,7 +16,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -66,10 +65,11 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*worker.OSBuildJobResult, error) {
+func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (result worker.OSBuildJobResult) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
-		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
+		result.GenericError = fmt.Sprintf("error creating temporary output directory: %v", err)
+		return
 	}
 	defer func() {
 		err := os.RemoveAll(outputDirectory)
@@ -78,10 +78,18 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 		}
 	}()
 
-	result, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
+	osBuildOutput, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
-		return nil, err
+		if osbuildErr, ok := err.(*OSBuildError); ok {
+			result.OSBuildOutput = osbuildErr.Result
+			return
+		} else {
+			result.GenericError = err.Error()
+			return
+		}
 	}
+
+	result.OSBuildOutput = osBuildOutput
 
 	var r []error
 
@@ -158,10 +166,10 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 	}
 
 	if len(r) > 0 {
-		return &worker.OSBuildJobResult{OSBuildOutput: result}, &TargetsError{r}
+		result.GenericError = (&TargetsError{Errors: r}).Error() // temporary, will be refactored
 	}
 
-	return &worker.OSBuildJobResult{OSBuildOutput: result}, nil
+	return
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
@@ -234,31 +242,14 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		go WatchJob(ctx, client, job)
 
-		result, err := RunJob(job, store, client.UploadImage)
-		if err != nil {
-			log.Printf("  Job failed: %v", err)
-
-			// If the error comes from osbuild, retrieve the result
-			if osbuildError, ok := err.(*OSBuildError); ok {
-				result = &worker.OSBuildJobResult{OSBuildOutput: osbuildError.Result}
-			}
-		}
+		result := RunJob(job, store, client.UploadImage)
+		// TODO: print at least something here in case of failure
+		// log.Printf("  Job failed: %v", err)
 
 		// signal to WatchJob() that it can stop watching
 		cancel()
 
-		// Ensure we always have a non-nil result, composer doesn't like nils.
-		// This can happen in cases when OSBuild crashes and doesn't produce
-		// a meaningful output. E.g. when the machine runs of disk space.
-		if result == nil {
-			result = &worker.OSBuildJobResult{
-				OSBuildOutput: &common.ComposeResult{
-					Success: false,
-				},
-			}
-		}
-
-		err = client.UpdateJob(job, result)
+		err = client.UpdateJob(job, &result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
 		}

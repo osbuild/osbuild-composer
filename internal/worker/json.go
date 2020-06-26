@@ -19,6 +19,7 @@ type OSBuildJob struct {
 
 type OSBuildJobResult struct {
 	OSBuildOutput *common.ComposeResult `json:"osbuild_output,omitempty"`
+	GenericError  string                `json:"generic_error,omitempty"`
 }
 
 //
