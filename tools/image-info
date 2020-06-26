@@ -341,7 +341,7 @@ def append_ostree_repo(report, repo):
     refs = {r: {"inputhash": ostree("show", "--print-metadata-key=rpmostree.inputhash", resolved[r]).stdout.strip("'\n")} for r in refs}
     report["ostree"]["refs"] = refs
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
         tree = os.path.join(tmpdir, "tree")
         ostree("checkout", "--force-copy", commit, tree)
         append_directory(report, tree)
@@ -369,7 +369,7 @@ def is_tarball(path):
 
 
 def analyse_tarball(path):
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
         tree = os.path.join(tmpdir, "root")
         os.makedirs(tree)
         command = [
