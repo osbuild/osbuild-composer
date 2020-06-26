@@ -30,6 +30,7 @@ def run_osbuild(manifest, store, output):
                             encoding="utf-8",
                             input=json.dumps(manifest))
         except:
+            log.seek(0)
             print(log.read())
             raise
 
