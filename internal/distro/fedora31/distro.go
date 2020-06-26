@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
-	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -537,15 +536,8 @@ func (r *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbu
 			Key:         c.Key,
 		}
 
-		if c.UID != nil {
-			uid := strconv.Itoa(*c.UID)
-			user.UID = &uid
-		}
-
-		if c.GID != nil {
-			gid := strconv.Itoa(*c.GID)
-			user.GID = &gid
-		}
+		user.UID = c.UID
+		user.GID = c.GID
 
 		options.Users[c.Name] = user
 	}
@@ -562,10 +554,7 @@ func (r *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *os
 		groupData := osbuild.GroupsStageOptionsGroup{
 			Name: group.Name,
 		}
-		if group.GID != nil {
-			gid := strconv.Itoa(*group.GID)
-			groupData.GID = &gid
-		}
+		groupData.GID = group.GID
 
 		options.Groups[group.Name] = groupData
 	}

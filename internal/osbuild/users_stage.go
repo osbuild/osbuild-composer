@@ -7,8 +7,8 @@ type UsersStageOptions struct {
 func (UsersStageOptions) isStageOptions() {}
 
 type UsersStageOptionsUser struct {
-	UID         *string  `json:"uid,omitempty"`
-	GID         *string  `json:"gid,omitempty"`
+	UID         *int     `json:"uid,omitempty"`
+	GID         *int     `json:"gid,omitempty"`
 	Groups      []string `json:"groups,omitempty"`
 	Description *string  `json:"description,omitempty"`
 	Home        *string  `json:"home,omitempty"`
