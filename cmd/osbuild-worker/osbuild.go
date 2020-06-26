@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +20,17 @@ func (e *OSBuildError) Error() string {
 	return e.Message
 }
 
+func parseOSBuildOutput(output bytes.Buffer) (*common.ComposeResult, error) {
+	var result common.ComposeResult
+	err := json.NewDecoder(&output).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("%v\nraw osbuild output:\n%s", err, output.String())
+	}
+
+	return &result, nil
+
+}
+
 func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*common.ComposeResult, error) {
 	cmd := exec.Command(
 		"osbuild",
@@ -33,10 +45,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
 	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("error setting up stdout for osbuild: %v", err)
-	}
+	var outBuffer bytes.Buffer
+	cmd.Stdout = &outBuffer
 
 	err = cmd.Start()
 	if err != nil {
@@ -50,19 +60,23 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 	// FIXME: handle or comment this possible error
 	_ = stdin.Close()
 
-	var result common.ComposeResult
-	err = json.NewDecoder(stdout).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %#v", err)
-	}
+	osbuildErr := cmd.Wait()
+	osbuildResult, parseErr := parseOSBuildOutput(outBuffer)
 
-	err = cmd.Wait()
-	if err != nil {
+	if osbuildErr != nil {
+		if parseErr != nil {
+			return nil, fmt.Errorf("running osbuild failed: %v\nparsing osbuild output also failed: %v", osbuildErr, parseErr)
+		}
+
 		return nil, &OSBuildError{
-			Message: fmt.Sprintf("running osbuild failed: %v", err),
-			Result:  &result,
+			Message: fmt.Sprintf("running osbuild failed: %v", osbuildErr),
+			Result:  osbuildResult,
 		}
 	}
 
-	return &result, nil
+	if parseErr != nil {
+		return nil, fmt.Errorf("osbuild succeeded but parsing its output failed: %v", parseErr)
+	}
+
+	return osbuildResult, nil
 }
