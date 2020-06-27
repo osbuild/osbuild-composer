@@ -252,6 +252,13 @@ func main() {
 					Success: false,
 				}
 			}
+
+			// set the success to false on every error. This is hacky but composer
+			// currently relies only on this flag to decide whether a compose was
+			// successful. There's no different way how to inform composer that
+			// e.g. an upload fail. Therefore, this line reuses the osbuild success
+			// flag to indicate all error kinds.
+			result.Success = false
 		} else {
 			log.Printf("  🎉 Job completed successfully: %s", job.Id)
 			status = common.IBFinished
