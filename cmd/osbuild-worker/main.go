@@ -243,6 +243,15 @@ func main() {
 			if osbuildError, ok := err.(*OSBuildError); ok {
 				result = osbuildError.Result
 			}
+
+			// Ensure we always have a non-nil result, composer doesn't like nils.
+			// This can happen in cases when OSBuild crashes and doesn't produce
+			// a meaningful output. E.g. when the machine runs of disk space.
+			if result == nil {
+				result = &common.ComposeResult{
+					Success: false,
+				}
+			}
 		} else {
 			log.Printf("  🎉 Job completed successfully: %s", job.Id)
 			status = common.IBFinished
@@ -250,15 +259,6 @@ func main() {
 
 		// signal to WatchJob() that it can stop watching
 		cancel()
-
-		// Ensure we always have a non-nil result, composer doesn't like nils.
-		// This can happen in cases when OSBuild crashes and doesn't produce
-		// a meaningful output. E.g. when the machine runs of disk space.
-		if result == nil {
-			result = &common.ComposeResult{
-				Success: false,
-			}
-		}
 
 		err = client.UpdateJob(job, status, result)
 		if err != nil {
