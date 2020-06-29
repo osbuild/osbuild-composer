@@ -298,7 +298,15 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 func (t *imageType) buildPipeline(repos []rpmmd.RepoConfig, arch architecture, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := &osbuild.Pipeline{}
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(arch, repos, buildPackageSpecs)))
-	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
+
+	selinuxOptions := osbuild.SELinuxStageOptions{
+		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+		Labels: map[string]string{
+			"/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+		},
+	}
+
+	p.AddStage(osbuild.NewSELinuxStage(&selinuxOptions))
 	return p
 }
 
