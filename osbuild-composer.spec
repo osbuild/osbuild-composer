@@ -49,8 +49,8 @@ BuildRequires:  golang(github.com/stretchr/testify/assert)
 
 Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
-Requires: osbuild >= 17
-Requires: osbuild-ostree >= 17
+Requires: osbuild >= 18
+Requires: osbuild-ostree >= 18
 
 Provides: weldr
 
