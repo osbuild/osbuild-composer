@@ -32,7 +32,7 @@ pipeline {
         stage("Mock") {
             // Halt the entire pipeline if a single RPM build fails. That
             // could indicate a code problem that needs to be investigated.
-            failFast true
+            failFast false
 
             parallel {
                 stage('Fedora 31') {
@@ -99,35 +99,35 @@ pipeline {
             failFast false
 
             parallel {
-                stage('Fedora 31 base') {
-                    agent { label "fedora31" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-base')
-                        }
-                    }
-                }
-                stage('Fedora 31 image') {
-                    agent { label "fedora31 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-image')
-                        }
-                    }
-                }
+                // stage('Fedora 31 base') {
+                //     agent { label "fedora31" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'fedora31'
+                //         run_tests('base')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora31-base')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 31 image') {
+                //     agent { label "fedora31 && psi" }
+                //     environment {
+                //         TEST_TYPE = "image"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //     }
+                //     steps {
+                //         unstash 'fedora31'
+                //         run_tests('image')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora31-image')
+                //         }
+                //     }
+                // }
                 stage('Fedora 31 integration') {
                     agent { label "fedora31 && psi" }
                     environment {
@@ -144,35 +144,35 @@ pipeline {
                         }
                     }
                 }
-                stage('Fedora 32 base') {
-                    agent { label "fedora32" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-base')
-                        }
-                    }
-                }
-                stage('Fedora 32 image') {
-                    agent { label "fedora32 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-image')
-                        }
-                    }
-                }
+                // stage('Fedora 32 base') {
+                //     agent { label "fedora32" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'fedora32'
+                //         run_tests('base')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-base')
+                //         }
+                //     }
+                // }
+                // stage('Fedora 32 image') {
+                //     agent { label "fedora32 && psi" }
+                //     environment {
+                //         TEST_TYPE = "image"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //     }
+                //     steps {
+                //         unstash 'fedora32'
+                //         run_tests('image')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora32-image')
+                //         }
+                //     }
+                // }
                 stage('Fedora 32 integration') {
                     agent { label "fedora32" }
                     environment {
@@ -189,35 +189,35 @@ pipeline {
                         }
                     }
                 }
-                stage('RHEL 8 CDN Base') {
-                    agent { label "rhel8" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-base')
-                        }
-                    }
-                }
-                stage('RHEL 8 CDN Image') {
-                    agent { label "rhel8 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-image')
-                        }
-                    }
-                }
+                // stage('RHEL 8 CDN Base') {
+                //     agent { label "rhel8" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'rhel8cdn'
+                //         run_tests('base')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel8-base')
+                //         }
+                //     }
+                // }
+                // stage('RHEL 8 CDN Image') {
+                //     agent { label "rhel8 && psi" }
+                //     environment {
+                //         TEST_TYPE = "image"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //     }
+                //     steps {
+                //         unstash 'rhel8cdn'
+                //         run_tests('image')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel8-image')
+                //         }
+                //     }
+                // }
                 stage('RHEL 8 CDN integration') {
                     agent { label "rhel8" }
                     environment {
@@ -234,49 +234,49 @@ pipeline {
                         }
                     }
                 }
-                stage('RHEL 8.3 Base') {
-                    agent { label "rhel83" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'rhel83'
-                        // If RHEL 8.3 fails, let the stage fail without
-                        // marking the entire pipeline as a failure. Once
-                        // RHEL 8.3 calms down and tests begin to pass,
-                        // remove this wrapper and make this test look like
-                        // the others.
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            run_tests('base')
-                        }
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-base')
-                        }
-                    }
-                }
-                stage('RHEL 8.3 Image') {
-                    agent { label "rhel83 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'rhel83'
-                        // If RHEL 8.3 fails, let the stage fail without
-                        // marking the entire pipeline as a failure. Once
-                        // RHEL 8.3 calms down and tests begin to pass,
-                        // remove this wrapper and make this test look like
-                        // the others.
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            run_tests('image')
-                        }
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-image')
-                        }
-                    }
-                }
+                // stage('RHEL 8.3 Base') {
+                //     agent { label "rhel83" }
+                //     environment { TEST_TYPE = "base" }
+                //     steps {
+                //         unstash 'rhel83'
+                //         // If RHEL 8.3 fails, let the stage fail without
+                //         // marking the entire pipeline as a failure. Once
+                //         // RHEL 8.3 calms down and tests begin to pass,
+                //         // remove this wrapper and make this test look like
+                //         // the others.
+                //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                //             run_tests('base')
+                //         }
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel83-base')
+                //         }
+                //     }
+                // }
+                // stage('RHEL 8.3 Image') {
+                //     agent { label "rhel83 && psi" }
+                //     environment {
+                //         TEST_TYPE = "image"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //     }
+                //     steps {
+                //         unstash 'rhel83'
+                //         // If RHEL 8.3 fails, let the stage fail without
+                //         // marking the entire pipeline as a failure. Once
+                //         // RHEL 8.3 calms down and tests begin to pass,
+                //         // remove this wrapper and make this test look like
+                //         // the others.
+                //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                //             run_tests('image')
+                //         }
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('rhel83-image')
+                //         }
+                //     }
+                // }
                 stage('RHEL 8.3 integration') {
                     agent { label "rhel83" }
                     environment {
@@ -338,28 +338,28 @@ void run_tests(test_type) {
 
     if (test_type == 'integration') {
         // Run the qcow2 test.
-        sh (
-            label: "Integration test: QCOW2",
-            script: "test/image-tests/qemu.sh qcow2"
-        )
+        // sh (
+        //     label: "Integration test: QCOW2",
+        //     script: "test/image-tests/qemu.sh qcow2"
+        // )
 
         // Run the openstack test.
-        sh (
-            label: "Integration test: OpenStack",
-            script: "test/image-tests/qemu.sh openstack"
-        )
+        // sh (
+        //     label: "Integration test: OpenStack",
+        //     script: "test/image-tests/qemu.sh openstack"
+        // )
 
         // Run the VHD/Azure test.
-        sh (
-            label: "Integration test: VHD",
-            script: "test/image-tests/qemu.sh vhd"
-        )
+        // sh (
+        //     label: "Integration test: VHD",
+        //     script: "test/image-tests/qemu.sh vhd"
+        // )
 
         // Run the VMDK/VMware test.
-        sh (
-            label: "Integration test: VMDK",
-            script: "test/image-tests/qemu.sh vmdk"
-        )
+        // sh (
+        //     label: "Integration test: VMDK",
+        //     script: "test/image-tests/qemu.sh vmdk"
+        // )
 
         // Run the AWS test.
         sh (

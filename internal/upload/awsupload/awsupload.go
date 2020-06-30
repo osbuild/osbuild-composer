@@ -143,14 +143,14 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	}
 
 	// we no longer need the object in s3, let's just delete it
-	log.Printf("[AWS] 🧹 Deleting image from S3: %s/%s", bucket, key)
-	_, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		return nil, err
-	}
+	log.Printf("[AWS] 🤯 Skipping AWS S3 deletion to hunt down shenanigans: %s/%s", bucket, key)
+	// _, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
+	// 	Bucket: aws.String(bucket),
+	// 	Key:    aws.String(key),
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	importOutput, err := a.importer.DescribeImportSnapshotTasks(
 		&ec2.DescribeImportSnapshotTasksInput{

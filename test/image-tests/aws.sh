@@ -188,6 +188,16 @@ sudo kill ${WORKER_JOURNAL_PID}
 # json and pass it to the aws command.
 tee $AWS_INSTANCE_JSON > /dev/null << EOF
 {
+    "BlockDeviceMappings": [
+        {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+                "DeleteOnTermination": true,
+                "VolumeSize": 10,
+                "VolumeType": "gp2",
+            },
+        }
+    ],
     "TagSpecifications": [
         {
             "ResourceType": "instance",
