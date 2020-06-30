@@ -36,7 +36,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31') {
-                    agent { label "fedora31" }
+                    agent { label "f31 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -50,7 +50,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32') {
-                    agent { label "fedora32" }
+                    agent { label "f32 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
