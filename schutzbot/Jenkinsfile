@@ -84,6 +84,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
+                        sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
                         stash (
                             includes: 'osbuild-mock.repo',
