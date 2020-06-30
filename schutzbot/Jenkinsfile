@@ -64,7 +64,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8cdn && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -79,9 +79,11 @@ pipeline {
                 }
                 // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
                 stage('RHEL 8.3 Nightly') {
-                    agent { label "rhel83 && psi" }
+                    agent { label "rhel83nightly && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        NIGHTLY_REPO = credentials('rhel8-nightly-repo')
+                        NIGHTLY_MOCK_TEMPLATE = credentials('rhel8-nightly-mock-template')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
