@@ -194,8 +194,8 @@ tee $AWS_INSTANCE_JSON > /dev/null << EOF
             "Ebs": {
                 "DeleteOnTermination": true,
                 "VolumeSize": 10,
-                "VolumeType": "gp2",
-            },
+                "VolumeType": "gp2"
+            }
         }
     ],
     "TagSpecifications": [
