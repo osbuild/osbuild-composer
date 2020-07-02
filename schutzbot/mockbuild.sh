@@ -74,7 +74,7 @@ fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
+sudo mock -r $MOCK_CONFIG -v --no-bootstrap-chroot \
     --resultdir $REPO_DIR --with=tests \
     rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
