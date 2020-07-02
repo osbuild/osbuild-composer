@@ -42,7 +42,9 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'fedora31'
@@ -56,7 +58,9 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'fedora32'
@@ -70,7 +74,9 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'rhel8cdn'
@@ -87,7 +93,9 @@ pipeline {
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'rhel83'
