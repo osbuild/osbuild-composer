@@ -13,7 +13,7 @@
         "check_gpg": true
       }
     ],
-    "filename": "image.vhdx",
+    "filename": "image.raw",
     "blueprint": {}
   },
   "manifest": {
@@ -3418,8 +3418,8 @@
       "assembler": {
         "name": "org.osbuild.qemu",
         "options": {
-          "format": "vhdx",
-          "filename": "image.vhdx",
+          "format": "raw",
+          "filename": "image.raw",
           "size": 6442450944,
           "ptuuid": "0x14fc63d2",
           "pttype": "mbr",
@@ -9161,7 +9161,7 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
-    "image-format": "vhdx",
+    "image-format": "raw",
     "os-release": {
       "ANSI_COLOR": "0;34",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",

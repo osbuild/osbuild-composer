@@ -578,7 +578,7 @@ func New() distro.Distro {
 	}
 	amiImgType := imageType{
 		name:     "ami",
-		filename: "image.vhdx",
+		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@Core",
@@ -602,7 +602,7 @@ func New() distro.Distro {
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vhdx", "image.vhdx", uefi, options)
+			return qemuAssembler("raw", "image.raw", uefi, options)
 		},
 	}
 

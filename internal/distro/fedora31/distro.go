@@ -194,7 +194,7 @@ func New() *Fedora31 {
 
 	amiImgType := imageType{
 		name:     "ami",
-		filename: "image.vhdx",
+		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packages: []string{
 			"@Core",
@@ -218,7 +218,7 @@ func New() *Fedora31 {
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, size uint64) *osbuild.Assembler {
-			return qemuAssembler("vhdx", "image.vhdx", uefi, size)
+			return qemuAssembler("raw", "image.raw", uefi, size)
 		},
 	}
 

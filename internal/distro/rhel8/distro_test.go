@@ -23,7 +23,7 @@ func TestFilenameFromType(t *testing.T) {
 		{
 			name:  "ami",
 			args:  args{"ami"},
-			want:  "image.vhdx",
+			want:  "image.raw",
 			want1: "application/octet-stream",
 		},
 		{
