@@ -35,6 +35,10 @@ run_test_case () {
     TEST_CASE_FILENAME=$2
     TEST_NAME=$(basename $TEST_CASE_FILENAME)
 
+    # Check disk space.
+    df -h
+    sudo du -hs /* 2>/dev/null || true
+
     echo
     test_divider
     echo "🏃🏻 Running test: ${TEST_NAME}"

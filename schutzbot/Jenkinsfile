@@ -349,16 +349,16 @@ void run_tests(test_type) {
             script: "test/image-tests/qemu.sh openstack"
         )
 
-        // Run the VHD/Azure test.
-        sh (
-            label: "Integration test: VHD",
-            script: "test/image-tests/qemu.sh vhd"
-        )
-
         // Run the VMDK/VMware test.
         sh (
             label: "Integration test: VMDK",
             script: "test/image-tests/qemu.sh vmdk"
+        )
+
+        // Run the VHD/Azure test.
+        sh (
+            label: "Integration test: VHD",
+            script: "test/image-tests/qemu.sh vhd"
         )
 
         // Run the AWS test.
