@@ -219,24 +219,24 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 
 	// Azure requires a lot of names - for a virtual machine, a virtual network,
 	// a virtual interface and so on and so forth.
-	// In the Go code, it's just need to know the public IP address name,
-	// the tag name and the deployment name. Let's set these here to names
-	// based on the test id.
-	// The rest of the names are set from the test id inside the deployment
-	// template because they're irrelevant to the Go code.
+	// Let's create all of them here from the test id.
 	deploymentName := testId
 	tag := "tag-" + testId
-	publicIPAddressName := "address-" + testId
 	imagePath := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", creds.StorageAccount, creds.ContainerName, imageName)
 
 	parameters := deploymentParameters{
-		Location:            newDeploymentParameter(creds.Location),
-		TestId:              newDeploymentParameter(testId),
-		Tag:                 newDeploymentParameter(tag),
-		PublicIPAddressName: newDeploymentParameter(publicIPAddressName),
-		ImagePath:           newDeploymentParameter(imagePath),
-		AdminUsername:       newDeploymentParameter("redhat"),
-		AdminPublicKey:      newDeploymentParameter(publicKey),
+		NetworkInterfaceName:     newDeploymentParameter("iface-" + testId),
+		NetworkSecurityGroupName: newDeploymentParameter("nsg-" + testId),
+		VirtualNetworkName:       newDeploymentParameter("vnet-" + testId),
+		PublicIPAddressName:      newDeploymentParameter("ip-" + testId),
+		VirtualMachineName:       newDeploymentParameter("vm-" + testId),
+		DiskName:                 newDeploymentParameter("disk-" + testId),
+		ImageName:                newDeploymentParameter("image-" + testId),
+		Tag:                      newDeploymentParameter(tag),
+		Location:                 newDeploymentParameter(creds.Location),
+		ImagePath:                newDeploymentParameter(imagePath),
+		AdminUsername:            newDeploymentParameter("redhat"),
+		AdminPublicKey:           newDeploymentParameter(publicKey),
 	}
 
 	deploymentsClient := resources.NewDeploymentsClient(creds.SubscriptionID)
@@ -319,7 +319,7 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 	publicIPAddressClient := network.NewPublicIPAddressesClient(creds.SubscriptionID)
 	publicIPAddressClient.Authorizer = authorizer
 
-	publicIPAddress, err := publicIPAddressClient.Get(context.Background(), creds.ResourceGroup, publicIPAddressName, "")
+	publicIPAddress, err := publicIPAddressClient.Get(context.Background(), creds.ResourceGroup, parameters.PublicIPAddressName.Value, "")
 	if err != nil {
 		return fmt.Errorf("cannot get the ip address details: %v", err)
 	}

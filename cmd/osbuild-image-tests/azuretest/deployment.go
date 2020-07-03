@@ -33,20 +33,25 @@ func loadDeploymentTemplate() (interface{}, error) {
 
 // struct for encoding a deployment parameter
 type deploymentParameter struct {
-	Value interface{} `json:"value"`
+	Value string `json:"value"`
 }
 
-func newDeploymentParameter(value interface{}) deploymentParameter {
+func newDeploymentParameter(value string) deploymentParameter {
 	return deploymentParameter{Value: value}
 }
 
 // struct for encoding deployment parameters
 type deploymentParameters struct {
-	Location            deploymentParameter `json:"location"`
-	TestId              deploymentParameter `json:"testId"`
-	Tag                 deploymentParameter `json:"tag"`
-	PublicIPAddressName deploymentParameter `json:"publicIPAddressName"`
-	ImagePath           deploymentParameter `json:"imagePath"`
-	AdminUsername       deploymentParameter `json:"adminUsername"`
-	AdminPublicKey      deploymentParameter `json:"adminPublicKey"`
+	NetworkInterfaceName     deploymentParameter `json:"networkInterfaceName"`
+	NetworkSecurityGroupName deploymentParameter `json:"networkSecurityGroupName"`
+	VirtualNetworkName       deploymentParameter `json:"virtualNetworkName"`
+	PublicIPAddressName      deploymentParameter `json:"publicIPAddressName"`
+	VirtualMachineName       deploymentParameter `json:"virtualMachineName"`
+	DiskName                 deploymentParameter `json:"diskName"`
+	ImageName                deploymentParameter `json:"imageName"`
+	Tag                      deploymentParameter `json:"tag"`
+	Location                 deploymentParameter `json:"location"`
+	ImagePath                deploymentParameter `json:"imagePath"`
+	AdminUsername            deploymentParameter `json:"adminUsername"`
+	AdminPublicKey           deploymentParameter `json:"adminPublicKey"`
 }
