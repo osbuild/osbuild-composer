@@ -2,10 +2,25 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "testId": {
+    "networkInterfaceName": {
+      "type": "string"
+    },
+    "networkSecurityGroupName": {
+      "type": "string"
+    },
+    "virtualNetworkName": {
       "type": "string"
     },
     "publicIPAddressName": {
+      "type": "string"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "diskName": {
+      "type": "string"
+    },
+    "imageName": {
       "type": "string"
     },
     "tag": {
@@ -25,26 +40,19 @@
     }
   },
   "variables": {
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/default')]",
-    "networkInterfaceName": "[concat('iface-', parameters('testId'))]",
-    "networkSecurityGroupName": "[concat('nsg-', parameters('testId'))]",
-    "virtualNetworkName": "[concat('vnet-', parameters('testId'))]",
-    "publicIPAddressName": "[concat('ip-', parameters('testId'))]",
-    "virtualMachineName": "[concat('vm-', parameters('testId'))]",
-    "diskName": "[concat('disk-', parameters('testId'))]",
-    "imageName": "[concat('image-', parameters('testId'))]",
-    "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-    "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+    "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+    "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/default')]"
   },
   "resources": [
     {
-      "name": "[variables('networkInterfaceName')]",
+      "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIPAddressName'))]"
       ],
       "properties": {
@@ -71,7 +79,7 @@
       }
     },
     {
-      "name": "[variables('networkSecurityGroupName')]",
+      "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
@@ -97,7 +105,7 @@
       }
     },
     {
-      "name": "[variables('virtualNetworkName')]",
+      "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
@@ -136,7 +144,7 @@
       }
     },
     {
-      "name": "[variables('imageName')]",
+      "name": "[parameters('imageName')]",
       "type": "Microsoft.Compute/images",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
@@ -155,13 +163,13 @@
       }
     },
     {
-      "name": "[variables('virtualMachineName')]",
+      "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
-        "[concat('Microsoft.Compute/images/', variables('imageName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
+        "[concat('Microsoft.Compute/images/', parameters('imageName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -169,26 +177,26 @@
         },
         "storageProfile": {
           "imageReference": {
-            "id": "[resourceId(resourceGroup().name, 'Microsoft.Compute/images', variables('imageName'))]"
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Compute/images', parameters('imageName'))]"
           },
           "osDisk": {
             "caching": "ReadWrite",
             "managedDisk": {
               "storageAccountType": "Standard_LRS"
             },
-            "name": "[variables('diskName')]",
+            "name": "[parameters('diskName')]",
             "createOption": "FromImage"
           }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[variables('virtualMachineName')]",
+          "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
