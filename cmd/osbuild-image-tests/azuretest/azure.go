@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 
@@ -125,49 +126,6 @@ func DeleteImageFromAzure(c *azureCredentials, imageName string) error {
 	return nil
 }
 
-type resourceType struct {
-	resType    string
-	apiVersion string
-}
-
-// resourcesTypesToDelete serves two purposes:
-// 1) The WithBootedImageInAzure method tags all the created resources and
-//    we can get the list of resources with that tag. However, it's needed to
-//    delete them in right order because of inner dependencies.
-// 2) The resources.Client.DeleteByID method requires the API version to be
-//    passed in. Therefore we need to way to get API version for a given
-//    resource type.
-var resourcesTypesToDelete = []resourceType{
-	{
-		resType:    "Microsoft.Compute/virtualMachines",
-		apiVersion: "2019-07-01",
-	},
-	{
-		resType:    "Microsoft.Network/networkInterfaces",
-		apiVersion: "2019-09-01",
-	},
-	{
-		resType:    "Microsoft.Network/publicIPAddresses",
-		apiVersion: "2019-09-01",
-	},
-	{
-		resType:    "Microsoft.Network/networkSecurityGroups",
-		apiVersion: "2019-09-01",
-	},
-	{
-		resType:    "Microsoft.Network/virtualNetworks",
-		apiVersion: "2019-09-01",
-	},
-	{
-		resType:    "Microsoft.Compute/disks",
-		apiVersion: "2019-07-01",
-	},
-	{
-		resType:    "Microsoft.Compute/images",
-		apiVersion: "2019-07-01",
-	},
-}
-
 // readPublicKey reads the public key from a file and returns it as a string
 func readPublicKey(publicKeyFile string) (string, error) {
 	publicKey, err := ioutil.ReadFile(publicKeyFile)
@@ -219,7 +177,8 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 
 	// Azure requires a lot of names - for a virtual machine, a virtual network,
 	// a virtual interface and so on and so forth.
-	// Let's create all of them here from the test id.
+	// Let's create all of them here from the test id so we can delete them
+	// later.
 	deploymentName := testId
 	tag := "tag-" + testId
 	imagePath := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", creds.StorageAccount, creds.ContainerName, imageName)
@@ -255,26 +214,66 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 		resourcesClient := resources.NewClient(creds.SubscriptionID)
 		resourcesClient.Authorizer = authorizer
 
-		// find all the resources we marked with a tag during the deployment
-		filter := fmt.Sprintf("tagName eq 'osbuild-composer-image-test' and tagValue eq '%s'", tag)
-		resourceList, err := resourcesClient.ListByResourceGroup(context.Background(), creds.ResourceGroup, filter, "", nil)
-		if err != nil {
-			retErr = wrapErrorf(retErr, "listing of resources failed: %v", err)
-		} else {
+		// This array specifies all the resources we need to delete. The
+		// order is important, e.g. one cannot delete a network interface
+		// that is still attached to a virtual machine.
+		resourcesToDelete := []struct {
+			resType    string
+			name       string
+			apiVersion string
+		}{
+			{
+				resType:    "Microsoft.Compute/virtualMachines",
+				name:       parameters.VirtualMachineName.Value,
+				apiVersion: "2019-07-01",
+			},
+			{
+				resType:    "Microsoft.Network/networkInterfaces",
+				name:       parameters.NetworkInterfaceName.Value,
+				apiVersion: "2019-09-01",
+			},
+			{
+				resType:    "Microsoft.Network/publicIPAddresses",
+				name:       parameters.PublicIPAddressName.Value,
+				apiVersion: "2019-09-01",
+			},
+			{
+				resType:    "Microsoft.Network/networkSecurityGroups",
+				name:       parameters.NetworkSecurityGroupName.Value,
+				apiVersion: "2019-09-01",
+			},
+			{
+				resType:    "Microsoft.Network/virtualNetworks",
+				name:       parameters.VirtualNetworkName.Value,
+				apiVersion: "2019-09-01",
+			},
+			{
+				resType:    "Microsoft.Compute/disks",
+				name:       parameters.DiskName.Value,
+				apiVersion: "2019-07-01",
+			},
+			{
+				resType:    "Microsoft.Compute/images",
+				name:       parameters.ImageName.Value,
+				apiVersion: "2019-07-01",
+			},
+		}
 
-			// delete all the found resources
-			for _, resourceType := range resourcesTypesToDelete {
-				for _, resource := range resourceList.Values() {
-					if *resource.Type != resourceType.resType {
-						continue
-					}
+		// Delete all the resources
+		for _, resourceToDelete := range resourcesToDelete {
+			resourceID := fmt.Sprintf(
+				"subscriptions/%s/resourceGroups/%s/providers/%s/%s",
+				creds.SubscriptionID,
+				creds.ResourceGroup,
+				resourceToDelete.resType,
+				resourceToDelete.name,
+			)
 
-					err := deleteResource(resourcesClient, *resource.ID, resourceType.apiVersion)
-					if err != nil {
-						retErr = wrapErrorf(retErr, "cannot delete the resource %s: %v", *resource.ID, err)
-						// do not return here, try deleting as much as possible
-					}
-				}
+			err := deleteResource(resourcesClient, resourceID, resourceToDelete.apiVersion)
+			if err != nil {
+				log.Printf("deleting the resource %s errored: %v", resourceToDelete.name, err)
+				retErr = wrapErrorf(retErr, "cannot delete the resource %s: %v", resourceToDelete.name, err)
+				// do not return here, try deleting as much as possible
 			}
 		}
 
