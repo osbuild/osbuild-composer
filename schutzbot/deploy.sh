@@ -24,6 +24,13 @@ source /etc/os-release
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
+# Remove Fedora's modular repositories to speed up dnf.
+sudo rm -f /etc/yum.repos.d/fedora*modular*
+
+# Enable fastestmirror and disable weak dependency installation to speed up
+# dnf operations.
+echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
+
 # Add osbuild team ssh keys.
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
