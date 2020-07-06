@@ -16,6 +16,12 @@ sudo rm -f /etc/yum.repos.d/fedora*modular*
 # dnf operations.
 echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
+# Fedora: Use a reliable set of mirrors for faster downloads.
+if [[ $ID == fedora ]]; then
+    sudo rm -f /etc/yum.repos.d/*.repo
+    sudo cp schutzbot/assets/fedora.repo /etc/yum.repos.d/fedora.repo
+fi
+
 # Mock is only available in EPEL for RHEL.
 if [[ $ID == rhel ]]; then
     greenprint "📦 Setting up EPEL repository"
@@ -73,6 +79,11 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 greenprint "🔧 Building source RPMs."
 make srpm
 make -C osbuild srpm
+
+# Use optimized mock template for Fedora.
+if [[ $ID == fedora ]]; then
+    sudo cp schutzbot/assets/fedora-branched.tpl /etc/mock/templates/fedora-branched.tpl
+fi
 
 # Fix RHEL 8 mock template for non-subscribed images.
 if [[ $NODE_NAME == *rhel8[23]* ]]; then
