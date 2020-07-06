@@ -9,11 +9,12 @@ function greenprint {
 # Get OS details.
 source /etc/os-release
 
-# Prepare dnf on Fedora for performance.
-if [[ $ID == fedora ]]; then
-    sudo rm -f /etc/yum.repos.d/fedora*modular*
-    echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
-fi
+# Remove Fedora's modular repositories to speed up dnf.
+sudo rm -f /etc/yum.repos.d/fedora*modular*
+
+# Enable fastestmirror and disable weak dependency installation to speed up
+# dnf operations.
+echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
