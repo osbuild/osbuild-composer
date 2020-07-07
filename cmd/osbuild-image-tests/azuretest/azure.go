@@ -180,7 +180,6 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 	// Let's create all of them here from the test id so we can delete them
 	// later.
 	deploymentName := testId
-	tag := "tag-" + testId
 	imagePath := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", creds.StorageAccount, creds.ContainerName, imageName)
 
 	parameters := deploymentParameters{
@@ -191,7 +190,6 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 		VirtualMachineName:       newDeploymentParameter("vm-" + testId),
 		DiskName:                 newDeploymentParameter("disk-" + testId),
 		ImageName:                newDeploymentParameter("image-" + testId),
-		Tag:                      newDeploymentParameter(tag),
 		Location:                 newDeploymentParameter(creds.Location),
 		ImagePath:                newDeploymentParameter(imagePath),
 		AdminUsername:            newDeploymentParameter("redhat"),
@@ -280,7 +278,7 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 		// Delete the deployment
 		// This actually does not delete any resources created by the
 		// deployment as one might think. Therefore the code above
-		// and the tagging are needed.
+		// is needed.
 		result, err := deploymentsClient.Delete(context.Background(), creds.ResourceGroup, deploymentName)
 		if err != nil {
 			retErr = wrapErrorf(retErr, "cannot create the request for the deployment deletion: %v", err)

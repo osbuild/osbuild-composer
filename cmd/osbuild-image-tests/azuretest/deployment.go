@@ -49,7 +49,6 @@ type deploymentParameters struct {
 	VirtualMachineName       deploymentParameter `json:"virtualMachineName"`
 	DiskName                 deploymentParameter `json:"diskName"`
 	ImageName                deploymentParameter `json:"imageName"`
-	Tag                      deploymentParameter `json:"tag"`
 	Location                 deploymentParameter `json:"location"`
 	ImagePath                deploymentParameter `json:"imagePath"`
 	AdminUsername            deploymentParameter `json:"adminUsername"`
