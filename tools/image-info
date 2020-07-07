@@ -227,27 +227,19 @@ def append_filesystem(report, tree, *, is_ostree=False):
         report["services-enabled"] = read_services(tree, "enabled")
         report["services-disabled"] = read_services(tree, "disabled")
 
-        try:
+        with contextlib.suppress(FileNotFoundError):
             with open(f"{tree}/etc/hostname") as f:
                 report["hostname"] = f.read().strip()
-        except FileNotFoundError:
-            pass
 
-        try:
+        with contextlib.suppress(FileNotFoundError):
             report["timezone"] = os.path.basename(os.readlink(f"{tree}/etc/localtime"))
-        except FileNotFoundError:
-            pass
 
-        try:
+        with contextlib.suppress(FileNotFoundError):
             report["firewall-enabled"] = read_firewall_zone(tree)
-        except FileNotFoundError:
-            pass
 
-        try:
+        with contextlib.suppress(FileNotFoundError):
             with open(f"{tree}/etc/fstab") as f:
                 report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
-        except FileNotFoundError:
-            pass
 
         with open(f"{tree}/etc/passwd") as f:
             report["passwd"] = sorted(f.read().strip().split("\n"))
@@ -264,11 +256,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
 
         if os.path.exists(f"{tree}/boot") and len(os.listdir(f"{tree}/boot")) > 0:
             assert "bootmenu" not in report
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 with open(f"{tree}/boot/grub2/grubenv") as f:
                     report["boot-environment"] = parse_environment_vars(f.read())
-            except FileNotFoundError:
-                pass
             report["bootmenu"] = read_boot_entries(f"{tree}/boot")
 
     elif len(glob.glob(f"{tree}/vmlinuz-*")) > 0:
