@@ -215,6 +215,14 @@ def read_firewall_zone(tree):
     return r
 
 
+def read_fstab(tree):
+    result = []
+    with contextlib.suppress(FileNotFoundError):
+        with open(f"{tree}/etc/fstab") as f:
+            result = sorted([line.split() for line in f if line and not line.startswith("#")])
+    return result
+
+
 def append_filesystem(report, tree, *, is_ostree=False):
     if os.path.exists(f"{tree}/etc/os-release"):
         report["packages"] = rpm_packages(tree, is_ostree)
@@ -237,9 +245,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         with contextlib.suppress(FileNotFoundError):
             report["firewall-enabled"] = read_firewall_zone(tree)
 
-        with contextlib.suppress(FileNotFoundError):
-            with open(f"{tree}/etc/fstab") as f:
-                report["fstab"] = sorted([line.split() for line in f.read().split("\n") if line and not line.startswith("#")])
+        fstab = read_fstab(tree)
+        if fstab:
+            report["fstab"] = fstab
 
         with open(f"{tree}/etc/passwd") as f:
             report["passwd"] = sorted(f.read().strip().split("\n"))
