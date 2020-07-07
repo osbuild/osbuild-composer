@@ -23,9 +23,6 @@
     "imageName": {
       "type": "string"
     },
-    "tag": {
-      "type": "string"
-    },
     "location": {
       "type": "string"
     },
@@ -73,9 +70,6 @@
         "networkSecurityGroup": {
           "id": "[variables('nsgId')]"
         }
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     },
     {
@@ -99,9 +93,6 @@
             }
           }
         ]
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     },
     {
@@ -123,9 +114,6 @@
             }
           }
         ]
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     },
     {
@@ -138,9 +126,6 @@
       },
       "sku": {
         "name": "Basic"
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     },
     {
@@ -157,9 +142,6 @@
             "osState": "Generalized"
           }
         }
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     },
     {
@@ -210,9 +192,6 @@
             }
           }
         }
-      },
-      "tags": {
-        "osbuild-composer-image-test": "[parameters('tag')]"
       }
     }
   ]
