@@ -105,7 +105,7 @@ def read_image_format(device):
     return qemu["format"]
 
 
-def read_partition(device, bootable, typ=None, start=0, size=0, type=None):
+def read_partition(device, bootable, typ=None, start=0, size=0):
    blkid = subprocess_check_output(["blkid", "--output", "export", device], parse_environment_vars)
    return {
        "label": blkid.get("LABEL"), # doesn't exist for mbr
