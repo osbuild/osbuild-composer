@@ -121,17 +121,23 @@ def read_partition(device, bootable, typ=None, start=0, size=0):
 
 def read_partition_table(device):
     partitions = []
+    info = {"partition-table": None,
+            "partition-table-id": None,
+            "partitions": partitions}
     try:
         sfdisk = subprocess_check_output(["sfdisk", "--json", device], json.loads)
     except subprocess.CalledProcessError:
         partitions.append(read_partition(device, False))
-        return None, None, partitions
-    else:
-        ptable = sfdisk["partitiontable"]
-        assert ptable["unit"] == "sectors"
-        for p in ptable["partitions"]:
-            partitions.append(read_partition(p["node"], p.get("bootable", False), p["type"], p["start"] * 512, p["size"] * 512))
-        return ptable["label"], ptable["id"], partitions
+        return info
+
+    ptable = sfdisk["partitiontable"]
+    assert ptable["unit"] == "sectors"
+    for p in ptable["partitions"]:
+        partitions.append(read_partition(p["node"], p.get("bootable", False), p["type"], p["start"] * 512, p["size"] * 512))
+    info["partition-table"] = ptable["label"]
+    info["partition-table-id"] = ptable["id"]
+
+    return info
 
 
 def read_bootloader_type(device):
@@ -293,7 +299,7 @@ def analyse_image(image):
 
     with nbd_connect(image) as device:
         report["bootloader"] = read_bootloader_type(device)
-        report["partition-table"], report["partition-table-id"], report["partitions"] = read_partition_table(device)
+        report.update(read_partition_table(device))
 
         if report["partition-table"]:
             esp, esp_id = find_esp(report["partitions"])
