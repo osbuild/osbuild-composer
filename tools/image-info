@@ -288,9 +288,10 @@ def find_esp(partitions):
 def analyse_image(image):
     subprocess.run(["modprobe", "nbd"], check=True)
 
-    report = {}
+    imgfmt = read_image_format(image)
+    report = {"image-format": imgfmt}
+
     with nbd_connect(image) as device:
-        report["image-format"] = read_image_format(image)
         report["bootloader"] = read_bootloader_type(device)
         report["partition-table"], report["partition-table-id"], report["partitions"] = read_partition_table(device)
 
