@@ -291,6 +291,19 @@ def find_esp(partitions):
     return None, 0
 
 
+def append_partitions(report, device):
+    esp, esp_id = find_esp(report["partitions"])
+    n_partitions = len(report["partitions"])
+    for n in range(n_partitions):
+        if report["partitions"][n]["fstype"]:
+            with mount(device + f"p{n + 1}") as tree:
+                if esp and os.path.exists(f"{tree}/boot/efi"):
+                    with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
+                        append_filesystem(report, tree)
+                else:
+                    append_filesystem(report, tree)
+
+
 def analyse_image(image):
     subprocess.run(["modprobe", "nbd"], check=True)
 
@@ -302,16 +315,7 @@ def analyse_image(image):
         report.update(read_partition_table(device))
 
         if report["partition-table"]:
-            esp, esp_id = find_esp(report["partitions"])
-            n_partitions = len(report["partitions"])
-            for n in range(n_partitions):
-                if report["partitions"][n]["fstype"]:
-                    with mount(device + f"p{n + 1}") as tree:
-                        if esp and os.path.exists(f"{tree}/boot/efi"):
-                            with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
-                                append_filesystem(report, tree)
-                        else:
-                            append_filesystem(report, tree)
+            append_partitions(report, device)
         else:
             with mount(device) as tree:
                 append_filesystem(report, tree)
