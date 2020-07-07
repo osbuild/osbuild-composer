@@ -27,8 +27,17 @@ pipeline {
             unit: "HOURS"
         )
     }
-
     stages {
+        stage("Prepare") {
+            agent { label "schutzbot" }
+            steps {
+                sh (
+                    label: "Get environment variables",
+                    script: "env | sort"
+                )
+            }
+        }
+
         stage("Mock") {
             // Halt the entire pipeline if a single RPM build fails. That
             // could indicate a code problem that needs to be investigated.
@@ -36,7 +45,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31') {
-                    agent { label "f31 && minimal" }
+                    agent { label "f31cloudbase" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -52,7 +61,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32') {
-                    agent { label "f32 && minimal" }
+                    agent { label "f32cloudbase" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -68,9 +77,10 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN') {
-                    agent { label "rhel8cdn && minimal" }
+                    agent { label "rhel8cloudbase" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -85,7 +95,7 @@ pipeline {
                 }
                 // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
                 stage('RHEL 8.3 Nightly') {
-                    agent { label "rhel83nightly && minimal" }
+                    agent { label "rhel83cloudbase" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         NIGHTLY_REPO = credentials('rhel8-nightly-repo')
