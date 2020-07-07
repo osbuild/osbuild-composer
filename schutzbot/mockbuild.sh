@@ -9,19 +9,6 @@ function greenprint {
 # Get OS details.
 source /etc/os-release
 
-# Remove Fedora's modular repositories to speed up dnf.
-sudo rm -f /etc/yum.repos.d/fedora*modular*
-
-# Enable fastestmirror and disable weak dependency installation to speed up
-# dnf operations.
-echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
-
-# Fedora: Use a reliable set of mirrors for faster downloads.
-if [[ $ID == fedora ]]; then
-    sudo rm -f /etc/yum.repos.d/*.repo
-    sudo cp schutzbot/assets/fedora.repo /etc/yum.repos.d/fedora.repo
-fi
-
 # Mock is only available in EPEL for RHEL.
 if [[ $ID == rhel ]]; then
     greenprint "📦 Setting up EPEL repository"
@@ -30,20 +17,21 @@ if [[ $ID == rhel ]]; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]]; then
+    greenprint "🪙 Registering RHEL instance"
+    sudo chmod +x $RHN_REGISTRATION_SCRIPT
+    sudo $RHN_REGISTRATION_SCRIPT
+fi
+
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock rpm-build
+sudo dnf -y install createrepo_c make mock python3-pip rpm-build
 
 # Install s3cmd if it is not present.
 if ! s3cmd --version > /dev/null 2>&1; then
     greenprint "📦 Installing s3cmd"
-    sudo pip3 install s3cmd
-fi
-
-# Enable fastestmirror for mock on Fedora.
-if [[ $ID == fedora ]]; then
-    sudo sed -i '/^install_weak_deps=.*/a fastestmirror=1' \
-        /etc/mock/templates/fedora-branched.tpl
+    sudo pip3 -q install s3cmd
 fi
 
 # Jenkins sets a workspace variable as the root of its working directory.
@@ -80,13 +68,8 @@ greenprint "🔧 Building source RPMs."
 make srpm
 make -C osbuild srpm
 
-# Use optimized mock template for Fedora.
-if [[ $ID == fedora ]]; then
-    sudo cp schutzbot/assets/fedora-branched.tpl /etc/mock/templates/fedora-branched.tpl
-fi
-
 # Fix RHEL 8 mock template for non-subscribed images.
-if [[ $NODE_NAME == *rhel8[23]* ]]; then
+if [[ "${ID}${VERSION_ID//./}" == rhel83 ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
     sudo mv $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
     cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
@@ -95,8 +78,7 @@ fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
-    --resultdir $REPO_DIR --with=tests \
+sudo mock -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
     rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
