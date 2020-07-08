@@ -143,8 +143,13 @@ def read_image_format(device):
 
 
 def read_partition(device, partition):
-    blkid = subprocess_check_output(["blkid", "--output", "export", device],
-                                   parse_environment_vars)
+    res = subprocess.run(["blkid", "--output", "export", device],
+                         check=False, encoding="utf-8",
+                         stdout=subprocess.PIPE)
+    if res.returncode == 0:
+        blkid = parse_environment_vars(res.stdout)
+    else:
+        blkid = {}
 
     partition["label"] = blkid.get("LABEL") # doesn't exist for mbr
     partition["uuid"] = blkid.get("UUID")
