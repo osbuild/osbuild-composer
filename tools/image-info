@@ -398,7 +398,9 @@ def analyse_tarball(path):
 
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
-    parser.add_argument("target",  help="The file or directory to analyse")
+    parser.add_argument("target", metavar="TARGET",
+                        help="The file or directory to analyse",
+                        type=os.path.abspath)
 
     args = parser.parse_args()
     target = args.target
