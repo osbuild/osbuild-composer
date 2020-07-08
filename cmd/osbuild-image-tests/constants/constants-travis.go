@@ -2,7 +2,10 @@
 
 package constants
 
-import "os/exec"
+import (
+	"os"
+	"os/exec"
+)
 
 func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
 	cmd := exec.Command(
@@ -15,6 +18,15 @@ func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
 		"-",
 	)
 	cmd.Dir = "osbuild"
+	return cmd
+}
+
+func GetImageInfoCommand(imagePath string) *exec.Cmd {
+	cmd := exec.Command(
+		"tools/image-info",
+		imagePath,
+	)
+	cmd.Env = append(os.Environ(), "PYTHONPATH=osbuild")
 	return cmd
 }
 
