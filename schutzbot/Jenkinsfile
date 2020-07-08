@@ -120,7 +120,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31 base') {
-                    agent { label "fedora31" }
+                    agent { label "f31cloudbase && psi" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora31'
@@ -133,7 +133,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 31 image') {
-                    agent { label "fedora31 && psi" }
+                    agent { label "f31cloudbase && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -149,7 +149,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 31 integration') {
-                    agent { label "fedora31 && psi" }
+                    agent { label "f31cloudbase && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -165,7 +165,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 base') {
-                    agent { label "fedora32" }
+                    agent { label "f32cloudbase && psi" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora32'
@@ -178,7 +178,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 image') {
-                    agent { label "fedora32 && psi" }
+                    agent { label "f32cloudbase && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -194,7 +194,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 integration') {
-                    agent { label "fedora32" }
+                    agent { label "f32cloudbase && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -210,7 +210,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN Base') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8cloudbase && psi" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'rhel8cdn'
@@ -223,7 +223,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN Image') {
-                    agent { label "rhel8 && psi" }
+                    agent { label "rhel8cloudbase && psi" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -239,7 +239,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN integration') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8cloudbase && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -255,7 +255,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8.3 Base') {
-                    agent { label "rhel83" }
+                    agent { label "rhel83cloudbase" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'rhel83'
@@ -275,7 +275,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8.3 Image') {
-                    agent { label "rhel83 && psi" }
+                    agent { label "rhel83cloudbase" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -298,7 +298,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8.3 integration') {
-                    agent { label "rhel83" }
+                    agent { label "rhel83cloudbase" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
