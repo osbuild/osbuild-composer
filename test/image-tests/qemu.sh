@@ -47,7 +47,7 @@ sudo systemctl start libvirtd
 sudo virsh list --all > /dev/null
 
 # Allow anyone in the wheel group to talk to libvirt.
-greenprint "🚪 Allowing users in wheel group to valk to libvirt"
+greenprint "🚪 Allowing users in wheel group to talk to libvirt"
 WHEEL_GROUP=wheel
 if [[ $ID == rhel ]]; then
     WHEEL_GROUP=adm
