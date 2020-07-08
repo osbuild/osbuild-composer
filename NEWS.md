@@ -1,5 +1,17 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 17:
+
+  * AWS images are now built in the raw format. Previously used vhdx was
+    space-efficient but actually caused about 30% of uploads to fail.
+
+  * The spec file had a wrong version of lorax-composer to obsolete, causing
+    upgrades to fail. This is now fixed.
+
+Contributions from: Major Hayden, Tom Gundersen
+
+— Liberec, 2020-07-08
+
 ## CHANGES WITH 16:
 
   * osbuild-composer now obsoletes lorax-composer on RHEL.
