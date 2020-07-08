@@ -33,7 +33,7 @@ fi
 
 # Install required packages.
 greenprint "📦 Installing required packages"
-sudo dnf -qy install htop libvirt-client libvirt-daemon \
+sudo dnf -qy install libvirt-client libvirt-daemon \
     libvirt-daemon-config-network libvirt-daemon-config-nwfilter \
     libvirt-daemon-driver-interface libvirt-daemon-driver-network \
     libvirt-daemon-driver-nodedev libvirt-daemon-driver-nwfilter \

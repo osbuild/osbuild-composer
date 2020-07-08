@@ -42,31 +42,15 @@ sudo dnf repository-packages osbuild-mock list
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install osbuild-composer-tests
 
-# Copy the internal repositories into place when needed.
-if curl -fs http://download.devel.redhat.com > /dev/null; then
+# Set up a directory to hold repository overrides.
+sudo mkdir -p /etc/osbuild-composer/repositories
 
-    # Set up a directory to hold repository overrides.
-    sudo mkdir -p /etc/osbuild-composer/repositories
-
-    case "${ID}${VERSION_ID}" in
-        fedora31)
-            sudo cp ${WORKSPACE}/test/internal-repos/fedora-31.json \
-                /etc/osbuild-composer/repositories/fedora-31.json
-        ;;
-        fedora32)
-            sudo cp ${WORKSPACE}/test/internal-repos/fedora-32.json \
-                /etc/osbuild-composer/repositories/fedora-32.json
-        ;;
-        rhel8.2)
-            sudo cp ${WORKSPACE}/test/external-repos/rhel-8.json \
-                /etc/osbuild-composer/repositories/rhel-8.json
-        ;;
-        rhel8.3)
-            sudo cp ${WORKSPACE}/test/internal-repos/rhel-8.json \
-                /etc/osbuild-composer/repositories/rhel-8.json
-        ;;
-    esac
-
+# NOTE(mhayden): RHEL 8.3 is the release we are currently targeting, but the
+# release is in beta right now. For RHEL 8.2 (latest release), ensure that
+# the production (non-beta content) is used.
+if [[ "${ID}${VERSION_ID//./}" == rhel82 ]]; then
+    sudo cp ${WORKSPACE}/test/external-repos/rhel-8.json \
+        /etc/osbuild-composer/repositories/rhel-8.json
 fi
 
 # Start services.
