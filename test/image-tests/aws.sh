@@ -28,10 +28,17 @@ if ! hash jq; then
     sudo dnf -qy install jq
 fi
 
-# Check for awscli.
+# We need awscli to talk to AWS.
 if ! hash aws; then
     greenprint "Installing awscli"
-    sudo pip3 -qq install awscli
+    sudo dnf -y install unzip
+    pushd /tmp
+        curl -Ls --retry 5 --output awscliv2.zip \
+            https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        unzip awscliv2.zip > /dev/null
+        sudo ./aws/install > /dev/null
+        aws --version
+    popd
 fi
 
 TEST_UUID=$(uuidgen)
