@@ -31,6 +31,10 @@ sudo rm -f /etc/yum.repos.d/fedora*modular*
 # dnf operations.
 echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
+# Ensure we are using the latest dnf since early revisions of Fedora 31 had
+# some dnf repo priority bugs like BZ 1733582.
+sudo dnf -y upgrade
+
 # Add osbuild team ssh keys.
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
