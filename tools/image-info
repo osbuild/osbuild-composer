@@ -171,6 +171,7 @@ def read_partition_table(device):
     ptable = sfdisk["partitiontable"]
     assert ptable["unit"] == "sectors"
     is_dos = ptable["label"] == "dos"
+    ssize = ptable.get("sectorsize", 512)
 
     for i, p in enumerate(ptable["partitions"]):
 
@@ -187,8 +188,8 @@ def read_partition_table(device):
         partitions.append({
             "bootable": p.get("bootable", False),
             "type": p["type"],
-            "start": p["start"] * 512,
-            "size": p["size"] * 512,
+            "start": p["start"] * ssize,
+            "size": p["size"] * ssize,
             "partuuid": partuuid
         })
 
