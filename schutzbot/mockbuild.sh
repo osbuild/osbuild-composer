@@ -10,7 +10,7 @@ function greenprint {
 source /etc/os-release
 
 # Mock is only available in EPEL for RHEL.
-if [[ $ID == rhel ]]; then
+if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
