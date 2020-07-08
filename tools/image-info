@@ -2,6 +2,7 @@
 
 import argparse
 import contextlib
+import errno
 import functools
 import glob
 import mimetypes
@@ -11,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree
+
+from osbuild import loop
 
 
 def run_ostree(*args, _input=None, _check=True, **kwargs):
@@ -25,17 +28,51 @@ def run_ostree(*args, _input=None, _check=True, **kwargs):
 
 
 @contextlib.contextmanager
-def nbd_connect(image):
-    for device in glob.glob("/dev/nbd*"):
-        r = subprocess.run(["qemu-nbd", "--connect", device, "--read-only", image], check=False).returncode
-        if r == 0:
-            try:
-                yield device
-            finally:
-                subprocess.run(["qemu-nbd", "--disconnect", device], check=True, stdout=subprocess.DEVNULL)
-            break
-    else:
-        raise RuntimeError("no free network block device")
+def loop_create_device(ctl, fd, offset=None, sizelimit=None):
+    while True:
+        lo = loop.Loop(ctl.get_unbound())
+        try:
+            lo.set_fd(fd)
+        except OSError as e:
+            lo.close()
+            if e.errno == errno.EBUSY:
+                continue
+            raise e
+        try:
+            lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
+        except BlockingIOError:
+            lo.clear_fd()
+            lo.close()
+            continue
+        break
+    try:
+        yield lo
+    finally:
+        lo.close()
+
+
+@contextlib.contextmanager
+def loop_open(ctl, image, *, offset=None, size=None):
+    with open(image, "rb") as f:
+        fd = f.fileno()
+        with loop_create_device(ctl, fd, offset=offset, sizelimit=size) as lo:
+            yield os.path.join("/dev", lo.devname)
+
+
+@contextlib.contextmanager
+def open_image(ctl, image, fmt):
+    with tempfile.TemporaryDirectory() as tmp:
+        if fmt != "raw":
+            target = os.path.join(tmp, "image.raw")
+            subprocess.run(["qemu-img", "convert", "-O", "raw", image, target],
+                           check=True)
+        else:
+            target = image
+
+        size = os.stat(target).st_size
+
+        with loop_open(ctl, target, offset=0, size=size) as dev:
+            yield target, dev
 
 
 @contextlib.contextmanager
@@ -105,18 +142,14 @@ def read_image_format(device):
     return qemu["format"]
 
 
-def read_partition(device, bootable, typ=None, start=0, size=0):
-   blkid = subprocess_check_output(["blkid", "--output", "export", device], parse_environment_vars)
-   return {
-       "label": blkid.get("LABEL"), # doesn't exist for mbr
-       "type": typ,
-       "uuid": blkid.get("UUID"),
-       "partuuid": blkid.get("PARTUUID"),
-       "fstype": blkid.get("TYPE"),
-       "bootable": bootable,
-       "start": start,
-       "size": size
-   }
+def read_partition(device, partition):
+    blkid = subprocess_check_output(["blkid", "--output", "export", device],
+                                   parse_environment_vars)
+
+    partition["label"] = blkid.get("LABEL") # doesn't exist for mbr
+    partition["uuid"] = blkid.get("UUID")
+    partition["fstype"] = blkid.get("TYPE")
+    return partition
 
 
 def read_partition_table(device):
@@ -132,8 +165,28 @@ def read_partition_table(device):
 
     ptable = sfdisk["partitiontable"]
     assert ptable["unit"] == "sectors"
-    for p in ptable["partitions"]:
-        partitions.append(read_partition(p["node"], p.get("bootable", False), p["type"], p["start"] * 512, p["size"] * 512))
+    is_dos = ptable["label"] == "dos"
+
+    for i, p in enumerate(ptable["partitions"]):
+
+        partuuid = p.get("uuid")
+        if not partuuid and is_dos:
+            # For dos/mbr partition layouts the partition uuid
+            # is generated. Normally this would be done by
+            # udev+blkid, when the partition table is scanned.
+            # 'sfdisk' prefixes the partition id with '0x' but
+            # 'blkid' does not; remove it to mimic 'blkid'
+            table_id = ptable['id'][2:]
+            partuuid = "%.33s-%02x" % (table_id, i+1)
+
+        partitions.append({
+            "bootable": p.get("bootable", False),
+            "type": p["type"],
+            "start": p["start"] * 512,
+            "size": p["size"] * 512,
+            "partuuid": partuuid
+        })
+
     info["partition-table"] = ptable["label"]
     info["partition-table-id"] = ptable["id"]
 
@@ -289,33 +342,43 @@ def find_esp(partitions):
     return None, 0
 
 
-def append_partitions(report, device):
-    esp, esp_id = find_esp(report["partitions"])
+def append_partitions(report, device, loctl):
+    partitions = report["partitions"]
+    esp, esp_id = find_esp(partitions)
 
-    for n, part in enumerate(report["partitions"]):
-        if not part["fstype"]:
-            continue
+    with contextlib.ExitStack() as cm:
 
-        with mount(device + f"p{n + 1}") as tree:
-            if esp and os.path.exists(f"{tree}/boot/efi"):
-                with mount_at(device + f"p{esp_id + 1}", f"{tree}/boot/efi", options=['umask=077']):
+        devices = {}
+        for n, part in enumerate(partitions):
+            start, size = part["start"], part["size"]
+            dev = cm.enter_context(loop_open(loctl, device, offset=start, size=size))
+            devices[n] = dev
+            read_partition(dev, part)
+
+        for n, part in enumerate(partitions):
+            if not part["fstype"]:
+                continue
+
+            with mount(devices[n]) as tree:
+                if esp and os.path.exists(f"{tree}/boot/efi"):
+                    with mount_at(devices[esp_id], f"{tree}/boot/efi", options=['umask=077']):
+                        append_filesystem(report, tree)
+                else:
                     append_filesystem(report, tree)
-            else:
-                append_filesystem(report, tree)
 
 
 def analyse_image(image):
-    subprocess.run(["modprobe", "nbd"], check=True)
+    loctl = loop.LoopControl()
 
     imgfmt = read_image_format(image)
     report = {"image-format": imgfmt}
 
-    with nbd_connect(image) as device:
+    with open_image(loctl, image, imgfmt) as (_, device):
         report["bootloader"] = read_bootloader_type(device)
         report.update(read_partition_table(device))
 
         if report["partition-table"]:
-            append_partitions(report, device)
+            append_partitions(report, device, loctl)
         else:
             with mount(device) as tree:
                 append_filesystem(report, tree)
