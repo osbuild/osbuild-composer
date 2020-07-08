@@ -14,6 +14,13 @@ func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
 	)
 }
 
+func GetImageInfoCommand(imagePath string) *exec.Cmd {
+	return exec.Command(
+		"/usr/libexec/osbuild-composer/image-info",
+		imagePath,
+	)
+}
+
 var TestPaths = struct {
 	ImageInfo               string
 	PrivateKey              string

@@ -84,7 +84,7 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
 	require.NoErrorf(t, err, "cannot decode expected image info: %#v", err)
 
-	cmd := exec.Command(constants.TestPaths.ImageInfo, imagePath)
+	cmd := constants.GetImageInfoCommand(imagePath)
 	cmd.Stderr = os.Stderr
 	reader, writer := io.Pipe()
 	cmd.Stdout = writer
