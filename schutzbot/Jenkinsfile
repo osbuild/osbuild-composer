@@ -259,14 +259,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'rhel83'
-                        // If RHEL 8.3 fails, let the stage fail without
-                        // marking the entire pipeline as a failure. Once
-                        // RHEL 8.3 calms down and tests begin to pass,
-                        // remove this wrapper and make this test look like
-                        // the others.
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            run_tests('base')
-                        }
+                        run_tests('base')
                     }
                     post {
                         always {
@@ -282,14 +275,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel83'
-                        // If RHEL 8.3 fails, let the stage fail without
-                        // marking the entire pipeline as a failure. Once
-                        // RHEL 8.3 calms down and tests begin to pass,
-                        // remove this wrapper and make this test look like
-                        // the others.
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            run_tests('image')
-                        }
+                        run_tests('image')
                     }
                     post {
                         always {
@@ -305,14 +291,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel83'
-                        // If RHEL 8.3 fails, let the stage fail without
-                        // marking the entire pipeline as a failure. Once
-                        // RHEL 8.3 calms down and tests begin to pass,
-                        // remove this wrapper and make this test look like
-                        // the others.
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            run_tests('integration')
-                        }
+                        run_tests('integration')
                     }
                     post {
                         always {
