@@ -396,6 +396,37 @@ def analyse_tarball(path):
         return analyse_directory(tree)
 
 
+def is_compressed(path):
+    _, encoding = mimetypes.guess_type(path)
+    return encoding in ["xz", "gzip", "bzip2"]
+
+
+def analyse_compressed(path):
+    _, encoding = mimetypes.guess_type(path)
+
+    if encoding == "xz":
+        command = ["unxz", "--force"]
+    elif encoding == "gzip":
+        command = ["gunzip", "--force"]
+    elif encoding == "bzip2":
+        command = ["bunzip2", "--force"]
+    else:
+        raise ValueError(f"Unsupported compression: {encoding}")
+
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
+        subprocess.run(["cp", "--reflink=auto", "-a", path, tmpdir],
+                       check=True)
+
+        files = os.listdir(tmpdir)
+        archive = os.path.join(tmpdir, files[0])
+        subprocess.run(command + [archive], check=True)
+
+        files = os.listdir(tmpdir)
+        assert len(files) == 1
+        image = os.path.join(tmpdir, files[0])
+        return analyse_image(image)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
     parser.add_argument("target", metavar="TARGET",
@@ -409,6 +440,8 @@ def main():
         report = analyse_directory(target)
     elif is_tarball(target):
         report = analyse_tarball(target)
+    elif is_compressed(target):
+        report = analyse_compressed(target)
     else:
         report = analyse_image(target)
 
