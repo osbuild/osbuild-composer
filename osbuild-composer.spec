@@ -55,7 +55,7 @@ Requires: osbuild-ostree >= 17
 Provides: weldr
 
 %if 0%{?rhel}
-Obsoletes: lorax-composer <= 28
+Obsoletes: lorax-composer <= 29
 Conflicts: lorax-composer
 %endif
 
