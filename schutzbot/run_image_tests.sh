@@ -1,8 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Get OS details.
+# Get OS and architecture details.
 source /etc/os-release
+ARCH=$(uname -m)
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 IMAGE_TEST_CASE_RUNNER=/usr/libexec/tests/osbuild-composer/osbuild-image-tests
@@ -11,22 +12,17 @@ IMAGE_TEST_CASES_PATH=/usr/share/tests/osbuild-composer/cases
 PASSED_TESTS=()
 FAILED_TESTS=()
 
-TEST_CASES=(
-  "openstack-boot.json"
-  "qcow2-boot.json"
-  "tar-boot.json"
-  "vhd-boot.json"
-  "vmdk-boot.json"
-)
-
 # Print out a nice test divider so we know when tests stop and start.
 test_divider () {
     printf "%0.s-" {1..78} && echo
 }
 
-# Get the full test case name based on distro and architecture.
-get_full_test_case () {
-    echo "${IMAGE_TEST_CASES_PATH}/${ID}_${VERSION_ID%.*}-$(uname -m)-${1}"
+# Get a list of test cases.
+get_test_cases () {
+    TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}*.json"
+    pushd $IMAGE_TEST_CASES_PATH > /dev/null
+        ls $TEST_CASE_SELECTOR
+    popd > /dev/null
 }
 
 # Run a test case and store the result as passed or failed.
@@ -40,7 +36,12 @@ run_test_case () {
     echo "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
-    if sudo $TEST_RUNNER -test.v $TEST_CASE_FILENAME 2>&1 | tee ${WORKSPACE}/${TEST_NAME}.log; then
+    # Set up the testing command.
+    TEST_CMD="$TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
+
+    # Run the test and add the test name to the list of passed or failed
+    # tests depending on the result.
+    if sudo $TEST_CMD 2>&1 | tee ${WORKSPACE}/${TEST_NAME}.log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
@@ -51,15 +52,16 @@ run_test_case () {
 }
 
 # Ensure osbuild-composer-tests is installed.
-sudo dnf -y install osbuild-composer-tests
+if ! rpm -qi osbuild-composer-tests > /dev/null 2>&1; then
+    sudo dnf -y install osbuild-composer-tests
+fi
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
 # Run each test case.
-for TEST_CASE in "${TEST_CASES[@]}"; do
-    TEST_CASE_FILENAME=$(get_full_test_case $TEST_CASE)
-    run_test_case $IMAGE_TEST_CASE_RUNNER $TEST_CASE_FILENAME
+for TEST_CASE in $(get_test_cases); do
+    run_test_case $IMAGE_TEST_CASE_RUNNER $TEST_CASE
 done
 
 # Print a report of the test results.
