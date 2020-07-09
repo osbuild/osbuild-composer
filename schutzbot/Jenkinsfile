@@ -169,7 +169,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31 base') {
-                    agent { label "f31cloudbase && psi && x86_64" }
+                    agent { label "f31cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora31'
@@ -198,7 +198,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 31 integration') {
-                    agent { label "f31cloudbase && psi && x86_64" }
+                    agent { label "f31cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -214,7 +214,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 base') {
-                    agent { label "f32cloudbase && psi && x86_64" }
+                    agent { label "f32cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora32'
@@ -243,7 +243,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32 integration') {
-                    agent { label "f32cloudbase && psi && x86_64" }
+                    agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -259,8 +259,11 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN Base') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    environment { TEST_TYPE = "base" }
+                    agent { label "rhel8cloudbase && x86_64 && aws" }
+                    environment {
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        TEST_TYPE = "base"
+                    }
                     steps {
                         unstash 'rhel8cdn'
                         run_tests('base')
@@ -288,10 +291,11 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN integration') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
                         unstash 'rhel8cdn'
