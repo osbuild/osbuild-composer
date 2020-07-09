@@ -8,6 +8,8 @@ CPUS=$(nproc)
 MEM=$(free -m | grep -oP '\d+' | head -n 1)
 DISK=$(df --output=size -h / | sed '1d;s/[^0-9]//g')
 HOSTNAME=$(uname -n)
+ARCH=$(uname -m)
+KERNEL=$(uname -r)
 
 echo -e "\033[0;36m"
 cat << EOF
@@ -22,6 +24,8 @@ CI MACHINE SPECS
          CPUs: ${CPUS}
           RAM: ${MEM} GB
          DISK: ${DISK} GB
+         ARCH: ${ARCH}
+       KERNEL: ${KERNEL}
 
 ------------------------------------------------------------------------------
 EOF

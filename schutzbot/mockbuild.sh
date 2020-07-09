@@ -6,8 +6,9 @@ function greenprint {
   echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Get OS details.
+# Get OS and architecture details.
 source /etc/os-release
+ARCH=$(uname -m)
 
 # Mock is only available in EPEL for RHEL.
 if [[ $ID == rhel ]] && ! rpm -q epel-release; then
@@ -53,10 +54,10 @@ REPO_BUCKET=osbuild-composer-repos
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
 # Directory to hold the RPMs temporarily before we upload them.
-REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}
+REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Full URL to the RPM repository after they are uploaded.
-REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}
+REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
