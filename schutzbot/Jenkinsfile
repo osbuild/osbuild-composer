@@ -60,6 +60,22 @@ pipeline {
                         )
                     }
                 }
+                stage('Fedora 31 aarch64') {
+                    agent { label "f31cloudbase_aarch64_temporary" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora31_aarch64'
+                        )
+                    }
+                }
                 stage('Fedora 32') {
                     agent { label "f32cloudbase && x86_64" }
                     environment {
@@ -73,6 +89,22 @@ pipeline {
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'fedora32'
+                        )
+                    }
+                }
+                stage('Fedora 32 aarch64') {
+                    agent { label "f32cloudbase_aarch64_temporary" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora32_aarch64'
                         )
                     }
                 }
@@ -90,6 +122,23 @@ pipeline {
                         stash (
                             includes: 'osbuild-mock.repo',
                             name: 'rhel8cdn'
+                        )
+                    }
+                }
+                stage('RHEL 8 CDN aarch64') {
+                    agent { label "rhel8cloudbase_aarch64_temporary" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel8cdn_aarch64'
                         )
                     }
                 }
