@@ -21,6 +21,12 @@ function retry {
 # Get OS details.
 source /etc/os-release
 
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    sudo chmod +x $RHN_REGISTRATION_SCRIPT
+    sudo $RHN_REGISTRATION_SCRIPT
+fi
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
