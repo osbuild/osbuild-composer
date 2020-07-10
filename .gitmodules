@@ -1,3 +1,4 @@
 [submodule "osbuild"]
 	path = osbuild
-	url = https://github.com/osbuild/osbuild.git
+	url = https://github.com/teg/osbuild.git
+	branch = debug
