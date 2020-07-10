@@ -52,6 +52,18 @@ def dnfrepo(desc, parent_conf=None):
 
 def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     base = dnf.Base()
+
+    # Enable fastestmirror to ensure we choose the fastest mirrors for
+    # downloading metadata (when depsolving) and downloading packages.
+    base.conf.fastestmirror = True
+
+    # Initialize all plugins (including fastestmirror).
+    base.init_plugins()
+
+    # Try another mirror if it takes longer than 5 seconds to connect.
+    base.conf.timeout = 5
+
+    # Set the rest of the dnf configuration.
     base.conf.module_platform_id = module_platform_id
     base.conf.config_file_path = "/dev/null"
     base.conf.persistdir = persistdir
