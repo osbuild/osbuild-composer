@@ -72,14 +72,14 @@ make -C osbuild srpm
 # Fix RHEL 8 mock template for non-subscribed images.
 if [[ "${ID}${VERSION_ID//./}" == rhel83 ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo mv $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
+    sudo cp $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
     cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
 fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
+sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
     rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
