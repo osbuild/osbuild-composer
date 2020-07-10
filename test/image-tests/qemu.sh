@@ -25,15 +25,9 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# We need jq for parsing composer-cli output.
-if ! hash jq; then
-    greenprint "📦 Installing jq"
-    sudo dnf -qy install jq
-fi
-
 # Install required packages.
 greenprint "📦 Installing required packages"
-sudo dnf -qy install libvirt-client libvirt-daemon \
+sudo dnf -y install jq libvirt-client libvirt-daemon \
     libvirt-daemon-config-network libvirt-daemon-config-nwfilter \
     libvirt-daemon-driver-interface libvirt-daemon-driver-network \
     libvirt-daemon-driver-nodedev libvirt-daemon-driver-nwfilter \
@@ -45,6 +39,32 @@ sudo dnf -qy install libvirt-client libvirt-daemon \
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
 sudo virsh list --all > /dev/null
+
+# Set a customized dnsmasq configuration for libvirt so we always get the
+# same address on bootup.
+sudo tee /tmp/integration.xml > /dev/null << EOF
+<network>
+  <name>integration</name>
+  <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='integration' stp='on' delay='0'/>
+  <mac address='52:54:00:36:46:ef'/>
+  <ip address='192.168.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.100.2' end='192.168.100.254'/>
+      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
+    </dhcp>
+  </ip>
+</network>
+EOF
+if ! sudo virsh net-info integration > /dev/null 2>&1; then
+    sudo virsh net-define /tmp/integration.xml
+    sudo virsh net-start integration
+fi
 
 # Allow anyone in the wheel group to talk to libvirt.
 greenprint "🚪 Allowing users in wheel group to talk to libvirt"
@@ -61,22 +81,16 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-# Jenkins sets WORKSPACE to the job workspace, but if this script runs
-# outside of Jenkins, we can set up a temporary directory instead.
-if [[ ${WORKSPACE:-empty} == empty ]]; then
-    WORKSPACE=$(mktemp -d)
-fi
-
 # Set up variables.
 TEST_UUID=$(uuidgen)
 IMAGE_KEY=osbuild-composer-aws-test-${TEST_UUID}
+INSTANCE_ADDRESS=192.168.100.50
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
-DOMIF_CHECK=${TEMPDIR}/domifcheck-${IMAGE_KEY}.json
 
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
@@ -84,7 +98,8 @@ smoke_test_check () {
     SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
     chmod 0600 $SSH_KEY
 
-    SMOKE_TEST=$(ssh -i ${SSH_KEY} redhat@${1} 'cat /etc/smoke-test.txt')
+    SSH_OPTIONS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
+    SMOKE_TEST=$(ssh $SSH_OPTIONS -i ${SSH_KEY} redhat@${1} 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
     else
@@ -136,6 +151,9 @@ name = "cloud-init"
 
 [customizations.services]
 enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
+
+[customizations.kernel]
+append = "LANG=en_US.UTF-8 net.ifnames=0 biosdevname=0"
 EOF
 
 # Prepare the blueprint for the compose.
@@ -165,7 +183,7 @@ while true; do
     fi
 
     # Wait 30 seconds and try again.
-    sleep 30
+    sleep 5
 done
 
 # Capture the compose logs from osbuild.
@@ -189,11 +207,19 @@ IMAGE_FILENAME=$(basename $(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSIO
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
 sudo mv $IMAGE_FILENAME $LIBVIRT_IMAGE_PATH
 
+# Prepare cloud-init data.
+CLOUD_INIT_DIR=$(mktemp -d)
+cp ${WORKSPACE}/test/cloud-init/{meta,user}-data ${CLOUD_INIT_DIR}/
+cp ${WORKSPACE}/test/cloud-init/network-config ${CLOUD_INIT_DIR}/
+
 # Set up a cloud-init ISO.
 greenprint "💿 Creating a cloud-init ISO"
 CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
-cp ${WORKSPACE}/test/cloud-init/*-data .
-sudo genisoimage -o $CLOUD_INIT_PATH -V cidata -r -J user-data meta-data 2>&1 > /dev/null
+rm -f $CLOUD_INIT_PATH
+pushd $CLOUD_INIT_DIR
+    sudo genisoimage -o $CLOUD_INIT_PATH -V cidata \
+        -r -J user-data meta-data network-config 2>&1 > /dev/null
+popd
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
@@ -210,46 +236,17 @@ sudo virt-install \
     --import \
     --os-variant rhel8-unknown \
     --noautoconsole \
-    --network network=default
-
-# Wait for the image to make a DHCP request.
-greenprint "💻 Waiting for the instance to make a DHCP request."
-for LOOP_COUNTER in {0..30}; do
-    sudo virsh domifaddr ${IMAGE_KEY} | tee $DOMIF_CHECK > /dev/null
-
-    # Check to see if the CIDR IP is in the output yet.
-    if grep -oP "[0-9\.]*/[0-9]*" $DOMIF_CHECK > /dev/null; then
-        INSTANCE_ADDRESS=$(grep -oP "[0-9\.]*/[0-9]*" $DOMIF_CHECK | sed 's#/.*$##')
-        echo "Found instance address: ${INSTANCE_ADDRESS}"
-        break
-    fi
-
-    # Wait 10 seconds and try again.
-    sleep 10
-done
-
-# Wait for SSH to start.
-greenprint "⏱ Waiting for instance to respond to ssh"
-for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan -T 5 $INSTANCE_ADDRESS 2>&1 > /dev/null; then
-        echo "SSH is up!"
-        ssh-keyscan $INSTANCE_ADDRESS >> ~/.ssh/known_hosts
-        break
-    fi
-
-    echo "Retrying in 5 seconds..."
-    sleep 5
-done
+    --network network=integration,mac=34:49:22:B0:83:30 > /dev/null
 
 # Check for our smoke test file.
-greenprint "🛃 Checking for smoke test file"
-for LOOP_COUNTER in {0..10}; do
+greenprint "🛃 Checking for smoke test file in VM"
+for LOOP_COUNTER in {0..30}; do
     RESULTS="$(smoke_test_check $INSTANCE_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "Smoke test passed! 🥳"
         break
     fi
-    sleep 5
+    sleep 10
 done
 
 # Clean up our mess.
