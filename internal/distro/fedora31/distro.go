@@ -242,6 +242,12 @@ func New() *Fedora31 {
 			"gobject-introspection",
 			"plymouth",
 		},
+		enabledServices: []string{
+			"cloud-init.service",
+			"cloud-config.service",
+			"cloud-final.service",
+			"cloud-init-local.service",
+		},
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
@@ -268,6 +274,12 @@ func New() *Fedora31 {
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
+		},
+		enabledServices: []string{
+			"cloud-init.service",
+			"cloud-config.service",
+			"cloud-final.service",
+			"cloud-init-local.service",
 		},
 		kernelOptions: "ro biosdevname=0 net.ifnames=0",
 		bootable:      true,

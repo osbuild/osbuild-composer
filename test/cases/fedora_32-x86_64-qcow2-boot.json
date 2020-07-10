@@ -3397,6 +3397,17 @@
           }
         },
         {
+          "name": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "cloud-init.service",
+              "cloud-config.service",
+              "cloud-final.service",
+              "cloud-init-local.service"
+            ]
+          }
+        },
+        {
           "name": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
@@ -9535,10 +9546,6 @@
       "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
-      "cloud-config.service",
-      "cloud-final.service",
-      "cloud-init-local.service",
-      "cloud-init.service",
       "console-getty.service",
       "console-login-helper-messages-issuegen.service",
       "console-login-helper-messages-motdgen.service",
@@ -9582,6 +9589,10 @@
       "auditd.service",
       "autovt@.service",
       "chronyd.service",
+      "cloud-config.service",
+      "cloud-final.service",
+      "cloud-init-local.service",
+      "cloud-init.service",
       "ctrl-alt-del.target",
       "dbus-broker.service",
       "dbus-org.freedesktop.nm-dispatcher.service",

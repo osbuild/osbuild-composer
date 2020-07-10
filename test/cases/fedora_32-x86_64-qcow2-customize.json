@@ -3499,6 +3499,10 @@
           "name": "org.osbuild.systemd",
           "options": {
             "enabled_services": [
+              "cloud-init.service",
+              "cloud-config.service",
+              "cloud-final.service",
+              "cloud-init-local.service",
               "sshd.socket"
             ],
             "disabled_services": [
@@ -9649,10 +9653,6 @@
       "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
-      "cloud-config.service",
-      "cloud-final.service",
-      "cloud-init-local.service",
-      "cloud-init.service",
       "console-getty.service",
       "console-login-helper-messages-issuegen.service",
       "console-login-helper-messages-motdgen.service",
@@ -9695,6 +9695,10 @@
       "auditd.service",
       "autovt@.service",
       "chronyd.service",
+      "cloud-config.service",
+      "cloud-final.service",
+      "cloud-init-local.service",
+      "cloud-init.service",
       "ctrl-alt-del.target",
       "dbus-broker.service",
       "dbus-org.freedesktop.nm-dispatcher.service",
