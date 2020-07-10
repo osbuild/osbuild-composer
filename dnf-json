@@ -5,7 +5,6 @@ import dnf
 import hashlib
 import hawkey
 import json
-import shutil
 import sys
 import tempfile
 
@@ -99,7 +98,8 @@ def repo_checksums(base):
 
         digest = hashlib.sha256(url.encode()).hexdigest()[:16]
 
-        with open(f"{base.conf.cachedir}/{repo.id}-{digest}/repodata/repomd.xml", "rb") as f:
+        repomd_file = f"{repo.id}-{digest}/repodata/repomd.xml"
+        with open(f"{base.conf.cachedir}/{repomd_file}", "rb") as f:
             repomd = f.read()
 
         checksums[repo.id] = "sha256:" + hashlib.sha256(repomd).hexdigest()
@@ -117,9 +117,18 @@ module_platform_id = arguments["module_platform_id"]
 
 with tempfile.TemporaryDirectory() as persistdir:
     try:
-        base = create_base(repos, module_platform_id, persistdir, cachedir, arch)
+        base = create_base(
+            repos,
+            module_platform_id,
+            persistdir,
+            cachedir,
+            arch
+        )
     except dnf.exceptions.Error as e:
-        exit_with_dnf_error(type(e).__name__, f"Error occurred when setting up repo: {e}")
+        exit_with_dnf_error(
+            type(e).__name__,
+            f"Error occurred when setting up repo: {e}"
+        )
 
     if command == "dump":
         packages = []
@@ -145,18 +154,31 @@ with tempfile.TemporaryDirectory() as persistdir:
         errors = []
 
         try:
-            base.install_specs(arguments["package-specs"], exclude=arguments.get("exclude-specs", []))
+            base.install_specs(
+                arguments["package-specs"],
+                exclude=arguments.get("exclude-specs", [])
+            )
         except dnf.exceptions.MarkingErrors as e:
-            exit_with_dnf_error("MarkingErrors", f"Error occurred when marking packages for installation: {e}")
+            exit_with_dnf_error(
+                "MarkingErrors",
+                f"Error occurred when marking packages for installation: {e}"
+            )
 
         try:
             base.resolve()
         except dnf.exceptions.DepsolveError as e:
-            exit_with_dnf_error("DepsolveError", f"There was a problem depsolving {arguments['package-specs']}: {e}")
+            exit_with_dnf_error(
+                "DepsolveError",
+                (
+                    "There was a problem depsolving "
+                    f"{arguments['package-specs']}: {e}"
+                )
+            )
 
         dependencies = []
         for tsi in base.transaction:
-            # avoid using the install_set() helper, as it does not guarantee a stable order
+            # Avoid using the install_set() helper, as it does not guarantee
+            # a stable order
             if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
                 continue
             package = tsi.pkg
@@ -170,7 +192,10 @@ with tempfile.TemporaryDirectory() as persistdir:
                 "repo_id": package.reponame,
                 "path": package.relativepath,
                 "remote_location": package.remote_location(),
-                "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
+                "checksum": (
+                    f"{hawkey.chksum_name(package.chksum[0])}:"
+                    f"{package.chksum[1].hex()}"
+                )
             })
         json.dump({
             "checksums": repo_checksums(base),
