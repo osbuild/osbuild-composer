@@ -4129,6 +4129,17 @@
           }
         },
         {
+          "name": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "cloud-init.service",
+              "cloud-config.service",
+              "cloud-final.service",
+              "cloud-init-local.service"
+            ]
+          }
+        },
+        {
           "name": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
