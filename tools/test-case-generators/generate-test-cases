@@ -7,12 +7,13 @@ import os
 import sys
 import tempfile
 
+
 def get_subprocess_stdout(*args, **kwargs):
     sp = subprocess.run(*args, **kwargs, stdout=subprocess.PIPE)
     if sp.returncode != 0:
         sys.stderr.write(sp.stdout)
         sys.exit(1)
-    
+
     return sp.stdout
 
 
@@ -199,6 +200,7 @@ def main(distro, arch, image_types, keep_image_info, store, output):
         }
         generate_test_case("customize", distro, arch, "qcow2", test_case_request, keep_image_info, store, output)
     return
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate test cases")
