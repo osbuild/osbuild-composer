@@ -10,6 +10,21 @@
       "repositories": [],
       "filename": "image.raw",
       "blueprint": {}
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "customizations": {
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
+        }
+      }
     }
   },
   "rhel-edge-commit": {
@@ -20,6 +35,21 @@
       "repositories": [],
       "filename": "commit.tar",
       "blueprint": {}
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "customizations": {
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
+        }
+      }
     }
   },
   "fedora-iot-commit": {
@@ -57,6 +87,32 @@
           ]
         }
       }
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "name": "openstack-boot-test",
+          "description": "Image for boot test",
+          "packages": [],
+          "modules": [],
+          "groups": [],
+          "customizations": {
+            "user": [
+              {
+                "name": "redhat",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            ],
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
+        }
+      }
     }
   },
   "tar": {
@@ -89,6 +145,37 @@
           ]
         }
       }
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "name": "tar-boot-test",
+          "description": "Image for boot test",
+          "packages": [
+            {
+              "name": "openssh-server",
+              "version": "*"
+            }
+          ],
+          "modules": [],
+          "groups": [],
+          "customizations": {
+            "user": [
+              {
+                "name": "redhat",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            ],
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
+        }
+      }
     }
   },
   "qcow2": {
@@ -114,6 +201,32 @@
               "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
             }
           ]
+        }
+      }
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "name": "qcow2-boot-test",
+          "description": "Image for boot test",
+          "packages": [],
+          "modules": [],
+          "groups": [],
+          "customizations": {
+            "user": [
+              {
+                "name": "redhat",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            ],
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
         }
       }
     }
@@ -143,6 +256,32 @@
           ]
         }
       }
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "name": "vhd-boot-test",
+          "description": "Image for boot test",
+          "packages": [],
+          "modules": [],
+          "groups": [],
+          "customizations": {
+            "user": [
+              {
+                "name": "redhat",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            ],
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
+        }
+      }
     }
   },
   "vmdk": {
@@ -167,6 +306,32 @@
               "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
             }
           ]
+        }
+      }
+    },
+    "overrides": {
+      "rhel-8": {
+        "blueprint": {
+          "name": "vhd-boot-test",
+          "description": "Image for boot test",
+          "packages": [],
+          "modules": [],
+          "groups": [],
+          "customizations": {
+            "user": [
+              {
+                "name": "redhat",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              }
+            ],
+            "subscription": {
+              "organization": 2040324,
+              "activation-key": "my-secret-key",
+              "server-url": "subscription.rhsm.redhat.com",
+              "base-url": "http://cdn.redhat.com",
+              "insights": true
+            }
+          }
         }
       }
     }

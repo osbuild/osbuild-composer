@@ -19,6 +19,17 @@
     "filename": "image.raw",
     "blueprint": {}
   },
+  "blueprint": {
+    "customizations": {
+      "subscription": {
+        "organization": 2040324,
+        "activation-key": "my-secret-key",
+        "server-url": "subscription.rhsm.redhat.com",
+        "base-url": "http://cdn.redhat.com",
+        "insights": true
+      }
+    }
+  },
   "manifest": {
     "sources": {
       "org.osbuild.files": {

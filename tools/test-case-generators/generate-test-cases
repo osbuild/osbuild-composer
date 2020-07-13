@@ -207,13 +207,18 @@ def main(distro, arch, image_types, keep_image_info, store, output, with_customi
         return
 
     for output_format, test_case_request in format_request_dict.items():
-        if test_case_request["compose-request"]["image-type"] not in image_types:
+        filtered_request = dict(filter(lambda i: i[0] != "overrides", test_case_request.items()))
+        if filtered_request["compose-request"]["image-type"] not in image_types:
                 continue
-        test_case_request["compose-request"]["distro"] = distro
-        test_case_request["compose-request"]["arch"] = arch
-        test_case_request["compose-request"]["repositories"] = repos_dict[distro][arch]
-        generate_test_case("boot", distro, arch, output_format, test_case_request, keep_image_info, store, output)
-    
+        filtered_request["compose-request"]["distro"] = distro
+        filtered_request["compose-request"]["arch"] = arch
+        filtered_request["compose-request"]["repositories"] = repos_dict[distro][arch]
+
+        if distro in test_case_request["overrides"]:
+            filtered_request.update(test_case_request["overrides"][distro])
+
+        generate_test_case("boot", distro, arch, output_format, filtered_request, keep_image_info, store, output)
+
     return
 
 
