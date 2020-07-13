@@ -31,6 +31,8 @@ def run_osbuild(manifest, store, output):
                             input=json.dumps(manifest))
         except:
             print(log.read())
+            raise
+
 
 class TestCaseGenerator:
     '''
