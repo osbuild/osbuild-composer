@@ -70,6 +70,7 @@ pipeline {
                             environment {
                                 TEST_TYPE = "image"
                                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                                AZURE_CREDS = credentials('azure')
                             }
                             steps {
                                 unstash 'fedora31'
@@ -190,6 +191,7 @@ pipeline {
                             environment {
                                 TEST_TYPE = "image"
                                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                                AZURE_CREDS = credentials('azure')
                             }
                             steps {
                                 unstash 'fedora32'
@@ -314,6 +316,7 @@ pipeline {
                             environment {
                                 TEST_TYPE = "image"
                                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                                AZURE_CREDS = credentials('azure')
                                 RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                             }
                             steps {
@@ -442,6 +445,7 @@ pipeline {
                             environment {
                                 TEST_TYPE = "image"
                                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                                AZURE_CREDS = credentials('azure')
                             }
                             steps {
                                 unstash 'rhel83'
