@@ -2421,9 +2421,10 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 	common.PanicOnError(err)
 
 	header := &tar.Header{
-		Name: "logs/osbuild.log",
-		Mode: 0644,
-		Size: int64(fileContents.Len()),
+		Name:    "logs/osbuild.log",
+		Mode:    0644,
+		Size:    int64(fileContents.Len()),
+		ModTime: time.Now().Truncate(time.Second),
 	}
 
 	err = tw.WriteHeader(header)
