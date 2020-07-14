@@ -129,7 +129,7 @@ pipeline {
                             }
                             post {
                                 always {
-                                    preserve_logs('fedora31-base')
+                                    preserve_logs('fedora31-base-aarch64')
                                 }
                             }
                         }
@@ -233,7 +233,7 @@ pipeline {
                             }
                             post {
                                 always {
-                                    preserve_logs('fedora32-base')
+                                    preserve_logs('fedora32-base-aarch64')
                                 }
                             }
                         }
@@ -347,7 +347,7 @@ pipeline {
                             }
                             post {
                                 always {
-                                    preserve_logs('fedora32-base')
+                                    preserve_logs('rhel8-base-aarch64')
                                 }
                             }
                         }
@@ -358,7 +358,7 @@ pipeline {
                 // in PSI until 8.3 beta content appears on the public CDN.
                 stage("RHEL8.3 x86") {
                     stages {
-                        stage('RHEL 8.3 Nightly') {
+                        stage('Mock build') {
                             agent { label "rhel83cloudbase && x86_64" }
                             environment {
                                 AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -376,7 +376,7 @@ pipeline {
                                 )
                             }
                         }
-                        stage('RHEL 8.3 Base') {
+                        stage('Base') {
                             agent { label "rhel83cloudbase && x86_64" }
                             environment { TEST_TYPE = "base" }
                             steps {
@@ -389,7 +389,38 @@ pipeline {
                                 }
                             }
                         }
-
+                        stage('Image') {
+                            agent { label "rhel83cloudbase && x86_64" }
+                            environment {
+                                TEST_TYPE = "image"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'rhel83'
+                                run_tests('image')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('rhel83-image')
+                                }
+                            }
+                        }
+                        stage('Integration') {
+                            agent { label "rhel83cloudbase && x86_64" }
+                            environment {
+                                TEST_TYPE = "integration"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'rhel83'
+                                run_tests('integration')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('rhel83-integration')
+                                }
+                            }
+                        }
                     }
                 }
             }
