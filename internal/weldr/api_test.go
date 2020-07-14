@@ -679,6 +679,7 @@ func TestComposeLogs(t *testing.T) {
 		h, err := tr.Next()
 
 		require.NoErrorf(t, err, "untarring failed with error")
+		require.Falsef(t, h.ModTime.After(time.Now()), "ModTime cannot be in the future")
 		require.Equalf(t, c.ExpectedFileName, h.Name, "%s: unexpected file name", c.Path)
 
 		var buffer bytes.Buffer

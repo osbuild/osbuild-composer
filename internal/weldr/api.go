@@ -2270,7 +2270,7 @@ func (api *API) composeMetadataHandler(writer http.ResponseWriter, request *http
 		Name:    uuid.String() + ".json",
 		Mode:    0600,
 		Size:    int64(len(metadata)),
-		ModTime: time.Now(),
+		ModTime: time.Now().Truncate(time.Second),
 	}
 	err = tw.WriteHeader(hdr)
 	common.PanicOnError(err)
@@ -2331,7 +2331,7 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 		Name:    uuid.String() + ".json",
 		Mode:    0644,
 		Size:    int64(len(metadata)),
-		ModTime: time.Now(),
+		ModTime: time.Now().Truncate(time.Second),
 	}
 	err = tw.WriteHeader(hdr)
 	common.PanicOnError(err)
@@ -2348,7 +2348,7 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 			Name:    "logs/osbuild.log",
 			Mode:    0644,
 			Size:    int64(fileContents.Len()),
-			ModTime: time.Now(),
+			ModTime: time.Now().Truncate(time.Second),
 		}
 		err = tw.WriteHeader(hdr)
 		common.PanicOnError(err)
@@ -2362,7 +2362,7 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 			Name:    uuid.String() + "-" + compose.ImageBuild.ImageType.Filename(),
 			Mode:    0644,
 			Size:    int64(fileSize),
-			ModTime: time.Now(),
+			ModTime: time.Now().Truncate(time.Second),
 		}
 		err = tw.WriteHeader(hdr)
 		common.PanicOnError(err)
