@@ -133,6 +133,22 @@ pipeline {
                                 }
                             }
                         }
+                        stage('Image') {
+                            agent { label "f31cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "image"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'fedora31_aarch64'
+                                run_tests('image')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('fedora31-image-aarch64')
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -234,6 +250,22 @@ pipeline {
                             post {
                                 always {
                                     preserve_logs('fedora32-base-aarch64')
+                                }
+                            }
+                        }
+                        stage('Image') {
+                            agent { label "f32cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "image"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'fedora32_aarch64'
+                                run_tests('image')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('fedora32-image-aarch64')
                                 }
                             }
                         }
@@ -348,6 +380,22 @@ pipeline {
                             post {
                                 always {
                                     preserve_logs('rhel8-base-aarch64')
+                                }
+                            }
+                        }
+                        stage('Image') {
+                            agent { label "rhel8cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "image"
+                                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
+                            }
+                            steps {
+                                unstash 'rhel8cdn_aarch64'
+                                run_tests('image')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('rhel8-image-aarch64')
                                 }
                             }
                         }
