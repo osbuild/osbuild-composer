@@ -149,6 +149,22 @@ pipeline {
                                 }
                             }
                         }
+                        stage('Integration') {
+                            agent { label "f31cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "integration"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'fedora31_aarch64'
+                                run_tests('integration', 'aarch64')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('fedora31-integration-aarch64')
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -266,6 +282,22 @@ pipeline {
                             post {
                                 always {
                                     preserve_logs('fedora32-image-aarch64')
+                                }
+                            }
+                        }
+                        stage('Integration') {
+                            agent { label "f32cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "integration"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                            }
+                            steps {
+                                unstash 'fedora32_aarch64'
+                                run_tests('integration', 'aarch64')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('fedora32-integration-aarch64')
                                 }
                             }
                         }
@@ -399,6 +431,23 @@ pipeline {
                                 }
                             }
                         }
+                        stage('Integration') {
+                            agent { label "rhel8cloudbase_aarch64_temporary" }
+                            environment {
+                                TEST_TYPE = "integration"
+                                AWS_CREDS = credentials('aws-credentials-osbuildci')
+                                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                            }
+                            steps {
+                                unstash 'rhel8cdn_aarch64'
+                                run_tests('integration', 'aarch64')
+                            }
+                            post {
+                                always {
+                                    preserve_logs('rhel8-integration-aarch64')
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -478,7 +527,7 @@ pipeline {
 
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
-void run_tests(test_type) {
+void run_tests(test_type = "base", architecture = "x86_64") {
 
     // Get CI machine details.
     sh (
@@ -520,23 +569,27 @@ void run_tests(test_type) {
             script: "test/image-tests/qemu.sh openstack"
         )
 
-        // Run the VHD/Azure test.
-        sh (
-            label: "Integration test: VHD",
-            script: "test/image-tests/qemu.sh vhd"
-        )
-
-        // Run the VMDK/VMware test.
-        sh (
-            label: "Integration test: VMDK",
-            script: "test/image-tests/qemu.sh vmdk"
-        )
-
         // Run the AWS test.
         sh (
             label: "Integration test: AWS",
             script: "test/image-tests/aws.sh"
         )
+
+        // Only run the VHD/VMDK tests on x86_64.
+        if (architecture == 'x86_64') {
+            // Run the VHD/Azure test.
+            sh (
+                label: "Integration test: VHD",
+                script: "test/image-tests/qemu.sh vhd"
+            )
+
+            // Run the VMDK/VMware test.
+            sh (
+                label: "Integration test: VMDK",
+                script: "test/image-tests/qemu.sh vmdk"
+            )
+        }
+
     }
 
 }
