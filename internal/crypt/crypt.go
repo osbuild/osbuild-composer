@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// CryptSHA512 encrypts the given password with SHA512 and a random salt.
+//
+// Note that this function is not deterministic.
 func CryptSHA512(phrase string) (string, error) {
 	const SHA512SaltLength = 16
 
@@ -35,6 +38,13 @@ func genSalt(length int) (string, error) {
 	return string(b), nil
 }
 
+// PasswordIsCrypted returns true if the password appears to be an encrypted
+// one, according to a very simple heuristic.
+//
+// Any string starting with one of $2$, $6$ or $5$ is considered to be
+// encrypted. Any other string is consdirede to be unencrypted.
+//
+// This functionality is taken from pylorax.
 func PasswordIsCrypted(s string) bool {
 	// taken from lorax src: src/pylorax/api/compose.py:533
 	prefixes := [...]string{"$2b$", "$6$", "$5$"}
