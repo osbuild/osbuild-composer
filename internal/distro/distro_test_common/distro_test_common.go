@@ -95,7 +95,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				return
 			}
 			if tt.Manifest != nil {
-				require.JSONEq(t, string(tt.Manifest), string(got))
+				require.JSONEqf(t, string(tt.Manifest), string(got), "Distro: %s\nArch: %s\nImage type: %s\nTest case file: %s\n", d.Name(), arch.Name(), imageType.Name(), fileName)
 			}
 		})
 	}
