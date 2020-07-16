@@ -247,6 +247,7 @@ Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
 Requires:   qemu-kvm-core
+Requires:   systemd-container
 %ifarch %{arm}
 Requires:   edk2-aarch64
 %endif
