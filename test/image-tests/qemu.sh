@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Get OS data.
 source /etc/os-release
+ARCH=$(uname -m)
 
 # Take the image type passed to the script or use qcow2 by default if nothing
 # was passed.
@@ -227,16 +228,43 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 
 # Run virt-install to import the QCOW and boot it.
 greenprint "🚀 Booting the image with libvirt"
-sudo virt-install \
-    --name $IMAGE_KEY \
-    --memory 2048 \
-    --vcpus 2 \
-    --disk path=${LIBVIRT_IMAGE_PATH} \
-    --disk path=${CLOUD_INIT_PATH},device=cdrom \
-    --import \
-    --os-variant rhel8-unknown \
-    --noautoconsole \
-    --network network=integration,mac=34:49:22:B0:83:30 > /dev/null
+if [[ $ARCH == 'ppc64le' ]]; then
+    # ppc64le has some machine quirks that must be worked around.
+    sudo virt-install \
+        --name $IMAGE_KEY \
+        --memory 2048 \
+        --vcpus 2 \
+        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path=${CLOUD_INIT_PATH},device=cdrom \
+        --import \
+        --os-variant rhel8-unknown \
+        --noautoconsole \
+        --network network=integration,mac=34:49:22:B0:83:30 \
+        --qemu-commandline="-machine pseries,cap-cfpc=broken,cap-sbbc=broken,cap-ibs=broken,cap-ccf-assist=off,cap-large-decr=off"
+elif [[ $ARCH == 's390x' ]]; then
+    # Our s390x machines are highly constrained on resources.
+    sudo virt-install \
+        --name $IMAGE_KEY \
+        --memory 512 \
+        --vcpus 1 \
+        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path=${CLOUD_INIT_PATH},device=cdrom \
+        --import \
+        --os-variant rhel8-unknown \
+        --noautoconsole \
+        --network network=integration,mac=34:49:22:B0:83:30
+else
+    sudo virt-install \
+        --name $IMAGE_KEY \
+        --memory 1024 \
+        --vcpus 2 \
+        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path=${CLOUD_INIT_PATH},device=cdrom \
+        --import \
+        --os-variant rhel8-unknown \
+        --noautoconsole \
+        --network network=integration,mac=34:49:22:B0:83:30
+fi
 
 # Check for our smoke test file.
 greenprint "🛃 Checking for smoke test file in VM"
