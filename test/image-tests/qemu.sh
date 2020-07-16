@@ -266,9 +266,20 @@ else
         --network network=integration,mac=34:49:22:B0:83:30
 fi
 
+# Set a number of maximum loops to check for our smoke test file via ssh.
+case $ARCH in
+    s390x)
+        # s390x needs more time to boot its VM.
+        MAX_LOOPS=60
+        ;;
+    *)
+        MAX_LOOPS=30
+        ;;
+esac
+
 # Check for our smoke test file.
 greenprint "🛃 Checking for smoke test file in VM"
-for LOOP_COUNTER in {0..30}; do
+for LOOP_COUNTER in `seq 0 ${MAX_LOOPS}`; do
     RESULTS="$(smoke_test_check $INSTANCE_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "Smoke test passed! 🥳"
