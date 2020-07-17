@@ -291,7 +291,11 @@ done
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
 sudo virsh destroy ${IMAGE_KEY}
-sudo virsh undefine ${IMAGE_KEY}
+if [[ $ARCH == aarch64 ]]; then
+    sudo virsh undefine ${IMAGE_KEY} --nvram
+else
+    sudo virsh undefine ${IMAGE_KEY}
+fi
 sudo rm -f $LIBVIRT_IMAGE_PATH $CLOUD_INIT_PATH
 
 # Use the return code of the smoke test to determine if we passed or failed.
