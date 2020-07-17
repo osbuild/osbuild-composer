@@ -103,55 +103,55 @@ pipeline {
 
                 // Fedora 31 on aarch64 has base tests enabled and can only
                 // run at AWS.
-                stage("F31 aarch64") {
-                    stages {
-                        stage('Mock build') {
-                            agent { label "f31cloudbase_aarch64_temporary" }
-                            environment {
-                                AWS_CREDS = credentials('aws-credentials-osbuildci')
-                            }
-                            steps {
-                                sh "schutzbot/ci_details.sh"
-                                retry(3) {
-                                    sh "schutzbot/mockbuild.sh"
-                                }
-                                stash (
-                                    includes: 'osbuild-mock.repo',
-                                    name: 'fedora31_aarch64'
-                                )
-                            }
-                        }
-                        stage('Base') {
-                            agent { label "f31cloudbase_aarch64_temporary" }
-                            environment { TEST_TYPE = "base" }
-                            steps {
-                                unstash 'fedora31_aarch64'
-                                run_tests('base')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('fedora31-base-aarch64')
-                                }
-                            }
-                        }
-                        stage('Image') {
-                            agent { label "f31cloudbase_aarch64_temporary" }
-                            environment {
-                                TEST_TYPE = "image"
-                                AWS_CREDS = credentials('aws-credentials-osbuildci')
-                            }
-                            steps {
-                                unstash 'fedora31_aarch64'
-                                run_tests('image')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('fedora31-image-aarch64')
-                                }
-                            }
-                        }
-                    }
-                }
+                // stage("F31 aarch64") {
+                //     stages {
+                //         stage('Mock build') {
+                //             agent { label "f31cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //             }
+                //             steps {
+                //                 sh "schutzbot/ci_details.sh"
+                //                 retry(3) {
+                //                     sh "schutzbot/mockbuild.sh"
+                //                 }
+                //                 stash (
+                //                     includes: 'osbuild-mock.repo',
+                //                     name: 'fedora31_aarch64'
+                //                 )
+                //             }
+                //         }
+                //         stage('Base') {
+                //             agent { label "f31cloudbase_aarch64_temporary" }
+                //             environment { TEST_TYPE = "base" }
+                //             steps {
+                //                 unstash 'fedora31_aarch64'
+                //                 run_tests('base')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('fedora31-base-aarch64')
+                //                 }
+                //             }
+                //         }
+                //         stage('Image') {
+                //             agent { label "f31cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 TEST_TYPE = "image"
+                //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //             }
+                //             steps {
+                //                 unstash 'fedora31_aarch64'
+                //                 run_tests('image')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('fedora31-image-aarch64')
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
                 // Fedora 32 on x86 has a full suite of tests and can run in
                 // AWS or PSI.
@@ -224,55 +224,55 @@ pipeline {
 
                 // Fedora 32 on aarch64 has base tests enabled and can only
                 // run at AWS.
-                stage("F32 aarch64") {
-                    stages {
-                        stage('Mock build') {
-                            agent { label "f32cloudbase_aarch64_temporary" }
-                            environment {
-                                AWS_CREDS = credentials('aws-credentials-osbuildci')
-                            }
-                            steps {
-                                sh "schutzbot/ci_details.sh"
-                                retry(3) {
-                                    sh "schutzbot/mockbuild.sh"
-                                }
-                                stash (
-                                    includes: 'osbuild-mock.repo',
-                                    name: 'fedora32_aarch64'
-                                )
-                            }
-                        }
-                        stage('Base') {
-                            agent { label "f32cloudbase_aarch64_temporary" }
-                            environment { TEST_TYPE = "base" }
-                            steps {
-                                unstash 'fedora32_aarch64'
-                                run_tests('base')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('fedora32-base-aarch64')
-                                }
-                            }
-                        }
-                        stage('Image') {
-                            agent { label "f32cloudbase_aarch64_temporary" }
-                            environment {
-                                TEST_TYPE = "image"
-                                AWS_CREDS = credentials('aws-credentials-osbuildci')
-                            }
-                            steps {
-                                unstash 'fedora32_aarch64'
-                                run_tests('image')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('fedora32-image-aarch64')
-                                }
-                            }
-                        }
-                    }
-                }
+                // stage("F32 aarch64") {
+                //     stages {
+                //         stage('Mock build') {
+                //             agent { label "f32cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //             }
+                //             steps {
+                //                 sh "schutzbot/ci_details.sh"
+                //                 retry(3) {
+                //                     sh "schutzbot/mockbuild.sh"
+                //                 }
+                //                 stash (
+                //                     includes: 'osbuild-mock.repo',
+                //                     name: 'fedora32_aarch64'
+                //                 )
+                //             }
+                //         }
+                //         stage('Base') {
+                //             agent { label "f32cloudbase_aarch64_temporary" }
+                //             environment { TEST_TYPE = "base" }
+                //             steps {
+                //                 unstash 'fedora32_aarch64'
+                //                 run_tests('base')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('fedora32-base-aarch64')
+                //                 }
+                //             }
+                //         }
+                //         stage('Image') {
+                //             agent { label "f32cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 TEST_TYPE = "image"
+                //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //             }
+                //             steps {
+                //                 unstash 'fedora32_aarch64'
+                //                 run_tests('image')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('fedora32-image-aarch64')
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
                 // RHEL 8 on x86 has a full suite of tests and can run in
                 // AWS or PSI.
@@ -351,59 +351,59 @@ pipeline {
 
                 // RHEL 8 on aarch64 has base tests enabled and can only
                 // run at AWS.
-                stage("RHEL8 aarch64") {
-                    stages {
-                        stage('Mock build') {
-                            agent { label "rhel8cloudbase_aarch64_temporary" }
-                            environment {
-                                AWS_CREDS = credentials('aws-credentials-osbuildci')
-                                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
-                            }
-                            steps {
-                                sh "schutzbot/ci_details.sh"
-                                retry(3) {
-                                    sh "schutzbot/mockbuild.sh"
-                                }
-                                stash (
-                                    includes: 'osbuild-mock.repo',
-                                    name: 'rhel8cdn_aarch64'
-                                )
-                            }
-                        }
-                        stage('Base') {
-                            agent { label "rhel8cloudbase_aarch64_temporary" }
-                            environment {
-                                TEST_TYPE = "base"
-                                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
-                            }
-                            steps {
-                                unstash 'rhel8cdn_aarch64'
-                                run_tests('base')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('rhel8-base-aarch64')
-                                }
-                            }
-                        }
-                        stage('Image') {
-                            agent { label "rhel8cloudbase_aarch64_temporary" }
-                            environment {
-                                TEST_TYPE = "image"
-                                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
-                            }
-                            steps {
-                                unstash 'rhel8cdn_aarch64'
-                                run_tests('image')
-                            }
-                            post {
-                                always {
-                                    preserve_logs('rhel8-image-aarch64')
-                                }
-                            }
-                        }
-                    }
-                }
+                // stage("RHEL8 aarch64") {
+                //     stages {
+                //         stage('Mock build') {
+                //             agent { label "rhel8cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //                 RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
+                //             }
+                //             steps {
+                //                 sh "schutzbot/ci_details.sh"
+                //                 retry(3) {
+                //                     sh "schutzbot/mockbuild.sh"
+                //                 }
+                //                 stash (
+                //                     includes: 'osbuild-mock.repo',
+                //                     name: 'rhel8cdn_aarch64'
+                //                 )
+                //             }
+                //         }
+                //         stage('Base') {
+                //             agent { label "rhel8cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 TEST_TYPE = "base"
+                //                 RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
+                //             }
+                //             steps {
+                //                 unstash 'rhel8cdn_aarch64'
+                //                 run_tests('base')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('rhel8-base-aarch64')
+                //                 }
+                //             }
+                //         }
+                //         stage('Image') {
+                //             agent { label "rhel8cloudbase_aarch64_temporary" }
+                //             environment {
+                //                 TEST_TYPE = "image"
+                //                 RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-aarch64')
+                //             }
+                //             steps {
+                //                 unstash 'rhel8cdn_aarch64'
+                //                 run_tests('image')
+                //             }
+                //             post {
+                //                 always {
+                //                     preserve_logs('rhel8-image-aarch64')
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
                 // RHEL 8.3 on x86 has a full suite of tests and can only run
                 // in PSI until 8.3 beta content appears on the public CDN.
