@@ -17,7 +17,7 @@ pipeline {
     }
     stages {
 
-        stage("Prepare") {
+        stage("Prepare 🤔") {
             agent { label "schutzbot" }
             steps {
                 sh (
@@ -27,7 +27,7 @@ pipeline {
             }
         }
 
-        stage("Mock build ⚒") {
+        stage("Mock build 👷🏻") {
             // Halt the pipeline immediately if a single mock build fails.
             // A failure to build an RPM is serious and must be
             // investigated.
