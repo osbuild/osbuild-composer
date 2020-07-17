@@ -74,7 +74,7 @@ The commits in the PR should have these properties:
     obviously wrong
   * Well documented: both code and commit message
   * The commit message should start with the module you work on,
-    like: `weldr: `, or `rcm:`
+    like: `weldr: `, or `distro:`
 * The code should compile and the composer should start, so that we can run
   `git bisect` on it
 * All code should be covered by unit-tests

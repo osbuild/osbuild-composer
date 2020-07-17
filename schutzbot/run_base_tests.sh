@@ -8,7 +8,6 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 TEST_CASES=(
-  "osbuild-rcm-tests"
   "osbuild-weldr-tests"
   "osbuild-dnf-json-tests"
   "osbuild-tests"

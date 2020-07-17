@@ -1,9 +1,0 @@
-[Unit]
-Description=OSBuild Composer RCM API socket
-
-[Socket]
-Service=osbuild-composer.service
-ListenStream=80
-
-[Install]
-WantedBy=sockets.target

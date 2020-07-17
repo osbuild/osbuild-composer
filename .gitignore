@@ -9,6 +9,5 @@ __pycache__
 /osbuild-dnf-json-tests
 /osbuild-tests
 /osbuild-weldr-tests
-/osbuild-rcm-tests
 
 /rpmbuild

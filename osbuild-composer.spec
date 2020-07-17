@@ -107,7 +107,6 @@ TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d '
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-rcm-tests %{goipath}/cmd/osbuild-rcm-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 
 %endif
@@ -136,7 +135,6 @@ install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libex
 install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-rcm-tests                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer
@@ -181,29 +179,6 @@ export GOPATH=$PWD/_build:%{gopath}
 %{_unitdir}/osbuild-remote-worker.socket
 %{_sysusersdir}/osbuild-composer.conf
 
-%package rcm
-Summary:    RCM-specific version of osbuild-composer
-Requires:   %{name} = %{version}-%{release}
-
-# remove in F34
-Obsoletes: golang-github-osbuild-composer-rcm < %{version}-%{release}
-Provides:  golang-github-osbuild-composer-rcm = %{version}-%{release}
-
-%description rcm
-RCM-specific version of osbuild-composer not intended for public usage.
-
-%files rcm
-%{_unitdir}/osbuild-rcm.socket
-
-%post rcm
-%systemd_post osbuild-rcm.socket
-
-%preun rcm
-%systemd_preun osbuild-rcm.socket
-
-%postun rcm
-%systemd_postun_with_restart osbuild-rcm.socket
-
 %package worker
 Summary:    The worker for osbuild-composer
 Requires:   systemd
@@ -242,7 +217,6 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %package tests
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
-Requires:   %{name}-rcm = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
