@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -63,7 +64,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				CheckGPG:   repo.CheckGPG,
 			}
 		}
-		t.Run(tt.ComposeRequest.ImageType, func(t *testing.T) {
+		t.Run(path.Base(fileName), func(t *testing.T) {
 			distros, err := distro.NewRegistry(distros...)
 			require.NoError(t, err)
 			d := distros.GetDistro(tt.ComposeRequest.Distro)
