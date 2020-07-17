@@ -399,7 +399,8 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
-	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
+	_ = os.Mkdir("/var/lib/osbuild-composer-tests", 0755)
+	outputDirectory, err := ioutil.TempDir("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
 	require.NoError(t, err, "error creating temporary output directory")
 
 	defer func() {
@@ -437,7 +438,8 @@ func getAllCases() ([]string, error) {
 
 // runTests opens, parses and runs all the specified testcases
 func runTests(t *testing.T, cases []string) {
-	store, err := ioutil.TempDir("/var/tmp", "osbuild-image-tests-*")
+	_ = os.Mkdir("/var/lib/osbuild-composer-tests", 0755)
+	store, err := ioutil.TempDir("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
 	require.NoError(t, err, "error creating temporary store")
 
 	defer func() {
