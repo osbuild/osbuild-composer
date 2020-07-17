@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
-	"github.com/osbuild/osbuild-composer/internal/rcm"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -142,22 +141,6 @@ func main() {
 		err := workers.Serve(jobListener)
 		common.PanicOnError(err)
 	}()
-
-	// Optionally run RCM API as well as Weldr API
-	if rcmApiListeners, exists := listeners["osbuild-rcm.socket"]; exists {
-		if len(rcmApiListeners) != 1 {
-			// Use Fatal to call os.Exit with non-zero return value
-			log.Fatal("The RCM API socket unit is misconfigured. It should contain only one socket.")
-		}
-		rcmListener := rcmApiListeners[0]
-		rcmAPI := rcm.New(logger, workers, rpm, distros)
-		go func() {
-			err := rcmAPI.Serve(rcmListener)
-			// If the RCM API fails, take down the whole process, not just a single gorutine
-			log.Fatal("RCM API failed: ", err)
-		}()
-
-	}
 
 	if remoteWorkerListeners, exists := listeners["osbuild-remote-worker.socket"]; exists {
 		for _, listener := range remoteWorkerListeners {

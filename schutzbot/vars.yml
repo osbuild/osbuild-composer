@@ -12,7 +12,6 @@ polling_interval: 15
 ## Non-image test variables.
 # List of base tests
 osbuild_composer_base_tests:
-  - osbuild-rcm-tests
   - osbuild-weldr-tests
   - osbuild-dnf-json-tests
   - osbuild-tests
