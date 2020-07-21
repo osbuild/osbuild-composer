@@ -34,7 +34,7 @@
   },
   "openstack": {
     "boot": {
-      "type": "qemu"
+      "type": "openstack"
     },
     "compose-request": {
       "distro": "",
