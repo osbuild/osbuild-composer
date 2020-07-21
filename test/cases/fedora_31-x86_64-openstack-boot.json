@@ -1,6 +1,6 @@
 {
   "boot": {
-    "type": "qemu"
+    "type": "openstack"
   },
   "compose-request": {
     "distro": "fedora-31",
