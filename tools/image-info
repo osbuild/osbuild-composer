@@ -8,6 +8,7 @@ import glob
 import mimetypes
 import json
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -64,8 +65,22 @@ def open_image(ctl, image, fmt):
     with tempfile.TemporaryDirectory() as tmp:
         if fmt != "raw":
             target = os.path.join(tmp, "image.raw")
-            subprocess.run(["qemu-img", "convert", "-O", "raw", image, target],
-                           check=True)
+            # A bug exists in qemu that causes the conversion to raw to fail
+            # on aarch64 systems with a LOT of CPUs. A workaround is to use
+            # a single coroutine to do the conversion. It doesn't slow down
+            # the conversion by much, but it hangs about half the time without
+            # the limit set. 😢
+            # Bug: https://bugs.launchpad.net/qemu/+bug/1805256
+            if platform.machine() == 'aarch64':
+                subprocess.run(
+                    ["qemu-img", "convert", "-m", "1", "-O", "raw", image, target],
+                    check=True
+                )
+            else:
+                subprocess.run(
+                    ["qemu-img", "convert", "-O", "raw", image, target],
+                    check=True
+                )
         else:
             target = image
 
