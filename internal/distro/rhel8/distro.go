@@ -847,7 +847,7 @@ func New() distro.Distro {
 		},
 		kernelOptions: "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
 		bootable:      true,
-		defaultSize:   2 * GigaByte,
+		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
 		},
@@ -874,7 +874,7 @@ func New() distro.Distro {
 		},
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
-		defaultSize:   2 * GigaByte,
+		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
 		},
@@ -929,7 +929,7 @@ func New() distro.Distro {
 		defaultTarget: "multi-user.target",
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
-		defaultSize:   2 * GigaByte,
+		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("vpc", "disk.vhd", uefi, options, arch)
 		},
@@ -957,7 +957,7 @@ func New() distro.Distro {
 		},
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
-		defaultSize:   2 * GigaByte,
+		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("vmdk", "disk.vmdk", uefi, options, arch)
 		},
