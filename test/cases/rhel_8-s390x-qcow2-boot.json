@@ -3709,7 +3709,7 @@
           },
           "format": "qcow2",
           "filename": "disk.qcow2",
-          "size": 2147483648,
+          "size": 4294967296,
           "ptuuid": "0x14fc63d2",
           "pttype": "dos",
           "partitions": [
