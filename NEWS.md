@@ -1,5 +1,30 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 18:
+
+  * Qcow and openstack images for Fedora have now cloudinit service enabled
+    by default. This change leads to a higher consistency with the official
+    images.
+    
+  * Fedora 32 image builds were failing if an installed package shipped
+    a custom SELinux policy. This is now fixed.
+
+  * The DNF integration now uses the fastestmirror plugin. This should lead
+    to faster and more reliable depsolves.
+
+  * Tar archives returned from Weldr routes could have contained files with
+    a timestamp newer than the current time. This led to warnings when
+    untarring these archives. The timestamps are now fixed.
+    
+  * The RCM subpackage was removed. It was never properly finished and will
+    be superseded by a Koji integration at some point.
+
+Contributions from: Chloe Kaubisch, Christian Kellner, David Rheinsberg,
+                    Lars Karlitski, Major Hayden, Martin Sehnoutka,
+                    Ondřej Budai, Tom Gundersen
+
+— Liberec, 2020-07-22
+
 ## CHANGES WITH 17:
 
   * AWS images are now built in the raw format. Previously used vhdx was
