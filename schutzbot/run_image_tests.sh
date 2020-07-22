@@ -75,6 +75,10 @@ if ! rpm -qi osbuild-composer-tests > /dev/null 2>&1; then
     sudo dnf -y install osbuild-composer-tests
 fi
 
+# Prepare the OpenStack login credentials.
+mkdir -p ~/.config/openstack
+cp $OPENSTACK_CREDS ~/.config/openstack/clouds.yaml
+
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
