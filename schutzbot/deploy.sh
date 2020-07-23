@@ -43,6 +43,10 @@ echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 # and module updates. The system will not be rebooted in CI anyway, so a
 # kernel update is not needed.
 if [[ $ID == fedora ]]; then
+    # There is a race condition in dnf where an RPM package is present in the
+    # cache when the transaction starts, but it is missing when it is to be
+    # installed. Workaround this issue by sleeping for 2 minutes.
+    sleep 120
     sudo dnf -y upgrade --exclude kernel --exclude kernel-core
 fi
 
@@ -54,8 +58,15 @@ sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
-# Note: installing only -tests to catch missing dependencies
-retry sudo dnf -y install osbuild-composer-tests
+if [ "${1-""}" == "composer" ];
+then
+    # This is the target image. Install only osbuild-composer.
+    retry sudo dnf -y install osbuild-composer
+else
+    # Note: installing only -tests to catch missing dependencies
+    retry sudo dnf -y install osbuild-composer-tests
+fi
+
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
@@ -68,9 +79,19 @@ if [[ "${ID}${VERSION_ID//./}" == rhel82 ]]; then
         /etc/osbuild-composer/repositories/rhel-8.json
 fi
 
-# Start services.
-sudo systemctl enable --now osbuild-composer.socket
-
-# Verify that the API is running.
-sudo composer-cli status show
-sudo composer-cli sources list
+if [ "${1-""}" == "composer" ];
+then
+    # Start services.
+    sudo systemctl enable --now osbuild-composer.socket
+elif [ "${1-""}" == "tests" ];
+then
+    # Verify that the API is running.
+    sudo composer-cli status show
+    sudo composer-cli sources list
+else
+    # Start services.
+    sudo systemctl enable --now osbuild-composer.socket
+    # Verify that the API is running.
+    sudo composer-cli status show
+    sudo composer-cli sources list
+fi

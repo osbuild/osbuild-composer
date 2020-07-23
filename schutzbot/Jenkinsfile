@@ -112,7 +112,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora31'
-                        run_tests('base')
+                        run_base_tests('f31cloudbase', 'fedora-ssh-key')
                     }
                     post {
                         always {
@@ -160,7 +160,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora32'
-                        run_tests('base')
+                        run_base_tests('f32cloudbase', 'fedora-ssh-key')
                     }
                     post {
                         always {
@@ -211,7 +211,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests('base')
+                        run_base_tests('rhel8cloudbase', 'rhel-ssh-key')
                     }
                     post {
                         always {
@@ -264,7 +264,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel83'
-                        run_tests('base')
+                        run_base_tests('rhel83cloudbase', 'rhel-ssh-key')
                     }
                     post {
                         always {
@@ -333,6 +333,28 @@ pipeline {
         }
     }
 
+}
+
+void run_base_tests(template, credentials) {
+    // Get CI machine details.
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
+
+    setup_remote_osbuild_composer("${template}", "${credentials}")
+
+    // Install -tests RPM package
+    sh (
+        label: "Deploy",
+        script: "schutzbot/deploy.sh tests"
+    )
+
+    // Run the tests
+    sh (
+        label: "Base tests",
+        script: "schutzbot/run_base_tests.sh"
+    )
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
@@ -416,4 +438,66 @@ void preserve_logs(test_slug) {
         artifacts: "${test_slug}/*.log,${test_slug}/*.jpg"
     )
 
+}
+
+void setup_remote_osbuild_composer(template, credentials) {
+    // Embed imperative Jenkinsfile format into this declarative one
+    script {
+        // Run independent OpenStack VM
+        vm = openstackMachine cloud: 'PSI OpenStack', template: "${template}"
+        echo "Deploying target machine on IP address: ${vm.address}"
+        // Wait for it to become online
+        timeout(5) {
+            waitUntil {
+                def rc = sh (
+                    label: "Trying to reach the target VM",
+                    returnStatus: true,
+                    script: "ping -qc 5 ${vm.address}"
+                )
+                echo "Ping result: $rc"
+                return rc == 0
+            }
+        }
+        def sshOpts = "-oConnectTimeout=15 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
+        withCredentials([sshUserPrivateKey(credentialsId: "${credentials}", keyFileVariable: 'keyFile', usernameVariable: 'username')]) {
+            // Make sure SSH works
+            timeout(5) {
+                waitUntil {
+                    sleep(10)
+                    def rc = sh (
+                        label: "Trying to make sure SSH works",
+                        returnStatus: true,
+                        script: "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'cat /etc/os-release'"
+                    )
+                    echo "SSH result: $rc"
+                    return rc == 0
+                }
+            }
+            // Install and run osbuild-composer inside the VM
+            sh (
+                label: "Copy repo file to the target VM",
+                script: "scp $sshOpts -i ${keyFile} osbuild-mock.repo ${username}@${vm.address}:/tmp/"
+            )
+            sh (
+                label: "Copy deployment configuration to the target VM",
+                script: "scp $sshOpts -i ${keyFile} schutzbot/deploy.sh ${username}@${vm.address}:/tmp/"
+            )
+            sh (
+                label: "Run configuration of the target VM",
+                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'bash /tmp/deploy.sh composer'"
+            )
+            sh (
+                label: "Prepare Weldr API socket for forwarding (allow the Jenkins user to read/write from/to it)",
+                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'sudo chmod go+rw /run/weldr/api.socket'"
+            )
+            sh (
+                label: "Prepare local /run/weldr directory for the forwarded socket",
+                script:  "sudo mkdir /run/weldr"
+            )
+            sh (
+                label: "Forward the Weldr API socket from the target VM to the test VM",
+                script:  "sudo ssh $sshOpts -i ${keyFile} -fN -L /run/weldr/api.socket:/run/weldr/api.socket ${username}@${vm.address}"
+            )
+        }
+    }
 }
