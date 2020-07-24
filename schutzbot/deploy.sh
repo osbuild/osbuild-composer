@@ -50,7 +50,15 @@ fi
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
 # Set up a dnf repository for the RPMs we built via mock.
-sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+sudo tee /etc/yum.repos.d/osbuild-mock.repo << EOF
+[osbuild-mock]
+name=osbuild mock
+${REPO_SPEC}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority.
+priority=5
+EOF
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.

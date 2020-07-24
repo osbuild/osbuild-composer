@@ -1,3 +1,8 @@
+repoSpecF31 = ""
+repoSpecF32 = ""
+repoSpecEL8 = ""
+repoSpecEL83 = ""
+
 pipeline {
     agent none
 
@@ -45,10 +50,9 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora31'
-                        )
+                        script {
+                            repoSpecF31 = sh(script: "cat osbuild-repo-url", returnStdout: true).trim()
+                        }
                     }
                 }
                 stage('F32') {
@@ -61,10 +65,9 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora32'
-                        )
+                        script {
+                            repoSpecF32 = sh(script: "cat osbuild-repo-url", returnStdout: true).trim()
+                        }
                     }
                 }
                 stage('EL8') {
@@ -78,10 +81,9 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel8cdn'
-                        )
+                        script {
+                            repoSpecEL8 = sh(script: "cat osbuild-repo-url", returnStdout: true).trim()
+                        }
                     }
                 }
                 stage('EL8.3') {
@@ -96,10 +98,9 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel83'
-                        )
+                        script {
+                            repoSpecEL83 = sh(script: "cat osbuild-repo-url", returnStdout: true).trim()
+                        }
                     }
                 }
             }
@@ -110,9 +111,11 @@ pipeline {
 
                 stage('F31 Base') {
                     agent { label "f31cloudbase && x86_64" }
-                    environment { TEST_TYPE = "base" }
+                    environment {
+                        TEST_TYPE = "base"
+                        REPO_SPEC = "${repoSpecF31}"
+                    }
                     steps {
-                        unstash 'fedora31'
                         run_tests('base')
                     }
                     post {
@@ -128,9 +131,9 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        REPO_SPEC = "${repoSpecF31}"
                     }
                     steps {
-                        unstash 'fedora31'
                         run_tests('image')
                     }
                     post {
@@ -144,9 +147,9 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        REPO_SPEC = "${repoSpecF31}"
                     }
                     steps {
-                        unstash 'fedora31'
                         run_tests('integration')
                     }
                     post {
@@ -158,9 +161,11 @@ pipeline {
 
                 stage('F32 Base') {
                     agent { label "f32cloudbase && x86_64" }
-                    environment { TEST_TYPE = "base" }
+                    environment {
+                        TEST_TYPE = "base"
+                        REPO_SPEC = "${repoSpecF32}"
+                    }
                     steps {
-                        unstash 'fedora32'
                         run_tests('base')
                     }
                     post {
@@ -176,9 +181,9 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        REPO_SPEC = "${repoSpecF32}"
                     }
                     steps {
-                        unstash 'fedora32'
                         run_tests('image')
                     }
                     post {
@@ -192,9 +197,9 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        REPO_SPEC = "${repoSpecF32}"
                     }
                     steps {
-                        unstash 'fedora32'
                         run_tests('integration')
                     }
                     post {
@@ -209,9 +214,9 @@ pipeline {
                     environment {
                         TEST_TYPE = "base"
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        REPO_SPEC = "${repoSpecEL8}"
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('base')
                     }
                     post {
@@ -228,9 +233,9 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        REPO_SPEC = "${repoSpecEL8}"
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('image')
                     }
                     post {
@@ -245,9 +250,9 @@ pipeline {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        REPO_SPEC = "${repoSpecEL8}"
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('integration')
                     }
                     post {
@@ -259,9 +264,11 @@ pipeline {
 
                 stage('EL8.3 Base') {
                     agent { label "rhel83cloudbase && x86_64" }
-                    environment { TEST_TYPE = "base" }
+                    environment {
+                        TEST_TYPE = "base"
+                        REPO_SPEC = "${repoSpecEL83}"
+                    }
                     steps {
-                        unstash 'rhel83'
                         run_tests('base')
                     }
                     post {
@@ -277,9 +284,9 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        REPO_SPEC = "${repoSpecEL83}"
                     }
                     steps {
-                        unstash 'rhel83'
                         run_tests('image')
                     }
                     post {
@@ -293,9 +300,9 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        REPO_SPEC = "${repoSpecEL83}"
                     }
                     steps {
-                        unstash 'rhel83'
                         run_tests('integration')
                     }
                     post {

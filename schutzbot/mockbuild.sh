@@ -99,12 +99,6 @@ popd
 
 # Create a repository file.
 greenprint "📜 Generating dnf repository file"
-tee osbuild-mock.repo << EOF
-[osbuild-mock]
-name=osbuild mock ${JOB_NAME}-${POST_MERGE_SHA} ${ID}${VERSION_ID//./}
+tee osbuild-repo-url << EOF
 baseurl=${REPO_URL}
-enabled=1
-gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
 EOF
