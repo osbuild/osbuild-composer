@@ -982,6 +982,31 @@ func TestDepsolveInvalidBlueprintV0(t *testing.T) {
 	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
 }
 
+// depsolve a blueprint with a depsolve that will fail
+func TestBadDepsolveBlueprintV0(t *testing.T) {
+	if testState.unitTest {
+		t.Skip()
+	}
+	bp := `{
+		"name": "test-baddep-blueprint-v0",
+		"description": "TestBadDepsolveBlueprintV0",
+		"version": "0.0.1",
+		"packages": [{"name": "bash", "version": "*"}, {"name": "bad-package", "version": "1.32.1"}]
+	}`
+
+	// Push a blueprint
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "POST blueprint failed with a client error")
+	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
+
+	// Depsolve the blueprint
+	deps, api, err := DepsolveBlueprintV0(testState.socket, "test-baddep-blueprint-v0")
+	require.NoError(t, err, "Depsolve blueprint failed with a client error")
+	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
+	require.Greater(t, len(deps.Blueprints), 0, "No blueprints returned")
+	require.Greater(t, len(deps.Errors), 0, "Not enough errors returned")
+}
+
 // freeze a blueprint
 func TestBlueprintFreezeV0(t *testing.T) {
 	if testState.unitTest {
