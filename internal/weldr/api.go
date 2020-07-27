@@ -1118,12 +1118,11 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 		dependencies, _, err := api.depsolveBlueprint(blueprint, nil)
 
 		if err != nil {
-			errors := responseError{
+			blueprintsErrors = append(blueprintsErrors, responseError{
 				ID:  "BlueprintsError",
 				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
+			})
+			dependencies = []rpmmd.PackageSpec{}
 		}
 
 		blueprints = append(blueprints, entry{*blueprint, dependencies})
