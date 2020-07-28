@@ -631,14 +631,21 @@ func New() distro.Distro {
 			"podman", "container-selinux", "skopeo", "criu",
 			"slirp4netns", "fuse-overlayfs",
 			"clevis", "clevis-dracut", "clevis-luks",
+			"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
 			// x86 specific
 			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
 			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
 			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
 			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
 		},
+		excludedPackages: []string{
+			"subscription-manager",
+		},
 		enabledServices: []string{
 			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
+			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
+			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
@@ -680,12 +687,19 @@ func New() distro.Distro {
 			"podman", "container-selinux", "skopeo", "criu",
 			"slirp4netns", "fuse-overlayfs",
 			"clevis", "clevis-dracut", "clevis-luks",
+			"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
 			// aarch64 specific
 			"grub2-efi-aa64", "efibootmgr", "shim-aa64",
 			"iwl7260-firmware",
 		},
+		excludedPackages: []string{
+			"subscription-manager",
+		},
 		enabledServices: []string{
 			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
+			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
+			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
