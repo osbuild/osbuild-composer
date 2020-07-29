@@ -232,3 +232,88 @@ func Test_upgrade(t *testing.T) {
 		assert.Equal(1, len(store.workspace))
 	}
 }
+
+func Test_newCommitsFromV0(t *testing.T) {
+	exampleChanges := changesV0{
+		"test-blueprint-changes-v0": {
+			"4774980638f4162d9909a613c3ccd938e60bb3a9": {
+				Commit:    "4774980638f4162d9909a613c3ccd938e60bb3a9",
+				Message:   "Recipe test-blueprint-changes-v0, version 0.1.2 saved.",
+				Revision:  nil,
+				Timestamp: "2020-07-29T09:52:07Z",
+			},
+			"72fdb76b9994bd72770e283bf3a5206756daf497": {
+				Commit:    "72fdb76b9994bd72770e283bf3a5206756daf497",
+				Message:   "Recipe test-blueprint-changes-v0, version 0.1.1 saved.",
+				Revision:  nil,
+				Timestamp: "2020-07-09T13:33:06Z",
+			},
+			"79e2043a83637ffdd4db078c6da23deaae09c84b": {
+				Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
+				Message:   "Recipe test-blueprint-changes-v0, version 0.0.1 saved.",
+				Revision:  nil,
+				Timestamp: "2020-07-07T02:57:00Z",
+			},
+		},
+	}
+	type args struct {
+		changes changesV0
+		commits commitsV0
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string][]string
+	}{
+		{
+			name: "empty",
+			args: args{
+				changes: make(changesV0),
+				commits: make(commitsV0),
+			},
+			want: make(map[string][]string),
+		},
+		{
+			name: "Changes with no commits",
+			args: args{
+				changes: exampleChanges,
+				commits: make(commitsV0),
+			},
+			want: map[string][]string{
+				"test-blueprint-changes-v0": {
+					// Oldest sorted first
+					"79e2043a83637ffdd4db078c6da23deaae09c84b",
+					"72fdb76b9994bd72770e283bf3a5206756daf497",
+					"4774980638f4162d9909a613c3ccd938e60bb3a9",
+				},
+			},
+		},
+		{
+			name: "Changes with commits",
+			args: args{
+				changes: exampleChanges,
+				commits: commitsV0{
+					"test-blueprint-changes-v0": {
+						"79e2043a83637ffdd4db078c6da23deaae09c84b",
+						"72fdb76b9994bd72770e283bf3a5206756daf497",
+						"4774980638f4162d9909a613c3ccd938e60bb3a9",
+					},
+				},
+			},
+			want: map[string][]string{
+				"test-blueprint-changes-v0": {
+					// Oldest sorted first
+					"79e2043a83637ffdd4db078c6da23deaae09c84b",
+					"72fdb76b9994bd72770e283bf3a5206756daf497",
+					"4774980638f4162d9909a613c3ccd938e60bb3a9",
+				},
+			},
+		}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newCommitsFromV0(tt.args.commits, tt.args.changes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newCommitsFromV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
