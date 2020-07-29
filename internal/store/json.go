@@ -186,7 +186,7 @@ func newChangesFromV0(changesStruct changesV0) map[string]map[string]blueprint.C
 func newCommitsFromV0(commitsMapStruct commitsV0, changesMapStruct changesV0) map[string][]string {
 	commitsMap := make(map[string][]string)
 	for name, commitsStruct := range commitsMapStruct {
-		commits := make([]string, 0, len(commitsStruct))
+		commits := make([]string, len(commitsStruct))
 		copy(commits, commitsStruct)
 		commitsMap[name] = commits
 	}
