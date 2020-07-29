@@ -69,12 +69,17 @@ greenprint "🔧 Building source RPMs."
 make srpm
 make -C osbuild srpm
 
-# Fix RHEL 8 mock template for non-subscribed images.
-if [[ "${ID}${VERSION_ID//./}" == rhel83 ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo cp $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
-    cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+# Update the mock configs if we are on 8.3 beta.
+if [[ $VERSION_ID == 8.3 ]]; then
+    # Remove the existing (non-beta) repos from the template.
+    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
+
+    # Add the enabled repos to the template.
+    cat /etc/yum.repos.d/redhat.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl
+
+    # We need triple quotes at the end of the template to mark the end of
+    # the repo list.
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 fi
 
 # Compile RPMs in a mock chroot
