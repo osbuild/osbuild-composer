@@ -1,6 +1,6 @@
 {
   "boot": {
-    "type": "qemu"
+    "type": "vmware"
   },
   "compose-request": {
     "distro": "fedora-32",

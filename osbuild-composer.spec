@@ -45,6 +45,7 @@ BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
+BuildRequires:  golang(github.com/vmware/govmomi)
 %endif
 
 Requires: %{name}-worker = %{version}-%{release}
@@ -222,6 +223,7 @@ Requires:   createrepo_c
 Requires:   genisoimage
 Requires:   qemu-kvm-core
 Requires:   systemd-container
+Requires:   /usr/bin/govc
 %ifarch %{arm}
 Requires:   edk2-aarch64
 %endif
