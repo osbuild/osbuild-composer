@@ -27,7 +27,7 @@ fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock python3-pip rpm-build rsync
+sudo dnf -y install createrepo_c make mock python3-pip rpm-build
 
 # Install s3cmd if it is not present.
 if ! s3cmd --version > /dev/null 2>&1; then
@@ -104,7 +104,7 @@ createrepo_c ${REPO_DIR}
 
 # Copy the current build to the latest directory.
 mkdir -p $REPO_DIR_LATEST
-rsync -a ${REPO_DIR}/ ${REPO_DIR_LATEST}/
+cp -arv ${REPO_DIR}/ ${REPO_DIR_LATEST}/
 
 # Remove the previous latest build for this branch.
 # Don't fail if the path is missing.
