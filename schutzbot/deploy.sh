@@ -47,6 +47,7 @@ if [[ $ID == fedora ]]; then
     # cache when the transaction starts, but it is missing when it is to be
     # installed. Workaround this issue by sleeping for 2 minutes.
     sleep 120
+    sudo dnf clean all
     sudo dnf -y upgrade --exclude kernel --exclude kernel-core
 fi
 
