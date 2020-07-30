@@ -26,6 +26,7 @@ import (
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/azuretest"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/openstacktest"
+	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/vmwaretest"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
@@ -331,6 +332,42 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 }
 
+func testBootUsingVMware(t *testing.T, imagePath string) {
+	creds, err := vmwaretest.AuthOptionsFromEnv()
+
+	// if no credentials are given, fall back to qemu
+	if (creds == nil) {
+		log.Print("No vCenter credentials given, falling back to booting using qemu")
+		log.Printf("Error=%v", err)
+		testBootUsingQemu(t, imagePath)
+		return
+	}
+	require.NoError(t, err)
+
+	// create a random test id to name all the resources used in this test
+	imageName, err := generateRandomString("osbuild-image-tests-vmware-image-")
+	require.NoError(t, err)
+
+	// the following line should be done by osbuild-composer at some point
+	err = vmwaretest.ImportImage(creds, imagePath, imageName)
+	require.NoErrorf(t, err, "Upload to vCenter failed, resources could have been leaked")
+
+	// delete the image after the test is over
+	defer func() {
+		err = vmwaretest.DeleteImage(creds, imageName)
+		require.NoErrorf(t, err, "Cannot delete image from vCenter, resources could have been leaked")
+	}()
+
+	// boot the uploaded image and try to connect to it
+	err = vmwaretest.WithSSHKeyPair(func(privateKey, publicKey string) error {
+		return vmwaretest.WithBootedImage(creds, imagePath, imageName, publicKey, func(address string) error {
+			testSSH(t, address, privateKey, nil)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+}
+
 // testBoot tests if the image is able to successfully boot
 // Before the test it boots the image respecting the specified bootType.
 // The test passes if the function is able to connect to the image via ssh
@@ -355,6 +392,9 @@ func testBoot(t *testing.T, imagePath string, bootType string) {
 
 	case "openstack":
 		testBootUsingOpenStack(t, imagePath)
+
+	case "vmware":
+		testBootUsingVMware(t, imagePath)
 
 	default:
 		panic("unknown boot type!")

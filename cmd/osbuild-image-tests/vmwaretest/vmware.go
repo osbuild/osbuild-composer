@@ -1,0 +1,211 @@
+// +build integration
+
+package vmwaretest
+
+import (
+	"errors"
+	"os"
+	"os/exec"
+	"fmt"
+	"path/filepath"
+
+	// importing the packages registers these cli commands
+	"github.com/vmware/govmomi/govc/cli"
+	_ "github.com/vmware/govmomi/govc/datastore"
+	_ "github.com/vmware/govmomi/govc/importx"
+	_ "github.com/vmware/govmomi/govc/vm"
+	_ "github.com/vmware/govmomi/govc/vm/guest"
+)
+
+const WaitTimeout = 6000 // in seconds
+
+type AuthOptions struct {
+	Host string
+	Username string
+	Password string
+	Datacenter string
+	Cluster string
+	Network string
+	Datastore string
+	Folder string
+}
+
+func AuthOptionsFromEnv() (*AuthOptions, error) {
+	host, hostExists := os.LookupEnv("GOVMOMI_URL")
+	username, userExists := os.LookupEnv("GOVMOMI_USERNAME")
+	password, pwdExists := os.LookupEnv("GOVMOMI_PASSWORD")
+	datacenter, dcExists := os.LookupEnv("GOVMOMI_DATACENTER")
+	cluster, clusterExists := os.LookupEnv("GOVMOMI_CLUSTER")
+	network, netExists := os.LookupEnv("GOVMOMI_NETWORK")
+	datastore, dsExists := os.LookupEnv("GOVMOMI_DATASTORE")
+	folder, folderExists := os.LookupEnv("GOVMOMI_FOLDER")
+
+	// If only one/two of them are not set, then fail
+	if !hostExists {
+		return nil, errors.New("GOVMOMI_URL not set")
+	}
+
+	if !userExists {
+		return nil, errors.New("GOVMOMI_USERNAME not set")
+	}
+
+	if !pwdExists {
+		return nil, errors.New("GOVMOMI_PASSWORD not set")
+	}
+
+	if !dcExists {
+		return nil, errors.New("GOVMOMI_DATACENTER not set")
+	}
+
+	if !clusterExists {
+		return nil, errors.New("GOVMOMI_CLUSTER not set")
+	}
+
+	if !netExists {
+		return nil, errors.New("GOVMOMI_NETWORK not set")
+	}
+
+	if !dsExists {
+		return nil, errors.New("GOVMOMI_DATASTORE not set")
+	}
+
+	if !folderExists {
+		return nil, errors.New("GOVMOMI_FOLDER not set")
+	}
+
+	return &AuthOptions{
+		Host:       host,
+		Username:   username,
+		Password:   password,
+		Datacenter: datacenter,
+		Cluster:    cluster,
+		Network:    network,
+		Datastore:  datastore,
+		Folder:     folder,
+	}, nil
+}
+
+func ImportImage(creds *AuthOptions, imagePath, imageName string) error {
+	args := []string{
+		"import.vmdk",
+		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+		"-k=true",
+		fmt.Sprintf("-dc=%s", creds.Datacenter),
+		fmt.Sprintf("-ds=%s", creds.Datastore),
+		imagePath,
+		imageName,
+	}
+	retcode := cli.Run(args)
+
+	if retcode != 0 {
+		return errors.New("importing vmdk failed")
+	}
+	return nil
+}
+
+func DeleteImage(creds *AuthOptions, directoryName string) error {
+	retcode := cli.Run([]string{
+		"datastore.rm",
+		"-f=true",
+		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+		"-k=true",
+		fmt.Sprintf("-dc=%s", creds.Datacenter),
+		fmt.Sprintf("-ds=%s", creds.Datastore),
+		directoryName + "*", // because vm.create creates another directory with _1 prefix
+	})
+
+	if retcode != 0 {
+		return errors.New("deleting directory failed")
+	}
+	return nil
+}
+
+func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string, f func(address string) error) (retErr error) {
+	vmdkBaseName := filepath.Base(imagePath)
+
+	args := []string{
+		"vm.create",
+		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+		"-k=true",
+		fmt.Sprintf("-dc=%s", creds.Datacenter),
+		fmt.Sprintf("-ds=%s", creds.Datastore),
+		fmt.Sprintf("-folder=%s", creds.Folder),
+		fmt.Sprintf("-net=%s", creds.Network),
+		"-m=2048", "-g=rhel8_64Guest", "-on=true", "-firmware=bios",
+		fmt.Sprintf("-disk=%s/%s", imageName, vmdkBaseName),
+		"--disk.controller=ide",
+		imageName,
+	}
+	retcode := cli.Run(args)
+	if retcode != 0 {
+		return errors.New("Creating VM from vmdk failed")
+	}
+
+	defer func() {
+		args = []string{
+			"vm.destroy",
+			fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+			"-k=true",
+			imageName,
+		}
+		retcode := cli.Run(args)
+
+		if retcode != 0 {
+			fmt.Printf("Deleting VM %s failed", imageName)
+			return
+		}
+	}()
+
+	// note: by default this will wait/block until an IP address is returned
+	// note: using exec() instead of running the command b/c .Run() returns an int
+	ipAddress, err := exec.Command(
+		"/usr/bin/govc",
+		"vm.ip",
+		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+		"-k=true",
+		imageName,
+	).Output()
+	if err != nil {
+		fmt.Println("Getting IP address for VM failed:", string(ipAddress))
+		return err
+	}
+
+	// Disabled b/c of https://github.com/vmware/govmomi/issues/2054
+	// upload public key on the VM
+	//args = []string{
+	//	"guest.mkdir",
+	//	fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+	//	"-k=true",
+	//	fmt.Sprintf("-vm=%s", imageName),
+	//	"-p", "/root/.ssh",
+	//}
+	//retcode = cli.Run(args)
+	//if retcode != 0 {
+	//	return errors.New("mkdir /root/.ssh on VM failed")
+	//}
+
+	//args = []string{
+	//	"guest.upload",
+	//	fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+	//	"-k=true",
+	//	fmt.Sprintf("-vm=%s", imageName),
+	//	"-f=true",
+	//	publicKey, // this is a file path
+	//	"/root/.ssh/authorized_keys",
+	//}
+	//retcode = cli.Run(args)
+	//if retcode != 0 {
+	//	return errors.New("Uploading public key to VM failed")
+	//}
+
+	return f(string(ipAddress))
+}
+
+// hard-coded SSH keys b/c we're having troubles uploading publicKey
+// to the VM, see https://github.com/vmware/govmomi/issues/2054
+func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
+	public := "/usr/share/tests/osbuild-composer/keyring/id_rsa.pub"
+	private := "/usr/share/tests/osbuild-composer/keyring/id_rsa"
+
+	return f(private, public)
+}
