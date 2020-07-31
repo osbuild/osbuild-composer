@@ -23,6 +23,7 @@ source /etc/os-release
 
 # Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    # TODO: copy this to the target VM
     sudo chmod +x $RHN_REGISTRATION_SCRIPT
     sudo $RHN_REGISTRATION_SCRIPT
 fi
@@ -51,11 +52,19 @@ if [[ $ID == fedora ]]; then
     sudo dnf -y upgrade --exclude kernel --exclude kernel-core
 fi
 
-# Add osbuild team ssh keys.
-cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
+if [ "${1-""}" != "composer" ];
+then
+    # Add osbuild team ssh keys.
+    cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
+fi
 
 # Set up a dnf repository for the RPMs we built via mock.
-sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+if [ "${1-""}" == "composer" ];
+then
+    sudo cp /tmp/osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+else
+    sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+fi
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
@@ -76,6 +85,7 @@ sudo mkdir -p /etc/osbuild-composer/repositories
 # release is in beta right now. For RHEL 8.2 (latest release), ensure that
 # the production (non-beta content) is used.
 if [[ "${ID}${VERSION_ID//./}" == rhel82 ]]; then
+    # TODO: copy this into the target VM
     sudo cp ${WORKSPACE}/test/external-repos/rhel-8.json \
         /etc/osbuild-composer/repositories/rhel-8.json
 fi
