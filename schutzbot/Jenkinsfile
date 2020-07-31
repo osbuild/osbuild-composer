@@ -19,6 +19,11 @@ pipeline {
 
         stage("Prepare 🤔") {
             agent { label "schutzbot" }
+            options {
+                // Don't checkout the git repository here. It just clogs
+                // up the Jenkins disk space and does nothing for us.
+                skipDefaultCheckout()
+            }
             steps {
                 sh (
                     label: "Get environment variables",
