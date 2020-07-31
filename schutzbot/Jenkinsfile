@@ -474,13 +474,24 @@ void setup_remote_osbuild_composer(template, credentials) {
                 }
             }
             // Install and run osbuild-composer inside the VM
+            // TODO: copy environment variables needed for RHEL setup
+            sh (
+                // The target VM does not contain the git checkout which is available in the test VM
+                // but we still need few files there
+                label: "Prepare directories",
+                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'mkdir /tmp/schutzbot /tmp/test/external-repos/'"
+            )
             sh (
                 label: "Copy repo file to the target VM",
                 script: "scp $sshOpts -i ${keyFile} osbuild-mock.repo ${username}@${vm.address}:/tmp/"
             )
             sh (
                 label: "Copy deployment configuration to the target VM",
-                script: "scp $sshOpts -i ${keyFile} schutzbot/deploy.sh ${username}@${vm.address}:/tmp/"
+                script: "scp $sshOpts -i ${keyFile} schutzbot/team_ssh_keys.txt schutzbot/deploy.sh ${username}@${vm.address}:/tmp/schutzbot/"
+            )
+            sh (
+                label: "Copy RHEL repository configuration to the target VM",
+                script: "scp $sshOpts -i ${keyFile} test/external-repos/rhel-8.json ${username}@${vm.address}:/tmp/test/external-repos/"
             )
             sh (
                 label: "Run configuration of the target VM",

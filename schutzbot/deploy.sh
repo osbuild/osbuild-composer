@@ -18,6 +18,12 @@ function retry {
     return 0
 }
 
+if [ "${1-""}" == "composer" ];
+then
+    # Target VM does not have a git checkout, use /tmp instead
+    pushd /tmp
+fi
+
 # Get OS details.
 source /etc/os-release
 
@@ -52,19 +58,11 @@ if [[ $ID == fedora ]]; then
     sudo dnf -y upgrade --exclude kernel --exclude kernel-core
 fi
 
-if [ "${1-""}" != "composer" ];
-then
-    # Add osbuild team ssh keys.
-    cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
-fi
+# Add osbuild team ssh keys.
+cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
 # Set up a dnf repository for the RPMs we built via mock.
-if [ "${1-""}" == "composer" ];
-then
-    sudo cp /tmp/osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
-else
-    sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
-fi
+sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
