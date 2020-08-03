@@ -56,7 +56,8 @@ run_test_case () {
     # support aarch64), therefore the following line sets AZURE_CREDS to
     # /dev/null if the variable is undefined.
     AZURE_CREDS=${AZURE_CREDS-/dev/null}
-    TEST_CMD="env $(cat $AZURE_CREDS) $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
+    OPENSTACK_CREDS=${OPENSTACK_CREDS-/dev/null}
+    TEST_CMD="env $(cat $AZURE_CREDS $OPENSTACK_CREDS) $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
 
     # Run the test and add the test name to the list of passed or failed
     # tests depending on the result.
@@ -74,10 +75,6 @@ run_test_case () {
 if ! rpm -qi osbuild-composer-tests > /dev/null 2>&1; then
     sudo dnf -y install osbuild-composer-tests
 fi
-
-# Prepare the OpenStack login credentials.
-mkdir -p ~/.config/openstack
-cp $OPENSTACK_CREDS ~/.config/openstack/clouds.yaml
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
