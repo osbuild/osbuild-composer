@@ -479,7 +479,7 @@ void setup_remote_osbuild_composer(template, credentials) {
                 // The target VM does not contain the git checkout which is available in the test VM
                 // but we still need few files there
                 label: "Prepare directories",
-                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'mkdir /tmp/schutzbot /tmp/test/external-repos/'"
+                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'mkdir -p /tmp/schutzbot /tmp/test/external-repos/'"
             )
             sh (
                 label: "Copy repo file to the target VM",
