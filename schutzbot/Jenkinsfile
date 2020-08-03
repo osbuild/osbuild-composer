@@ -131,7 +131,7 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
                     }
                     steps {
                         unstash 'fedora31'
@@ -179,7 +179,7 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
                     }
                     steps {
                         unstash 'fedora32'
@@ -230,7 +230,7 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
@@ -283,7 +283,7 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-clouds-yaml")
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                     }
                     steps {
