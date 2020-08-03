@@ -10214,7 +10214,7 @@
     "ostree": {
       "refs": {
         "fedora/32/x86_64/iot": {
-          "inputhash": "4879988213fbac55953e12b6268dc7fce3fc20b28d9112958665c98a546c1820"
+          "inputhash": "e7a265e665ce2765c90c1a51ba187202e8b77b4e0aadddfc545189171cb9c31f"
         }
       },
       "repo": {
