@@ -84,12 +84,6 @@ cd $WORKING_DIRECTORY
 
 # Run each test case.
 for TEST_CASE in $(get_test_cases); do
-    # The fedora_32-x86_64-fedora_iot_commit-boot test has some bugs that
-    # still need to be worked out.  See this bug for details:
-    # https://github.com/osbuild/osbuild-composer/issues/798
-    if [[ $TEST_CASE == *fedora_iot_commit* ]]; then
-        continue
-    fi
     run_test_case $IMAGE_TEST_CASE_RUNNER $TEST_CASE
 done
 
