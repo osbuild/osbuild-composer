@@ -1246,7 +1246,12 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		// lorax concatenates multiple blueprints with `\n\n` here,
 		// which is never useful. Deviate by only returning the first
 		// blueprint.
-		if len(blueprints) > 1 {
+		if len(blueprints) == 0 {
+			// lorax-composer just outputs an empty string if there were no blueprints
+			writer.WriteHeader(http.StatusOK)
+			fmt.Fprintf(writer, "")
+			return
+		} else if len(blueprints) > 1 {
 			errors := responseError{
 				ID:  "HTTPError",
 				Msg: "toml format only supported when requesting one blueprint",
