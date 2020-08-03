@@ -495,7 +495,7 @@ void setup_remote_osbuild_composer(template, credentials) {
             )
             sh (
                 label: "Run configuration of the target VM",
-                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'bash /tmp/deploy.sh composer'"
+                script:  "ssh $sshOpts -i ${keyFile} ${username}@${vm.address} 'bash /tmp/schutzbot/deploy.sh composer'"
             )
             sh (
                 label: "Prepare Weldr API socket for forwarding (allow the Jenkins user to read/write from/to it)",
