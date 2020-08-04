@@ -58,7 +58,7 @@ REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Maintain a directory for the master branch that always contains the latest
 # RPM packages.
-REPO_DIR_LATEST=repo/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH}
+REPO_DIR_LATEST=repo/${JOB_NAME}/latest
 
 # Full URL to the RPM repository after they are uploaded.
 REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
