@@ -198,7 +198,61 @@ func Test_newCommitsV0(t *testing.T) {
 		args args
 		want commitsV0
 	}{
-		// TODO: Add test cases.
+		{
+			name: "empty",
+			args: args{
+				commits: make(map[string][]string),
+			},
+			want: commitsV0{},
+		},
+		{
+			name: "One blueprint's commits",
+			args: args{
+				commits: map[string][]string{
+					"test-blueprint-changes-v0": {
+						"79e2043a83637ffdd4db078c6da23deaae09c84b",
+						"72fdb76b9994bd72770e283bf3a5206756daf497",
+						"4774980638f4162d9909a613c3ccd938e60bb3a9",
+					},
+				},
+			},
+			want: commitsV0{
+				"test-blueprint-changes-v0": {
+					"79e2043a83637ffdd4db078c6da23deaae09c84b",
+					"72fdb76b9994bd72770e283bf3a5206756daf497",
+					"4774980638f4162d9909a613c3ccd938e60bb3a9",
+				},
+			},
+		},
+		{
+			name: "Two blueprint's commits",
+			args: args{
+				commits: map[string][]string{
+					"test-blueprint-changes-v0": {
+						"79e2043a83637ffdd4db078c6da23deaae09c84b",
+						"72fdb76b9994bd72770e283bf3a5206756daf497",
+						"4774980638f4162d9909a613c3ccd938e60bb3a9",
+					},
+					"second-blueprint": {
+						"3c2a2653d044433bae36e3236d394688126fa386",
+						"7619ec57c37b4396b5a91358c98792df9e143c18",
+						"8d3cc55a6d2841b2bc6e6578d2ec21123110a858",
+					},
+				},
+			},
+			want: commitsV0{
+				"test-blueprint-changes-v0": {
+					"79e2043a83637ffdd4db078c6da23deaae09c84b",
+					"72fdb76b9994bd72770e283bf3a5206756daf497",
+					"4774980638f4162d9909a613c3ccd938e60bb3a9",
+				},
+				"second-blueprint": {
+					"3c2a2653d044433bae36e3236d394688126fa386",
+					"7619ec57c37b4396b5a91358c98792df9e143c18",
+					"8d3cc55a6d2841b2bc6e6578d2ec21123110a858",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
