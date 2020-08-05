@@ -371,3 +371,95 @@ func Test_newCommitsFromV0(t *testing.T) {
 		})
 	}
 }
+
+func Test_newBlueprintsFromV0(t *testing.T) {
+	tests := []struct {
+		name       string
+		blueprints blueprintsV0
+		want       map[string]blueprint.Blueprint
+	}{
+		{
+			name:       "empty",
+			blueprints: blueprintsV0{},
+			want:       make(map[string]blueprint.Blueprint),
+		},
+		{
+			name: "Two Blueprints",
+			blueprints: blueprintsV0{
+				"blueprint-1": {
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1",
+				},
+				"blueprint-2": {
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1",
+				},
+			},
+			want: map[string]blueprint.Blueprint{
+				"blueprint-1": blueprint.Blueprint{
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1"},
+				"blueprint-2": blueprint.Blueprint{
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newBlueprintsFromV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newBlueprintsFromV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newBlueprintsV0(t *testing.T) {
+	tests := []struct {
+		name       string
+		blueprints map[string]blueprint.Blueprint
+		want       blueprintsV0
+	}{
+		{
+			name:       "empty",
+			blueprints: make(map[string]blueprint.Blueprint),
+			want:       blueprintsV0{},
+		},
+		{
+			name: "Two Blueprints",
+			blueprints: map[string]blueprint.Blueprint{
+				"blueprint-1": blueprint.Blueprint{
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1"},
+				"blueprint-2": blueprint.Blueprint{
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1"},
+			},
+			want: blueprintsV0{
+				"blueprint-1": {
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1",
+				},
+				"blueprint-2": {
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newBlueprintsV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newBlueprintsV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
