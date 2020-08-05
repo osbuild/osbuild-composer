@@ -463,3 +463,95 @@ func Test_newBlueprintsV0(t *testing.T) {
 		})
 	}
 }
+
+func Test_newWorkspaceFromV0(t *testing.T) {
+	tests := []struct {
+		name       string
+		blueprints workspaceV0
+		want       map[string]blueprint.Blueprint
+	}{
+		{
+			name:       "empty",
+			blueprints: workspaceV0{},
+			want:       make(map[string]blueprint.Blueprint),
+		},
+		{
+			name: "Two Blueprints",
+			blueprints: workspaceV0{
+				"blueprint-1": {
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1",
+				},
+				"blueprint-2": {
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1",
+				},
+			},
+			want: map[string]blueprint.Blueprint{
+				"blueprint-1": blueprint.Blueprint{
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1"},
+				"blueprint-2": blueprint.Blueprint{
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newWorkspaceFromV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newWorkspaceFromV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newWorkspaceV0(t *testing.T) {
+	tests := []struct {
+		name       string
+		blueprints map[string]blueprint.Blueprint
+		want       workspaceV0
+	}{
+		{
+			name:       "empty",
+			blueprints: make(map[string]blueprint.Blueprint),
+			want:       workspaceV0{},
+		},
+		{
+			name: "Two Blueprints",
+			blueprints: map[string]blueprint.Blueprint{
+				"blueprint-1": blueprint.Blueprint{
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1"},
+				"blueprint-2": blueprint.Blueprint{
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1"},
+			},
+			want: workspaceV0{
+				"blueprint-1": {
+					Name:        "blueprint-1",
+					Description: "First Blueprint in Test",
+					Version:     "0.0.1",
+				},
+				"blueprint-2": {
+					Name:        "blueprint-2",
+					Description: "Second Blueprint in Test",
+					Version:     "0.0.1",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newWorkspaceV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newWorkspaceV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
