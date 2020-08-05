@@ -792,3 +792,169 @@ func Test_newChangesV0(t *testing.T) {
 		})
 	}
 }
+
+func Test_newSourceConfigsFromV0(t *testing.T) {
+	tests := []struct {
+		name    string
+		sources sourcesV0
+		want    map[string]SourceConfig
+	}{
+		{
+			name:    "empty",
+			sources: sourcesV0{},
+			want:    make(map[string]SourceConfig),
+		},
+		{
+			name: "One Source",
+			sources: sourcesV0{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+			want: map[string]SourceConfig{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+		},
+		{
+			name: "Two Sources",
+			sources: sourcesV0{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+				"repo-2": {
+					Name:     "testRepo2",
+					Type:     "yum-baseurl",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+			want: map[string]SourceConfig{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+				"repo-2": {
+					Name:     "testRepo2",
+					Type:     "yum-baseurl",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newSourceConfigsFromV0(tt.sources); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newSourceConfigsFromV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newSourcesFromV0(t *testing.T) {
+	tests := []struct {
+		name    string
+		sources map[string]SourceConfig
+		want    sourcesV0
+	}{
+		{
+			name:    "empty",
+			sources: make(map[string]SourceConfig),
+			want:    sourcesV0{},
+		},
+		{
+			name: "One Source",
+			sources: map[string]SourceConfig{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+			want: sourcesV0{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+		},
+		{
+			name: "Two Sources",
+			sources: map[string]SourceConfig{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+				"repo-2": {
+					Name:     "testRepo2",
+					Type:     "yum-baseurl",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+			want: sourcesV0{
+				"repo-1": {
+					Name:     "testRepo1",
+					Type:     "yum-mirrorlist",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+				"repo-2": {
+					Name:     "testRepo2",
+					Type:     "yum-baseurl",
+					URL:      "testURL",
+					CheckGPG: true,
+					CheckSSL: true,
+					System:   false,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newSourcesV0(tt.sources); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newSourcesV0() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
