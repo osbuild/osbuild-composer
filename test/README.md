@@ -89,6 +89,17 @@ it uploads the image to Azure, boots it and tries to ssh into it.
    the *Access control (IAM)* section under the newly created resource group.
    Here, add the new application with the *Developer* role.
 
+### Setting up OpenStack upload tests
+
+The following environment variables are required
+
+- `OS_AUTH_URL`
+- `OS_USERNAME`
+- `OS_PASSWORD`
+- `OS_PROJECT_ID`
+- `OS_DOMAIN_NAME`
+
+
 ## Notes on asserts and comparing expected values
 
 When comparing for expected values in test functions you should use the
