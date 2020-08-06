@@ -2479,7 +2479,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	if composeStatus.State == common.CRunning {
-		fmt.Fprintf(writer, "Running...\n")
+		fmt.Fprintf(writer, "Build %s is still running.\n", uuidString)
 		return
 	}
 
