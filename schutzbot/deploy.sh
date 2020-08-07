@@ -22,6 +22,7 @@ if [ "${1-""}" == "composer" ];
 then
     # Target VM does not have a git checkout, use /tmp instead
     pushd /tmp
+    export WORKSPACE=/tmp
 fi
 
 # Get OS details.
