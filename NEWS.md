@@ -1,5 +1,20 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 19:
+
+  * Bug fixes to the weldr API.
+
+  * Default image size was increased to be able to build empty blueprints by
+    default.
+
+  * OpenStack images are now tested on the target footprint in CI.
+
+  * Other test improvements.
+
+Contributions from: Alexander Todorov, Brian C. Lane, Jenn Giardino, Major Hayden, Martin Sehnoutka
+
+— London, 2020-08-10
+
 ## CHANGES WITH 18:
 
   * Qcow and openstack images for Fedora have now cloudinit service enabled
