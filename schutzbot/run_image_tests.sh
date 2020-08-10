@@ -57,7 +57,8 @@ run_test_case () {
     # /dev/null if the variable is undefined.
     AZURE_CREDS=${AZURE_CREDS-/dev/null}
     OPENSTACK_CREDS=${OPENSTACK_CREDS-/dev/null}
-    TEST_CMD="env $(cat $AZURE_CREDS $OPENSTACK_CREDS) $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
+    VCENTER_CREDS=${VCENTER_CREDS-/dev/null}
+    TEST_CMD="env $(cat $AZURE_CREDS $OPENSTACK_CREDS $VCENTER_CREDS) $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
 
     # Run the test and add the test name to the list of passed or failed
     # tests depending on the result.
