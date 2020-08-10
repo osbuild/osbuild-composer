@@ -100,6 +100,25 @@ The following environment variables are required
 - `OS_DOMAIN_NAME`
 
 
+### Setting up VMware vCenter upload tests
+
+The following environment variables are required
+
+- `GOVMOMI_URL` - vCenter hostname
+- `GOVMOMI_USERNAME`
+- `GOVMOMI_PASSWORD`
+- `GOVMOMI_DATACENTER`
+- `GOVMOMI_CLUSTER`
+- `GOVMOMI_NETWORK`
+- `GOVMOMI_DATASTORE`
+- `GOVMOMI_FOLDER`
+- `GOVMOMI_INSECURE` - value of 1 will skip checking SSL certificates
+
+**WARNING:** when configuring the credentials for Schutzbot we've experienced
+an issue where the first line in the credentials file gets lost resulting in
+incomplete credentials. The work-around is to define a dummy ENV variable on
+the first line!
+
 ## Notes on asserts and comparing expected values
 
 When comparing for expected values in test functions you should use the
