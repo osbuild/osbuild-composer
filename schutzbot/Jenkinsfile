@@ -132,6 +132,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         unstash 'fedora31'
@@ -180,6 +181,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         unstash 'fedora32'
@@ -232,6 +234,7 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         unstash 'rhel8cdn'
@@ -285,6 +288,7 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         unstash 'rhel83'
