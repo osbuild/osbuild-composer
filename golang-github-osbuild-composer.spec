@@ -1,6 +1,6 @@
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        18
+Version:        19
 
 %gometa
 
@@ -45,8 +45,8 @@ BuildRequires:  golang(github.com/stretchr/testify)
 
 Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
-Requires: osbuild >= 17
-Requires: osbuild-ostree >= 17
+Requires: osbuild >= 18
+Requires: osbuild-ostree >= 18
 
 Provides: osbuild-composer
 Provides: weldr
