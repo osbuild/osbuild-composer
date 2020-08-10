@@ -461,9 +461,9 @@ void setup_remote_osbuild_composer(template, credentials) {
         def sshOpts = "-oConnectTimeout=15 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null"
         withCredentials([sshUserPrivateKey(credentialsId: "${credentials}", keyFileVariable: 'keyFile', usernameVariable: 'username')]) {
             // Make sure SSH works
-            timeout(5) {
+            timeout(10) {
                 waitUntil {
-                    sleep(10)
+                    sleep(30)
                     def rc = sh (
                         label: "Trying to make sure SSH works",
                         returnStatus: true,
