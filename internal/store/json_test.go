@@ -1458,3 +1458,88 @@ func Test_newComposesFromV0(t *testing.T) {
 		})
 	}
 }
+
+func Test_newImageBuildFromV0(t *testing.T) {
+	tests := []struct {
+		name  string
+		arch  distro.Arch
+		ib    imageBuildV0
+		want  ImageBuild
+		errOk bool
+	}{
+		{
+			name:  "empty",
+			arch:  &test_distro.TestArch{},
+			errOk: true,
+			ib:    imageBuildV0{},
+			want:  ImageBuild{},
+		},
+		{
+			name:  "qcow2 image build",
+			arch:  &test_distro.TestArch{},
+			errOk: false,
+			ib: imageBuildV0{
+				ID:        0,
+				ImageType: "test_type",
+				Manifest:  []byte("JSON MANIFEST GOES HERE"),
+				Targets: []*target.Target{
+					{
+						Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+						ImageName: "",
+						Name:      "org.osbuild.local",
+						Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+						Status:    common.IBWaiting,
+						Options: target.LocalTargetOptions{
+							ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+							ImageBuildId: 0,
+							Filename:     "disk.qcow2",
+						},
+					},
+				},
+				JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+				JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+				JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+				Size:        2147483648,
+				JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+				QueueStatus: common.IBFinished,
+			},
+			want: ImageBuild{
+				ID:        0,
+				ImageType: &test_distro.TestImageType{},
+				Manifest:  []byte("JSON MANIFEST GOES HERE"),
+				Targets: []*target.Target{
+					{
+						Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+						ImageName: "",
+						Name:      "org.osbuild.local",
+						Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+						Status:    common.IBWaiting,
+						Options: target.LocalTargetOptions{
+							ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+							ImageBuildId: 0,
+							Filename:     "disk.qcow2",
+						},
+					},
+				},
+				JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+				JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+				JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+				Size:        2147483648,
+				JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+				QueueStatus: common.IBFinished,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := newImageBuildFromV0(tt.ib, tt.arch)
+			if err != nil {
+				if !tt.errOk {
+					t.Errorf("newImageBuildFromV0() error = %v", err)
+				}
+			} else if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newImageBuildFromV0() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
