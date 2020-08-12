@@ -1156,3 +1156,305 @@ func Test_newComposeFromV0(t *testing.T) {
 		})
 	}
 }
+
+func Test_newComposesV0(t *testing.T) {
+	bp := blueprint.Blueprint{
+		Name:        "tmux",
+		Description: "tmux blueprint",
+		Version:     "0.0.1",
+		Packages: []blueprint.Package{
+			{Name: "tmux", Version: "*"}},
+	}
+
+	tests := []struct {
+		name     string
+		composes map[uuid.UUID]Compose
+		want     composesV0
+	}{
+		{
+			name: "two composes",
+			composes: map[uuid.UUID]Compose{
+				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
+					Blueprint: &bp,
+					ImageBuild: ImageBuild{
+						ID:        0,
+						ImageType: &test_distro.TestImageType{},
+						Manifest:  []byte("JSON MANIFEST GOES HERE"),
+						Targets: []*target.Target{
+							{
+								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+								ImageName: "",
+								Name:      "org.osbuild.local",
+								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+								Status:    common.IBWaiting,
+								Options: target.LocalTargetOptions{
+									ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+									ImageBuildId: 0,
+									Filename:     "disk.qcow2",
+								},
+							},
+						},
+						JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+						JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+						JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+						Size:        2147483648,
+						JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+						QueueStatus: common.IBFinished,
+					},
+				},
+				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
+					Blueprint: &bp,
+					ImageBuild: ImageBuild{
+						ID:        0,
+						ImageType: &test_distro.TestImageType{},
+						Manifest:  []byte("JSON MANIFEST GOES HERE"),
+						Targets: []*target.Target{
+							{
+								Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+								ImageName: "",
+								Name:      "org.osbuild.local",
+								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+								Status:    common.IBWaiting,
+								Options: target.LocalTargetOptions{
+									ComposeId:    uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+									ImageBuildId: 0,
+									Filename:     "disk.qcow2",
+								},
+							},
+						},
+						JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+						JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+						JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+						Size:        2147483648,
+						JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
+						QueueStatus: common.IBFinished,
+					},
+				},
+			},
+			want: composesV0{
+				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
+					Blueprint: &bp,
+					ImageBuilds: []imageBuildV0{
+						imageBuildV0{
+							ID:        0,
+							ImageType: "test_type",
+							Manifest:  []byte("JSON MANIFEST GOES HERE"),
+							Targets: []*target.Target{
+								{
+									Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+									ImageName: "",
+									Name:      "org.osbuild.local",
+									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+									Status:    common.IBWaiting,
+									Options: target.LocalTargetOptions{
+										ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+										ImageBuildId: 0,
+										Filename:     "disk.qcow2",
+									},
+								},
+							},
+							JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+							JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+							JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+							Size:        2147483648,
+							JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+							QueueStatus: common.IBFinished,
+						},
+					},
+				},
+				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
+					Blueprint: &bp,
+					ImageBuilds: []imageBuildV0{
+						imageBuildV0{
+							ID:        0,
+							ImageType: "test_type",
+							Manifest:  []byte("JSON MANIFEST GOES HERE"),
+							Targets: []*target.Target{
+								{
+									Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+									ImageName: "",
+									Name:      "org.osbuild.local",
+									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+									Status:    common.IBWaiting,
+									Options: target.LocalTargetOptions{
+										ComposeId:    uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+										ImageBuildId: 0,
+										Filename:     "disk.qcow2",
+									},
+								},
+							},
+							JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+							JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+							JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+							Size:        2147483648,
+							JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
+							QueueStatus: common.IBFinished,
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newComposesV0(tt.composes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newComposesV0() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_newComposesFromV0(t *testing.T) {
+	bp := blueprint.Blueprint{
+		Name:        "tmux",
+		Description: "tmux blueprint",
+		Version:     "0.0.1",
+		Packages: []blueprint.Package{
+			{Name: "tmux", Version: "*"}},
+	}
+
+	tests := []struct {
+		name     string
+		arch     distro.Arch
+		composes composesV0
+		want     map[uuid.UUID]Compose
+	}{
+		{
+			name:     "empty",
+			arch:     &test_distro.TestArch{},
+			composes: composesV0{},
+			want:     make(map[uuid.UUID]Compose),
+		},
+		{
+			name: "two composes",
+			arch: &test_distro.TestArch{},
+			composes: composesV0{
+				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
+					Blueprint: &bp,
+					ImageBuilds: []imageBuildV0{
+						{
+							ID:        0,
+							ImageType: "test_type",
+							Manifest:  []byte("JSON MANIFEST GOES HERE"),
+							Targets: []*target.Target{
+								{
+									Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+									ImageName: "",
+									Name:      "org.osbuild.local",
+									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+									Status:    common.IBWaiting,
+									Options: target.LocalTargetOptions{
+										ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+										ImageBuildId: 0,
+										Filename:     "disk.qcow2",
+									},
+								},
+							},
+							JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+							JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+							JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+							Size:        2147483648,
+							JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+							QueueStatus: common.IBFinished,
+						},
+					},
+				},
+				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
+					Blueprint: &bp,
+					ImageBuilds: []imageBuildV0{
+						{
+							ID:        0,
+							ImageType: "test_type",
+							Manifest:  []byte("JSON MANIFEST GOES HERE"),
+							Targets: []*target.Target{
+								{
+									Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+									ImageName: "",
+									Name:      "org.osbuild.local",
+									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+									Status:    common.IBWaiting,
+									Options: target.LocalTargetOptions{
+										ComposeId:    uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+										ImageBuildId: 0,
+										Filename:     "disk.qcow2",
+									},
+								},
+							},
+							JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+							JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+							JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+							Size:        2147483648,
+							JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
+							QueueStatus: common.IBFinished,
+						},
+					},
+				},
+			},
+			want: map[uuid.UUID]Compose{
+				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
+					Blueprint: &bp,
+					ImageBuild: ImageBuild{
+						ID:        0,
+						ImageType: &test_distro.TestImageType{},
+						Manifest:  []byte("JSON MANIFEST GOES HERE"),
+						Targets: []*target.Target{
+							{
+								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
+								ImageName: "",
+								Name:      "org.osbuild.local",
+								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+								Status:    common.IBWaiting,
+								Options: target.LocalTargetOptions{
+									ComposeId:    uuid.MustParse("6b512b52-1e9d-4dac-869c-108fd4860a3e"),
+									ImageBuildId: 0,
+									Filename:     "disk.qcow2",
+								},
+							},
+						},
+						JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+						JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+						JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+						Size:        2147483648,
+						JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
+						QueueStatus: common.IBFinished,
+					},
+				},
+				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
+					Blueprint: &bp,
+					ImageBuild: ImageBuild{
+						ID:        0,
+						ImageType: &test_distro.TestImageType{},
+						Manifest:  []byte("JSON MANIFEST GOES HERE"),
+						Targets: []*target.Target{
+							{
+								Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+								ImageName: "",
+								Name:      "org.osbuild.local",
+								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
+								Status:    common.IBWaiting,
+								Options: target.LocalTargetOptions{
+									ComposeId:    uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
+									ImageBuildId: 0,
+									Filename:     "disk.qcow2",
+								},
+							},
+						},
+						JobCreated:  MustParseTime("2020-08-12T09:21:50.07040195-07:00"),
+						JobStarted:  MustParseTime("0001-01-01T00:00:00Z"),
+						JobFinished: MustParseTime("0001-01-01T00:00:00Z"),
+						Size:        2147483648,
+						JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
+						QueueStatus: common.IBFinished,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newComposesFromV0(tt.composes, tt.arch, nil); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newComposesFromV0() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
