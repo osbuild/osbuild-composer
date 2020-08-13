@@ -71,7 +71,6 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
-make -C osbuild srpm
 
 # Update the mock configs if we are on 8.3 beta.
 if [[ $VERSION_ID == 8.3 ]]; then
@@ -89,7 +88,7 @@ fi
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
 sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
-    rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
+    rpmbuild/SRPMS/*.src.rpm
 
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R $USER ${REPO_DIR%%/*}
