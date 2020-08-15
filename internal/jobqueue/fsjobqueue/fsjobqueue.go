@@ -144,13 +144,13 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
-		return uuid.Nil, "", nil, err
+		return uuid.Nil, nil, "", nil, err
 	}
 
 	// Filter q.pending by the `jobTypes`. Ignore those job types that this
@@ -172,12 +172,12 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		q.mu.Lock()
 
 		if err != nil {
-			return uuid.Nil, "", nil, err
+			return uuid.Nil, nil, "", nil, err
 		}
 
 		j, err = q.readJob(id)
 		if err != nil {
-			return uuid.Nil, "", nil, err
+			return uuid.Nil, nil, "", nil, err
 		}
 
 		if !j.Canceled {
@@ -189,10 +189,10 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 
 	err := q.db.Write(j.Id.String(), j)
 	if err != nil {
-		return uuid.Nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
 	}
 
-	return j.Id, j.Type, j.Args, nil
+	return j.Id, j.Dependencies, j.Type, j.Args, nil
 }
 
 func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {

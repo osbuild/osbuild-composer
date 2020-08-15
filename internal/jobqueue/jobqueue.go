@@ -39,9 +39,9 @@ type JobQueue interface {
 	// Waits until a job with a type of any of `jobTypes` is available, or `ctx` is
 	// canceled.
 	//
-	// Returns the job's id, type, and arguments, or an error. Arguments
+	// Returns the job's id, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
-	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, string, json.RawMessage, error)
+	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Mark the job with `id` as finished. `result` must fit the associated
 	// job type and must be serializable to JSON.
