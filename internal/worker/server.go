@@ -180,7 +180,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jts = append(jts, t)
 	}
 
-	jobId, jobType, args, err := s.jobs.Dequeue(ctx, jts)
+	jobId, _, jobType, args, err := s.jobs.Dequeue(ctx, jts)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, err
 	}
