@@ -38,8 +38,9 @@ type job struct {
 
 func New() *testJobQueue {
 	return &testJobQueue{
-		jobs:    make(map[uuid.UUID]*job),
-		pending: make(map[string][]uuid.UUID),
+		jobs:       make(map[uuid.UUID]*job),
+		pending:    make(map[string][]uuid.UUID),
+		dependants: make(map[uuid.UUID][]uuid.UUID),
 	}
 }
 
