@@ -17,7 +17,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sort"
 	"sync"
 	"time"
 
@@ -108,7 +107,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	var j = job{
 		Id:           uuid.New(),
 		Type:         jobType,
-		Dependencies: uniqueUUIDList(dependencies),
+		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
 	}
 
@@ -334,30 +333,6 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	}
 
 	return nil
-}
-
-// Sorts and removes duplicates from `ids`.
-func uniqueUUIDList(ids []uuid.UUID) []uuid.UUID {
-	s := map[uuid.UUID]bool{}
-	for _, id := range ids {
-		s[id] = true
-	}
-
-	l := []uuid.UUID{}
-	for id := range s {
-		l = append(l, id)
-	}
-
-	sort.Slice(l, func(i, j int) bool {
-		for b := 0; b < 16; b++ {
-			if l[i][b] < l[j][b] {
-				return true
-			}
-		}
-		return false
-	})
-
-	return l
 }
 
 // Select on a list of `chan uuid.UUID`s. Returns an error if one of the
