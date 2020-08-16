@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,7 +47,7 @@ func (q *testJobQueue) Enqueue(jobType string, args interface{}, dependencies []
 	var j = job{
 		Id:           uuid.New(),
 		Type:         jobType,
-		Dependencies: uniqueUUIDList(dependencies),
+		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
 	}
 
@@ -178,29 +177,4 @@ func (q *testJobQueue) countFinishedJobs(ids []uuid.UUID) (int, error) {
 	}
 
 	return n, nil
-}
-
-// Sorts and removes duplicates from `ids`.
-// Copied from fsjobqueue, which also contains a test.
-func uniqueUUIDList(ids []uuid.UUID) []uuid.UUID {
-	s := map[uuid.UUID]bool{}
-	for _, id := range ids {
-		s[id] = true
-	}
-
-	l := []uuid.UUID{}
-	for id := range s {
-		l = append(l, id)
-	}
-
-	sort.Slice(l, func(i, j int) bool {
-		for b := 0; b < 16; b++ {
-			if l[i][b] < l[j][b] {
-				return true
-			}
-		}
-		return false
-	})
-
-	return l
 }
