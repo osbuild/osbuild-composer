@@ -93,7 +93,7 @@ func main() {
 		log.Fatalf("Error loading distros: %v", err)
 	}
 
-	distribution, err := distros.FromHost()
+	distribution, beta, err := distros.FromHost()
 	if err != nil {
 		log.Fatalf("Could not determine distro from host: " + err.Error())
 	}
@@ -103,7 +103,13 @@ func main() {
 		log.Fatalf("Host distro does not support host architecture: " + err.Error())
 	}
 
-	repoMap, err := rpmmd.LoadRepositories([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"}, distribution.Name())
+	// TODO: refactor to be more generic
+	name := distribution.Name()
+	if beta {
+		name += "-beta"
+	}
+
+	repoMap, err := rpmmd.LoadRepositories([]string{"/etc/osbuild-composer", "/usr/share/osbuild-composer"}, name)
 	if err != nil {
 		log.Fatalf("Could not load repositories for %s: %v", distribution.Name(), err)
 	}

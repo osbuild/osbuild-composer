@@ -147,35 +147,38 @@ func (r *Registry) List() []string {
 	return list
 }
 
-func (r *Registry) FromHost() (Distro, error) {
-	name, err := GetHostDistroName()
+func (r *Registry) FromHost() (Distro, bool, error) {
+	name, beta, err := GetHostDistroName()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	d := r.GetDistro(name)
 	if d == nil {
-		return nil, errors.New("unknown distro: " + name)
+		return nil, false, errors.New("unknown distro: " + name)
 	}
 
-	return d, nil
+	return d, beta, nil
 }
 
-func GetHostDistroName() (string, error) {
+func GetHostDistroName() (string, bool, error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	defer f.Close()
 	osrelease, err := readOSRelease(f)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	// NOTE: We only consider major releases
 	version := strings.Split(osrelease["VERSION_ID"], ".")
 	name := osrelease["ID"] + "-" + version[0]
-	return name, nil
+
+	// TODO: We should probably index these things by the full CPE
+	beta := strings.Contains(osrelease["CPE_NAME"], "beta")
+	return name, beta, nil
 }
 
 func readOSRelease(r io.Reader) (map[string]string, error) {
