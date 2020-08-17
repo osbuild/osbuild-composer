@@ -27,8 +27,8 @@ type uploadSettings interface {
 
 type awsUploadSettings struct {
 	Region          string `json:"region"`
-	AccessKeyID     string `json:"accessKeyID"`
-	SecretAccessKey string `json:"secretAccessKey"`
+	AccessKeyID     string `json:"accessKeyID,omitempty"`
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`
 	Bucket          string `json:"bucket"`
 	Key             string `json:"key"`
 }
@@ -36,8 +36,8 @@ type awsUploadSettings struct {
 func (awsUploadSettings) isUploadSettings() {}
 
 type azureUploadSettings struct {
-	StorageAccount   string `json:"storageAccount"`
-	StorageAccessKey string `json:"storageAccessKey"`
+	StorageAccount   string `json:"storageAccount,omitempty"`
+	StorageAccessKey string `json:"storageAccessKey,omitempty"`
 	Container        string `json:"container"`
 }
 
@@ -88,6 +88,9 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 // This ignore the status in `targets`, because that's never set correctly.
 // Instead, it sets each target's status to the ImageBuildState equivalent of
 // `state`.
+//
+// This also ignores any sensitive data passed into targets. Access keys may
+// be passed as input to composer, but should not be possible to be queried.
 func targetsToUploadResponses(targets []*target.Target, state common.ComposeState) []uploadResponse {
 	var uploads []uploadResponse
 	for _, t := range targets {
@@ -112,19 +115,17 @@ func targetsToUploadResponses(targets []*target.Target, state common.ComposeStat
 		case *target.AWSTargetOptions:
 			upload.ProviderName = "aws"
 			upload.Settings = &awsUploadSettings{
-				Region:          options.Region,
-				AccessKeyID:     options.AccessKeyID,
-				SecretAccessKey: options.SecretAccessKey,
-				Bucket:          options.Bucket,
-				Key:             options.Key,
+				Region: options.Region,
+				Bucket: options.Bucket,
+				Key:    options.Key,
+				// AccessKeyID and SecretAccessKey are intentionally not included.
 			}
 			uploads = append(uploads, upload)
 		case *target.AzureTargetOptions:
 			upload.ProviderName = "azure"
 			upload.Settings = &azureUploadSettings{
-				StorageAccount:   options.StorageAccount,
-				StorageAccessKey: options.StorageAccessKey,
-				Container:        options.Container,
+				Container: options.Container,
+				// StorageAccount and StorageAccessKey are intentionally not included.
 			}
 			uploads = append(uploads, upload)
 		}
