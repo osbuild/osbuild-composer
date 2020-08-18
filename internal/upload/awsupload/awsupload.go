@@ -1,6 +1,7 @@
 package awsupload
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -115,8 +116,10 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 
 func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	log.Printf("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
+	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
 	importTaskOutput, err := a.importer.ImportSnapshot(
 		&ec2.ImportSnapshotInput{
+			Description: aws.String(snapshotDescription),
 			DiskContainer: &ec2.SnapshotDiskContainer{
 				UserBucket: &ec2.UserBucket{
 					S3Bucket: aws.String(bucket),
