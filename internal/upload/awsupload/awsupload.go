@@ -132,7 +132,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	log.Printf("[AWS] ⏱ Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
+	log.Printf("[AWS] 🚚 Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
 	err = WaitUntilImportSnapshotTaskCompleted(
 		a.importer,
 		&ec2.DescribeImportSnapshotTasksInput{
