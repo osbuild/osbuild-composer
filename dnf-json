@@ -199,5 +199,5 @@ with tempfile.TemporaryDirectory() as persistdir:
             })
         json.dump({
             "checksums": repo_checksums(base),
-            "dependencies": dependencies
+            "dependencies": sorted(dependencies, key=lambda x: x['name'])
         }, sys.stdout)
