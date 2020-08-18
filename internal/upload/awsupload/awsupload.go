@@ -114,6 +114,9 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 	return w.WaitWithContext(ctx)
 }
 
+// Register is a function that imports a snapshot, waits for the snapshot to
+// fully import, tags the snapshot, cleans up the image in S3, and registers
+// an AMI in AWS.
 func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	log.Printf("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
 	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
