@@ -167,6 +167,24 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	}
 
 	snapshotID := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
+
+	// Tag the snapshot with the image name.
+	req, _ := a.importer.CreateTagsRequest(
+		&ec2.CreateTagsInput{
+			Resources: []*string{snapshotID},
+			Tags: []*ec2.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(name),
+				},
+			},
+		},
+	)
+	err = req.Send()
+	if err != nil {
+		return nil, err
+	}
+
 	log.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
 	registerOutput, err := a.importer.RegisterImage(
 		&ec2.RegisterImageInput{
