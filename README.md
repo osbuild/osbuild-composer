@@ -50,7 +50,7 @@ The requirements for this project are:
 
 At build-time, the following software is required:
 
- * `go >= 1.12`
+ * `go >= 1.13`
  * `python-docutils >= 0.13`
 
 ### Build
