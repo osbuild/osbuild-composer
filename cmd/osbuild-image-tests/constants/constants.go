@@ -1,4 +1,4 @@
-// +build integration,!travis
+// +build integration
 
 package constants
 
