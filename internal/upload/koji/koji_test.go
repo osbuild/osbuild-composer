@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -31,7 +32,7 @@ func TestKojiImport(t *testing.T) {
 	// koji needs to specify a directory to which the upload should happen, let's reuse the build name
 	uploadDirectory := buildName
 
-	k, err := koji.Login(server, user, password)
+	k, err := koji.Login(server, user, password, http.DefaultTransport)
 	require.NoError(t, err)
 
 	defer func() {

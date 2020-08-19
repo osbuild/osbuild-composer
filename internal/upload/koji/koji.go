@@ -106,9 +106,11 @@ type CGImportResult struct {
 	BuildID int `xmlrpc:"build_id"`
 }
 
-func Login(server, user, password string) (*Koji, error) {
-	// Create a temporary xmlrpc client with the default http transport
-	// as we don't need sessionID, key nor callnum yet.
+func Login(server, user, password string, transport http.RoundTripper) (*Koji, error) {
+	// Create a temporary xmlrpc client.
+	// The API doesn't require sessionID, sessionKey and callnum yet,
+	// so there's no need to use the custom Koji RoundTripper,
+	// let's just use the one that the called passed in.
 	loginClient, err := xmlrpc.NewClient(server, http.DefaultTransport)
 	if err != nil {
 		return nil, err
@@ -130,6 +132,7 @@ func Login(server, user, password string) (*Koji, error) {
 		sessionID:  reply.SessionID,
 		sessionKey: reply.SessionKey,
 		callnum:    0,
+		transport:  transport,
 	}
 
 	client, err := xmlrpc.NewClient(server, kojiTransport)
@@ -277,6 +280,7 @@ type Transport struct {
 	sessionID  int64
 	sessionKey string
 	callnum    int
+	transport  http.RoundTripper
 }
 
 // RoundTrip implements the RoundTripper interface, using the default
@@ -303,5 +307,5 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Each call is given a unique callnum.
 	rt.callnum++
 
-	return http.DefaultTransport.RoundTrip(rClone)
+	return rt.transport.RoundTrip(rClone)
 }
