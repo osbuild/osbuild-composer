@@ -223,7 +223,6 @@ Requires:   createrepo_c
 Requires:   genisoimage
 Requires:   qemu-kvm-core
 Requires:   systemd-container
-Requires:   /usr/bin/govc
 %ifarch %{arm}
 Requires:   edk2-aarch64
 %endif
