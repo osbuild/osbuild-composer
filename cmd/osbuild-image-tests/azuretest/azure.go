@@ -56,7 +56,7 @@ func GetAzureCredentialsFromEnv() (*azureCredentials, error) {
 	location, lExists := os.LookupEnv("AZURE_LOCATION")
 	resourceGroup, rgExists := os.LookupEnv("AZURE_RESOURCE_GROUP")
 
-	// Workaround Travis security feature. If non of the variables is set, just ignore the test
+	// If non of the variables is set, just ignore the test
 	if !saExists && !sakExists && !cExists && !siExists && !ciExists && !csExists && !tiExists && !lExists && !rgExists {
 		return nil, nil
 	}

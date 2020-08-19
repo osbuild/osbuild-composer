@@ -79,8 +79,8 @@ make man
 ### Pull request gating
 
 Each pull request against `osbuild-composer` starts a series of automated
-tests. Tests run via GitHub Actions, Travis CI, and Jenkins. Each push to
-the pull request will launch theses tests automatically.
+tests. Tests run via GitHub Actions and Jenkins. Each push to the pull request
+will launch theses tests automatically.
 
 Jenkins only tests pull requests from members of the `osbuild` organization in
 GitHub. A member of the `osbuild` organization must say `ok to test` in a pull

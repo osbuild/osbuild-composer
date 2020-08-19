@@ -32,7 +32,7 @@ func getAWSCredentialsFromEnv() (*awsCredentials, error) {
 	region, regionExists := os.LookupEnv("AWS_REGION")
 	bucket, bucketExists := os.LookupEnv("AWS_BUCKET")
 
-	// Workaround Travis security feature. If non of the variables is set, just ignore the test
+	// If non of the variables is set, just ignore the test
 	if !akExists && !sakExists && !bucketExists && !regionExists {
 		return nil, nil
 	}

@@ -38,7 +38,7 @@ func TestAzure_FileUpload(t *testing.T) {
 	fileName := "/tmp/testing-image.vhd"
 	var threads int = 4
 
-	// Workaround Travis security feature. If non of the variables is set, just ignore the test
+	// If non of the variables is set, just ignore the test
 	if saExists == false && sakExists == false && cnExists == false {
 		t.Log("No AZURE configuration provided, assuming that this is running in CI. Skipping the test.")
 		return
