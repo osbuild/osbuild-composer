@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/adler32"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/kolo/xmlrpc"
+	"github.com/ubccr/kerby/khttp"
 )
 
 type Koji struct {
@@ -106,26 +109,17 @@ type CGImportResult struct {
 	BuildID int `xmlrpc:"build_id"`
 }
 
-func Login(server, user, password string, transport http.RoundTripper) (*Koji, error) {
-	// Create a temporary xmlrpc client.
-	// The API doesn't require sessionID, sessionKey and callnum yet,
-	// so there's no need to use the custom Koji RoundTripper,
-	// let's just use the one that the called passed in.
-	loginClient, err := xmlrpc.NewClient(server, http.DefaultTransport)
-	if err != nil {
-		return nil, err
-	}
+type GSSAPICredentials struct {
+	Principal string
+	KeyTab    string
+}
 
-	args := []interface{}{user, password}
-	var reply struct {
-		SessionID  int64  `xmlrpc:"session-id"`
-		SessionKey string `xmlrpc:"session-key"`
-	}
-	err = loginClient.Call("login", args, &reply)
-	if err != nil {
-		return nil, err
-	}
+type loginReply struct {
+	SessionID  int64  `xmlrpc:"session-id"`
+	SessionKey string `xmlrpc:"session-key"`
+}
 
+func newKoji(server string, transport http.RoundTripper, reply loginReply) (*Koji, error) {
 	// Create the final xmlrpc client with our custom RoundTripper handling
 	// sessionID, sessionKey and callnum
 	kojiTransport := &Transport{
@@ -134,7 +128,6 @@ func Login(server, user, password string, transport http.RoundTripper) (*Koji, e
 		callnum:    0,
 		transport:  transport,
 	}
-
 	client, err := xmlrpc.NewClient(server, kojiTransport)
 	if err != nil {
 		return nil, err
@@ -145,6 +138,55 @@ func Login(server, user, password string, transport http.RoundTripper) (*Koji, e
 		server:    server,
 		transport: kojiTransport,
 	}, nil
+}
+
+// NewFromPlain creates a new Koji sessions  =authenticated using the plain
+// username/password method. If you want to speak to a public koji instance,
+// you probably cannot use this method.
+func NewFromPlain(server, user, password string, transport http.RoundTripper) (*Koji, error) {
+	// Create a temporary xmlrpc client.
+	// The API doesn't require sessionID, sessionKey and callnum yet,
+	// so there's no need to use the custom Koji RoundTripper,
+	// let's just use the one that the called passed in.
+	loginClient, err := xmlrpc.NewClient(server, http.DefaultTransport)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{user, password}
+	var reply loginReply
+	err = loginClient.Call("login", args, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	return newKoji(server, transport, reply)
+}
+
+// NewFromGSSAPI creates a new Koji session authenticated using GSSAPI.
+// Principal and keytab used for the session is passed using credentials
+// parameter.
+func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http.RoundTripper) (*Koji, error) {
+	// Create a temporary xmlrpc client with kerberos transport.
+	// The API doesn't require sessionID, sessionKey and callnum yet,
+	// so there's no need to use the custom Koji RoundTripper,
+	// let's just use the one that the called passed in.
+	loginClient, err := xmlrpc.NewClient(server+"/ssllogin", &khttp.Transport{
+		KeyTab:    credentials.KeyTab,
+		Principal: credentials.Principal,
+		Next:      transport,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var reply loginReply
+	err = loginClient.Call("sslLogin", nil, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	return newKoji(server, transport, reply)
 }
 
 // GetAPIVersion gets the version of the API of the remote Koji instance
@@ -308,4 +350,18 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt.callnum++
 
 	return rt.transport.RoundTrip(rClone)
+}
+
+func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
+	principal, principalExists := os.LookupEnv("OSBUILD_COMPOSER_KOJI_PRINCIPAL")
+	keyTab, keyTabExists := os.LookupEnv("OSBUILD_COMPOSER_KOJI_KEYTAB")
+
+	if !principalExists || !keyTabExists {
+		return nil, errors.New("Both OSBUILD_COMPOSER_KOJI_PRINCIPAL and OSBUILD_COMPOSER_KOJI_KEYTAB must be set")
+	}
+
+	return &GSSAPICredentials{
+		Principal: principal,
+		KeyTab:    keyTab,
+	}, nil
 }
