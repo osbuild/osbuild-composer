@@ -39,7 +39,7 @@ func main() {
 	}
 	defer file.Close()
 
-	k, err := koji.Login(server, "osbuild", "osbuildpass", http.DefaultTransport)
+	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", http.DefaultTransport)
 	if err != nil {
 		println(err.Error())
 		return
