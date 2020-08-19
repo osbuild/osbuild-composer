@@ -224,15 +224,10 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("filename", filename)
 	q.Add("offset", fmt.Sprintf("%v", offset))
 	q.Add("fileverify", "adler32")
-	q.Add("session-id", fmt.Sprintf("%v", k.sessionID))
-	q.Add("session-key", k.sessionKey)
-	q.Add("callnum", fmt.Sprintf("%v", k.callnum))
 	u.RawQuery = q.Encode()
 
-	// Each call is given a unique callnum.
-	k.callnum++
-
-	resp, err := http.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
+	client := http.Client{Transport: k}
+	resp, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 	if err != nil {
 		return err
 	}
