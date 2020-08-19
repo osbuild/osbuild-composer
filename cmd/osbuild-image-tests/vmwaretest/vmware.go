@@ -181,6 +181,8 @@ func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string,
 	}
 	ipAddress, retcode := runWithStdout(args)
 
+	fmt.Println("Got IP address for VM: ", string(ipAddress))
+
 	if retcode != 0 {
 		return errors.New("Getting IP address for VM failed")
 	}
