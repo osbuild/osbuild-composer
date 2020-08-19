@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	// importing the packages registers these cli commands
@@ -208,4 +209,23 @@ func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
 	private := "/usr/share/tests/osbuild-composer/keyring/id_rsa"
 
 	return f(private, public)
+}
+
+
+func ConvertToStreamOptimizedVmdk(imagePath string) (string, error) {
+	optimizedVmdk, err := ioutil.TempFile("/var/tmp", "osbuild-composer-stream-optimized-*.vmdk")
+	if err != nil {
+		return "", err
+	}
+	optimizedVmdk.Close()
+
+	cmd := exec.Command(
+		"/usr/bin/qemu-img", "convert", "-O", "vmdk", "-o", "subformat=streamOptimized",
+		imagePath, optimizedVmdk.Name())
+	err = cmd.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return optimizedVmdk.Name(), nil
 }
