@@ -31,10 +31,7 @@ func TestKojiImport(t *testing.T) {
 	// koji needs to specify a directory to which the upload should happen, let's reuse the build name
 	uploadDirectory := buildName
 
-	// authenticate
-	k, err := koji.New(server)
-	require.NoError(t, err)
-	err = k.Login(user, password)
+	k, err := koji.Login(server, user, password)
 	require.NoError(t, err)
 
 	defer func() {

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"time"
@@ -38,13 +39,7 @@ func main() {
 	}
 	defer file.Close()
 
-	k, err := koji.New(server)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-
-	err = k.Login("osbuild", "osbuildpass")
+	k, err := koji.Login(server, "osbuild", "osbuildpass", http.DefaultTransport)
 	if err != nil {
 		println(err.Error())
 		return
