@@ -4,10 +4,10 @@ package vmwaretest
 
 import (
 	"errors"
-	"os"
-	"os/exec"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"path/filepath"
 
 	// importing the packages registers these cli commands
@@ -21,14 +21,14 @@ import (
 const WaitTimeout = 6000 // in seconds
 
 type AuthOptions struct {
-	Host string
-	Username string
-	Password string
+	Host       string
+	Username   string
+	Password   string
 	Datacenter string
-	Cluster string
-	Network string
-	Datastore string
-	Folder string
+	Cluster    string
+	Network    string
+	Datastore  string
+	Folder     string
 }
 
 func AuthOptionsFromEnv() (*AuthOptions, error) {
@@ -121,6 +121,20 @@ func DeleteImage(creds *AuthOptions, directoryName string) error {
 	return nil
 }
 
+func runWithStdout(args []string) ([]byte, int) {
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	retcode := cli.Run(args)
+
+	w.Close()
+	out, _ := ioutil.ReadAll(r)
+	os.Stdout = oldStdout
+
+	return out, retcode
+}
+
 func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string, f func(address string) error) (retErr error) {
 	vmdkBaseName := filepath.Base(imagePath)
 
@@ -159,16 +173,16 @@ func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string,
 
 	// note: by default this will wait/block until an IP address is returned
 	// note: using exec() instead of running the command b/c .Run() returns an int
-	ipAddress, err := exec.Command(
-		"/usr/bin/govc",
+	args = []string{
 		"vm.ip",
 		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
 		"-k=true",
 		imageName,
-	).Output()
-	if err != nil {
-		fmt.Println("Getting IP address for VM failed:", string(ipAddress))
-		return err
+	}
+	ipAddress, retcode := runWithStdout(args)
+
+	if retcode != 0 {
+		return errors.New("Getting IP address for VM failed")
 	}
 
 	// Disabled b/c of https://github.com/vmware/govmomi/issues/2054
@@ -210,7 +224,6 @@ func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
 
 	return f(private, public)
 }
-
 
 func ConvertToStreamOptimizedVmdk(imagePath string) (string, error) {
 	optimizedVmdk, err := ioutil.TempFile("/var/tmp", "osbuild-composer-stream-optimized-*.vmdk")
