@@ -106,15 +106,42 @@ type CGImportResult struct {
 	BuildID int `xmlrpc:"build_id"`
 }
 
-func New(server string) (*Koji, error) {
-	k := &Koji{}
-	client, err := xmlrpc.NewClient(server, http.DefaultTransport)
+func Login(server, user, password string) (*Koji, error) {
+	// Create a temporary xmlrpc client with the default http transport
+	// as we don't need sessionID, key nor callnum yet.
+	loginClient, err := xmlrpc.NewClient(server, http.DefaultTransport)
 	if err != nil {
 		return nil, err
 	}
-	k.xmlrpc = client
-	k.server = server
-	return k, nil
+
+	args := []interface{}{user, password}
+	var reply struct {
+		SessionID  int64  `xmlrpc:"session-id"`
+		SessionKey string `xmlrpc:"session-key"`
+	}
+	err = loginClient.Call("login", args, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the final xmlrpc client with our custom RoundTripper handling
+	// sessionID, sessionKey and callnum
+	kojiTransport := &Transport{
+		sessionID:  reply.SessionID,
+		sessionKey: reply.SessionKey,
+		callnum:    0,
+	}
+
+	client, err := xmlrpc.NewClient(server, kojiTransport)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Koji{
+		xmlrpc:    client,
+		server:    server,
+		transport: kojiTransport,
+	}, nil
 }
 
 // GetAPIVersion gets the version of the API of the remote Koji instance
@@ -126,26 +153,6 @@ func (k *Koji) GetAPIVersion() (int, error) {
 	}
 
 	return version, nil
-}
-
-// Login sets up a new session with the given user/password
-func (k *Koji) Login(user, password string) error {
-	args := []interface{}{user, password}
-	var reply struct {
-		SessionID  int64  `xmlrpc:"session-id"`
-		SessionKey string `xmlrpc:"session-key"`
-	}
-	err := k.xmlrpc.Call("login", args, &reply)
-	if err != nil {
-		return err
-	}
-
-	k.transport = &Transport{
-		sessionID:  reply.SessionID,
-		sessionKey: reply.SessionKey,
-		callnum:    0,
-	}
-	return nil
 }
 
 // Logout ends the session
@@ -279,10 +286,6 @@ type Transport struct {
 // us to adjust the URL per-call (these arguments should really be in
 // the body).
 func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if rt.sessionKey == "" {
-		return http.DefaultTransport.RoundTrip(req)
-	}
-
 	// Clone the request, so as not to alter the passed in value.
 	rClone := new(http.Request)
 	*rClone = *req
