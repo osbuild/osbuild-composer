@@ -1,6 +1,6 @@
 module github.com/osbuild/osbuild-composer
 
-go 1.12
+go 1.13
 
 require (
 	github.com/Azure/azure-sdk-for-go v41.3.0+incompatible
