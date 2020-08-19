@@ -15,11 +15,9 @@ import (
 )
 
 type Koji struct {
-	sessionID  int64
-	sessionKey string
-	callnum    int
-	xmlrpc     *xmlrpc.Client
-	server     string
+	xmlrpc    *xmlrpc.Client
+	server    string
+	transport http.RoundTripper
 }
 
 type BuildExtra struct {
@@ -108,40 +106,9 @@ type CGImportResult struct {
 	BuildID int `xmlrpc:"build_id"`
 }
 
-// RoundTrip implements the RoundTripper interface, using the default
-// transport. When a session has been established, also pass along the
-// session credentials. This may not be how the RoundTripper interface
-// is meant to be used, but the underlying XML-RPC helpers don't allow
-// us to adjust the URL per-call (these arguments should really be in
-// the body).
-func (k *Koji) RoundTrip(req *http.Request) (*http.Response, error) {
-	if k.sessionKey == "" {
-		return http.DefaultTransport.RoundTrip(req)
-	}
-
-	// Clone the request, so as not to alter the passed in value.
-	rClone := new(http.Request)
-	*rClone = *req
-	rClone.Header = make(http.Header, len(req.Header))
-	for idx, header := range req.Header {
-		rClone.Header[idx] = append([]string(nil), header...)
-	}
-
-	values := rClone.URL.Query()
-	values.Add("session-id", fmt.Sprintf("%v", k.sessionID))
-	values.Add("session-key", k.sessionKey)
-	values.Add("callnum", fmt.Sprintf("%v", k.callnum))
-	rClone.URL.RawQuery = values.Encode()
-
-	// Each call is given a unique callnum.
-	k.callnum++
-
-	return http.DefaultTransport.RoundTrip(rClone)
-}
-
 func New(server string) (*Koji, error) {
 	k := &Koji{}
-	client, err := xmlrpc.NewClient(server, k)
+	client, err := xmlrpc.NewClient(server, http.DefaultTransport)
 	if err != nil {
 		return nil, err
 	}
@@ -172,9 +139,12 @@ func (k *Koji) Login(user, password string) error {
 	if err != nil {
 		return err
 	}
-	k.sessionID = reply.SessionID
-	k.sessionKey = reply.SessionKey
-	k.callnum = 0
+
+	k.transport = &Transport{
+		sessionID:  reply.SessionID,
+		sessionKey: reply.SessionKey,
+		callnum:    0,
+	}
 	return nil
 }
 
@@ -226,7 +196,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("fileverify", "adler32")
 	u.RawQuery = q.Encode()
 
-	client := http.Client{Transport: k}
+	client := http.Client{Transport: k.transport}
 	resp, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 	if err != nil {
 		return err
@@ -294,4 +264,41 @@ func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64
 		}
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), offset, nil
+}
+
+type Transport struct {
+	sessionID  int64
+	sessionKey string
+	callnum    int
+}
+
+// RoundTrip implements the RoundTripper interface, using the default
+// transport. When a session has been established, also pass along the
+// session credentials. This may not be how the RoundTripper interface
+// is meant to be used, but the underlying XML-RPC helpers don't allow
+// us to adjust the URL per-call (these arguments should really be in
+// the body).
+func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if rt.sessionKey == "" {
+		return http.DefaultTransport.RoundTrip(req)
+	}
+
+	// Clone the request, so as not to alter the passed in value.
+	rClone := new(http.Request)
+	*rClone = *req
+	rClone.Header = make(http.Header, len(req.Header))
+	for idx, header := range req.Header {
+		rClone.Header[idx] = append([]string(nil), header...)
+	}
+
+	values := rClone.URL.Query()
+	values.Add("session-id", fmt.Sprintf("%v", rt.sessionID))
+	values.Add("session-key", rt.sessionKey)
+	values.Add("callnum", fmt.Sprintf("%v", rt.callnum))
+	rClone.URL.RawQuery = values.Encode()
+
+	// Each call is given a unique callnum.
+	rt.callnum++
+
+	return http.DefaultTransport.RoundTrip(rClone)
 }
