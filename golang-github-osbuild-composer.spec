@@ -47,6 +47,7 @@ Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
 Requires: osbuild >= 18
 Requires: osbuild-ostree >= 18
+Requires: qemu-img
 
 Provides: osbuild-composer
 Provides: weldr

@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"time"
 
@@ -65,6 +66,26 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
+func openAsStreamOptimizedVmdk(imagePath string) (*os.File, error) {
+	newPath := imagePath + ".stream"
+	cmd := exec.Command(
+		"/usr/bin/qemu-img", "convert", "-O", "vmdk", "-o", "subformat=streamOptimized",
+		imagePath, newPath)
+	err := cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(newPath)
+	if err != nil {
+		return nil, err
+	}
+	err = os.Remove(newPath)
+	if err != nil {
+		return nil, err
+	}
+	return f, err
+}
+
 func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*common.ComposeResult, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
@@ -87,10 +108,20 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 	for _, t := range job.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			f, err := os.Open(path.Join(outputDirectory, options.Filename))
-			if err != nil {
-				r = append(r, err)
-				continue
+			var f *os.File
+			imagePath := path.Join(outputDirectory, options.Filename)
+			if options.StreamOptimized {
+				f, err = openAsStreamOptimizedVmdk(imagePath)
+				if err != nil {
+					r = append(r, err)
+					continue
+				}
+			} else {
+				f, err = os.Open(imagePath)
+				if err != nil {
+					r = append(r, err)
+					continue
+				}
 			}
 
 			err = uploadFunc(job.Id, options.Filename, f)
