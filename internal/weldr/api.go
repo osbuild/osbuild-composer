@@ -1753,9 +1753,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	targets = append(targets, target.NewLocalTarget(
 		&target.LocalTargetOptions{
-			ComposeId:    composeID,
-			ImageBuildId: 0,
-			Filename:     imageType.Filename(),
+			ComposeId:       composeID,
+			ImageBuildId:    0,
+			Filename:        imageType.Filename(),
+			StreamOptimized: imageType.Name() == "vmdk", // TODO: move conversion to osbuild
 		},
 	))
 
