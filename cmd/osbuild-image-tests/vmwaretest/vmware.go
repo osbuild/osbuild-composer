@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	// importing the packages registers these cli commands
 	"github.com/vmware/govmomi/govc/cli"
@@ -121,7 +122,7 @@ func DeleteImage(creds *AuthOptions, directoryName string) error {
 	return nil
 }
 
-func runWithStdout(args []string) ([]byte, int) {
+func runWithStdout(args []string) (string, int) {
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
@@ -132,7 +133,7 @@ func runWithStdout(args []string) ([]byte, int) {
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = oldStdout
 
-	return out, retcode
+	return strings.TrimSpace(string(out)), retcode
 }
 
 func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string, f func(address string) error) (retErr error) {
@@ -213,7 +214,7 @@ func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string,
 	//	return errors.New("Uploading public key to VM failed")
 	//}
 
-	return f(string(ipAddress))
+	return f(ipAddress)
 }
 
 // hard-coded SSH keys b/c we're having troubles uploading publicKey
