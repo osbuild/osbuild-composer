@@ -38,7 +38,7 @@ jobs:
           fi
 
       - name: Install golangci-lint
-        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.7
+        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.30.0
 
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run
