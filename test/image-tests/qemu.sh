@@ -16,8 +16,8 @@ if [[ $IMAGE_TYPE == 'openstack' ]]; then
 fi
 
 # RHEL 8 cannot boot a VMDK using libvirt. See BZ 999789.
-if [[ $IMAGE_TYPE == vmdk ]] && [[ $ID == rhel ]]; then
-    echo "🤷 RHEL 8 cannot boot a VMDK. See BZ 999789."
+if [[ $IMAGE_TYPE == vmdk ]]; then
+    echo "🤷 libvirt cannot boot stream-optimized VMDK."
     exit 0
 fi
 

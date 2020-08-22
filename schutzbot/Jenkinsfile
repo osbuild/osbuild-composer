@@ -390,12 +390,6 @@ void run_tests(test_type) {
             script: "test/image-tests/qemu.sh vhd"
         )
 
-        // Run the VMDK/VMware test.
-        sh (
-            label: "Integration test: VMDK",
-            script: "test/image-tests/qemu.sh vmdk"
-        )
-
         // Run the AWS test.
         sh (
             label: "Integration test: AWS",
