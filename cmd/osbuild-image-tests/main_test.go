@@ -344,12 +344,6 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 	}
 	require.NoError(t, err)
 
-	// convert to streamOptimized vmdk
-	imagePath, err = vmwaretest.ConvertToStreamOptimizedVmdk(imagePath)
-	require.NoError(t, err)
-	require.NotEqual(t, "", imagePath)
-	defer os.Remove(imagePath)
-
 	// create a random test id to name all the resources used in this test
 	imageName, err := generateRandomString("osbuild-image-tests-vmware-image-")
 	require.NoError(t, err)
