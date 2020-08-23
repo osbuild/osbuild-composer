@@ -56,9 +56,6 @@ def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     # downloading metadata (when depsolving) and downloading packages.
     base.conf.fastestmirror = True
 
-    # Initialize all plugins (including fastestmirror).
-    base.init_plugins()
-
     # Try another mirror if it takes longer than 5 seconds to connect.
     base.conf.timeout = 5
 
