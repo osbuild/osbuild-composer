@@ -19,7 +19,7 @@ test_divider () {
 
 # Get a list of test cases.
 get_test_cases () {
-    TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}*.json"
+    TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}-vmdk-boot.json"
     pushd $IMAGE_TEST_CASES_PATH > /dev/null
         ls $TEST_CASE_SELECTOR
     popd > /dev/null
