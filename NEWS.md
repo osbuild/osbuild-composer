@@ -1,5 +1,20 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 20:
+
+  * VMDK images are now stream optimized to be compatible with vCenter by
+    defult.
+
+  * RPMs are pulled from the correct repositories on RHEL, depending on whether
+    the host is running on Beta or GA.
+
+  * Cloud credentials can now no longer be returned by the API.
+
+Contributions from: Alexander Todorov, Brian C. Lane, Lars Karlitski,
+                    Major Hayden, Tom Gundersen
+
+— London, 2020-08-23
+
 ## CHANGES WITH 19:
 
   * Bug fixes to the weldr API.
@@ -11,7 +26,8 @@
 
   * Other test improvements.
 
-Contributions from: Alexander Todorov, Brian C. Lane, Jenn Giardino, Major Hayden, Martin Sehnoutka
+Contributions from: Alexander Todorov, Brian C. Lane, Jenn Giardino,
+                    Major Hayden, Martin Sehnoutka
 
 — London, 2020-08-10
 
