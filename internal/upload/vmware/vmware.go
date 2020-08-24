@@ -18,9 +18,5 @@ func OpenAsStreamOptimizedVmdk(imagePath string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = os.Remove(newPath)
-	if err != nil {
-		return nil, err
-	}
 	return f, err
 }
