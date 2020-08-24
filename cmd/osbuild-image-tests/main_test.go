@@ -28,6 +28,7 @@ import (
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/openstacktest"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/vmwaretest"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 )
 
 type testcaseStruct struct {
@@ -345,8 +346,12 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 
 	// convert to streamOptimized vmdk
-	imagePath, err = vmwaretest.ConvertToStreamOptimizedVmdk(imagePath)
+	imageF, err := vmware.OpenAsStreamOptimizedVmdk(imagePath)
 	require.NoError(t, err)
+	// we don't need the file descriptor to be opened b/c import.vmdk operates
+	// on the file path
+	imageF.Close()
+	imagePath = imageF.Name()
 	require.NotEqual(t, "", imagePath)
 	defer os.Remove(imagePath)
 
