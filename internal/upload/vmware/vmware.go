@@ -3,10 +3,11 @@ package vmware
 import (
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func OpenAsStreamOptimizedVmdk(imagePath string) (*os.File, error) {
-	newPath := imagePath + ".stream"
+	newPath := strings.TrimSuffix(imagePath, ".vmdk") + "-stream.vmdk"
 	cmd := exec.Command(
 		"/usr/bin/qemu-img", "convert", "-O", "vmdk", "-o", "subformat=streamOptimized",
 		imagePath, newPath)
