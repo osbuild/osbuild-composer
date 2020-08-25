@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -18,7 +19,7 @@ type OSBuildJob struct {
 }
 
 type OSBuildJobResult struct {
-	OSBuildOutput *common.ComposeResult `json:"osbuild_output,omitempty"`
+	OSBuildOutput *osbuild.Result `json:"osbuild_output,omitempty"`
 }
 
 //
@@ -49,7 +50,7 @@ type jobResponse struct {
 
 type updateJobRequest struct {
 	Status common.ImageBuildState `json:"status"`
-	Result *common.ComposeResult  `json:"result"`
+	Result *osbuild.Result        `json:"result"`
 }
 
 type updateJobResponse struct {

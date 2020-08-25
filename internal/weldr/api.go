@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -165,7 +166,7 @@ type composeStatus struct {
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
-	Result   *common.ComposeResult
+	Result   *osbuild.Result
 }
 
 // Returns the state of the image in `compose` and the times the job was
@@ -194,7 +195,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 			Queued:   compose.ImageBuild.JobCreated,
 			Started:  compose.ImageBuild.JobStarted,
 			Finished: compose.ImageBuild.JobFinished,
-			Result:   &common.ComposeResult{},
+			Result:   &osbuild.Result{},
 		}
 	}
 

@@ -6,20 +6,20 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 type OSBuildError struct {
 	Message string
-	Result  *common.ComposeResult
+	Result  *osbuild.Result
 }
 
 func (e *OSBuildError) Error() string {
 	return e.Message
 }
 
-func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*common.ComposeResult, error) {
+func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*osbuild.Result, error) {
 	cmd := exec.Command(
 		"osbuild",
 		"--store", store,
@@ -50,7 +50,7 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 	// FIXME: handle or comment this possible error
 	_ = stdin.Close()
 
-	var result common.ComposeResult
+	var result osbuild.Result
 	err = json.NewDecoder(stdout).Decode(&result)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding osbuild output: %#v", err)

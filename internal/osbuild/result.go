@@ -1,4 +1,4 @@
-package common
+package osbuild
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ type build struct {
 	Success bool    `json:"success"`
 }
 
-type ComposeResult struct {
+type Result struct {
 	TreeID    string     `json:"tree_id"`
 	OutputID  string     `json:"output_id"`
 	Build     *build     `json:"build"`
@@ -35,7 +35,7 @@ type ComposeResult struct {
 	Success   bool       `json:"success"`
 }
 
-func (cr *ComposeResult) Write(writer io.Writer) error {
+func (cr *Result) Write(writer io.Writer) error {
 	if cr.Build == nil && len(cr.Stages) == 0 && cr.Assembler == nil {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
 	}
