@@ -6,33 +6,74 @@ import (
 	"io"
 )
 
-type assembler struct {
+type rawAssemblerResult struct {
 	Name    string          `json:"name"`
 	Options json.RawMessage `json:"options"`
 	Success bool            `json:"success"`
 	Output  string          `json:"output"`
 }
 
-type stage struct {
-	Name    string          `json:"name"`
-	Options json.RawMessage `json:"options"`
-	Success bool            `json:"success"`
-	Output  string          `json:"output"`
+type StageResult struct {
+	Name     string          `json:"name"`
+	Options  json.RawMessage `json:"options"`
+	Success  bool            `json:"success"`
+	Output   string          `json:"output"`
+	Metadata StageMetadata   `json:"metadata"`
 }
 
-type build struct {
-	Stages  []stage `json:"stages"`
-	TreeID  string  `json:"tree_id"`
-	Success bool    `json:"success"`
+// StageMetadata specify the metadata of a given stage-type.
+type StageMetadata interface {
+	isStageMetadata()
+}
+
+type rawStageResult struct {
+	Name     string          `json:"name"`
+	Options  json.RawMessage `json:"options"`
+	Success  bool            `json:"success"`
+	Output   string          `json:"output"`
+	Metadata json.RawMessage `json:"metadata"`
+}
+
+type buildResult struct {
+	Stages  []StageResult `json:"stages"`
+	TreeID  string        `json:"tree_id"`
+	Success bool          `json:"success"`
 }
 
 type Result struct {
-	TreeID    string     `json:"tree_id"`
-	OutputID  string     `json:"output_id"`
-	Build     *build     `json:"build"`
-	Stages    []stage    `json:"stages"`
-	Assembler *assembler `json:"assembler"`
-	Success   bool       `json:"success"`
+	TreeID    string              `json:"tree_id"`
+	OutputID  string              `json:"output_id"`
+	Build     *buildResult        `json:"build"`
+	Stages    []StageResult       `json:"stages"`
+	Assembler *rawAssemblerResult `json:"assembler"`
+	Success   bool                `json:"success"`
+}
+
+func (result *StageResult) UnmarshalJSON(data []byte) error {
+	var rawStageResult rawStageResult
+	err := json.Unmarshal(data, &rawStageResult)
+	if err != nil {
+		return err
+	}
+	var metadata StageMetadata
+	switch rawStageResult.Name {
+	case "org.osbuild.rpm":
+		metadata = new(RPMStageMetadata)
+		err = json.Unmarshal(rawStageResult.Metadata, metadata)
+		if err != nil {
+			return err
+		}
+	default:
+		metadata = nil
+	}
+
+	result.Name = rawStageResult.Name
+	result.Options = rawStageResult.Options
+	result.Success = rawStageResult.Success
+	result.Output = rawStageResult.Output
+	result.Metadata = metadata
+
+	return nil
 }
 
 func (cr *Result) Write(writer io.Writer) error {

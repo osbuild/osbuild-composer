@@ -28,3 +28,20 @@ func NewRPMStage(options *RPMStageOptions) *Stage {
 		Options: options,
 	}
 }
+
+// RPMStageMetadata gives the set of packages installed by the RPM stage
+type RPMStageMetadata struct {
+	Packages []RPMPackageMetadata `json:"packages"`
+}
+
+// RPMPackageMetadata contains the metadata extracted from one RPM header
+type RPMPackageMetadata struct {
+	Name    string  `json:"name"`
+	Version string  `json:"version"`
+	Release string  `json:"release"`
+	Epoch   *string `json:"epoch"`
+	Arch    string  `json:"arch"`
+	SigMD5  string  `json:"sigmd5"`
+}
+
+func (RPMStageMetadata) isStageMetadata() {}
