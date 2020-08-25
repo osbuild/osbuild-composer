@@ -1,9 +1,10 @@
-package common
+package osbuild
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWriteFull(t *testing.T) {
@@ -30,7 +31,7 @@ func TestWriteFull(t *testing.T) {
 		Output:  "Done",
 	}
 
-	testComposeResult := ComposeResult{
+	testComposeResult := Result{
 		TreeID:    "TreeID",
 		OutputID:  "OutputID",
 		Build:     &testBuild,
@@ -71,7 +72,7 @@ Done
 
 func TestWriteEmpty(t *testing.T) {
 
-	testComposeResult := ComposeResult{}
+	testComposeResult := Result{}
 
 	var b bytes.Buffer
 	assert.NoError(t, testComposeResult.Write(&b))

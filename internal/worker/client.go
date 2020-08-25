@@ -15,6 +15,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -111,7 +112,7 @@ func (c *Client) JobCanceled(job *Job) bool {
 	return jr.Canceled
 }
 
-func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *common.ComposeResult) error {
+func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbuild.Result) error {
 	var b bytes.Buffer
 	err := json.NewEncoder(&b).Encode(&updateJobRequest{status, result})
 	if err != nil {
