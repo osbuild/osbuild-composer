@@ -3,7 +3,7 @@
 Firstly, you need to start the koji container:
 
 ```
-sudo ./internal/upload/koji/run-koji-container.sh
+sudo ./internal/upload/koji/run-koji-container.sh start
 ```
 
 This command starts a kojihub instance available at
@@ -20,3 +20,9 @@ go test -v -tags koji_test ./internal/upload/koji
 
 The test is run on each PR in the Github CI. See `.github/workflows/tests.yml`
 for more details.
+
+To stop and remove the koji container, use the following command:
+
+```
+sudo ./internal/upload/koji/run-koji-container.sh stop
+```
