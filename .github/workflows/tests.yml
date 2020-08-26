@@ -52,22 +52,6 @@ jobs:
   koji:
     name: "麹 Koji test"
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: docker.io/library/postgres:12-alpine
-        env:
-          POSTGRES_USER:     koji
-          POSTGRES_PASSWORD: kojipass
-          POSTGRES_DB:       koji
-      koji:
-        image: quay.io/osbuild/ghci-koji:v1
-        env:
-          POSTGRES_USER:     koji
-          POSTGRES_PASSWORD: kojipass
-          POSTGRES_DB:       koji
-          POSTGRES_HOST:     postgres
-        ports:
-          - 8080:80
     steps:
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
@@ -95,7 +79,10 @@ jobs:
           sudo cp .github/koji.conf /etc/koji.conf
 
       - name: Run unit tests
-        run: go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
+        run: |
+          sudo internal/upload/koji/run-koji-container.sh start
+          go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
+          sudo internal/upload/koji/run-koji-container.sh stop
 
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
