@@ -46,7 +46,7 @@ ${CONTAINER_RUNTIME} run -d --name org.osbuild.koji.koji --network org.osbuild.k
   -e POSTGRES_PASSWORD=kojipass \
   -e POSTGRES_DB=koji \
   -e POSTGRES_HOST=org.osbuild.koji.postgres \
-  quay.io/osbuild/ghci-koji:rc1
+  quay.io/osbuild/ghci-koji:v1
 
 echo "Running, press CTRL+C to stop..."
 sleep infinity
