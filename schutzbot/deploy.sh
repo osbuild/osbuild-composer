@@ -50,6 +50,23 @@ gpgcheck=0
 priority=5
 EOF
 
+# TODO: include this in the jenkins runner (and split test/target machines out)
+sudo dnf -y install jq
+
+OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
+if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
+    greenprint "Setting up a dnf repository with our unreleased osbuild depedency"
+    sudo tee /etc/yum.repos.d/osbuild.repo << EOF
+[osbuild]
+name=osbuild ${OSBUILD_GIT_COMMIT}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_GIT_COMMIT}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority. This repo may contain an old composer build, dump the priority.
+priority=10
+EOF
+fi
+
 if [[ $ID == rhel ]]; then
     greenprint "Setting up EPEL repository"
     # we need this for ansible and koji

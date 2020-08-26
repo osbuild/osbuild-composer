@@ -1,0 +1,9 @@
+{
+  "rhel-8.3": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "afafd46393e1c106e79c2412dbb5c4e45a05eda8"
+      }
+    }
+  }
+}
