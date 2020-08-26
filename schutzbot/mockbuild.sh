@@ -65,12 +65,21 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
-make -C osbuild srpm
+
+if [[ $VERSION_ID == 8.3 ]]; then
+    # osbuild in 8.3 is no longer being rebased, build from submodule
+    make -C osbuild srpm
+fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
-    rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
+if [[ $VERSION_ID == 8.3 ]]; then
+    sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
+        rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
+else
+    sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
+        rpmbuild/SRPMS/*.src.rpm
+fi
 
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R "$USER" "${REPO_DIR%%/*}"
