@@ -66,3 +66,6 @@ sudo systemctl enable --now osbuild-composer.socket
 # Verify that the API is running.
 sudo composer-cli status show
 sudo composer-cli sources list
+for SOURCE in `sudo composer-cli sources list`; do
+    sudo composer-cli sources info $SOURCE
+done
