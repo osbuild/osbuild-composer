@@ -344,6 +344,148 @@ pipeline {
 
 }
 
+pipeline {
+    // test against RHEL nightly builds
+    agent none
+
+    // TODO: do we need to disable triggering via GitHub pull requests ???
+    triggers {
+        cron('@daily')
+    }
+
+    environment {
+        AWS_REGION = "us-east-2"
+        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+    }
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+        // Cancel the pipeline if it runs for more than three hours.
+        timeout(
+            time: 3,
+            unit: "HOURS"
+        )
+    }
+    stages {
+
+        stage("Prepare 🤔") {
+            agent { label "schutzbot" }
+            options {
+                // Don't checkout the git repository here. It just clogs
+                // up the Jenkins disk space and does nothing for us.
+                skipDefaultCheckout()
+            }
+            steps {
+                sh (
+                    label: "Get environment variables",
+                    script: "env | sort"
+                )
+                // don't build, use RPMs from the nightly trees
+                sh "schutzbot/prepare-rhel-nightly.sh"
+                stash (
+                    includes: 'osbuild-mock.repo',
+                    name: 'rhel8nightly'
+                )
+                stash (
+                    includes: 'rhel-8.json',
+                    name: 'rhel8json'
+                )
+                stash (
+                    includes: 'rhel-8-beta.json',
+                    name: 'rhel8betajson'
+                )
+                stash (
+                    includes: 'COMPOSE_ID',
+                    name: 'compose_id'
+                )
+            }
+        }
+
+        stage("Testing 🍌") {
+            parallel {
+
+                stage('EL8 Base') {
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "base"
+                    }
+                    steps {
+                        unstash 'rhel8nightly'
+                        unstash 'rhel8json'
+                        unstash 'rhel8betajson'
+                        run_tests('dummy-base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-base')
+                        }
+                    }
+                }
+                stage('EL8 Image') {
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        unstash 'rhel8nightly'
+                        unstash 'rhel8json'
+                        unstash 'rhel8betajson'
+                        run_tests('dummy-image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-image')
+                        }
+                    }
+                }
+                stage('EL8 Integration') {
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'rhel8nightly'
+                        unstash 'rhel8json'
+                        unstash 'rhel8betajson'
+                        run_tests('dummy-integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-integration')
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+//TODO: send messages via Email too
+// TODO: how do we make the contents of COMPOSE_ID available as env.COMPOSE_ID
+    post {
+        success {
+            node('schutzbot') {
+                script {
+                    telegramSend "💚 CI passed for ${env.COMPOSE_ID} see ${env.BUILD_URL}"
+                }
+            }
+        }
+        unsuccessful {
+            node('schutzbot') {
+                script {
+                    telegramSend "💣 CI failed for ${env.COMPOSE_ID} see ${env.BUILD_URL}"
+                }
+            }
+        }
+    }
+}
+
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
 void run_tests(test_type) {
