@@ -60,6 +60,15 @@ retry sudo dnf -y install osbuild-composer-tests
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
 
+# Override default osbuild-composer sources if local definition exists
+if [[ -f "rhel-8.json" ]]; then
+    sudo cp rhel-8.json /etc/osbuild-composer/repositories/
+fi
+
+if [[ -f "rhel-8-beta.json" ]]; then
+    sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
+fi
+
 # Start services.
 sudo systemctl enable --now osbuild-composer.socket
 
