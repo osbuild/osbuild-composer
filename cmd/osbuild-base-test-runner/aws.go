@@ -165,13 +165,15 @@ func deleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	}
 
 	// now it's possible to delete the snapshot
-	_, err = e.DeleteSnapshot(&ec2.DeleteSnapshotInput{
-		SnapshotId: imageDesc.SnapshotId,
-	})
+	// Don't delete the snapshot, it will be used in the following test run because we
+	// run the image again for each test binary.
+	// _, err = e.DeleteSnapshot(&ec2.DeleteSnapshotInput{
+	// 	SnapshotId: imageDesc.SnapshotId,
+	// })
 
-	if err != nil {
-		retErr = wrapErrorf(retErr, "cannot delete the snapshot: %#v", err)
-	}
+	// if err != nil {
+	// 	retErr = wrapErrorf(retErr, "cannot delete the snapshot: %#v", err)
+	// }
 
 	return retErr
 }
