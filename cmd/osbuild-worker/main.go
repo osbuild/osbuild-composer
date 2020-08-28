@@ -9,16 +9,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
+	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -159,6 +162,88 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 				azureMaxUploadGoroutines,
 			)
 
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+		case *target.KojiTargetOptions:
+			// Koji for some reason needs TLS renegotiation enabled.
+			// Clone the default http transport and enable renegotiation.
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			transport.TLSClientConfig = &tls.Config{
+				Renegotiation: tls.RenegotiateOnceAsClient,
+			}
+
+			k, err := koji.NewFromGSSAPI(options.Server, &koji.GSSAPICredentials{}, transport)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			defer func() {
+				err := k.Logout()
+				if err != nil {
+					log.Printf("koji logout failed: %v", err)
+				}
+			}()
+
+			f, err := os.Open(path.Join(outputDirectory, options.Filename))
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			hash, filesize, err := k.Upload(f, options.UploadDirectory, options.Filename)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			build := koji.Build{
+				Name:      job.Id.String(),
+				Version:   "1",
+				Release:   "1",
+				StartTime: time.Now().Unix(),
+				EndTime:   time.Now().Unix(),
+			}
+			buildRoots := []koji.BuildRoot{
+				{
+					ID: 1,
+					Host: koji.Host{
+						Os:   "RHEL8",
+						Arch: "noarch",
+					},
+					ContentGenerator: koji.ContentGenerator{
+						Name:    "osbuild",
+						Version: "1",
+					},
+					Container: koji.Container{
+						Type: "nspawn",
+						Arch: "noarch",
+					},
+					Tools:      []koji.Tool{},
+					Components: []koji.Component{},
+				},
+			}
+			output := []koji.Output{
+				{
+					BuildRootID:  1,
+					Filename:     options.Filename,
+					FileSize:     uint64(filesize),
+					Arch:         "noarch",
+					ChecksumType: "md5",
+					MD5:          hash,
+					Type:         "image",
+					Components:   []koji.Component{},
+					Extra: koji.OutputExtra{
+						Image: koji.OutputExtraImageInfo{
+							Arch: "noarch",
+						},
+					},
+				},
+			}
+
+			_, err = k.CGImport(build, buildRoots, output, options.UploadDirectory)
 			if err != nil {
 				r = append(r, err)
 				continue

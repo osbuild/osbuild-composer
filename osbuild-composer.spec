@@ -43,12 +43,15 @@ BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
 BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
+BuildRequires:  golang(github.com/kolo/xmlrpc)
 BuildRequires:  golang(github.com/labstack/echo/v4)
 BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
+BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
+BuildRequires:  krb5-devel
 %endif
 
 Requires: %{name}-worker = %{version}-%{release}
