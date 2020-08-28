@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -147,6 +148,24 @@ func main() {
 		err := workers.Serve(jobListener)
 		common.PanicOnError(err)
 	}()
+
+	// Optionally run Koji API
+	if kojiListeners, exists := listeners["osbuild-composer-koji.socket"]; exists {
+		if len(kojiListeners) != 1 {
+			// Use Fatal to call os.Exit with non-zero return value
+			log.Fatal("The osbuild-composer-koji.socket unit is misconfigured. It should contain only one socket.")
+		}
+		kojiListener := kojiListeners[0]
+
+		kojiServer := kojiapi.NewServer(workers, rpm, distros)
+
+		go func() {
+			err = kojiServer.Serve(kojiListener)
+
+			// If the koji server fails, take down the whole process, not just a single goroutine
+			log.Fatal("osbuild-composer-koji.socket failed: ", err)
+		}()
+	}
 
 	if remoteWorkerListeners, exists := listeners["osbuild-remote-worker.socket"]; exists {
 		for _, listener := range remoteWorkerListeners {
