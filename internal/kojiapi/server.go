@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -69,6 +70,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 
 	type imageRequest struct {
 		manifest distro.Manifest
+		filename string
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 
@@ -113,6 +115,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		}
 
 		imageRequests[i].manifest = manifest
+		imageRequests[i].filename = imageType.Filename()
 	}
 
 	var ir imageRequest
@@ -123,7 +126,15 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only single-image composes are currently supported", http.StatusBadRequest)
 		return
 	}
-	id, err := server.workers.Enqueue(ir.manifest, nil)
+	id, err := server.workers.Enqueue(ir.manifest, []*target.Target{
+		target.NewKojiTarget(&target.KojiTargetOptions{
+			BuildID:         uint64(request.Koji.BuildId),
+			Token:           request.Koji.Token,
+			Filename:        ir.filename,
+			UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
+			Server:          request.Koji.Server,
+		}),
+	})
 	if err != nil {
 		// This is a programming errror.
 		panic(err)
