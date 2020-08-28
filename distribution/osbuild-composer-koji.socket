@@ -1,0 +1,9 @@
+[Unit]
+Description=OSBuild Composer Koji API socket
+
+[Socket]
+Service=osbuild-composer.service
+ListenStream=8701
+
+[Install]
+WantedBy=sockets.target
