@@ -127,3 +127,15 @@ gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
 priority=5
 EOF
+
+# Create a osbuild-composer "sources" file
+greenprint "📜 Generating osbuild-composer \"sources\" file"
+tee osbuild-mock.toml << EOF
+id="osbuild-mock"
+name="osbuild-mock"
+type="yum-baseurl"
+url="${REPO_URL}"
+enabled="1"
+gpgcheck="0"
+priority="5"
+EOF
