@@ -70,6 +70,8 @@ func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (Targ
 		options = new(AWSTargetOptions)
 	case "org.osbuild.local":
 		options = new(LocalTargetOptions)
+	case "org.osbuild.koji":
+		options = new(KojiTargetOptions)
 	default:
 		return nil, errors.New("unexpected target name")
 	}
