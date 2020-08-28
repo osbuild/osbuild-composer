@@ -1,63 +1,74 @@
 #!/bin/bash
-set -euo pipefail
+set -euox pipefail
 
+CHECKOUT_DIRECTORY="${PWD}"
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 TESTS_PATH=/usr/libexec/tests/osbuild-composer
 
 PASSED_TESTS=()
 FAILED_TESTS=()
 
-TEST_CASES=(
-  "osbuild-weldr-tests"
-  "osbuild-dnf-json-tests"
-  "osbuild-tests"
-)
+TEST_RUNNER=/usr/libexec/tests/osbuild-composer/osbuild-base-test-runner
 
-# Print out a nice test divider so we know when tests stop and start.
-test_divider () {
-    printf "%0.s-" {1..78} && echo
+function retry {
+    local count=0
+    local retries=5
+    until "$@"; do
+        exit=$?
+        count=$(($count + 1))
+        if [[ $count -lt $retries ]]; then
+            echo "Retrying command..."
+            sleep 1
+        else
+            echo "Command failed after ${retries} retries. Giving up."
+            return $exit
+        fi
+    done
+    return 0
 }
 
-# Run a test case and store the result as passed or failed.
-run_test_case () {
-    TEST_NAME=$(basename $1)
-    echo
-    test_divider
-    echo "🏃🏻 Running test: ${TEST_NAME}"
-    test_divider
+# Get OS details.
+source /etc/os-release
 
-    if sudo ${1} -test.v | tee ${WORKSPACE}/${TEST_NAME}.log; then
-        PASSED_TESTS+=($TEST_NAME)
-    else
-        FAILED_TESTS+=($TEST_NAME)
-    fi
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    sudo chmod +x $RHN_REGISTRATION_SCRIPT
+    sudo $RHN_REGISTRATION_SCRIPT
+fi
 
-    test_divider
-    echo
-}
+# Restart systemd to work around some Fedora issues in cloud images.
+sudo systemctl restart systemd-journald
+
+# Remove Fedora's modular repositories to speed up dnf.
+sudo rm -f /etc/yum.repos.d/fedora*modular*
+
+# Enable fastestmirror and disable weak dependency installation to speed up
+# dnf operations.
+echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
+
+# Ensure we are using the latest dnf since early revisions of Fedora 31 had
+# some dnf repo priority bugs like BZ 1733582.
+# NOTE(mhayden): We can exclude kernel updates here to save time with dracut
+# and module updates. The system will not be rebooted in CI anyway, so a
+# kernel update is not needed.
+if [[ $ID == fedora ]]; then
+    sudo dnf -y upgrade --exclude kernel --exclude kernel-core
+fi
+
+# Add osbuild team ssh keys.
+cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
+
+# Set up a dnf repository for the RPMs we built via mock.
+sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
+sudo dnf repository-packages osbuild-mock list
 
 # Ensure osbuild-composer-tests is installed.
-sudo dnf -y install osbuild-composer-tests
+retry sudo dnf -y install osbuild-composer-tests
+
+ls -l /usr/libexec/tests/osbuild-composer
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
-# Run each test case.
-for TEST_CASE in "${TEST_CASES[@]}"; do
-    run_test_case ${TESTS_PATH}/$TEST_CASE
-done
-
-# Print a report of the test results.
-test_divider
-echo "😃 Passed tests: ${PASSED_TESTS[@]}"
-echo "☹ Failed tests: ${FAILED_TESTS[@]}"
-test_divider
-
-# Exit with a failure if any tests failed.
-if [ ${#FAILED_TESTS[@]} -eq 0 ]; then
-    echo "🎉 All tests passed."
-    exit 0
-else
-    echo "🔥 One or more tests failed."
-    exit 1
-fi
+# Run
+sudo --preserve-env $TEST_RUNNER /usr/libexec/tests/osbuild-composer/osbuild-weldr-tests
