@@ -40,22 +40,22 @@ pipeline {
 
             parallel {
 
-                stage('F31') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora31'
-                        )
-                    }
-                }
+                //stage('F31') {
+                //    agent { label "f31cloudbase && x86_64" }
+                //    environment {
+                //        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //    }
+                //    steps {
+                //        sh "schutzbot/ci_details.sh"
+                //        retry(3) {
+                //            sh "schutzbot/mockbuild.sh"
+                //        }
+                //        stash (
+                //            includes: 'osbuild-mock.repo',
+                //            name: 'fedora31'
+                //        )
+                //    }
+                //}
                 stage('F32') {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
@@ -70,255 +70,303 @@ pipeline {
                             includes: 'osbuild-mock.repo',
                             name: 'fedora32'
                         )
-                    }
-                }
-                stage('EL8') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
                         stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel8cdn'
+                            includes: 'osbuild-mock.toml',
+                            name: 'fedora32toml'
                         )
                     }
                 }
-                stage('EL8.3') {
-                    agent { label "rhel83cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel83'
-                        )
-                    }
+                //stage('EL8') {
+                //    agent { label "rhel8cloudbase && x86_64" }
+                //    environment {
+                //        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                //    }
+                //    steps {
+                //        sh "schutzbot/ci_details.sh"
+                //        retry(3) {
+                //            sh "schutzbot/mockbuild.sh"
+                //        }
+                //        stash (
+                //            includes: 'osbuild-mock.repo',
+                //            name: 'rhel8cdn'
+                //        )
+                //    }
+                //}
+                //stage('EL8.3') {
+                //    agent { label "rhel83cloudbase && x86_64" }
+                //    environment {
+                //        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+                //    }
+                //    steps {
+                //        sh "schutzbot/ci_details.sh"
+                //        retry(3) {
+                //            sh "schutzbot/mockbuild.sh"
+                //        }
+                //        stash (
+                //            includes: 'osbuild-mock.repo',
+                //            name: 'rhel83'
+                //        )
+                //    }
+                //}
+            }
+        }
+
+        stage("Creating target images 🎯") {
+            agent { label "f32cloudbase && x86_64 && aws" }
+            environment {
+                AWS_CREDS = credentials('aws-credentials-osbuildci')
+            }
+            steps {
+                unstash 'fedora32'
+                unstash 'fedora32toml'
+                create_target_image()
+            }
+            post {
+                always {
+                    preserve_logs('fedora32-create-target-image')
                 }
             }
         }
 
-        stage("Testing 🍌") {
-            parallel {
-
-                stage('F31 Base') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-base')
-                        }
-                    }
-                }
-                stage('F31 Image') {
-                    agent { label "f31cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-image')
-                        }
-                    }
-                }
-                stage('F31 Integration') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('integration')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-integration')
-                        }
-                    }
-                }
-
-                stage('F32 Base') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-base')
-                        }
-                    }
-                }
-                stage('F32 Image') {
-                    agent { label "f32cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                    }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-image')
-                        }
-                    }
-                }
-                stage('F32 Integration') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        unstash 'fedora32'
-                        run_tests('integration')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-integration')
-                        }
-                    }
-                }
-
-                stage('EL8 Base') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "base"
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-base')
-                        }
-                    }
-                }
-                stage('EL8 Image') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                    }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-image')
-                        }
-                    }
-                }
-                stage('EL8 Integration') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        unstash 'rhel8cdn'
-                        run_tests('integration')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-integration')
-                        }
-                    }
-                }
-
-                stage('EL8.3 Base') {
-                    agent { label "rhel83cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "base"
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
-                    }
-                    steps {
-                        unstash 'rhel83'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-base')
-                        }
-                    }
-                }
-                stage('EL8.3 Image') {
-                    agent { label "rhel83cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                    }
-                    steps {
-                        unstash 'rhel83'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-image')
-                        }
-                    }
-                }
-                stage('EL8.3 Integration') {
-                    agent { label "rhel83cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
-                    }
-                    steps {
-                        unstash 'rhel83'
-                        run_tests('integration')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-integration')
-                        }
-                    }
+        stage("Run base test") {
+            agent { label "f32cloudbase && x86_64 && aws" }
+            environment {
+                AWS_CREDS = credentials('aws-credentials-osbuildci')
+            }
+            steps {
+                unstash 'fedora32'
+                sh (
+                    label: "Get environment variables",
+                    script: "env | sort"
+                )
+                sh (
+                    label: "Get CI machine details",
+                    script: "schutzbot/ci_details.sh"
+                )
+                sh (
+                    label: "Run target machine",
+                    script: "test/base-tests/run.sh"
+                )
+            }
+            post {
+                always {
+                    preserve_logs('fedora32-create-target-image')
                 }
             }
         }
+
+        //stage("Testing 🍌") {
+        //    parallel {
+        //
+        //        stage('F31 Base') {
+        //            agent { label "f31cloudbase && x86_64" }
+        //            environment { TEST_TYPE = "base" }
+        //            steps {
+        //                unstash 'fedora31'
+        //                run_tests('base')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora31-base')
+        //                }
+        //            }
+        //        }
+        //        stage('F31 Image') {
+        //            agent { label "f31cloudbase && psi && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "image"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                AZURE_CREDS = credentials('azure')
+        //                OPENSTACK_CREDS = credentials("psi-openstack-creds")
+        //                VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+        //            }
+        //            steps {
+        //                unstash 'fedora31'
+        //                run_tests('image')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora31-image')
+        //                }
+        //            }
+        //        }
+        //        stage('F31 Integration') {
+        //            agent { label "f31cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "integration"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //            }
+        //            steps {
+        //                unstash 'fedora31'
+        //                run_tests('integration')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora31-integration')
+        //                }
+        //            }
+        //        }
+        //
+        //        stage('F32 Base') {
+        //            agent { label "f32cloudbase && x86_64" }
+        //            environment { TEST_TYPE = "base" }
+        //            steps {
+        //                unstash 'fedora32'
+        //                run_tests('base')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora32-base')
+        //                }
+        //            }
+        //        }
+        //        stage('F32 Image') {
+        //            agent { label "f32cloudbase && psi && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "image"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                AZURE_CREDS = credentials('azure')
+        //                OPENSTACK_CREDS = credentials("psi-openstack-creds")
+        //                VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+        //            }
+        //            steps {
+        //                unstash 'fedora32'
+        //                run_tests('image')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora32-image')
+        //                }
+        //            }
+        //        }
+        //        stage('F32 Integration') {
+        //            agent { label "f32cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "integration"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //            }
+        //            steps {
+        //                unstash 'fedora32'
+        //                run_tests('integration')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('fedora32-integration')
+        //                }
+        //            }
+        //        }
+        //
+        //        stage('EL8 Base') {
+        //            agent { label "rhel8cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "base"
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+        //            }
+        //            steps {
+        //                unstash 'rhel8cdn'
+        //                run_tests('base')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel8-base')
+        //                }
+        //            }
+        //        }
+        //        stage('EL8 Image') {
+        //            agent { label "rhel8cloudbase && psi && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "image"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                AZURE_CREDS = credentials('azure')
+        //                OPENSTACK_CREDS = credentials("psi-openstack-creds")
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+        //                VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+        //            }
+        //            steps {
+        //                unstash 'rhel8cdn'
+        //                run_tests('image')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel8-image')
+        //                }
+        //            }
+        //        }
+        //        stage('EL8 Integration') {
+        //            agent { label "rhel8cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "integration"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+        //            }
+        //            steps {
+        //                unstash 'rhel8cdn'
+        //                run_tests('integration')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel8-integration')
+        //                }
+        //            }
+        //        }
+        //
+        //        stage('EL8.3 Base') {
+        //            agent { label "rhel83cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "base"
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+        //            }
+        //            steps {
+        //                unstash 'rhel83'
+        //                run_tests('base')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel83-base')
+        //                }
+        //            }
+        //        }
+        //        stage('EL8.3 Image') {
+        //            agent { label "rhel83cloudbase && psi && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "image"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                AZURE_CREDS = credentials('azure')
+        //                OPENSTACK_CREDS = credentials("psi-openstack-creds")
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+        //                VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+        //            }
+        //            steps {
+        //                unstash 'rhel83'
+        //                run_tests('image')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel83-image')
+        //                }
+        //            }
+        //        }
+        //        stage('EL8.3 Integration') {
+        //            agent { label "rhel83cloudbase && x86_64" }
+        //            environment {
+        //                TEST_TYPE = "integration"
+        //                AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+        //            }
+        //            steps {
+        //                unstash 'rhel83'
+        //                run_tests('integration')
+        //            }
+        //            post {
+        //                always {
+        //                    preserve_logs('rhel83-integration')
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
     }
 
     post {
@@ -342,6 +390,32 @@ pipeline {
         }
     }
 
+}
+
+// Run a script to create a target VM and upload it to AWS so that it
+// can be used in base tests
+void create_target_image() {
+    sh (
+        label: "Get environment variables",
+        script: "env | sort"
+    )
+
+    // Get CI machine details.
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
+
+    // Deploy the Image Builder packages and services.
+    sh (
+        label: "Deploy",
+        script: "schutzbot/deploy.sh"
+    )
+    
+    sh (
+        label: "Create target VM and upload it to AWS",
+        script: "test/base-tests/upload-to-aws.sh"
+    )
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
