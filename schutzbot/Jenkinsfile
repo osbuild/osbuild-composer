@@ -399,6 +399,12 @@ void run_tests(test_type) {
             label: "Integration test: AWS",
             script: "test/image-tests/aws.sh"
         )
+
+        // Run the ostree test.
+        sh (
+            label: "Integration test: OSTree",
+            script: "test/image-tests/ostree.sh"
+        )
     }
 
 }
