@@ -1,0 +1,21 @@
+name: CI
+
+# NOTE(mhayden): Restricting branches prevents jobs from being doubled since
+# a push to a pull request triggers two events.
+on:
+  pull_request_target:
+    branches:
+      - "*"
+  push:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: "⚙ Mock build"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check OS release
+        run: cat /etc/os-release
+        uses: fedora:32s
