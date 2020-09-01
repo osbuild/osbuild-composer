@@ -1,0 +1,41 @@
+name: "Less Jenkins, More GitHub"
+
+on:
+  - pull_request
+  # - push
+
+jobs:
+  mock_build:
+    name: "⚙ Mock build"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container:
+          - docker.io/library/fedora:31
+          - docker.io/library/fedora:32
+          - docker.io/library/fedora:33
+    container:
+      image: docker://${{ matrix.container }}
+    steps:
+
+      - name: Prepare for mock build
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y install createrepo_c git make mock python3-pip rpm-build
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild-composer
+          submodules: recursive
+
+      - name: Run mock
+        run: |
+          set -euxo pipefail
+          source /etc/os-release
+          MOCK_CONFIG=${ID}-${VERSION_ID%.*}-$(uname -m)
+          REPO_DIR=.
+          mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
+            rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
+
