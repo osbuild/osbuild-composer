@@ -23,10 +23,10 @@ type awsCredentials struct {
 	Bucket          string
 }
 
-// getAWSCredentialsFromEnv gets the credentials from environment variables
+// GetAWSCredentialsFromEnv gets the credentials from environment variables
 // If none of the environment variables is set, it returns nil.
 // If some but not all environment variables are set, it returns an error.
-func getAWSCredentialsFromEnv() (*awsCredentials, error) {
+func GetAWSCredentialsFromEnv() (*awsCredentials, error) {
 	accessKeyId, akExists := os.LookupEnv("AWS_ACCESS_KEY_ID")
 	secretAccessKey, sakExists := os.LookupEnv("AWS_SECRET_ACCESS_KEY")
 	region, regionExists := os.LookupEnv("AWS_REGION")
@@ -54,9 +54,9 @@ func encodeBase64(input string) string {
 	return base64.StdEncoding.EncodeToString([]byte(input))
 }
 
-// createUserData creates cloud-init's user-data that contains user redhat with
+// CreateUserData creates cloud-init's user-data that contains user redhat with
 // the specified public key
-func createUserData(publicKeyFile string) (string, error) {
+func CreateUserData(publicKeyFile string) (string, error) {
 	publicKey, err := ioutil.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", fmt.Errorf("cannot read the public key: %#v", err)
@@ -83,11 +83,11 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 	return fmt.Errorf(format, a...)
 }
 
-// uploadImageToAWS mimics the upload feature of osbuild-composer.
+// UploadImageToAWS mimics the upload feature of osbuild-composer.
 // It takes an image and an image name and creates an ec2 instance from them.
 // The s3 key is never returned - the same thing is done in osbuild-composer,
 // the user has no way of getting the s3 key.
-func uploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
+func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
 	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey)
 	if err != nil {
 		return fmt.Errorf("cannot create aws uploader: %#v", err)
@@ -105,8 +105,8 @@ func uploadImageToAWS(c *awsCredentials, imagePath string, imageName string) err
 	return nil
 }
 
-// newEC2 creates EC2 struct from given credentials
-func newEC2(c *awsCredentials) (*ec2.EC2, error) {
+// NewEC2 creates EC2 struct from given credentials
+func NewEC2(c *awsCredentials) (*ec2.EC2, error) {
 	creds := credentials.NewStaticCredentials(c.AccessKeyId, c.SecretAccessKey, "")
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: creds,
@@ -126,9 +126,9 @@ type imageDescription struct {
 	// because this feature is not supported in composer
 }
 
-// describeEC2Image searches for EC2 image by its name and returns
+// DescribeEC2Image searches for EC2 image by its name and returns
 // its id and snapshot id
-func describeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
+func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	imageDescriptions, err := e.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -151,8 +151,8 @@ func describeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	}, nil
 }
 
-// deleteEC2Image deletes the specified image and its associated snapshot
-func deleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
+// DeleteEC2Image deletes the specified image and its associated snapshot
+func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	var retErr error
 
 	// firstly, deregister the image
@@ -176,11 +176,11 @@ func deleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	return retErr
 }
 
-// withBootedImageInEC2 runs the function f in the context of booted
+// WithBootedImageInEC2 runs the function f in the context of booted
 // image in AWS EC2
-func withBootedImageInEC2(e *ec2.EC2, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
+func WithBootedImageInEC2(e *ec2.EC2, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
 	// generate user data with given public key
-	userData, err := createUserData(publicKey)
+	userData, err := CreateUserData(publicKey)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func withBootedImageInEC2(e *ec2.EC2, imageDesc *imageDescription, publicKey str
 	// Security group must be now generated, because by default
 	// all traffic to EC2 instance is filtered.
 
-	securityGroupName, err := generateRandomString("osbuild-image-tests-security-group-")
+	securityGroupName, err := GenerateRandomString("osbuild-image-tests-security-group-")
 	if err != nil {
 		return fmt.Errorf("cannot generate a random name for the image: %#v", err)
 	}

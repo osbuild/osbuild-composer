@@ -19,9 +19,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
-// withNetworkNamespace provides the function f with a new network namespace
+// WithNetworkNamespace provides the function f with a new network namespace
 // which is deleted immediately after f returns
-func withNetworkNamespace(f func(ns netNS) error) error {
+func WithNetworkNamespace(f func(ns NetNS) error) error {
 	ns, err := newNetworkNamespace()
 	if err != nil {
 		return err
@@ -95,9 +95,9 @@ func writeCloudInitISO(writer io.Writer, userData, metaData string) error {
 	return nil
 }
 
-// withBootedQemuImage boots the specified image in the specified namespace
+// WithBootedQemuImage boots the specified image in the specified namespace
 // using qemu. The VM is killed immediately after function returns.
-func withBootedQemuImage(image string, ns netNS, f func() error) error {
+func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 	return withTempFile("", "osbuild-image-tests-cloudinit", func(cloudInitFile *os.File) error {
 		err := writeCloudInitISO(
 			cloudInitFile,
@@ -177,9 +177,9 @@ func withBootedQemuImage(image string, ns netNS, f func() error) error {
 	})
 }
 
-// withBootedNspawnImage boots the specified image in the specified namespace
+// WithBootedNspawnImage boots the specified image in the specified namespace
 // using nspawn. The VM is killed immediately after function returns.
-func withBootedNspawnImage(image string, ns netNS, f func() error) error {
+func WithBootedNspawnImage(image string, ns NetNS, f func() error) error {
 	cmd := exec.Command(
 		"systemd-nspawn",
 		"--boot", "--register=no",
@@ -202,9 +202,9 @@ func withBootedNspawnImage(image string, ns netNS, f func() error) error {
 	return f()
 }
 
-// withBootedNspawnImage boots the specified directory in the specified namespace
+// WithBootedNspawnImage boots the specified directory in the specified namespace
 // using nspawn. The VM is killed immediately after function returns.
-func withBootedNspawnDirectory(dir string, ns netNS, f func() error) error {
+func WithBootedNspawnDirectory(dir string, ns NetNS, f func() error) error {
 	cmd := exec.Command(
 		"systemd-nspawn",
 		"--boot", "--register=no",
@@ -227,10 +227,10 @@ func withBootedNspawnDirectory(dir string, ns netNS, f func() error) error {
 	return f()
 }
 
-// withExtractedTarArchive extracts the provided archive and passes
+// WithExtractedTarArchive extracts the provided archive and passes
 // a path to the result to the function f. The result is deleted
 // immediately after the function returns.
-func withExtractedTarArchive(archive string, f func(dir string) error) error {
+func WithExtractedTarArchive(archive string, f func(dir string) error) error {
 	return withTempDir("", "tar-archive", func(dir string) error {
 		cmd := exec.Command(
 			"tar",
@@ -249,10 +249,10 @@ func withExtractedTarArchive(archive string, f func(dir string) error) error {
 	})
 }
 
-// withSSHKeyPair runs the function f with a newly generated
+// WithSSHKeyPair runs the function f with a newly generated
 // ssh key-pair, they key-pair is deleted immediately after
 // the function f returns
-func withSSHKeyPair(f func(privateKey, publicKey string) error) error {
+func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
 	return withTempDir("", "keys", func(dir string) error {
 		privateKey := dir + "/id_rsa"
 		publicKey := dir + "/id_rsa.pub"

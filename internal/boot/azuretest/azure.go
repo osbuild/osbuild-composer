@@ -156,7 +156,7 @@ func deleteResource(client resources.Client, id string, apiVersion string) error
 	return nil
 }
 
-// withBootedImageInAzure runs the function f in the context of booted
+// WithBootedImageInAzure runs the function f in the context of booted
 // image in Azure
 func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKeyFile string, f func(address string) error) (retErr error) {
 	publicKey, err := readPublicKey(publicKeyFile)
