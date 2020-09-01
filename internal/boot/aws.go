@@ -1,6 +1,6 @@
 // +build integration
 
-package main
+package boot
 
 import (
 	"encoding/base64"
