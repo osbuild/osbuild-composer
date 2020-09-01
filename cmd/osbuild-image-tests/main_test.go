@@ -23,10 +23,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/azuretest"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
-	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/openstacktest"
-	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/vmwaretest"
+	"github.com/osbuild/osbuild-composer/internal/boot/azuretest"
+	"github.com/osbuild/osbuild-composer/internal/boot/openstacktest"
+	"github.com/osbuild/osbuild-composer/internal/boot/vmwaretest"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 )
@@ -337,7 +337,7 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 	creds, err := vmwaretest.AuthOptionsFromEnv()
 
 	// if no credentials are given, fall back to qemu
-	if (creds == nil) {
+	if creds == nil {
 		log.Print("No vCenter credentials given, falling back to booting using qemu")
 		log.Printf("Error=%v", err)
 		testBootUsingQemu(t, imagePath)
