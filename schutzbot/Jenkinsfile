@@ -209,7 +209,18 @@ pipeline {
                         }
                     }
                 }
-
+                stage('F32 OSTree') {
+                    agent { label "f32cloudbase && psi && x86_64" }
+                    steps {
+                        unstash 'fedora32'
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-ostree')
+                        }
+                    }
+                }
                 stage('EL8 Base') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
@@ -317,6 +328,18 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8.3 OSTree') {
+                    agent { label "rhel83cloudbase && psi && x86_64" }
+                    steps {
+                        unstash 'rhel83'
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel83-ostree')
+                        }
+                    }
+                }
             }
         }
     }
@@ -372,6 +395,13 @@ void run_tests(test_type) {
         sh (
             label: "Image tests",
             script: "schutzbot/run_image_tests.sh"
+        )
+    }
+
+    if (test_type == 'ostree') {
+        sh (
+            label: "OSTree tests",
+            script: "test/image-tests/ostree.sh"
         )
     }
 
