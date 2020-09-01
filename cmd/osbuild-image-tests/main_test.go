@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
+	"github.com/osbuild/osbuild-composer/internal/boot"
 	"github.com/osbuild/osbuild-composer/internal/boot/azuretest"
 	"github.com/osbuild/osbuild-composer/internal/boot/openstacktest"
 	"github.com/osbuild/osbuild-composer/internal/boot/vmwaretest"
@@ -102,7 +103,7 @@ func (*timeoutError) Error() string { return "" }
 // that 10 seconds or if systemd-is-running returns starting.
 // It returns nil if systemd-is-running returns running or degraded.
 // It can also return other errors in other error cases.
-func trySSHOnce(address string, privateKey string, ns *netNS) error {
+func trySSHOnce(address string, privateKey string, ns *boot.NetNS) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -157,7 +158,7 @@ func trySSHOnce(address string, privateKey string, ns *netNS) error {
 // testSSH tests the running image using ssh.
 // It tries 20 attempts before giving up. If a major error occurs, it might
 // return earlier.
-func testSSH(t *testing.T, address string, privateKey string, ns *netNS) {
+func testSSH(t *testing.T, address string, privateKey string, ns *boot.NetNS) {
 	const attempts = 20
 	for i := 0; i < attempts; i++ {
 		err := trySSHOnce(address, privateKey, ns)
@@ -181,8 +182,8 @@ func testBootUsingQemu(t *testing.T, imagePath string) {
 	if *disableLocalBoot {
 		t.Skip("local booting was disabled by -disable-local-boot, skipping")
 	}
-	err := withNetworkNamespace(func(ns netNS) error {
-		return withBootedQemuImage(imagePath, ns, func() error {
+	err := boot.WithNetworkNamespace(func(ns boot.NetNS) error {
+		return boot.WithBootedQemuImage(imagePath, ns, func() error {
 			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 			return nil
 		})
@@ -191,8 +192,8 @@ func testBootUsingQemu(t *testing.T, imagePath string) {
 }
 
 func testBootUsingNspawnImage(t *testing.T, imagePath string) {
-	err := withNetworkNamespace(func(ns netNS) error {
-		return withBootedNspawnImage(imagePath, ns, func() error {
+	err := boot.WithNetworkNamespace(func(ns boot.NetNS) error {
+		return boot.WithBootedNspawnImage(imagePath, ns, func() error {
 			testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 			return nil
 		})
@@ -201,9 +202,9 @@ func testBootUsingNspawnImage(t *testing.T, imagePath string) {
 }
 
 func testBootUsingNspawnDirectory(t *testing.T, imagePath string) {
-	err := withNetworkNamespace(func(ns netNS) error {
-		return withExtractedTarArchive(imagePath, func(dir string) error {
-			return withBootedNspawnDirectory(dir, ns, func() error {
+	err := boot.WithNetworkNamespace(func(ns boot.NetNS) error {
+		return boot.WithExtractedTarArchive(imagePath, func(dir string) error {
+			return boot.WithBootedNspawnDirectory(dir, ns, func() error {
 				testSSH(t, "localhost", constants.TestPaths.PrivateKey, &ns)
 				return nil
 			})
@@ -213,7 +214,7 @@ func testBootUsingNspawnDirectory(t *testing.T, imagePath string) {
 }
 
 func testBootUsingAWS(t *testing.T, imagePath string) {
-	creds, err := getAWSCredentialsFromEnv()
+	creds, err := boot.GetAWSCredentialsFromEnv()
 	require.NoError(t, err)
 
 	// if no credentials are given, fall back to qemu
@@ -224,28 +225,28 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 
 	}
 
-	imageName, err := generateRandomString("osbuild-image-tests-image-")
+	imageName, err := boot.GenerateRandomString("osbuild-image-tests-image-")
 	require.NoError(t, err)
 
-	e, err := newEC2(creds)
+	e, err := boot.NewEC2(creds)
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point
-	err = uploadImageToAWS(creds, imagePath, imageName)
+	err = boot.UploadImageToAWS(creds, imagePath, imageName)
 	require.NoErrorf(t, err, "upload to amazon failed, resources could have been leaked")
 
-	imageDesc, err := describeEC2Image(e, imageName)
+	imageDesc, err := boot.DescribeEC2Image(e, imageName)
 	require.NoErrorf(t, err, "cannot describe the ec2 image")
 
 	// delete the image after the test is over
 	defer func() {
-		err = deleteEC2Image(e, imageDesc)
+		err = boot.DeleteEC2Image(e, imageDesc)
 		require.NoErrorf(t, err, "cannot delete the ec2 image, resources could have been leaked")
 	}()
 
 	// boot the uploaded image and try to connect to it
-	err = withSSHKeyPair(func(privateKey, publicKey string) error {
-		return withBootedImageInEC2(e, imageDesc, publicKey, func(address string) error {
+	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
+		return boot.WithBootedImageInEC2(e, imageDesc, publicKey, func(address string) error {
 			testSSH(t, address, privateKey, nil)
 			return nil
 		})
@@ -265,7 +266,7 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 	}
 
 	// create a random test id to name all the resources used in this test
-	testId, err := generateRandomString("")
+	testId, err := boot.GenerateRandomString("")
 	require.NoError(t, err)
 
 	imageName := "image-" + testId + ".vhd"
@@ -281,7 +282,7 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 	}()
 
 	// boot the uploaded image and try to connect to it
-	err = withSSHKeyPair(func(privateKey, publicKey string) error {
+	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
 		return azuretest.WithBootedImageInAzure(creds, imageName, testId, publicKey, func(address string) error {
 			testSSH(t, address, privateKey, nil)
 			return nil
@@ -306,7 +307,7 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 
 	// create a random test id to name all the resources used in this test
-	imageName, err := generateRandomString("osbuild-image-tests-openstack-image-")
+	imageName, err := boot.GenerateRandomString("osbuild-image-tests-openstack-image-")
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point
@@ -321,8 +322,8 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	}()
 
 	// boot the uploaded image and try to connect to it
-	err = withSSHKeyPair(func(privateKey, publicKey string) error {
-		userData, err := createUserData(publicKey)
+	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
+		userData, err := boot.CreateUserData(publicKey)
 		require.NoErrorf(t, err, "Creating user data failed: %v", err)
 
 		return openstacktest.WithBootedImageInOpenStack(provider, image.ID, userData, func(address string) error {
@@ -356,7 +357,7 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 	defer os.Remove(imagePath)
 
 	// create a random test id to name all the resources used in this test
-	imageName, err := generateRandomString("osbuild-image-tests-vmware-image-")
+	imageName, err := boot.GenerateRandomString("osbuild-image-tests-vmware-image-")
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point

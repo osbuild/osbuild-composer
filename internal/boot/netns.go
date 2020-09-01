@@ -19,12 +19,12 @@ import (
 const netnsDir = "/var/run/netns"
 
 // Network namespace abstraction
-type netNS string
+type NetNS string
 
 // newNetworkNamespace returns a new network namespace with a random
 // name. The calling goroutine remains in the same namespace
 // as before the call.
-func newNetworkNamespace() (netNS, error) {
+func newNetworkNamespace() (NetNS, error) {
 	// This method needs to unshare the current thread. Go runtime can switch
 	// the goroutine to run on a different thread at any point, so we need
 	// to ensure that this method runs in the same thread for its whole
@@ -99,7 +99,7 @@ func newNetworkNamespace() (netNS, error) {
 		return "", fmt.Errorf("cannot bind mount the new namespace: %#v", err)
 	}
 
-	ns := netNS(path.Base(f.Name()))
+	ns := NetNS(path.Base(f.Name()))
 
 	// Initialization OK, do not delete the namespace file.
 	initOK = true
@@ -109,7 +109,7 @@ func newNetworkNamespace() (netNS, error) {
 // NamespaceCommand returns an *exec.Cmd struct with the difference
 // that it's prepended by "ip netns exec NAMESPACE_NAME" command, which
 // runs the command in a namespaced environment.
-func (n netNS) NamespacedCommand(name string, arg ...string) *exec.Cmd {
+func (n NetNS) NamespacedCommand(name string, arg ...string) *exec.Cmd {
 	args := []string{"netns", "exec", string(n), name}
 	args = append(args, arg...)
 	return exec.Command("ip", args...)
@@ -118,19 +118,19 @@ func (n netNS) NamespacedCommand(name string, arg ...string) *exec.Cmd {
 // NamespaceCommand returns an *exec.Cmd struct with the difference
 // that it's prepended by "ip netns exec NAMESPACE_NAME" command, which
 // runs the command in a namespaced environment.
-func (n netNS) NamespacedCommandContext(ctx context.Context, name string, arg ...string) *exec.Cmd {
+func (n NetNS) NamespacedCommandContext(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	args := []string{"netns", "exec", string(n), name}
 	args = append(args, arg...)
 	return exec.CommandContext(ctx, "ip", args...)
 }
 
 // Path returns the path to the namespace file
-func (n netNS) Path() string {
+func (n NetNS) Path() string {
 	return path.Join(netnsDir, string(n))
 }
 
 // Delete deletes the namespaces
-func (n netNS) Delete() error {
+func (n NetNS) Delete() error {
 	cmd := exec.Command("umount", n.Path())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
