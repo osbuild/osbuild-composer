@@ -70,6 +70,10 @@ pipeline {
                             includes: 'osbuild-mock.repo',
                             name: 'fedora32'
                         )
+			stash (
+                            includes: 'osbuild-mock.toml',
+                            name: 'fedora32toml'
+                        )
                     }
                 }
                 stage('EL8') {
@@ -105,6 +109,23 @@ pipeline {
                             name: 'rhel83'
                         )
                     }
+                }
+            }
+        }
+
+        stage("Creating target images 🎯") {
+            agent { label "f32cloudbase && x86_64 && aws" }
+            environment {
+                AWS_CREDS = credentials('aws-credentials-osbuildci')
+            }
+            steps {
+                unstash 'fedora32'
+                unstash 'fedora32toml'
+                create_target_image()
+            }
+            post {
+                always {
+                    preserve_logs('fedora32-create-target-image')
                 }
             }
         }
@@ -172,6 +193,32 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora32-base')
+                        }
+                    }
+                }
+                stage("F32 Base with target VM") {
+                    agent { label "f32cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'fedora32'
+                        sh (
+                            label: "Get environment variables",
+                            script: "env | sort"
+                        )
+                        sh (
+                            label: "Get CI machine details",
+                            script: "schutzbot/ci_details.sh"
+                        )
+                        sh (
+                            label: "Run target machine",
+                            script: "test/base-tests/run.sh"
+                        )
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-create-target-image')
                         }
                     }
                 }
@@ -492,6 +539,7 @@ pipeline {
             }
         }
     }
+}
 
 //TODO: send messages via Email too
 // TODO: how do we make the contents of COMPOSE_ID available as env.COMPOSE_ID
@@ -511,6 +559,31 @@ pipeline {
             }
         }
     }
+
+// Run a script to create a target VM and upload it to AWS so that it
+// can be used in base tests
+void create_target_image() {
+    sh (
+        label: "Get environment variables",
+        script: "env | sort"
+    )
+
+    // Get CI machine details.
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
+
+    // Deploy the Image Builder packages and services.
+    sh (
+        label: "Deploy",
+        script: "schutzbot/deploy.sh"
+    )
+
+    sh (
+        label: "Create target VM and upload it to AWS",
+        script: "test/base-tests/upload-to-aws.sh"
+    )
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
