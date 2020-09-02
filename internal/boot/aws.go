@@ -151,23 +151,35 @@ func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	}, nil
 }
 
+func DeregisterEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
+	_, err := e.DeregisterImage(&ec2.DeregisterImageInput{
+		ImageId: imageDesc.Id,
+	})
+
+	return err
+}
+
+func DeleteEC2Snapshot(e *ec2.EC2, imageDesc *imageDescription) error {
+	_, err := e.DeleteSnapshot(&ec2.DeleteSnapshotInput{
+		SnapshotId: imageDesc.SnapshotId,
+	})
+
+	return err
+}
+
 // DeleteEC2Image deletes the specified image and its associated snapshot
 func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	var retErr error
 
 	// firstly, deregister the image
-	_, err := e.DeregisterImage(&ec2.DeregisterImageInput{
-		ImageId: imageDesc.Id,
-	})
+	err := DeregisterEC2Image(e, imageDesc)
 
 	if err != nil {
 		retErr = wrapErrorf(retErr, "cannot deregister the image: %#v", err)
 	}
 
 	// now it's possible to delete the snapshot
-	_, err = e.DeleteSnapshot(&ec2.DeleteSnapshotInput{
-		SnapshotId: imageDesc.SnapshotId,
-	})
+	err = DeleteEC2Snapshot(e, imageDesc)
 
 	if err != nil {
 		retErr = wrapErrorf(retErr, "cannot delete the snapshot: %#v", err)
