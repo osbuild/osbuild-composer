@@ -114,6 +114,34 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 	return w.WaitWithContext(ctx)
 }
 
+// RegisterEC2Snapshot registers a snapshot specified by the snapshotId as an image with the imageName
+func RegisterEC2Snapshot(e *ec2.EC2, snapshotID *string, imageName string) (*string, error) {
+	log.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
+	registerOutput, err := e.RegisterImage(
+		&ec2.RegisterImageInput{
+			Architecture:       aws.String("x86_64"),
+			VirtualizationType: aws.String("hvm"),
+			Name:               aws.String(imageName),
+			RootDeviceName:     aws.String("/dev/sda1"),
+			EnaSupport:         aws.Bool(true),
+			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+				{
+					DeviceName: aws.String("/dev/sda1"),
+					Ebs: &ec2.EbsBlockDevice{
+						SnapshotId: snapshotID,
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
+	return registerOutput.ImageId, nil
+}
+
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
@@ -188,28 +216,5 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	log.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
-	registerOutput, err := a.importer.RegisterImage(
-		&ec2.RegisterImageInput{
-			Architecture:       aws.String("x86_64"),
-			VirtualizationType: aws.String("hvm"),
-			Name:               aws.String(name),
-			RootDeviceName:     aws.String("/dev/sda1"),
-			EnaSupport:         aws.Bool(true),
-			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-				{
-					DeviceName: aws.String("/dev/sda1"),
-					Ebs: &ec2.EbsBlockDevice{
-						SnapshotId: snapshotID,
-					},
-				},
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
-	return registerOutput.ImageId, nil
+	return RegisterEC2Snapshot(a.importer, snapshotID, name)
 }
