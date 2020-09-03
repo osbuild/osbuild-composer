@@ -167,6 +167,9 @@ func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot describe the image: %#v", err)
 	}
+	if len(imageDescriptions.Images) == 0 {
+		return nil, fmt.Errorf("no images found")
+	}
 	imageId := imageDescriptions.Images[0].ImageId
 	snapshotId := imageDescriptions.Images[0].BlockDeviceMappings[0].Ebs.SnapshotId
 
