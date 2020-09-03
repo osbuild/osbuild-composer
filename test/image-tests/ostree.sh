@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
 
 # Get OS data.
 source /etc/os-release
@@ -18,6 +18,9 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora32"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "rhel-8.3")
+        # Override old rhel-8-beta.json because test needs latest systemd and redhat-release
+        sudo cp $(dirname $0)/rhel-8-beta.json /etc/osbuild-composer/repositories/
+        sudo systemctl restart osbuild-composer.socket
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
@@ -157,11 +160,9 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     if [[ $blueprint_name == upgrade ]]; then
-        if [[ "${ID}-${VERSION_ID}" == rhel-8.3 ]]; then
-            sudo composer-cli --json compose start-ostree --ref $OSTREE_REF --parent $COMMIT_HASH $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
-        else
-            sudo composer-cli --json compose start-ostree $blueprint_name $IMAGE_TYPE $OSTREE_REF $COMMIT_HASH | tee $COMPOSE_START
-        fi
+        # Leave new version composer-cli here in case it got updated.
+        # sudo composer-cli --json compose start-ostree --ref $OSTREE_REF --parent $COMMIT_HASH $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
+        sudo composer-cli --json compose start-ostree $blueprint_name $IMAGE_TYPE $OSTREE_REF $COMMIT_HASH | tee $COMPOSE_START
     else
         sudo composer-cli --json compose start $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
     fi
