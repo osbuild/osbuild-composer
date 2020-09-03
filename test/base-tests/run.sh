@@ -70,7 +70,44 @@ ls -l /usr/libexec/tests/osbuild-composer
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
+PASSED_TESTS=()
+FAILED_TESTS=()
+
+# Print out a nice test divider so we know when tests stop and start.
+test_divider () {
+    printf "%0.s-" {1..78} && echo
+}
+
+run_test_case () {
+    test_divider
+    echo "🏃🏻 Running test: $1"
+    # In case the socket exists, remove it
+    sudo rm -f /run/weldr/api.socket
+    if sudo --preserve-env $TEST_RUNNER $1; then
+        PASSED_TESTS+=$1
+    else
+        FAILED_TESTS+=$1
+    fi
+    test_divider
+    echo
+}
+
 # Run
-sudo --preserve-env $TEST_RUNNER /usr/libexec/tests/osbuild-composer/osbuild-weldr-tests
-sudo --preserve-env $TEST_RUNNER /usr/libexec/tests/osbuild-composer/osbuild-tests
+run_test_case /usr/libexec/tests/osbuild-composer/osbuild-weldr-tests
+run_test_case /usr/libexec/tests/osbuild-composer/osbuild-tests
 sudo --preserve-env $TEST_RUNNER -cleanup
+
+# Print a report of the test results.
+test_divider
+echo "😃 Passed tests: ${PASSED_TESTS[@]}"
+echo "☹ Failed tests: ${FAILED_TESTS[@]}"
+test_divider
+
+# Exit with a failure if any tests failed.
+if [ ${#FAILED_TESTS[@]} -eq 0 ]; then
+    echo "🎉 All tests passed."
+    exit 0
+else
+    echo "🔥 One or more tests failed."
+    exit 1
+fi
