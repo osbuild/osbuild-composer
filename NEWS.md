@@ -1,5 +1,13 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 20.1:
+
+  * RHEL for Edge gained greenboot support
+
+Contributions from: Peter Robinson, Tom Gundersen
+
+— London, 2020-09-03
+
 ## CHANGES WITH 20:
 
   * VMDK images are now stream optimized to be compatible with vCenter by
