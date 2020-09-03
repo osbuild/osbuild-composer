@@ -8,6 +8,7 @@ CPUS=$(nproc)
 MEM=$(free -m | grep -oP '\d+' | head -n 1)
 DISK=$(df --output=size -h / | sed '1d;s/[^0-9]//g')
 HOSTNAME=$(uname -n)
+USER=$(whoami)
 ARCH=$(uname -m)
 KERNEL=$(uname -r)
 
@@ -18,6 +19,7 @@ CI MACHINE SPECS
 ------------------------------------------------------------------------------
 
      Hostname: ${HOSTNAME}
+         User: ${USER}
    Primary IP: ${PRIMARY_IP}
   External IP: ${EXTERNAL_IP}
   Reverse DNS: ${PTR}
