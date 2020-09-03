@@ -126,6 +126,31 @@ type imageDescription struct {
 	// because this feature is not supported in composer
 }
 
+func DescribeEC2Snapshot(e *ec2.EC2, snapshotName string) (*string, error) {
+	input := &ec2.DescribeSnapshotsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String("tag:Name"),
+				Values: []*string{
+					aws.String(snapshotName),
+				},
+			},
+		},
+	}
+
+	result, err := e.DescribeSnapshots(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result.Snapshots) != 1 {
+		return nil, fmt.Errorf("The list of snapshots does not contain exactly one element! This must not happen, check what is going on in AWS and fix it!")
+	}
+
+	snapshotId := result.Snapshots[0].SnapshotId
+	return snapshotId, nil
+}
+
 // DescribeEC2Image searches for EC2 image by its name and returns
 // its id and snapshot id
 func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
