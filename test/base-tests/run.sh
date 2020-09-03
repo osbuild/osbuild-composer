@@ -72,3 +72,5 @@ cd $WORKING_DIRECTORY
 
 # Run
 sudo --preserve-env $TEST_RUNNER /usr/libexec/tests/osbuild-composer/osbuild-weldr-tests
+sudo --preserve-env $TEST_RUNNER /usr/libexec/tests/osbuild-composer/osbuild-tests
+sudo --preserve-env $TEST_RUNNER -cleanup
