@@ -46,6 +46,7 @@ type testcaseStruct struct {
 }
 
 var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is given, no images are booted locally using qemu (this does not affect testing in clouds)")
+var failLocalBoot = flag.Bool("fail-local-boot", true, "when this flag is on (default), local boot will fail. Usually indicates missing cloud credentials")
 
 // GenerateCIArtifactName generates a new identifier for CI artifacts which is based
 // on environment variables specified by Jenkins
@@ -193,6 +194,15 @@ func testSSH(t *testing.T, address string, privateKey string, ns *boot.NetNS) {
 }
 
 func testBootUsingQemu(t *testing.T, imagePath string) {
+	if *failLocalBoot {
+		t.Fatal("-fail-local-boot specified. Check missing cloud credentials!")
+	}
+
+	bootWithQemu(t, imagePath)
+}
+
+// will not fail even if -fail-local-boot is specified
+func bootWithQemu(t *testing.T, imagePath string) {
 	if *disableLocalBoot {
 		t.Skip("local booting was disabled by -disable-local-boot, skipping")
 	}
@@ -404,7 +414,7 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 func testBoot(t *testing.T, imagePath string, bootType string) {
 	switch bootType {
 	case "qemu":
-		testBootUsingQemu(t, imagePath)
+		bootWithQemu(t, imagePath)
 
 	case "nspawn":
 		testBootUsingNspawnImage(t, imagePath)
