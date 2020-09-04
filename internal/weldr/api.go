@@ -599,6 +599,8 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 			err = errors_package.New("'name' field is missing from request")
 		} else if len(source.GetType()) == 0 {
 			err = errors_package.New("'type' field is missing from request")
+		} else if len(source.SourceConfig().URL) == 0 {
+			err = errors_package.New("'url' field is missing from request")
 		}
 	}
 
