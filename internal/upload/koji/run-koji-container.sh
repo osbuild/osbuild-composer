@@ -89,7 +89,10 @@ koji_start() {
     quay.io/osbuild/koji:v1
 
   # TODO: we need to wait for the database to be initialized here. A better method should be used.
-  sleep 2
+  sleep 10
+
+  ${CONTAINER_RUNTIME} logs org.osbuild.koji.postgres
+  ${CONTAINER_RUNTIME} logs org.osbuild.koji.koji
 
   # create koji users
   # kojiadmin/kojipass    - admin

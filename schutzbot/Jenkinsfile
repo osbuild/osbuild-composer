@@ -548,6 +548,12 @@ void run_tests(test_type) {
     }
 
     if (test_type == 'integration') {
+        // Run Koji tests.
+        sh (
+            label: "Koji tests",
+            script: "test/image-tests/koji.sh"
+        )
+
         // Run the qcow2 test.
         sh (
             label: "Integration test: QCOW2",

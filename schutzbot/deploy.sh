@@ -55,7 +55,7 @@ sudo dnf repository-packages osbuild-mock list
 
 # Install the Image Builder packages.
 # Note: installing only -tests to catch missing dependencies
-retry sudo dnf -y install osbuild-composer-tests
+retry sudo dnf -y install osbuild-composer-tests make
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
@@ -69,8 +69,13 @@ if [[ -f "rhel-8-beta.json" ]]; then
     sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
 fi
 
+# Generate SSL certificates
+sudo make composer-key-pair
+sudo make worker-key-pair
+
 # Start services.
 sudo systemctl enable --now osbuild-composer.socket
+sudo systemctl enable --now osbuild-composer-koji.socket
 
 # Verify that the API is running.
 sudo composer-cli status show
