@@ -232,6 +232,7 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %package tests
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
+Requires:   %{name}-koji = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
