@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 
@@ -20,9 +21,8 @@ import (
 )
 
 type Client struct {
-	client   *http.Client
-	scheme   string
-	hostname string
+	client *http.Client
+	server *url.URL
 }
 
 type Job struct {
@@ -31,22 +31,19 @@ type Job struct {
 	Targets  []*target.Target
 }
 
-func NewClient(address string, conf *tls.Config) *Client {
+func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: conf,
 		},
 	}
 
-	var scheme string
-	// Use https if the TLS configuration is present, otherwise use http.
-	if conf != nil {
-		scheme = "https"
-	} else {
-		scheme = "http"
+	server, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Client{client, scheme, address}
+	return &Client{client, server}, nil
 }
 
 func NewClientUnix(path string) *Client {
@@ -58,7 +55,12 @@ func NewClientUnix(path string) *Client {
 		},
 	}
 
-	return &Client{client, "http", "localhost"}
+	server, err := url.Parse("http://localhost")
+	if err != nil {
+		panic(err)
+	}
+
+	return &Client{client, server}
 }
 
 func (c *Client) AddJob() (*Job, error) {
@@ -147,5 +149,11 @@ func (c *Client) UploadImage(job uuid.UUID, name string, reader io.Reader) error
 }
 
 func (c *Client) createURL(path string) string {
-	return c.scheme + "://" + c.hostname + path
+	u, err := c.server.Parse(path)
+	if err != nil {
+		// panic here, because `path` is always a literal string
+		panic(err)
+	}
+
+	return u.String()
 }

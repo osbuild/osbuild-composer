@@ -230,7 +230,10 @@ func main() {
 			log.Fatalf("Error creating TLS config: %v", err)
 		}
 
-		client = worker.NewClient(address, conf)
+		client, err = worker.NewClient("https://"+address, conf)
+		if err != nil {
+			log.Fatalf("Error creating worker client: %v", err)
+		}
 	}
 
 	for {
