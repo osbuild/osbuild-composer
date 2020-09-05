@@ -13,18 +13,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
+	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
 type Server struct {
-	logger       *log.Logger
 	jobs         jobqueue.JobQueue
-	router       *httprouter.Router
+	echo         *echo.Echo
 	artifactsDir string
 }
 
@@ -39,33 +39,23 @@ type JobStatus struct {
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
 	s := &Server{
-		logger:       logger,
 		jobs:         jobs,
 		artifactsDir: artifactsDir,
 	}
 
-	s.router = httprouter.New()
-	s.router.RedirectTrailingSlash = false
-	s.router.RedirectFixedPath = false
-	s.router.MethodNotAllowed = http.HandlerFunc(methodNotAllowedHandler)
-	s.router.NotFound = http.HandlerFunc(notFoundHandler)
+	s.echo = echo.New()
+	s.echo.Binder = binder{}
+	s.echo.StdLogger = logger
 
-	// Add a basic status handler for checking if osbuild-composer is alive.
-	s.router.GET("/status", s.statusHandler)
-
-	// Add handlers for managing jobs.
-	s.router.POST("/job-queue/v1/jobs", s.addJobHandler)
-	s.router.GET("/job-queue/v1/jobs/:job_id", s.jobHandler)
-	s.router.PATCH("/job-queue/v1/jobs/:job_id", s.updateJobHandler)
-	s.router.POST("/job-queue/v1/jobs/:job_id/artifacts/:name", s.addJobImageHandler)
+	api.RegisterHandlers(s.echo, &apiHandlers{s})
 
 	return s
 }
 
 func (s *Server) Serve(listener net.Listener) error {
-	server := http.Server{Handler: s}
+	s.echo.Listener = listener
 
-	err := server.Serve(listener)
+	err := s.echo.Start("")
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -74,12 +64,7 @@ func (s *Server) Serve(listener net.Listener) error {
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if s.logger != nil {
-		log.Println(request.Method, request.URL.Path)
-	}
-
-	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-	s.router.ServeHTTP(writer, request)
+	s.echo.ServeHTTP(writer, request)
 }
 
 func (s *Server) Enqueue(manifest distro.Manifest, targets []*target.Target) (uuid.UUID, error) {
@@ -166,168 +151,146 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-// jsonErrorf() is similar to http.Error(), but returns the message in a json
-// object with a "message" field.
-func jsonErrorf(writer http.ResponseWriter, code int, message string, args ...interface{}) {
-	writer.WriteHeader(code)
-
-	// ignore error, because we cannot do anything useful with it
-	_ = json.NewEncoder(writer).Encode(&errorResponse{
-		Message: fmt.Sprintf(message, args...),
-	})
+// apiHandlers implements api.ServerInterface - the http api route handlers
+// generated from api/openapi.yml. This is a separate object, because these
+// handlers should not be exposed on the `Server` object.
+type apiHandlers struct {
+	server *Server
 }
 
-func methodNotAllowedHandler(writer http.ResponseWriter, request *http.Request) {
-	jsonErrorf(writer, http.StatusMethodNotAllowed, "method not allowed")
-}
-
-func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
-	jsonErrorf(writer, http.StatusNotFound, "not found")
-}
-
-func (s *Server) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	writer.WriteHeader(http.StatusOK)
-
-	// Send back a status message.
-	_ = json.NewEncoder(writer).Encode(&statusResponse{
+func (h *apiHandlers) GetStatus(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, &statusResponse{
 		Status: "OK",
 	})
 }
 
-func (s *Server) jobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	id, err := uuid.Parse(params.ByName("job_id"))
+func (h *apiHandlers) GetJobQueueV1JobsJobId(ctx echo.Context, jobId string) error {
+	id, err := uuid.Parse(jobId)
 	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
 	}
 
-	status, err := s.JobStatus(id)
+	status, err := h.server.JobStatus(id)
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotExist:
-			jsonErrorf(writer, http.StatusNotFound, "job does not exist: %s", id)
+			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %s", id)
 		default:
-			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+			return err
 		}
-		return
 	}
 
-	_ = json.NewEncoder(writer).Encode(jobResponse{
+	return ctx.JSON(http.StatusOK, jobResponse{
 		Id:       id,
 		Canceled: status.Canceled,
 	})
 }
 
-func (s *Server) addJobHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
-		jsonErrorf(writer, http.StatusUnsupportedMediaType, "request must contain application/json data")
-		return
-	}
-
+func (h *apiHandlers) PostJobQueueV1Jobs(ctx echo.Context) error {
 	var body addJobRequest
-	err := json.NewDecoder(request.Body).Decode(&body)
+	err := ctx.Bind(&body)
 	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "%v", err)
-		return
+		return err
 	}
 
 	var job OSBuildJob
-	id, err := s.jobs.Dequeue(request.Context(), []string{"osbuild"}, &job)
+	id, err := h.server.jobs.Dequeue(ctx.Request().Context(), []string{"osbuild"}, &job)
 	if err != nil {
-		jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "%v", err)
 	}
 
-	writer.WriteHeader(http.StatusCreated)
-	// FIXME: handle or comment this possible error
-	_ = json.NewEncoder(writer).Encode(addJobResponse{
+	return ctx.JSON(http.StatusCreated, addJobResponse{
 		Id:       id,
 		Manifest: job.Manifest,
 		Targets:  job.Targets,
 	})
 }
 
-func (s *Server) updateJobHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	contentType := request.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
-		jsonErrorf(writer, http.StatusUnsupportedMediaType, "request must contain application/json data")
-		return
-	}
-
-	id, err := uuid.Parse(params.ByName("job_id"))
+func (h *apiHandlers) PatchJobQueueV1JobsJobId(ctx echo.Context, jobId string) error {
+	id, err := uuid.Parse(jobId)
 	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
 	}
 
 	var body updateJobRequest
-	err = json.NewDecoder(request.Body).Decode(&body)
+	err = ctx.Bind(&body)
 	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse request body: %v", err)
-		return
+		return err
 	}
 
 	// The jobqueue doesn't support setting the status before a job is
 	// finished. This branch should never be hit, because the worker
 	// doesn't attempt this. Change the API to remove this awkwardness.
 	if body.Status != common.IBFinished && body.Status != common.IBFailed {
-		jsonErrorf(writer, http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
 	}
 
-	err = s.jobs.FinishJob(id, OSBuildJobResult{OSBuildOutput: body.Result})
+	err = h.server.jobs.FinishJob(id, OSBuildJobResult{OSBuildOutput: body.Result})
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotExist:
-			jsonErrorf(writer, http.StatusNotFound, "job does not exist: %s", id)
+			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %s", id)
 		case jobqueue.ErrNotRunning:
-			jsonErrorf(writer, http.StatusBadRequest, "job is not running: %s", id)
+			return echo.NewHTTPError(http.StatusBadRequest, "job is not running: %s", id)
 		default:
-			jsonErrorf(writer, http.StatusInternalServerError, "%v", err)
+			return err
 		}
-		return
 	}
 
-	_ = json.NewEncoder(writer).Encode(updateJobResponse{})
+	return ctx.JSON(http.StatusOK, updateJobResponse{})
 }
 
-func (s *Server) addJobImageHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	id, err := uuid.Parse(params.ByName("job_id"))
+func (h *apiHandlers) PostJobQueueV1JobsJobIdArtifactsName(ctx echo.Context, jobId string, name string) error {
+	id, err := uuid.Parse(jobId)
 	if err != nil {
-		jsonErrorf(writer, http.StatusBadRequest, "cannot parse compose id: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
 	}
 
-	name := params.ByName("name")
-	if name == "" {
-		jsonErrorf(writer, http.StatusBadRequest, "invalid artifact name")
-		return
-	}
+	request := ctx.Request()
 
-	if s.artifactsDir == "" {
+	if h.server.artifactsDir == "" {
 		_, err := io.Copy(ioutil.Discard, request.Body)
 		if err != nil {
-			jsonErrorf(writer, http.StatusInternalServerError, "error discarding artifact: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "error discarding artifact: %v", err)
 		}
-		return
+		return ctx.NoContent(http.StatusOK)
 	}
 
-	err = os.Mkdir(path.Join(s.artifactsDir, id.String()), 0700)
+	err = os.Mkdir(path.Join(h.server.artifactsDir, id.String()), 0700)
 	if err != nil {
-		jsonErrorf(writer, http.StatusInternalServerError, "cannot create artifact directory: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create artifact directory: %v", err)
 	}
 
-	f, err := os.Create(path.Join(s.artifactsDir, id.String(), name))
+	f, err := os.Create(path.Join(h.server.artifactsDir, id.String(), name))
 	if err != nil {
-		jsonErrorf(writer, http.StatusInternalServerError, "cannot create artifact file: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create artifact file: %v", err)
 	}
 
 	_, err = io.Copy(f, request.Body)
 	if err != nil {
-		jsonErrorf(writer, http.StatusInternalServerError, "error writing artifact file: %v", err)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "error writing artifact file: %v", err)
 	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+// A simple echo.Binder(), which only accepts application/json, but is more
+// strict than echo's DefaultBinder. It does not handle binding query
+// parameters either.
+type binder struct{}
+
+func (b binder) Bind(i interface{}, ctx echo.Context) error {
+	request := ctx.Request()
+
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "request must be json-encoded")
+	}
+
+	err := json.NewDecoder(request.Body).Decode(i)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse request body: %v", err)
+	}
+
+	return nil
 }

@@ -1,0 +1,133 @@
+openapi: 3.0.0
+info:
+  title: worker
+  version: '1.0'
+servers: []
+paths:
+  /status:
+    get:
+      summary: status
+      tags: []
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - OK
+                required:
+                  - status
+      operationId: get-status
+      description: Simple status handler to check whether the service is up.
+  /job-queue/v1/jobs:
+    post:
+      summary: create-job
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  manifest: {}
+                  targets:
+                    type: array
+                    items: {}
+                required:
+                  - id
+                  - manifest
+                  - targets
+      operationId: post-job-queue-v1-jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+  '/job-queue/v1/jobs/{job_id}':
+    parameters:
+      - schema:
+          type: string
+        name: job_id
+        in: path
+        required: true
+    get:
+      summary: get-job
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  canceled:
+                    type: boolean
+                required:
+                  - id
+                  - canceled
+      operationId: get-job-queue-v1-jobs-job_id
+    patch:
+      summary: update-job
+      tags: []
+      responses: {}
+      operationId: patch-job-queue-v1-jobs-job_id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - WAITING
+                    - RUNNING
+                    - FINISHED
+                    - FAILED
+                result: {}
+              required:
+                - status
+                - result
+  '/job-queue/v1/jobs/{job_id}/artifacts/{name}':
+    parameters:
+      - schema:
+          type: string
+        name: job_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: name
+        in: path
+        required: true
+    post:
+      summary: add-image
+      tags: []
+      responses:
+        '200':
+          description: OK
+      operationId: post-job-queue-v1-jobs-job_id-artifacts-name
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+components:
+  schemas: {}
