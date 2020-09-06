@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -10,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 
 	"github.com/google/uuid"
 
@@ -18,11 +16,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
 type Client struct {
-	client *http.Client
-	server *url.URL
+	api *api.Client
 }
 
 type Job struct {
@@ -32,22 +30,22 @@ type Job struct {
 }
 
 func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
-	client := &http.Client{
+	httpClient := http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: conf,
 		},
 	}
 
-	server, err := url.Parse(baseURL)
+	c, err := api.NewClient(baseURL, api.WithHTTPClient(&httpClient))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{client, server}, nil
+	return &Client{c}, nil
 }
 
 func NewClientUnix(path string) *Client {
-	client := &http.Client{
+	httpClient := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial("unix", path)
@@ -55,21 +53,16 @@ func NewClientUnix(path string) *Client {
 		},
 	}
 
-	server, err := url.Parse("http://localhost")
+	c, err := api.NewClient("http://localhost", api.WithHTTPClient(&httpClient))
 	if err != nil {
 		panic(err)
 	}
 
-	return &Client{client, server}
+	return &Client{c}
 }
 
 func (c *Client) AddJob() (*Job, error) {
-	var b bytes.Buffer
-	err := json.NewEncoder(&b).Encode(addJobRequest{})
-	if err != nil {
-		panic(err)
-	}
-	response, err := c.client.Post(c.createURL("/job-queue/v1/jobs"), "application/json", &b)
+	response, err := c.api.PostJobQueueV1Jobs(context.Background(), api.PostJobQueueV1JobsJSONRequestBody{})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +88,7 @@ func (c *Client) AddJob() (*Job, error) {
 }
 
 func (c *Client) JobCanceled(job *Job) bool {
-	response, err := c.client.Get(c.createURL("/job-queue/v1/jobs/" + job.Id.String()))
+	response, err := c.api.GetJobQueueV1JobsJobId(context.Background(), job.Id.String())
 	if err != nil {
 		return true
 	}
@@ -115,24 +108,13 @@ func (c *Client) JobCanceled(job *Job) bool {
 }
 
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbuild.Result) error {
-	var b bytes.Buffer
-	err := json.NewEncoder(&b).Encode(&updateJobRequest{status, result})
-	if err != nil {
-		panic(err)
-	}
-	urlPath := fmt.Sprintf("/job-queue/v1/jobs/%s", job.Id)
-	url := c.createURL(urlPath)
-	req, err := http.NewRequest("PATCH", url, &b)
+	response, err := c.api.PatchJobQueueV1JobsJobId(context.Background(), job.Id.String(), api.PatchJobQueueV1JobsJobIdJSONRequestBody{
+		Result: result,
+		Status: status.ToString(),
+	})
 	if err != nil {
 		return err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	response, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return errors.New("error setting job status")
@@ -142,18 +124,8 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbu
 }
 
 func (c *Client) UploadImage(job uuid.UUID, name string, reader io.Reader) error {
-	url := c.createURL(fmt.Sprintf("/job-queue/v1/jobs/%s/artifacts/%s", job, name))
-	_, err := c.client.Post(url, "application/octet-stream", reader)
+	_, err := c.api.PostJobQueueV1JobsJobIdArtifactsNameWithBody(context.Background(),
+		job.String(), name, "application/octet-stream", reader)
 
 	return err
-}
-
-func (c *Client) createURL(path string) string {
-	u, err := c.server.Parse(path)
-	if err != nil {
-		// panic here, because `path` is always a literal string
-		panic(err)
-	}
-
-	return u.String()
 }
