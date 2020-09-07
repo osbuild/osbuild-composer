@@ -1,7 +1,6 @@
 package xmlrpc
 
 import (
-	"fmt"
 	"regexp"
 )
 
@@ -9,32 +8,43 @@ var (
 	faultRx = regexp.MustCompile(`<fault>(\s|\S)+</fault>`)
 )
 
-// FaultError is returned from the server when an invalid call is made
-type FaultError struct {
-	Code   int    `xmlrpc:"faultCode"`
-	String string `xmlrpc:"faultString"`
+type failedResponse struct {
+	Code  int    `xmlrpc:"faultCode"`
+	Error string `xmlrpc:"faultString"`
 }
 
-// Error implements the error interface
-func (e FaultError) Error() string {
-	return fmt.Sprintf("Fault(%d): %s", e.Code, e.String)
-}
-
-type Response []byte
-
-func (r Response) Err() error {
-	if !faultRx.Match(r) {
-		return nil
+func (r *failedResponse) err() error {
+	return &xmlrpcError{
+		code: r.Code,
+		err:  r.Error,
 	}
-	var fault FaultError
-	if err := unmarshal(r, &fault); err != nil {
+}
+
+type Response struct {
+	data []byte
+}
+
+func NewResponse(data []byte) *Response {
+	return &Response{
+		data: data,
+	}
+}
+
+func (r *Response) Failed() bool {
+	return faultRx.Match(r.data)
+}
+
+func (r *Response) Err() error {
+	failedResp := new(failedResponse)
+	if err := unmarshal(r.data, failedResp); err != nil {
 		return err
 	}
-	return fault
+
+	return failedResp.err()
 }
 
-func (r Response) Unmarshal(v interface{}) error {
-	if err := unmarshal(r, v); err != nil {
+func (r *Response) Unmarshal(v interface{}) error {
+	if err := unmarshal(r.data, v); err != nil {
 		return err
 	}
 

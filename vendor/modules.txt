@@ -119,7 +119,7 @@ github.com/gophercloud/gophercloud/pagination
 github.com/jmespath/go-jmespath
 # github.com/julienschmidt/httprouter v1.2.0
 github.com/julienschmidt/httprouter
-# github.com/kolo/xmlrpc v0.0.0-20190909154602-56d5ec7c422e
+# github.com/kolo/xmlrpc v0.0.0-20190417161013-de6d879202d7
 github.com/kolo/xmlrpc
 # github.com/kr/pretty v0.1.0
 github.com/kr/pretty
