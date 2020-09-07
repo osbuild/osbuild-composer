@@ -1,7 +1,9 @@
 package worker
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +29,18 @@ type Server struct {
 	jobs         jobqueue.JobQueue
 	echo         *echo.Echo
 	artifactsDir string
+
+	// Currently running jobs. Workers are not handed job ids, but
+	// independent tokens which serve as an indirection. This enables
+	// race-free uploading of artifacts and makes restarting composer more
+	// robust (workers from an old run cannot report results for jobs
+	// composer thinks are not running).
+	// This map maps these tokens to job ids. Artifacts are stored in
+	// `$STATE_DIRECTORY/artifacts/tmp/$TOKEN` while the worker is running,
+	// and renamed to `$STATE_DIRECTORY/artifacts/$JOB_ID` once the job is
+	// reported as done.
+	running      map[uuid.UUID]uuid.UUID
+	runningMutex sync.Mutex
 }
 
 type JobStatus struct {
@@ -37,10 +52,13 @@ type JobStatus struct {
 	Result   OSBuildJobResult
 }
 
+var ErrTokenNotExist = errors.New("worker token does not exist")
+
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
 	s := &Server{
 		jobs:         jobs,
 		artifactsDir: artifactsDir,
+		running:      make(map[uuid.UUID]uuid.UUID),
 	}
 
 	s.echo = echo.New()
@@ -151,6 +169,72 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
+func (s *Server) RequestJob(ctx context.Context) (uuid.UUID, *OSBuildJob, error) {
+	token := uuid.New()
+
+	var args OSBuildJob
+	jobId, err := s.jobs.Dequeue(ctx, []string{"osbuild"}, &args)
+	if err != nil {
+		return uuid.Nil, nil, err
+	}
+
+	if s.artifactsDir != "" {
+		err := os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
+		if err != nil {
+			return uuid.Nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
+		}
+	}
+
+	s.runningMutex.Lock()
+	defer s.runningMutex.Unlock()
+	s.running[token] = jobId
+
+	return token, &args, nil
+}
+
+func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
+	s.runningMutex.Lock()
+	defer s.runningMutex.Unlock()
+
+	jobId, ok := s.running[token]
+	if !ok {
+		return uuid.Nil, ErrTokenNotExist
+	}
+
+	return jobId, nil
+}
+
+func (s *Server) FinishJob(token uuid.UUID, result *OSBuildJobResult) error {
+	s.runningMutex.Lock()
+	defer s.runningMutex.Unlock()
+
+	jobId, ok := s.running[token]
+	if !ok {
+		return ErrTokenNotExist
+	}
+
+	// Always delete the running job, even if there are errors finishing
+	// the job, because callers won't call this a second time on error.
+	delete(s.running, token)
+
+	err := s.jobs.FinishJob(jobId, result)
+	if err != nil {
+		return fmt.Errorf("error finishing job: %v", err)
+	}
+
+	// Move artifacts from the temporary location to the final job
+	// location. Log any errors, but do not treat them as fatal. The job is
+	// already finished.
+	if s.artifactsDir != "" {
+		err := os.Rename(path.Join(s.artifactsDir, "tmp", token.String()), path.Join(s.artifactsDir, jobId.String()))
+		if err != nil {
+			log.Printf("Error moving artifacts for job%s: %v", jobId, err)
+		}
+	}
+
+	return nil
+}
+
 // apiHandlers implements api.ServerInterface - the http api route handlers
 // generated from api/openapi.yml. This is a separate object, because these
 // handlers should not be exposed on the `Server` object.
@@ -164,52 +248,59 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 	})
 }
 
-func (h *apiHandlers) GetJob(ctx echo.Context, jobId string) error {
-	id, err := uuid.Parse(jobId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
-	}
-
-	status, err := h.server.JobStatus(id)
-	if err != nil {
-		switch err {
-		case jobqueue.ErrNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %s", id)
-		default:
-			return err
-		}
-	}
-
-	return ctx.JSON(http.StatusOK, jobResponse{
-		Id:       id,
-		Canceled: status.Canceled,
-	})
-}
-
-func (h *apiHandlers) PostJob(ctx echo.Context) error {
-	var body addJobRequest
+func (h *apiHandlers) RequestJob(ctx echo.Context) error {
+	var body struct{}
 	err := ctx.Bind(&body)
 	if err != nil {
 		return err
 	}
 
-	var job OSBuildJob
-	id, err := h.server.jobs.Dequeue(ctx.Request().Context(), []string{"osbuild"}, &job)
+	token, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "%v", err)
 	}
 
-	return ctx.JSON(http.StatusCreated, addJobResponse{
-		Id:       id,
-		Manifest: job.Manifest,
-		Targets:  job.Targets,
+	return ctx.JSON(http.StatusCreated, requestJobResponse{
+		Token:    token,
+		Manifest: jobArgs.Manifest,
+		Targets:  jobArgs.Targets,
 	})
 }
 
-func (h *apiHandlers) UpdateJob(ctx echo.Context, jobId string) error {
-	id, err := uuid.Parse(jobId)
+func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
+	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token: %v", err)
+	}
+
+	jobId, err := h.server.RunningJob(token)
+	if err != nil {
+		switch err {
+		case ErrTokenNotExist:
+			return echo.NewHTTPError(http.StatusNotFound, "job is not running")
+		default:
+			return err
+		}
+	}
+
+	if jobId == uuid.Nil {
+		return ctx.JSON(http.StatusOK, getJobResponse{})
+	}
+
+	status, err := h.server.JobStatus(jobId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error retrieving job status: %v", err)
+	}
+
+	return ctx.JSON(http.StatusOK, getJobResponse{
+		Canceled: status.Canceled,
+	})
+}
+
+func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
+	token, err := uuid.Parse(idstr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse token: %v", err)
 	}
 
 	var body updateJobRequest
@@ -225,13 +316,11 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, jobId string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
 	}
 
-	err = h.server.jobs.FinishJob(id, OSBuildJobResult{OSBuildOutput: body.Result})
+	err = h.server.FinishJob(token, &OSBuildJobResult{OSBuildOutput: body.Result})
 	if err != nil {
 		switch err {
-		case jobqueue.ErrNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %s", id)
-		case jobqueue.ErrNotRunning:
-			return echo.NewHTTPError(http.StatusBadRequest, "job is not running: %s", id)
+		case ErrTokenNotExist:
+			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %v", token)
 		default:
 			return err
 		}
@@ -240,10 +329,10 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, jobId string) error {
 	return ctx.JSON(http.StatusOK, updateJobResponse{})
 }
 
-func (h *apiHandlers) PostJobArtifact(ctx echo.Context, jobId string, name string) error {
-	id, err := uuid.Parse(jobId)
+func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name string) error {
+	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token: %v", err)
 	}
 
 	request := ctx.Request()
@@ -256,12 +345,7 @@ func (h *apiHandlers) PostJobArtifact(ctx echo.Context, jobId string, name strin
 		return ctx.NoContent(http.StatusOK)
 	}
 
-	err = os.Mkdir(path.Join(h.server.artifactsDir, id.String()), 0700)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create artifact directory: %v", err)
-	}
-
-	f, err := os.Create(path.Join(h.server.artifactsDir, id.String(), name))
+	f, err := os.Create(path.Join(h.server.artifactsDir, "tmp", token.String(), name))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create artifact file: %v", err)
 	}

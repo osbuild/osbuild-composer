@@ -17,8 +17,8 @@ import (
 	"strings"
 )
 
-// PostJobJSONBody defines parameters for PostJob.
-type PostJobJSONBody map[string]interface{}
+// RequestJobJSONBody defines parameters for RequestJob.
+type RequestJobJSONBody map[string]interface{}
 
 // UpdateJobJSONBody defines parameters for UpdateJob.
 type UpdateJobJSONBody struct {
@@ -26,8 +26,8 @@ type UpdateJobJSONBody struct {
 	Status string      `json:"status"`
 }
 
-// PostJobRequestBody defines body for PostJob for application/json ContentType.
-type PostJobJSONRequestBody PostJobJSONBody
+// RequestJobRequestBody defines body for RequestJob for application/json ContentType.
+type RequestJobJSONRequestBody RequestJobJSONBody
 
 // UpdateJobRequestBody defines body for UpdateJob for application/json ContentType.
 type UpdateJobJSONRequestBody UpdateJobJSONBody
@@ -103,28 +103,28 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostJob request  with any body
-	PostJobWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// RequestJob request  with any body
+	RequestJobWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostJob(ctx context.Context, body PostJobJSONRequestBody) (*http.Response, error)
+	RequestJob(ctx context.Context, body RequestJobJSONRequestBody) (*http.Response, error)
 
 	// GetJob request
-	GetJob(ctx context.Context, jobId string) (*http.Response, error)
+	GetJob(ctx context.Context, token string) (*http.Response, error)
 
 	// UpdateJob request  with any body
-	UpdateJobWithBody(ctx context.Context, jobId string, contentType string, body io.Reader) (*http.Response, error)
+	UpdateJobWithBody(ctx context.Context, token string, contentType string, body io.Reader) (*http.Response, error)
 
-	UpdateJob(ctx context.Context, jobId string, body UpdateJobJSONRequestBody) (*http.Response, error)
+	UpdateJob(ctx context.Context, token string, body UpdateJobJSONRequestBody) (*http.Response, error)
 
-	// PostJobArtifact request  with any body
-	PostJobArtifactWithBody(ctx context.Context, jobId string, name string, contentType string, body io.Reader) (*http.Response, error)
+	// UploadJobArtifact request  with any body
+	UploadJobArtifactWithBody(ctx context.Context, token string, name string, contentType string, body io.Reader) (*http.Response, error)
 
 	// GetStatus request
 	GetStatus(ctx context.Context) (*http.Response, error)
 }
 
-func (c *Client) PostJobWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostJobRequestWithBody(c.Server, contentType, body)
+func (c *Client) RequestJobWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewRequestJobRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +138,8 @@ func (c *Client) PostJobWithBody(ctx context.Context, contentType string, body i
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostJob(ctx context.Context, body PostJobJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostJobRequest(c.Server, body)
+func (c *Client) RequestJob(ctx context.Context, body RequestJobJSONRequestBody) (*http.Response, error) {
+	req, err := NewRequestJobRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +153,8 @@ func (c *Client) PostJob(ctx context.Context, body PostJobJSONRequestBody) (*htt
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetJob(ctx context.Context, jobId string) (*http.Response, error) {
-	req, err := NewGetJobRequest(c.Server, jobId)
+func (c *Client) GetJob(ctx context.Context, token string) (*http.Response, error) {
+	req, err := NewGetJobRequest(c.Server, token)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +168,8 @@ func (c *Client) GetJob(ctx context.Context, jobId string) (*http.Response, erro
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateJobWithBody(ctx context.Context, jobId string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewUpdateJobRequestWithBody(c.Server, jobId, contentType, body)
+func (c *Client) UpdateJobWithBody(ctx context.Context, token string, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewUpdateJobRequestWithBody(c.Server, token, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +183,8 @@ func (c *Client) UpdateJobWithBody(ctx context.Context, jobId string, contentTyp
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateJob(ctx context.Context, jobId string, body UpdateJobJSONRequestBody) (*http.Response, error) {
-	req, err := NewUpdateJobRequest(c.Server, jobId, body)
+func (c *Client) UpdateJob(ctx context.Context, token string, body UpdateJobJSONRequestBody) (*http.Response, error) {
+	req, err := NewUpdateJobRequest(c.Server, token, body)
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +198,8 @@ func (c *Client) UpdateJob(ctx context.Context, jobId string, body UpdateJobJSON
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostJobArtifactWithBody(ctx context.Context, jobId string, name string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostJobArtifactRequestWithBody(c.Server, jobId, name, contentType, body)
+func (c *Client) UploadJobArtifactWithBody(ctx context.Context, token string, name string, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewUploadJobArtifactRequestWithBody(c.Server, token, name, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -228,19 +228,19 @@ func (c *Client) GetStatus(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// NewPostJobRequest calls the generic PostJob builder with application/json body
-func NewPostJobRequest(server string, body PostJobJSONRequestBody) (*http.Request, error) {
+// NewRequestJobRequest calls the generic RequestJob builder with application/json body
+func NewRequestJobRequest(server string, body RequestJobJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostJobRequestWithBody(server, "application/json", bodyReader)
+	return NewRequestJobRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostJobRequestWithBody generates requests for PostJob with any type of body
-func NewPostJobRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewRequestJobRequestWithBody generates requests for RequestJob with any type of body
+func NewRequestJobRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -268,12 +268,12 @@ func NewPostJobRequestWithBody(server string, contentType string, body io.Reader
 }
 
 // NewGetJobRequest generates requests for GetJob
-func NewGetJobRequest(server string, jobId string) (*http.Request, error) {
+func NewGetJobRequest(server string, token string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "job_id", jobId)
+	pathParam0, err = runtime.StyleParam("simple", false, "token", token)
 	if err != nil {
 		return nil, err
 	}
@@ -302,23 +302,23 @@ func NewGetJobRequest(server string, jobId string) (*http.Request, error) {
 }
 
 // NewUpdateJobRequest calls the generic UpdateJob builder with application/json body
-func NewUpdateJobRequest(server string, jobId string, body UpdateJobJSONRequestBody) (*http.Request, error) {
+func NewUpdateJobRequest(server string, token string, body UpdateJobJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateJobRequestWithBody(server, jobId, "application/json", bodyReader)
+	return NewUpdateJobRequestWithBody(server, token, "application/json", bodyReader)
 }
 
 // NewUpdateJobRequestWithBody generates requests for UpdateJob with any type of body
-func NewUpdateJobRequestWithBody(server string, jobId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateJobRequestWithBody(server string, token string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "job_id", jobId)
+	pathParam0, err = runtime.StyleParam("simple", false, "token", token)
 	if err != nil {
 		return nil, err
 	}
@@ -347,13 +347,13 @@ func NewUpdateJobRequestWithBody(server string, jobId string, contentType string
 	return req, nil
 }
 
-// NewPostJobArtifactRequestWithBody generates requests for PostJobArtifact with any type of body
-func NewPostJobArtifactRequestWithBody(server string, jobId string, name string, contentType string, body io.Reader) (*http.Request, error) {
+// NewUploadJobArtifactRequestWithBody generates requests for UploadJobArtifact with any type of body
+func NewUploadJobArtifactRequestWithBody(server string, token string, name string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "job_id", jobId)
+	pathParam0, err = runtime.StyleParam("simple", false, "token", token)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func NewPostJobArtifactRequestWithBody(server string, jobId string, name string,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	req, err := http.NewRequest("PUT", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -445,38 +445,38 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostJob request  with any body
-	PostJobWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJobResponse, error)
+	// RequestJob request  with any body
+	RequestJobWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*RequestJobResponse, error)
 
-	PostJobWithResponse(ctx context.Context, body PostJobJSONRequestBody) (*PostJobResponse, error)
+	RequestJobWithResponse(ctx context.Context, body RequestJobJSONRequestBody) (*RequestJobResponse, error)
 
 	// GetJob request
-	GetJobWithResponse(ctx context.Context, jobId string) (*GetJobResponse, error)
+	GetJobWithResponse(ctx context.Context, token string) (*GetJobResponse, error)
 
 	// UpdateJob request  with any body
-	UpdateJobWithBodyWithResponse(ctx context.Context, jobId string, contentType string, body io.Reader) (*UpdateJobResponse, error)
+	UpdateJobWithBodyWithResponse(ctx context.Context, token string, contentType string, body io.Reader) (*UpdateJobResponse, error)
 
-	UpdateJobWithResponse(ctx context.Context, jobId string, body UpdateJobJSONRequestBody) (*UpdateJobResponse, error)
+	UpdateJobWithResponse(ctx context.Context, token string, body UpdateJobJSONRequestBody) (*UpdateJobResponse, error)
 
-	// PostJobArtifact request  with any body
-	PostJobArtifactWithBodyWithResponse(ctx context.Context, jobId string, name string, contentType string, body io.Reader) (*PostJobArtifactResponse, error)
+	// UploadJobArtifact request  with any body
+	UploadJobArtifactWithBodyWithResponse(ctx context.Context, token string, name string, contentType string, body io.Reader) (*UploadJobArtifactResponse, error)
 
 	// GetStatus request
 	GetStatusWithResponse(ctx context.Context) (*GetStatusResponse, error)
 }
 
-type PostJobResponse struct {
+type RequestJobResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		Id       string        `json:"id"`
-		Manifest interface{}   `json:"manifest"`
-		Targets  []interface{} `json:"targets"`
+	JSON201      *struct {
+		Manifest interface{}    `json:"manifest"`
+		Targets  *[]interface{} `json:"targets,omitempty"`
+		Token    string         `json:"token"`
 	}
 }
 
 // Status returns HTTPResponse.Status
-func (r PostJobResponse) Status() string {
+func (r RequestJobResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -484,7 +484,7 @@ func (r PostJobResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostJobResponse) StatusCode() int {
+func (r RequestJobResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -495,8 +495,7 @@ type GetJobResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Canceled bool   `json:"canceled"`
-		Id       string `json:"id"`
+		Canceled bool `json:"canceled"`
 	}
 }
 
@@ -537,13 +536,13 @@ func (r UpdateJobResponse) StatusCode() int {
 	return 0
 }
 
-type PostJobArtifactResponse struct {
+type UploadJobArtifactResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r PostJobArtifactResponse) Status() string {
+func (r UploadJobArtifactResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -551,7 +550,7 @@ func (r PostJobArtifactResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostJobArtifactResponse) StatusCode() int {
+func (r UploadJobArtifactResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -582,26 +581,26 @@ func (r GetStatusResponse) StatusCode() int {
 	return 0
 }
 
-// PostJobWithBodyWithResponse request with arbitrary body returning *PostJobResponse
-func (c *ClientWithResponses) PostJobWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJobResponse, error) {
-	rsp, err := c.PostJobWithBody(ctx, contentType, body)
+// RequestJobWithBodyWithResponse request with arbitrary body returning *RequestJobResponse
+func (c *ClientWithResponses) RequestJobWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*RequestJobResponse, error) {
+	rsp, err := c.RequestJobWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostJobResponse(rsp)
+	return ParseRequestJobResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostJobWithResponse(ctx context.Context, body PostJobJSONRequestBody) (*PostJobResponse, error) {
-	rsp, err := c.PostJob(ctx, body)
+func (c *ClientWithResponses) RequestJobWithResponse(ctx context.Context, body RequestJobJSONRequestBody) (*RequestJobResponse, error) {
+	rsp, err := c.RequestJob(ctx, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostJobResponse(rsp)
+	return ParseRequestJobResponse(rsp)
 }
 
 // GetJobWithResponse request returning *GetJobResponse
-func (c *ClientWithResponses) GetJobWithResponse(ctx context.Context, jobId string) (*GetJobResponse, error) {
-	rsp, err := c.GetJob(ctx, jobId)
+func (c *ClientWithResponses) GetJobWithResponse(ctx context.Context, token string) (*GetJobResponse, error) {
+	rsp, err := c.GetJob(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -609,29 +608,29 @@ func (c *ClientWithResponses) GetJobWithResponse(ctx context.Context, jobId stri
 }
 
 // UpdateJobWithBodyWithResponse request with arbitrary body returning *UpdateJobResponse
-func (c *ClientWithResponses) UpdateJobWithBodyWithResponse(ctx context.Context, jobId string, contentType string, body io.Reader) (*UpdateJobResponse, error) {
-	rsp, err := c.UpdateJobWithBody(ctx, jobId, contentType, body)
+func (c *ClientWithResponses) UpdateJobWithBodyWithResponse(ctx context.Context, token string, contentType string, body io.Reader) (*UpdateJobResponse, error) {
+	rsp, err := c.UpdateJobWithBody(ctx, token, contentType, body)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateJobResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateJobWithResponse(ctx context.Context, jobId string, body UpdateJobJSONRequestBody) (*UpdateJobResponse, error) {
-	rsp, err := c.UpdateJob(ctx, jobId, body)
+func (c *ClientWithResponses) UpdateJobWithResponse(ctx context.Context, token string, body UpdateJobJSONRequestBody) (*UpdateJobResponse, error) {
+	rsp, err := c.UpdateJob(ctx, token, body)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateJobResponse(rsp)
 }
 
-// PostJobArtifactWithBodyWithResponse request with arbitrary body returning *PostJobArtifactResponse
-func (c *ClientWithResponses) PostJobArtifactWithBodyWithResponse(ctx context.Context, jobId string, name string, contentType string, body io.Reader) (*PostJobArtifactResponse, error) {
-	rsp, err := c.PostJobArtifactWithBody(ctx, jobId, name, contentType, body)
+// UploadJobArtifactWithBodyWithResponse request with arbitrary body returning *UploadJobArtifactResponse
+func (c *ClientWithResponses) UploadJobArtifactWithBodyWithResponse(ctx context.Context, token string, name string, contentType string, body io.Reader) (*UploadJobArtifactResponse, error) {
+	rsp, err := c.UploadJobArtifactWithBody(ctx, token, name, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostJobArtifactResponse(rsp)
+	return ParseUploadJobArtifactResponse(rsp)
 }
 
 // GetStatusWithResponse request returning *GetStatusResponse
@@ -643,30 +642,30 @@ func (c *ClientWithResponses) GetStatusWithResponse(ctx context.Context) (*GetSt
 	return ParseGetStatusResponse(rsp)
 }
 
-// ParsePostJobResponse parses an HTTP response from a PostJobWithResponse call
-func ParsePostJobResponse(rsp *http.Response) (*PostJobResponse, error) {
+// ParseRequestJobResponse parses an HTTP response from a RequestJobWithResponse call
+func ParseRequestJobResponse(rsp *http.Response) (*RequestJobResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostJobResponse{
+	response := &RequestJobResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest struct {
-			Id       string        `json:"id"`
-			Manifest interface{}   `json:"manifest"`
-			Targets  []interface{} `json:"targets"`
+			Manifest interface{}    `json:"manifest"`
+			Targets  *[]interface{} `json:"targets,omitempty"`
+			Token    string         `json:"token"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	}
 
@@ -689,8 +688,7 @@ func ParseGetJobResponse(rsp *http.Response) (*GetJobResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Canceled bool   `json:"canceled"`
-			Id       string `json:"id"`
+			Canceled bool `json:"canceled"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -721,15 +719,15 @@ func ParseUpdateJobResponse(rsp *http.Response) (*UpdateJobResponse, error) {
 	return response, nil
 }
 
-// ParsePostJobArtifactResponse parses an HTTP response from a PostJobArtifactWithResponse call
-func ParsePostJobArtifactResponse(rsp *http.Response) (*PostJobArtifactResponse, error) {
+// ParseUploadJobArtifactResponse parses an HTTP response from a UploadJobArtifactWithResponse call
+func ParseUploadJobArtifactResponse(rsp *http.Response) (*UploadJobArtifactResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostJobArtifactResponse{
+	response := &UploadJobArtifactResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -770,18 +768,18 @@ func ParseGetStatusResponse(rsp *http.Response) (*GetStatusResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// create-job
+	// Request a job
 	// (POST /jobs)
-	PostJob(ctx echo.Context) error
-	// get-job
-	// (GET /jobs/{job_id})
-	GetJob(ctx echo.Context, jobId string) error
-	// update-job
-	// (PATCH /jobs/{job_id})
-	UpdateJob(ctx echo.Context, jobId string) error
-	// add-image
-	// (POST /jobs/{job_id}/artifacts/{name})
-	PostJobArtifact(ctx echo.Context, jobId string, name string) error
+	RequestJob(ctx echo.Context) error
+	// Get running job
+	// (GET /jobs/{token})
+	GetJob(ctx echo.Context, token string) error
+	// Update a running job
+	// (PATCH /jobs/{token})
+	UpdateJob(ctx echo.Context, token string) error
+	// Upload an artifact
+	// (PUT /jobs/{token}/artifacts/{name})
+	UploadJobArtifact(ctx echo.Context, token string, name string) error
 	// status
 	// (GET /status)
 	GetStatus(ctx echo.Context) error
@@ -792,56 +790,56 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// PostJob converts echo context to params.
-func (w *ServerInterfaceWrapper) PostJob(ctx echo.Context) error {
+// RequestJob converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestJob(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostJob(ctx)
+	err = w.Handler.RequestJob(ctx)
 	return err
 }
 
 // GetJob converts echo context to params.
 func (w *ServerInterfaceWrapper) GetJob(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "job_id" -------------
-	var jobId string
+	// ------------- Path parameter "token" -------------
+	var token string
 
-	err = runtime.BindStyledParameter("simple", false, "job_id", ctx.Param("job_id"), &jobId)
+	err = runtime.BindStyledParameter("simple", false, "token", ctx.Param("token"), &token)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter job_id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter token: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetJob(ctx, jobId)
+	err = w.Handler.GetJob(ctx, token)
 	return err
 }
 
 // UpdateJob converts echo context to params.
 func (w *ServerInterfaceWrapper) UpdateJob(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "job_id" -------------
-	var jobId string
+	// ------------- Path parameter "token" -------------
+	var token string
 
-	err = runtime.BindStyledParameter("simple", false, "job_id", ctx.Param("job_id"), &jobId)
+	err = runtime.BindStyledParameter("simple", false, "token", ctx.Param("token"), &token)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter job_id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter token: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.UpdateJob(ctx, jobId)
+	err = w.Handler.UpdateJob(ctx, token)
 	return err
 }
 
-// PostJobArtifact converts echo context to params.
-func (w *ServerInterfaceWrapper) PostJobArtifact(ctx echo.Context) error {
+// UploadJobArtifact converts echo context to params.
+func (w *ServerInterfaceWrapper) UploadJobArtifact(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "job_id" -------------
-	var jobId string
+	// ------------- Path parameter "token" -------------
+	var token string
 
-	err = runtime.BindStyledParameter("simple", false, "job_id", ctx.Param("job_id"), &jobId)
+	err = runtime.BindStyledParameter("simple", false, "token", ctx.Param("token"), &token)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter job_id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter token: %s", err))
 	}
 
 	// ------------- Path parameter "name" -------------
@@ -853,7 +851,7 @@ func (w *ServerInterfaceWrapper) PostJobArtifact(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostJobArtifact(ctx, jobId, name)
+	err = w.Handler.UploadJobArtifact(ctx, token, name)
 	return err
 }
 
@@ -888,10 +886,10 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
-	router.POST("/jobs", wrapper.PostJob)
-	router.GET("/jobs/:job_id", wrapper.GetJob)
-	router.PATCH("/jobs/:job_id", wrapper.UpdateJob)
-	router.POST("/jobs/:job_id/artifacts/:name", wrapper.PostJobArtifact)
+	router.POST("/jobs", wrapper.RequestJob)
+	router.GET("/jobs/:token", wrapper.GetJob)
+	router.PATCH("/jobs/:token", wrapper.UpdateJob)
+	router.PUT("/jobs/:token/artifacts/:name", wrapper.UploadJobArtifact)
 	router.GET("/status", wrapper.GetStatus)
 
 }
