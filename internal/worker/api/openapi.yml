@@ -23,7 +23,7 @@ paths:
                       - OK
                 required:
                   - status
-      operationId: get-status
+      operationId: GetStatus
       description: Simple status handler to check whether the service is up.
   /jobs:
     post:
@@ -49,13 +49,14 @@ paths:
                   - id
                   - manifest
                   - targets
-      operationId: post-job-queue-v1-jobs
+      operationId: PostJob
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties: {}
+    parameters: []
   '/jobs/{job_id}':
     parameters:
       - schema:
@@ -82,12 +83,12 @@ paths:
                 required:
                   - id
                   - canceled
-      operationId: get-job-queue-v1-jobs-job_id
+      operationId: GetJob
     patch:
       summary: update-job
       tags: []
       responses: {}
-      operationId: patch-job-queue-v1-jobs-job_id
+      operationId: UpdateJob
       requestBody:
         content:
           application/json:
@@ -123,7 +124,7 @@ paths:
       responses:
         '200':
           description: OK
-      operationId: post-job-queue-v1-jobs-job_id-artifacts-name
+      operationId: PostJobArtifact
       requestBody:
         content:
           application/octet-stream:
