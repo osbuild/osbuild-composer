@@ -248,7 +248,7 @@ func NewPostJobQueueV1JobsRequestWithBody(server string, contentType string, bod
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/job-queue/v1/jobs")
+	basePath := fmt.Sprintf("/jobs")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -283,7 +283,7 @@ func NewGetJobQueueV1JobsJobIdRequest(server string, jobId string) (*http.Reques
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/job-queue/v1/jobs/%s", pathParam0)
+	basePath := fmt.Sprintf("/jobs/%s", pathParam0)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -328,7 +328,7 @@ func NewPatchJobQueueV1JobsJobIdRequestWithBody(server string, jobId string, con
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/job-queue/v1/jobs/%s", pathParam0)
+	basePath := fmt.Sprintf("/jobs/%s", pathParam0)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -370,7 +370,7 @@ func NewPostJobQueueV1JobsJobIdArtifactsNameRequestWithBody(server string, jobId
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/job-queue/v1/jobs/%s/artifacts/%s", pathParam0, pathParam1)
+	basePath := fmt.Sprintf("/jobs/%s/artifacts/%s", pathParam0, pathParam1)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -771,16 +771,16 @@ func ParseGetStatusResponse(rsp *http.Response) (*GetStatusResponse, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// create-job
-	// (POST /job-queue/v1/jobs)
+	// (POST /jobs)
 	PostJobQueueV1Jobs(ctx echo.Context) error
 	// get-job
-	// (GET /job-queue/v1/jobs/{job_id})
+	// (GET /jobs/{job_id})
 	GetJobQueueV1JobsJobId(ctx echo.Context, jobId string) error
 	// update-job
-	// (PATCH /job-queue/v1/jobs/{job_id})
+	// (PATCH /jobs/{job_id})
 	PatchJobQueueV1JobsJobId(ctx echo.Context, jobId string) error
 	// add-image
-	// (POST /job-queue/v1/jobs/{job_id}/artifacts/{name})
+	// (POST /jobs/{job_id}/artifacts/{name})
 	PostJobQueueV1JobsJobIdArtifactsName(ctx echo.Context, jobId string, name string) error
 	// status
 	// (GET /status)
@@ -888,10 +888,10 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
-	router.POST("/job-queue/v1/jobs", wrapper.PostJobQueueV1Jobs)
-	router.GET("/job-queue/v1/jobs/:job_id", wrapper.GetJobQueueV1JobsJobId)
-	router.PATCH("/job-queue/v1/jobs/:job_id", wrapper.PatchJobQueueV1JobsJobId)
-	router.POST("/job-queue/v1/jobs/:job_id/artifacts/:name", wrapper.PostJobQueueV1JobsJobIdArtifactsName)
+	router.POST("/jobs", wrapper.PostJobQueueV1Jobs)
+	router.GET("/jobs/:job_id", wrapper.GetJobQueueV1JobsJobId)
+	router.PATCH("/jobs/:job_id", wrapper.PatchJobQueueV1JobsJobId)
+	router.POST("/jobs/:job_id/artifacts/:name", wrapper.PostJobQueueV1JobsJobIdArtifactsName)
 	router.GET("/status", wrapper.GetStatus)
 
 }
