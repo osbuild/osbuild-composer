@@ -23,18 +23,19 @@ type Koji struct {
 	transport http.RoundTripper
 }
 
-type BuildExtra struct {
+type ImageBuildExtra struct {
 	Image interface{} `json:"image"` // No extra info tracked at build level.
 }
 
-type Build struct {
-	Name      string     `json:"name"`
-	Version   string     `json:"version"`
-	Release   string     `json:"release"`
-	Source    string     `json:"source"`
-	StartTime int64      `json:"start_time"`
-	EndTime   int64      `json:"end_time"`
-	Extra     BuildExtra `json:"extra"`
+type ImageBuild struct {
+	BuildID   uint64          `json:"build_id"`
+	Name      string          `json:"name"`
+	Version   string          `json:"version"`
+	Release   string          `json:"release"`
+	Source    string          `json:"source"`
+	StartTime int64           `json:"start_time"`
+	EndTime   int64           `json:"end_time"`
+	Extra     ImageBuildExtra `json:"extra"`
 }
 
 type Host struct {
@@ -43,7 +44,7 @@ type Host struct {
 }
 
 type ContentGenerator struct {
-	Name    string `json:"name"`
+	Name    string `json:"name"` // Must be 'osbuild'.
 	Version string `json:"version"`
 }
 
@@ -57,12 +58,12 @@ type Tool struct {
 	Version string `json:"version"`
 }
 
-type Component struct {
+type RPM struct {
 	Type      string  `json:"type"` // must be 'rpm'
 	Name      string  `json:"name"`
 	Version   string  `json:"version"`
 	Release   string  `json:"release"`
-	Epoch     *uint64 `json:"epoch"`
+	Epoch     *string `json:"epoch,omitempty"`
 	Arch      string  `json:"arch"`
 	Sigmd5    string  `json:"sigmd5"`
 	Signature *string `json:"signature"`
@@ -74,35 +75,40 @@ type BuildRoot struct {
 	ContentGenerator ContentGenerator `json:"content_generator"`
 	Container        Container        `json:"container"`
 	Tools            []Tool           `json:"tools"`
-	Components       []Component      `json:"components"`
+	RPMs             []RPM            `json:"components"`
 }
 
-type OutputExtraImageInfo struct {
+type ImageExtraInfo struct {
 	// TODO: Ideally this is where the pipeline would be passed.
 	Arch string `json:"arch"` // TODO: why?
 }
 
-type OutputExtra struct {
-	Image OutputExtraImageInfo `json:"image"`
+type ImageExtra struct {
+	Info ImageExtraInfo `json:"image"`
 }
 
-type Output struct {
-	BuildRootID  uint64      `json:"buildroot_id"`
-	Filename     string      `json:"filename"`
-	FileSize     uint64      `json:"filesize"`
-	Arch         string      `json:"arch"`
-	ChecksumType string      `json:"checksum_type"` // must be 'md5'
-	MD5          string      `json:"checksum"`
-	Type         string      `json:"type"`
-	Components   []Component `json:"component"`
-	Extra        OutputExtra `json:"extra"`
+type Image struct {
+	BuildRootID  uint64     `json:"buildroot_id"`
+	Filename     string     `json:"filename"`
+	FileSize     uint64     `json:"filesize"`
+	Arch         string     `json:"arch"`
+	ChecksumType string     `json:"checksum_type"` // must be 'md5'
+	MD5          string     `json:"checksum"`
+	Type         string     `json:"type"`
+	RPMs         []RPM      `json:"component"`
+	Extra        ImageExtra `json:"extra"`
 }
 
 type Metadata struct {
 	MetadataVersion int         `json:"metadata_version"` // must be '0'
-	Build           Build       `json:"build"`
+	ImageBuild      ImageBuild  `json:"build"`
 	BuildRoots      []BuildRoot `json:"buildroots"`
-	Output          []Output    `json:"output"`
+	Images          []Image     `json:"output"`
+}
+
+type CGInitBuildResult struct {
+	BuildID int    `xmlrpc:"build_id"`
+	Token   string `xmlrpc:"token"`
 }
 
 type CGImportResult struct {
@@ -209,13 +215,36 @@ func (k *Koji) Logout() error {
 	return nil
 }
 
+// CGInitBuild reserves a build ID and initializes a build
+func (k *Koji) CGInitBuild(taskID *int, name, version, release string) (*CGInitBuildResult, error) {
+	var buildInfo struct {
+		TaskID  *int   `xmlrpc:"task_id,omitempty"`
+		Name    string `xmlrpc:"name"`
+		Version string `xmlrpc:"version"`
+		Release string `xmlrpc:"release"`
+	}
+
+	buildInfo.TaskID = taskID
+	buildInfo.Name = name
+	buildInfo.Version = version
+	buildInfo.Release = release
+
+	var result CGInitBuildResult
+	err := k.xmlrpc.Call("CGInitBuild", []interface{}{"osbuild", buildInfo}, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // CGImport imports previously uploaded content, by specifying its metadata, and the temporary
 // directory where it is located.
-func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, output []Output, directory string) (*CGImportResult, error) {
+func (k *Koji) CGImport(build ImageBuild, buildRoots []BuildRoot, images []Image, directory, token string) (*CGImportResult, error) {
 	m := &Metadata{
-		Build:      build,
+		ImageBuild: build,
 		BuildRoots: buildRoots,
-		Output:     output,
+		Images:     images,
 	}
 	metadata, err := json.Marshal(m)
 	if err != nil {
@@ -223,7 +252,7 @@ func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, output []Output, di
 	}
 
 	var result CGImportResult
-	err = k.xmlrpc.Call("CGImport", []interface{}{string(metadata), directory}, &result)
+	err = k.xmlrpc.Call("CGImport", []interface{}{string(metadata), directory, token}, &result)
 	if err != nil {
 		return nil, err
 	}

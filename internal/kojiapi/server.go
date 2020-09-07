@@ -4,8 +4,10 @@
 package kojiapi
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -126,10 +129,40 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only single-image composes are currently supported", http.StatusBadRequest)
 		return
 	}
+
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+	}
+
+	k, err := koji.NewFromGSSAPI(request.Koji.Server, &koji.GSSAPICredentials{}, transport)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Could not log into Koji: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	defer func() {
+		err := k.Logout()
+		if err != nil {
+			log.Printf("koji logout failed: %v", err)
+		}
+	}()
+
+	buildInfo, err := k.CGInitBuild(&request.Koji.TaskId, request.Name, request.Version, request.Release)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Could not initialize build with koji: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	id, err := server.workers.Enqueue(ir.manifest, []*target.Target{
 		target.NewKojiTarget(&target.KojiTargetOptions{
-			BuildID:         uint64(request.Koji.BuildId),
-			Token:           request.Koji.Token,
+			BuildID:         uint64(buildInfo.BuildID),
+			Token:           buildInfo.Token,
+			Name:            request.Name,
+			Version:         request.Version,
+			Release:         request.Release,
 			Filename:        ir.filename,
 			UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
 			Server:          request.Koji.Server,
@@ -142,6 +175,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 
 	var response ComposeResponse
 	response.Id = id.String()
+	response.KojiBuildId = buildInfo.BuildID
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(response)

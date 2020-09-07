@@ -81,7 +81,7 @@ func TestKojiImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// Import the build
-	build := koji.Build{
+	build := koji.ImageBuild{
 		Name:      buildName,
 		Version:   "1",
 		Release:   "1",
@@ -103,11 +103,11 @@ func TestKojiImport(t *testing.T) {
 				Type: "nspawn",
 				Arch: "noarch",
 			},
-			Tools:      []koji.Tool{},
-			Components: []koji.Component{},
+			Tools: []koji.Tool{},
+			RPMs:  []koji.RPM{},
 		},
 	}
-	output := []koji.Output{
+	output := []koji.Image{
 		{
 			BuildRootID:  1,
 			Filename:     filename,
@@ -116,16 +116,21 @@ func TestKojiImport(t *testing.T) {
 			ChecksumType: "md5",
 			MD5:          hash,
 			Type:         "image",
-			Components:   []koji.Component{},
-			Extra: koji.OutputExtra{
-				Image: koji.OutputExtraImageInfo{
+			RPMs:         []koji.RPM{},
+			Extra: koji.ImageExtra{
+				Info: koji.ImageExtraInfo{
 					Arch: "noarch",
 				},
 			},
 		},
 	}
 
-	result, err := k.CGImport(build, buildRoots, output, uploadDirectory)
+	initResult, err := k.CGInitBuild(nil, build.Name, build.Version, build.Release)
+	require.NoError(t, err)
+
+	build.BuildID = uint64(initResult.BuildID)
+
+	importResult, err := k.CGImport(build, buildRoots, output, uploadDirectory, initResult.Token)
 	require.NoError(t, err)
 
 	// check if the build is really there:
@@ -136,7 +141,7 @@ func TestKojiImport(t *testing.T) {
 		"--keytab", credentials.KeyTab,
 		"--principal", credentials.Principal,
 		"list-builds",
-		"--buildid", strconv.Itoa(result.BuildID),
+		"--buildid", strconv.Itoa(importResult.BuildID),
 	)
 
 	// sample output:
