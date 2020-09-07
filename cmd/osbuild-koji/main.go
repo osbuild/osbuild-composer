@@ -57,7 +57,7 @@ func main() {
 		return
 	}
 
-	build := koji.Build{
+	build := koji.ImageBuild{
 		Name:      name,
 		Version:   version,
 		Release:   release,
@@ -79,11 +79,11 @@ func main() {
 				Type: "nspawn",
 				Arch: arch,
 			},
-			Tools:      []koji.Tool{},
-			Components: []koji.Component{},
+			Tools: []koji.Tool{},
+			RPMs:  []koji.RPM{},
 		},
 	}
-	output := []koji.Output{
+	output := []koji.Image{
 		{
 			BuildRootID:  1,
 			Filename:     path.Base(filename),
@@ -92,20 +92,28 @@ func main() {
 			ChecksumType: "md5",
 			MD5:          hash,
 			Type:         "image",
-			Components:   []koji.Component{},
-			Extra: koji.OutputExtra{
-				Image: koji.OutputExtraImageInfo{
+			RPMs:         []koji.RPM{},
+			Extra: koji.ImageExtra{
+				Info: koji.ImageExtraInfo{
 					Arch: arch,
 				},
 			},
 		},
 	}
 
-	result, err := k.CGImport(build, buildRoots, output, dir)
+	initResult, err := k.CGInitBuild(nil, build.Name, build.Version, build.Release)
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
-	fmt.Printf("Success, build id: %d\n", result.BuildID)
+	build.BuildID = uint64(initResult.BuildID)
+
+	importResult, err := k.CGImport(build, buildRoots, output, dir, initResult.Token)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	fmt.Printf("Success, build id: %d\n", importResult.BuildID)
 }
