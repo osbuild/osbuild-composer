@@ -69,6 +69,29 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
+func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
+	rpms := make([]koji.RPM, 0)
+	for _, stage := range stages {
+		switch metadata := stage.Metadata.(type) {
+		case osbuild.RPMStageMetadata:
+			for _, pkg := range metadata.Packages {
+				rpms = append(rpms, koji.RPM{
+					Type:    "rpm",
+					Name:    pkg.Name,
+					Epoch:   pkg.Epoch,
+					Version: pkg.Version,
+					Release: pkg.Release,
+					Arch:    pkg.Arch,
+					Sigmd5:  pkg.SigMD5,
+				})
+			}
+		default:
+			continue
+		}
+	}
+	return rpms
+}
+
 func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
@@ -227,7 +250,7 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 						Arch: "noarch",
 					},
 					Tools: []koji.Tool{},
-					RPMs:  []koji.RPM{},
+					RPMs:  osbuildStagesToRPMs(result.Build.Stages),
 				},
 			}
 			output := []koji.Image{
@@ -239,7 +262,7 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 					ChecksumType: "md5",
 					MD5:          hash,
 					Type:         "image",
-					RPMs:         []koji.RPM{},
+					RPMs:         osbuildStagesToRPMs(result.Stages),
 					Extra: koji.ImageExtra{
 						Info: koji.ImageExtraInfo{
 							Arch: "noarch",
