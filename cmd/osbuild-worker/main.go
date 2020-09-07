@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -67,7 +68,7 @@ func (e *TargetsError) Error() string {
 	return errString
 }
 
-func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*osbuild.Result, error) {
+func RunJob(token uuid.UUID, manifest distro.Manifest, targets []*target.Target, store string, uploadFunc func(uuid.UUID, string, io.Reader) error) (*osbuild.Result, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
@@ -79,14 +80,14 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 		}
 	}()
 
-	result, err := RunOSBuild(job.Manifest, store, outputDirectory, os.Stderr)
+	result, err := RunOSBuild(manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
 
 	var r []error
 
-	for _, t := range job.Targets {
+	for _, t := range targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
 			var f *os.File
@@ -105,7 +106,7 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 				}
 			}
 
-			err = uploadFunc(job.Id, options.Filename, f)
+			err = uploadFunc(token, options.Filename, f)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -120,7 +121,7 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 			}
 
 			if options.Key == "" {
-				options.Key = job.Id.String()
+				options.Key = token.String()
 			}
 
 			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
@@ -180,11 +181,11 @@ func RunJob(job *worker.Job, store string, uploadFunc func(uuid.UUID, string, io
 // It would be cleaner to kill the osbuild process using (`exec.CommandContext`
 // or similar), but osbuild does not currently support this. Exiting here will
 // make systemd clean up the whole cgroup and restart this service.
-func WatchJob(ctx context.Context, client *worker.Client, job *worker.Job) {
+func WatchJob(ctx context.Context, client *worker.Client, token uuid.UUID) {
 	for {
 		select {
 		case <-time.After(15 * time.Second):
-			if client.JobCanceled(job) {
+			if client.JobCanceled(token) {
 				log.Println("Job was canceled. Exiting.")
 				os.Exit(0)
 			}
@@ -238,18 +239,18 @@ func main() {
 
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.AddJob()
+		token, manifest, targets, err := client.RequestJob()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Running job %s\n", job.Id)
+		fmt.Printf("Running job %s\n", token)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		go WatchJob(ctx, client, job)
+		go WatchJob(ctx, client, token)
 
 		var status common.ImageBuildState
-		result, err := RunJob(job, store, client.UploadImage)
+		result, err := RunJob(token, manifest, targets, store, client.UploadImage)
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
@@ -275,14 +276,14 @@ func main() {
 			// flag to indicate all error kinds.
 			result.Success = false
 		} else {
-			log.Printf("  🎉 Job completed successfully: %s", job.Id)
+			log.Printf("  🎉 Job completed successfully: %s", token)
 			status = common.IBFinished
 		}
 
 		// signal to WatchJob() that it can stop watching
 		cancel()
 
-		err = client.UpdateJob(job, status, result)
+		err = client.UpdateJob(token, status, result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
 		}

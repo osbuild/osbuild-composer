@@ -34,18 +34,14 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-type addJobRequest struct {
-}
-
-type addJobResponse struct {
-	Id       uuid.UUID        `json:"id"`
+type requestJobResponse struct {
+	Token    uuid.UUID        `json:"token"`
 	Manifest distro.Manifest  `json:"manifest"`
 	Targets  []*target.Target `json:"targets,omitempty"`
 }
 
-type jobResponse struct {
-	Id       uuid.UUID `json:"id"`
-	Canceled bool      `json:"canceled"`
+type getJobResponse struct {
+	Canceled bool `json:"canceled"`
 }
 
 type updateJobRequest struct {

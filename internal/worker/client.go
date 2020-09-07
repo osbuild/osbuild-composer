@@ -23,12 +23,6 @@ type Client struct {
 	api *api.Client
 }
 
-type Job struct {
-	Id       uuid.UUID
-	Manifest distro.Manifest
-	Targets  []*target.Target
-}
-
 func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
 	httpClient := http.Client{
 		Transport: &http.Transport{
@@ -61,34 +55,30 @@ func NewClientUnix(path string) *Client {
 	return &Client{c}
 }
 
-func (c *Client) AddJob() (*Job, error) {
-	response, err := c.api.PostJob(context.Background(), api.PostJobJSONRequestBody{})
+func (c *Client) RequestJob() (uuid.UUID, distro.Manifest, []*target.Target, error) {
+	response, err := c.api.RequestJob(context.Background(), api.RequestJobJSONRequestBody{})
 	if err != nil {
-		return nil, err
+		return uuid.Nil, nil, nil, err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
 		var er errorResponse
 		_ = json.NewDecoder(response.Body).Decode(&er)
-		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
+		return uuid.Nil, nil, nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
 	}
 
-	var jr addJobResponse
+	var jr requestJobResponse
 	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, nil, nil, err
 	}
 
-	return &Job{
-		jr.Id,
-		jr.Manifest,
-		jr.Targets,
-	}, nil
+	return jr.Token, jr.Manifest, jr.Targets, nil
 }
 
-func (c *Client) JobCanceled(job *Job) bool {
-	response, err := c.api.GetJob(context.Background(), job.Id.String())
+func (c *Client) JobCanceled(token uuid.UUID) bool {
+	response, err := c.api.GetJob(context.Background(), token.String())
 	if err != nil {
 		return true
 	}
@@ -98,7 +88,7 @@ func (c *Client) JobCanceled(job *Job) bool {
 		return true
 	}
 
-	var jr jobResponse
+	var jr getJobResponse
 	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
 		return true
@@ -107,8 +97,8 @@ func (c *Client) JobCanceled(job *Job) bool {
 	return jr.Canceled
 }
 
-func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbuild.Result) error {
-	response, err := c.api.UpdateJob(context.Background(), job.Id.String(), api.UpdateJobJSONRequestBody{
+func (c *Client) UpdateJob(token uuid.UUID, status common.ImageBuildState, result *osbuild.Result) error {
+	response, err := c.api.UpdateJob(context.Background(), token.String(), api.UpdateJobJSONRequestBody{
 		Result: result,
 		Status: status.ToString(),
 	})
@@ -123,9 +113,9 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbu
 	return nil
 }
 
-func (c *Client) UploadImage(job uuid.UUID, name string, reader io.Reader) error {
-	_, err := c.api.PostJobArtifactWithBody(context.Background(),
-		job.String(), name, "application/octet-stream", reader)
+func (c *Client) UploadImage(token uuid.UUID, name string, reader io.Reader) error {
+	_, err := c.api.UploadJobArtifactWithBody(context.Background(),
+		token.String(), name, "application/octet-stream", reader)
 
 	return err
 }

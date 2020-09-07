@@ -27,18 +27,18 @@ paths:
       description: Simple status handler to check whether the service is up.
   /jobs:
     post:
-      summary: create-job
+      summary: Request a job
       tags: []
       responses:
-        '200':
-          description: OK
+        '201':
+          description: Created
           content:
             application/json:
               schema:
                 type: object
                 additionalProperties: false
                 properties:
-                  id:
+                  token:
                     type: string
                     format: uuid
                   manifest: {}
@@ -46,26 +46,27 @@ paths:
                     type: array
                     items: {}
                 required:
-                  - id
+                  - token
                   - manifest
-                  - targets
-      operationId: PostJob
+      operationId: RequestJob
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties: {}
+              additionalProperties: false
+        description: ''
+      description: Requests a job. This operation blocks until a job is available.
     parameters: []
-  '/jobs/{job_id}':
+  '/jobs/{token}':
     parameters:
       - schema:
           type: string
-        name: job_id
+        name: token
         in: path
         required: true
     get:
-      summary: get-job
+      summary: Get running job
       tags: []
       responses:
         '200':
@@ -75,17 +76,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: string
-                    format: uuid
                   canceled:
                     type: boolean
                 required:
-                  - id
                   - canceled
       operationId: GetJob
+      description: ''
     patch:
-      summary: update-job
+      summary: Update a running job
       tags: []
       responses: {}
       operationId: UpdateJob
@@ -106,25 +104,25 @@ paths:
               required:
                 - status
                 - result
-  '/jobs/{job_id}/artifacts/{name}':
+  '/jobs/{token}/artifacts/{name}':
     parameters:
-      - schema:
-          type: string
-        name: job_id
-        in: path
-        required: true
       - schema:
           type: string
         name: name
         in: path
         required: true
-    post:
-      summary: add-image
+      - schema:
+          type: string
+        name: token
+        in: path
+        required: true
+    put:
+      summary: Upload an artifact
       tags: []
       responses:
         '200':
           description: OK
-      operationId: PostJobArtifact
+      operationId: UploadJobArtifact
       requestBody:
         content:
           application/octet-stream:
