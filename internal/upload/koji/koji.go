@@ -305,20 +305,20 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	u.RawQuery = q.Encode()
 
 	client := http.Client{Transport: k.transport}
-	resp, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
+	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer respData.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(respData.Body)
 	if err != nil {
 		return err
 	}
 
-	err = xmlrpc.Response.Err(body)
-	if err != nil {
-		return err
+	resp := xmlrpc.NewResponse(body)
+	if resp.Failed() {
+		return resp.Err()
 	}
 
 	var reply struct {
@@ -326,7 +326,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 		HexDigest string `xmlrpc:"hexdigest"`
 	}
 
-	err = xmlrpc.Response.Unmarshal(body, &reply)
+	err = resp.Unmarshal(&reply)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
 	}

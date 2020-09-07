@@ -130,9 +130,8 @@ func (dec *decoder) decodeValue(val reflect.Value) error {
 				ismap = true
 			} else if checkType(val, reflect.Interface) == nil && val.IsNil() {
 				var dummy map[string]interface{}
-				valType = reflect.TypeOf(dummy)
-				pmap = reflect.New(valType).Elem()
-				val.Set(pmap)
+				pmap = reflect.New(reflect.TypeOf(dummy)).Elem()
+				valType = pmap.Type()
 				ismap = true
 			} else {
 				return err

@@ -31,7 +31,7 @@ type clientCodec struct {
 	responses map[uint64]*http.Response
 	mutex     sync.Mutex
 
-	response Response
+	response *Response
 
 	// ready presents channel, that is used to link request and it`s response.
 	ready chan uint64
@@ -43,14 +43,14 @@ type clientCodec struct {
 func (codec *clientCodec) WriteRequest(request *rpc.Request, args interface{}) (err error) {
 	httpRequest, err := NewRequest(codec.url.String(), request.ServiceMethod, args)
 
-	if err != nil {
-		return err
-	}
-
 	if codec.cookies != nil {
 		for _, cookie := range codec.cookies.Cookies(codec.url) {
 			httpRequest.AddCookie(cookie)
 		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	var httpResponse *http.Response
@@ -75,38 +75,42 @@ func (codec *clientCodec) WriteRequest(request *rpc.Request, args interface{}) (
 
 func (codec *clientCodec) ReadResponseHeader(response *rpc.Response) (err error) {
 	var seq uint64
+
 	select {
 	case seq = <-codec.ready:
 	case <-codec.close:
 		return errors.New("codec is closed")
 	}
-	response.Seq = seq
 
 	codec.mutex.Lock()
 	httpResponse := codec.responses[seq]
-	delete(codec.responses, seq)
 	codec.mutex.Unlock()
 
-	defer httpResponse.Body.Close()
-
 	if httpResponse.StatusCode < 200 || httpResponse.StatusCode >= 300 {
-		response.Error = fmt.Sprintf("request error: bad status code - %d", httpResponse.StatusCode)
-		return nil
+		return fmt.Errorf("request error: bad status code - %d", httpResponse.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(httpResponse.Body)
+	respData, err := ioutil.ReadAll(httpResponse.Body)
+
 	if err != nil {
-		response.Error = err.Error()
-		return nil
+		return err
 	}
 
-	resp := Response(body)
-	if err := resp.Err(); err != nil {
-		response.Error = err.Error()
-		return nil
+	httpResponse.Body.Close()
+
+	resp := NewResponse(respData)
+
+	if resp.Failed() {
+		response.Error = fmt.Sprintf("%v", resp.Err())
 	}
 
 	codec.response = resp
+
+	response.Seq = seq
+
+	codec.mutex.Lock()
+	delete(codec.responses, seq)
+	codec.mutex.Unlock()
 
 	return nil
 }
@@ -115,7 +119,12 @@ func (codec *clientCodec) ReadResponseBody(v interface{}) (err error) {
 	if v == nil {
 		return nil
 	}
-	return codec.response.Unmarshal(v)
+
+	if err = codec.response.Unmarshal(v); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (codec *clientCodec) Close() error {
