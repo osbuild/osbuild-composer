@@ -257,7 +257,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	token, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "%v", err)
+		return err
 	}
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
@@ -270,7 +270,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
 	}
 
 	jobId, err := h.server.RunningJob(token)
@@ -289,7 +289,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	status, err := h.server.JobStatus(jobId)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "error retrieving job status: %v", err)
+		return err
 	}
 
 	return ctx.JSON(http.StatusOK, getJobResponse{
@@ -300,7 +300,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	token, err := uuid.Parse(idstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse token: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
 	}
 
 	var body updateJobRequest
@@ -320,7 +320,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	if err != nil {
 		switch err {
 		case ErrTokenNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "job does not exist: %v", token)
+			return echo.NewHTTPError(http.StatusNotFound, "job does not exist")
 		default:
 			return err
 		}
@@ -332,7 +332,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
 	}
 
 	request := ctx.Request()
@@ -340,19 +340,19 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 	if h.server.artifactsDir == "" {
 		_, err := io.Copy(ioutil.Discard, request.Body)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "error discarding artifact: %v", err)
+			return fmt.Errorf("error discarding artifact: %v", err)
 		}
 		return ctx.NoContent(http.StatusOK)
 	}
 
 	f, err := os.Create(path.Join(h.server.artifactsDir, "tmp", token.String(), name))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create artifact file: %v", err)
+		return fmt.Errorf("cannot create artifact file: %v", err)
 	}
 
 	_, err = io.Copy(f, request.Body)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "error writing artifact file: %v", err)
+		return fmt.Errorf("error writing artifact file: %v", err)
 	}
 
 	return ctx.NoContent(http.StatusOK)
@@ -373,7 +373,7 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	err := json.NewDecoder(request.Body).Decode(i)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse request body: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse request body: "+err.Error())
 	}
 
 	return nil
