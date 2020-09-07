@@ -31,15 +31,15 @@ func TestErrors(t *testing.T) {
 		// Bogus path
 		{"GET", "/foo", ``, http.StatusNotFound},
 		// Create job with invalid body
-		{"POST", "/job-queue/v1/jobs", ``, http.StatusBadRequest},
+		{"POST", "/jobs", ``, http.StatusBadRequest},
 		// Wrong method
-		{"GET", "/job-queue/v1/jobs", ``, http.StatusMethodNotAllowed},
+		{"GET", "/jobs", ``, http.StatusMethodNotAllowed},
 		// Update job with invalid ID
-		{"PATCH", "/job-queue/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
+		{"PATCH", "/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
 		// Update job that does not exist, with invalid body
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
+		{"PATCH", "/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
 		// Update job that does not exist
-		{"PATCH", "/job-queue/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
+		{"PATCH", "/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
 	}
 
 	for _, c := range cases {
@@ -67,10 +67,10 @@ func TestCreate(t *testing.T) {
 	id, err := server.Enqueue(manifest, nil)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/jobs", `{}`, http.StatusCreated,
 		`{"id":"`+id.String()+`","manifest":{"sources":{},"pipeline":{}}}`, "created")
 
-	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/job-queue/v1/jobs/%s", id), `{}`, http.StatusOK,
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/jobs/%s", id), `{}`, http.StatusOK,
 		`{"id":"`+id.String()+`","canceled":false}`)
 }
 
@@ -93,13 +93,13 @@ func TestCancel(t *testing.T) {
 	id, err := server.Enqueue(manifest, nil)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/job-queue/v1/jobs", `{}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/jobs", `{}`, http.StatusCreated,
 		`{"id":"`+id.String()+`","manifest":{"sources":{},"pipeline":{}}}`, "created")
 
 	err = server.Cancel(id)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/job-queue/v1/jobs/%s", id), `{}`, http.StatusOK,
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/jobs/%s", id), `{}`, http.StatusOK,
 		`{"id":"`+id.String()+`","canceled":true}`)
 }
 
@@ -126,14 +126,14 @@ func testUpdateTransition(t *testing.T, from, to string, expectedStatus int) {
 		require.NoError(t, err)
 
 		if from != "WAITING" {
-			test.SendHTTP(server, false, "POST", "/job-queue/v1/jobs", `{}`)
+			test.SendHTTP(server, false, "POST", "/jobs", `{}`)
 			if from != "RUNNING" {
-				test.SendHTTP(server, false, "PATCH", "/job-queue/v1/jobs/"+id.String(), `{"status":"`+from+`"}`)
+				test.SendHTTP(server, false, "PATCH", "/jobs/"+id.String(), `{"status":"`+from+`"}`)
 			}
 		}
 	}
 
-	test.TestRoute(t, server, false, "PATCH", "/job-queue/v1/jobs/"+id.String(), `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
+	test.TestRoute(t, server, false, "PATCH", "/jobs/"+id.String(), `{"status":"`+to+`"}`, expectedStatus, "{}", "message")
 }
 
 func TestUpdate(t *testing.T) {

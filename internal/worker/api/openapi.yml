@@ -25,7 +25,7 @@ paths:
                   - status
       operationId: get-status
       description: Simple status handler to check whether the service is up.
-  /job-queue/v1/jobs:
+  /jobs:
     post:
       summary: create-job
       tags: []
@@ -56,7 +56,7 @@ paths:
             schema:
               type: object
               properties: {}
-  '/job-queue/v1/jobs/{job_id}':
+  '/jobs/{job_id}':
     parameters:
       - schema:
           type: string
@@ -105,7 +105,7 @@ paths:
               required:
                 - status
                 - result
-  '/job-queue/v1/jobs/{job_id}/artifacts/{name}':
+  '/jobs/{job_id}/artifacts/{name}':
     parameters:
       - schema:
           type: string
