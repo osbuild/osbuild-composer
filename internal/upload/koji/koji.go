@@ -238,6 +238,33 @@ func (k *Koji) CGInitBuild(taskID *int, name, version, release string) (*CGInitB
 	return &result, nil
 }
 
+/* from `koji/__init__.py`
+BUILD_STATES = Enum((
+    'BUILDING',
+    'COMPLETE',
+    'DELETED',
+    'FAILED',
+    'CANCELED',
+))
+*/
+const (
+	_ = iota /* BUILDING */
+	_        /* COMPLETED */
+	_        /* DELETED */
+	buildStateFailed
+	buildStateCanceled
+)
+
+// CGFailBuild marks an in-progress build as failed
+func (k *Koji) CGFailBuild(buildID int, token string) error {
+	return k.xmlrpc.Call("CGRefundBuild", []interface{}{"osbuild", buildID, token, buildStateFailed}, nil)
+}
+
+// CGCancelBuild marks an in-progress build as cancelled, and
+func (k *Koji) CGCancelBuild(buildID int, token string) error {
+	return k.xmlrpc.Call("CGRefundBuild", []interface{}{"osbuild", buildID, token, buildStateCanceled}, nil)
+}
+
 // CGImport imports previously uploaded content, by specifying its metadata, and the temporary
 // directory where it is located.
 func (k *Koji) CGImport(build ImageBuild, buildRoots []BuildRoot, images []Image, directory, token string) (*CGImportResult, error) {
