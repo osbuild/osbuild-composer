@@ -62,7 +62,7 @@ func NewClientUnix(path string) *Client {
 }
 
 func (c *Client) AddJob() (*Job, error) {
-	response, err := c.api.PostJobQueueV1Jobs(context.Background(), api.PostJobQueueV1JobsJSONRequestBody{})
+	response, err := c.api.PostJob(context.Background(), api.PostJobJSONRequestBody{})
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (c *Client) AddJob() (*Job, error) {
 }
 
 func (c *Client) JobCanceled(job *Job) bool {
-	response, err := c.api.GetJobQueueV1JobsJobId(context.Background(), job.Id.String())
+	response, err := c.api.GetJob(context.Background(), job.Id.String())
 	if err != nil {
 		return true
 	}
@@ -108,7 +108,7 @@ func (c *Client) JobCanceled(job *Job) bool {
 }
 
 func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbuild.Result) error {
-	response, err := c.api.PatchJobQueueV1JobsJobId(context.Background(), job.Id.String(), api.PatchJobQueueV1JobsJobIdJSONRequestBody{
+	response, err := c.api.UpdateJob(context.Background(), job.Id.String(), api.UpdateJobJSONRequestBody{
 		Result: result,
 		Status: status.ToString(),
 	})
@@ -124,7 +124,7 @@ func (c *Client) UpdateJob(job *Job, status common.ImageBuildState, result *osbu
 }
 
 func (c *Client) UploadImage(job uuid.UUID, name string, reader io.Reader) error {
-	_, err := c.api.PostJobQueueV1JobsJobIdArtifactsNameWithBody(context.Background(),
+	_, err := c.api.PostJobArtifactWithBody(context.Background(),
 		job.String(), name, "application/octet-stream", reader)
 
 	return err

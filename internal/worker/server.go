@@ -164,7 +164,7 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 	})
 }
 
-func (h *apiHandlers) GetJobQueueV1JobsJobId(ctx echo.Context, jobId string) error {
+func (h *apiHandlers) GetJob(ctx echo.Context, jobId string) error {
 	id, err := uuid.Parse(jobId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
@@ -186,7 +186,7 @@ func (h *apiHandlers) GetJobQueueV1JobsJobId(ctx echo.Context, jobId string) err
 	})
 }
 
-func (h *apiHandlers) PostJobQueueV1Jobs(ctx echo.Context) error {
+func (h *apiHandlers) PostJob(ctx echo.Context) error {
 	var body addJobRequest
 	err := ctx.Bind(&body)
 	if err != nil {
@@ -206,7 +206,7 @@ func (h *apiHandlers) PostJobQueueV1Jobs(ctx echo.Context) error {
 	})
 }
 
-func (h *apiHandlers) PatchJobQueueV1JobsJobId(ctx echo.Context, jobId string) error {
+func (h *apiHandlers) UpdateJob(ctx echo.Context, jobId string) error {
 	id, err := uuid.Parse(jobId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
@@ -240,7 +240,7 @@ func (h *apiHandlers) PatchJobQueueV1JobsJobId(ctx echo.Context, jobId string) e
 	return ctx.JSON(http.StatusOK, updateJobResponse{})
 }
 
-func (h *apiHandlers) PostJobQueueV1JobsJobIdArtifactsName(ctx echo.Context, jobId string, name string) error {
+func (h *apiHandlers) PostJobArtifact(ctx echo.Context, jobId string, name string) error {
 	id, err := uuid.Parse(jobId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse compose id: %v", err)
