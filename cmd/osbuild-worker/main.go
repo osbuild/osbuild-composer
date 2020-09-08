@@ -120,18 +120,19 @@ func RunJob(token uuid.UUID, manifest distro.Manifest, targets []*target.Target,
 				continue
 			}
 
-			if options.Key == "" {
-				options.Key = token.String()
+			key := options.Key
+			if key == "" {
+				key = uuid.New().String()
 			}
 
-			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Key)
+			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, key)
 			if err != nil {
 				r = append(r, err)
 				continue
 			}
 
 			/* TODO: communicate back the AMI */
-			_, err = a.Register(t.ImageName, options.Bucket, options.Key)
+			_, err = a.Register(t.ImageName, options.Bucket, key)
 			if err != nil {
 				r = append(r, err)
 				continue
