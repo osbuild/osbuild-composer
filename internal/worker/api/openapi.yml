@@ -38,16 +38,17 @@ paths:
                 type: object
                 additionalProperties: false
                 properties:
-                  token:
-                    type: string
-                    format: uuid
                   manifest: {}
                   targets:
                     type: array
                     items: {}
+                  location:
+                    type: string
+                  artifact_location:
+                    type: string
                 required:
-                  - token
                   - manifest
+                  - location
       operationId: RequestJob
       requestBody:
         content:

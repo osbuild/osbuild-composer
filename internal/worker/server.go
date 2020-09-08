@@ -261,9 +261,10 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
-		Token:    token,
-		Manifest: jobArgs.Manifest,
-		Targets:  jobArgs.Targets,
+		Manifest:         jobArgs.Manifest,
+		Targets:          jobArgs.Targets,
+		Location:         fmt.Sprintf("/jobs/%v", token),
+		ArtifactLocation: fmt.Sprintf("/jobs/%v/artifacts/", token),
 	})
 }
 
