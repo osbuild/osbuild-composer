@@ -178,7 +178,7 @@ func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 
 // WithBootedImageInEC2 runs the function f in the context of booted
 // image in AWS EC2
-func WithBootedImageInEC2(e *ec2.EC2, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
+func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
 	// generate user data with given public key
 	userData, err := CreateUserData(publicKey)
 	if err != nil {
@@ -187,12 +187,6 @@ func WithBootedImageInEC2(e *ec2.EC2, imageDesc *imageDescription, publicKey str
 
 	// Security group must be now generated, because by default
 	// all traffic to EC2 instance is filtered.
-
-	securityGroupName, err := GenerateRandomString("osbuild-image-tests-security-group-")
-	if err != nil {
-		return fmt.Errorf("cannot generate a random name for the image: %#v", err)
-	}
-
 	// Firstly create a security group
 	securityGroup, err := e.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 		GroupName:   aws.String(securityGroupName),

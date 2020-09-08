@@ -133,6 +133,7 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "fedora31"
                     }
                     steps {
                         unstash 'fedora31'
@@ -182,6 +183,7 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "fedora32"
                     }
                     steps {
                         unstash 'fedora32'
@@ -246,6 +248,7 @@ pipeline {
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "rhel8"
                     }
                     steps {
                         unstash 'rhel8cdn'
@@ -300,6 +303,7 @@ pipeline {
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "rhel83"
                     }
                     steps {
                         unstash 'rhel83'
