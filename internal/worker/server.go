@@ -169,19 +169,19 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context) (uuid.UUID, *OSBuildJob, error) {
+func (s *Server) RequestJob(ctx context.Context) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
 	token := uuid.New()
 
 	var args OSBuildJob
 	jobId, err := s.jobs.Dequeue(ctx, []string{"osbuild"}, &args)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return uuid.Nil, uuid.Nil, nil, err
 	}
 
 	if s.artifactsDir != "" {
 		err := os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
 		if err != nil {
-			return uuid.Nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
+			return uuid.Nil, uuid.Nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
 		}
 	}
 
@@ -189,7 +189,7 @@ func (s *Server) RequestJob(ctx context.Context) (uuid.UUID, *OSBuildJob, error)
 	defer s.runningMutex.Unlock()
 	s.running[token] = jobId
 
-	return token, &args, nil
+	return token, jobId, &args, nil
 }
 
 func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
@@ -255,12 +255,13 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	token, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
+	token, jobId, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
+		Id:               jobId,
 		Manifest:         jobArgs.Manifest,
 		Targets:          jobArgs.Targets,
 		Location:         fmt.Sprintf("/jobs/%v", token),
