@@ -1,8 +1,6 @@
 package worker
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -35,9 +33,10 @@ type errorResponse struct {
 }
 
 type requestJobResponse struct {
-	Token    uuid.UUID        `json:"token"`
-	Manifest distro.Manifest  `json:"manifest"`
-	Targets  []*target.Target `json:"targets,omitempty"`
+	Manifest         distro.Manifest  `json:"manifest"`
+	Targets          []*target.Target `json:"targets,omitempty"`
+	Location         string           `json:"location"`
+	ArtifactLocation string           `json:"artifact_location"`
 }
 
 type getJobResponse struct {

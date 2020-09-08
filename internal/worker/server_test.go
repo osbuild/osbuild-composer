@@ -68,7 +68,7 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	test.TestRoute(t, server, false, "POST", "/jobs", `{}`, http.StatusCreated,
-		`{"manifest":{"sources":{},"pipeline":{}}}`, "token", "created")
+		`{"manifest":{"sources":{},"pipeline":{}}}`, "location", "artifact_location", "created")
 }
 
 func TestCancel(t *testing.T) {

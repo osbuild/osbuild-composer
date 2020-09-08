@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -9,8 +10,7 @@ import (
 	"io"
 	"net"
 	"net/http"
-
-	"github.com/google/uuid"
+	"net/url"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -20,26 +20,47 @@ import (
 )
 
 type Client struct {
-	api *api.Client
+	server    *url.URL
+	requester *http.Client
+}
+
+type Job interface {
+	OSBuildArgs() (distro.Manifest, []*target.Target, error)
+	Update(status common.ImageBuildState, result *osbuild.Result) error
+	Canceled() (bool, error)
+	UploadArtifact(name string, reader io.Reader) error
+}
+
+type job struct {
+	requester        *http.Client
+	manifest         distro.Manifest
+	targets          []*target.Target
+	location         string
+	artifactLocation string
 }
 
 func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
-	httpClient := http.Client{
+	server, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	requester := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: conf,
 		},
 	}
 
-	c, err := api.NewClient(baseURL, api.WithHTTPClient(&httpClient))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{c}, nil
+	return &Client{server, requester}, nil
 }
 
 func NewClientUnix(path string) *Client {
-	httpClient := http.Client{
+	server, err := url.Parse("http://localhost")
+	if err != nil {
+		panic(err)
+	}
+
+	requester := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial("unix", path)
@@ -47,64 +68,85 @@ func NewClientUnix(path string) *Client {
 		},
 	}
 
-	c, err := api.NewClient("http://localhost", api.WithHTTPClient(&httpClient))
+	return &Client{server, requester}
+}
+
+func (c *Client) RequestJob() (Job, error) {
+	url, err := c.server.Parse("/jobs")
+	if err != nil {
+		// This only happens when "/jobs" cannot be parsed.
+		panic(err)
+	}
+
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{})
 	if err != nil {
 		panic(err)
 	}
 
-	return &Client{c}
-}
-
-func (c *Client) RequestJob() (uuid.UUID, distro.Manifest, []*target.Target, error) {
-	response, err := c.api.RequestJob(context.Background(), api.RequestJobJSONRequestBody{})
+	response, err := c.requester.Post(url.String(), "application/json", &buf)
 	if err != nil {
-		return uuid.Nil, nil, nil, err
+		return nil, fmt.Errorf("error requesting job: %v", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
 		var er errorResponse
 		_ = json.NewDecoder(response.Body).Decode(&er)
-		return uuid.Nil, nil, nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
+		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
 	}
 
 	var jr requestJobResponse
 	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
-		return uuid.Nil, nil, nil, err
+		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
 
-	return jr.Token, jr.Manifest, jr.Targets, nil
+	location, err := c.server.Parse(jr.Location)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing location url in response: %v", err)
+	}
+
+	artifactLocation, err := c.server.Parse(jr.ArtifactLocation)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
+	}
+
+	return &job{
+		requester:        c.requester,
+		manifest:         jr.Manifest,
+		targets:          jr.Targets,
+		location:         location.String(),
+		artifactLocation: artifactLocation.String(),
+	}, nil
 }
 
-func (c *Client) JobCanceled(token uuid.UUID) bool {
-	response, err := c.api.GetJob(context.Background(), token.String())
-	if err != nil {
-		return true
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return true
-	}
-
-	var jr getJobResponse
-	err = json.NewDecoder(response.Body).Decode(&jr)
-	if err != nil {
-		return true
-	}
-
-	return jr.Canceled
+func (j *job) OSBuildArgs() (distro.Manifest, []*target.Target, error) {
+	return j.manifest, j.targets, nil
 }
 
-func (c *Client) UpdateJob(token uuid.UUID, status common.ImageBuildState, result *osbuild.Result) error {
-	response, err := c.api.UpdateJob(context.Background(), token.String(), api.UpdateJobJSONRequestBody{
+func (j *job) Update(status common.ImageBuildState, result *osbuild.Result) error {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(api.UpdateJobJSONRequestBody{
 		Result: result,
 		Status: status.ToString(),
 	})
 	if err != nil {
-		return err
+		panic(err)
 	}
+
+	req, err := http.NewRequest("PATCH", j.location, &buf)
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	response, err := j.requester.Do(req)
+	if err != nil {
+		return fmt.Errorf("error fetching job info: %v", err)
+	}
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		return errors.New("error setting job status")
@@ -113,9 +155,52 @@ func (c *Client) UpdateJob(token uuid.UUID, status common.ImageBuildState, resul
 	return nil
 }
 
-func (c *Client) UploadImage(token uuid.UUID, name string, reader io.Reader) error {
-	_, err := c.api.UploadJobArtifactWithBody(context.Background(),
-		token.String(), name, "application/octet-stream", reader)
+func (j *job) Canceled() (bool, error) {
+	response, err := j.requester.Get(j.location)
+	if err != nil {
+		return false, fmt.Errorf("error fetching job info: %v", err)
+	}
+	defer response.Body.Close()
 
-	return err
+	if response.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("unexpected return value: %v", response.StatusCode)
+	}
+
+	var jr getJobResponse
+	err = json.NewDecoder(response.Body).Decode(&jr)
+	if err != nil {
+		return false, fmt.Errorf("error parsing reponse: %v", err)
+	}
+
+	return jr.Canceled, nil
+}
+
+func (j *job) UploadArtifact(name string, reader io.Reader) error {
+	if j.artifactLocation == "" {
+		return fmt.Errorf("server does not accept artifacts for this job")
+	}
+
+	loc, err := url.Parse(j.artifactLocation)
+	if err != nil {
+		return fmt.Errorf("error parsing job location: %v", err)
+	}
+
+	loc, err = loc.Parse(url.PathEscape(name))
+	if err != nil {
+		panic(err)
+	}
+
+	req, err := http.NewRequest("PUT", loc.String(), reader)
+	if err != nil {
+		return fmt.Errorf("cannot create request: %v", err)
+	}
+
+	req.Header.Add("Content-Type", "application/octet-stream")
+
+	_, err = j.requester.Do(req)
+	if err != nil {
+		return fmt.Errorf("error uploading artifcat: %v", err)
+	}
+
+	return nil
 }
