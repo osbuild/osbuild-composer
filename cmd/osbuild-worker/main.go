@@ -253,7 +253,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Running next job\n")
+		fmt.Printf("Running job %v\n", job.Id())
 
 		ctx, cancel := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
@@ -285,7 +285,7 @@ func main() {
 			// flag to indicate all error kinds.
 			result.Success = false
 		} else {
-			log.Printf("  🎉 Job completed successfully")
+			log.Printf("  🎉 Job completed successfully: %v", job.Id())
 			status = common.IBFinished
 		}
 

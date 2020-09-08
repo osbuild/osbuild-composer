@@ -46,9 +46,13 @@ paths:
                     type: string
                   artifact_location:
                     type: string
+                  id:
+                    type: string
+                    format: uuid
                 required:
                   - manifest
                   - location
+                  - id
       operationId: RequestJob
       requestBody:
         content:

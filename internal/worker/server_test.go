@@ -68,7 +68,7 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	test.TestRoute(t, server, false, "POST", "/jobs", `{}`, http.StatusCreated,
-		`{"manifest":{"sources":{},"pipeline":{}}}`, "location", "artifact_location", "created")
+		`{"manifest":{"sources":{},"pipeline":{}}}`, "id", "location", "artifact_location")
 }
 
 func TestCancel(t *testing.T) {
@@ -90,8 +90,9 @@ func TestCancel(t *testing.T) {
 	jobId, err := server.Enqueue(manifest, nil)
 	require.NoError(t, err)
 
-	token, _, err := server.RequestJob(context.Background())
+	token, j, _, err := server.RequestJob(context.Background())
 	require.NoError(t, err)
+	require.Equal(t, jobId, j)
 
 	err = server.Cancel(jobId)
 	require.NoError(t, err)

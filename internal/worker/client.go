@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -25,6 +26,7 @@ type Client struct {
 }
 
 type Job interface {
+	Id() uuid.UUID
 	OSBuildArgs() (distro.Manifest, []*target.Target, error)
 	Update(status common.ImageBuildState, result *osbuild.Result) error
 	Canceled() (bool, error)
@@ -33,6 +35,7 @@ type Job interface {
 
 type job struct {
 	requester        *http.Client
+	id               uuid.UUID
 	manifest         distro.Manifest
 	targets          []*target.Target
 	location         string
@@ -114,11 +117,16 @@ func (c *Client) RequestJob() (Job, error) {
 
 	return &job{
 		requester:        c.requester,
+		id:               jr.Id,
 		manifest:         jr.Manifest,
 		targets:          jr.Targets,
 		location:         location.String(),
 		artifactLocation: artifactLocation.String(),
 	}, nil
+}
+
+func (j *job) Id() uuid.UUID {
+	return j.id
 }
 
 func (j *job) OSBuildArgs() (distro.Manifest, []*target.Target, error) {
