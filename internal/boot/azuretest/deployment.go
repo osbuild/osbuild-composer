@@ -41,7 +41,7 @@ func newDeploymentParameter(value string) deploymentParameter {
 }
 
 // struct for encoding deployment parameters
-type deploymentParameters struct {
+type DeploymentParameters struct {
 	NetworkInterfaceName     deploymentParameter `json:"networkInterfaceName"`
 	NetworkSecurityGroupName deploymentParameter `json:"networkSecurityGroupName"`
 	VirtualNetworkName       deploymentParameter `json:"virtualNetworkName"`
