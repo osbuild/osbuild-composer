@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -156,6 +157,125 @@ func deleteResource(client resources.Client, id string, apiVersion string) error
 	return nil
 }
 
+func NewDeploymentParameters(creds *azureCredentials, imageName, testId, publicKey string) DeploymentParameters {
+	// Azure requires a lot of names - for a virtual machine, a virtual network,
+	// a virtual interface and so on and so forth.
+	// Let's create all of them here from the test id so we can delete them
+	// later.
+
+	imagePath := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", creds.StorageAccount, creds.ContainerName, imageName)
+
+	return DeploymentParameters{
+		NetworkInterfaceName:     newDeploymentParameter("iface-" + testId),
+		NetworkSecurityGroupName: newDeploymentParameter("nsg-" + testId),
+		VirtualNetworkName:       newDeploymentParameter("vnet-" + testId),
+		PublicIPAddressName:      newDeploymentParameter("ip-" + testId),
+		VirtualMachineName:       newDeploymentParameter("vm-" + testId),
+		DiskName:                 newDeploymentParameter("disk-" + testId),
+		ImageName:                newDeploymentParameter("image-" + testId),
+		Location:                 newDeploymentParameter(creds.Location),
+		ImagePath:                newDeploymentParameter(imagePath),
+		AdminUsername:            newDeploymentParameter("redhat"),
+		AdminPublicKey:           newDeploymentParameter(publicKey),
+	}
+}
+
+func CleanUpBootedVM(creds *azureCredentials, parameters DeploymentParameters, authorizer autorest.Authorizer, testId string) (retErr error) {
+	deploymentName := testId
+
+	deploymentsClient := resources.NewDeploymentsClient(creds.SubscriptionID)
+	deploymentsClient.Authorizer = authorizer
+
+	resourcesClient := resources.NewClient(creds.SubscriptionID)
+	resourcesClient.Authorizer = authorizer
+
+	// This array specifies all the resources we need to delete. The
+	// order is important, e.g. one cannot delete a network interface
+	// that is still attached to a virtual machine.
+	resourcesToDelete := []struct {
+		resType    string
+		name       string
+		apiVersion string
+	}{
+		{
+			resType:    "Microsoft.Compute/virtualMachines",
+			name:       parameters.VirtualMachineName.Value,
+			apiVersion: "2019-07-01",
+		},
+		{
+			resType:    "Microsoft.Network/networkInterfaces",
+			name:       parameters.NetworkInterfaceName.Value,
+			apiVersion: "2019-09-01",
+		},
+		{
+			resType:    "Microsoft.Network/publicIPAddresses",
+			name:       parameters.PublicIPAddressName.Value,
+			apiVersion: "2019-09-01",
+		},
+		{
+			resType:    "Microsoft.Network/networkSecurityGroups",
+			name:       parameters.NetworkSecurityGroupName.Value,
+			apiVersion: "2019-09-01",
+		},
+		{
+			resType:    "Microsoft.Network/virtualNetworks",
+			name:       parameters.VirtualNetworkName.Value,
+			apiVersion: "2019-09-01",
+		},
+		{
+			resType:    "Microsoft.Compute/disks",
+			name:       parameters.DiskName.Value,
+			apiVersion: "2019-07-01",
+		},
+		{
+			resType:    "Microsoft.Compute/images",
+			name:       parameters.ImageName.Value,
+			apiVersion: "2019-07-01",
+		},
+	}
+
+	// Delete all the resources
+	for _, resourceToDelete := range resourcesToDelete {
+		resourceID := fmt.Sprintf(
+			"subscriptions/%s/resourceGroups/%s/providers/%s/%s",
+			creds.SubscriptionID,
+			creds.ResourceGroup,
+			resourceToDelete.resType,
+			resourceToDelete.name,
+		)
+
+		err := deleteResource(resourcesClient, resourceID, resourceToDelete.apiVersion)
+		if err != nil {
+			log.Printf("deleting the resource %s errored: %v", resourceToDelete.name, err)
+			retErr = wrapErrorf(retErr, "cannot delete the resource %s: %v", resourceToDelete.name, err)
+			// do not return here, try deleting as much as possible
+		}
+	}
+
+	// Delete the deployment
+	// This actually does not delete any resources created by the
+	// deployment as one might think. Therefore the code above
+	// is needed.
+	result, err := deploymentsClient.Delete(context.Background(), creds.ResourceGroup, deploymentName)
+	if err != nil {
+		retErr = wrapErrorf(retErr, "cannot create the request for the deployment deletion: %v", err)
+		return
+	}
+
+	err = result.WaitForCompletionRef(context.Background(), deploymentsClient.Client)
+	if err != nil {
+		retErr = wrapErrorf(retErr, "waiting for the deployment deletion failed: %v", err)
+		return
+	}
+
+	_, err = result.Result(deploymentsClient)
+	if err != nil {
+		retErr = wrapErrorf(retErr, "cannot retrieve the deployment deletion result: %v", err)
+		return
+	}
+	return
+}
+
 // WithBootedImageInAzure runs the function f in the context of booted
 // image in Azure
 func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKeyFile string, f func(address string) error) (retErr error) {
@@ -175,29 +295,11 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 		return err
 	}
 
-	// Azure requires a lot of names - for a virtual machine, a virtual network,
-	// a virtual interface and so on and so forth.
-	// Let's create all of them here from the test id so we can delete them
-	// later.
-	deploymentName := testId
-	imagePath := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", creds.StorageAccount, creds.ContainerName, imageName)
-
-	parameters := deploymentParameters{
-		NetworkInterfaceName:     newDeploymentParameter("iface-" + testId),
-		NetworkSecurityGroupName: newDeploymentParameter("nsg-" + testId),
-		VirtualNetworkName:       newDeploymentParameter("vnet-" + testId),
-		PublicIPAddressName:      newDeploymentParameter("ip-" + testId),
-		VirtualMachineName:       newDeploymentParameter("vm-" + testId),
-		DiskName:                 newDeploymentParameter("disk-" + testId),
-		ImageName:                newDeploymentParameter("image-" + testId),
-		Location:                 newDeploymentParameter(creds.Location),
-		ImagePath:                newDeploymentParameter(imagePath),
-		AdminUsername:            newDeploymentParameter("redhat"),
-		AdminPublicKey:           newDeploymentParameter(publicKey),
-	}
-
 	deploymentsClient := resources.NewDeploymentsClient(creds.SubscriptionID)
 	deploymentsClient.Authorizer = authorizer
+
+	deploymentName := testId
+	parameters := NewDeploymentParameters(creds, imageName, testId, publicKey)
 
 	deploymentFuture, err := deploymentsClient.CreateOrUpdate(context.Background(), creds.ResourceGroup, deploymentName, resources.Deployment{
 		Properties: &resources.DeploymentProperties{
@@ -209,93 +311,7 @@ func WithBootedImageInAzure(creds *azureCredentials, imageName, testId, publicKe
 
 	// Let's registed the clean-up function as soon as possible.
 	defer func() {
-		resourcesClient := resources.NewClient(creds.SubscriptionID)
-		resourcesClient.Authorizer = authorizer
-
-		// This array specifies all the resources we need to delete. The
-		// order is important, e.g. one cannot delete a network interface
-		// that is still attached to a virtual machine.
-		resourcesToDelete := []struct {
-			resType    string
-			name       string
-			apiVersion string
-		}{
-			{
-				resType:    "Microsoft.Compute/virtualMachines",
-				name:       parameters.VirtualMachineName.Value,
-				apiVersion: "2019-07-01",
-			},
-			{
-				resType:    "Microsoft.Network/networkInterfaces",
-				name:       parameters.NetworkInterfaceName.Value,
-				apiVersion: "2019-09-01",
-			},
-			{
-				resType:    "Microsoft.Network/publicIPAddresses",
-				name:       parameters.PublicIPAddressName.Value,
-				apiVersion: "2019-09-01",
-			},
-			{
-				resType:    "Microsoft.Network/networkSecurityGroups",
-				name:       parameters.NetworkSecurityGroupName.Value,
-				apiVersion: "2019-09-01",
-			},
-			{
-				resType:    "Microsoft.Network/virtualNetworks",
-				name:       parameters.VirtualNetworkName.Value,
-				apiVersion: "2019-09-01",
-			},
-			{
-				resType:    "Microsoft.Compute/disks",
-				name:       parameters.DiskName.Value,
-				apiVersion: "2019-07-01",
-			},
-			{
-				resType:    "Microsoft.Compute/images",
-				name:       parameters.ImageName.Value,
-				apiVersion: "2019-07-01",
-			},
-		}
-
-		// Delete all the resources
-		for _, resourceToDelete := range resourcesToDelete {
-			resourceID := fmt.Sprintf(
-				"subscriptions/%s/resourceGroups/%s/providers/%s/%s",
-				creds.SubscriptionID,
-				creds.ResourceGroup,
-				resourceToDelete.resType,
-				resourceToDelete.name,
-			)
-
-			err := deleteResource(resourcesClient, resourceID, resourceToDelete.apiVersion)
-			if err != nil {
-				log.Printf("deleting the resource %s errored: %v", resourceToDelete.name, err)
-				retErr = wrapErrorf(retErr, "cannot delete the resource %s: %v", resourceToDelete.name, err)
-				// do not return here, try deleting as much as possible
-			}
-		}
-
-		// Delete the deployment
-		// This actually does not delete any resources created by the
-		// deployment as one might think. Therefore the code above
-		// is needed.
-		result, err := deploymentsClient.Delete(context.Background(), creds.ResourceGroup, deploymentName)
-		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot create the request for the deployment deletion: %v", err)
-			return
-		}
-
-		err = result.WaitForCompletionRef(context.Background(), deploymentsClient.Client)
-		if err != nil {
-			retErr = wrapErrorf(retErr, "waiting for the deployment deletion failed: %v", err)
-			return
-		}
-
-		_, err = result.Result(deploymentsClient)
-		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot retrieve the deployment deletion result: %v", err)
-			return
-		}
+		retErr = CleanUpBootedVM(creds, parameters, authorizer, testId)
 	}()
 
 	if err != nil {
