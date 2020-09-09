@@ -136,11 +136,14 @@ components:
       type: object
       required:
         - baseurl
+        - rhsm
       properties:
         baseurl:
           type: string
           format: url
           example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+        rhsm:
+          type: boolean
     UploadRequest:
       type: object
       required:

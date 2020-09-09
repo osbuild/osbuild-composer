@@ -83,6 +83,7 @@ type ImageStatus struct {
 // Repository defines model for Repository.
 type Repository struct {
 	Baseurl string `json:"baseurl"`
+	Rhsm    bool   `json:"rhsm"`
 }
 
 // Subscription defines model for Subscription.

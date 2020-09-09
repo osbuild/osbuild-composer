@@ -310,8 +310,14 @@ tee "$CLOUD_REQUEST_FILE" > /dev/null << EOF
       "architecture": "x86_64",
       "image_type": "qcow2",
       "repositories": [
-        { "baseurl": "${BASE_URL}" },
-        { "baseurl": "${APPSTREAM_URL}" }
+        {
+          "baseurl": "${BASE_URL}",
+          "rhsm": true
+        },
+        {
+          "baseurl": "${APPSTREAM_URL}",
+          "rhsm": true
+        }
       ],
       "upload_requests": [
         {
