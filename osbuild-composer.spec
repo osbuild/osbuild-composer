@@ -261,6 +261,7 @@ The cloud api for osbuild-composer
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name}-koji = %{version}-%{release}
+Requires:   %{name}-cloud = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage

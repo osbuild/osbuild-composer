@@ -87,7 +87,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
 			repositories[j].BaseURL = repo.Baseurl
-			repositories[j].RHSM = true
+			repositories[j].RHSM = repo.Rhsm
 		}
 
 		var bp = blueprint.Blueprint{}
