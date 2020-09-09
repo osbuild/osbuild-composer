@@ -29,10 +29,6 @@ type statusResponse struct {
 	Status string `json:"status"`
 }
 
-type errorResponse struct {
-	Message string `json:"message"`
-}
-
 type requestJobResponse struct {
 	Id               uuid.UUID        `json:"id"`
 	Manifest         distro.Manifest  `json:"manifest"`

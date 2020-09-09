@@ -23,6 +23,17 @@ paths:
                       - OK
                 required:
                   - status
+        4XX:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        5XX:
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: GetStatus
       description: Simple status handler to check whether the service is up.
   /jobs:
@@ -53,6 +64,17 @@ paths:
                   - manifest
                   - location
                   - id
+        4XX:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        5XX:
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: RequestJob
       requestBody:
         content:
@@ -85,6 +107,18 @@ paths:
                     type: boolean
                 required:
                   - canceled
+        4XX:
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        5XX:
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: GetJob
       description: ''
     patch:
@@ -127,6 +161,17 @@ paths:
       responses:
         '200':
           description: OK
+        4XX:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        5XX:
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       operationId: UploadJobArtifact
       requestBody:
         content:
@@ -134,4 +179,12 @@ paths:
             schema:
               type: string
 components:
-  schemas: {}
+  schemas:
+    Error:
+      title: Error
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message

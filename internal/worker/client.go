@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -94,9 +93,7 @@ func (c *Client) RequestJob() (Job, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		var er errorResponse
-		_ = json.NewDecoder(response.Body).Decode(&er)
-		return nil, fmt.Errorf("couldn't create job, got %d: %s", response.StatusCode, er.Message)
+		return nil, errorFromResponse(response, "error requesting job")
 	}
 
 	var jr requestJobResponse
@@ -157,7 +154,7 @@ func (j *job) Update(status common.ImageBuildState, result *osbuild.Result) erro
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return errors.New("error setting job status")
+		return errorFromResponse(response, "error setting job status")
 	}
 
 	return nil
@@ -171,7 +168,7 @@ func (j *job) Canceled() (bool, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("unexpected return value: %v", response.StatusCode)
+		return false, errorFromResponse(response, "error fetching job info")
 	}
 
 	var jr getJobResponse
@@ -205,10 +202,26 @@ func (j *job) UploadArtifact(name string, reader io.Reader) error {
 
 	req.Header.Add("Content-Type", "application/octet-stream")
 
-	_, err = j.requester.Do(req)
+	response, err := j.requester.Do(req)
 	if err != nil {
-		return fmt.Errorf("error uploading artifcat: %v", err)
+		return fmt.Errorf("error uploading artifact: %v", err)
+	}
+
+	if response.StatusCode != 200 {
+		return errorFromResponse(response, "error uploading artifact")
 	}
 
 	return nil
+}
+
+// Parses an api.Error from a response and returns it as a golang error. Other
+// errors, such failing to parse the response, are returned as golang error as
+// well. If client code expects an error, it gets one.
+func errorFromResponse(response *http.Response, message string) error {
+	var e api.Error
+	err := json.NewDecoder(response.Body).Decode(&e)
+	if err != nil {
+		return fmt.Errorf("failed to parse error response: %v", err)
+	}
+	return fmt.Errorf("%v: %v — %v", message, response.StatusCode, e.Message)
 }

@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+// Error defines model for Error.
+type Error struct {
+	Message string `json:"message"`
+}
+
 // RequestJobJSONBody defines parameters for RequestJob.
 type RequestJobJSONBody map[string]interface{}
 
