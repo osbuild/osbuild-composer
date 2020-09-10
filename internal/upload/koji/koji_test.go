@@ -56,7 +56,7 @@ func TestKojiRefund(t *testing.T) {
 		}
 	}()
 
-	initResult, err := k.CGInitBuild(nil, "name", "verison", "release")
+	initResult, err := k.CGInitBuild("name", "verison", "release")
 	require.NoError(t, err)
 
 	err = k.CGCancelBuild(initResult.BuildID, initResult.Token)
@@ -65,7 +65,7 @@ func TestKojiRefund(t *testing.T) {
 	err = k.CGCancelBuild(initResult.BuildID, initResult.Token)
 	require.Error(t, err)
 
-	initResult, err = k.CGInitBuild(nil, "name", "verison", "release")
+	initResult, err = k.CGInitBuild("name", "verison", "release")
 	require.NoError(t, err)
 
 	err = k.CGFailBuild(initResult.BuildID, initResult.Token)
@@ -135,6 +135,7 @@ func TestKojiImport(t *testing.T) {
 
 	// Import the build
 	build := koji.ImageBuild{
+		TaskID:    1,
 		Name:      buildName,
 		Version:   "1",
 		Release:   "1",
@@ -178,7 +179,7 @@ func TestKojiImport(t *testing.T) {
 		},
 	}
 
-	initResult, err := k.CGInitBuild(nil, build.Name, build.Version, build.Release)
+	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release)
 	require.NoError(t, err)
 
 	build.BuildID = uint64(initResult.BuildID)

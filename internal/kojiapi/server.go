@@ -150,7 +150,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	buildInfo, err := k.CGInitBuild(&request.Koji.TaskId, request.Name, request.Version, request.Release)
+	buildInfo, err := k.CGInitBuild(request.Name, request.Version, request.Release)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Could not initialize build with koji: %v", err), http.StatusBadRequest)
 		return
@@ -159,6 +159,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 	id, err := server.workers.Enqueue(ir.manifest, []*target.Target{
 		target.NewKojiTarget(&target.KojiTargetOptions{
 			BuildID:         uint64(buildInfo.BuildID),
+			TaskID:          uint64(request.Koji.TaskId),
 			Token:           buildInfo.Token,
 			Name:            request.Name,
 			Version:         request.Version,

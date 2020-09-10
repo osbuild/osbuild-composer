@@ -85,6 +85,7 @@ jobs:
       - name: Run unit tests
         run: |
           sudo internal/upload/koji/run-koji-container.sh start
+          koji --server=http://localhost/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
           env KRB5_CONFIG=../../../.github/krb5.conf go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
           sudo internal/upload/koji/run-koji-container.sh stop
 

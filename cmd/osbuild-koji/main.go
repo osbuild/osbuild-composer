@@ -14,7 +14,9 @@ import (
 )
 
 func main() {
+	var taskID int
 	var server, user, password, name, version, release, arch, filename string
+	flag.IntVar(&taskID, "task-id", 0, "id of owning task")
 	flag.StringVar(&server, "server", "", "url to API")
 	flag.StringVar(&user, "user", "", "koji username")
 	flag.StringVar(&password, "password", "", "koji password")
@@ -58,6 +60,7 @@ func main() {
 	}
 
 	build := koji.ImageBuild{
+		TaskID:    uint64(taskID),
 		Name:      name,
 		Version:   version,
 		Release:   release,
@@ -101,7 +104,7 @@ func main() {
 		},
 	}
 
-	initResult, err := k.CGInitBuild(nil, build.Name, build.Version, build.Release)
+	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release)
 	if err != nil {
 		println(err.Error())
 		return

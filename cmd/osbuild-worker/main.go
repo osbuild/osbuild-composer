@@ -228,6 +228,7 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 
 			build := koji.ImageBuild{
 				BuildID:   options.BuildID,
+				TaskID:    options.TaskID,
 				Name:      options.Name,
 				Version:   options.Version,
 				Release:   options.Release,

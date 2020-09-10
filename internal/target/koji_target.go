@@ -2,6 +2,7 @@ package target
 
 type KojiTargetOptions struct {
 	BuildID         uint64 `json:"build_id"`
+	TaskID          uint64 `json:"task_id"`
 	Token           string `json:"token"`
 	Name            string `json:"name"`
 	Version         string `json:"version"`
