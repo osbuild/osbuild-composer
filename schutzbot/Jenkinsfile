@@ -147,6 +147,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora31-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -199,6 +203,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora32-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -266,6 +274,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -323,6 +335,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel83-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
