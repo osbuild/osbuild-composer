@@ -119,6 +119,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-te
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cloud-tests %{goipath}/cmd/osbuild-composer-cloud-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
+go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/cloud-cleaner %{goipath}/cmd/cloud-cleaner
 
 %endif
 
@@ -160,6 +161,7 @@ install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp test/cmd/*                                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer/
 
