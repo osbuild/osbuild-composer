@@ -29,6 +29,7 @@ type ImageBuildExtra struct {
 
 type ImageBuild struct {
 	BuildID   uint64          `json:"build_id"`
+	TaskID    uint64          `json:"task_id"`
 	Name      string          `json:"name"`
 	Version   string          `json:"version"`
 	Release   string          `json:"release"`
@@ -216,15 +217,13 @@ func (k *Koji) Logout() error {
 }
 
 // CGInitBuild reserves a build ID and initializes a build
-func (k *Koji) CGInitBuild(taskID *int, name, version, release string) (*CGInitBuildResult, error) {
+func (k *Koji) CGInitBuild(name, version, release string) (*CGInitBuildResult, error) {
 	var buildInfo struct {
-		TaskID  *int   `xmlrpc:"task_id,omitempty"`
 		Name    string `xmlrpc:"name"`
 		Version string `xmlrpc:"version"`
 		Release string `xmlrpc:"release"`
 	}
 
-	buildInfo.TaskID = taskID
 	buildInfo.Name = name
 	buildInfo.Version = version
 	buildInfo.Release = release
