@@ -294,6 +294,44 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 	return result, nil
 }
 
+func FailJob(job worker.Job) {
+	_, targets, err := job.OSBuildArgs()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, t := range targets {
+		switch options := t.Options.(type) {
+		case *target.KojiTargetOptions:
+			// Koji for some reason needs TLS renegotiation enabled.
+			// Clone the default http transport and enable renegotiation.
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			transport.TLSClientConfig = &tls.Config{
+				Renegotiation: tls.RenegotiateOnceAsClient,
+			}
+
+			k, err := koji.NewFromGSSAPI(options.Server, &koji.GSSAPICredentials{}, transport)
+			if err != nil {
+				log.Printf("koji login failed: %v", err)
+				return
+			}
+
+			defer func() {
+				err := k.Logout()
+				if err != nil {
+					log.Printf("koji logout failed: %v", err)
+				}
+			}()
+
+			err = k.CGFailBuild(int(options.BuildID), options.Token)
+			if err != nil {
+				log.Printf("CGFailBuild failed: %v", err)
+			}
+		default:
+		}
+	}
+}
+
 // Regularly ask osbuild-composer if the compose we're currently working on was
 // canceled and exit the process if it was.
 // It would be cleaner to kill the osbuild process using (`exec.CommandContext`
@@ -377,6 +415,9 @@ func main() {
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
+
+			// Fail the jobs in any targets that expects it
+			FailJob(job)
 
 			// If the error comes from osbuild, retrieve the result
 			if osbuildError, ok := err.(*OSBuildError); ok {
