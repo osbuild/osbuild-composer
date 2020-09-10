@@ -502,7 +502,12 @@ pipeline {
         success {
             node('schutzbot') {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
+                    if (env.BUILD_CAUSE == 'cron') {
+                        unstash 'compose_id'
+                        def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
+
+                        telegramSend "💚 CI passed for osbuild-composer ${composeId} ${env.BUILD_URL}"
+                    } else if (env.BRANCH_NAME == 'master') {
                         telegramSend "💚 CI passed for osbuild-composer master branch ${env.BUILD_URL}"
                     }
                 }
@@ -511,7 +516,12 @@ pipeline {
         unsuccessful {
             node('schutzbot') {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
+                    if (env.BUILD_CAUSE == 'cron') {
+                        unstash 'compose_id'
+                        def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
+
+                        telegramSend "💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL}"
+                    } else if (env.BRANCH_NAME == 'master') {
                         telegramSend "💣 CI failed for osbuild-composer master branch ${env.BUILD_URL}"
                     }
                 }
