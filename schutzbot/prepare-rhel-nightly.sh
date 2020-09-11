@@ -52,3 +52,59 @@ tee rhel-8.json << EOF
 EOF
 
 cp rhel-8.json rhel-8-beta.json
+
+
+greenprint "📦 Installing requirements"
+sudo dnf -y install createrepo_c wget python3-pip
+
+# Install s3cmd if it is not present.
+if ! s3cmd --version > /dev/null 2>&1; then
+    greenprint "📦 Installing s3cmd"
+    sudo pip3 -q install s3cmd
+fi
+
+REPO_DIR_LATEST="repo/${JOB_NAME}/latest/nightly"
+mkdir -p "$REPO_DIR_LATEST"
+
+greenprint "Discover latest osbuild-composer NVR"
+# Download only osbuild-composer-worker-*.rpm and use it in rpm --qf below
+wget --quiet --recursive --no-parent --no-directories --accept "osbuild-composer-worker-*.rpm" \
+    "http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/${COMPOSE_ID}/compose/AppStream/${ARCH}/os/Packages/"
+
+# Download osbuild-composer-tests from Brew b/c it is not available in the distro
+# version matches osbuild-composer from the nightly tree
+greenprint "Downloading osbuild-composer-tests from Brew"
+TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-8/packages/osbuild-composer/%{version}/%{release}/%{arch}/osbuild-composer-tests-%{version}-%{release}.%{arch}.rpm")
+wget --directory-prefix "$REPO_DIR_LATEST" "$TESTS_RPM_URL"
+
+greenprint "⛓ Creating dnf repository"
+createrepo_c "${REPO_DIR_LATEST}"
+
+# Bucket in S3 where our artifacts are uploaded
+REPO_BUCKET=osbuild-composer-repos
+
+# Remove the previous latest repo for this job.
+# Don't fail if the path is missing.
+s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
+
+# Upload repository to S3.
+greenprint "☁ Uploading RPMs to S3"
+s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+
+# Public URL for the S3 bucket with our artifacts.
+MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
+
+# Full URL to the RPM repository after they are uploaded.
+REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_DIR_LATEST}
+
+# amend repository file.
+greenprint "📜 Amend dnf repository file"
+tee -a osbuild-mock.repo << EOF
+[osbuild-mock]
+name=osbuild mock ${JOB_NAME}
+baseurl=${REPO_URL}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority.
+priority=5
+EOF
