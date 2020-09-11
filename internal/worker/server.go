@@ -279,7 +279,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	if err != nil {
 		switch err {
 		case ErrTokenNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "job is not running")
+			return echo.NewHTTPError(http.StatusNotFound, "not found")
 		default:
 			return err
 		}
@@ -322,7 +322,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	if err != nil {
 		switch err {
 		case ErrTokenNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "job does not exist")
+			return echo.NewHTTPError(http.StatusNotFound, "not found")
 		default:
 			return err
 		}
