@@ -150,6 +150,9 @@ pipeline {
                 }
             }
 
+            environment {
+                AWS_CREDS = credentials('aws-credentials-osbuildci')
+            }
             steps {
                 // don't build, use RPMs from the nightly trees
                 sh "schutzbot/prepare-rhel-nightly.sh"
