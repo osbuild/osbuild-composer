@@ -151,13 +151,22 @@ func main() {
 
 	// Optionally run Koji API
 	if kojiListeners, exists := listeners["osbuild-composer-koji.socket"]; exists {
+		kojiServer := kojiapi.NewServer(workers, rpm, distros)
+
+		tlsConfig, err := createTLSConfig(&connectionConfig{
+			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
+			ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
+			ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+		})
+		if err != nil {
+			log.Fatalf("TLS configuration cannot be created: " + err.Error())
+		}
+
 		if len(kojiListeners) != 1 {
 			// Use Fatal to call os.Exit with non-zero return value
 			log.Fatal("The osbuild-composer-koji.socket unit is misconfigured. It should contain only one socket.")
 		}
-		kojiListener := kojiListeners[0]
-
-		kojiServer := kojiapi.NewServer(workers, rpm, distros)
+		kojiListener := tls.NewListener(kojiListeners[0], tlsConfig)
 
 		go func() {
 			err = kojiServer.Serve(kojiListener)
