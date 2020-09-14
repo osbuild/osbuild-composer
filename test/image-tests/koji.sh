@@ -36,17 +36,24 @@ fi
 greenprint "Starting containers"
 sudo ./internal/upload/koji/run-koji-container.sh start
 
+greenprint "Copying custom composer/worker config"
+sudo mkdir -p /etc/osbuild-composer
+sudo cp test/image-tests/osbuild-composer.toml \
+    /etc/osbuild-composer/
+sudo mkdir -p /etc/osbuild-worker
+sudo cp test/image-tests/osbuild-worker.toml \
+    /etc/osbuild-worker/
+
 greenprint "Adding kerberos config"
 sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
-    /etc/krb5.keytab
+    /etc/osbuild-composer/client.keytab
+sudo cp \
+    /tmp/osbuild-composer-koji-test/client.keytab \
+    /etc/osbuild-worker/client.keytab
 sudo cp \
     test/image-tests/krb5-local.conf \
     /etc/krb5.conf.d/local
-
-greenprint "Initializing Kerberos"
-kinit osbuild-krb@LOCAL -k
-sudo -u _osbuild-composer kinit osbuild-krb@LOCAL -k
 
 greenprint "Adding generated CA cert for Koji"
 sudo cp \
@@ -54,13 +61,12 @@ sudo cp \
     /etc/pki/ca-trust/source/anchors/koji-ca-crt.pem
 sudo update-ca-trust
 
-greenprint "Restarting composer to pick up new certs"
+greenprint "Restarting composer to pick up new config"
 sudo systemctl restart osbuild-composer
+sudo systemctl restart osbuild-worker\@1
 
 greenprint "Testing Koji"
 koji --server=http://localhost/kojihub --user=osbuild --password=osbuildpass --authtype=password hello
-koji --server=http://localhost/kojihub hello
-sudo -u _osbuild-composer koji --server=http://localhost/kojihub hello
 
 greenprint "Creating Koji task"
 koji --server=http://localhost/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
