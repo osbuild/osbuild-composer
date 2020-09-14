@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -26,14 +27,16 @@ type Server struct {
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
+	kojiServers map[string]koji.GSSAPICredentials
 }
 
 // NewServer creates a new koji server
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *Server {
+func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry, kojiServers map[string]koji.GSSAPICredentials) *Server {
 	server := &Server{
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
+		kojiServers: kojiServers,
 	}
 	return server
 }
@@ -69,6 +72,18 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 	if d == nil {
 		http.Error(w, fmt.Sprintf("Unsupported distribution: %s", request.Distribution), http.StatusBadRequest)
 		return
+	}
+
+	kojiServer, err := url.Parse(request.Koji.Server)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Koji server: %s", request.Koji.Server), http.StatusBadRequest)
+		return
+	}
+	creds, exists := server.kojiServers[kojiServer.Hostname()]
+	if !exists {
+		http.Error(w, fmt.Sprintf("Koji server has not been configured: %s", kojiServer.Hostname()), http.StatusBadRequest)
+		return
+
 	}
 
 	type imageRequest struct {
@@ -137,7 +152,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		Renegotiation: tls.RenegotiateOnceAsClient,
 	}
 
-	k, err := koji.NewFromGSSAPI(request.Koji.Server, &koji.GSSAPICredentials{}, transport)
+	k, err := koji.NewFromGSSAPI(request.Koji.Server, &creds, transport)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Could not log into Koji: %v", err), http.StatusBadRequest)
 		return

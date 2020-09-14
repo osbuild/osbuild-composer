@@ -9,11 +9,13 @@ import (
 	"os"
 	"path"
 
+	"github.com/BurntSushi/toml"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
+	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -24,6 +26,8 @@ import (
 
 	"github.com/coreos/go-systemd/activation"
 )
+
+const configFile = "/etc/osbuild-composer/osbuild-composer.toml"
 
 type connectionConfig struct {
 	CACertFile     string
@@ -55,9 +59,29 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 }
 
 func main() {
+	var config struct {
+		KojiServers map[string]struct {
+			Kerberos *struct {
+				Principal string `toml:"principal"`
+				KeyTab    string `toml:"keytab"`
+			} `toml:"kerberos,omitempty"`
+		} `toml:"koji"`
+	}
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
+
+	_, err := toml.DecodeFile(configFile, &config)
+	if err == nil {
+		log.Println("Composer configuration:")
+		encoder := toml.NewEncoder(log.Writer())
+		err := encoder.Encode(&config)
+		if err != nil {
+			log.Fatalf("Could not print config: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		log.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
 	if !ok {
@@ -151,7 +175,19 @@ func main() {
 
 	// Optionally run Koji API
 	if kojiListeners, exists := listeners["osbuild-composer-koji.socket"]; exists {
-		kojiServer := kojiapi.NewServer(workers, rpm, distros)
+		kojiServers := make(map[string]koji.GSSAPICredentials)
+		for server, creds := range config.KojiServers {
+			if creds.Kerberos == nil {
+				// For now we only support Kerberos authentication.
+				continue
+			}
+			kojiServers[server] = koji.GSSAPICredentials{
+				Principal: creds.Kerberos.Principal,
+				KeyTab:    creds.Kerberos.KeyTab,
+			}
+		}
+
+		kojiServer := kojiapi.NewServer(workers, rpm, distros, kojiServers)
 
 		tlsConfig, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",

@@ -10,10 +10,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -25,6 +27,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
+
+const configFile = "/etc/osbuild-worker/osbuild-worker.toml"
 
 type connectionConfig struct {
 	CACertFile     string
@@ -92,7 +96,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 	return rpms
 }
 
-func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
+func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) (*osbuild.Result, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
@@ -201,7 +205,13 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 				Renegotiation: tls.RenegotiateOnceAsClient,
 			}
 
-			k, err := koji.NewFromGSSAPI(options.Server, &koji.GSSAPICredentials{}, transport)
+			kojiServer, _ := url.Parse(options.Server)
+			creds, exists := kojiServers[kojiServer.Hostname()]
+			if !exists {
+				r = append(r, fmt.Errorf("Koji server has not been configured: %s", kojiServer.Hostname()))
+			}
+
+			k, err := koji.NewFromGSSAPI(options.Server, &creds, transport)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -294,7 +304,7 @@ func RunJob(job worker.Job, store string) (*osbuild.Result, error) {
 	return result, nil
 }
 
-func FailJob(job worker.Job) {
+func FailJob(job worker.Job, kojiServers map[string]koji.GSSAPICredentials) {
 	_, targets, err := job.OSBuildArgs()
 	if err != nil {
 		panic(err)
@@ -310,7 +320,14 @@ func FailJob(job worker.Job) {
 				Renegotiation: tls.RenegotiateOnceAsClient,
 			}
 
-			k, err := koji.NewFromGSSAPI(options.Server, &koji.GSSAPICredentials{}, transport)
+			kojiServer, _ := url.Parse(options.Server)
+			creds, exists := kojiServers[kojiServer.Hostname()]
+			if !exists {
+				log.Printf("Koji server has not been configured: %s", kojiServer.Hostname())
+				return
+			}
+
+			k, err := koji.NewFromGSSAPI(options.Server, &creds, transport)
 			if err != nil {
 				log.Printf("koji login failed: %v", err)
 				return
@@ -357,6 +374,14 @@ func WatchJob(ctx context.Context, job worker.Job) {
 }
 
 func main() {
+	var config struct {
+		KojiServers map[string]struct {
+			Kerberos *struct {
+				Principal string `toml:"principal"`
+				KeyTab    string `toml:"keytab"`
+			} `toml:"kerberos,omitempty"`
+		} `toml:"koji"`
+	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
@@ -373,11 +398,35 @@ func main() {
 		flag.Usage()
 	}
 
+	_, err := toml.DecodeFile(configFile, &config)
+	if err == nil {
+		log.Println("Composer configuration:")
+		encoder := toml.NewEncoder(log.Writer())
+		err := encoder.Encode(&config)
+		if err != nil {
+			log.Fatalf("Could not print config: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		log.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 	store := path.Join(cacheDirectory, "osbuild-store")
+
+	kojiServers := make(map[string]koji.GSSAPICredentials)
+	for server, creds := range config.KojiServers {
+		if creds.Kerberos == nil {
+			// For now we only support Kerberos authentication.
+			continue
+		}
+		kojiServers[server] = koji.GSSAPICredentials{
+			Principal: creds.Kerberos.Principal,
+			KeyTab:    creds.Kerberos.KeyTab,
+		}
+	}
 
 	var client *worker.Client
 	if unix {
@@ -411,13 +460,13 @@ func main() {
 		go WatchJob(ctx, job)
 
 		var status common.ImageBuildState
-		result, err := RunJob(job, store)
+		result, err := RunJob(job, store, kojiServers)
 		if err != nil {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
 
 			// Fail the jobs in any targets that expects it
-			FailJob(job)
+			FailJob(job, kojiServers)
 
 			// If the error comes from osbuild, retrieve the result
 			if osbuildError, ok := err.(*OSBuildError); ok {
