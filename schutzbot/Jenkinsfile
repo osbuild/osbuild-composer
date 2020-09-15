@@ -261,7 +261,7 @@ pipeline {
                     }
                 }
                 stage('EL8 Integration') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
+                    agent { label "rhel8cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -316,7 +316,7 @@ pipeline {
                     }
                 }
                 stage('EL8.3 Integration') {
-                    agent { label "rhel83cloudbase && x86_64 && aws" }
+                    agent { label "rhel83cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
