@@ -24,7 +24,7 @@ import (
 
 func TestKojiRefund(t *testing.T) {
 	shareDir := "/tmp/osbuild-composer-koji-test"
-	server := "https://localhost/kojihub"
+	server := "https://localhost:4343/kojihub"
 
 	// base our transport on the default one
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -77,7 +77,7 @@ func TestKojiRefund(t *testing.T) {
 
 func TestKojiImport(t *testing.T) {
 	// define constants
-	server := "https://localhost/kojihub"
+	server := "https://localhost:4343/kojihub"
 	filename := "image.qcow2"
 	filesize := 1024
 	shareDir := "/tmp/osbuild-composer-koji-test"

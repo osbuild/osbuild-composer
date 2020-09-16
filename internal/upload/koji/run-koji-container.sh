@@ -80,8 +80,8 @@ koji_start() {
 
   ${CONTAINER_RUNTIME} run -d --name org.osbuild.koji.koji --network org.osbuild.koji \
     -v "${SHARE_DIR}:/share:z" \
-    -p 80:80 \
-    -p 443:443 \
+    -p 8080:80 \
+    -p 4343:443 \
     -e POSTGRES_USER=koji \
     -e POSTGRES_PASSWORD=kojipass \
     -e POSTGRES_DB=koji \
