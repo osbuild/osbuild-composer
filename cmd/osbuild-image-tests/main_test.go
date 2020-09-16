@@ -52,10 +52,10 @@ var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is
 // note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
 func GenerateCIArtifactName(prefix string) (string, error) {
 	distroCode := os.Getenv("DISTRO_CODE")
-	changeId := os.Getenv("CHANGE_ID")
+	changeId := os.Getenv("BRANCH_NAME")
 	buildId := os.Getenv("BUILD_ID")
 	if changeId == "" || buildId == "" || distroCode == "" {
-		return "", fmt.Errorf("The environment variables must specify CHANGE_ID, BUILD_ID, and DISTRO_CODE")
+		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
 	}
 
 	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, changeId, buildId), nil
