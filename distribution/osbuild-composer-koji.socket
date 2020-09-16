@@ -3,7 +3,7 @@ Description=OSBuild Composer Koji API socket
 
 [Socket]
 Service=osbuild-composer.service
-ListenStream=8701
+ListenStream=443
 
 [Install]
 WantedBy=sockets.target
