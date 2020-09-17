@@ -91,3 +91,17 @@ jobs:
 
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
+
+  shellcheck:
+    name: "🐚 Shellcheck"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: shellcheck
+        uses: reviewdog/action-shellcheck@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review # Change reporter.
+          path: "." # Optional.
+          pattern: "*.sh" # Optional.
+          exclude: "./vendor/*" # Optional.
