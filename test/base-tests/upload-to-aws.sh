@@ -80,11 +80,8 @@ EOF
 # Write a basic blueprint for our image.
 tee "${BLUEPRINT_FILE}" << EOF
 name = "${BLUEPRINT_NAME}"
-description = "A base system with bash"
+description = "A base system with osbuild-composer"
 version = "0.0.1"
-
-[[packages]]
-name = "bash"
 
 [[packages]]
 name = "osbuild-composer"
