@@ -1,5 +1,3 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=kojiapi --generate types,chi-server,client -o openapi.gen.go openapi.yml
-
 // Package kojiapi provides a REST API to build and push images to Koji
 package kojiapi
 
@@ -16,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
@@ -43,7 +42,7 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.
 
 // Serve serves the koji API over the provided listener socket
 func (server *Server) Serve(listener net.Listener) error {
-	s := http.Server{Handler: Handler(server)}
+	s := http.Server{Handler: api.Handler(server)}
 
 	err := s.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {
@@ -61,7 +60,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request ComposeRequest
+	var request api.ComposeRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		http.Error(w, "Could not parse JSON body", http.StatusBadRequest)
@@ -189,7 +188,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var response ComposeResponse
+	var response api.ComposeResponse
 	response.Id = id.String()
 	response.KojiBuildId = buildInfo.BuildID
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -244,9 +243,9 @@ func (server *Server) GetComposeId(w http.ResponseWriter, r *http.Request, id st
 		return
 	}
 
-	response := ComposeStatus{
+	response := api.ComposeStatus{
 		Status: composeStateToStatus(status.State),
-		ImageStatuses: []ImageStatus{
+		ImageStatuses: []api.ImageStatus{
 			{
 				Status: composeStateToImageStatus(status.State),
 			},
