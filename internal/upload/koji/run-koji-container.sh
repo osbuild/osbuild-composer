@@ -141,10 +141,10 @@ else
   exit 2
 fi
 
-if [ $1 == "start" ]; then
+if [ "$1" == "start" ]; then
   koji_start
 fi
 
-if [ $1 == "stop" ]; then
+if [ "$1" == "stop" ]; then
   koji_stop
 fi

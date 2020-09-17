@@ -21,7 +21,7 @@ test_divider () {
 get_test_cases () {
     TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}*.json"
     pushd $IMAGE_TEST_CASES_PATH > /dev/null
-        ls $TEST_CASE_SELECTOR
+        ls "$TEST_CASE_SELECTOR"
     popd > /dev/null
 }
 
@@ -29,7 +29,7 @@ get_test_cases () {
 run_test_case () {
     TEST_RUNNER=$1
     TEST_CASE_FILENAME=$2
-    TEST_NAME=$(basename $TEST_CASE_FILENAME)
+    TEST_NAME=$(basename "$TEST_CASE_FILENAME")
 
     echo
     test_divider
@@ -58,11 +58,11 @@ run_test_case () {
     AZURE_CREDS=${AZURE_CREDS-/dev/null}
     OPENSTACK_CREDS=${OPENSTACK_CREDS-/dev/null}
     VCENTER_CREDS=${VCENTER_CREDS-/dev/null}
-    TEST_CMD="env $(cat $AZURE_CREDS $OPENSTACK_CREDS $VCENTER_CREDS) BRANCH_NAME=${BRANCH_NAME-master} BUILD_ID=$BUILD_ID DISTRO_CODE=$DISTRO_CODE $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
+    TEST_CMD="env $(cat "$AZURE_CREDS" "$OPENSTACK_CREDS" "$VCENTER_CREDS") BRANCH_NAME=${BRANCH_NAME-master} BUILD_ID=$BUILD_ID DISTRO_CODE=$DISTRO_CODE $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
 
     # Run the test and add the test name to the list of passed or failed
     # tests depending on the result.
-    if sudo $TEST_CMD 2>&1 | tee ${WORKSPACE}/${TEST_NAME}.log; then
+    if sudo "$TEST_CMD" 2>&1 | tee "${WORKSPACE}"/"${TEST_NAME}".log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
@@ -82,7 +82,7 @@ cd $WORKING_DIRECTORY
 
 # Run each test case.
 for TEST_CASE in $(get_test_cases); do
-    run_test_case $IMAGE_TEST_CASE_RUNNER $TEST_CASE
+    run_test_case $IMAGE_TEST_CASE_RUNNER "$TEST_CASE"
 done
 
 # Print a report of the test results.

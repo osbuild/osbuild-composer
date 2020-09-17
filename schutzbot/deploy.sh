@@ -23,8 +23,8 @@ source /etc/os-release
 
 # Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
 # Restart systemd to work around some Fedora issues in cloud images.
@@ -80,6 +80,6 @@ sudo systemctl enable --now osbuild-composer-koji.socket
 # Verify that the API is running.
 sudo composer-cli status show
 sudo composer-cli sources list
-for SOURCE in `sudo composer-cli sources list`; do
-    sudo composer-cli sources info $SOURCE
+for SOURCE in $(sudo composer-cli sources list); do
+    sudo composer-cli sources info "$SOURCE"
 done

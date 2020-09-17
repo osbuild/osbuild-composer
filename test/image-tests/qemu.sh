@@ -105,10 +105,10 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 smoke_test_check () {
     # Ensure the ssh key has restricted permissions.
     SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
-    chmod 0600 $SSH_KEY
+    chmod 0600 "$SSH_KEY"
 
     SSH_OPTIONS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
-    SMOKE_TEST=$(ssh $SSH_OPTIONS -i ${SSH_KEY} redhat@${1} 'cat /etc/smoke-test.txt')
+    SMOKE_TEST=$(ssh "$SSH_OPTIONS" -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
     else
@@ -122,7 +122,7 @@ get_compose_log () {
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
 
     # Download the logs.
-    sudo composer-cli compose log $COMPOSE_ID | tee $LOG_FILE > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
 }
 
 # Get the compose metadata.
@@ -131,15 +131,15 @@ get_compose_metadata () {
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata $COMPOSE_ID > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
-    tar -xf $TARBALL
-    rm -f $TARBALL
+    tar -xf "$TARBALL"
+    rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    cat ${COMPOSE_ID}.json | jq -M '.' | tee $METADATA_FILE > /dev/null
+    cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
 # Write a basic blueprint for our image.
@@ -147,7 +147,7 @@ get_compose_metadata () {
 # but it is needed for OpenStack due to issue #698 in osbuild-composer. 😭
 # NOTE(mhayden): The cloud-init package isn't included in VHD/Azure images
 # by default and it must be added here.
-tee $BLUEPRINT_FILE > /dev/null << EOF
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -167,24 +167,24 @@ EOF
 
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing blueprint"
-sudo composer-cli blueprints push $BLUEPRINT_FILE
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve bash
 
 # Get worker unit file so we can watch the journal.
 WORKER_UNIT=$(sudo systemctl list-units | egrep -o "osbuild.*worker.*\.service")
-sudo journalctl -af -n 1 -u ${WORKER_UNIT} &
+sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
 
 # Start the compose
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash $IMAGE_TYPE | tee $COMPOSE_START
-COMPOSE_ID=$(jq -r '.build_id' $COMPOSE_START)
+sudo composer-cli --json compose start bash "$IMAGE_TYPE" | tee "$COMPOSE_START"
+COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info ${COMPOSE_ID} | tee $COMPOSE_INFO > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' $COMPOSE_INFO)
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
@@ -197,8 +197,8 @@ done
 
 # Capture the compose logs from osbuild.
 greenprint "💬 Getting compose log and metadata"
-get_compose_log $COMPOSE_ID
-get_compose_metadata $COMPOSE_ID
+get_compose_log "$COMPOSE_ID"
+get_compose_metadata "$COMPOSE_ID"
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
@@ -211,21 +211,21 @@ sudo kill ${WORKER_JOURNAL_PID}
 
 # Download the image.
 greenprint "📥 Downloading the image"
-sudo composer-cli compose image ${COMPOSE_ID} > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME=$(basename $(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}"))
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
-sudo mv $IMAGE_FILENAME $LIBVIRT_IMAGE_PATH
+sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
 
 # Prepare cloud-init data.
 CLOUD_INIT_DIR=$(mktemp -d)
-cp ${WORKSPACE}/test/cloud-init/{meta,user}-data ${CLOUD_INIT_DIR}/
-cp ${WORKSPACE}/test/cloud-init/network-config ${CLOUD_INIT_DIR}/
+cp "${WORKSPACE}"/test/cloud-init/{meta,user}-data "${CLOUD_INIT_DIR}"/
+cp "${WORKSPACE}"/test/cloud-init/network-config "${CLOUD_INIT_DIR}"/
 
 # Set up a cloud-init ISO.
 greenprint "💿 Creating a cloud-init ISO"
 CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 rm -f $CLOUD_INIT_PATH
-pushd $CLOUD_INIT_DIR
+pushd "$CLOUD_INIT_DIR"
     sudo genisoimage -o $CLOUD_INIT_PATH -V cidata \
         -r -J user-data meta-data network-config 2>&1 > /dev/null
 popd
@@ -239,10 +239,10 @@ greenprint "🚀 Booting the image with libvirt"
 if [[ $ARCH == 'ppc64le' ]]; then
     # ppc64le has some machine quirks that must be worked around.
     sudo virt-install \
-        --name $IMAGE_KEY \
+        --name "$IMAGE_KEY" \
         --memory 2048 \
         --vcpus 2 \
-        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path="${LIBVIRT_IMAGE_PATH}" \
         --disk path=${CLOUD_INIT_PATH},device=cdrom \
         --import \
         --os-variant rhel8-unknown \
@@ -252,10 +252,10 @@ if [[ $ARCH == 'ppc64le' ]]; then
 elif [[ $ARCH == 's390x' ]]; then
     # Our s390x machines are highly constrained on resources.
     sudo virt-install \
-        --name $IMAGE_KEY \
+        --name "$IMAGE_KEY" \
         --memory 512 \
         --vcpus 1 \
-        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path="${LIBVIRT_IMAGE_PATH}" \
         --disk path=${CLOUD_INIT_PATH},device=cdrom \
         --import \
         --os-variant rhel8-unknown \
@@ -263,10 +263,10 @@ elif [[ $ARCH == 's390x' ]]; then
         --network network=integration,mac=34:49:22:B0:83:30
 else
     sudo virt-install \
-        --name $IMAGE_KEY \
+        --name "$IMAGE_KEY" \
         --memory 1024 \
         --vcpus 2 \
-        --disk path=${LIBVIRT_IMAGE_PATH} \
+        --disk path="${LIBVIRT_IMAGE_PATH}" \
         --disk path=${CLOUD_INIT_PATH},device=cdrom \
         --import \
         --os-variant rhel8-unknown \
@@ -287,7 +287,7 @@ esac
 
 # Check for our smoke test file.
 greenprint "🛃 Checking for smoke test file in VM"
-for LOOP_COUNTER in `seq 0 ${MAX_LOOPS}`; do
+for LOOP_COUNTER in $(seq 0 ${MAX_LOOPS}); do
     RESULTS="$(smoke_test_check $INSTANCE_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "Smoke test passed! 🥳"
@@ -298,13 +298,13 @@ done
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
-sudo virsh destroy ${IMAGE_KEY}
+sudo virsh destroy "${IMAGE_KEY}"
 if [[ $ARCH == aarch64 ]]; then
-    sudo virsh undefine ${IMAGE_KEY} --nvram
+    sudo virsh undefine "${IMAGE_KEY}" --nvram
 else
-    sudo virsh undefine ${IMAGE_KEY}
+    sudo virsh undefine "${IMAGE_KEY}"
 fi
-sudo rm -f $LIBVIRT_IMAGE_PATH $CLOUD_INIT_PATH
+sudo rm -f "$LIBVIRT_IMAGE_PATH" $CLOUD_INIT_PATH
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then

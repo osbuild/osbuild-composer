@@ -19,7 +19,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "rhel-8.3")
         # Override old rhel-8-beta.json because test needs latest systemd and redhat-release
-        sudo cp $(dirname $0)/rhel-8-beta.json /etc/osbuild-composer/repositories/
+        sudo cp $(dirname "$0")/rhel-8-beta.json /etc/osbuild-composer/repositories/
         sudo systemctl restart osbuild-composer.socket
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -114,7 +114,7 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 # SSH setup.
 SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
 SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
-chmod 0600 $SSH_KEY
+chmod 0600 "$SSH_KEY"
 
 # Get the compose log.
 get_compose_log () {
@@ -122,7 +122,7 @@ get_compose_log () {
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
 
     # Download the logs.
-    sudo composer-cli compose log $COMPOSE_ID | tee $LOG_FILE > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
 }
 
 # Get the compose metadata.
@@ -131,15 +131,15 @@ get_compose_metadata () {
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata $COMPOSE_ID > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
-    tar -xf $TARBALL -C ${TEMPDIR}
-    rm -f $TARBALL
+    tar -xf "$TARBALL" -C "${TEMPDIR}"
+    rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    cat ${TEMPDIR}/${COMPOSE_ID}.json | jq -M '.' | tee $METADATA_FILE > /dev/null
+    cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
 # Build ostree image.
@@ -149,12 +149,12 @@ build_image() {
 
     # Prepare the blueprint for the compose.
     greenprint "📋 Preparing blueprint"
-    sudo composer-cli blueprints push $blueprint_file
-    sudo composer-cli blueprints depsolve $blueprint_name
+    sudo composer-cli blueprints push "$blueprint_file"
+    sudo composer-cli blueprints depsolve "$blueprint_name"
 
     # Get worker unit file so we can watch the journal.
     WORKER_UNIT=$(sudo systemctl list-units | egrep -o "osbuild.*worker.*\.service")
-    sudo journalctl -af -n 1 -u ${WORKER_UNIT} &
+    sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
 
     # Start the compose.
@@ -162,17 +162,17 @@ build_image() {
     if [[ $blueprint_name == upgrade ]]; then
         # Leave new version composer-cli here in case it got updated.
         # sudo composer-cli --json compose start-ostree --ref $OSTREE_REF --parent $COMMIT_HASH $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
-        sudo composer-cli --json compose start-ostree $blueprint_name $IMAGE_TYPE $OSTREE_REF $COMMIT_HASH | tee $COMPOSE_START
+        sudo composer-cli --json compose start-ostree "$blueprint_name" $IMAGE_TYPE "$OSTREE_REF" "$COMMIT_HASH" | tee "$COMPOSE_START"
     else
-        sudo composer-cli --json compose start $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
+        sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     fi
-    COMPOSE_ID=$(jq -r '.build_id' $COMPOSE_START)
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
-        sudo composer-cli --json compose info ${COMPOSE_ID} | tee $COMPOSE_INFO > /dev/null
-        COMPOSE_STATUS=$(jq -r '.queue_status' $COMPOSE_INFO)
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
@@ -185,8 +185,8 @@ build_image() {
 
     # Capture the compose logs from osbuild.
     greenprint "💬 Getting compose log and metadata"
-    get_compose_log $COMPOSE_ID
-    get_compose_metadata $COMPOSE_ID
+    get_compose_log "$COMPOSE_ID"
+    get_compose_metadata "$COMPOSE_ID"
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
@@ -200,7 +200,7 @@ build_image() {
 
 # Wait for the ssh server up to be.
 wait_for_ssh_up () {
-    SSH_STATUS=$(ssh $SSH_OPTIONS -i ${SSH_KEY} admin@${1} '/bin/bash -c "echo -n READY"')
+    SSH_STATUS=$(ssh "$SSH_OPTIONS" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -211,20 +211,20 @@ wait_for_ssh_up () {
 # Clean up our mess.
 clean_up () {
     greenprint "🧼 Cleaning up"
-    sudo virsh destroy ${IMAGE_KEY}
+    sudo virsh destroy "${IMAGE_KEY}"
     if [[ $ARCH == aarch64 ]]; then
-        sudo virsh undefine ${IMAGE_KEY} --nvram
+        sudo virsh undefine "${IMAGE_KEY}" --nvram
     else
-        sudo virsh undefine ${IMAGE_KEY}
+        sudo virsh undefine "${IMAGE_KEY}"
     fi
     # Remove qcow2 file.
-    sudo rm -f $LIBVIRT_IMAGE_PATH
+    sudo rm -f "$LIBVIRT_IMAGE_PATH"
     # Remove extracted upgrade image-tar.
-    sudo rm -rf $UPGRADE_PATH
+    sudo rm -rf "$UPGRADE_PATH"
     # Remove "remote" repo.
-    sudo rm -rf ${HTTPD_PATH}/{repo,compose.json}
+    sudo rm -rf "${HTTPD_PATH}"/{repo,compose.json}
     # Remomve tmp dir.
-    sudo rm -rf $TEMPDIR
+    sudo rm -rf "$TEMPDIR"
     # Stop httpd
     sudo systemctl disable httpd --now
 }
@@ -248,7 +248,7 @@ check_result () {
 ##################################################
 
 # Write a blueprint for ostree image.
-tee $BLUEPRINT_FILE > /dev/null << EOF
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "ostree"
 description = "A base ostree image"
 version = "0.0.1"
@@ -261,7 +261,7 @@ version = "*"
 EOF
 
 # Build installation image.
-build_image $BLUEPRINT_FILE ostree
+build_image "$BLUEPRINT_FILE" ostree
 
 # Start httpd to serve ostree repo.
 greenprint "🚀 Starting httpd daemon"
@@ -269,15 +269,15 @@ sudo systemctl start httpd
 
 # Download the image and extract tar into web server root folder.
 greenprint "📥 Downloading and extracting the image"
-sudo composer-cli compose image ${COMPOSE_ID} > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
 HTTPD_PATH="/var/www/html"
-sudo tar -xf ${IMAGE_FILENAME} -C ${HTTPD_PATH}
-sudo rm -f $IMAGE_FILENAME
+sudo tar -xf "${IMAGE_FILENAME}" -C ${HTTPD_PATH}
+sudo rm -f "$IMAGE_FILENAME"
 
 # Clean compose and blueprints.
 greenprint "Clean up osbuild-composer"
-sudo composer-cli compose delete ${COMPOSE_ID} > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete ostree > /dev/null
 
 # Get ostree commit value.
@@ -291,11 +291,11 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 # Create qcow2 file for virt install.
 greenprint "Create qcow2 file for virt install"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
-sudo qemu-img create -f qcow2 ${LIBVIRT_IMAGE_PATH} 20G
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
 # Write kickstart file for ostree image installation.
 greenprint "Generate kickstart file"
-tee $KS_FILE > /dev/null << STOPHERE
+tee "$KS_FILE" > /dev/null << STOPHERE
 text
 lang en_US.UTF-8
 keyboard us
@@ -350,10 +350,10 @@ STOPHERE
 
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
-sudo virt-install  --initrd-inject=${KS_FILE} \
+sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name=${IMAGE_KEY}\
-                   --disk path=${LIBVIRT_IMAGE_PATH},format=qcow2 \
+                   --name="${IMAGE_KEY}"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
@@ -367,11 +367,11 @@ sudo virt-install  --initrd-inject=${KS_FILE} \
 
 # Start VM.
 greenprint "Start VM"
-sudo virsh start ${IMAGE_KEY}
+sudo virsh start "${IMAGE_KEY}"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in `seq 0 30`; do
+for LOOP_COUNTER in $(seq 0 30); do
     RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
@@ -390,7 +390,7 @@ check_result
 ##################################################
 
 # Write a blueprint for ostree image.
-tee $BLUEPRINT_FILE > /dev/null << EOF
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "upgrade"
 description = "An upgrade ostree image"
 version = "0.0.2"
@@ -407,25 +407,25 @@ version = "*"
 EOF
 
 # Build upgrade image.
-build_image $BLUEPRINT_FILE upgrade
+build_image "$BLUEPRINT_FILE" upgrade
 
 # Download the image and extract tar into web server root folder.
 greenprint "📥 Downloading and extracting the image"
-sudo composer-cli compose image ${COMPOSE_ID} > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
 UPGRADE_PATH="$(pwd)/upgrade"
-mkdir -p $UPGRADE_PATH
-sudo tar -xf $IMAGE_FILENAME -C $UPGRADE_PATH
-sudo rm -f $IMAGE_FILENAME
+mkdir -p "$UPGRADE_PATH"
+sudo tar -xf "$IMAGE_FILENAME" -C "$UPGRADE_PATH"
+sudo rm -f "$IMAGE_FILENAME"
 
 # Clean compose and blueprints.
 greenprint "Clean up osbuild-composer again"
-sudo composer-cli compose delete ${COMPOSE_ID} > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 # Introduce new ostree commit into repo.
 greenprint "Introduce new ostree commit into repo"
-sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" $OSTREE_REF
+sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" "$OSTREE_REF"
 sudo ostree summary --update --repo "${HTTPD_PATH}/repo"
 
 # Ensure SELinux is happy with all objects files.
@@ -434,19 +434,19 @@ sudo restorecon -Rv "${HTTPD_PATH}/repo" > /dev/null
 
 # Get ostree commit value.
 greenprint "Get ostree image commit value"
-UPGRADE_HASH=$(jq -r '."ostree-commit"' < ${UPGRADE_PATH}/compose.json)
+UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
-ssh $SSH_OPTIONS -i ${SSH_KEY} admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
-ssh $SSH_OPTIONS -i ${SSH_KEY} admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
+ssh "$SSH_OPTIONS" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
+ssh "$SSH_OPTIONS" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in `seq 0 30`; do
+for LOOP_COUNTER in $(seq 0 30); do
     RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
@@ -459,7 +459,7 @@ done
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee ${TEMPDIR}/inventory > /dev/null << EOF
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${GUEST_ADDRESS}
 
@@ -471,7 +471,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-ansible-playbook -v -i ${TEMPDIR}/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit=${UPGRADE_HASH} $(dirname $0)/check_ostree.yaml || RESULTS=0
+ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" $(dirname "$0")/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
