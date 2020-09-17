@@ -102,7 +102,7 @@ greenprint "📋 Preparing blueprint"
 cat "${BLUEPRINT_FILE}"
 sudo composer-cli -j blueprints push "${BLUEPRINT_FILE}"
 greenprint "📋 Depsolving blueprint"
-sudo composer-cli -j blueprints depsolve "${BLUEPRINT_FILE}"
+sudo composer-cli -j blueprints depsolve "${BLUEPRINT_NAME}"
 
 # Get worker unit file so we can watch the journal.
 WORKER_UNIT=$(sudo systemctl list-units | egrep -o "osbuild.*worker.*\.service")
