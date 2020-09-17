@@ -187,6 +187,7 @@ func testSSH(t *testing.T, address string, privateKey string, ns *boot.NetNS) {
 			t.Fatal(err)
 		}
 
+		fmt.Println(err)
 		time.Sleep(10 * time.Second)
 	}
 
