@@ -11,6 +11,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -23,6 +24,7 @@ import (
 
 // Server represents the state of the koji Server
 type Server struct {
+	echo        *echo.Echo
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
@@ -30,21 +32,28 @@ type Server struct {
 }
 
 // NewServer creates a new koji server
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry, kojiServers map[string]koji.GSSAPICredentials) *Server {
-	server := &Server{
+func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry, kojiServers map[string]koji.GSSAPICredentials) *Server {
+	s := &Server{
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
 		kojiServers: kojiServers,
 	}
-	return server
+
+	s.echo = echo.New()
+	s.echo.Binder = binder{}
+	s.echo.StdLogger = logger
+
+	api.RegisterHandlers(s.echo, &apiHandlers{s})
+
+	return s
 }
 
 // Serve serves the koji API over the provided listener socket
-func (server *Server) Serve(listener net.Listener) error {
-	s := http.Server{Handler: api.Handler(server)}
+func (s *Server) Serve(listener net.Listener) error {
+	s.echo.Listener = listener
 
-	err := s.Serve(listener)
+	err := s.echo.Start("")
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -52,37 +61,33 @@ func (server *Server) Serve(listener net.Listener) error {
 	return nil
 }
 
+// apiHandlers implements api.ServerInterface - the http api route handlers
+// generated from api/openapi.yml. This is a separate object, because these
+// handlers should not be exposed on the `Server` object.
+type apiHandlers struct {
+	server *Server
+}
+
 // PostCompose handles a new /compose POST request
-func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header["Content-Type"]
-	if len(contentType) != 1 || contentType[0] != "application/json" {
-		http.Error(w, "Only 'application/json' content type is supported", http.StatusUnsupportedMediaType)
-		return
-	}
-
+func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	var request api.ComposeRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
+	err := ctx.Bind(&request)
 	if err != nil {
-		http.Error(w, "Could not parse JSON body", http.StatusBadRequest)
-		return
+		return err
 	}
 
-	d := server.distros.GetDistro(request.Distribution)
+	d := h.server.distros.GetDistro(request.Distribution)
 	if d == nil {
-		http.Error(w, fmt.Sprintf("Unsupported distribution: %s", request.Distribution), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported distribution: %s", request.Distribution))
 	}
 
 	kojiServer, err := url.Parse(request.Koji.Server)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid Koji server: %s", request.Koji.Server), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid Koji server: %s", request.Koji.Server))
 	}
-	creds, exists := server.kojiServers[kojiServer.Hostname()]
+	creds, exists := h.server.kojiServers[kojiServer.Hostname()]
 	if !exists {
-		http.Error(w, fmt.Sprintf("Koji server has not been configured: %s", kojiServer.Hostname()), http.StatusBadRequest)
-		return
-
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Koji server has not been configured: %s", kojiServer.Hostname()))
 	}
 
 	type imageRequest struct {
@@ -94,13 +99,11 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 	for i, ir := range request.ImageRequests {
 		arch, err := d.GetArch(ir.Architecture)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution))
 		}
 		imageType, err := arch.GetImageType(ir.ImageType)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution))
 		}
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
@@ -113,22 +116,19 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 			panic("Could not initialize empty blueprint.")
 		}
 		packageSpecs, _ := imageType.Packages(*bp)
-		packages, _, err := server.rpmMetadata.Depsolve(packageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
+		packages, _, err := h.server.rpmMetadata.Depsolve(packageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
 		buildPackageSpecs := imageType.BuildPackages()
-		buildPackages, _, err := server.rpmMetadata.Depsolve(buildPackageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
+		buildPackages, _, err := h.server.rpmMetadata.Depsolve(buildPackageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to depsolve build packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve build packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
 
 		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packages, buildPackages)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
 
 		imageRequests[i].manifest = manifest
@@ -140,8 +140,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		// NOTE: the store currently does not support multi-image composes
 		ir = imageRequests[0]
 	} else {
-		http.Error(w, "Only single-image composes are currently supported", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Only single-image composes are currently supported")
 	}
 
 	// Koji for some reason needs TLS renegotiation enabled.
@@ -153,8 +152,7 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 
 	k, err := koji.NewFromGSSAPI(request.Koji.Server, &creds, transport)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Could not log into Koji: %v", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not log into Koji: %v", err))
 	}
 
 	defer func() {
@@ -166,11 +164,10 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 
 	buildInfo, err := k.CGInitBuild(request.Name, request.Version, request.Release)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Could not initialize build with koji: %v", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", err))
 	}
 
-	id, err := server.workers.Enqueue(ir.manifest, []*target.Target{
+	id, err := h.server.workers.Enqueue(ir.manifest, []*target.Target{
 		target.NewKojiTarget(&target.KojiTargetOptions{
 			BuildID:         uint64(buildInfo.BuildID),
 			TaskID:          uint64(request.Koji.TaskId),
@@ -188,15 +185,10 @@ func (server *Server) PostCompose(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var response api.ComposeResponse
-	response.Id = id.String()
-	response.KojiBuildId = buildInfo.BuildID
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		panic("Failed to write response")
-	}
+	return ctx.JSON(http.StatusCreated, &api.ComposeResponse{
+		Id:          id.String(),
+		KojiBuildId: buildInfo.BuildID,
+	})
 }
 
 func composeStateToStatus(state common.ComposeState) string {
@@ -230,17 +222,15 @@ func composeStateToImageStatus(state common.ComposeState) string {
 }
 
 // GetComposeId handles a /compose/{id} GET request
-func (server *Server) GetComposeId(w http.ResponseWriter, r *http.Request, id string) {
-	parsedID, err := uuid.Parse(id)
+func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
+	id, err := uuid.Parse(idstr)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	status, err := server.workers.JobStatus(parsedID)
+	status, err := h.server.workers.JobStatus(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
 	response := api.ComposeStatus{
@@ -251,9 +241,26 @@ func (server *Server) GetComposeId(w http.ResponseWriter, r *http.Request, id st
 			},
 		},
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		panic("Failed to write response")
+	return ctx.JSON(http.StatusOK, response)
+}
+
+// A simple echo.Binder(), which only accepts application/json, but is more
+// strict than echo's DefaultBinder. It does not handle binding query
+// parameters either.
+type binder struct{}
+
+func (b binder) Bind(i interface{}, ctx echo.Context) error {
+	request := ctx.Request()
+
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "request must be json-encoded")
 	}
+
+	err := json.NewDecoder(request.Body).Decode(i)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("cannot parse request body: %v", err))
+	}
+
+	return nil
 }

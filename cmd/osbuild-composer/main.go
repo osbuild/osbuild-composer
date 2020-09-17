@@ -187,7 +187,7 @@ func main() {
 			}
 		}
 
-		kojiServer := kojiapi.NewServer(workers, rpm, distros, kojiServers)
+		kojiServer := kojiapi.NewServer(logger, workers, rpm, distros, kojiServers)
 
 		tlsConfig, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
