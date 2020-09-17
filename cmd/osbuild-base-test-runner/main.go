@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/osbuild/osbuild-composer/internal/boot"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
@@ -18,18 +19,25 @@ type timeoutError struct{}
 
 func (*timeoutError) Error() string { return "Timeout exceeded" }
 
+// panicErr panics on err != nil
+func panicErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 // GenerateCIArtifactName generates a new identifier for CI artifacts which is based
 // on environment variables specified by Jenkins
 // note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
 func GenerateCIArtifactName(prefix string) (string, error) {
 	distroCode := os.Getenv("DISTRO_CODE")
-	changeId := os.Getenv("CHANGE_ID")
+	branchName := os.Getenv("BRANCH_NAME")
 	buildId := os.Getenv("BUILD_ID")
-	if changeId == "" || buildId == "" || distroCode == "" {
-		return "", fmt.Errorf("The environment variables must specify CHANGE_ID, BUILD_ID, and DISTRO_CODE")
+	if branchName == "" || buildId == "" || distroCode == "" {
+		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
 	}
 
-	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, changeId, buildId), nil
+	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
 }
 
 // sshDisableHostChecking disables host (=remote machine) key checking
@@ -159,6 +167,91 @@ func testSSH(address string, privateKey string) {
 	panic(fmt.Sprintf("ssh test failure, %d attempts were made", attempts))
 }
 
+func runTestOverSSH(address, privateKey, testCommand string) int {
+	// Get details about the machine
+	err := runSSHCommand(address, privateKey, "cat /etc/os-release")
+	panicErr(err)
+
+	// Prepare the socket for forwarding because it is not owned by the redhat user
+	err = runSSHCommand(address, privateKey, "sudo chmod go+rw /run/weldr/api.socket")
+	panicErr(err)
+
+	// Forward the socket to the local machine
+	runLocalCommand("sudo", "mkdir", "/run/weldr")
+	forwardSocketCommand := []string{"ssh"}
+	forwardSocketCommand = append(forwardSocketCommand, sshDisableHostChecking()...)
+	// Use this private key as an identity
+	forwardSocketCommand = append(forwardSocketCommand, "-i", privateKey)
+	// -f = go to background
+	// -N = do not execute a remote command, only forward the port
+	// -L = forward the port
+	forwardSocketCommand = append(forwardSocketCommand, "-fN", "-L", "/run/weldr/api.socket:/run/weldr/api.socket", fmt.Sprintf("redhat@%s", address))
+	runLocalCommand("sudo", forwardSocketCommand...)
+
+	fmt.Println("Running test: ", testCommand)
+	return runLocalCommand(testCommand)
+}
+
+func cleanupImageAndSnapshot(e *ec2.EC2, imageName string) {
+	fmt.Println("Getting the EC2 image description")
+	imageDesc, err := boot.DescribeEC2Image(e, imageName)
+	if err != nil {
+		fmt.Println("Could not get image description, this is expected.")
+	} else {
+		fmt.Println("Image exists, this is unexpected, but deleting it anyway.")
+		fmt.Println("[AWS] 🧹 Deregistering image", imageName)
+		err = boot.DeregisterEC2Image(e, imageDesc.Id)
+		if err != nil {
+			fmt.Println("Cannot delete the ec2 image, resources could have been leaked")
+		}
+	}
+	fmt.Println("[AWS] 🧹 Deregistering snapshot", imageName)
+	sid, err := boot.DescribeEC2Snapshot(e, imageName)
+	panicErr(err)
+	err = boot.DeleteEC2Snapshot(e, sid)
+	panicErr(err)
+	fmt.Println("[AWS] 🧹 Successfully wiped all images and snapshots associated with this PR.")
+}
+
+func runTest(e *ec2.EC2, imageName, securityGroupName string) int {
+	// Start by registering the image from a stapshot if it is not already registered
+	fmt.Println("Getting the EC2 image description")
+	imageDesc, err := boot.DescribeEC2Image(e, imageName)
+	if err != nil {
+		fmt.Println("Failed to describe EC2 image, trying to register it from a snapshot.")
+		sid, err := boot.DescribeEC2Snapshot(e, imageName)
+		panicErr(err)
+		fmt.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *sid)
+		imgId, err := awsupload.RegisterEC2Snapshot(e, sid, imageName)
+		panicErr(err)
+		imageDesc.Id = imgId
+		imageDesc.SnapshotId = sid
+	}
+
+	// Deregister the image after the test is over
+	defer func() {
+		fmt.Println("[AWS] 🧹 Deregistering image", imageName)
+		err = boot.DeregisterEC2Image(e, imageDesc.Id)
+		if err != nil {
+			fmt.Println("Cannot delete the ec2 image, resources could have been leaked")
+		}
+	}()
+
+	// Boot the image and try to connect to it. In case it works, run the test.
+	fmt.Println("[AWS] 🚀 Booting the image")
+	var returnCode int = 1
+	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
+		return boot.WithBootedImageInEC2(e, securityGroupName, imageDesc, publicKey, func(address string) error {
+			// First make sure it works
+			testSSH(address, privateKey)
+			// Now run the test
+			returnCode = runTestOverSSH(address, privateKey, os.Args[1])
+			return nil
+		})
+	})
+	return returnCode
+}
+
 func main() {
 	// Parse cmdline arguments if there are any
 	cleanup := false
@@ -176,102 +269,31 @@ func main() {
 	// Get AWS credentials and Jenkins job variables which will identify the image in AWS
 	fmt.Println("Getting AWS credentials")
 	creds, err := boot.GetAWSCredentialsFromEnv()
-	if err != nil {
-		panic("AWS credentials unavailable")
-	}
+	panicErr(err)
 	if creds == nil {
 		panic("Empty AWS credentials")
 	}
 
-	// Get environment variables defining the name of CI artifacts
-	fmt.Println("Getting change and build IDs")
-	changeId := os.Getenv("CHANGE_ID")
-	buildId := os.Getenv("BUILD_ID")
-	if changeId == "" || buildId == "" {
-		panic("The environment variables must specify CHANGE_ID and BUILD_ID")
-	}
-	imageName := fmt.Sprintf("osbuild-composer-base-test-%s-%s", changeId, buildId)
-
+	// Generate names for CI artifacts
+	imageName, err := GenerateCIArtifactName("osbuild-composer-base-test-")
+	panicErr(err)
 	securityGroupName, err := GenerateCIArtifactName("osbuild-image-tests-security-group-")
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 
-	fmt.Println("Getting the EC2 image description")
+	// Get credentials for EC2
 	e, err := boot.NewEC2(creds)
-	if err != nil {
-		panic("Failed to obtain credentials for EC2")
-	}
+	panicErr(err)
 
+	// Cleanup mode:
+	// Try to wipe the image and snapshot associated with this PR
 	if cleanup {
-		imageDesc, err := boot.DescribeEC2Image(e, imageName)
-		if err != nil {
-			fmt.Println("Could not get image description, this is expected.")
-		} else {
-			fmt.Println("Image exists, this is unexpected, but deleting it anyway.")
-			fmt.Println("[AWS] 🧹 Deregistering image", imageName)
-			err = boot.DeregisterEC2Image(e, imageDesc.Id)
-			if err != nil {
-				fmt.Println("Cannot delete the ec2 image, resources could have been leaked")
-			}
-		}
-		fmt.Println("[AWS] 🧹 Deregistering snapshot", imageName)
-		sid, err := boot.DescribeEC2Snapshot(e, imageName)
-		if err != nil {
-			panic(err)
-		}
-		err = boot.DeleteEC2Snapshot(e, sid)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("[AWS] 🧹 Successfully wiped all images and snapshots associated with this PR.")
+		cleanupImageAndSnapshot(e, imageName)
 		return
 	}
 
-	fmt.Println("Getting the EC2 image description")
-	imageDesc, err := boot.DescribeEC2Image(e, imageName)
-	if err != nil {
-		fmt.Println("Failed to describe EC2 image, trying to register it from a snapshot.")
-		sid, err := boot.DescribeEC2Snapshot(e, imageName)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *sid)
-		imgId, err := awsupload.RegisterEC2Snapshot(e, sid, imageName)
-		if err != nil {
-			panic(err)
-		}
-		imageDesc.Id = imgId
-		imageDesc.SnapshotId = sid
-	}
-	// delete the image after the test is over
-	defer func() {
-		fmt.Println("[AWS] 🧹 Deregistering image", imageName)
-		err = boot.DeregisterEC2Image(e, imageDesc.Id)
-		if err != nil {
-			fmt.Println("Cannot delete the ec2 image, resources could have been leaked")
-		}
-	}()
-	fmt.Println("[AWS] 🚀 Booting the image")
-	var returnCode int = 1
-	// boot the uploaded image and try to connect to it. In case it works, run the test.
-	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
-		return boot.WithBootedImageInEC2(e, securityGroupName, imageDesc, publicKey, func(address string) error {
-			testSSH(address, privateKey)
-			err = runSSHCommand(address, privateKey, "cat /etc/os-release")
-			if err != nil {
-				panic(err)
-			}
-			err = runSSHCommand(address, privateKey, "sudo chmod go+rw /run/weldr/api.socket")
-			if err != nil {
-				panic(err)
-			}
-			runLocalCommand("sudo", "mkdir", "/run/weldr")
-			runLocalCommand("sudo", "ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", privateKey, "-fN", "-L", "/run/weldr/api.socket:/run/weldr/api.socket", fmt.Sprintf("redhat@%s", address))
-			fmt.Println("Running test: ", os.Args[1])
-			returnCode = runLocalCommand(os.Args[1])
-			return nil
-		})
-	})
+	// "Regular" mode:
+	// Spin up a VM in AWS and run the test there
+	returnCode := runTest(e, imageName, securityGroupName)
+
 	os.Exit(returnCode)
 }
