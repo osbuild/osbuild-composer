@@ -21,8 +21,8 @@ fi
 # Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
 # Install requirements for building RPMs in mock.
@@ -88,27 +88,27 @@ fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
+sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
     rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
 
 # Change the ownership of all of our repo files from root to our CI user.
-sudo chown -R $USER ${REPO_DIR%%/*}
+sudo chown -R "$USER" "${REPO_DIR%%/*}"
 
 # Move the logs out of the way.
 greenprint "🧹 Retaining logs from mock build"
-mv ${REPO_DIR}/*.log $WORKSPACE
+mv "${REPO_DIR}"/*.log "$WORKSPACE"
 
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
-createrepo_c ${REPO_DIR}
+createrepo_c "${REPO_DIR}"
 
 # Copy the current build to the latest directory.
-mkdir -p $REPO_DIR_LATEST
-cp -arv ${REPO_DIR}/ ${REPO_DIR_LATEST}/
+mkdir -p "$REPO_DIR_LATEST"
+cp -arv "${REPO_DIR}"/ "${REPO_DIR_LATEST}"/
 
 # Remove the previous latest build for this branch.
 # Don't fail if the path is missing.
-s3cmd --recursive rm s3://${REPO_BUCKET}/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH} || true
+s3cmd --recursive rm s3://${REPO_BUCKET}/"${JOB_NAME}"/latest/"${ID}""${VERSION_ID//./}"_"${ARCH}" || true
 
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
