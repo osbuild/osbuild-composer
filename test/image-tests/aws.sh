@@ -94,7 +94,7 @@ get_compose_metadata () {
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
 
     # Find the tarball and extract it.
-    TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
+    TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
     tar -xf "$TARBALL"
     rm -f "$TARBALL"
 
@@ -143,7 +143,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve bash
 
 # Get worker unit file so we can watch the journal.
-WORKER_UNIT=$(sudo systemctl list-units | egrep -o "osbuild.*worker.*\.service")
+WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
 
@@ -245,7 +245,7 @@ PUBLIC_IP=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$INSTANCE_DATA"
 # Wait for the node to come online.
 greenprint "⏱ Waiting for AWS instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan "$PUBLIC_IP" 2>&1 > /dev/null; then
+    if ssh-keyscan "$PUBLIC_IP" > /dev/null 2>&1; then
         echo "SSH is up!"
         ssh-keyscan "$PUBLIC_IP" >> ~/.ssh/known_hosts
         break
@@ -253,7 +253,7 @@ for LOOP_COUNTER in {0..30}; do
 
     # Get a screenshot of the instance console.
     echo "Getting instance screenshot..."
-    store_instance_screenshot "$INSTANCE_ID" $LOOP_COUNTER || true
+    store_instance_screenshot "$INSTANCE_ID" "$LOOP_COUNTER" || true
 
     # ssh-keyscan has a 5 second timeout by default, so the pause per loop
     # is 10 seconds when you include the following `sleep`.

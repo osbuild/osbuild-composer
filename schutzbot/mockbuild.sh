@@ -108,7 +108,7 @@ cp -arv "${REPO_DIR}"/ "${REPO_DIR_LATEST}"/
 
 # Remove the previous latest build for this branch.
 # Don't fail if the path is missing.
-s3cmd --recursive rm s3://${REPO_BUCKET}/"${JOB_NAME}"/latest/"${ID}""${VERSION_ID//./}"_"${ARCH}" || true
+s3cmd --recursive rm "s3://${REPO_BUCKET}/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH}" || true
 
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"

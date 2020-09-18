@@ -27,9 +27,9 @@ run_test_case () {
     test_divider
 
     if sudo "${1}" -test.v | tee "${WORKSPACE}"/"${TEST_NAME}".log; then
-        PASSED_TESTS+=($TEST_NAME)
+        PASSED_TESTS+=("$TEST_NAME")
     else
-        FAILED_TESTS+=($TEST_NAME)
+        FAILED_TESTS+=("$TEST_NAME")
     fi
 
     test_divider
@@ -49,8 +49,8 @@ done
 
 # Print a report of the test results.
 test_divider
-echo "😃 Passed tests: ${PASSED_TESTS[@]}"
-echo "☹ Failed tests: ${FAILED_TESTS[@]}"
+echo "😃 Passed tests:" "${PASSED_TESTS[@]}"
+echo "☹ Failed tests:" "${FAILED_TESTS[@]}"
 test_divider
 
 # Exit with a failure if any tests failed.
