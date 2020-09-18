@@ -107,8 +107,8 @@ smoke_test_check () {
     SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
     chmod 0600 "$SSH_KEY"
 
-    SSH_OPTIONS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
-    SMOKE_TEST=$(ssh "$SSH_OPTIONS" -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
+    SSH_OPTIONS=(-o StrictHostKeyChecking=no -o ConnectTimeout=5)
+    SMOKE_TEST=$(ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
     else
@@ -134,7 +134,7 @@ get_compose_metadata () {
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
 
     # Find the tarball and extract it.
-    TARBALL=$(basename $(find . -maxdepth 1 -type f -name "*-metadata.tar"))
+    TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
     tar -xf "$TARBALL"
     rm -f "$TARBALL"
 
@@ -171,7 +171,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve bash
 
 # Get worker unit file so we can watch the journal.
-WORKER_UNIT=$(sudo systemctl list-units | egrep -o "osbuild.*worker.*\.service")
+WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
 
@@ -212,7 +212,7 @@ sudo kill ${WORKER_JOURNAL_PID}
 # Download the image.
 greenprint "📥 Downloading the image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-IMAGE_FILENAME=$(basename $(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}"))
+IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
 sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
 
@@ -227,7 +227,7 @@ CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 rm -f $CLOUD_INIT_PATH
 pushd "$CLOUD_INIT_DIR"
     sudo genisoimage -o $CLOUD_INIT_PATH -V cidata \
-        -r -J user-data meta-data network-config 2>&1 > /dev/null
+        -r -J user-data meta-data network-config > /dev/null 2>&1
 popd
 
 # Ensure SELinux is happy with our new images.
@@ -287,6 +287,7 @@ esac
 
 # Check for our smoke test file.
 greenprint "🛃 Checking for smoke test file in VM"
+# shellcheck disable=SC2034  # Unused variables left for readability
 for LOOP_COUNTER in $(seq 0 ${MAX_LOOPS}); do
     RESULTS="$(smoke_test_check $INSTANCE_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then

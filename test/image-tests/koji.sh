@@ -3,7 +3,6 @@ set -euo pipefail
 
 # Get OS data.
 source /etc/os-release
-ARCH=$(uname -m)
 
 # Colorful output.
 function greenprint {

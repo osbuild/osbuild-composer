@@ -6,7 +6,7 @@ function retry {
     local retries=5
     until "$@"; do
         exit=$?
-        count=$(($count + 1))
+        count=$((count + 1))
         if [[ $count -lt $retries ]]; then
             echo "Retrying command..."
             sleep 1
