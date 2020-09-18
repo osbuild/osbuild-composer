@@ -171,6 +171,8 @@ func runTestOverSSH(address, privateKey, testCommand string) int {
 	// Get details about the machine
 	err := runSSHCommand(address, privateKey, "cat /etc/os-release")
 	panicErr(err)
+	err = runSSHCommand(address, privateKey, "df -h")
+	panicErr(err)
 
 	// Prepare the socket for forwarding because it is not owned by the redhat user
 	err = runSSHCommand(address, privateKey, "sudo chmod go+rw /run/weldr/api.socket")
