@@ -88,7 +88,7 @@ fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
+sudo mock -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
     rpmbuild/SRPMS/*.src.rpm osbuild/rpmbuild/SRPMS/*.src.rpm
 
 # Change the ownership of all of our repo files from root to our CI user.
