@@ -224,6 +224,7 @@ func runTest(e *ec2.EC2, imageName, securityGroupName string) int {
 		fmt.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *sid)
 		imgId, err := awsupload.RegisterEC2Snapshot(e, sid, imageName)
 		panicErr(err)
+		imageDesc = new(boot.ImageDescription)
 		imageDesc.Id = imgId
 		imageDesc.SnapshotId = sid
 	}

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
 
 WORKING_DIRECTORY="/usr/libexec/osbuild-composer"
 TEST_RUNNER="/usr/libexec/tests/osbuild-composer/osbuild-base-test-runner"

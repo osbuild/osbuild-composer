@@ -119,7 +119,7 @@ func NewEC2(c *awsCredentials) (*ec2.EC2, error) {
 	return ec2.New(sess), nil
 }
 
-type imageDescription struct {
+type ImageDescription struct {
 	Id         *string
 	SnapshotId *string
 	// this doesn't support multiple snapshots per one image,
@@ -153,7 +153,7 @@ func DescribeEC2Snapshot(e *ec2.EC2, snapshotName string) (*string, error) {
 
 // DescribeEC2Image searches for EC2 image by its name and returns
 // its id and snapshot id
-func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
+func DescribeEC2Image(e *ec2.EC2, imageName string) (*ImageDescription, error) {
 	imageDescriptions, err := e.DescribeImages(&ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
@@ -173,7 +173,7 @@ func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	imageId := imageDescriptions.Images[0].ImageId
 	snapshotId := imageDescriptions.Images[0].BlockDeviceMappings[0].Ebs.SnapshotId
 
-	return &imageDescription{
+	return &ImageDescription{
 		Id:         imageId,
 		SnapshotId: snapshotId,
 	}, nil
@@ -196,7 +196,7 @@ func DeleteEC2Snapshot(e *ec2.EC2, snapshotId *string) error {
 }
 
 // DeleteEC2Image deletes the specified image and its associated snapshot
-func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
+func DeleteEC2Image(e *ec2.EC2, imageDesc *ImageDescription) error {
 	var retErr error
 
 	// firstly, deregister the image
@@ -218,7 +218,7 @@ func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 
 // WithBootedImageInEC2 runs the function f in the context of booted
 // image in AWS EC2
-func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
+func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *ImageDescription, publicKey string, f func(address string) error) (retErr error) {
 	// generate user data with given public key
 	userData, err := CreateUserData(publicKey)
 	if err != nil {
