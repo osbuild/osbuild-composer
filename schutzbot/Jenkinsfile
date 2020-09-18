@@ -426,7 +426,7 @@ pipeline {
                 }
 
                 stage('EL8.3 Base') {
-                    agent { label "rhel83cloudbase && x86_64 && aws" }
+                    agent { label "rhel83cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "base"
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
