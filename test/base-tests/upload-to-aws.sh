@@ -22,8 +22,8 @@ if ! hash jq; then
     sudo dnf -qy install jq
 fi
 
-TEST_ID="${CHANGE_ID}-${BUILD_ID}"
-IMAGE_KEY=osbuild-composer-base-test-${TEST_ID}
+TEST_ID="${DISTRO_CODE}-${BRANCH_NAME}-${BUILD_ID}"
+IMAGE_KEY="osbuild-composer-base-test-${TEST_ID}"
 
 # Jenkins sets WORKSPACE to the job workspace, but if this script runs
 # outside of Jenkins, we can set up a temporary directory instead.

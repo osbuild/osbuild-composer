@@ -117,6 +117,7 @@ pipeline {
             agent { label "f32cloudbase && x86_64 && aws" }
             environment {
                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+                DISTRO_CODE = "fedora32"
             }
             steps {
                 unstash 'fedora32'
@@ -540,7 +541,7 @@ pipeline {
             }
         }
     }
-}
+
 
 //TODO: send messages via Email too
 // TODO: how do we make the contents of COMPOSE_ID available as env.COMPOSE_ID
@@ -560,6 +561,7 @@ pipeline {
             }
         }
     }
+}
 
 // Run a script to create a target VM and upload it to AWS so that it
 // can be used in base tests
