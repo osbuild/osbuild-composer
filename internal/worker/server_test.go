@@ -64,10 +64,10 @@ func TestCreate(t *testing.T) {
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 
-	_, err = server.Enqueue(manifest, nil)
+	_, err = server.Enqueue(arch.Name(), manifest, nil)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/jobs", `{"types":["osbuild"]}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
 		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 
@@ -87,10 +87,10 @@ func TestCancel(t *testing.T) {
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 
-	jobId, err := server.Enqueue(manifest, nil)
+	jobId, err := server.Enqueue(arch.Name(), manifest, nil)
 	require.NoError(t, err)
 
-	token, j, _, err := server.RequestOSBuildJob(context.Background())
+	token, j, _, err := server.RequestOSBuildJob(context.Background(), arch.Name())
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 

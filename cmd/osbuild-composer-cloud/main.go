@@ -106,17 +106,31 @@ func main() {
 		log.Fatalf("cannot create queue directory: %v", err)
 	}
 
-	jobs, err := fsjobqueue.New(queueDir, []string{"osbuild"})
+	distros, err := distro.NewRegistry(fedora31.New(), fedora32.New(), rhel8.New())
+	if err != nil {
+		log.Fatalf("Error loading distros: %v", err)
+	}
+
+	// construct job types of the form osbuild:{arch} for all arches
+	jobTypes := []string{"osbuild"}
+	jobTypesMap := map[string]bool{}
+	for _, name := range distros.List() {
+		d := distros.GetDistro(name)
+		for _, arch := range d.ListArches() {
+			jt := "osbuild:" + arch
+			if !jobTypesMap[jt] {
+				jobTypesMap[jt] = true
+				jobTypes = append(jobTypes, jt)
+			}
+		}
+	}
+
+	jobs, err := fsjobqueue.New(queueDir, jobTypes)
 	if err != nil {
 		log.Fatalf("cannot create jobqueue: %v", err)
 	}
 
 	rpm := rpmmd.NewRPMMD(path.Join(cacheDirectory, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
-
-	distros, err := distro.NewRegistry(fedora31.New(), fedora32.New(), rhel8.New())
-	if err != nil {
-		log.Fatalf("Error loading distros: %v", err)
-	}
 
 	workerServer := worker.NewServer(logger, jobs, "")
 	cloudServer := cloudapi.NewServer(workerServer, rpm, distros)

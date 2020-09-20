@@ -90,8 +90,11 @@ paths:
                     type: string
                     enum:
                       - osbuild
+                arch:
+                  type: string
               required:
                 - types
+                - arch
         description: ''
       description: Requests a job. This operation blocks until a job is available.
     parameters: []

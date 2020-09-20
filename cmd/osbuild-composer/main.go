@@ -180,7 +180,21 @@ func main() {
 		log.Fatalf("cannot create queue directory: %v", err)
 	}
 
-	jobs, err := fsjobqueue.New(queueDir, []string{"osbuild"})
+	// construct job types of the form osbuild:{arch} for all arches
+	jobTypes := []string{"osbuild"}
+	jobTypesMap := map[string]bool{}
+	for _, name := range distros.List() {
+		d := distros.GetDistro(name)
+		for _, arch := range d.ListArches() {
+			jt := "osbuild:" + arch
+			if !jobTypesMap[jt] {
+				jobTypesMap[jt] = true
+				jobTypes = append(jobTypes, jt)
+			}
+		}
+	}
+
+	jobs, err := fsjobqueue.New(queueDir, jobTypes)
 	if err != nil {
 		log.Fatalf("cannot create jobqueue: %v", err)
 	}

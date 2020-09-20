@@ -69,6 +69,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 
 	type imageRequest struct {
 		manifest distro.Manifest
+		arch     string
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 	var targets []*target.Target
@@ -128,6 +129,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		}
 
 		imageRequests[i].manifest = manifest
+		imageRequests[i].arch = arch.Name()
 
 		if len(ir.UploadRequests) != 1 {
 			http.Error(w, "Only compose requests with a single upload target are currently supported", http.StatusBadRequest)
@@ -179,7 +181,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := server.workers.Enqueue(ir.manifest, targets)
+	id, err := server.workers.Enqueue(ir.arch, ir.manifest, targets)
 	if err != nil {
 		http.Error(w, "Failed to enqueue manifest", http.StatusInternalServerError)
 		return

@@ -17,6 +17,7 @@ type Error struct {
 
 // RequestJobJSONBody defines parameters for RequestJob.
 type RequestJobJSONBody struct {
+	Arch  string   `json:"arch"`
 	Types []string `json:"types"`
 }
 
