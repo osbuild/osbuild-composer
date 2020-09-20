@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -35,10 +36,10 @@ type Job interface {
 type job struct {
 	requester        *http.Client
 	id               uuid.UUID
-	manifest         distro.Manifest
-	targets          []*target.Target
 	location         string
 	artifactLocation string
+	jobType          string
+	args             json.RawMessage
 }
 
 func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
@@ -115,8 +116,8 @@ func (c *Client) RequestJob() (Job, error) {
 	return &job{
 		requester:        c.requester,
 		id:               jr.Id,
-		manifest:         jr.Manifest,
-		targets:          jr.Targets,
+		jobType:          jr.Type,
+		args:             jr.Args,
 		location:         location.String(),
 		artifactLocation: artifactLocation.String(),
 	}, nil
@@ -127,7 +128,17 @@ func (j *job) Id() uuid.UUID {
 }
 
 func (j *job) OSBuildArgs() (distro.Manifest, []*target.Target, error) {
-	return j.manifest, j.targets, nil
+	if j.jobType != "osbuild" {
+		return nil, nil, errors.New("not an osbuild job")
+	}
+
+	var args OSBuildJob
+	err := json.Unmarshal(j.args, &args)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing osbuild job arguments: %v", err)
+	}
+
+	return args.Manifest, args.Targets, nil
 }
 
 func (j *job) Update(status common.ImageBuildState, result *osbuild.Result) error {

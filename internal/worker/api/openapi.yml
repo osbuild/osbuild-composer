@@ -49,19 +49,20 @@ paths:
                 type: object
                 additionalProperties: false
                 properties:
-                  manifest: {}
-                  targets:
-                    type: array
-                    items: {}
+                  id:
+                    type: string
+                    format: uuid
                   location:
                     type: string
                   artifact_location:
                     type: string
-                  id:
+                  type:
                     type: string
-                    format: uuid
+                    enum:
+                      - osbuild
+                  args: {}
                 required:
-                  - manifest
+                  - type
                   - location
                   - id
         4XX:
