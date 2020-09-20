@@ -172,7 +172,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
+func (s *Server) RequestOSBuildJob(ctx context.Context) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
 	token := uuid.New()
 
 	var args OSBuildJob
@@ -262,7 +262,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid job types")
 	}
 
-	token, jobId, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
+	token, jobId, jobArgs, err := h.server.RequestOSBuildJob(ctx.Request().Context())
 	if err != nil {
 		return err
 	}
