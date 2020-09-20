@@ -263,12 +263,17 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
+	serializedArgs, err := json.Marshal(jobArgs)
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
-		Manifest:         jobArgs.Manifest,
-		Targets:          jobArgs.Targets,
 		Location:         fmt.Sprintf("/jobs/%v", token),
 		ArtifactLocation: fmt.Sprintf("/jobs/%v/artifacts/", token),
+		Type:             "osbuild",
+		Args:             serializedArgs,
 	})
 }
 

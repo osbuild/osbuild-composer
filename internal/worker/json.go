@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -30,11 +32,11 @@ type statusResponse struct {
 }
 
 type requestJobResponse struct {
-	Id               uuid.UUID        `json:"id"`
-	Manifest         distro.Manifest  `json:"manifest"`
-	Targets          []*target.Target `json:"targets,omitempty"`
-	Location         string           `json:"location"`
-	ArtifactLocation string           `json:"artifact_location"`
+	Id               uuid.UUID       `json:"id"`
+	Location         string          `json:"location"`
+	ArtifactLocation string          `json:"artifact_location"`
+	Type             string          `json:"type"`
+	Args             json.RawMessage `json:"args,omitempty"`
 }
 
 type getJobResponse struct {
