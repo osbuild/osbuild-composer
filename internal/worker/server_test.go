@@ -67,7 +67,7 @@ func TestCreate(t *testing.T) {
 	_, err = server.Enqueue(manifest, nil)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/jobs", `{}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/jobs", `{"types":["osbuild"]}`, http.StatusCreated,
 		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 

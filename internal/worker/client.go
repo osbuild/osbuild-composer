@@ -82,7 +82,9 @@ func (c *Client) RequestJob() (Job, error) {
 	}
 
 	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{})
+	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{
+		Types: []string{"osbuild"},
+	})
 	if err != nil {
 		panic(err)
 	}
