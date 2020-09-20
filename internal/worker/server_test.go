@@ -90,7 +90,7 @@ func TestCancel(t *testing.T) {
 	jobId, err := server.Enqueue(manifest, nil)
 	require.NoError(t, err)
 
-	token, j, _, err := server.RequestJob(context.Background())
+	token, j, _, err := server.RequestOSBuildJob(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 
