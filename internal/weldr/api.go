@@ -1825,7 +1825,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	} else {
 		var jobId uuid.UUID
 
-		jobId, err = api.workers.Enqueue(manifest, targets)
+		jobId, err = api.workers.Enqueue(api.arch.Name(), manifest, targets)
 		if err == nil {
 			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId)
 		}

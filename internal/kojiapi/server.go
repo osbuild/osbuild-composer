@@ -92,6 +92,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	type imageRequest struct {
 		manifest distro.Manifest
+		arch     string
 		filename string
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
@@ -132,6 +133,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		imageRequests[i].manifest = manifest
+		imageRequests[i].arch = arch.Name()
 		imageRequests[i].filename = imageType.Filename()
 	}
 
@@ -167,7 +169,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", err))
 	}
 
-	id, err := h.server.workers.Enqueue(ir.manifest, []*target.Target{
+	id, err := h.server.workers.Enqueue(ir.arch, ir.manifest, []*target.Target{
 		target.NewKojiTarget(&target.KojiTargetOptions{
 			BuildID:         uint64(buildInfo.BuildID),
 			TaskID:          uint64(request.Koji.TaskId),

@@ -85,13 +85,13 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.echo.ServeHTTP(writer, request)
 }
 
-func (s *Server) Enqueue(manifest distro.Manifest, targets []*target.Target) (uuid.UUID, error) {
+func (s *Server) Enqueue(arch string, manifest distro.Manifest, targets []*target.Target) (uuid.UUID, error) {
 	job := OSBuildJob{
 		Manifest: manifest,
 		Targets:  targets,
 	}
 
-	return s.jobs.Enqueue("osbuild", job, nil)
+	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
 }
 
 func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
@@ -169,11 +169,14 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestOSBuildJob(ctx context.Context) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
+func (s *Server) RequestOSBuildJob(ctx context.Context, arch string) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
 	token := uuid.New()
 
+	// wait on "osbuild" jobs for backwards compatiblity
+	jobTypes := []string{"osbuild", "osbuild:" + arch}
+
 	var args OSBuildJob
-	jobId, err := s.jobs.Dequeue(ctx, []string{"osbuild"}, &args)
+	jobId, err := s.jobs.Dequeue(ctx, jobTypes, &args)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, nil, err
 	}
@@ -259,7 +262,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid job types")
 	}
 
-	token, jobId, jobArgs, err := h.server.RequestOSBuildJob(ctx.Request().Context())
+	token, jobId, jobArgs, err := h.server.RequestOSBuildJob(ctx.Request().Context(), body.Arch)
 	if err != nil {
 		return err
 	}
