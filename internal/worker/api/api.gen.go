@@ -16,7 +16,9 @@ type Error struct {
 }
 
 // RequestJobJSONBody defines parameters for RequestJob.
-type RequestJobJSONBody map[string]interface{}
+type RequestJobJSONBody struct {
+	Types []string `json:"types"`
+}
 
 // UpdateJobJSONBody defines parameters for UpdateJob.
 type UpdateJobJSONBody struct {

@@ -83,6 +83,15 @@ paths:
             schema:
               type: object
               additionalProperties: false
+              properties:
+                types:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - osbuild
+              required:
+                - types
         description: ''
       description: Requests a job. This operation blocks until a job is available.
     parameters: []

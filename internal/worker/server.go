@@ -249,10 +249,14 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 }
 
 func (h *apiHandlers) RequestJob(ctx echo.Context) error {
-	var body struct{}
+	var body api.RequestJobJSONRequestBody
 	err := ctx.Bind(&body)
 	if err != nil {
 		return err
+	}
+
+	if len(body.Types) != 1 || body.Types[0] != "osbuild" {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid job types")
 	}
 
 	token, jobId, jobArgs, err := h.server.RequestJob(ctx.Request().Context())
