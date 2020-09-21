@@ -79,6 +79,7 @@ func main() {
 					KeyTab    string `toml:"keytab"`
 				} `toml:"kerberos,omitempty"`
 			} `toml:"servers"`
+			AllowedDomains []string `toml:"allowed_domains"`
 		} `toml:"koji"`
 		Worker *struct {
 			AllowedDomains []string `toml:"allowed_domains"`
@@ -213,6 +214,7 @@ func main() {
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
 			ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 			ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+			AllowedDomains: config.Koji.AllowedDomains,
 		})
 		if err != nil {
 			log.Fatalf("TLS configuration cannot be created: " + err.Error())
