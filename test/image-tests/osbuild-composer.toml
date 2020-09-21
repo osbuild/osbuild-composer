@@ -1,3 +1,6 @@
 [koji.localhost.kerberos]
 principal = "osbuild-krb@LOCAL"
 keytab = "/etc/osbuild-composer/client.keytab"
+
+[worker]
+allowed_domains = [ "localhost", "*.osbuild.org" ]
