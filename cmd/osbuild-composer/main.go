@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"path"
 
 	"github.com/BurntSushi/toml"
+
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
@@ -33,6 +35,7 @@ type connectionConfig struct {
 	CACertFile     string
 	ServerKeyFile  string
 	ServerCertFile string
+	AllowedDomains []string
 }
 
 func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
@@ -55,6 +58,15 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 		Certificates: []tls.Certificate{cert},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		ClientCAs:    roots,
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			for _, chain := range verifiedChains {
+				for _, domain := range c.AllowedDomains {
+					return chain[0].VerifyHostname(domain)
+				}
+			}
+
+			return errors.New("domain not in allowlist")
+		},
 	}, nil
 }
 
@@ -66,6 +78,9 @@ func main() {
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
 		} `toml:"koji"`
+		Worker *struct {
+			AllowedDomains []string `toml:"allowed_domains"`
+		} `toml:"worker,omitempty"`
 	}
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "Print access log")
@@ -216,10 +231,15 @@ func main() {
 		for _, listener := range remoteWorkerListeners {
 			log.Printf("Starting remote listener\n")
 
+			if config.Worker == nil {
+				log.Fatal("remote worker not configured in the config file")
+			}
+
 			tlsConfig, err := createTLSConfig(&connectionConfig{
 				CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
 				ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 				ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+				AllowedDomains: config.Worker.AllowedDomains,
 			})
 
 			if err != nil {
