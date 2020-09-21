@@ -1,4 +1,4 @@
-[koji.localhost.kerberos]
+[koji.servers.localhost.kerberos]
 principal = "osbuild-krb@LOCAL"
 keytab = "/etc/osbuild-composer/client.keytab"
 

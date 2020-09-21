@@ -72,11 +72,13 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 
 func main() {
 	var config struct {
-		KojiServers map[string]struct {
-			Kerberos *struct {
-				Principal string `toml:"principal"`
-				KeyTab    string `toml:"keytab"`
-			} `toml:"kerberos,omitempty"`
+		Koji *struct {
+			Servers map[string]struct {
+				Kerberos *struct {
+					Principal string `toml:"principal"`
+					KeyTab    string `toml:"keytab"`
+				} `toml:"kerberos,omitempty"`
+			} `toml:"servers"`
 		} `toml:"koji"`
 		Worker *struct {
 			AllowedDomains []string `toml:"allowed_domains"`
@@ -190,8 +192,11 @@ func main() {
 
 	// Optionally run Koji API
 	if kojiListeners, exists := listeners["osbuild-composer-koji.socket"]; exists {
+		if config.Koji == nil {
+			log.Fatal("koji not configured in the config file")
+		}
 		kojiServers := make(map[string]koji.GSSAPICredentials)
-		for server, creds := range config.KojiServers {
+		for server, creds := range config.Koji.Servers {
 			if creds.Kerberos == nil {
 				// For now we only support Kerberos authentication.
 				continue
