@@ -57,6 +57,11 @@ type Repository struct {
 	Gpgkey  string `json:"gpgkey"`
 }
 
+// Status defines model for Status.
+type Status struct {
+	Status string `json:"status"`
+}
+
 // PostComposeJSONBody defines parameters for PostCompose.
 type PostComposeJSONBody ComposeRequest
 
@@ -71,6 +76,9 @@ type ServerInterface interface {
 	// The status of a compose
 	// (GET /compose/{id})
 	GetComposeId(ctx echo.Context, id string) error
+	// status
+	// (GET /status)
+	GetStatus(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -103,6 +111,15 @@ func (w *ServerInterfaceWrapper) GetComposeId(ctx echo.Context) error {
 	return err
 }
 
+// GetStatus converts echo context to params.
+func (w *ServerInterfaceWrapper) GetStatus(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetStatus(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -127,5 +144,6 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	router.POST("/compose", wrapper.PostCompose)
 	router.GET("/compose/:id", wrapper.GetComposeId)
+	router.GET("/status", wrapper.GetStatus)
 
 }
