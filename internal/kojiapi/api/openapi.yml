@@ -7,6 +7,20 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
 paths:
+  /status:
+    get:
+      summary: status
+      tags: [ ]
+      responses:
+        '200':
+          description: OK
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+      operationId: GetStatus
+      description: Simple status handler to check whether the service is up.
   '/compose/{id}':
     get:
       summary: The status of a compose
@@ -70,6 +84,14 @@ paths:
                 type: string
 components:
   schemas:
+    Status:
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - OK
     ComposeStatus:
       required:
         - status

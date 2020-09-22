@@ -247,6 +247,13 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
+// GetStatus handles a /status GET request
+func (h *apiHandlers) GetStatus(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, &api.Status{
+		Status: "OK",
+	})
+}
+
 // A simple echo.Binder(), which only accepts application/json, but is more
 // strict than echo's DefaultBinder. It does not handle binding query
 // parameters either.
