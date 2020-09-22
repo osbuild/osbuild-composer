@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Colorful output.
+function greenprint {
+    echo -e "\033[1;32m${1}\033[0m"
+}
+
 function retry {
     local count=0
     local retries=5
@@ -21,20 +26,19 @@ function retry {
 # Get OS details.
 source /etc/os-release
 
-# Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    greenprint "Registering RHEL"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
-# Restart systemd to work around some Fedora issues in cloud images.
+greenprint "Restarting systemd to work around some Fedora issues in cloud images"
 sudo systemctl restart systemd-journald
 
-# Remove Fedora's modular repositories to speed up dnf.
+greenprint "Removing Fedora's modular repositories to speed up dnf"
 sudo rm -f /etc/yum.repos.d/fedora*modular*
 
-# Enable fastestmirror and disable weak dependency installation to speed up
-# dnf operations.
+greenprint "Enabling fastestmirror and disabling weak dependencies to speed up dnf even more 🏎️"
 echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
 # Ensure we are using the latest dnf since early revisions of Fedora 31 had
@@ -43,45 +47,49 @@ echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 # and module updates. The system will not be rebooted in CI anyway, so a
 # kernel update is not needed.
 if [[ $ID == fedora ]]; then
+    greenprint "Upgrading system to fix dnf issues"
     sudo dnf -y upgrade --exclude kernel --exclude kernel-core
 fi
 
-# Add osbuild team ssh keys.
+greenprint "Adding osbuild team ssh keys"
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
-# Set up a dnf repository for the RPMs we built via mock.
+greenprint "Setting up a dnf repository for the RPMs we built via mock"
 sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
-# Install the Image Builder packages.
+greenprint "Installing the Image Builder packages"
 # Note: installing only -tests to catch missing dependencies
+# TODO: remove make to fulfill the previous line's statement
 retry sudo dnf -y install osbuild-composer-tests make
 
-# Set up a directory to hold repository overrides.
+greenprint "Setting up a directory to hold repository overrides"
 sudo mkdir -p /etc/osbuild-composer/repositories
 
-# Override default osbuild-composer sources if local definition exists
 if [[ -f "rhel-8.json" ]]; then
+    greenprint "Overriding default osbuild-composer rhel-8 sources"
     sudo cp rhel-8.json /etc/osbuild-composer/repositories/
 fi
 
 if [[ -f "rhel-8-beta.json" ]]; then
+    greenprint "Overriding default osbuild-composer rhel-8-beta sources"
     sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
 fi
 
-# Generate SSL certificates
+greenprint "Generating SSL certificates"
 sudo make composer-key-pair
 sudo make worker-key-pair
 
-# Start services.
+greenprint "Starting services"
 sudo systemctl enable --now osbuild-composer.socket
 sudo systemctl enable --now osbuild-composer-koji.socket
 
 if [[ $ID == rhel ]]; then
+    greenprint "Starting cloud socket"
     sudo systemctl enable --now osbuild-composer-cloud.socket
 fi
 
-# Verify that the API is running.
+greenprint "Verifying that the API is running"
 sudo composer-cli status show
 sudo composer-cli sources list
 for SOURCE in $(sudo composer-cli sources list); do
