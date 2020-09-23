@@ -121,14 +121,12 @@ func main() {
 		log.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
-	if _, exists := listeners["osbuild-composer.socket"]; !exists {
+	composerListeners, exists := listeners["osbuild-composer.socket"]
+	if !exists {
 		log.Fatalf("osbuild-composer.socket doesn't exist")
 	}
-
-	composerListeners := listeners["osbuild-composer.socket"]
-
-	if len(composerListeners) != 2 && len(composerListeners) != 3 {
-		log.Fatalf("Unexpected number of listening sockets (%d), expected 2 or 3", len(composerListeners))
+	if len(composerListeners) != 2 {
+		log.Fatalf("Expected two listeners in osbuild-composer.socket, but found %d", len(composerListeners))
 	}
 
 	weldrListener := composerListeners[0]
