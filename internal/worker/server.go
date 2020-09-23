@@ -27,7 +27,7 @@ import (
 
 type Server struct {
 	jobs         jobqueue.JobQueue
-	echo         *echo.Echo
+	server       *http.Server
 	artifactsDir string
 
 	// Currently running jobs. Workers are not handed job ids, but
@@ -61,19 +61,22 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 		running:      make(map[uuid.UUID]uuid.UUID),
 	}
 
-	s.echo = echo.New()
-	s.echo.Binder = binder{}
-	s.echo.StdLogger = logger
+	e := echo.New()
+	e.Binder = binder{}
+	e.StdLogger = logger
 
-	api.RegisterHandlers(s.echo, &apiHandlers{s})
+	api.RegisterHandlers(e, &apiHandlers{s})
+
+	s.server = &http.Server{
+		ErrorLog: logger,
+		Handler:  e,
+	}
 
 	return s
 }
 
 func (s *Server) Serve(listener net.Listener) error {
-	s.echo.Listener = listener
-
-	err := s.echo.Start("")
+	err := s.server.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -82,7 +85,7 @@ func (s *Server) Serve(listener net.Listener) error {
 }
 
 func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	s.echo.ServeHTTP(writer, request)
+	s.server.Handler.ServeHTTP(writer, request)
 }
 
 func (s *Server) Enqueue(manifest distro.Manifest, targets []*target.Target) (uuid.UUID, error) {
