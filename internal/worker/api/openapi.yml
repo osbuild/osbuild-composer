@@ -1,8 +1,10 @@
 openapi: 3.0.0
 info:
-  title: worker
-  version: '1.0'
-servers: []
+  title: OSBuild Composer - Worker
+  version: '1'
+  description: This is an API for workers to request and handle jobs.
+servers:
+  - url: /api/worker/v1
 paths:
   /status:
     get:

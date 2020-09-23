@@ -48,6 +48,11 @@ func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
 		return nil, err
 	}
 
+	server, err = server.Parse(api.BasePath + "/")
+	if err != nil {
+		panic(err)
+	}
+
 	requester := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: conf,
@@ -58,7 +63,12 @@ func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
 }
 
 func NewClientUnix(path string) *Client {
-	server, err := url.Parse("http://localhost")
+	server, err := url.Parse("http://localhost/")
+	if err != nil {
+		panic(err)
+	}
+
+	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}
@@ -75,9 +85,9 @@ func NewClientUnix(path string) *Client {
 }
 
 func (c *Client) RequestJob() (Job, error) {
-	url, err := c.server.Parse("/jobs")
+	url, err := c.server.Parse("jobs")
 	if err != nil {
-		// This only happens when "/jobs" cannot be parsed.
+		// This only happens when "jobs" cannot be parsed.
 		panic(err)
 	}
 
