@@ -62,7 +62,8 @@ run_test_case () {
 
     # Run the test and add the test name to the list of passed or failed
     # tests depending on the result.
-    if sudo "$TEST_CMD" 2>&1 | tee "${WORKSPACE}"/"${TEST_NAME}".log; then
+    # shellcheck disable=SC2086 # We need to pass multiple arguments here.
+    if sudo $TEST_CMD 2>&1 | tee "${WORKSPACE}"/"${TEST_NAME}".log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
