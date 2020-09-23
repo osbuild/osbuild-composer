@@ -1,11 +1,13 @@
 openapi: 3.0.1
 info:
-  version: '1'
   title: OSBuild Composer - Koji
+  version: '1'
   description: Service to build and push images to Koji.
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: /api/composer-koji/v1
 paths:
   /status:
     get:

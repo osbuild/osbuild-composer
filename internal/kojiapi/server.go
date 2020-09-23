@@ -44,7 +44,7 @@ func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPM
 	e.Binder = binder{}
 	e.StdLogger = logger
 
-	api.RegisterHandlers(e, &apiHandlers{s})
+	api.RegisterHandlers(e.Group(api.BasePath), &apiHandlers{s})
 
 	s.server = &http.Server{
 		ErrorLog: logger,
