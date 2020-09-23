@@ -137,28 +137,56 @@ install:
 	cp distribution/*.socket /etc/systemd/system/
 	systemctl daemon-reload
 
+CERT_DIR=/etc/osbuild-composer
+
 .PHONY: ca
 ca:
-ifneq (/etc/osbuild-composer/ca-key.pem/etc/osbuild-composer/ca-crt.pem,$(wildcard /etc/osbuild-composer/ca-key.pem)$(wildcard /etc/osbuild-composer/ca-crt.pem))
+ifneq (${CERT_DIR}/ca-key.pem${CERT_DIR}/ca-crt.pem,$(wildcard ${CERT_DIR}/ca-key.pem)$(wildcard ${CERT_DIR}/ca-crt.pem))
 	@echo CA key or certificate file is missing, generating a new pair...
-	- mkdir -p /etc/osbuild-composer
-	openssl req -new -nodes -x509 -days 365 -keyout /etc/osbuild-composer/ca-key.pem -out /etc/osbuild-composer/ca-crt.pem -subj "/CN=osbuild.org"
+	- mkdir -p ${CERT_DIR}
+	openssl req -new -nodes -x509 -days 365 -keyout ${CERT_DIR}/ca-key.pem -out ${CERT_DIR}/ca-crt.pem -subj "/CN=osbuild.org"
 else
 	@echo CA key and certificate files already exist, skipping...
 endif
 
 .PHONY: composer-key-pair
 composer-key-pair: ca
-	openssl genrsa -out /etc/osbuild-composer/composer-key.pem 2048
-	openssl req -new -sha256 -key /etc/osbuild-composer/composer-key.pem	-out /etc/osbuild-composer/composer-csr.pem -subj "/CN=localhost" # TODO: we need to generate certificates with another hostname
-	openssl x509 -req -in /etc/osbuild-composer/composer-csr.pem  -CA /etc/osbuild-composer/ca-crt.pem -CAkey /etc/osbuild-composer/ca-key.pem -CAcreateserial -out /etc/osbuild-composer/composer-crt.pem
-	chown _osbuild-composer:_osbuild-composer /etc/osbuild-composer/composer-key.pem /etc/osbuild-composer/composer-csr.pem /etc/osbuild-composer/composer-crt.pem
+	# generate a private key and a certificate request
+	openssl req -new -nodes \
+		-subj "/CN=localhost" \
+		-keyout ${CERT_DIR}/composer-key.pem \
+		-out ${CERT_DIR}/composer-csr.pem
+
+	# sign the certificate
+	openssl x509 -req \
+		-in ${CERT_DIR}/composer-csr.pem \
+		-CA ${CERT_DIR}/ca-crt.pem \
+		-CAkey ${CERT_DIR}/ca-key.pem \
+		-CAcreateserial \
+		-out ${CERT_DIR}/composer-crt.pem
+
+	# delete the request and set _osbuild-composer as the owner
+	rm ${CERT_DIR}/composer-csr.pem
+	chown _osbuild-composer:_osbuild-composer ${CERT_DIR}/composer-key.pem ${CERT_DIR}/composer-crt.pem
 
 .PHONY: worker-key-pair
 worker-key-pair: ca
-	openssl genrsa -out /etc/osbuild-composer/worker-key.pem 2048
-	openssl req -new -sha256 -key /etc/osbuild-composer/worker-key.pem	-out /etc/osbuild-composer/worker-csr.pem -subj "/CN=localhost"
-	openssl x509 -req -in /etc/osbuild-composer/worker-csr.pem  -CA /etc/osbuild-composer/ca-crt.pem -CAkey /etc/osbuild-composer/ca-key.pem -CAcreateserial -out /etc/osbuild-composer/worker-crt.pem
+	# generate a private key and a certificate request
+	openssl req -new -nodes \
+		-subj "/CN=localhost" \
+		-keyout ${CERT_DIR}/worker-key.pem \
+		-out ${CERT_DIR}/worker-csr.pem
+
+	# sign the certificate
+	openssl x509 -req \
+		-in ${CERT_DIR}/worker-csr.pem \
+		-CA ${CERT_DIR}/ca-crt.pem \
+		-CAkey ${CERT_DIR}/ca-key.pem \
+		-CAcreateserial \
+		-out ${CERT_DIR}/worker-crt.pem
+
+	# delete the request
+	rm /etc/osbuild-composer/worker-csr.pem
 
 
 #
