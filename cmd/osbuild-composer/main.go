@@ -259,30 +259,32 @@ func main() {
 	}
 
 	if remoteWorkerListeners, exists := listeners["osbuild-remote-worker.socket"]; exists {
-		for _, listener := range remoteWorkerListeners {
-			log.Printf("Starting remote listener\n")
-
-			if config.Worker == nil {
-				log.Fatal("remote worker not configured in the config file")
-			}
-
-			tlsConfig, err := createTLSConfig(&connectionConfig{
-				CACertFile:     config.Worker.CA,
-				ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
-				ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
-				AllowedDomains: config.Worker.AllowedDomains,
-			})
-
-			if err != nil {
-				log.Fatalf("TLS configuration cannot be created: " + err.Error())
-			}
-
-			listener := tls.NewListener(listener, tlsConfig)
-			go func() {
-				err := workers.Serve(listener)
-				common.PanicOnError(err)
-			}()
+		if len(remoteWorkerListeners) != 1 {
+			log.Fatal("The osbuild-remote-worker.socket unit is misconfigured. It should contain only one socket.")
 		}
+
+		log.Printf("Starting remote listener\n")
+
+		if config.Worker == nil {
+			log.Fatal("remote worker not configured in the config file")
+		}
+
+		tlsConfig, err := createTLSConfig(&connectionConfig{
+			CACertFile:     config.Worker.CA,
+			ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
+			ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+			AllowedDomains: config.Worker.AllowedDomains,
+		})
+
+		if err != nil {
+			log.Fatalf("TLS configuration cannot be created: " + err.Error())
+		}
+
+		listener := tls.NewListener(remoteWorkerListeners[0], tlsConfig)
+		go func() {
+			err := workers.Serve(listener)
+			common.PanicOnError(err)
+		}()
 	}
 
 	err = weldrAPI.Serve(weldrListener)
