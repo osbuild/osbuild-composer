@@ -32,22 +32,28 @@ import (
 const configFile = "/etc/osbuild-composer/osbuild-composer.toml"
 
 type connectionConfig struct {
-	CACertFile     string
+	// CA used for client certificate validation. If nil, then the CAs
+	// trusted by the host system are used.
+	CACertFile     *string
 	ServerKeyFile  string
 	ServerCertFile string
 	AllowedDomains []string
 }
 
 func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
-	caCertPEM, err := ioutil.ReadFile(c.CACertFile)
-	if err != nil {
-		return nil, err
-	}
+	var roots *x509.CertPool
 
-	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM(caCertPEM)
-	if !ok {
-		panic("failed to parse root certificate")
+	if c.CACertFile != nil {
+		caCertPEM, err := ioutil.ReadFile(*c.CACertFile)
+		if err != nil {
+			return nil, err
+		}
+
+		roots = x509.NewCertPool()
+		ok := roots.AppendCertsFromPEM(caCertPEM)
+		if !ok {
+			panic("failed to parse root certificate")
+		}
 	}
 
 	cert, err := tls.LoadX509KeyPair(c.ServerCertFile, c.ServerKeyFile)
@@ -82,9 +88,11 @@ func main() {
 				} `toml:"kerberos,omitempty"`
 			} `toml:"servers"`
 			AllowedDomains []string `toml:"allowed_domains"`
+			CA             *string  `toml:"ca"`
 		} `toml:"koji"`
 		Worker *struct {
 			AllowedDomains []string `toml:"allowed_domains"`
+			CA             *string  `toml:"ca"`
 		} `toml:"worker,omitempty"`
 	}
 	var verbose bool
@@ -213,7 +221,7 @@ func main() {
 		kojiServer := kojiapi.NewServer(logger, workers, rpm, distros, kojiServers)
 
 		tlsConfig, err := createTLSConfig(&connectionConfig{
-			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
+			CACertFile:     config.Koji.CA,
 			ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 			ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
 			AllowedDomains: config.Koji.AllowedDomains,
@@ -245,7 +253,7 @@ func main() {
 			}
 
 			tlsConfig, err := createTLSConfig(&connectionConfig{
-				CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
+				CACertFile:     config.Worker.CA,
 				ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 				ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
 				AllowedDomains: config.Worker.AllowedDomains,
