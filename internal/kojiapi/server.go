@@ -24,7 +24,7 @@ import (
 
 // Server represents the state of the koji Server
 type Server struct {
-	echo        *echo.Echo
+	server      *http.Server
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
@@ -40,20 +40,23 @@ func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPM
 		kojiServers: kojiServers,
 	}
 
-	s.echo = echo.New()
-	s.echo.Binder = binder{}
-	s.echo.StdLogger = logger
+	e := echo.New()
+	e.Binder = binder{}
+	e.StdLogger = logger
 
-	api.RegisterHandlers(s.echo, &apiHandlers{s})
+	api.RegisterHandlers(e, &apiHandlers{s})
+
+	s.server = &http.Server{
+		ErrorLog: logger,
+		Handler:  e,
+	}
 
 	return s
 }
 
 // Serve serves the koji API over the provided listener socket
 func (s *Server) Serve(listener net.Listener) error {
-	s.echo.Listener = listener
-
-	err := s.echo.Start("")
+	err := s.server.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
