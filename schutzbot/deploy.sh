@@ -76,11 +76,18 @@ if [[ -f "rhel-8-beta.json" ]]; then
     sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
 fi
 
+greenprint "Copying custom composer config"
+# Remote worker needs this
+sudo mkdir -p /etc/osbuild-composer
+sudo cp test/image-tests/osbuild-composer.toml \
+    /etc/osbuild-composer/
+
 greenprint "Generating SSL certificates"
 sudo make composer-key-pair
 sudo make worker-key-pair
 
 greenprint "Starting services"
+sudo systemctl enable --now osbuild-remote-worker.socket
 sudo systemctl enable --now osbuild-composer.socket
 sudo systemctl enable --now osbuild-composer-koji.socket
 
