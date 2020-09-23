@@ -118,6 +118,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cloud-tests %{goipath}/cmd/osbuild-composer-cloud-tests
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
 
 %endif
 
@@ -156,8 +157,9 @@ install -m 0755 -vp _bin/osbuild-tests                          %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-composer-cloud-tests       %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer
 install -m 0644 -vp test/azure-deployment-template.json         %{buildroot}%{_datadir}/tests/osbuild-composer/

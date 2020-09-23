@@ -1,9 +1,9 @@
 [koji]
-allowed_domains = [ "localhost", "*.osbuild.org" ]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
 
 [koji.servers.localhost.kerberos]
 principal = "osbuild-krb@LOCAL"
 keytab = "/etc/osbuild-composer/client.keytab"
 
 [worker]
-allowed_domains = [ "localhost", "*.osbuild.org" ]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
