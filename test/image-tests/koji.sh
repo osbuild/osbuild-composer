@@ -35,10 +35,7 @@ fi
 greenprint "Starting containers"
 sudo ./internal/upload/koji/run-koji-container.sh start
 
-greenprint "Copying custom composer/worker config"
-sudo mkdir -p /etc/osbuild-composer
-sudo cp test/image-tests/osbuild-composer.toml \
-    /etc/osbuild-composer/
+greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
 sudo cp test/image-tests/osbuild-worker.toml \
     /etc/osbuild-worker/
