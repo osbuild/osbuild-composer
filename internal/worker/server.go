@@ -65,7 +65,7 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 	e.Binder = binder{}
 	e.StdLogger = logger
 
-	api.RegisterHandlers(e, &apiHandlers{s})
+	api.RegisterHandlers(e.Group(api.BasePath), &apiHandlers{s})
 
 	s.server = &http.Server{
 		ErrorLog: logger,
@@ -277,8 +277,8 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
-		Location:         fmt.Sprintf("/jobs/%v", token),
-		ArtifactLocation: fmt.Sprintf("/jobs/%v/artifacts/", token),
+		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
 		Type:             "osbuild",
 		Args:             serializedArgs,
 	})

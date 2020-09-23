@@ -18,7 +18,7 @@ import (
 // Ensure that the status request returns OK.
 func TestStatus(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
-	test.TestRoute(t, server, false, "GET", "/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
+	test.TestRoute(t, server, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
 
 func TestErrors(t *testing.T) {
@@ -29,17 +29,17 @@ func TestErrors(t *testing.T) {
 		ExpectedStatus int
 	}{
 		// Bogus path
-		{"GET", "/foo", ``, http.StatusNotFound},
+		{"GET", "/api/worker/v1/foo", ``, http.StatusNotFound},
 		// Create job with invalid body
-		{"POST", "/jobs", ``, http.StatusBadRequest},
+		{"POST", "/api/worker/v1/jobs", ``, http.StatusBadRequest},
 		// Wrong method
-		{"GET", "/jobs", ``, http.StatusMethodNotAllowed},
+		{"GET", "/api/worker/v1/jobs", ``, http.StatusMethodNotAllowed},
 		// Update job with invalid ID
-		{"PATCH", "/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
+		{"PATCH", "/api/worker/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
 		// Update job that does not exist, with invalid body
-		{"PATCH", "/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
+		{"PATCH", "/api/worker/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
 		// Update job that does not exist
-		{"PATCH", "/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
+		{"PATCH", "/api/worker/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
 	}
 
 	for _, c := range cases {
@@ -67,7 +67,7 @@ func TestCreate(t *testing.T) {
 	_, err = server.Enqueue(arch.Name(), manifest, nil)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
+	test.TestRoute(t, server, false, "POST", "/api/worker/v1/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
 		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 
@@ -97,6 +97,6 @@ func TestCancel(t *testing.T) {
 	err = server.Cancel(jobId)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/jobs/%s", token), `{}`, http.StatusOK,
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		`{"canceled":true}`)
 }
