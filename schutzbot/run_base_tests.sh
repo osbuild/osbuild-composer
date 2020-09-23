@@ -11,6 +11,7 @@ TEST_CASES=(
   "osbuild-weldr-tests"
   "osbuild-dnf-json-tests"
   "osbuild-tests"
+  "osbuild-auth-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.

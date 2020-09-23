@@ -119,6 +119,7 @@ build:
 	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go test -c -tags=integration -o osbuild-image-tests ./cmd/osbuild-image-tests/
 	go test -c -tags=integration -o osbuild-composer-cloud-tests ./cmd/osbuild-composer-cloud-tests/main_test.go
+	go test -c -tags=integration -o osbuild-auth-tests ./cmd/osbuild-auth-tests/
 
 .PHONY: install
 install:
