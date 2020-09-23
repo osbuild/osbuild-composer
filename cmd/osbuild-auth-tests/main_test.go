@@ -192,7 +192,7 @@ func TestKojiAPIAuth(t *testing.T) {
 				require.NoError(t, err)
 				defer ckp.remove()
 
-				testRoute(t, "https://localhost/status", ckp, c.success)
+				testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, c.success)
 			})
 		}
 	})
@@ -208,7 +208,7 @@ func TestKojiAPIAuth(t *testing.T) {
 		require.NoError(t, err)
 		defer ckp.remove()
 
-		testRoute(t, "https://localhost/status", ckp, false)
+		testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, false)
 	})
 
 	t.Run("self-signed certificate", func(t *testing.T) {
@@ -217,7 +217,7 @@ func TestKojiAPIAuth(t *testing.T) {
 		require.NoError(t, err)
 		defer ckp.remove()
 
-		testRoute(t, "https://localhost/status", ckp, false)
+		testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, false)
 	})
 }
 

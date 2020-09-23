@@ -42,7 +42,7 @@ def main(distro):
     cr = compose_request(distro, "https://localhost:4343/kojihub")
     print(json.dumps(cr))
 
-    r = requests.post("https://localhost/compose", json=cr,
+    r = requests.post("https://localhost/api/composer-koji/v1/compose", json=cr,
                       cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                       verify="/etc/osbuild-composer/ca-crt.pem")
     if r.status_code != 201:
@@ -54,7 +54,7 @@ def main(distro):
     compose_id = r.json()["id"]
 
     while True:
-        r = requests.get(f"https://localhost/compose/{compose_id}",
+        r = requests.get(f"https://localhost/api/composer-koji/v1/compose/{compose_id}",
                          cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                          verify="/etc/osbuild-composer/ca-crt.pem")
         if r.status_code != 200:
