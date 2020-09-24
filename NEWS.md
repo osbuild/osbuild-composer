@@ -2,10 +2,11 @@
 
 ## CHANGES WITH 21:
 
-  * Composer API is now available in the TODO subpackage. It's meant to be
-    a simple API that allows users build an image and push it to a cloud
-    provider. It doesn't support advanced features like storing blueprints
-    as Weldr API does.
+  * Composer API is now available as a tech preview in the
+    osbuild-composer-cloud subpackage. It's meant to be a simple API that
+    allows users build an image and push it to a cloud provider. It doesn't
+    support advanced features like storing blueprints as Weldr API does. This
+    is not stable API, and is subject to incompatible change.
 
   * Koji API is now available in the -koji subpackage. It can be used
     to perform an image build and push the result directly to a Koji
