@@ -1,5 +1,36 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 21:
+
+  * Composer API is now available in the TODO subpackage. It's meant to be
+    a simple API that allows users build an image and push it to a cloud
+    provider. It doesn't support advanced features like storing blueprints
+    as Weldr API does.
+
+  * Koji API is now available in the -koji subpackage. It can be used
+    to perform an image build and push the result directly to a Koji
+    instance.
+    
+  * Worker API is now completely overhauled. Support for distinguishing
+    architectures is added and the whole API is generated from an OpenAPI
+    spec.
+    
+  * Weldr API's /projects/source/new route now explicitly requires the url
+    field. 
+  
+  * The project now requires Go 1.13.
+
+  * Testing of vmware and ostree images is now greatly improved.
+  
+  * All bash scripts are now checked with shellcheck on the CI.
+
+Contributions from: Alexander Todorov, Lars Karlitski, Major Hayden,
+                    Martin Sehnoutka, Ondřej Budai, Peter Robinson,
+                    Sanne Raymaekers, Tom Gundersen, Xiaofeng Wang
+
+— Liberec, 2020-09-24
+
+
 ## CHANGES WITH 20:
 
   * VMDK images are now stream optimized to be compatible with vCenter by
