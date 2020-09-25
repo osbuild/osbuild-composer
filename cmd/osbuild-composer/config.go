@@ -7,7 +7,7 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji *struct {
+	Koji struct {
 		Servers map[string]struct {
 			Kerberos *struct {
 				Principal string `toml:"principal"`
@@ -15,12 +15,12 @@ type ComposerConfigFile struct {
 			} `toml:"kerberos,omitempty"`
 		} `toml:"servers"`
 		AllowedDomains []string `toml:"allowed_domains"`
-		CA             *string  `toml:"ca"`
+		CA             string   `toml:"ca"`
 	} `toml:"koji"`
-	Worker *struct {
+	Worker struct {
 		AllowedDomains []string `toml:"allowed_domains"`
-		CA             *string  `toml:"ca"`
-	} `toml:"worker,omitempty"`
+		CA             string   `toml:"ca"`
+	} `toml:"worker"`
 }
 
 func LoadConfig(name string) (*ComposerConfigFile, error) {
