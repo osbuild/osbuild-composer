@@ -60,8 +60,7 @@ sudo dnf repository-packages osbuild-mock list
 
 greenprint "Installing the Image Builder packages"
 # Note: installing only -tests to catch missing dependencies
-# TODO: remove make to fulfill the previous line's statement
-retry sudo dnf -y install osbuild-composer-tests make
+retry sudo dnf -y install osbuild-composer-tests
 
 greenprint "Setting up a directory to hold repository overrides"
 sudo mkdir -p /etc/osbuild-composer/repositories
@@ -82,9 +81,10 @@ sudo mkdir -p /etc/osbuild-composer
 sudo cp test/image-tests/osbuild-composer.toml \
     /etc/osbuild-composer/
 
-greenprint "Generating SSL certificates"
-sudo make composer-key-pair
-sudo make worker-key-pair
+greenprint "Copying pre-generated SSL certificates"
+sudo cp /usr/share/tests/osbuild-composer/ca/* \
+    /etc/osbuild-composer/
+sudo chown _osbuild-composer /etc/osbuild-composer/composer-*.pem
 
 greenprint "Starting services"
 sudo systemctl enable --now osbuild-remote-worker.socket

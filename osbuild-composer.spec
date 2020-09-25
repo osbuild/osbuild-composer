@@ -166,8 +166,12 @@ install -m 0644 -vp test/azure-deployment-template.json         %{buildroot}%{_d
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cases
 install -m 0644 -vp test/cases/*                                %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
+
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
 install -m 0600 -vp test/keyring/*                              %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/ca
+install -m 0600 -vp test/ca/*                                   %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
 install -m 0644 -vp test/cloud-init/*                           %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
