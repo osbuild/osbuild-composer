@@ -10,8 +10,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/BurntSushi/toml"
-
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora31"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
@@ -79,36 +77,23 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 }
 
 func main() {
-	var config struct {
-		Koji *struct {
-			Servers map[string]struct {
-				Kerberos *struct {
-					Principal string `toml:"principal"`
-					KeyTab    string `toml:"keytab"`
-				} `toml:"kerberos,omitempty"`
-			} `toml:"servers"`
-			AllowedDomains []string `toml:"allowed_domains"`
-			CA             *string  `toml:"ca"`
-		} `toml:"koji"`
-		Worker *struct {
-			AllowedDomains []string `toml:"allowed_domains"`
-			CA             *string  `toml:"ca"`
-		} `toml:"worker,omitempty"`
-	}
 	var verbose bool
 	flag.BoolVar(&verbose, "v", false, "Print access log")
 	flag.Parse()
 
-	_, err := toml.DecodeFile(configFile, &config)
-	if err == nil {
-		log.Println("Composer configuration:")
-		encoder := toml.NewEncoder(log.Writer())
-		err := encoder.Encode(&config)
-		if err != nil {
-			log.Fatalf("Could not print config: %v", err)
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			config = &ComposerConfigFile{}
+		} else {
+			log.Fatalf("Error loading configuration: %v", err)
 		}
-	} else if !os.IsNotExist(err) {
-		log.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
+	log.Println("Loaded configuration:")
+	err = DumpConfig(config, log.Writer())
+	if err != nil {
+		log.Fatalf("Error printing configuration: %v", err)
 	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
