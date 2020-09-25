@@ -30,9 +30,10 @@ import (
 const configFile = "/etc/osbuild-composer/osbuild-composer.toml"
 
 type connectionConfig struct {
-	// CA used for client certificate validation. If nil, then the CAs
+	// CA used for client certificate validation. If empty, then the CAs
 	// trusted by the host system are used.
-	CACertFile     *string
+	CACertFile string
+
 	ServerKeyFile  string
 	ServerCertFile string
 	AllowedDomains []string
@@ -41,8 +42,8 @@ type connectionConfig struct {
 func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 	var roots *x509.CertPool
 
-	if c.CACertFile != nil {
-		caCertPEM, err := ioutil.ReadFile(*c.CACertFile)
+	if c.CACertFile != "" {
+		caCertPEM, err := ioutil.ReadFile(c.CACertFile)
 		if err != nil {
 			return nil, err
 		}
@@ -200,9 +201,6 @@ func main() {
 
 	// Optionally run Koji API
 	if kojiListeners, exists := listeners["osbuild-composer-koji.socket"]; exists {
-		if config.Koji == nil {
-			log.Fatal("koji not configured in the config file")
-		}
 		kojiServers := make(map[string]koji.GSSAPICredentials)
 		for server, creds := range config.Koji.Servers {
 			if creds.Kerberos == nil {
@@ -247,10 +245,6 @@ func main() {
 		}
 
 		log.Printf("Starting remote listener\n")
-
-		if config.Worker == nil {
-			log.Fatal("remote worker not configured in the config file")
-		}
 
 		tlsConfig, err := createTLSConfig(&connectionConfig{
 			CACertFile:     config.Worker.CA,
