@@ -37,7 +37,7 @@ sudo ./internal/upload/koji/run-koji-container.sh start
 
 greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
-sudo cp test/integration/osbuild-worker.toml \
+sudo cp test/composer/osbuild-worker.toml \
     /etc/osbuild-worker/
 
 greenprint "Adding kerberos config"
