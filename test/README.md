@@ -150,7 +150,8 @@ tests, see `.github/workflows/tests.yml`.
 ## Integration testing
 
 This will consume the osbuild-composer API surface via the `composer-cli`
-command line interface. Implementation is under `cmd/osbuild-tests/`.
+command line interface. Implementation is under
+`cmd/osbuild-composer-cli-tests/`.
 
 The easiest way to get started with integration testing from a git
 checkout is:
@@ -161,8 +162,10 @@ checkout is:
 * `dnf install rpmbuild/RPMS/x86_64/osbuild-composer-*.rpm` - this will
   install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
 * `systemctl start osbuild-composer`
-* `/usr/libexec/tests/osbuild-composer/osbuild-tests` to execute the test suite.
-  It is best that you use a fresh system for installing and running the tests!
+* `/usr/libexec/tests/osbuild-composer/osbuild-composer-cli-tests` to execute
+  the test suite.
+
+It is best that you use a fresh system for installing and running the tests!
 
 **NOTE:**
 
@@ -174,4 +177,4 @@ If you are working on a pull request that adds more integration tests
 from the local directory without installing it:
 
 * `make build` - will build everything under `cmd/`
-* `./osbuild-tests` - will execute the freshly built integration test suite
+* `./osbuild-composer-cli-tests` - will execute the freshly built integration test suite

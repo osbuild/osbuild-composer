@@ -10,7 +10,7 @@ FAILED_TESTS=()
 TEST_CASES=(
   "osbuild-weldr-tests"
   "osbuild-dnf-json-tests"
-  "osbuild-tests"
+  "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
 )
 

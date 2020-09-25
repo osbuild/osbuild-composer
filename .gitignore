@@ -7,7 +7,7 @@ __pycache__
 /osbuild-upload-azure
 /osbuild-upload-aws
 /osbuild-dnf-json-tests
-/osbuild-tests
+/osbuild-composer-cli-tests
 /osbuild-weldr-tests
 /osbuild-composer-cloud
 /osbuild-composer-cloud-tests

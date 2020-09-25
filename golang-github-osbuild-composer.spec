@@ -92,7 +92,7 @@ export GOPATH=%{gobuilddir}:%{gopath}
 
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
 
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-tests %{goipath}/cmd/osbuild-tests
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cli-tests %{goipath}/cmd/osbuild-composer-cli-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
@@ -116,7 +116,7 @@ install -m 0644 -vp distribution/osbuild-composer.conf      %{buildroot}%{_sysus
 install -m 0755 -vd                                         %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
 install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/osbuild-composer
-install -m 0755 -vp _bin/osbuild-tests                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-composer-cli-tests         %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
