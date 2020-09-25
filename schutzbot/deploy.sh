@@ -89,7 +89,10 @@ sudo make worker-key-pair
 greenprint "Starting services"
 sudo systemctl enable --now osbuild-remote-worker.socket
 sudo systemctl enable --now osbuild-composer.socket
-sudo systemctl enable --now osbuild-composer-koji.socket
+
+if rpm -q osbuild-composer-koji; then
+    sudo systemctl enable --now osbuild-composer-koji.socket
+fi
 
 if [[ $ID == rhel ]]; then
     greenprint "Starting cloud socket"
