@@ -161,8 +161,8 @@ install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
 
-install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer
-install -m 0644 -vp test/azure-deployment-template.json         %{buildroot}%{_datadir}/tests/osbuild-composer/
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/azure
+install -m 0644 -vp test/azure/deployment-template.json         %{buildroot}%{_datadir}/tests/osbuild-composer/azure/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cases
 install -m 0644 -vp test/cases/*                                %{buildroot}%{_datadir}/tests/osbuild-composer/cases/

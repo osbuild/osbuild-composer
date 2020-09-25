@@ -34,5 +34,5 @@ var TestPaths = struct {
 	TestCasesDirectory:      "/usr/share/tests/osbuild-composer/cases",
 	UserData:                "/usr/share/tests/osbuild-composer/cloud-init/user-data",
 	MetaData:                "/usr/share/tests/osbuild-composer/cloud-init/meta-data",
-	AzureDeploymentTemplate: "/usr/share/tests/osbuild-composer/azure-deployment-template.json",
+	AzureDeploymentTemplate: "/usr/share/tests/osbuild-composer/azure/deployment-template.json",
 }
