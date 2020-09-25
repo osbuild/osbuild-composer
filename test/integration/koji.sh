@@ -37,7 +37,7 @@ sudo ./internal/upload/koji/run-koji-container.sh start
 
 greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
-sudo cp test/image-tests/osbuild-worker.toml \
+sudo cp test/integration/osbuild-worker.toml \
     /etc/osbuild-worker/
 
 greenprint "Adding kerberos config"
@@ -48,7 +48,7 @@ sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
     /etc/osbuild-worker/client.keytab
 sudo cp \
-    test/image-tests/krb5-local.conf \
+    test/integration/krb5-local.conf \
     /etc/krb5.conf.d/local
 
 greenprint "Adding generated CA cert for Koji"
@@ -68,7 +68,7 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo ./test/image-tests/koji-compose.py "${ID}-${VERSION_ID%.*}"
+sudo ./test/integration/koji-compose.py "${ID}-${VERSION_ID%.*}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
