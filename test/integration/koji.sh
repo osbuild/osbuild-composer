@@ -48,7 +48,7 @@ sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
     /etc/osbuild-worker/client.keytab
 sudo cp \
-    test/integration/krb5-local.conf \
+    test/kerberos/krb5-local.conf \
     /etc/krb5.conf.d/local
 
 greenprint "Adding generated CA cert for Koji"
