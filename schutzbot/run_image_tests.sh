@@ -55,10 +55,11 @@ run_test_case () {
     # AZURE_CREDS might not be defined in all cases (e.g. Azure doesn't
     # support aarch64), therefore the following line sets AZURE_CREDS to
     # /dev/null if the variable is undefined.
+    AWS_CREDS=${AWS_IMAGE_TEST_CREDS-/dev/null}
     AZURE_CREDS=${AZURE_CREDS-/dev/null}
     OPENSTACK_CREDS=${OPENSTACK_CREDS-/dev/null}
     VCENTER_CREDS=${VCENTER_CREDS-/dev/null}
-    TEST_CMD="env $(cat "$AZURE_CREDS" "$OPENSTACK_CREDS" "$VCENTER_CREDS") BRANCH_NAME=${BRANCH_NAME-master} BUILD_ID=$BUILD_ID DISTRO_CODE=$DISTRO_CODE $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
+    TEST_CMD="env $(cat "$AWS_CREDS" "$AZURE_CREDS" "$OPENSTACK_CREDS" "$VCENTER_CREDS") BRANCH_NAME=${BRANCH_NAME-master} BUILD_ID=$BUILD_ID DISTRO_CODE=$DISTRO_CODE $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
 
     # Run the test and add the test name to the list of passed or failed
     # tests depending on the result.

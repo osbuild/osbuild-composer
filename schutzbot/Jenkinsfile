@@ -44,6 +44,7 @@ pipeline {
                     agent { label "f31cloudbase && x86_64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -60,6 +61,7 @@ pipeline {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -76,6 +78,7 @@ pipeline {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
@@ -93,6 +96,7 @@ pipeline {
                     agent { label "rhel83cloudbase && x86_64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                     }
                     steps {
@@ -130,6 +134,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
@@ -150,6 +155,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
                         unstash 'fedora31'
@@ -180,6 +186,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
@@ -200,6 +207,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
                         unstash 'fedora32'
@@ -244,6 +252,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
@@ -265,6 +274,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
@@ -299,6 +309,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
@@ -320,6 +331,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                     }
                     steps {
@@ -454,6 +466,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
@@ -475,6 +488,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
                         unstash 'rhel8nightly'
