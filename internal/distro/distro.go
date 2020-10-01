@@ -185,9 +185,12 @@ func GetHostDistroName() (string, bool, error) {
 		return "", false, err
 	}
 
-	// NOTE: We only consider major releases
+	// NOTE: We only consider major releases up until rhel 8.4
 	version := strings.Split(osrelease["VERSION_ID"], ".")
 	name := osrelease["ID"] + "-" + version[0]
+	if osrelease["ID"] == "rhel" && version[0] == "8" && version[1] >= "4" {
+		name = name + version[1]
+	}
 
 	// TODO: We should probably index these things by the full CPE
 	beta := strings.Contains(osrelease["CPE_NAME"], "beta")
