@@ -1,11 +1,11 @@
-package rhel8_test
+package rhel84_test
 
 import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +65,7 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dist := rhel8.New()
+			dist := rhel84.New()
 			arch, _ := dist.GetArch("x86_64")
 			imgType, err := arch.GetImageType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
@@ -91,11 +91,13 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"dnf",
 		"dosfstools",
 		"e2fsprogs",
+		"grub2-efi-x64",
 		"grub2-pc",
 		"policycoreutils",
-		"qemu-img",
+		"shim-x64",
 		"systemd",
 		"tar",
+		"qemu-img",
 		"xz",
 	}
 	aarch64BuildPackages := []string{
@@ -114,7 +116,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"ppc64le": nil,
 		"s390x":   nil,
 	}
-	d := rhel8.New()
+	d := rhel84.New()
 	for _, archLabel := range d.ListArches() {
 		archStruct, err := d.GetArch(archLabel)
 		if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
@@ -131,7 +133,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 }
 
 func TestImageType_Name(t *testing.T) {
-	distro := rhel8.New()
+	distro := rhel84.New()
 	imgMap := []struct {
 		arch     string
 		imgNames []string
@@ -212,7 +214,7 @@ func TestImageType_Size(t *testing.T) {
 		},
 	}
 
-	distro := rhel8.New()
+	distro := rhel84.New()
 	arch, err := distro.GetArch("x86_64")
 	if assert.NoError(t, err) {
 		for _, mapping := range sizeMap {
@@ -261,6 +263,8 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootloaderPackages: []string{
 				"dracut-config-generic",
 				"grub2-pc",
+				"grub2-efi-x64",
+				"shim-x64",
 			},
 			excludedPackages: []string{
 				"aic94xx-firmware",
@@ -309,7 +313,6 @@ func TestImageType_BasePackages(t *testing.T) {
 				// Defaults
 				"@Core",
 				"langpacks-en",
-
 				// From the lorax kickstart
 				"kernel",
 				"selinux-policy-targeted",
@@ -320,6 +323,8 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootloaderPackages: []string{
 				"dracut-config-generic",
 				"grub2-pc",
+				"grub2-efi-x64",
+				"shim-x64",
 			},
 			excludedPackages: []string{
 				"dracut-config-rescue",
@@ -327,7 +332,7 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootable: true,
 		},
 	}
-	distro := rhel8.New()
+	distro := rhel84.New()
 	arch, err := distro.GetArch("x86_64")
 	assert.NoError(t, err)
 
@@ -347,17 +352,17 @@ func TestImageType_BasePackages(t *testing.T) {
 }
 
 func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "rhel_8-*", rhel8.New())
+	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "rhel_84*", rhel84.New())
 }
 
-func TestRhel8_ListArches(t *testing.T) {
-	distro := rhel8.New()
+func TestRhel84_ListArches(t *testing.T) {
+	distro := rhel84.New()
 	arches := distro.ListArches()
 	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
 }
 
-func TestRhel8_GetArch(t *testing.T) {
-	distro := rhel8.New()
+func TestRhel84_GetArch(t *testing.T) {
+	distro := rhel84.New()
 	arches := []struct {
 		name          string
 		errorExpected bool
@@ -392,12 +397,12 @@ func TestRhel8_GetArch(t *testing.T) {
 	}
 }
 
-func TestRhel8_Name(t *testing.T) {
-	distro := rhel8.New()
-	assert.Equal(t, "rhel-8", distro.Name())
+func TestRhel84_Name(t *testing.T) {
+	distro := rhel84.New()
+	assert.Equal(t, "rhel-84", distro.Name())
 }
 
-func TestRhel8_ModulePlatformID(t *testing.T) {
-	distro := rhel8.New()
+func TestRhel84_ModulePlatformID(t *testing.T) {
+	distro := rhel84.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
 }
