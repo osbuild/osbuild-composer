@@ -165,6 +165,69 @@ pipeline {
                         }
                     }
                 }
+                stage('F33 Base') {
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        unstash 'fedora33'
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-base')
+                        }
+                    }
+                }
+                stage('F33 Image') {
+                    agent { label "f33cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "fedora33"
+                    }
+                    steps {
+                        unstash 'fedora33'
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-image')
+                        }
+                    }
+                }
+                stage('F33 Integration') {
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        unstash 'fedora33'
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-integration')
+                        }
+                    }
+                }
+                stage('F33 OSTree') {
+                    agent { label "f33cloudbase && psi && x86_64" }
+                    steps {
+                        unstash 'fedora33'
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-ostree')
+                        }
+                    }
+                }
                 stage('EL8 Base') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
