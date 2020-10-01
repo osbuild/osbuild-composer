@@ -176,7 +176,6 @@ components:
       type: object
       required:
         - baseurl
-        - gpgkey
       properties:
         baseurl:
           type: string
