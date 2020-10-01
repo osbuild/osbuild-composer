@@ -112,7 +112,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
 			repositories[j].BaseURL = repo.Baseurl
-			repositories[j].GPGKey = repo.Gpgkey
+			if repo.Gpgkey != nil {
+				repositories[j].GPGKey = *repo.Gpgkey
+			}
 		}
 		bp := &blueprint.Blueprint{}
 		err = bp.Initialize()

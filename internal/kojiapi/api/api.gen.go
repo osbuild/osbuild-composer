@@ -53,8 +53,8 @@ type Koji struct {
 
 // Repository defines model for Repository.
 type Repository struct {
-	Baseurl string `json:"baseurl"`
-	Gpgkey  string `json:"gpgkey"`
+	Baseurl string  `json:"baseurl"`
+	Gpgkey  *string `json:"gpgkey,omitempty"`
 }
 
 // Status defines model for Status.
