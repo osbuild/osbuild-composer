@@ -26,6 +26,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 )
 
 type Composer struct {
@@ -63,7 +64,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, err
 	}
 
-	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New())
+	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New())
 	if err != nil {
 		return nil, fmt.Errorf("Error loading distros: %v", err)
 	}
@@ -109,6 +110,9 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListe
 
 	// TODO: refactor to be more generic
 	name := hostDistro.Name()
+	if name == "rhel-84" {
+		name = "rhel-8"
+	}
 	if beta {
 		name += "-beta"
 	}
