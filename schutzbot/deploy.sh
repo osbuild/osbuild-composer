@@ -95,8 +95,10 @@ if rpm -q osbuild-composer-koji; then
 fi
 
 if [[ $ID == rhel ]]; then
-    greenprint "Starting cloud socket"
-    sudo systemctl enable --now osbuild-composer-cloud.socket
+    if rpm -q osbuild-composer-cloud; then
+        greenprint "Starting cloud socket"
+        sudo systemctl enable --now osbuild-composer-cloud.socket
+    fi
 fi
 
 greenprint "Verifying that the API is running"
