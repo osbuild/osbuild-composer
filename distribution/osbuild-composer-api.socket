@@ -1,0 +1,9 @@
+[Unit]
+Description=OSBuild Composer API socket
+
+[Socket]
+Service=osbuild-composer.service
+ListenStream=443
+
+[Install]
+WantedBy=sockets.target

@@ -77,9 +77,9 @@ func main() {
 		log.Fatalf("osbuild-composer.socket doesn't exist")
 	}
 
-	if l, exists := listeners["osbuild-composer-koji.socket"]; exists {
+	if l, exists := listeners["osbuild-composer-api.socket"]; exists {
 		if len(l) != 1 {
-			log.Fatal("The osbuild-composer-koji.socket unit is misconfigured. It should contain only one socket.")
+			log.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
 		}
 
 		err = composer.InitKoji(ServerCertFile, ServerKeyFile, l[0])

@@ -11,14 +11,7 @@ sudo chown _osbuild-composer /etc/osbuild-composer/composer-*.pem
 
 sudo systemctl start osbuild-remote-worker.socket
 sudo systemctl start osbuild-composer.socket
-
-if rpm -q osbuild-composer-koji; then
-    sudo systemctl start osbuild-composer-koji.socket
-fi
-
-if rpm -q osbuild-composer-cloud; then
-    sudo systemctl start osbuild-composer-cloud.socket
-fi
+sudo systemctl start osbuild-composer-api.socket
 
 # Basic verification
 sudo composer-cli status show

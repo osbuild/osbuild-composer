@@ -158,6 +158,7 @@ install -m 0644 -vp distribution/osbuild-composer.socket        %{buildroot}%{_u
 install -m 0644 -vp distribution/osbuild-remote-worker.socket   %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-remote-worker@.service %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-worker@.service        %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/osbuild-composer-api.socket    %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-composer-koji.socket   %{buildroot}%{_unitdir}/
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/osbuild-composer.{service,socket} %{buildroot}%{_unitdir}/
@@ -231,13 +232,13 @@ cd $PWD/_build/src/%{goipath}
 %endif
 
 %post
-%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
+%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
 
 %preun
-%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
+%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
 
 %postun
-%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-remote-worker.socket
+%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
 
 %files
 %license LICENSE
@@ -247,6 +248,7 @@ cd $PWD/_build/src/%{goipath}
 %{_datadir}/osbuild-composer/
 %{_unitdir}/osbuild-composer.service
 %{_unitdir}/osbuild-composer.socket
+%{_unitdir}/osbuild-composer-api.socket
 %{_unitdir}/osbuild-remote-worker.socket
 %{_sysusersdir}/osbuild-composer.conf
 
@@ -375,7 +377,8 @@ Obsoletes: osbuild-composer-rcm < %{version}-%{release}
 Provides:  osbuild-composer-rcm = %{version}-%{release}
 
 %description koji
-osbulid-composer specifically for pushing images to Koji.
+osbuild-composer specifically for pushing images to Koji. This package is only
+needed for backwards compatibility and will be removed in the future.
 
 %files koji
 %{_unitdir}/osbuild-composer-koji.socket
