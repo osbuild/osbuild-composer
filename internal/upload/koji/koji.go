@@ -315,19 +315,14 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 		return err
 	}
 
-	resp := xmlrpc.NewResponse(body)
-	if resp.Failed() {
-		return resp.Err()
-	}
-
 	var reply struct {
 		Size      int    `xmlrpc:"size"`
 		HexDigest string `xmlrpc:"hexdigest"`
 	}
 
-	err = resp.Unmarshal(&reply)
+	err = processXMLRPCResponse(body, &reply)
 	if err != nil {
-		return fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
+		return err
 	}
 
 	if reply.Size != len(chunk) {
