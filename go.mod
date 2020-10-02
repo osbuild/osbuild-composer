@@ -20,7 +20,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.11.0
 	github.com/julienschmidt/httprouter v1.2.0
-	github.com/kolo/xmlrpc v0.0.0-20190417161013-de6d879202d7
+	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.5.1

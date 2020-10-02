@@ -1,4 +1,6 @@
-// This files provides a wrapper around kolo/xmlrpc response handling.
+// +build kolo_xmlrpc_oldapi
+//
+// This file provides a wrapper around kolo/xmlrpc response handling.
 //
 // Commit e3ad6d89 of the xmlrpc library changed the API of response handling.
 // This means that different APIs are available in Fedora 32 and 33 (it does
