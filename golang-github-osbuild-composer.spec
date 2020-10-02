@@ -64,6 +64,20 @@ Provides: weldr
 %goprep
 %endif
 
+%if 0%{?fedora} && 0%{?fedora} <= 32
+# Fedora 32 and older ships a different kolo/xmlrpc API. We cannot specify
+# build tags in gobuild macro because the macro itself specifies build tags.
+# and -tags argument cannot be used more than once.
+# Therefore, this ugly hack with build tags switcharoo is required.
+# Remove when F32 is EOL.
+
+# Remove the build constraint from the wrapper of the old API
+sed -i "s$// +build kolo_xmlrpc_oldapi$// +build !kolo_xmlrpc_oldapi$" internal/upload/koji/xmlrpc-response-oldapi.go
+
+# Add a build constraint to the wrapper of the new API
+sed -i "s$// +build !kolo_xmlrpc_oldapi$// +build kolo_xmlrpc_oldapi$" internal/upload/koji/xmlrpc-response.go
+%endif
+
 %build
 %if 0%{?rhel}
 GO_BUILD_PATH=$PWD/_build
