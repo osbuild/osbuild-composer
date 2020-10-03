@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
@@ -38,9 +40,10 @@ type Composer struct {
 
 	workers *worker.Server
 	weldr   *weldr.API
+	api     *cloudapi.Server
 	koji    *kojiapi.Server
 
-	weldrListener, localWorkerListener, workerListener, kojiListener net.Listener
+	weldrListener, localWorkerListener, workerListener, apiListener net.Listener
 }
 
 func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *log.Logger) (*Composer, error) {
@@ -127,7 +130,9 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListe
 	return nil
 }
 
-func (c *Composer) InitKoji(cert, key string, l net.Listener) error {
+func (c *Composer) InitAPI(cert, key string, l net.Listener) error {
+	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
+
 	servers := make(map[string]koji.GSSAPICredentials)
 	for name, creds := range c.config.Koji.Servers {
 		if creds.Kerberos != nil {
@@ -137,7 +142,6 @@ func (c *Composer) InitKoji(cert, key string, l net.Listener) error {
 			}
 		}
 	}
-
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros, servers)
 
 	tlsConfig, err := createTLSConfig(&connectionConfig{
@@ -147,10 +151,10 @@ func (c *Composer) InitKoji(cert, key string, l net.Listener) error {
 		AllowedDomains: c.config.Koji.AllowedDomains,
 	})
 	if err != nil {
-		return fmt.Errorf("Error creating TLS configuration for Koji API: %v", err)
+		return fmt.Errorf("Error creating TLS configuration: %v", err)
 	}
 
-	c.kojiListener = tls.NewListener(l, tlsConfig)
+	c.apiListener = tls.NewListener(l, tlsConfig)
 
 	return nil
 }
@@ -197,9 +201,25 @@ func (c *Composer) Start() error {
 		}()
 	}
 
-	if c.kojiListener != nil {
+	if c.apiListener != nil {
 		go func() {
-			err := c.koji.Serve(c.kojiListener)
+			const apiRoute = "/api/composer/v1"
+			const kojiRoute = "/api/composer-koji/v1"
+
+			mux := http.NewServeMux()
+
+			// Add a "/" here, because http.ServeMux expects the
+			// trailing slash for rooted subtrees, whereas the
+			// handler functions don't.
+			mux.Handle(apiRoute+"/", c.api.Handler(apiRoute))
+			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
+
+			s := &http.Server{
+				ErrorLog: c.logger,
+				Handler:  mux,
+			}
+
+			err := s.Serve(c.apiListener)
 			if err != nil {
 				panic(err)
 			}

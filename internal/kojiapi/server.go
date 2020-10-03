@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"net/url"
 
@@ -24,7 +23,7 @@ import (
 
 // Server represents the state of the koji Server
 type Server struct {
-	server      *http.Server
+	logger      *log.Logger
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
@@ -34,38 +33,26 @@ type Server struct {
 // NewServer creates a new koji server
 func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry, kojiServers map[string]koji.GSSAPICredentials) *Server {
 	s := &Server{
+		logger:      logger,
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
 		kojiServers: kojiServers,
 	}
 
-	e := echo.New()
-	e.Binder = binder{}
-	e.StdLogger = logger
-
-	api.RegisterHandlers(e.Group(api.BasePath), &apiHandlers{s})
-
-	s.server = &http.Server{
-		ErrorLog: logger,
-		Handler:  e,
-	}
-
 	return s
 }
 
-// Serve serves the koji API over the provided listener socket
-func (s *Server) Serve(listener net.Listener) error {
-	err := s.server.Serve(listener)
-	if err != nil && err != http.ErrServerClosed {
-		return err
-	}
+// Create an http.Handler() for this server, that provides the koji API at the
+// given path.
+func (s *Server) Handler(path string) http.Handler {
+	e := echo.New()
+	e.Binder = binder{}
+	e.StdLogger = s.logger
 
-	return nil
-}
+	api.RegisterHandlers(e.Group(path), &apiHandlers{s})
 
-func (s *Server) Handler() http.Handler {
-	return s.server.Handler
+	return e
 }
 
 // apiHandlers implements api.ServerInterface - the http api route handlers
