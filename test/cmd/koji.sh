@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+
 # Get OS data.
 source /etc/os-release
 
@@ -28,8 +30,8 @@ sudo dnf -y install \
 
 if [[ $ID == rhel ]]; then
   greenprint "Tweaking podman, maybe."
-  sudo cp schutzbot/vendor/87-podman-bridge.conflist /etc/cni/net.d/
-  sudo cp schutzbot/vendor/dnsname /usr/libexec/cni/
+  sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
+  sudo cp /usr/share/tests/osbuild-composer/vendor/dnsname /usr/libexec/cni/
 fi
 
 greenprint "Starting containers"
@@ -37,7 +39,7 @@ sudo ./internal/upload/koji/run-koji-container.sh start
 
 greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
-sudo cp test/composer/osbuild-worker.toml \
+sudo cp "${OSBUILD_COMPOSER_TEST_DATA}"/composer/osbuild-worker.toml \
     /etc/osbuild-worker/
 
 greenprint "Adding kerberos config"
@@ -48,7 +50,7 @@ sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
     /etc/osbuild-worker/client.keytab
 sudo cp \
-    test/kerberos/krb5-local.conf \
+    "${OSBUILD_COMPOSER_TEST_DATA}"/kerberos/krb5-local.conf \
     /etc/krb5.conf.d/local
 
 greenprint "Adding generated CA cert for Koji"

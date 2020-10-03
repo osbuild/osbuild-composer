@@ -347,7 +347,7 @@ func TestImageType_BasePackages(t *testing.T) {
 }
 
 func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../test/cases/", "rhel_8*", rhel8.New())
+	distro_test_common.TestDistro_Manifest(t, "../../../test/data/cases/", "rhel_8*", rhel8.New())
 }
 
 func TestRhel8_ListArches(t *testing.T) {
