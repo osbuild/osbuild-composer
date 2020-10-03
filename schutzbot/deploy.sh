@@ -78,7 +78,7 @@ fi
 greenprint "Copying custom composer config"
 # Remote worker needs this
 sudo mkdir -p /etc/osbuild-composer
-sudo cp test/composer/osbuild-composer.toml \
+sudo cp /usr/share/tests/osbuild-composer/composer/osbuild-composer.toml \
     /etc/osbuild-composer/
 
 greenprint "Copying pre-generated SSL certificates"

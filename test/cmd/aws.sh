@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+
 source /etc/os-release
 
 # Fedora 31's composer-cli doesn't support doing image uploads.
@@ -65,10 +67,9 @@ INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${IMAGE_KEY}.json
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
     # Ensure the ssh key has restricted permissions.
-    SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
-    chmod 0600 "$SSH_KEY"
+    SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
 
-    SMOKE_TEST=$(ssh -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
+    SMOKE_TEST=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
     else
@@ -216,7 +217,7 @@ $AWS_CMD ec2 run-instances \
     --key-name personal_servers \
     --image-id "${AMI_IMAGE_ID}" \
     --instance-type t3a.micro \
-    --user-data file://"${WORKSPACE}"/test/cloud-init/user-data \
+    --user-data file://"${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/user-data \
     --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
 
 # Wait for the instance to finish building.
@@ -247,7 +248,7 @@ greenprint "⏱ Waiting for AWS instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
     if ssh-keyscan "$PUBLIC_IP" > /dev/null 2>&1; then
         echo "SSH is up!"
-        ssh-keyscan "$PUBLIC_IP" >> ~/.ssh/known_hosts
+        ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
         break
     fi
 

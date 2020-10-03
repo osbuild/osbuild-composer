@@ -120,19 +120,39 @@ install -m 0755 -vp _bin/osbuild-composer-cli-tests         %{buildroot}%{_libex
 install -m 0755 -vp _bin/osbuild-weldr-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-auth-tests                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-auth-tests                 %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp test/cmd/*                              %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                        %{buildroot}%{_libexecdir}/osbuild-composer/
 
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/ansible
+install -m 0644 -vp test/data/ansible/*                     %{buildroot}%{_datadir}/tests/osbuild-composer/ansible/
+
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/azure
-install -m 0644 -vp test/azure/deployment-template.json     %{buildroot}%{_datadir}/tests/osbuild-composer/azure/
+install -m 0644 -vp test/data/azure/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/azure/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/ca
+install -m 0644 -vp test/data/ca/*-crt.pem                  %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0600 -vp test/data/ca/*-key.pem                  %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cases
-install -m 0644 -vp test/cases/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
-install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
-install -m 0600 -vp test/keyring/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+install -m 0644 -vp test/data/cases/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
 
 install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
-install -m 0644 -vp test/cloud-init/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
+install -m 0644 -vp test/data/cloud-init/*                  %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/composer
+install -m 0644 -vp test/data/composer/*                    %{buildroot}%{_datadir}/tests/osbuild-composer/composer/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/kerberos
+install -m 0644 -vp test/data/kerberos/*                    %{buildroot}%{_datadir}/tests/osbuild-composer/kerberos/
+
+install -m 0755 -vd                                         %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
+install -m 0644 -vp test/data/keyring/id_rsa.pub            %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+install -m 0600 -vp test/data/keyring/id_rsa                %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/vendor
+install -m 0644 -vp test/data/vendor/87-podman-bridge.conflist  %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
+install -m 0755 -vp test/data/vendor/dnsname                    %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
 
 %check
 %if 0%{?rhel}

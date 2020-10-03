@@ -561,7 +561,7 @@ void run_tests(test_type) {
     if (test_type == 'ostree') {
         sh (
             label: "OSTree tests",
-            script: "test/integration/ostree.sh"
+            script: "/usr/libexec/tests/osbuild-composer/ostree.sh"
         )
     }
 
@@ -569,31 +569,31 @@ void run_tests(test_type) {
         // Run Koji tests.
         sh (
             label: "Koji tests",
-            script: "test/integration/koji.sh"
+            script: "/usr/libexec/tests/osbuild-composer/koji.sh"
         )
 
         // Run the qcow2 test.
         sh (
             label: "Integration test: QCOW2",
-            script: "test/integration/qemu.sh qcow2"
+            script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2"
         )
 
         // Run the openstack test.
         sh (
             label: "Integration test: OpenStack",
-            script: "test/integration/qemu.sh openstack"
+            script: "/usr/libexec/tests/osbuild-composer/qemu.sh openstack"
         )
 
         // Run the VHD/Azure test.
         sh (
             label: "Integration test: VHD",
-            script: "test/integration/qemu.sh vhd"
+            script: "/usr/libexec/tests/osbuild-composer/qemu.sh vhd"
         )
 
         // Run the AWS test.
         sh (
             label: "Integration test: AWS",
-            script: "test/integration/aws.sh"
+            script: "/usr/libexec/tests/osbuild-composer/aws.sh"
         )
     }
 

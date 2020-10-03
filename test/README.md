@@ -1,7 +1,25 @@
 # osbuild-composer testing information
 
+With the exception of unit tests, all the osbuild-composer tests are shipped
+in a dedicated RPM: osbulid-composer-tests, and they are meant to be installed
+onto a pristine system and executed from there, rather than executed from a
+git checkout.
+
+Some tests are written as golang binaries, found in `cmd/*-test/`, and others
+are written as scripts and found in `test/cmd/`. Either way, they are installed
+into `/usr/libexec/tests/osbuild-composer/`, and any supporting test-data is
+installed into `/usr/share/tests/osbuild-composer/`.
+
+Provisioning and orchestration of test-systems, as well as configuring what
+distros, versions and architectures to test against is out of scope of the
+tests themselves. For osbuild-composer CI, schutzbot is used, which can be
+found in the directory by the same name.
+
+
+## Golang tests
+
 Test binaries, regardless of their scope/type (e.g. unit, API, integration)
-must follow the syntax of the Go
+that are written in Golang must follow the syntax of the Go
 [testing package](https://golang.org/pkg/testing/), that is implement only
 `TestXxx` functions with their setup/teardown when necessary in a `yyy_test.go`
 file.
@@ -20,7 +38,7 @@ See *Integration testing* for more information.
 
 ## Image tests
 
-In the `test/cases` directory, sample image builds and their tests are
+In the `test/data/cases` directory, sample image builds and their tests are
 collected for the various distros, architectures, configuration we support.
 
 Each test case describes how the image is built, the expected osbuild

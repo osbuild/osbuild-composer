@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -19,7 +21,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "rhel-8.3")
         # Override old rhel-8-beta.json because test needs latest systemd and redhat-release
-        sudo cp "$(dirname "$0")"/rhel-8-beta.json /etc/osbuild-composer/repositories/
+        sudo cp schutzbot/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/
         sudo systemctl restart osbuild-composer.socket
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -113,8 +115,7 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_KEY=${WORKSPACE}/test/keyring/id_rsa
-chmod 0600 "$SSH_KEY"
+SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
 
 # Get the compose log.
 get_compose_log () {
@@ -200,7 +201,7 @@ build_image() {
 
 # Wait for the ssh server up to be.
 wait_for_ssh_up () {
-    SSH_STATUS=$(ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -438,8 +439,8 @@ UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
-ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
-ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -472,7 +473,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" "$(dirname "$0")"/../ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
