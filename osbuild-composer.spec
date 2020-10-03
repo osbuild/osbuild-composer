@@ -115,7 +115,6 @@ export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
-%gobuild -o _bin/osbuild-composer-cloud %{goipath}/cmd/osbuild-composer-cloud
 
 
 %if %{with tests} || 0%{?rhel}
@@ -137,7 +136,6 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cloud-tests %{goipath}/cmd/osbuild-composer-cloud-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
 go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/cloud-cleaner %{goipath}/cmd/cloud-cleaner
 
@@ -169,9 +167,6 @@ install -m 0644 -vp distribution/osbuild-composer.conf          %{buildroot}%{_s
 
 install -m 0755 -vd                                             %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
-install -m 0755 -vp _bin/osbuild-composer-cloud             %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0644 -vp distribution/osbuild-composer-cloud.{service,socket} %{buildroot}%{_unitdir}/
-
 %if %{with tests} || 0%{?rhel}
 
 install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer
@@ -179,7 +174,6 @@ install -m 0755 -vp _bin/osbuild-composer-cli-tests             %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp test/cmd/*                                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer/
@@ -285,34 +279,12 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
-%package cloud
-Summary:    The osbuild-composer cloud api
-Requires:   systemd
-
-%description cloud
-The cloud api for osbuild-composer
-
-%files cloud
-%{_libexecdir}/osbuild-composer/osbuild-composer-cloud
-%{_unitdir}/osbuild-composer-cloud.socket
-%{_unitdir}/osbuild-composer-cloud.service
-
-%post cloud
-%systemd_post osbuild-composer-cloud.socket osbuild-composer-cloud.service
-
-%preun cloud
-%systemd_preun osbuild-composer-cloud.socket osbuild-composer-cloud.service
-
-%postun cloud
-%systemd_postun_with_restart osbuild-composer-cloud.socket osbuild-composer-cloud.service
-
 %if %{with tests} || 0%{?rhel}
 
 %package tests
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   %{name}-koji = %{version}-%{release}
-Requires:   %{name}-cloud = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage

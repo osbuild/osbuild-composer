@@ -35,7 +35,7 @@ func newTestKojiServer(t *testing.T) *kojiapi.Server {
 
 func TestStatus(t *testing.T) {
 	server := newTestKojiServer(t)
-	handler := server.Handler()
+	handler := server.Handler("/api/composer-koji/v1")
 
 	req := httptest.NewRequest("GET", "/api/composer-koji/v1/status", nil)
 	req.Header.Set("Content-Type", "application/json")

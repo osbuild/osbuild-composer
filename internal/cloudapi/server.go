@@ -5,9 +5,9 @@ package cloudapi
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -34,16 +34,16 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.
 	return server
 }
 
-// Serve serves the cloud API over the provided listener socket
-func (server *Server) Serve(listener net.Listener) error {
-	s := http.Server{Handler: Handler(server)}
+// Create an http.Handler() for this server, that provides the composer API at
+// the given path.
+func (server *Server) Handler(path string) http.Handler {
+	r := chi.NewRouter()
 
-	err := s.Serve(listener)
-	if err != nil && err != http.ErrServerClosed {
-		return err
-	}
+	r.Route(path, func(r chi.Router) {
+		HandlerFromMux(server, r)
+	})
 
-	return nil
+	return r
 }
 
 // Compose handles a new /compose POST request
@@ -150,7 +150,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			key := fmt.Sprintf("composer-cloudapi-%s", uuid.New().String())
+			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 			t := target.NewAWSTarget(&target.AWSTargetOptions{
 				Filename:        imageType.Filename(),
 				Region:          awsUploadOptions.Region,

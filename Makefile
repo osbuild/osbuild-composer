@@ -110,7 +110,6 @@ man: $(MANPAGES_TROFF)
 build:
 	- mkdir bin
 	go build -o bin/osbuild-composer ./cmd/osbuild-composer/
-	go build -o bin/osbuild-composer-cloud ./cmd/osbuild-composer-cloud/
 	go build -o bin/osbuild-worker ./cmd/osbuild-worker/
 	go build -o bin/osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o bin/osbuild-upload-azure ./cmd/osbuild-upload-azure/
@@ -119,7 +118,6 @@ build:
 	go test -c -tags=integration -o bin/osbuild-weldr-tests ./internal/client/
 	go test -c -tags=integration -o bin/osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go test -c -tags=integration -o bin/osbuild-image-tests ./cmd/osbuild-image-tests/
-	go test -c -tags=integration -o bin/osbuild-composer-cloud-tests ./cmd/osbuild-composer-cloud-tests/main_test.go
 	go test -c -tags=integration -o bin/osbuild-auth-tests ./cmd/osbuild-auth-tests/
 
 .PHONY: install
@@ -127,7 +125,6 @@ install:
 	- mkdir -p /usr/libexec/osbuild-composer
 	cp bin/osbuild-composer /usr/libexec/osbuild-composer/
 	cp bin/osbuild-worker /usr/libexec/osbuild-composer/
-	cp bin/osbuild-composer-cloud /usr/libexec/osbuild-composer/
 	cp dnf-json /usr/libexec/osbuild-composer/
 	- mkdir -p /usr/share/osbuild-composer/repositories
 	cp repositories/* /usr/share/osbuild-composer/repositories

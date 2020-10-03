@@ -82,7 +82,7 @@ func main() {
 			log.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitKoji(ServerCertFile, ServerKeyFile, l[0])
+		err = composer.InitAPI(ServerCertFile, ServerKeyFile, l[0])
 		if err != nil {
 			log.Fatalf("Error initializing koji API: %v", err)
 		}
