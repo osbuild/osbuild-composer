@@ -3,7 +3,7 @@
 Firstly, you need to start the koji container:
 
 ```
-sudo ./internal/upload/koji/run-koji-container.sh start
+sudo ./tools/run-koji-container.sh start
 ```
 
 This command starts a kojihub instance available at
@@ -24,5 +24,5 @@ for more details.
 To stop and remove the koji container, use the following command:
 
 ```
-sudo ./internal/upload/koji/run-koji-container.sh stop
+sudo ./tools/koji/run-koji-container.sh stop
 ```
