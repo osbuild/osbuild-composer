@@ -35,7 +35,7 @@ if [[ $ID == rhel ]]; then
 fi
 
 greenprint "Starting containers"
-sudo ./internal/upload/koji/run-koji-container.sh start
+sudo /usr/libexec/osbuild-composer/run-koji-container.sh start
 
 greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
@@ -77,7 +77,7 @@ koji --server=http://localhost:8080/kojihub taskinfo 1
 koji --server=http://localhost:8080/kojihub buildinfo 1
 
 greenprint "Stopping containers"
-sudo ./internal/upload/koji/run-koji-container.sh stop
+sudo /usr/libexec/osbuild-composer/run-koji-container.sh stop
 
 greenprint "Removing generated CA cert"
 sudo rm \

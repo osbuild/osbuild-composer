@@ -161,6 +161,7 @@ install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp test/cmd/*                                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/ansible
 install -m 0644 -vp test/data/ansible/*                         %{buildroot}%{_datadir}/tests/osbuild-composer/ansible/
@@ -302,6 +303,7 @@ Integration tests to be run on a pristine-dedicated system to test the osbuild-c
 %{_libexecdir}/tests/osbuild-composer/
 %{_datadir}/tests/osbuild-composer/
 %{_libexecdir}/osbuild-composer/image-info
+%{_libexecdir}/osbuild-composer/run-koji-container.sh
 
 %endif
 
