@@ -28,10 +28,12 @@ sudo dnf -y install \
     python3 \
     sssd-krb5
 
+greenprint "Adding podman dnsname plugin"
 if [[ $ID == rhel ]]; then
-  greenprint "Tweaking podman, maybe."
   sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
   sudo cp /usr/share/tests/osbuild-composer/vendor/dnsname /usr/libexec/cni/
+else
+  sudo dnf -y install podman-plugins
 fi
 
 greenprint "Starting containers"
