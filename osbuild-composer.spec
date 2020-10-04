@@ -188,9 +188,11 @@ install -m 0755 -vd                                             %{buildroot}%{_d
 install -m 0644 -vp test/data/keyring/id_rsa.pub                %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
 install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
 
+%if 0%{?rhel}
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/vendor
 install -m 0644 -vp test/data/vendor/87-podman-bridge.conflist  %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
 install -m 0755 -vp test/data/vendor/dnsname                    %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
+%endif
 
 %endif
 
