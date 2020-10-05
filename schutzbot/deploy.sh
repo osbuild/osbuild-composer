@@ -75,33 +75,5 @@ if [[ -f "rhel-8-beta.json" ]]; then
     sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
 fi
 
-greenprint "Copying custom composer config"
-# Remote worker needs this
-sudo mkdir -p /etc/osbuild-composer
-sudo cp /usr/share/tests/osbuild-composer/composer/osbuild-composer.toml \
-    /etc/osbuild-composer/
-
-greenprint "Copying pre-generated SSL certificates"
-sudo cp /usr/share/tests/osbuild-composer/ca/* \
-    /etc/osbuild-composer/
-sudo chown _osbuild-composer /etc/osbuild-composer/composer-*.pem
-
-greenprint "Starting services"
-sudo systemctl enable --now osbuild-remote-worker.socket
-sudo systemctl enable --now osbuild-composer.socket
-
-if rpm -q osbuild-composer-koji; then
-    sudo systemctl enable --now osbuild-composer-koji.socket
-fi
-
-if [[ $ID == rhel ]]; then
-    greenprint "Starting cloud socket"
-    sudo systemctl enable --now osbuild-composer-cloud.socket
-fi
-
-greenprint "Verifying that the API is running"
-sudo composer-cli status show
-sudo composer-cli sources list
-for SOURCE in $(sudo composer-cli sources list); do
-    sudo composer-cli sources info "$SOURCE"
-done
+greenprint "Provisioning the services"
+./schutzbot/provision.sh
