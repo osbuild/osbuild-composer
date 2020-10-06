@@ -1,0 +1,1 @@
+../../../../../../schutzbot/provision.sh

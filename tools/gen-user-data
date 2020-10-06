@@ -1,0 +1,75 @@
+#!/usr/bin/python3
+
+"""
+gen-user-data
+
+This tool generates a cloud-config user-data file from a directory containing
+configuration. Its main purpose is to make it easy to include files in the
+user-data, which need to be encoded in base64.
+
+It writes the assembled user-data to standard out.
+
+The configuration directory may contain:
+
+* user-data.yml -- a base user-data. Anything that exists in this file will be
+                   transferred as-is. Any additional configuration is appended
+                   to already existing configuration.
+
+* files/        -- a directory containing additional files to include. The
+                   file's path on the target system mirrors its path relative
+                   to this directore (`files/etc/hosts` → `/etc/hosts`). Its
+                   permissions are copied over, but the owner will always be
+                   root:root. Empty directories are ignored.
+
+The `python3-pyyaml` package is required to run this tool.
+"""
+
+
+import argparse
+import base64
+import os
+import stat
+import sys
+import yaml
+
+
+def octal_mode_string(mode):
+    """Convert stat.st_mode to the format cloud-init expects.
+
+    cloud-init's write_files plugin expects file permissions in the format
+    returned by python2's oct() function, for example '0644'. In python3, oct()
+    returns a string in the new octal notation, '0o644'.
+    """
+    return "0" + oct(stat.S_IMODE(mode))[2:]
+
+
+def main():
+    p = argparse.ArgumentParser(description="Generate cloud-config user-data")
+    p.add_argument("configdir", metavar="CONFIGDIR", help="input directory")
+    args = p.parse_args()
+
+    try:
+        with open(f"{args.configdir}/user-data.yml") as f:
+            userdata = yaml.load(f, Loader=yaml.SafeLoader)
+    except FileNotFoundError:
+        userdata = {}
+
+    filesdir = f"{args.configdir}/files"
+    for directory, dirs, files in os.walk(filesdir):
+        for name in files:
+            path = f"{directory}/{name}"
+            with open(path, "rb") as f:
+                content = base64.b64encode(f.read()).decode("utf-8")
+            userdata.setdefault("write_files", []).append({
+                "path": "/" + os.path.relpath(path, filesdir),
+                "encoding": "b64",
+                "content": content,
+                "permissions": octal_mode_string(os.lstat(path).st_mode)
+            })
+
+    sys.stdout.write("#cloud-config\n")
+    yaml.dump(userdata, sys.stdout, Dumper=yaml.SafeDumper)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
