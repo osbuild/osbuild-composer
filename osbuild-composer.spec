@@ -323,6 +323,7 @@ Requires:   expect
 Requires:   python3-lxml
 Requires:   ansible
 Requires:   httpd
+Requires:   openssl
 %if 0%{?fedora}
 Requires:   podman-plugins
 %endif
