@@ -1,0 +1,16 @@
+#cloud-config
+yum_repos:
+  osbuild:
+    name: osbuild
+    baseurl: "http://10.0.2.2:8000"
+    enabled: true
+    gpgcheck: false
+user: admin
+password: foobar
+ssh_pwauth: True
+chpasswd:
+  expire: False
+sudo: 'ALL=(ALL) NOPASSWD:ALL'
+runcmd:
+  - /run/provision-scripts/deploy.sh
+  - /run/provision-scripts/provision.sh

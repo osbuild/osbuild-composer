@@ -1,0 +1,59 @@
+#!/usr/bin/bash
+
+#
+# deploy-qemu IMAGE USERDATA
+#
+# Starts an ephemeral virtual machine in qemu, injecting configuration via
+# cloud-init. Stopping this script stops the VM and discards all data.
+#
+# IMAGE    -- An os image that can be booted by qemu and has cloud-init
+#             installed and enabled. No changes are made to this file.
+#
+# USERDATA -- A cloud-init user-data config file, or a directory of
+#             configuration as accepted by the `gen-user-data` tool.
+#
+
+set -euo pipefail
+
+if [[ -z "$1" || -z "$2" ]]; then
+  echo "usage: $0 IMAGE USERDATA"
+  exit 1
+fi
+
+scriptdir=$(dirname "$0")
+image=$1
+userdata=$2
+workdir=$(mktemp -d "$scriptdir/qemu-tmp-XXXXXX")
+function cleanup() {
+  rm -rf "$workdir"
+}
+trap cleanup EXIT
+
+if [ -d "$userdata" ]; then
+  "$scriptdir/gen-user-data" "$userdata" > "$workdir/user-data"
+else
+  cp "$userdata" "$workdir/user-data"
+fi
+
+echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/meta-data"
+
+genisoimage \
+  -input-charset utf-8 \
+  -output "$workdir/cloudinit.iso" \
+  -volid cidata \
+  -joliet \
+  -rock \
+  -quiet \
+  -graft-points \
+  "$workdir/user-data" \
+  "$workdir/meta-data"
+
+qemu-system-x86_64 \
+  -enable-kvm \
+  -m 1024 \
+  -snapshot \
+  -cpu host \
+  -net nic,model=virtio \
+  -net user,hostfwd=tcp::2222-:22,hostfwd=tcp::4430-:443 \
+  -cdrom "$workdir/cloudinit.iso" \
+  "$image"
