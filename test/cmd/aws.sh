@@ -24,16 +24,9 @@ if [[ $ID == rhel ]]; then
     sudo rm -f /usr/lib/python3.6/site-packages/composer/cli/compose.pyc
 fi
 
-# We need jq for parsing composer-cli output.
-if ! hash jq; then
-    greenprint "Installing jq"
-    sudo dnf -qy install jq
-fi
-
 # We need awscli to talk to AWS.
 if ! hash aws; then
     greenprint "Installing awscli"
-    sudo dnf -y install unzip
     pushd /tmp
         curl -Ls --retry 5 --output awscliv2.zip \
             https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip

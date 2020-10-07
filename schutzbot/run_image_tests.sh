@@ -74,11 +74,6 @@ run_test_case () {
     echo
 }
 
-# Ensure osbuild-composer-tests is installed.
-if ! rpm -qi osbuild-composer-tests > /dev/null 2>&1; then
-    sudo dnf -y install osbuild-composer-tests
-fi
-
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 

@@ -292,6 +292,37 @@ Requires:   createrepo_c
 Requires:   genisoimage
 Requires:   qemu-kvm-core
 Requires:   systemd-container
+Requires:   jq
+Requires:   unzip
+Requires:   container-selinux
+Requires:   dnsmasq
+Requires:   krb5-workstation
+Requires:   koji
+Requires:   podman
+Requires:   python3
+Requires:   sssd-krb5
+Requires:   libvirt-client libvirt-daemon
+Requires:   libvirt-daemon-config-network
+Requires:   libvirt-daemon-config-nwfilter
+Requires:   libvirt-daemon-driver-interface
+Requires:   libvirt-daemon-driver-network
+Requires:   libvirt-daemon-driver-nodedev
+Requires:   libvirt-daemon-driver-nwfilter
+Requires:   libvirt-daemon-driver-qemu
+Requires:   libvirt-daemon-driver-secret
+Requires:   libvirt-daemon-driver-storage
+Requires:   libvirt-daemon-driver-storage-disk
+Requires:   libvirt-daemon-kvm
+Requires:   qemu-img
+Requires:   qemu-kvm
+Requires:   virt-install
+Requires:   expect
+Requires:   python3-lxml
+Requires:   ansible
+Requires:   httpd
+%if 0%{?fedora}
+Requires:   podman-plugins
+%endif
 %ifarch %{arm}
 Requires:   edk2-aarch64
 %endif
