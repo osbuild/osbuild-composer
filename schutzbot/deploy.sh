@@ -58,6 +58,12 @@ greenprint "Setting up a dnf repository for the RPMs we built via mock"
 sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
+if [[ $ID == rhel ]]; then
+    greenprint "Setting up EPEL repository"
+    # we need this for ansible and koji
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+fi
+
 greenprint "Installing the Image Builder packages"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install osbuild-composer-tests
