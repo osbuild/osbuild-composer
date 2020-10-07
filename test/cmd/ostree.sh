@@ -44,17 +44,6 @@ if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# Install required packages.
-greenprint "📦 Installing required packages"
-sudo dnf -y install jq libvirt-client libvirt-daemon \
-    libvirt-daemon-config-network libvirt-daemon-config-nwfilter \
-    libvirt-daemon-driver-interface libvirt-daemon-driver-network \
-    libvirt-daemon-driver-nodedev libvirt-daemon-driver-nwfilter \
-    libvirt-daemon-driver-qemu libvirt-daemon-driver-secret \
-    libvirt-daemon-driver-storage libvirt-daemon-driver-storage-disk \
-    libvirt-daemon-kvm qemu-img qemu-kvm virt-install expect \
-    python3-lxml ansible httpd
-
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd

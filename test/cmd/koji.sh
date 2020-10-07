@@ -18,22 +18,10 @@ if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-greenprint "Installing required packages"
-sudo dnf -y install \
-    container-selinux \
-    dnsmasq \
-    krb5-workstation \
-    koji \
-    podman \
-    python3 \
-    sssd-krb5
-
 greenprint "Adding podman dnsname plugin"
 if [[ $ID == rhel ]]; then
   sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
   sudo cp /usr/share/tests/osbuild-composer/vendor/dnsname /usr/libexec/cni/
-else
-  sudo dnf -y install podman-plugins
 fi
 
 greenprint "Starting containers"

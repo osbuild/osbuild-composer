@@ -36,16 +36,6 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Install required packages.
-greenprint "📦 Installing required packages"
-sudo dnf -y install jq libvirt-client libvirt-daemon \
-    libvirt-daemon-config-network libvirt-daemon-config-nwfilter \
-    libvirt-daemon-driver-interface libvirt-daemon-driver-network \
-    libvirt-daemon-driver-nodedev libvirt-daemon-driver-nwfilter \
-    libvirt-daemon-driver-qemu libvirt-daemon-driver-secret \
-    libvirt-daemon-driver-storage libvirt-daemon-driver-storage-disk \
-    libvirt-daemon-kvm qemu-img qemu-kvm virt-install
-
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd

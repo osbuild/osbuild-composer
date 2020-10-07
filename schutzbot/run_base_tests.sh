@@ -37,9 +37,6 @@ run_test_case () {
     echo
 }
 
-# Ensure osbuild-composer-tests is installed.
-sudo dnf -y install osbuild-composer-tests
-
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
