@@ -42,6 +42,9 @@ func main() {
 	// Load Azure credentials
 	creds, err := azuretest.GetAzureCredentialsFromEnv()
 	panicErr(err)
+	if creds == nil {
+		panic("empty credentials")
+	}
 	// Get test ID
 	testID, err := GenerateCIArtifactName("")
 	panicErr(err)

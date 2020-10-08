@@ -161,7 +161,7 @@ install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-composer-cloud-tests           %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 install -m 0755 -vp test/cmd/*                                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/tests/osbuild-composer/
+install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer/
 
