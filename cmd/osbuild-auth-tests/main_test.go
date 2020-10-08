@@ -181,7 +181,7 @@ func TestKojiAPIAuth(t *testing.T) {
 			subj     string
 			success  bool
 		}{
-			{"valid CN 1", "/CN=worker.osbuild.org", true},
+			{"valid CN 1", "/CN=client.osbuild.org", true},
 			{"valid CN 2", "/CN=localhost", true},
 			{"invalid CN", "/CN=example.com", false},
 		}

@@ -187,8 +187,16 @@ install -m 0755 -vd                                             %{buildroot}%{_d
 install -m 0644 -vp test/data/azure/*                           %{buildroot}%{_datadir}/tests/osbuild-composer/azure/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/ca
-install -m 0644 -vp test/data/ca/*-crt.pem                      %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
-install -m 0600 -vp test/data/ca/*-key.pem                      %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0755 -vp test/data/ca/ca-crt.pem                     %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0600 -vp test/data/ca/ca-key.pem                     %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0755 -vp test/data/ca/composer-crt.pem               %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0600 -vp test/data/ca/composer-key.pem               %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0755 -vp test/data/ca/worker-crt.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0600 -vp test/data/ca/worker-key.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+
+# Client keys are used by tests to access the composer APIs. Allow all users access.
+install -m 0755 -vp test/data/ca/client-crt.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
+install -m 0755 -vp test/data/ca/client-key.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cases
 install -m 0644 -vp test/data/cases/*                           %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
