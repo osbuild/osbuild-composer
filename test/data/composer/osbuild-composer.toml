@@ -1,5 +1,5 @@
 [koji]
-allowed_domains = [ "localhost", "worker.osbuild.org" ]
+allowed_domains = [ "localhost", "client.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
 
 [koji.servers.localhost.kerberos]

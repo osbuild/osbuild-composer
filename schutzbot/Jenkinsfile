@@ -628,6 +628,12 @@ void run_tests(test_type) {
             label: "Integration test: AWS",
             script: "/usr/libexec/tests/osbuild-composer/aws.sh"
         )
+
+        // Run the API test.
+        sh (
+            label: "Integration test: API",
+            script: "/usr/libexec/tests/osbuild-composer/api.sh"
+        )
     }
 
 }
