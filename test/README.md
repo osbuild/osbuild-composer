@@ -223,3 +223,36 @@ can be used to review the test automation state during a PR lifecycle.
 `qa_ack+` on RHBZ will be granted **after** a reproducer has been
 identified and with the mutual understanding that PRs related to
 that RHBZ must include an automated test reproducer.
+
+
+## Cron jobs for nightly builds testing
+
+The Schutzbot Pipeline contains conditional sections that facilitate test execution
+against nightly builds. This is achieved by running different preparation steps while
+the testing stage remains the same. The main difference is that SUT is not compiled
+locally but installed directly from OS repositories!
+
+### Replay nightly Pipeline manually
+
+If you wish to execute the nightly Pipeline by hand, often to verify changes made to it
+then do the following:
+
+1. Wait for `schutzbot-psi/pr-head` to report any status on the pull request.
+   This means a regular Pipeline has been started with changes coming from your PR; or
+1. In Jenkins Blue Ocean UI locate the latest Pipeline execution triggered by timer
+2. In Jenkins Blue Ocean UI, top-right corner, click ***Go to classic*** button:
+
+   !['Go to classic button'](./go_to_classic.png)
+
+3. In Jenkins Classic UI, left-hand sidebar click ***Replay*** button. This will allow you to
+   replay a Pipeline with a modified syntax
+4. Locate the  `detect_build_cause()` function near the bottom and modify it so that it
+   will `return "cron"`. This is required because when Pipelines are restarted manually
+   their build cause is **Replayed #xy**. See the images for reference:
+
+   !['Modify build cause'](./pipeline_replay_01.png)
+
+   !['Modify build cause'](./pipeline_replay_02.png)
+
+5. Click the ***Run*** button - the newly started Pipeline will be forced to take the
+   nightly branches instead of the regular ones
