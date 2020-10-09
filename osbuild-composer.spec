@@ -67,6 +67,12 @@ Obsoletes: lorax-composer <= 29
 Conflicts: lorax-composer
 %endif
 
+# Remove when we stop releasing into Fedora 35
+%if 0%{?fedora} >= 34
+# lorax 34.3 is the first one without the composer subpackage
+Obsoletes: lorax-composer < 34.3
+%endif
+
 # remove in F34
 Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
