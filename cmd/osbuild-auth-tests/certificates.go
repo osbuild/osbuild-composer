@@ -28,45 +28,37 @@ func (ckp certificateKeyPair) key() string {
 	return path.Join(ckp.baseDir, "key")
 }
 
-func newCertificateKeyPair(CA, CAkey, commonName string) (*certificateKeyPair, error) {
+func newCertificateKeyPair(CA, CAkey, commonName string, subjectAlternativeNames []string) (*certificateKeyPair, error) {
 	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
 	}
 
 	ckp := certificateKeyPair{baseDir: dir}
-	certificateRequest := path.Join(dir, "csr")
 
-	cmd := exec.Command(
-		"openssl", "req", "-new", "-nodes",
-		"-subj", fmt.Sprintf("/CN=%s", commonName),
+	args := []string{
+		"-out", ckp.certificate(),
 		"-keyout", ckp.key(),
-		"-out", certificateRequest,
-	)
-
-	err = cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate a private key and a certificate request: %v", err)
-	}
-
-	defer os.Remove(certificateRequest)
-
-	cmd = exec.Command(
-		"openssl", "x509", "-req", "-CAcreateserial",
-		"-in", certificateRequest,
 		"-CA", CA,
 		"-CAkey", CAkey,
-		"-out", ckp.certificate(),
+		"-cn", commonName,
+		"-san",
+	}
+	args = append(args, subjectAlternativeNames...)
+
+	cmd := exec.Command(
+		"/usr/libexec/osbuild-composer-test/x509/generate-certificate",
+		args...,
 	)
 	err = cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign the certificate: %v", err)
+		return nil, fmt.Errorf("cannot create the certificate: %v", err)
 	}
 
 	return &ckp, nil
 }
 
-func newSelfSignedCertificateKeyPair(commonName string) (*certificateKeyPair, error) {
+func newSelfSignedCertificateKeyPair(commonName string, subjectAlternativeNames []string) (*certificateKeyPair, error) {
 	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
@@ -74,11 +66,18 @@ func newSelfSignedCertificateKeyPair(commonName string) (*certificateKeyPair, er
 
 	ckp := certificateKeyPair{baseDir: dir}
 
-	cmd := exec.Command(
-		"openssl", "req", "-nodes", "-x509",
-		"-subj", fmt.Sprintf("/CN=%s", commonName),
+	args := []string{
+		"-selfsigned",
 		"-out", ckp.certificate(),
 		"-keyout", ckp.key(),
+		"-cn", commonName,
+		"-san",
+	}
+	args = append(args, subjectAlternativeNames...)
+
+	cmd := exec.Command(
+		"/usr/libexec/osbuild-composer-test/x509/generate-certificate",
+		args...,
 	)
 	err = cmd.Run()
 	if err != nil {

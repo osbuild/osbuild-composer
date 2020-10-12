@@ -180,6 +180,9 @@ install -m 0755 -vp tools/provision.sh                          %{buildroot}%{_l
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/koji-compose.py                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/osbuild-composer-test/x509
+install -m 0755 -vp tools/x509/generate-certificate             %{buildroot}%{_libexecdir}/osbuild-composer-test/x509/
+install -m 0644 -vp tools/x509/openssl.py                       %{buildroot}%{_libexecdir}/osbuild-composer-test/x509/
 install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp test/cases/*                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 

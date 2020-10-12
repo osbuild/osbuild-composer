@@ -46,18 +46,19 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 func TestWorkerAPIAuth(t *testing.T) {
 	t.Run("certificate signed by a trusted CA", func(t *testing.T) {
 		cases := []struct {
-			caseDesc   string
-			commonName string
-			success    bool
+			caseDesc                string
+			commonName              string
+			subjectAlternativeNames []string
+			success                 bool
 		}{
-			{"valid CN 1", "worker.osbuild.org", true},
-			{"valid CN 2", "localhost", true},
-			{"invalid CN", "example.com", false},
+			{"valid CN 1", "worker.osbuild.org", []string{"example.com", "worker.osbuild.org"}, true},
+			{"valid CN 2", "localhost", []string{"example.com", "localhost"}, true},
+			{"invalid CN", "example.com", []string{"example.com"}, false},
 		}
 
 		for _, c := range cases {
 			t.Run(c.caseDesc, func(t *testing.T) {
-				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.commonName)
+				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.commonName, c.subjectAlternativeNames)
 				require.NoError(t, err)
 				defer ckp.remove()
 
@@ -68,12 +69,12 @@ func TestWorkerAPIAuth(t *testing.T) {
 
 	t.Run("certificate signed by an untrusted CA", func(t *testing.T) {
 		// generate a new CA
-		ca, err := newSelfSignedCertificateKeyPair("osbuild.org")
+		ca, err := newSelfSignedCertificateKeyPair("ca.osbuild.org", []string{"ca.osbuild.org"})
 		require.NoError(t, err)
 		defer ca.remove()
 
 		// create a new certificate and signed it with the new CA
-		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "localhost")
+		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "localhost", []string{"localhost"})
 		require.NoError(t, err)
 		defer ckp.remove()
 
@@ -82,7 +83,7 @@ func TestWorkerAPIAuth(t *testing.T) {
 
 	t.Run("self-signed certificate", func(t *testing.T) {
 		// generate a new self-signed certificate
-		ckp, err := newSelfSignedCertificateKeyPair("osbuild.org")
+		ckp, err := newSelfSignedCertificateKeyPair("osbuild.org", []string{"osbuild.org"})
 		require.NoError(t, err)
 		defer ckp.remove()
 
@@ -93,18 +94,19 @@ func TestWorkerAPIAuth(t *testing.T) {
 func TestKojiAPIAuth(t *testing.T) {
 	t.Run("certificate signed by a trusted CA", func(t *testing.T) {
 		cases := []struct {
-			caseDesc   string
-			commonName string
-			success    bool
+			caseDesc                string
+			commonName              string
+			subjectAlternativeNames []string
+			success                 bool
 		}{
-			{"valid CN 1", "client.osbuild.org", true},
-			{"valid CN 2", "localhost", true},
-			{"invalid CN", "example.com", false},
+			{"valid CN 1", "worker.osbuild.org", []string{"example.com", "client.osbuild.org"}, true},
+			{"valid CN 2", "localhost", []string{"example.com", "localhost"}, true},
+			{"invalid CN", "example.com", []string{"example.com"}, false},
 		}
 
 		for _, c := range cases {
 			t.Run(c.caseDesc, func(t *testing.T) {
-				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.commonName)
+				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.commonName, c.subjectAlternativeNames)
 				require.NoError(t, err)
 				defer ckp.remove()
 
@@ -115,12 +117,12 @@ func TestKojiAPIAuth(t *testing.T) {
 
 	t.Run("certificate signed by an untrusted CA", func(t *testing.T) {
 		// generate a new CA
-		ca, err := newSelfSignedCertificateKeyPair("osbuild.org")
+		ca, err := newSelfSignedCertificateKeyPair("ca.osbuild.org", []string{"ca.osbuild.org"})
 		require.NoError(t, err)
 		defer ca.remove()
 
 		// create a new certificate and signed it with the new CA
-		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "localhost")
+		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "localhost", []string{"localhost"})
 		require.NoError(t, err)
 		defer ckp.remove()
 
@@ -129,7 +131,7 @@ func TestKojiAPIAuth(t *testing.T) {
 
 	t.Run("self-signed certificate", func(t *testing.T) {
 		// generate a new self-signed certificate
-		ckp, err := newSelfSignedCertificateKeyPair("osbuild.org")
+		ckp, err := newSelfSignedCertificateKeyPair("osbuild.org", []string{"osbuild.org"})
 		require.NoError(t, err)
 		defer ckp.remove()
 
