@@ -35,6 +35,28 @@ advance (because this is easier/more feasible). These stand-alone test binaries
 are also compiled via `go test -c -o` during rpm build or via `make build`.
 See *Integration testing* for more information.
 
+When comparing for expected values in test functions you should use the
+[testify/assert](https://godoc.org/github.com/stretchr/testify/assert) or
+[testify/require](https://godoc.org/github.com/stretchr/testify/require)
+packages. Both of them provide an impressive array of assertions with the
+possibility to use formatted strings as error messages. For example:
+
+```
+assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
+```
+
+If you want to fail immediately, not doing any more of the asserts use the
+`require` package instead of the `assert` package, otherwise you'll end up with
+panics and nil pointer memory problems.
+
+Stand-alone test binaries also have the `-test.failfast` option.
+
+Code coverage is recorded in
+[codecov.io](https://codecov.io/github/osbuild/osbuild-composer).
+This information comes only from unit tests and for the time being
+we're not concerned with collecting coverage information from integration
+tests, see `.github/workflows/tests.yml`.
+
 
 ## Image tests
 
@@ -136,33 +158,6 @@ The following environment variables are required
 an issue where the first line in the credentials file gets lost resulting in
 incomplete credentials. The work-around is to define a dummy ENV variable on
 the first line!
-
-## Notes on asserts and comparing expected values
-
-When comparing for expected values in test functions you should use the
-[testify/assert](https://godoc.org/github.com/stretchr/testify/assert) or
-[testify/require](https://godoc.org/github.com/stretchr/testify/require)
-packages. Both of them provide an impressive array of assertions with the
-possibility to use formatted strings as error messages. For example:
-
-```
-assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
-```
-
-If you want to fail immediately, not doing any more of the asserts use the
-require package instead of the assert package, otherwise you'll end up with
-panics and nil pointer memory problems.
-
-Stand-alone test binaries also have the `-test.failfast` option.
-
-
-## Notes on code coverage
-
-Code coverage is recorded in
-[codecov.io](https://codecov.io/github/osbuild/osbuild-composer).
-This information comes only from unit tests and for the time being
-we're not concerned with collecting coverage information from integration
-tests, see `.github/workflows/tests.yml`.
 
 
 ## Integration testing
