@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+"""
+Generate an X.509 certificate signing request and a private key
+
+The generated certificate is always a X509 v3 certificate signing request and
+always has the Subject Alternative Name field.
+"""
+
+import argparse
+
+import openssl
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-out", metavar="CSR", required=True,
+                        help="Location where the new certificate signing request should be stored.")
+    parser.add_argument("-keyout", metavar="KEY", required=True,
+                        help="Location where the private key belonging to the new csr should be stored.")
+    parser.add_argument("-cn", metavar="COMMON_NAME", required=True,
+                        help="Common name of the subject requesting the certificate.")
+    parser.add_argument("-san", nargs="+", metavar="SUBJECT_ALTERNATIVE_NAME", required=True,
+                        help="One or more subject alternative names of the subject requesting the certificate.")
+
+    args = parser.parse_args()
+
+    openssl.generate_csr(
+        out=args.out,
+        keyout=args.keyout,
+        common_name=args.cn,
+        subject_alternative_names=args.san,
+    )

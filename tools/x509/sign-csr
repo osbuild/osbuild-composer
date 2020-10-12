@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""
+Sign an X.509 certificate signing request
+
+The signed certificate is always a X509 v3 certificate and always has
+the Subject Alternative Name field.
+"""
+
+import argparse
+
+import openssl
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-in", metavar="CSR", required=True,
+                        help="Location of the certificate signing request.")
+    parser.add_argument("-out", metavar="CERTIFICATE", required=True,
+                        help="Location where the new certificate should be stored.")
+    parser.add_argument("-cn", metavar="COMMON_NAME", required=True,
+                        help="Common name of the subject owning the new certificate.")
+    parser.add_argument("-san", nargs="+", metavar="SUBJECT_ALTERNATIVE_NAME", required=True,
+                        help="One or more subject alternative names of the subject owning the new certificate.")
+    parser.add_argument("-CA", metavar="CERTIFICATE",
+                        help="Certificate of the CA used to sign the request.")
+    parser.add_argument("-CAkey", metavar="KEY",
+                        help="Private key of the CA used to sign the request.")
+
+    args = parser.parse_args()
+    openssl.sign_csr(
+        csr=getattr(args, "in"),  # "in" is a reserved word in Python
+        out=args.out,
+        ca=args.CA,
+        ca_key=args.CAkey,
+        common_name=args.cn,
+        subject_alternative_names=args.san,
+    )

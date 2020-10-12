@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+"""
+Generate an X.509 certificate and a private key
+
+The generated certificate is always a X509 v3 certificate and always has
+the Subject Alternative Name field. The script supports both self-signed
+certificates or signing the certificate using CA passed in as an argument.
+"""
+
+import argparse
+import sys
+
+import openssl
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate X.509 v3 certificates")
+    parser.add_argument("-out", metavar="CERTIFICATE", required=True,
+                        help="Location where the new certificate should be stored.")
+    parser.add_argument("-keyout", metavar="KEY", required=True,
+                        help="Location where the private key belonging to the new certificate should be stored.")
+    parser.add_argument("-cn", metavar="COMMON_NAME", required=True,
+                        help="Common name of the subject owning the new certificate.")
+    parser.add_argument("-san", nargs="+", metavar="SUBJECT_ALTERNATIVE_NAME", required=True,
+                        help="One or more subject alternative names of the subject owning the new certificate.")
+    parser.add_argument("-selfsigned", action="store_true",
+                        help="Controls whether the new certificate should be self-signed or not. (default: false)")
+    parser.add_argument("-CA", metavar="CERTIFICATE",
+                        help="Certificate of the CA used to sign the new certificate.")
+    parser.add_argument("-CAkey", metavar="KEY",
+                        help="Private key of the CA used to sign the new certificate.")
+
+    args = parser.parse_args()
+
+    if args.selfsigned and (args.CA is not None or args.CAkey is not None):
+        print("self-signed certificate doesn't need a CA")
+        sys.exit(1)
+
+    if not args.selfsigned and (args.CA is None or args.CAkey is None):
+        print("missing -CA or -CAkey (or use -selfsigned to create a self-signed certificate)")
+        sys.exit(1)
+
+    if args.selfsigned:
+        openssl.generate_self_signed_certificate(
+            out=args.out,
+            keyout=args.keyout,
+            common_name=args.cn,
+            subject_alternative_names=args.san,
+        )
+    else:
+        openssl.generate_certificate(
+            out=args.out,
+            keyout=args.keyout,
+            ca=args.CA,
+            ca_key=args.CAkey,
+            common_name=args.cn,
+            subject_alternative_names=args.san,
+        )
