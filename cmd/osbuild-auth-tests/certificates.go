@@ -28,7 +28,7 @@ func (ckp certificateKeyPair) key() string {
 	return path.Join(ckp.baseDir, "key")
 }
 
-func newCertificateKeyPair(CA, CAkey, subj string) (*certificateKeyPair, error) {
+func newCertificateKeyPair(CA, CAkey, commonName string) (*certificateKeyPair, error) {
 	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
@@ -39,7 +39,7 @@ func newCertificateKeyPair(CA, CAkey, subj string) (*certificateKeyPair, error) 
 
 	cmd := exec.Command(
 		"openssl", "req", "-new", "-nodes",
-		"-subj", subj,
+		"-subj", fmt.Sprintf("/CN=%s", commonName),
 		"-keyout", ckp.key(),
 		"-out", certificateRequest,
 	)
@@ -66,7 +66,7 @@ func newCertificateKeyPair(CA, CAkey, subj string) (*certificateKeyPair, error) 
 	return &ckp, nil
 }
 
-func newSelfSignedCertificateKeyPair(subj string) (*certificateKeyPair, error) {
+func newSelfSignedCertificateKeyPair(commonName string) (*certificateKeyPair, error) {
 	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
@@ -76,7 +76,7 @@ func newSelfSignedCertificateKeyPair(subj string) (*certificateKeyPair, error) {
 
 	cmd := exec.Command(
 		"openssl", "req", "-nodes", "-x509",
-		"-subj", subj,
+		"-subj", fmt.Sprintf("/CN=%s", commonName),
 		"-out", ckp.certificate(),
 		"-keyout", ckp.key(),
 	)
