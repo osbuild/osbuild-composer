@@ -191,3 +191,35 @@ from the local directory without installing it:
 
 * `make build` - will build everything under `cmd/`
 * `./osbuild-composer-cli-tests` - will execute the freshly built integration test suite
+
+
+## Downstream testing notes
+
+To make it easier for us to test & verify downstream builds we are going to
+move most of the work upstream and apply the following rules:
+
+1. Preferably the 1st commit of any PR will contain a bug reproducer.
+   First push a draft PR only containing that commit which will cause CI to FAIL.
+2. QE will review and approve the reproducer (can happen in parallel with next item)
+3. Subsequent commits provide bug fixes without modifying the reproducer and
+   CI reports PASS. Push these on top of the approved reproducer.
+4. QE has done final review and approved the PR; RHBZ status is set to
+   `MODIFIED + Verified=Tested`
+5. Devel has done final review and approved the PR
+
+**NOTES for devel:**
+
+Pull requests related to new functionality may add their
+automated tests together or after commit(s) adding said functionality!
+
+All PRs containing commits referencing `rhbz#` number and/or
+all PRs against a dedicated `rhel-` branch should follow the above rules!
+
+**NOTE for QE:**
+
+CI results are also reported against each commit and these
+can be used to review the test automation state during a PR lifecycle.
+
+`qa_ack+` on RHBZ will be granted **after** a reproducer has been
+identified and with the mutual understanding that PRs related to
+that RHBZ must include an automated test reproducer.
