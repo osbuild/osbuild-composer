@@ -30,6 +30,7 @@ Source0:        %{gosource}
 
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 BuildRequires:  systemd
+BuildRequires:  krb5-devel
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
@@ -51,7 +52,6 @@ BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
-BuildRequires:  krb5-devel
 %endif
 
 Requires: %{name}-worker = %{version}-%{release}
