@@ -64,6 +64,10 @@ func (s *Server) Serve(listener net.Listener) error {
 	return nil
 }
 
+func (s *Server) Handler() http.Handler {
+	return s.server.Handler
+}
+
 // apiHandlers implements api.ServerInterface - the http api route handlers
 // generated from api/openapi.yml. This is a separate object, because these
 // handlers should not be exposed on the `Server` object.
