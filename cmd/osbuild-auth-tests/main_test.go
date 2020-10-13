@@ -97,6 +97,8 @@ func newCertificateKeyPair(CA, CAkey, subj string) (*certificateKeyPair, error) 
 		"-CAkey", CAkey,
 		"-out", ckp.certificate(),
 	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
 		return nil, fmt.Errorf("cannot sign the certificate: %v", err)
