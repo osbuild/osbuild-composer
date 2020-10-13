@@ -209,6 +209,8 @@ install -m 0755 -vp test/data/vendor/dnsname                    %{buildroot}%{_d
 %if 0%{?rhel}
 export GOFLAGS=-mod=vendor
 export GOPATH=$PWD/_build:%{gopath}
+# cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
+cd $PWD/_build/src/%{goipath}
 %gotest ./...
 %else
 %gocheck
