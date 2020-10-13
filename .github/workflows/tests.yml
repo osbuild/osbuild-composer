@@ -84,6 +84,8 @@ jobs:
 
       - name: Run unit tests
         run: |
+          sudo mkdir -p /usr/libexec/osbuild-composer-test/x509
+          sudo cp tools/x509/generate-certificate tools/x509/openssl.py /usr/libexec/osbuild-composer-test/x509/
           sudo tools/run-koji-container.sh start
           koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
           env KRB5_CONFIG=../../../.github/krb5.conf go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
