@@ -1,15 +1,4 @@
 __pycache__
 
-/osbuild-composer
-/osbuild-worker
-/osbuild-weldr-tests
-/osbuild-pipeline
-/osbuild-upload-azure
-/osbuild-upload-aws
-/osbuild-dnf-json-tests
-/osbuild-composer-cli-tests
-/osbuild-weldr-tests
-/osbuild-composer-cloud
-/osbuild-composer-cloud-tests
-
+/bin
 /rpmbuild

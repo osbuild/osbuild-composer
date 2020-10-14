@@ -108,25 +108,26 @@ man: $(MANPAGES_TROFF)
 
 .PHONY: build
 build:
-	go build -o osbuild-composer ./cmd/osbuild-composer/
-	go build -o osbuild-composer-cloud ./cmd/osbuild-composer-cloud/
-	go build -o osbuild-worker ./cmd/osbuild-worker/
-	go build -o osbuild-pipeline ./cmd/osbuild-pipeline/
-	go build -o osbuild-upload-azure ./cmd/osbuild-upload-azure/
-	go build -o osbuild-upload-aws ./cmd/osbuild-upload-aws/
-	go test -c -tags=integration -o osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
-	go test -c -tags=integration -o osbuild-weldr-tests ./internal/client/
-	go test -c -tags=integration -o osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
-	go test -c -tags=integration -o osbuild-image-tests ./cmd/osbuild-image-tests/
-	go test -c -tags=integration -o osbuild-composer-cloud-tests ./cmd/osbuild-composer-cloud-tests/main_test.go
-	go test -c -tags=integration -o osbuild-auth-tests ./cmd/osbuild-auth-tests/
+	- mkdir bin
+	go build -o bin/osbuild-composer ./cmd/osbuild-composer/
+	go build -o bin/osbuild-composer-cloud ./cmd/osbuild-composer-cloud/
+	go build -o bin/osbuild-worker ./cmd/osbuild-worker/
+	go build -o bin/osbuild-pipeline ./cmd/osbuild-pipeline/
+	go build -o bin/osbuild-upload-azure ./cmd/osbuild-upload-azure/
+	go build -o bin/osbuild-upload-aws ./cmd/osbuild-upload-aws/
+	go test -c -tags=integration -o bin/osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
+	go test -c -tags=integration -o bin/osbuild-weldr-tests ./internal/client/
+	go test -c -tags=integration -o bin/osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
+	go test -c -tags=integration -o bin/osbuild-image-tests ./cmd/osbuild-image-tests/
+	go test -c -tags=integration -o bin/osbuild-composer-cloud-tests ./cmd/osbuild-composer-cloud-tests/main_test.go
+	go test -c -tags=integration -o bin/osbuild-auth-tests ./cmd/osbuild-auth-tests/
 
 .PHONY: install
 install:
 	- mkdir -p /usr/libexec/osbuild-composer
-	cp osbuild-composer /usr/libexec/osbuild-composer/
-	cp osbuild-worker /usr/libexec/osbuild-composer/
-	cp osbuild-composer-cloud /usr/libexec/osbuild-composer/
+	cp bin/osbuild-composer /usr/libexec/osbuild-composer/
+	cp bin/osbuild-worker /usr/libexec/osbuild-composer/
+	cp bin/osbuild-composer-cloud /usr/libexec/osbuild-composer/
 	cp dnf-json /usr/libexec/osbuild-composer/
 	- mkdir -p /usr/share/osbuild-composer/repositories
 	cp repositories/* /usr/share/osbuild-composer/repositories
