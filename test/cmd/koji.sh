@@ -60,7 +60,7 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo ./tools/koji-compose.py "${ID}-${VERSION_ID%.*}"
+sudo /usr/libexec/osbuild-composer/koji-compose.py "${ID}-${VERSION_ID%.*}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
