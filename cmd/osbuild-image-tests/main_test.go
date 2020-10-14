@@ -53,13 +53,13 @@ var failLocalBoot = flag.Bool("fail-local-boot", true, "when this flag is on (de
 // note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
 func GenerateCIArtifactName(prefix string) (string, error) {
 	distroCode := os.Getenv("DISTRO_CODE")
-	changeId := os.Getenv("BRANCH_NAME")
+	branchName := os.Getenv("BRANCH_NAME")
 	buildId := os.Getenv("BUILD_ID")
-	if changeId == "" || buildId == "" || distroCode == "" {
+	if branchName == "" || buildId == "" || distroCode == "" {
 		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
 	}
 
-	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, changeId, buildId), nil
+	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
 }
 
 // runOsbuild runs osbuild with the specified manifest and output-directory.
