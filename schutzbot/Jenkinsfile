@@ -74,6 +74,23 @@ pipeline {
                         )
                     }
                 }
+                stage('F33') {
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora33'
+                        )
+                    }
+                }
                 stage('EL8') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
