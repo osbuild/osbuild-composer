@@ -68,18 +68,16 @@ greenprint "Installing the Image Builder packages"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install osbuild-composer-tests
 
-greenprint "Setting up a directory to hold repository overrides"
+greenprint "Setting up a directory to hold repository overrides for weldr"
 sudo mkdir -p /etc/osbuild-composer/repositories
 
-if [[ -f "rhel-8.json" ]]; then
-    greenprint "Overriding default osbuild-composer rhel-8 sources"
-    sudo cp rhel-8.json /etc/osbuild-composer/repositories/
-fi
+# Copy Fedora rpmrepo snapshots for use in weldr tests. RHEL's are usually more
+# stable, and not available publically from rpmrepo.
+sudo cp schutzbot/repositories/fedora-*.json /etc/osbuild-composer/repositories/
 
-if [[ -f "rhel-8-beta.json" ]]; then
-    greenprint "Overriding default osbuild-composer rhel-8-beta sources"
-    sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
-fi
+greenprint "Copying repository configuration for tests"
+sudo mkdir -p /etc/tests/osbuild-composer/repositories
+sudo cp schutzbot/repositories/*.json /etc/tests/osbuild-composer/repositories/
 
 greenprint "Provisioning the services"
 ./schutzbot/provision.sh

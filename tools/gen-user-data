@@ -55,7 +55,7 @@ def main():
         userdata = {}
 
     filesdir = f"{args.configdir}/files"
-    for directory, dirs, files in os.walk(filesdir):
+    for directory, dirs, files in os.walk(filesdir, followlinks=True):
         for name in files:
             path = f"{directory}/{name}"
             with open(path, "rb") as f:
