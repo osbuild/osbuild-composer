@@ -200,13 +200,8 @@ worker-key-pair: ca
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-OLD_RPM_SPECFILE=rpmbuild/SPECS/golang-github-osbuild-composer-$(COMMIT).spec
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
-
-$(OLD_RPM_SPECFILE):
-	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	(echo "%global commit $(COMMIT)"; git show HEAD:golang-github-osbuild-composer.spec) > $(OLD_RPM_SPECFILE)
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
@@ -229,18 +224,6 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--with tests \
 		$(RPM_SPECFILE)
-
-.PHONY: old-srpm
-old-srpm: $(OLD_RPM_SPECFILE) $(RPM_TARBALL)
-	rpmbuild -bs \
-		--define "_topdir $(CURDIR)/rpmbuild" \
-		$(OLD_RPM_SPECFILE)
-
-.PHONY: old-rpm
-old-rpm: $(OLD_RPM_SPECFILE) $(RPM_TARBALL)
-	rpmbuild -bb \
-		--define "_topdir $(CURDIR)/rpmbuild" \
-		$(OLD_RPM_SPECFILE)
 
 #
 # Releasing
@@ -280,8 +263,7 @@ release:
 	@echo "        git log v$(VERSION)..HEAD"
 	@echo
 	@echo " * Bump the project version. The canonical location so far is"
-	@echo "   'osbuild-composer.spec' and"
-	@echo "   'golang-github-osbuild-composer.spec'."
+	@echo "   'osbuild-composer.spec'."
 	@echo
 	@echo " * Make sure the spec-file is updated for the new release and"
 	@echo "   correctly supports all new features. This should already be"
