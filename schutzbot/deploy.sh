@@ -35,9 +35,6 @@ fi
 greenprint "Restarting systemd to work around some Fedora issues in cloud images"
 sudo systemctl restart systemd-journald
 
-greenprint "Removing Fedora's modular repositories to speed up dnf"
-sudo rm -f /etc/yum.repos.d/fedora*modular*
-
 greenprint "Enabling fastestmirror and disabling weak dependencies to speed up dnf even more 🏎️"
 echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
