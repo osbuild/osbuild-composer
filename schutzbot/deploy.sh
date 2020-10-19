@@ -41,16 +41,6 @@ sudo rm -f /etc/yum.repos.d/fedora*modular*
 greenprint "Enabling fastestmirror and disabling weak dependencies to speed up dnf even more 🏎️"
 echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
 
-# Ensure we are using the latest dnf since early revisions of Fedora 31 had
-# some dnf repo priority bugs like BZ 1733582.
-# NOTE(mhayden): We can exclude kernel updates here to save time with dracut
-# and module updates. The system will not be rebooted in CI anyway, so a
-# kernel update is not needed.
-if [[ $ID == fedora ]]; then
-    greenprint "Upgrading system to fix dnf issues"
-    sudo dnf -y upgrade --exclude kernel --exclude kernel-core
-fi
-
 greenprint "Adding osbuild team ssh keys"
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 

@@ -9,9 +9,7 @@ ARCH=$(uname -m)
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    # Bypass ostree test on fedora-31 and rhel 8.2
-    "fedora-31")
-        exit 0;;
+    # Bypass ostree test on rhel 8.2
     "rhel-8.2")
         exit 0;;
     "fedora-32")

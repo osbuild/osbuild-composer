@@ -65,9 +65,6 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.2" | "rhel-8.3")
     DISTRO="rhel-8"
   ;;
-  "fedora-31")
-    DISTRO="fedora-31"
-  ;;
   "fedora-32")
     DISTRO="fedora-32"
   ;;
