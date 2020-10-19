@@ -32,9 +32,6 @@ if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status
     sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
-greenprint "Restarting systemd to work around some Fedora issues in cloud images"
-sudo systemctl restart systemd-journald
-
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
