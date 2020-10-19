@@ -436,14 +436,14 @@ void run_tests(test_type) {
     if (test_type == 'base') {
         sh (
             label: "Base tests",
-            script: "schutzbot/run_base_tests.sh"
+            script: "/usr/libexec/tests/osbuild-composer/base_tests.sh"
         )
     }
 
     if (test_type == 'image') {
         sh (
             label: "Image tests",
-            script: "schutzbot/run_image_tests.sh"
+            script: "/usr/libexec/tests/osbuild-composer/image_tests.sh"
         )
     }
 
