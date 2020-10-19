@@ -35,8 +35,8 @@ fi
 greenprint "Restarting systemd to work around some Fedora issues in cloud images"
 sudo systemctl restart systemd-journald
 
-greenprint "Enabling fastestmirror and disabling weak dependencies to speed up dnf even more 🏎️"
-echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
+greenprint "Enabling fastestmirror to speed up dnf 🏎️"
+echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
 greenprint "Adding osbuild team ssh keys"
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
