@@ -40,23 +40,6 @@ pipeline {
 
             parallel {
 
-                stage('F31') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora31'
-                        )
-                    }
-                }
                 stage('F32') {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
@@ -132,62 +115,6 @@ pipeline {
 
         stage("Testing 🍌") {
             parallel {
-
-                stage('F31 Base') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('base')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-base')
-                        }
-                    }
-                }
-                stage('F31 Image') {
-                    agent { label "f31cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora31"
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('image')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-image')
-                            sh (
-                                label: "Run cloud cleaner just in case something failed",
-                                script: "schutzbot/run_cloud_cleaner.sh"
-                            )
-                        }
-                    }
-                }
-                stage('F31 Integration') {
-                    agent { label "f31cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests('integration')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-integration')
-                        }
-                    }
-                }
 
                 stage('F32 Base') {
                     agent { label "f32cloudbase && x86_64 && aws" }
