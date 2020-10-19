@@ -1,9 +1,14 @@
 pipeline {
     agent none
 
+    triggers {
+        cron('@daily')
+    }
+
     environment {
         AWS_REGION = "us-east-2"
         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+        BUILD_CAUSE = detect_build_cause()
     }
 
     options {
@@ -33,6 +38,12 @@ pipeline {
         }
 
         stage("Mock build 👷🏻") {
+            when {
+                expression {
+                    return env.BUILD_CAUSE != 'cron';
+                }
+            }
+
             // Halt the pipeline immediately if a single mock build fails.
             // A failure to build an RPM is serious and must be
             // investigated.
@@ -111,7 +122,46 @@ pipeline {
             }
         }
 
+        stage("Prepare EL8 nightly 🤔") {
+            agent { label "rhel8cloudbase && x86_64 && psi" }
+
+            when {
+                expression {
+                    return env.BUILD_CAUSE == 'cron';
+                }
+            }
+
+            steps {
+                // don't build, use RPMs from the nightly trees
+                sh "schutzbot/prepare-rhel-nightly.sh"
+                stash (
+                    includes: 'osbuild-mock.repo',
+                    // the name here matches the name in EL8 sections b/c
+                    // they are executed unconditionally
+                    name: 'rhel8'
+                )
+                stash (
+                    includes: 'rhel-8.json',
+                    name: 'rhel8json'
+                )
+                stash (
+                    includes: 'rhel-8-beta.json',
+                    name: 'rhel8betajson'
+                )
+                stash (
+                    includes: 'COMPOSE_ID',
+                    name: 'compose_id'
+                )
+            }
+        }
+
         stage("Container build - x86_64") {
+            when {
+                expression {
+                    return env.BUILD_CAUSE != 'cron';
+                }
+            }
+
             agent { label "f33cloudbase && x86_64 && aws" }
             steps {
                 sh "schutzbot/containerbuild.sh"
@@ -122,6 +172,12 @@ pipeline {
             parallel {
 
                 stage('F32 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
@@ -134,6 +190,12 @@ pipeline {
                     }
                 }
                 stage('F32 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -158,6 +220,12 @@ pipeline {
                     }
                 }
                 stage('F32 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
@@ -175,6 +243,12 @@ pipeline {
                     }
                 }
                 stage('F32 OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && psi && x86_64" }
                     steps {
                         run_tests('ostree')
@@ -186,6 +260,12 @@ pipeline {
                     }
                 }
                 stage('F32: koji-osbuild') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && x86_64 && aws" }
                     steps {
                         run_project_tests('koji-osbuild', 'integration.sh')
@@ -197,6 +277,12 @@ pipeline {
                     }
                 }
                 stage('F33 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
@@ -209,6 +295,12 @@ pipeline {
                     }
                 }
                 stage('F33 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -233,6 +325,12 @@ pipeline {
                     }
                 }
                 stage('F33 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
@@ -250,6 +348,12 @@ pipeline {
                     }
                 }
                 stage('F33 OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && psi && x86_64" }
                     steps {
                         run_tests('ostree')
@@ -261,6 +365,12 @@ pipeline {
                     }
                 }
                 stage('F33 aarch64 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && aarch64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
@@ -273,6 +383,12 @@ pipeline {
                     }
                 }
                 stage('F33 aarch64 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f33cloudbase && aarch64 && aws" }
                     environment {
                         TEST_TYPE = "image"
@@ -296,7 +412,13 @@ pipeline {
                     }
                 }
                 stage('EL8 Base') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "rhel8cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "base"
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
@@ -311,6 +433,12 @@ pipeline {
                     }
                 }
                 stage('EL8 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -336,6 +464,12 @@ pipeline {
                     }
                 }
                 stage('EL8 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
@@ -354,6 +488,12 @@ pipeline {
                     }
                 }
                 stage('EL8 OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     steps {
                         run_tests('ostree')
@@ -365,6 +505,12 @@ pipeline {
                     }
                 }
                 stage('EL8: koji-osbuild') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     steps {
                         run_project_tests('koji-osbuild', 'integration.sh')
@@ -559,4 +705,14 @@ void preserve_logs(test_slug) {
         artifacts: "${test_slug}/*.log,${test_slug}/*.jpg"
     )
 
+}
+
+void detect_build_cause() {
+    def buildCause = currentBuild.getBuildCauses().get(0)
+
+    if ( buildCause.shortDescription == 'Started by timer') {
+        return "cron"
+    }
+
+    return
 }
