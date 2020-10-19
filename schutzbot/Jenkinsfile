@@ -1,9 +1,14 @@
 pipeline {
     agent none
 
+    triggers {
+        cron('@daily')
+    }
+
     environment {
         AWS_REGION = "us-east-2"
         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+        BUILD_CAUSE = detect_build_cause()
     }
 
     options {
@@ -33,6 +38,12 @@ pipeline {
         }
 
         stage("Mock build 👷🏻") {
+            when {
+                expression {
+                    return env.BUILD_CAUSE != 'cron';
+                }
+            }
+
             // Halt the pipeline immediately if a single mock build fails.
             // A failure to build an RPM is serious and must be
             // investigated.
@@ -130,10 +141,49 @@ pipeline {
             }
         }
 
+        stage("Prepare EL8 nightly 🤔") {
+            agent { label "rhel83cloudbase && x86_64 && psi" }
+
+            when {
+                expression {
+                    return env.BUILD_CAUSE == 'cron';
+                }
+            }
+
+            steps {
+                // don't build, use RPMs from the nightly trees
+                sh "schutzbot/prepare-rhel-nightly.sh"
+                stash (
+                    includes: 'osbuild-mock.repo',
+                    // the name here matches the name in EL8.3 sections b/c
+                    // they are executed unconditionally
+                    name: 'rhel83'
+                )
+                stash (
+                    includes: 'rhel-8.json',
+                    name: 'rhel8json'
+                )
+                stash (
+                    includes: 'rhel-8-beta.json',
+                    name: 'rhel8betajson'
+                )
+                stash (
+                    includes: 'COMPOSE_ID',
+                    name: 'compose_id'
+                )
+            }
+        }
+
         stage("Testing 🍌") {
             parallel {
 
                 stage('F31 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f31cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
@@ -147,6 +197,12 @@ pipeline {
                     }
                 }
                 stage('F31 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f31cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -172,6 +228,12 @@ pipeline {
                     }
                 }
                 stage('F31 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f31cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
@@ -190,6 +252,12 @@ pipeline {
                 }
 
                 stage('F32 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
@@ -203,6 +271,12 @@ pipeline {
                     }
                 }
                 stage('F32 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -228,6 +302,12 @@ pipeline {
                     }
                 }
                 stage('F32 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
@@ -245,6 +325,12 @@ pipeline {
                     }
                 }
                 stage('F32 OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "f32cloudbase && psi && x86_64" }
                     steps {
                         unstash 'fedora32'
@@ -257,6 +343,12 @@ pipeline {
                     }
                 }
                 stage('EL8 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "base"
@@ -273,6 +365,12 @@ pipeline {
                     }
                 }
                 stage('EL8 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
@@ -300,6 +398,13 @@ pipeline {
                 }
                 stage('EL8 Integration') {
                     agent { label "rhel8cloudbase && x86_64 && psi" }
+
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -414,6 +519,16 @@ pipeline {
         }
     }
 
+}
+
+void detect_build_cause() {
+    def buildCause = currentBuild.getBuildCauses().get(0)
+
+    if ( buildCause.shortDescription == 'Started by timer') {
+        return "cron"
+    }
+
+    return
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
