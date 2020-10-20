@@ -15,6 +15,13 @@ set -euxo pipefail
 
 
 #
+# Provision the software under tet.
+#
+
+/usr/libexec/osbuild-composer-test/provision.sh
+
+
+#
 # Verify that this script is running in the right environment. In particular,
 # it needs variables is set to access AWS.
 #
@@ -32,7 +39,6 @@ function cleanup() {
   rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
-
 
 #
 # Install the aws client from the upstream release, because it doesn't seem to
