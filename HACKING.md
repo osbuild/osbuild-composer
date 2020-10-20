@@ -21,6 +21,9 @@ To start a ephemeral virtual machine using this repository, run:
 
 `IMAGE` has to be a path to an cloud-init-enabled image matching the host
 operating system, because that's what the packages where built for above.
+Note that the Fedora/RHEL cloud images might be too small for some tests
+to pass. Run `qemu-img resize IMAGE 10G` to grow them, cloud-init's growpart
+module will grow the root partition automatically during boot. 
 
 The second argument points to a directory from which cloud-init user-data is
 generated (see `tools/gen-user-data` for details). The one given above tries to
