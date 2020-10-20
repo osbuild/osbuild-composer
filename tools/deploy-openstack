@@ -1,0 +1,70 @@
+#!/usr/bin/bash
+
+#
+# deploy-openstack IMAGE USERDATA
+#
+# Starts an openstack instance, injecting configuration via cloud-init. It
+# assumes that an openstackrc file has been sourced into the environment.
+#
+# CONFIG   -- A JSON file containing configuration for an openstack deployment,
+#             containing "image", "flavor", "network" (same as openstack server
+#             create arguments), and "extra-args".
+#
+# USERDATA -- A cloud-init user-data config file, or a directory of
+#             configuration as accepted by the `gen-user-data` tool.
+#
+
+set -euo pipefail
+
+if [[ "$#" != 2 ]]; then
+  echo "usage: $0 CONFIG USERDATA"
+  exit 1
+fi
+
+scriptdir=$(dirname "$0")
+config=$1
+userdata=$2
+
+# Verify that an openstackrc file has been sourced. This will fail when the
+# variables do not exist.
+printenv OS_PROJECT_NAME OS_USERNAME > /dev/null
+
+workdir=$(mktemp -d "$scriptdir/qemu-tmp-XXXXXX")
+function cleanup() {
+  rm -rf "$workdir"
+}
+trap cleanup EXIT
+
+if [ -d "$userdata" ]; then
+  "$scriptdir/gen-user-data" "$userdata" > "$workdir/user-data"
+else
+  cp "$userdata" "$workdir/user-data"
+fi
+
+name=$(jq -r '.name // ""' "$config")
+image=$(jq -r '.image // ""' "$config")
+flavor=$(jq -r '.flavor // ""' "$config")
+network=$(jq -r '.network // ""' "$config")
+extra_args=$(jq -r '.extra_args // ""' "$config")
+
+if [[ -z "$name" || -z "$image" || -z "$flavor" ]]; then
+  echo "at least 'name', 'image', and 'flavor' must be set in $config"
+  exit 1
+fi
+
+if openstack server show "$name" 2>/dev/null >/dev/null; then
+  echo "server '$name' already exists - delete it with"
+  echo ""
+  echo "    openstack server stop $name"
+  echo "    openstack server delete $name"
+  exit 1
+fi
+
+openstack server create \
+  --wait \
+  --image "$image" \
+  --flavor "$flavor" \
+  --user-data "$workdir/user-data" \
+  ${network:+--network "$network"} \
+  ${extra_args:+$extra_args} \
+  "$name"
