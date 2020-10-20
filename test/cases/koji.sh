@@ -25,7 +25,7 @@ if [[ $ID == rhel ]]; then
 fi
 
 greenprint "Starting containers"
-sudo /usr/libexec/osbuild-composer/run-koji-container.sh start
+sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
 
 greenprint "Copying custom worker config"
 sudo mkdir -p /etc/osbuild-worker
@@ -60,14 +60,14 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo /usr/libexec/osbuild-composer/koji-compose.py "${ID}-${VERSION_ID%.*}"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "${ID}-${VERSION_ID%.*}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
 koji --server=http://localhost:8080/kojihub buildinfo 1
 
 greenprint "Stopping containers"
-sudo /usr/libexec/osbuild-composer/run-koji-container.sh stop
+sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop
 
 greenprint "Removing generated CA cert"
 sudo rm \

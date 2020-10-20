@@ -15,7 +15,7 @@ import (
 func TestDistro_Manifest(t *testing.T) {
 	distro_test_common.TestDistro_Manifest(
 		t,
-		"../../test/data/cases/",
+		"../../test/data/manifests/",
 		"*",
 		fedora32.New(), fedora33.New(), rhel8.New(),
 	)

@@ -169,17 +169,18 @@ install -m 0755 -vd                                             %{buildroot}%{_l
 
 %if %{with tests} || 0%{?rhel}
 
+install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/osbuild-composer-test
+install -m 0755 -vp _bin/osbuild-composer-cli-tests             %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp tools/koji-compose.py                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer
-install -m 0755 -vp _bin/osbuild-composer-cli-tests             %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp test/cmd/*                                  %{buildroot}%{_libexecdir}/tests/osbuild-composer/
-install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp tools/koji-compose.py                       %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp test/cases/*                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/ansible
 install -m 0644 -vp test/data/ansible/*                         %{buildroot}%{_datadir}/tests/osbuild-composer/ansible/
@@ -199,8 +200,8 @@ install -m 0600 -vp test/data/ca/worker-key.pem                 %{buildroot}%{_d
 install -m 0755 -vp test/data/ca/client-crt.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
 install -m 0755 -vp test/data/ca/client-key.pem                 %{buildroot}%{_datadir}/tests/osbuild-composer/ca/
 
-install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cases
-install -m 0644 -vp test/data/cases/*                           %{buildroot}%{_datadir}/tests/osbuild-composer/cases/
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/manifests
+install -m 0644 -vp test/data/manifests/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/manifests/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
 install -m 0644 -vp test/data/cloud-init/*                      %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
@@ -338,12 +339,9 @@ Requires:   edk2-aarch64
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.
 
 %files tests
+%{_libexecdir}/osbuild-composer-test/
 %{_libexecdir}/tests/osbuild-composer/
 %{_datadir}/tests/osbuild-composer/
-%{_libexecdir}/osbuild-composer/cloud-cleaner
-%{_libexecdir}/osbuild-composer/image-info
-%{_libexecdir}/osbuild-composer/run-koji-container.sh
-%{_libexecdir}/osbuild-composer/koji-compose.py
 
 %endif
 
