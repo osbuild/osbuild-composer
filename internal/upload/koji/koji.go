@@ -96,7 +96,7 @@ type Image struct {
 	ChecksumType string     `json:"checksum_type"` // must be 'md5'
 	MD5          string     `json:"checksum"`
 	Type         string     `json:"type"`
-	RPMs         []RPM      `json:"component"`
+	RPMs         []RPM      `json:"components"`
 	Extra        ImageExtra `json:"extra"`
 }
 
