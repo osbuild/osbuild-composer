@@ -2,7 +2,7 @@
 set -euo pipefail
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
-TESTS_PATH=/usr/libexec/tests/osbuild-composer
+TESTS_PATH=/usr/libexec/osbuild-composer-test
 
 PASSED_TESTS=()
 FAILED_TESTS=()

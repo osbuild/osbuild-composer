@@ -5,10 +5,10 @@ in a dedicated RPM: osbulid-composer-tests, and they are meant to be installed
 onto a pristine system and executed from there, rather than executed from a
 git checkout.
 
-Some tests are written as golang binaries, found in `cmd/*-test/`, and others
-are written as scripts and found in `test/cmd/`. Either way, they are installed
-into `/usr/libexec/tests/osbuild-composer/`, and any supporting test-data is
-installed into `/usr/share/tests/osbuild-composer/`.
+Test cases are found in `test/cases`. They are intended to be independent of
+each other and they are installed into `/usr/libexec/tests/osbuild-composer/`,
+with any supporting test-data in `/usr/share/tests/osbuild-composer/`, and
+helper binaries in `/usr/libexec/osbuild-composer-test/`.
 
 Provisioning and orchestration of test-systems, as well as configuring what
 distros, versions and architectures to test against is out of scope of the

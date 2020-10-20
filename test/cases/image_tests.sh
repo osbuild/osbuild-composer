@@ -6,8 +6,8 @@ source /etc/os-release
 ARCH=$(uname -m)
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
-IMAGE_TEST_CASE_RUNNER=/usr/libexec/tests/osbuild-composer/osbuild-image-tests
-IMAGE_TEST_CASES_PATH=/usr/share/tests/osbuild-composer/cases
+IMAGE_TEST_CASE_RUNNER=/usr/libexec/osbuild-composer-test/osbuild-image-tests
+IMAGE_TEST_CASES_PATH=/usr/share/tests/osbuild-composer/manifests
 
 PASSED_TESTS=()
 FAILED_TESTS=()
