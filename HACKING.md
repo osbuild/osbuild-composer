@@ -31,7 +31,7 @@ mimick what is run on *osbuild-composer*'s continuous integration
 infrastructure, i.e., installing `osbuild-composer-tests` and starting the
 service.
 
-The virtual machine uses qemu's user mode networking [1], forwarding port 22 to
+The virtual machine uses qemu's [user networking][1], forwarding port 22 to
 the host's 2222 and 443 to 4430. You can log into the running machine with
 
     ssh admin@localhost -p 2222
