@@ -7,6 +7,9 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 source /etc/os-release
 ARCH=$(uname -m)
 
+# Provision the software under tet.
+/usr/libexec/osbuild-composer-test/provision.sh
+
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
     # Bypass ostree test on rhel 8.2

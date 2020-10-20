@@ -11,6 +11,9 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Provision the software under tet.
+/usr/libexec/osbuild-composer-test/provision.sh
+
 if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \

@@ -37,6 +37,10 @@ run_test_case () {
     echo
 }
 
+
+# Provision the software under tet.
+/usr/libexec/osbuild-composer-test/provision.sh
+
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 

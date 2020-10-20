@@ -62,6 +62,3 @@ sudo cp schutzbot/repositories/fedora-*.json /etc/osbuild-composer/repositories/
 greenprint "Copying repository configuration for tests"
 sudo mkdir -p /etc/tests/osbuild-composer/repositories
 sudo cp schutzbot/repositories/*.json /etc/tests/osbuild-composer/repositories/
-
-greenprint "Provisioning the services"
-./schutzbot/provision.sh

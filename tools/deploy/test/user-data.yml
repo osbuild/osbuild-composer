@@ -17,4 +17,3 @@ chpasswd:
 sudo: 'ALL=(ALL) NOPASSWD:ALL'
 runcmd:
   - /run/provision-scripts/deploy.sh
-  - /run/provision-scripts/provision.sh

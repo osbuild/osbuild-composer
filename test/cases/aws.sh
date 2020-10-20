@@ -16,6 +16,9 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Provision the software under tet.
+/usr/libexec/osbuild-composer-test/provision.sh
+
 # Apply lorax patch to work around pytoml issues in RHEL 8.x.
 # See BZ 1843704 or https://github.com/weldr/lorax/pull/1030 for more details.
 if [[ $ID == rhel ]]; then
