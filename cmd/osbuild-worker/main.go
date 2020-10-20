@@ -77,7 +77,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 	rpms := make([]koji.RPM, 0)
 	for _, stage := range stages {
 		switch metadata := stage.Metadata.(type) {
-		case osbuild.RPMStageMetadata:
+		case *osbuild.RPMStageMetadata:
 			for _, pkg := range metadata.Packages {
 				rpms = append(rpms, koji.RPM{
 					Type:    "rpm",
