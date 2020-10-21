@@ -5,12 +5,6 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 source /etc/os-release
 
-# Fedora 31's composer-cli doesn't support doing image uploads.
-if [[ $ID == fedora ]] && [[ $VERSION_ID == 31 ]]; then
-    echo "Fedora 31 does not support image uploads with composer-cli."
-    exit 0
-fi
-
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
