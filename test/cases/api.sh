@@ -86,7 +86,7 @@ cat > "$REQUEST_FILE" << EOF
     {
       "architecture": "$ARCH",
       "image_type": "ami",
-      "repositories": $(jq ".\"$ARCH\"" /etc/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
       "upload_requests": [
         {
           "type": "aws",
