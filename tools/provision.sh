@@ -5,6 +5,13 @@ sudo mkdir -p /etc/osbuild-composer
 sudo cp -a /usr/share/tests/osbuild-composer/composer/*.toml \
     /etc/osbuild-composer/
 
+
+# Copy Fedora rpmrepo snapshots for use in weldr tests. RHEL's are usually more
+# stable, and not available publically from rpmrepo.
+sudo mkdir -p /etc/osbuild-composer/repositories
+sudo cp -a /usr/share/tests/osbuild-composer/repositories/fedora-*.json \
+    /etc/osbuild-composer/repositories/
+
 sudo cp -a /usr/share/tests/osbuild-composer/ca/* \
     /etc/osbuild-composer/
 sudo chown _osbuild-composer /etc/osbuild-composer/composer-*.pem
