@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -236,6 +237,12 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				continue
 			}
 
+			hostOS, err := distro.GetRedHatRelease()
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
 			build := koji.ImageBuild{
 				BuildID:   options.BuildID,
 				TaskID:    options.TaskID,
@@ -249,7 +256,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				{
 					ID: 1,
 					Host: koji.Host{
-						Os:   "RHEL8",
+						Os:   hostOS,
 						Arch: "noarch",
 					},
 					ContentGenerator: koji.ContentGenerator{
