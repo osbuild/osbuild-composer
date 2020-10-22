@@ -23,8 +23,12 @@ type Koji struct {
 	transport http.RoundTripper
 }
 
+type TypeInfo struct {
+	Image struct{} `json:"image"`
+}
+
 type ImageBuildExtra struct {
-	Image interface{} `json:"image"` // No extra info tracked at build level.
+	TypeInfo TypeInfo `json:"typeinfo"`
 }
 
 type ImageBuild struct {
