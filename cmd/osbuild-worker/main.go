@@ -264,7 +264,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 						Version: "1",
 					},
 					Container: koji.Container{
-						Type: "nspawn",
+						Type: "none",
 						Arch: common.CurrentArch(),
 					},
 					Tools: []koji.Tool{},
