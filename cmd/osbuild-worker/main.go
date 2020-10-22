@@ -231,7 +231,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				continue
 			}
 
-			hash, filesize, err := k.Upload(f, options.UploadDirectory, options.Filename)
+			hash, filesize, err := k.Upload(f, options.UploadDirectory, options.KojiFilename)
 			if err != nil {
 				r = append(r, err)
 				continue
@@ -274,7 +274,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 			output := []koji.Image{
 				{
 					BuildRootID:  1,
-					Filename:     options.Filename,
+					Filename:     options.KojiFilename,
 					FileSize:     uint64(filesize),
 					Arch:         common.CurrentArch(),
 					ChecksumType: "md5",
