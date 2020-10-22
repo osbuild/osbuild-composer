@@ -257,7 +257,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					ID: 1,
 					Host: koji.Host{
 						Os:   hostOS,
-						Arch: "noarch",
+						Arch: common.CurrentArch(),
 					},
 					ContentGenerator: koji.ContentGenerator{
 						Name:    "osbuild",
@@ -265,7 +265,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					},
 					Container: koji.Container{
 						Type: "nspawn",
-						Arch: "noarch",
+						Arch: common.CurrentArch(),
 					},
 					Tools: []koji.Tool{},
 					RPMs:  osbuildStagesToRPMs(result.Build.Stages),
@@ -276,7 +276,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					BuildRootID:  1,
 					Filename:     options.Filename,
 					FileSize:     uint64(filesize),
-					Arch:         "noarch",
+					Arch:         common.CurrentArch(),
 					ChecksumType: "md5",
 					MD5:          hash,
 					Type:         "image",
