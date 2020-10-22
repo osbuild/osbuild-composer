@@ -2,6 +2,7 @@ package kojiapi_test
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -50,4 +51,32 @@ func TestStatus(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&status)
 	require.NoError(t, err)
 	require.Equal(t, "OK", status.Status)
+}
+
+func TestRequest(t *testing.T) {
+	server := newTestKojiServer(t)
+	handler := server.Handler("/api/composer-koji/v1")
+
+	// Make request to an invalid route
+	req := httptest.NewRequest("GET", "/invalidroute", nil)
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	resp := rec.Result()
+
+	var status api.Status
+	err := json.NewDecoder(resp.Body).Decode(&status)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	// Trigger an error 400 code
+	req = httptest.NewRequest("GET", "/api/composer-koji/v1/compose/badid", nil)
+
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	resp = rec.Result()
+
+	err = json.NewDecoder(resp.Body).Decode(&status)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
