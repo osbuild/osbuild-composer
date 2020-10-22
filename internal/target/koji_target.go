@@ -10,6 +10,7 @@ type KojiTargetOptions struct {
 	Filename        string `json:"filename"`
 	UploadDirectory string `json:"upload_directory"`
 	Server          string `json:"server"`
+	KojiFilename    string `json:"koji_filename"`
 }
 
 func (KojiTargetOptions) isTargetOptions() {}

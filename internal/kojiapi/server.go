@@ -8,9 +8,11 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -85,9 +87,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	type imageRequest struct {
-		manifest distro.Manifest
-		arch     string
-		filename string
+		manifest     distro.Manifest
+		arch         string
+		filename     string
+		kojiFilename string
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 
@@ -131,6 +134,17 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		imageRequests[i].manifest = manifest
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].filename = imageType.Filename()
+
+		filename := fmt.Sprintf(
+			"%s-%s-%s.%s%s",
+			request.Name,
+			request.Version,
+			request.Release,
+			ir.Architecture,
+			splitExtension(imageType.Filename()),
+		)
+
+		imageRequests[i].kojiFilename = filename
 	}
 
 	var ir imageRequest
@@ -176,6 +190,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			Filename:        ir.filename,
 			UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
 			Server:          request.Koji.Server,
+			KojiFilename:    ir.kojiFilename,
 		}),
 	})
 	if err != nil {
@@ -187,6 +202,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		Id:          id.String(),
 		KojiBuildId: buildInfo.BuildID,
 	})
+}
+
+// splitExtension returns the extension of the given file. If there's
+// a multipart extension (e.g. file.tar.gz), it returns all parts (e.g.
+// .tar.gz). If there's no extension in the input, it returns an empty
+// string. If the filename starts with dot, the part before the second dot
+// is not considered as an extension.
+func splitExtension(filename string) string {
+	filenameParts := strings.Split(filename, ".")
+
+	if len(filenameParts) > 0 && filenameParts[0] == "" {
+		filenameParts = filenameParts[1:]
+	}
+
+	if len(filenameParts) <= 1 {
+		return ""
+	}
+
+	return "." + strings.Join(filenameParts[1:], ".")
 }
 
 func composeStateToStatus(state common.ComposeState) string {
