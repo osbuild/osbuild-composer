@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -191,6 +192,20 @@ func GetHostDistroName() (string, bool, error) {
 	// TODO: We should probably index these things by the full CPE
 	beta := strings.Contains(osrelease["CPE_NAME"], "beta")
 	return name, beta, nil
+}
+
+// GetRedHatRelease returns the content of /etc/redhat-release
+// without the trailing new-line.
+func GetRedHatRelease() (string, error) {
+	raw, err := ioutil.ReadFile("/etc/redhat-release")
+	if err != nil {
+		return "", fmt.Errorf("cannot read /etc/redhat-release: %v", err)
+	}
+
+	//Remove the trailing new-line.
+	redHatRelease := strings.TrimSpace(string(raw))
+
+	return redHatRelease, nil
 }
 
 func readOSRelease(r io.Reader) (map[string]string, error) {
