@@ -101,6 +101,24 @@ sed -i "s$// +build kolo_xmlrpc_oldapi$// +build !kolo_xmlrpc_oldapi$" internal/
 sed -i "s$// +build !kolo_xmlrpc_oldapi$// +build kolo_xmlrpc_oldapi$" internal/upload/koji/xmlrpc-response.go
 %endif
 
+# create the packageinfo files for composer and worker
+tee osbuild-composer-packageinfo.json << EOF
+{
+  "name": "%{name}",
+  "version": "%{version}",
+  "release": "%{release}",
+  "arch": "%{_arch}"
+}
+EOF
+tee osbuild-worker-packageinfo.json << EOF
+{
+  "name": "%{name}-worker",
+  "version": "%{version}",
+  "release": "%{release}",
+  "arch": "%{_arch}"
+}
+EOF
+
 %build
 %if 0%{?rhel}
 GO_BUILD_PATH=$PWD/_build
@@ -147,8 +165,13 @@ install -m 0755 -vp _bin/osbuild-composer                       %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-worker                         %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                    %{buildroot}%{_libexecdir}/osbuild-composer/
 
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/osbuild-composer
+install -m 0644 -vp osbuild-composer-packageinfo.json           %{buildroot}%{_datadir}/osbuild-composer/packageinfo.json
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/osbuild-composer/repositories
 install -m 0644 -vp repositories/*                              %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/osbuild-worker
+install -m 0644 -vp osbuild-worker-packageinfo.json             %{buildroot}%{_datadir}/osbuild-worker/packageinfo.json
 
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/osbuild-composer.service       %{buildroot}%{_unitdir}/
@@ -271,6 +294,7 @@ The worker for osbuild-composer
 
 %files worker
 %{_libexecdir}/osbuild-composer/osbuild-worker
+%{_datadir}/osbuild-worker/
 %{_unitdir}/osbuild-worker@.service
 %{_unitdir}/osbuild-remote-worker@.service
 
