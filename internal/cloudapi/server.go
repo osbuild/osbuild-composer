@@ -17,6 +17,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+const (
+	StatusPending = "pending"
+	StatusRunning = "running"
+	StatusSuccess = "success"
+	StatusFailure = "failure"
+)
+
 // Server represents the state of the cloud Server
 type Server struct {
 	workers     *worker.Server
@@ -212,10 +219,10 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	}
 
 	response := ComposeStatus{
-		Status: status.State.ToString(), // TODO: map the status correctly
+		Status: composeStatusFromJobStatus(status),
 		ImageStatuses: &[]ImageStatus{
 			{
-				Status: status.State.ToString(), // TODO: map the status correctly
+				Status: composeStatusFromJobStatus(status),
 			},
 		},
 	}
@@ -224,4 +231,24 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	if err != nil {
 		panic("Failed to write response")
 	}
+}
+
+func composeStatusFromJobStatus(js *worker.JobStatus) string {
+	if js.Canceled {
+		return StatusFailure
+	}
+
+	if js.Started.IsZero() {
+		return StatusPending
+	}
+
+	if js.Finished.IsZero() {
+		return StatusRunning
+	}
+
+	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+		return StatusSuccess
+	}
+
+	return StatusFailure
 }
