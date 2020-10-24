@@ -44,7 +44,6 @@ type Server struct {
 }
 
 type JobStatus struct {
-	State    common.ComposeState
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
@@ -105,21 +104,8 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	state := common.CWaiting
-	if canceled {
-		state = common.CFailed
-	} else if !finished.IsZero() {
-		if result.OSBuildOutput != nil && result.OSBuildOutput.Success {
-			state = common.CFinished
-		} else {
-			state = common.CFailed
-		}
-	} else if !started.IsZero() {
-		state = common.CRunning
-	}
 
 	return &JobStatus{
-		State:    state,
 		Queued:   queued,
 		Started:  started,
 		Finished: finished,

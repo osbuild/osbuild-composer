@@ -169,6 +169,26 @@ type composeStatus struct {
 	Result   *osbuild.Result
 }
 
+func composeStateFromJobStatus(js *worker.JobStatus) common.ComposeState {
+	if js.Canceled {
+		return common.CFailed
+	}
+
+	if js.Started.IsZero() {
+		return common.CWaiting
+	}
+
+	if js.Finished.IsZero() {
+		return common.CRunning
+	}
+
+	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+		return common.CFinished
+	}
+
+	return common.CFailed
+}
+
 // Returns the state of the image in `compose` and the times the job was
 // queued, started, and finished. Assumes that there's only one image in the
 // compose.
@@ -202,7 +222,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 	// is it ok to ignore this error?
 	jobStatus, _ := api.workers.JobStatus(jobId)
 	return &composeStatus{
-		State:    jobStatus.State,
+		State:    composeStateFromJobStatus(jobStatus),
 		Queued:   jobStatus.Queued,
 		Started:  jobStatus.Started,
 		Finished: jobStatus.Finished,
