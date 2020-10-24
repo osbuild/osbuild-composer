@@ -69,31 +69,3 @@ func (ibs *ImageBuildState) UnmarshalJSON(data []byte) error {
 func (ibs ImageBuildState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(getStateMapping()[ibs])
 }
-
-type ComposeState int
-
-const (
-	CWaiting ComposeState = iota
-	CRunning
-	CFinished
-	CFailed
-)
-
-// ToString converts ImageBuildState into a human readable string
-func (cs ComposeState) ToString() string {
-	return getStateMapping()[int(cs)]
-}
-
-// UnmarshalJSON converts a JSON string into an ImageBuildState
-func (ibs *ComposeState) UnmarshalJSON(data []byte) error {
-	val, err := unmarshalStateHelper(data, getStateMapping())
-	if err != nil {
-		return err
-	}
-	*ibs = ComposeState(val)
-	return nil
-}
-
-func (ibs ComposeState) MarshalJSON() ([]byte, error) {
-	return json.Marshal(getStateMapping()[ibs])
-}
