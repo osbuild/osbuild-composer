@@ -101,13 +101,13 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 		}
 
 		switch state {
-		case CWaiting:
+		case ComposeWaiting:
 			upload.Status = common.IBWaiting
-		case CRunning:
+		case ComposeRunning:
 			upload.Status = common.IBRunning
-		case CFinished:
+		case ComposeFinished:
 			upload.Status = common.IBFinished
-		case CFailed:
+		case ComposeFailed:
 			upload.Status = common.IBFailed
 		}
 

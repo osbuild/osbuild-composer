@@ -35,23 +35,23 @@ func composeToComposeEntry(id uuid.UUID, compose store.Compose, status *composeS
 	}
 
 	switch status.State {
-	case CWaiting:
+	case ComposeWaiting:
 		composeEntry.QueueStatus = common.IBWaiting
 		composeEntry.JobCreated = float64(status.Queued.UnixNano()) / 1000000000
 
-	case CRunning:
+	case ComposeRunning:
 		composeEntry.QueueStatus = common.IBRunning
 		composeEntry.JobCreated = float64(status.Queued.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(status.Started.UnixNano()) / 1000000000
 
-	case CFinished:
+	case ComposeFinished:
 		composeEntry.QueueStatus = common.IBFinished
 		composeEntry.ImageSize = compose.ImageBuild.Size
 		composeEntry.JobCreated = float64(status.Queued.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(status.Started.UnixNano()) / 1000000000
 		composeEntry.JobFinished = float64(status.Finished.UnixNano()) / 1000000000
 
-	case CFailed:
+	case ComposeFailed:
 		composeEntry.QueueStatus = common.IBFailed
 		composeEntry.JobCreated = float64(status.Queued.UnixNano()) / 1000000000
 		composeEntry.JobStarted = float64(status.Started.UnixNano()) / 1000000000
