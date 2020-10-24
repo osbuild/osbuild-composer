@@ -199,14 +199,13 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 
 // ComposeStatus handles a /compose/{id} GET request
 func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id string) {
-	composeId, err := uuid.Parse(id)
-
+	jobId, err := uuid.Parse(id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	status, err := server.workers.JobStatus(composeId)
+	status, err := server.workers.JobStatus(jobId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
 		return
