@@ -143,8 +143,8 @@ do
 
   COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.status')
 
-  if [[ "$COMPOSE_STATUS" != "WAITING" && "$COMPOSE_STATUS" != "RUNNING" ]]; then
-    test "$COMPOSE_STATUS" = "FINISHED"
+  if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
+    test "$COMPOSE_STATUS" = "success"
     break
   fi
 
