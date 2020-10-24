@@ -49,6 +49,31 @@ type API struct {
 	compatOutputDir string
 }
 
+type ComposeState int
+
+const (
+	CWaiting ComposeState = iota
+	CRunning
+	CFinished
+	CFailed
+)
+
+// ToString converts ImageBuildState into a human readable string
+func (cs ComposeState) ToString() string {
+	switch cs {
+	case CWaiting:
+		return "WAITING"
+	case CRunning:
+		return "RUNNING"
+	case CFinished:
+		return "FINISHED"
+	case CFailed:
+		return "FAILED"
+	default:
+		panic("invalid ComposeState value")
+	}
+}
+
 // systemRepoIDs returns a list of the system repos
 // NOTE: The system repos have no concept of id vs. name so the id is returned
 func (api *API) systemRepoNames() (names []string) {
@@ -162,31 +187,31 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 }
 
 type composeStatus struct {
-	State    common.ComposeState
+	State    ComposeState
 	Queued   time.Time
 	Started  time.Time
 	Finished time.Time
 	Result   *osbuild.Result
 }
 
-func composeStateFromJobStatus(js *worker.JobStatus) common.ComposeState {
+func composeStateFromJobStatus(js *worker.JobStatus) ComposeState {
 	if js.Canceled {
-		return common.CFailed
+		return CFailed
 	}
 
 	if js.Started.IsZero() {
-		return common.CWaiting
+		return CWaiting
 	}
 
 	if js.Finished.IsZero() {
-		return common.CRunning
+		return CRunning
 	}
 
 	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
-		return common.CFinished
+		return CFinished
 	}
 
-	return common.CFailed
+	return CFailed
 }
 
 // Returns the state of the image in `compose` and the times the job was
@@ -199,16 +224,16 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 	// the job queue from the store still contain their valid status and
 	// times. Return those here as a fallback.
 	if jobId == uuid.Nil {
-		var state common.ComposeState
+		var state ComposeState
 		switch compose.ImageBuild.QueueStatus {
 		case common.IBWaiting:
-			state = common.CWaiting
+			state = CWaiting
 		case common.IBRunning:
-			state = common.CRunning
+			state = CRunning
 		case common.IBFinished:
-			state = common.CFinished
+			state = CFinished
 		case common.IBFailed:
-			state = common.CFailed
+			state = CFailed
 		}
 		return &composeStatus{
 			State:    state,
@@ -1910,7 +1935,7 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 		}
 
 		composeStatus := api.getComposeStatus(compose)
-		if composeStatus.State != common.CFinished && composeStatus.State != common.CFailed {
+		if composeStatus.State != CFinished && composeStatus.State != CFailed {
 			errors = append(errors, composeDeleteError{
 				"BuildInWrongState",
 				fmt.Sprintf("Compose %s is not in FINISHED or FAILED.", id),
@@ -1975,7 +2000,7 @@ func (api *API) composeCancelHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State == common.CWaiting {
+	if composeStatus.State == CWaiting {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
@@ -2035,9 +2060,9 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 	for id, compose := range composes {
 		composeStatus := api.getComposeStatus(compose)
 		switch composeStatus.State {
-		case common.CWaiting:
+		case CWaiting:
 			reply.New = append(reply.New, composeToComposeEntry(id, compose, composeStatus, includeUploads))
-		case common.CRunning:
+		case CRunning:
 			reply.Run = append(reply.Run, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 		}
 	}
@@ -2219,7 +2244,7 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State != common.CFinished {
+	if composeStatus.State != CFinished {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, composeStatus.State.ToString()),
@@ -2277,7 +2302,7 @@ func (api *API) composeMetadataHandler(writer http.ResponseWriter, request *http
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State != common.CFinished && composeStatus.State != common.CFailed {
+	if composeStatus.State != CFinished && composeStatus.State != CFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, composeStatus.State.ToString()),
@@ -2338,7 +2363,7 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State != common.CFinished && composeStatus.State != common.CFailed {
+	if composeStatus.State != CFinished && composeStatus.State != CFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s is in wrong state: %s", uuidString, composeStatus.State.ToString()),
@@ -2429,7 +2454,7 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State != common.CFinished && composeStatus.State != common.CFailed {
+	if composeStatus.State != CFinished && composeStatus.State != CFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s not in FINISHED or FAILED state.", uuidString),
@@ -2493,7 +2518,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State == common.CWaiting {
+	if composeStatus.State == CWaiting {
 		errors := responseError{
 			ID:  "BuildInWrongState",
 			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
@@ -2502,7 +2527,7 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	if composeStatus.State == common.CRunning {
+	if composeStatus.State == CRunning {
 		fmt.Fprintf(writer, "Build %s is still running.\n", uuidString)
 		return
 	}
@@ -2523,7 +2548,7 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 	includeUploads := isRequestVersionAtLeast(params, 1)
 	for id, compose := range api.store.GetAllComposes() {
 		composeStatus := api.getComposeStatus(compose)
-		if composeStatus.State != common.CFinished {
+		if composeStatus.State != CFinished {
 			continue
 		}
 		reply.Finished = append(reply.Finished, composeToComposeEntry(id, compose, composeStatus, includeUploads))
@@ -2546,7 +2571,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 	includeUploads := isRequestVersionAtLeast(params, 1)
 	for id, compose := range api.store.GetAllComposes() {
 		composeStatus := api.getComposeStatus(compose)
-		if composeStatus.State != common.CFailed {
+		if composeStatus.State != CFailed {
 			continue
 		}
 		reply.Failed = append(reply.Failed, composeToComposeEntry(id, compose, composeStatus, includeUploads))

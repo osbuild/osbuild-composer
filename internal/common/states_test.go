@@ -2,28 +2,26 @@ package common
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJSONConversions(t *testing.T) {
 	type TestJson struct {
 		Ibs ImageBuildState `json:"ibs"`
-		Cs  ComposeState    `json:"cs"`
 	}
 	typedCases := []TestJson{
 		{
 			Ibs: IBWaiting,
-			Cs:  CWaiting,
 		},
 		{
 			Ibs: IBRunning,
-			Cs:  CFailed,
 		},
 	}
 	strCases := []string{
-		`{"ibs": "WAITING", "cs": "WAITING"}`,
-		`{"ibs": "RUNNING", "cs": "FAILED"}`,
+		`{"ibs": "WAITING"}`,
+		`{"ibs": "RUNNING"}`,
 	}
 
 	for n, c := range strCases {

@@ -91,7 +91,7 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 //
 // This also ignores any sensitive data passed into targets. Access keys may
 // be passed as input to composer, but should not be possible to be queried.
-func targetsToUploadResponses(targets []*target.Target, state common.ComposeState) []uploadResponse {
+func targetsToUploadResponses(targets []*target.Target, state ComposeState) []uploadResponse {
 	var uploads []uploadResponse
 	for _, t := range targets {
 		upload := uploadResponse{
@@ -101,13 +101,13 @@ func targetsToUploadResponses(targets []*target.Target, state common.ComposeStat
 		}
 
 		switch state {
-		case common.CWaiting:
+		case CWaiting:
 			upload.Status = common.IBWaiting
-		case common.CRunning:
+		case CRunning:
 			upload.Status = common.IBRunning
-		case common.CFinished:
+		case CFinished:
 			upload.Status = common.IBFinished
-		case common.CFailed:
+		case CFailed:
 			upload.Status = common.IBFailed
 		}
 
