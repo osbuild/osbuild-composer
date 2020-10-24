@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -223,34 +222,44 @@ func splitExtension(filename string) string {
 	return "." + strings.Join(filenameParts[1:], ".")
 }
 
-func composeStateToStatus(state common.ComposeState) string {
-	switch state {
-	case common.CFailed:
+func composeStatusFromJobStatus(js *worker.JobStatus) string {
+	if js.Canceled {
 		return "failure"
-	case common.CFinished:
-		return "success"
-	case common.CRunning:
-		return "pending"
-	case common.CWaiting:
-		return "pending"
-	default:
-		panic("invalid compose state")
 	}
+
+	if js.Started.IsZero() {
+		return "pending"
+	}
+
+	if js.Finished.IsZero() {
+		return "pending"
+	}
+
+	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+		return "success"
+	}
+
+	return "failure"
 }
 
-func composeStateToImageStatus(state common.ComposeState) string {
-	switch state {
-	case common.CFailed:
+func imageStatusFromJobStatus(js *worker.JobStatus) string {
+	if js.Canceled {
 		return "failure"
-	case common.CFinished:
-		return "success"
-	case common.CRunning:
-		return "building"
-	case common.CWaiting:
-		return "pending"
-	default:
-		panic("invalid compose state")
 	}
+
+	if js.Started.IsZero() {
+		return "pending"
+	}
+
+	if js.Finished.IsZero() {
+		return "building"
+	}
+
+	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+		return "success"
+	}
+
+	return "failure"
 }
 
 // GetComposeId handles a /compose/{id} GET request
@@ -266,10 +275,10 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 	}
 
 	response := api.ComposeStatus{
-		Status: composeStateToStatus(status.State),
+		Status: composeStatusFromJobStatus(status),
 		ImageStatuses: []api.ImageStatus{
 			{
-				Status: composeStateToImageStatus(status.State),
+				Status: imageStatusFromJobStatus(status),
 			},
 		},
 	}
