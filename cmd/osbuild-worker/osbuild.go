@@ -43,8 +43,11 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 	if err != nil {
 		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
 	}
-	// FIXME: handle or comment this possible error
-	_ = stdin.Close()
+
+	err = stdin.Close()
+	if err != nil {
+		return nil, fmt.Errorf("error closing osbuild's stdin: %v", err)
+	}
 
 	var result osbuild.Result
 	err = json.NewDecoder(stdout).Decode(&result)
