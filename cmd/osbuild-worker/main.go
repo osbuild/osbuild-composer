@@ -133,6 +133,11 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 
 	end_time := time.Now()
 
+	// Don't run uploaders if osbuild failed
+	if !result.Success {
+		return result, nil
+	}
+
 	var r []error
 
 	for _, t := range targets {
@@ -478,17 +483,12 @@ func main() {
 
 		var status common.ImageBuildState
 		result, err := RunJob(job, store, kojiServers)
-		if err != nil {
+		if err != nil || result.Success == false {
 			log.Printf("  Job failed: %v", err)
 			status = common.IBFailed
 
 			// Fail the jobs in any targets that expects it
 			FailJob(job, kojiServers)
-
-			// If the error comes from osbuild, retrieve the result
-			if osbuildError, ok := err.(*OSBuildError); ok {
-				result = osbuildError.Result
-			}
 
 			// Ensure we always have a non-nil result, composer doesn't like nils.
 			// This can happen in cases when OSBuild crashes and doesn't produce
