@@ -10,15 +10,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
-type OSBuildError struct {
-	Message string
-	Result  *osbuild.Result
-}
-
-func (e *OSBuildError) Error() string {
-	return e.Message
-}
-
+// Run an instance of osbuild, returning a parsed osbuild.Result.
+//
+// Note that osbuild returns non-zero when the pipeline fails. This function
+// does not return an error in this case. Instead, the failure is communicated
+// with its corresponding logs through osbuild.Result.
 func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*osbuild.Result, error) {
 	cmd := exec.Command(
 		"osbuild",
@@ -58,9 +54,9 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 
 	err = cmd.Wait()
 	if err != nil {
-		return nil, &OSBuildError{
-			Message: fmt.Sprintf("running osbuild failed: %v", err),
-			Result:  &result,
+		// ignore ExitError if output could be decoded correctly
+		if _, isExitError := err.(*exec.ExitError); !isExitError {
+			return nil, fmt.Errorf("running osbuild failed: %v", err)
 		}
 	}
 
