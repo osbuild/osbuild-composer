@@ -56,8 +56,8 @@ BuildRequires:  golang(github.com/vmware/govmomi)
 
 Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
-Requires: osbuild >= 18
-Requires: osbuild-ostree >= 18
+Requires: osbuild >= 23
+Requires: osbuild-ostree >= 23
 Requires: qemu-img
 
 Provides: weldr

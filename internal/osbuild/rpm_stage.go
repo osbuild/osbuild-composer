@@ -42,6 +42,8 @@ type RPMPackageMetadata struct {
 	Epoch   *string `json:"epoch"`
 	Arch    string  `json:"arch"`
 	SigMD5  string  `json:"sigmd5"`
+	SigPGP  string  `json:"sigpgp"`
+	SigGPG  string  `json:"siggpg"`
 }
 
 func (RPMStageMetadata) isStageMetadata() {}
