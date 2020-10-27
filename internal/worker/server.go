@@ -97,7 +97,6 @@ func (s *Server) Enqueue(arch string, manifest distro.Manifest, targets []*targe
 }
 
 func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
-	var canceled bool
 	var result OSBuildJobResult
 
 	queued, started, finished, canceled, err := s.jobs.JobStatus(id, &result)
