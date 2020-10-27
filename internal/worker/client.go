@@ -28,7 +28,7 @@ type Client struct {
 type Job interface {
 	Id() uuid.UUID
 	OSBuildArgs() (distro.Manifest, []*target.Target, error)
-	Update(status common.ImageBuildState, result *osbuild.Result) error
+	Update(result *osbuild.Result) error
 	Canceled() (bool, error)
 	UploadArtifact(name string, reader io.Reader) error
 }
@@ -154,11 +154,11 @@ func (j *job) OSBuildArgs() (distro.Manifest, []*target.Target, error) {
 	return args.Manifest, args.Targets, nil
 }
 
-func (j *job) Update(status common.ImageBuildState, result *osbuild.Result) error {
+func (j *job) Update(result *osbuild.Result) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(api.UpdateJobJSONRequestBody{
 		Result: result,
-		Status: status.ToString(),
+		Status: "FINISHED",
 	})
 	if err != nil {
 		panic(err)
