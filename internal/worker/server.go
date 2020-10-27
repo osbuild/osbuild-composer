@@ -18,7 +18,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -309,13 +308,6 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	err = ctx.Bind(&body)
 	if err != nil {
 		return err
-	}
-
-	// The jobqueue doesn't support setting the status before a job is
-	// finished. This branch should never be hit, because the worker
-	// doesn't attempt this. Change the API to remove this awkwardness.
-	if body.Status != common.IBFinished && body.Status != common.IBFailed {
-		return echo.NewHTTPError(http.StatusBadRequest, "setting status of a job to waiting or running is not supported")
 	}
 
 	err = h.server.FinishJob(token, &OSBuildJobResult{OSBuildOutput: body.Result})

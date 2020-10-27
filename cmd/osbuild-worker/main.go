@@ -476,11 +476,9 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
 
-		var status common.ImageBuildState
 		result, err := RunJob(job, store, kojiServers)
 		if err != nil || result.Success == false {
 			log.Printf("  Job failed: %v", err)
-			status = common.IBFailed
 
 			// Fail the jobs in any targets that expects it
 			FailJob(job, kojiServers)
@@ -502,13 +500,12 @@ func main() {
 			result.Success = false
 		} else {
 			log.Printf("  🎉 Job completed successfully: %v", job.Id())
-			status = common.IBFinished
 		}
 
 		// signal to WatchJob() that it can stop watching
 		cancel()
 
-		err = job.Update(status, result)
+		err = job.Update(result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
 		}
