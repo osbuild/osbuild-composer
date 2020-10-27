@@ -119,14 +119,14 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		}
 	}()
 
-	manifest, targets, err := job.OSBuildArgs()
+	args, err := job.OSBuildArgs()
 	if err != nil {
 		return nil, err
 	}
 
 	start_time := time.Now()
 
-	result, err := RunOSBuild(manifest, store, outputDirectory, os.Stderr)
+	result, err := RunOSBuild(args.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -138,9 +138,29 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		return result, nil
 	}
 
+	if args.ImageName != "" {
+		var f *os.File
+		imagePath := path.Join(outputDirectory, args.ImageName)
+		if args.StreamOptimized {
+			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			f, err = os.Open(imagePath)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err = job.UploadArtifact(args.ImageName, f)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var r []error
 
-	for _, t := range targets {
+	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
 			var f *os.File
@@ -322,12 +342,12 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 }
 
 func FailJob(job worker.Job, kojiServers map[string]koji.GSSAPICredentials) {
-	_, targets, err := job.OSBuildArgs()
+	args, err := job.OSBuildArgs()
 	if err != nil {
 		panic(err)
 	}
 
-	for _, t := range targets {
+	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
 		case *target.KojiTargetOptions:
 			// Koji for some reason needs TLS renegotiation enabled.
