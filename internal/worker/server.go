@@ -18,9 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -86,12 +84,7 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.server.Handler.ServeHTTP(writer, request)
 }
 
-func (s *Server) Enqueue(arch string, manifest distro.Manifest, targets []*target.Target) (uuid.UUID, error) {
-	job := OSBuildJob{
-		Manifest: manifest,
-		Targets:  targets,
-	}
-
+func (s *Server) Enqueue(arch string, job *OSBuildJob) (uuid.UUID, error) {
 	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
 }
 

@@ -188,7 +188,10 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := server.workers.Enqueue(ir.arch, ir.manifest, targets)
+	id, err := server.workers.Enqueue(ir.arch, &worker.OSBuildJob{
+		Manifest: ir.manifest,
+		Targets:  targets,
+	})
 	if err != nil {
 		http.Error(w, "Failed to enqueue manifest", http.StatusInternalServerError)
 		return

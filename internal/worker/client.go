@@ -14,9 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -27,7 +25,7 @@ type Client struct {
 
 type Job interface {
 	Id() uuid.UUID
-	OSBuildArgs() (distro.Manifest, []*target.Target, error)
+	OSBuildArgs() (*OSBuildJob, error)
 	Update(result *osbuild.Result) error
 	Canceled() (bool, error)
 	UploadArtifact(name string, reader io.Reader) error
@@ -140,18 +138,18 @@ func (j *job) Id() uuid.UUID {
 	return j.id
 }
 
-func (j *job) OSBuildArgs() (distro.Manifest, []*target.Target, error) {
+func (j *job) OSBuildArgs() (*OSBuildJob, error) {
 	if j.jobType != "osbuild" {
-		return nil, nil, errors.New("not an osbuild job")
+		return nil, errors.New("not an osbuild job")
 	}
 
 	var args OSBuildJob
 	err := json.Unmarshal(j.args, &args)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing osbuild job arguments: %v", err)
+		return nil, fmt.Errorf("error parsing osbuild job arguments: %v", err)
 	}
 
-	return args.Manifest, args.Targets, nil
+	return &args, nil
 }
 
 func (j *job) Update(result *osbuild.Result) error {

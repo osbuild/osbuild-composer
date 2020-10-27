@@ -178,20 +178,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", err))
 	}
 
-	id, err := h.server.workers.Enqueue(ir.arch, ir.manifest, []*target.Target{
-		target.NewKojiTarget(&target.KojiTargetOptions{
-			BuildID:         uint64(buildInfo.BuildID),
-			TaskID:          uint64(request.Koji.TaskId),
-			Token:           buildInfo.Token,
-			Name:            request.Name,
-			Version:         request.Version,
-			Release:         request.Release,
-			Filename:        ir.filename,
-			UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
-			Server:          request.Koji.Server,
-			KojiFilename:    ir.kojiFilename,
-		}),
-	})
+	job := worker.OSBuildJob{
+		Manifest: ir.manifest,
+		Targets: []*target.Target{
+			target.NewKojiTarget(&target.KojiTargetOptions{
+				BuildID:         uint64(buildInfo.BuildID),
+				TaskID:          uint64(request.Koji.TaskId),
+				Token:           buildInfo.Token,
+				Name:            request.Name,
+				Version:         request.Version,
+				Release:         request.Release,
+				Filename:        ir.filename,
+				UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
+				Server:          request.Koji.Server,
+				KojiFilename:    ir.kojiFilename,
+			}),
+		},
+	}
+
+	id, err := h.server.workers.Enqueue(ir.arch, &job)
 	if err != nil {
 		// This is a programming errror.
 		panic(err)
