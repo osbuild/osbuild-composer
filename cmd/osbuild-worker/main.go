@@ -314,11 +314,6 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		}
 	}
 
-	err = os.RemoveAll(outputDirectory)
-	if err != nil {
-		log.Printf("Error removing osbuild output directory (%s): %v", outputDirectory, err)
-	}
-
 	if len(r) > 0 {
 		return result, &TargetsError{r}
 	}
