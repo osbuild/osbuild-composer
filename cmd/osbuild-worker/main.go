@@ -271,7 +271,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					},
 					ContentGenerator: koji.ContentGenerator{
 						Name:    "osbuild",
-						Version: "1",
+						Version: "0", // TODO: put the correct version here
 					},
 					Container: koji.Container{
 						Type: "none",
