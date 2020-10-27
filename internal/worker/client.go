@@ -121,9 +121,13 @@ func (c *Client) RequestJob() (Job, error) {
 		return nil, fmt.Errorf("error parsing location url in response: %v", err)
 	}
 
-	artifactLocation, err := c.server.Parse(jr.ArtifactLocation)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
+	var artifactLocation string
+	if jr.ArtifactLocation != "" {
+		l, err := c.server.Parse(jr.ArtifactLocation)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
+		}
+		artifactLocation = l.String()
 	}
 
 	return &job{
@@ -132,7 +136,7 @@ func (c *Client) RequestJob() (Job, error) {
 		jobType:          jr.Type,
 		args:             jr.Args,
 		location:         location.String(),
-		artifactLocation: artifactLocation.String(),
+		artifactLocation: artifactLocation,
 	}, nil
 }
 

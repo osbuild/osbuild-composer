@@ -34,7 +34,7 @@ type statusResponse struct {
 type requestJobResponse struct {
 	Id               uuid.UUID       `json:"id"`
 	Location         string          `json:"location"`
-	ArtifactLocation string          `json:"artifact_location"`
+	ArtifactLocation string          `json:"artifact_location,omitempty"`
 	Type             string          `json:"type"`
 	Args             json.RawMessage `json:"args,omitempty"`
 }

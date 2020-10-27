@@ -58,11 +58,6 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, err
 	}
 
-	artifactsDir, err := c.ensureStateDirectory("artifacts", 0755)
-	if err != nil {
-		return nil, err
-	}
-
 	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New())
 	if err != nil {
 		return nil, fmt.Errorf("Error loading distros: %v", err)
@@ -89,12 +84,21 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, fmt.Errorf("cannot create jobqueue: %v", err)
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir)
+	c.workers = worker.NewServer(c.logger, jobs)
 
 	return &c, nil
 }
 
 func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListener net.Listener) error {
+	// The weldr API allows downloading artifacts from the machine running
+	// osbuild-composer. Ensure an artifact directory exists and make the
+	// worker server request artifacts.
+	artifactsDir, err := c.ensureStateDirectory("artifacts", 0755)
+	if err != nil {
+		return err
+	}
+	c.workers.EnableArtifacts(artifactsDir)
+
 	archName := common.CurrentArch()
 
 	hostDistro, beta, err := c.distros.FromHost()

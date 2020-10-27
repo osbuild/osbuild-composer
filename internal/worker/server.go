@@ -52,11 +52,10 @@ type JobStatus struct {
 
 var ErrTokenNotExist = errors.New("worker token does not exist")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue) *Server {
 	s := &Server{
-		jobs:         jobs,
-		artifactsDir: artifactsDir,
-		running:      make(map[uuid.UUID]uuid.UUID),
+		jobs:    jobs,
+		running: make(map[uuid.UUID]uuid.UUID),
 	}
 
 	e := echo.New()
@@ -71,6 +70,12 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 	}
 
 	return s
+}
+
+// Enable requesting artifacts from workers and save them to `dir` for all jobs
+// started after this call. Must only be called before starting to Serve().
+func (s *Server) EnableArtifacts(dir string) {
+	s.artifactsDir = dir
 }
 
 func (s *Server) Serve(listener net.Listener) error {
@@ -119,6 +124,10 @@ func (s *Server) Cancel(id uuid.UUID) error {
 // Provides access to artifacts of a job. Returns an io.Reader for the artifact
 // and the artifact's size.
 func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error) {
+	if s.artifactsDir == "" {
+		return nil, 0, errors.New("Artifacts not enabled")
+	}
+
 	status, err := s.JobStatus(id)
 	if err != nil {
 		return nil, 0, err
@@ -144,6 +153,10 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 
 // Deletes all artifacts for job `id`.
 func (s *Server) DeleteArtifacts(id uuid.UUID) error {
+	if s.artifactsDir == "" {
+		return errors.New("Artifacts not enabled")
+	}
+
 	status, err := s.JobStatus(id)
 	if err != nil {
 		return err
@@ -259,10 +272,15 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
+	var artifactLocation string
+	if h.server.artifactsDir != "" {
+		artifactLocation = fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token)
+	}
+
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
 		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
+		ArtifactLocation: artifactLocation,
 		Type:             "osbuild",
 		Args:             serializedArgs,
 	})

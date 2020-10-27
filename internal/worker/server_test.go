@@ -17,7 +17,7 @@ import (
 
 // Ensure that the status request returns OK.
 func TestStatus(t *testing.T) {
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := worker.NewServer(nil, testjobqueue.New())
 	test.TestRoute(t, server, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
 
@@ -43,7 +43,7 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		server := worker.NewServer(nil, testjobqueue.New(), "")
+		server := worker.NewServer(nil, testjobqueue.New())
 		test.TestRoute(t, server, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
@@ -62,7 +62,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := worker.NewServer(nil, testjobqueue.New())
 
 	_, err = server.Enqueue(arch.Name(), manifest, nil)
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := worker.NewServer(nil, testjobqueue.New())
 
 	jobId, err := server.Enqueue(arch.Name(), manifest, nil)
 	require.NoError(t, err)

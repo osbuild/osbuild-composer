@@ -24,7 +24,7 @@ func newTestKojiServer(t *testing.T) *kojiapi.Server {
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	workers := worker.NewServer(nil, testjobqueue.New(), "")
+	workers := worker.NewServer(nil, testjobqueue.New())
 	require.NotNil(t, workers)
 
 	server := kojiapi.NewServer(nil, workers, rpm, distros, map[string]koji.GSSAPICredentials{})
