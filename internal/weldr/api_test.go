@@ -474,15 +474,6 @@ func TestCompose(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Manifest:    manifest,
-			Targets: []*target.Target{
-				{
-					// skip Uuid and Created fields - they are ignored
-					Name: "org.osbuild.local",
-					Options: &target.LocalTargetOptions{
-						Filename: "test.img",
-					},
-				},
-			},
 		},
 	}
 	expectedComposeLocalAndAws := &store.Compose{
@@ -510,13 +501,6 @@ func TestCompose(t *testing.T) {
 						SecretAccessKey: "secretkey",
 						Bucket:          "clay",
 						Key:             "imagekey",
-					},
-				},
-				{
-					// skip Uuid and Created fields - they are ignored
-					Name: "org.osbuild.local",
-					Options: &target.LocalTargetOptions{
-						Filename: "test.img",
 					},
 				},
 			},

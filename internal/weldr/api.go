@@ -1799,15 +1799,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		targets = append(targets, t)
 	}
 
-	targets = append(targets, target.NewLocalTarget(
-		&target.LocalTargetOptions{
-			ComposeId:       composeID,
-			ImageBuildId:    0,
-			Filename:        imageType.Filename(),
-			StreamOptimized: imageType.Name() == "vmdk", // TODO: move conversion to osbuild
-		},
-	))
-
 	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
 	if bp == nil {
 		errors := responseError{
@@ -1870,7 +1861,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	} else {
 		var jobId uuid.UUID
 
-		jobId, err = api.workers.Enqueue(api.arch.Name(), manifest, targets)
+		jobId, err = api.workers.Enqueue(api.arch.Name(), &worker.OSBuildJob{
+			Manifest:        manifest,
+			Targets:         targets,
+			ImageName:       imageType.Filename(),
+			StreamOptimized: imageType.Name() == "vmdk", // https://github.com/osbuild/osbuild/issues/528
+		})
 		if err == nil {
 			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId)
 		}
