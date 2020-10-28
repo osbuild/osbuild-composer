@@ -15,6 +15,15 @@ function greenprint {
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
+greenprint "Defining distro selector"
+# if the distro is RHEL 8.4 the distro includes the minor release number
+if [[ "${ID}-${VERSION_ID}" == "rhel-8.4" ]]; then
+    DISTRO_SELECTOR="${ID}-${VERSION_ID//.}"
+# otherwise the minor release number can be dropped
+else
+    DISTRO_SELECTOR="${ID}-${VERSION_ID%.*}"
+fi
+
 greenprint "Adding podman dnsname plugin"
 if [[ $ID == rhel ]]; then
   sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
@@ -57,7 +66,7 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo /usr/libexec/osbuild-composer-test/koji-compose.py "${ID}-${VERSION_ID%.*}" "${ARCH}"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_SELECTOR" "${ARCH}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1

@@ -80,6 +80,21 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8.4') {
+                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        RHEL84_NIGHTLY_REPO = credentials('rhel84-nightly-repo')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
+
             }
         }
 
@@ -273,6 +288,71 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-ostree')
+                        }
+                    }
+                }
+                stage('EL8.4 Base') {
+                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "base"
+                    }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-base')
+                        }
+                    }
+                }
+                stage('EL8.4 Image') {
+                    agent { label "rhel84cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "rhel84"
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
+                stage('EL8.4 Integration') {
+                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-integration')
+                        }
+                    }
+                }
+                stage('EL8.4 OSTree') {
+                    agent { label "rhel84cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-ostree')
                         }
                     }
                 }

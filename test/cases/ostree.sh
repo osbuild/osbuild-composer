@@ -29,6 +29,11 @@ case "${ID}-${VERSION_ID}" in
         # When 8.3 was released, it wasn't available on all RH internal
         # mirrors, therefore the Boston mirror is hardcoded.
         BOOT_LOCATION="http://download.eng.bos.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
+    "rhel-8.4")
+        IMAGE_TYPE=rhel-edge-commit
+        OSTREE_REF="rhel/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
+        BOOT_LOCATION="http://download.devel.redhat.com/nightly/rhel-8/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/";;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;

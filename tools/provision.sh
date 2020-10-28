@@ -1,16 +1,26 @@
 #!/bin/bash
 set -euxo pipefail
 
+source /etc/os-release
+
 sudo mkdir -p /etc/osbuild-composer
 sudo cp -a /usr/share/tests/osbuild-composer/composer/*.toml \
     /etc/osbuild-composer/
 
-
-# Copy Fedora rpmrepo snapshots for use in weldr tests. RHEL's are usually more
-# stable, and not available publically from rpmrepo.
+# Copy rpmrepo snapshots for use in weldr tests
 sudo mkdir -p /etc/osbuild-composer/repositories
+# Copy all fedora repo overrides
 sudo cp -a /usr/share/tests/osbuild-composer/repositories/fedora-*.json \
     /etc/osbuild-composer/repositories/
+# RHEL nightly repos need to be overriden in rhel-8.json and rhel-8-beta.json
+case "${ID}-${VERSION_ID}" in
+    "rhel-8.4")
+        # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.4 test needs nightly repos
+        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-84.json /etc/osbuild-composer/repositories/rhel-8.json
+        # If multiple tests are run and call provision.sh the symlink will need to be overriden with -f
+        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json /etc/osbuild-composer/repositories/rhel-8-beta.json;;
+    *) ;;
+esac
 
 # Generate all X.509 certificates for the tests
 # The whole generation is done in a $CADIR to better represent how osbuild-ca
