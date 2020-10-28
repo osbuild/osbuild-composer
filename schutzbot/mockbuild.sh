@@ -67,6 +67,21 @@ greenprint "🔧 Building source RPMs."
 make srpm
 make -C osbuild srpm
 
+# rhel 8.4 will run off of the nightly repos and does not have a redhat subscription
+if [[ $VERSION_ID == 8.4 ]]; then
+    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
+
+    # remove the subscription check
+    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
+
+    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
+    cat "$RHEL84_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+
+    # We need triple quotes at the end of the template to mark the end of
+    # the repo list.
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
+fi
+
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
 sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
