@@ -19,7 +19,13 @@ test_divider () {
 
 # Get a list of test cases.
 get_test_cases () {
-    TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}"
+    # if the distro is RHEL 8.4 the test case selector needs the minor release number
+    if [[ "${ID}-${VERSION_ID}" == "rhel-8.4" ]]; then
+        TEST_CASE_SELECTOR="${ID}_${VERSION_ID//.}-${ARCH}"
+    # otherwise the minor release number can be dropped
+    else
+        TEST_CASE_SELECTOR="${ID}_${VERSION_ID%.*}-${ARCH}"
+    fi
     pushd $IMAGE_TEST_CASES_PATH > /dev/null
         ls "$TEST_CASE_SELECTOR"*.json
     popd > /dev/null

@@ -68,6 +68,9 @@ ARCH=$(uname -m)
 SNAPSHOT_NAME=$(uuidgen)
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
+  "rhel-8.4")
+    DISTRO="rhel-84"
+  ;;
   "rhel-8.2" | "rhel-8.3")
     DISTRO="rhel-8"
   ;;

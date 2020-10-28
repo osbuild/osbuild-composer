@@ -277,6 +277,7 @@
     - name: run ubi8 image
       command: podman run ubi8-minimal:latest cat /etc/redhat-release
       register: podman_result
+      become: yes
 
     - name: run container test
       block:
