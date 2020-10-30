@@ -245,6 +245,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 			creds, exists := kojiServers[kojiServer.Hostname()]
 			if !exists {
 				r = append(r, fmt.Errorf("Koji server has not been configured: %s", kojiServer.Hostname()))
+				continue
 			}
 
 			k, err := koji.NewFromGSSAPI(options.Server, &creds, transport)
