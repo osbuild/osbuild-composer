@@ -133,12 +133,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 
 	end_time := time.Now()
 
-	// Don't run uploaders if osbuild failed
-	if !result.Success {
-		return result, nil
-	}
-
-	if args.ImageName != "" {
+	if result.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, args.ImageName)
 		if args.StreamOptimized {
@@ -163,6 +158,9 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
+			if !result.Success {
+				continue
+			}
 			var f *os.File
 			imagePath := path.Join(outputDirectory, options.Filename)
 			if options.StreamOptimized {
@@ -186,7 +184,9 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 			}
 
 		case *target.AWSTargetOptions:
-
+			if !result.Success {
+				continue
+			}
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
 				r = append(r, err)
@@ -211,7 +211,9 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				continue
 			}
 		case *target.AzureTargetOptions:
-
+			if !result.Success {
+				continue
+			}
 			credentials := azure.Credentials{
 				StorageAccount:   options.StorageAccount,
 				StorageAccessKey: options.StorageAccessKey,
@@ -260,6 +262,14 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					log.Printf("koji logout failed: %v", err)
 				}
 			}()
+
+			if result.Success == false {
+				err = k.CGFailBuild(int(options.BuildID), options.Token)
+				if err != nil {
+					log.Printf("CGFailBuild failed: %v", err)
+				}
+				continue
+			}
 
 			f, err := os.Open(path.Join(outputDirectory, options.Filename))
 			if err != nil {
@@ -340,51 +350,6 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 	}
 
 	return result, nil
-}
-
-func FailJob(job worker.Job, kojiServers map[string]koji.GSSAPICredentials) {
-	args, err := job.OSBuildArgs()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, t := range args.Targets {
-		switch options := t.Options.(type) {
-		case *target.KojiTargetOptions:
-			// Koji for some reason needs TLS renegotiation enabled.
-			// Clone the default http transport and enable renegotiation.
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.TLSClientConfig = &tls.Config{
-				Renegotiation: tls.RenegotiateOnceAsClient,
-			}
-
-			kojiServer, _ := url.Parse(options.Server)
-			creds, exists := kojiServers[kojiServer.Hostname()]
-			if !exists {
-				log.Printf("Koji server has not been configured: %s", kojiServer.Hostname())
-				return
-			}
-
-			k, err := koji.NewFromGSSAPI(options.Server, &creds, transport)
-			if err != nil {
-				log.Printf("koji login failed: %v", err)
-				return
-			}
-
-			defer func() {
-				err := k.Logout()
-				if err != nil {
-					log.Printf("koji logout failed: %v", err)
-				}
-			}()
-
-			err = k.CGFailBuild(int(options.BuildID), options.Token)
-			if err != nil {
-				log.Printf("CGFailBuild failed: %v", err)
-			}
-		default:
-		}
-	}
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
@@ -500,9 +465,6 @@ func main() {
 		result, err := RunJob(job, store, kojiServers)
 		if err != nil || result.Success == false {
 			log.Printf("  Job failed: %v", err)
-
-			// Fail the jobs in any targets that expects it
-			FailJob(job, kojiServers)
 
 			// Ensure we always have a non-nil result, composer doesn't like nils.
 			// This can happen in cases when OSBuild crashes and doesn't produce
