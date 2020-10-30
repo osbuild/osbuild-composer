@@ -1,0 +1,85 @@
+#
+# ca options
+#
+
+[ca]
+default_ca = osbuild_ca
+
+[osbuild_ca]
+database        = ./index.txt
+new_certs_dir   = ./certs
+rand_serial     = yes
+
+certificate     = ca.cert.pem
+private_key     = private/ca.key.pem
+
+default_days    = 3650
+default_md      = sha256
+
+x509_extensions = osbuild_ca_ext
+
+# See WARNINGS in `man openssl ca`. This is ok, becasue it only copies
+# extensions that are not already specified in `osbuild_ca_ext`.
+copy_extensions = copy
+
+preserve        = no
+policy          = osbuild_ca_policy
+
+# We want to issue multiple certificates with the same subject in the
+# testing environment.
+unique_subject  = no
+
+
+[osbuild_ca_ext]
+basicConstraints       = critical, CA:TRUE
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always, issuer:always
+keyUsage               = critical, digitalSignature, cRLSign, keyCertSign
+
+
+[osbuild_ca_policy]
+commonName   = supplied
+emailAddress = supplied
+
+
+#
+# Extensions for server certificates
+#
+
+[osbuild_server_ext]
+basicConstraints       = critical, CA:FALSE
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid, issuer:always
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+
+
+#
+# Extensions for client certificates
+#
+
+[osbuild_client_ext]
+basicConstraints       = CA:FALSE
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage               = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage       = clientAuth
+
+
+#
+# req options
+#
+
+[req]
+default_md         = sha256
+default_bits       = 2048
+distinguished_name = osbuild_distinguished_name
+
+
+#
+# Only prompt for CN
+#
+
+[osbuild_distinguished_name]
+CN = Common Name
+emailAddress = E-Mail Address
