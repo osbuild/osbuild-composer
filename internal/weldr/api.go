@@ -207,7 +207,7 @@ func composeStateFromJobStatus(js *worker.JobStatus) ComposeState {
 		return ComposeRunning
 	}
 
-	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+	if js.Result.Success {
 		return ComposeFinished
 	}
 

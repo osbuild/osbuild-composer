@@ -60,20 +60,6 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	}, nil
 }
 
-type TargetsError struct {
-	Errors []error
-}
-
-func (e *TargetsError) Error() string {
-	errString := fmt.Sprintf("%d target(s) errored:\n", len(e.Errors))
-
-	for _, err := range e.Errors {
-		errString += err.Error() + "\n"
-	}
-
-	return errString
-}
-
 func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
 	if pkg.SigGPG != "" {
 		return &pkg.SigGPG
@@ -107,7 +93,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 	return rpms
 }
 
-func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) (*osbuild.Result, error) {
+func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) (*worker.OSBuildJobResult, error) {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
@@ -126,14 +112,14 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 
 	start_time := time.Now()
 
-	result, err := RunOSBuild(args.Manifest, store, outputDirectory, os.Stderr)
+	osbuildOutput, err := RunOSBuild(args.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
 
 	end_time := time.Now()
 
-	if result.Success && args.ImageName != "" {
+	if osbuildOutput.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, args.ImageName)
 		if args.StreamOptimized {
@@ -158,7 +144,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
 		case *target.LocalTargetOptions:
-			if !result.Success {
+			if !osbuildOutput.Success {
 				continue
 			}
 			var f *os.File
@@ -184,7 +170,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 			}
 
 		case *target.AWSTargetOptions:
-			if !result.Success {
+			if !osbuildOutput.Success {
 				continue
 			}
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
@@ -211,7 +197,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				continue
 			}
 		case *target.AzureTargetOptions:
-			if !result.Success {
+			if !osbuildOutput.Success {
 				continue
 			}
 			credentials := azure.Credentials{
@@ -263,7 +249,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 				}
 			}()
 
-			if result.Success == false {
+			if osbuildOutput.Success == false {
 				err = k.CGFailBuild(int(options.BuildID), options.Token)
 				if err != nil {
 					log.Printf("CGFailBuild failed: %v", err)
@@ -314,7 +300,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 						Arch: common.CurrentArch(),
 					},
 					Tools: []koji.Tool{},
-					RPMs:  osbuildStagesToRPMs(result.Build.Stages),
+					RPMs:  osbuildStagesToRPMs(osbuildOutput.Build.Stages),
 				},
 			}
 			output := []koji.Image{
@@ -326,7 +312,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 					ChecksumType: "md5",
 					MD5:          hash,
 					Type:         "image",
-					RPMs:         osbuildStagesToRPMs(result.Stages),
+					RPMs:         osbuildStagesToRPMs(osbuildOutput.Stages),
 					Extra: koji.ImageExtra{
 						Info: koji.ImageExtraInfo{
 							Arch: "noarch",
@@ -345,11 +331,16 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		}
 	}
 
-	if len(r) > 0 {
-		return result, &TargetsError{r}
+	var targetErrors []string
+	for _, err := range r {
+		targetErrors = append(targetErrors, err.Error())
 	}
 
-	return result, nil
+	return &worker.OSBuildJobResult{
+		Success:       osbuildOutput.Success && len(targetErrors) == 0,
+		OSBuildOutput: osbuildOutput,
+		TargetErrors:  targetErrors,
+	}, nil
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
@@ -459,38 +450,21 @@ func main() {
 
 		fmt.Printf("Running job %v\n", job.Id())
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancelWatcher := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
 
 		result, err := RunJob(job, store, kojiServers)
-		if err != nil || result.Success == false {
-			log.Printf("  Job failed: %v", err)
-
-			// Ensure we always have a non-nil result, composer doesn't like nils.
-			// This can happen in cases when OSBuild crashes and doesn't produce
-			// a meaningful output. E.g. when the machine runs of disk space.
-			if result == nil {
-				result = &osbuild.Result{
-					Success: false,
-				}
-			}
-
-			// set the success to false on every error. This is hacky but composer
-			// currently relies only on this flag to decide whether a compose was
-			// successful. There's no different way how to inform composer that
-			// e.g. an upload fail. Therefore, this line reuses the osbuild success
-			// flag to indicate all error kinds.
-			result.Success = false
-		} else {
-			log.Printf("  🎉 Job completed successfully: %v", job.Id())
+		cancelWatcher()
+		if err != nil {
+			log.Printf("Job %s failed: %v", job.Id(), err)
+			continue
 		}
-
-		// signal to WatchJob() that it can stop watching
-		cancel()
 
 		err = job.Update(result)
 		if err != nil {
 			log.Fatalf("Error reporting job result: %v", err)
 		}
+
+		log.Printf("Job %s finished", job.Id())
 	}
 }
