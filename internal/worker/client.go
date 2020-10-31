@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -26,7 +25,7 @@ type Client struct {
 type Job interface {
 	Id() uuid.UUID
 	OSBuildArgs() (*OSBuildJob, error)
-	Update(result *osbuild.Result) error
+	Update(result *OSBuildJobResult) error
 	Canceled() (bool, error)
 	AcceptsArtifacts() bool
 	UploadArtifact(name string, reader io.Reader) error
@@ -157,11 +156,10 @@ func (j *job) OSBuildArgs() (*OSBuildJob, error) {
 	return &args, nil
 }
 
-func (j *job) Update(result *osbuild.Result) error {
+func (j *job) Update(result *OSBuildJobResult) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(api.UpdateJobJSONRequestBody{
 		Result: result,
-		Status: "FINISHED",
 	})
 	if err != nil {
 		panic(err)

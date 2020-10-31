@@ -240,7 +240,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus) string {
 		return "pending"
 	}
 
-	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+	if js.Result.Success {
 		return "success"
 	}
 
@@ -260,7 +260,7 @@ func imageStatusFromJobStatus(js *worker.JobStatus) string {
 		return "building"
 	}
 
-	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+	if js.Result.Success {
 		return "success"
 	}
 

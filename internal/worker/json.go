@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -22,7 +21,9 @@ type OSBuildJob struct {
 }
 
 type OSBuildJobResult struct {
+	Success       bool            `json:"success"`
 	OSBuildOutput *osbuild.Result `json:"osbuild_output,omitempty"`
+	TargetErrors  []string        `json:"target_errors,omitempty"`
 }
 
 //
@@ -46,8 +47,7 @@ type getJobResponse struct {
 }
 
 type updateJobRequest struct {
-	Status common.ImageBuildState `json:"status"`
-	Result *osbuild.Result        `json:"result"`
+	Result json.RawMessage `json:"result"`
 }
 
 type updateJobResponse struct {

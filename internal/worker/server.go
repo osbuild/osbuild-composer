@@ -101,6 +101,12 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 		return nil, err
 	}
 
+	// For backwards compatibility: OSBuildJobResult didn't use to have a
+	// top-level `Success` flag. Override it here by looking into the job.
+	if result.Success == false && result.OSBuildOutput != nil {
+		result.Success = result.OSBuildOutput.Success && len(result.TargetErrors) == 0
+	}
+
 	return &JobStatus{
 		Queued:   queued,
 		Started:  started,
@@ -200,7 +206,7 @@ func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
 	return jobId, nil
 }
 
-func (s *Server) FinishJob(token uuid.UUID, result *OSBuildJobResult) error {
+func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	s.runningMutex.Lock()
 	defer s.runningMutex.Unlock()
 
@@ -321,7 +327,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 		return err
 	}
 
-	err = h.server.FinishJob(token, &OSBuildJobResult{OSBuildOutput: body.Result})
+	err = h.server.FinishJob(token, body.Result)
 	if err != nil {
 		switch err {
 		case ErrTokenNotExist:

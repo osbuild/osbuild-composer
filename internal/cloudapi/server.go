@@ -249,7 +249,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus) string {
 		return StatusRunning
 	}
 
-	if js.Result.OSBuildOutput != nil && js.Result.OSBuildOutput.Success {
+	if js.Result.Success {
 		return StatusSuccess
 	}
 
