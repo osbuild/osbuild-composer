@@ -353,11 +353,7 @@ func WatchJob(ctx context.Context, job worker.Job) {
 		select {
 		case <-time.After(15 * time.Second):
 			canceled, err := job.Canceled()
-			if err != nil {
-				log.Printf("Error fetching job status: %v", err)
-				os.Exit(0)
-			}
-			if canceled {
+			if err == nil && canceled {
 				log.Println("Job was canceled. Exiting.")
 				os.Exit(0)
 			}
