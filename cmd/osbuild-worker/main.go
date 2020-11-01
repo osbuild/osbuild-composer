@@ -105,7 +105,8 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		}
 	}()
 
-	args, err := job.OSBuildArgs()
+	var args worker.OSBuildJob
+	err = job.Args(&args)
 	if err != nil {
 		return err
 	}
@@ -444,12 +445,12 @@ func main() {
 
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.RequestJob()
+		job, err := client.RequestJob([]string{"osbuild"})
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Running job %v\n", job.Id())
+		fmt.Printf("Running '%s' job %v\n", job.Type(), job.Id())
 
 		ctx, cancelWatcher := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
