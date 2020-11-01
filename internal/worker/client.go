@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -24,8 +23,9 @@ type Client struct {
 
 type Job interface {
 	Id() uuid.UUID
-	OSBuildArgs() (*OSBuildJob, error)
-	Update(result *OSBuildJobResult) error
+	Type() string
+	Args(args interface{}) error
+	Update(result interface{}) error
 	Canceled() (bool, error)
 	AcceptsArtifacts() bool
 	UploadArtifact(name string, reader io.Reader) error
@@ -82,7 +82,7 @@ func NewClientUnix(path string) *Client {
 	return &Client{server, requester}
 }
 
-func (c *Client) RequestJob() (Job, error) {
+func (c *Client) RequestJob(types []string) (Job, error) {
 	url, err := c.server.Parse("jobs")
 	if err != nil {
 		// This only happens when "jobs" cannot be parsed.
@@ -91,7 +91,7 @@ func (c *Client) RequestJob() (Job, error) {
 
 	var buf bytes.Buffer
 	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{
-		Types: []string{"osbuild"},
+		Types: types,
 		Arch:  common.CurrentArch(),
 	})
 	if err != nil {
@@ -142,21 +142,19 @@ func (j *job) Id() uuid.UUID {
 	return j.id
 }
 
-func (j *job) OSBuildArgs() (*OSBuildJob, error) {
-	if j.jobType != "osbuild" {
-		return nil, errors.New("not an osbuild job")
-	}
-
-	var args OSBuildJob
-	err := json.Unmarshal(j.args, &args)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing osbuild job arguments: %v", err)
-	}
-
-	return &args, nil
+func (j *job) Type() string {
+	return j.jobType
 }
 
-func (j *job) Update(result *OSBuildJobResult) error {
+func (j *job) Args(args interface{}) error {
+	err := json.Unmarshal(j.args, args)
+	if err != nil {
+		return fmt.Errorf("error parsing job arguments: %v", err)
+	}
+	return nil
+}
+
+func (j *job) Update(result interface{}) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(api.UpdateJobJSONRequestBody{
 		Result: result,
