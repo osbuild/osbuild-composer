@@ -23,6 +23,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+type OSBuildJobImpl struct {
+	Store       string
+	KojiServers map[string]koji.GSSAPICredentials
+}
+
 func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
 	if pkg.SigGPG != "" {
 		return &pkg.SigGPG
@@ -56,7 +61,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 	return rpms
 }
 
-func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) error {
+func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
@@ -76,7 +81,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 
 	start_time := time.Now()
 
-	osbuildOutput, err := RunOSBuild(args.Manifest, store, outputDirectory, os.Stderr)
+	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -194,7 +199,7 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 			}
 
 			kojiServer, _ := url.Parse(options.Server)
-			creds, exists := kojiServers[kojiServer.Hostname()]
+			creds, exists := impl.KojiServers[kojiServer.Hostname()]
 			if !exists {
 				r = append(r, fmt.Errorf("Koji server has not been configured: %s", kojiServer.Hostname()))
 				continue

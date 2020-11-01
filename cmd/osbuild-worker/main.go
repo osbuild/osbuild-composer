@@ -27,6 +27,11 @@ type connectionConfig struct {
 	ClientCertFile string
 }
 
+// Represents the implementation of a job type as defined by the worker API.
+type JobImplementation interface {
+	Run(job worker.Job) error
+}
+
 func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	caCertPEM, err := ioutil.ReadFile(config.CACertFile)
 	if err != nil {
@@ -144,11 +149,29 @@ func main() {
 		}
 	}
 
+	jobImpls := map[string]JobImplementation{
+		"osbuild": &OSBuildJobImpl{
+			Store:       store,
+			KojiServers: kojiServers,
+		},
+	}
+
+	acceptedJobTypes := []string{}
+	for jt := range jobImpls {
+		acceptedJobTypes = append(acceptedJobTypes, jt)
+	}
+
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.RequestJob([]string{"osbuild"})
+		job, err := client.RequestJob(acceptedJobTypes)
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		impl, exists := jobImpls[job.Type()]
+		if !exists {
+			log.Printf("Ignoring job with unknown type %s", job.Type())
+			continue
 		}
 
 		fmt.Printf("Running '%s' job %v\n", job.Type(), job.Id())
@@ -156,7 +179,7 @@ func main() {
 		ctx, cancelWatcher := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
 
-		err = RunJob(job, store, kojiServers)
+		err = impl.Run(job)
 		cancelWatcher()
 		if err != nil {
 			log.Printf("Job %s failed: %v", job.Id(), err)
