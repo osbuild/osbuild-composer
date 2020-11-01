@@ -93,10 +93,10 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 	return rpms
 }
 
-func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) (*worker.OSBuildJobResult, error) {
+func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICredentials) error {
 	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
 	if err != nil {
-		return nil, fmt.Errorf("error creating temporary output directory: %v", err)
+		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
 	defer func() {
 		err := os.RemoveAll(outputDirectory)
@@ -107,14 +107,14 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 
 	args, err := job.OSBuildArgs()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	start_time := time.Now()
 
 	osbuildOutput, err := RunOSBuild(args.Manifest, store, outputDirectory, os.Stderr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	end_time := time.Now()
@@ -125,17 +125,17 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		if args.StreamOptimized {
 			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		} else {
 			f, err = os.Open(imagePath)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 		err = job.UploadArtifact(args.ImageName, f)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -336,11 +336,16 @@ func RunJob(job worker.Job, store string, kojiServers map[string]koji.GSSAPICred
 		targetErrors = append(targetErrors, err.Error())
 	}
 
-	return &worker.OSBuildJobResult{
+	err = job.Update(&worker.OSBuildJobResult{
 		Success:       osbuildOutput.Success && len(targetErrors) == 0,
 		OSBuildOutput: osbuildOutput,
 		TargetErrors:  targetErrors,
-	}, nil
+	})
+	if err != nil {
+		return fmt.Errorf("Error reporting job result: %v", err)
+	}
+
+	return nil
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
@@ -449,16 +454,11 @@ func main() {
 		ctx, cancelWatcher := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
 
-		result, err := RunJob(job, store, kojiServers)
+		err = RunJob(job, store, kojiServers)
 		cancelWatcher()
 		if err != nil {
 			log.Printf("Job %s failed: %v", job.Id(), err)
 			continue
-		}
-
-		err = job.Update(result)
-		if err != nil {
-			log.Fatalf("Error reporting job result: %v", err)
 		}
 
 		log.Printf("Job %s finished", job.Id())
