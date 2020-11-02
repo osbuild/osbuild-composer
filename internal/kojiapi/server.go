@@ -227,7 +227,7 @@ func splitExtension(filename string) string {
 	return "." + strings.Join(filenameParts[1:], ".")
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
 	if js.Canceled {
 		return "failure"
 	}
@@ -240,14 +240,14 @@ func composeStatusFromJobStatus(js *worker.JobStatus) string {
 		return "pending"
 	}
 
-	if js.Result.Success {
+	if result.Success {
 		return "success"
 	}
 
 	return "failure"
 }
 
-func imageStatusFromJobStatus(js *worker.JobStatus) string {
+func imageStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
 	if js.Canceled {
 		return "failure"
 	}
@@ -260,7 +260,7 @@ func imageStatusFromJobStatus(js *worker.JobStatus) string {
 		return "building"
 	}
 
-	if js.Result.Success {
+	if result.Success {
 		return "success"
 	}
 
@@ -274,16 +274,17 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	status, err := h.server.workers.JobStatus(id)
+	var result worker.OSBuildJobResult
+	status, err := h.server.workers.JobStatus(id, &result)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
 	response := api.ComposeStatus{
-		Status: composeStatusFromJobStatus(status),
+		Status: composeStatusFromJobStatus(status, &result),
 		ImageStatuses: []api.ImageStatus{
 			{
-				Status: imageStatusFromJobStatus(status),
+				Status: imageStatusFromJobStatus(status, &result),
 			},
 		},
 	}

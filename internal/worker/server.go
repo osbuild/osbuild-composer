@@ -45,7 +45,6 @@ type JobStatus struct {
 	Started  time.Time
 	Finished time.Time
 	Canceled bool
-	Result   OSBuildJobResult
 }
 
 var ErrTokenNotExist = errors.New("worker token does not exist")
@@ -93,18 +92,18 @@ func (s *Server) Enqueue(arch string, job *OSBuildJob) (uuid.UUID, error) {
 	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
 }
 
-func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
-	var result OSBuildJobResult
-
-	queued, started, finished, canceled, err := s.jobs.JobStatus(id, &result)
+func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, error) {
+	queued, started, finished, canceled, err := s.jobs.JobStatus(id, result)
 	if err != nil {
 		return nil, err
 	}
 
 	// For backwards compatibility: OSBuildJobResult didn't use to have a
 	// top-level `Success` flag. Override it here by looking into the job.
-	if result.Success == false && result.OSBuildOutput != nil {
-		result.Success = result.OSBuildOutput.Success && len(result.TargetErrors) == 0
+	if r, ok := result.(*OSBuildJobResult); ok {
+		if !r.Success && r.OSBuildOutput != nil {
+			r.Success = r.OSBuildOutput.Success && len(r.TargetErrors) == 0
+		}
 	}
 
 	return &JobStatus{
@@ -112,7 +111,6 @@ func (s *Server) JobStatus(id uuid.UUID) (*JobStatus, error) {
 		Started:  started,
 		Finished: finished,
 		Canceled: canceled,
-		Result:   result,
 	}, nil
 }
 
@@ -127,7 +125,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
-	status, err := s.JobStatus(id)
+	status, err := s.JobStatus(id, &json.RawMessage{})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -156,7 +154,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return errors.New("Artifacts not enabled")
 	}
 
-	status, err := s.JobStatus(id)
+	status, err := s.JobStatus(id, &json.RawMessage{})
 	if err != nil {
 		return err
 	}
@@ -168,22 +166,29 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestOSBuildJob(ctx context.Context, arch string) (uuid.UUID, uuid.UUID, *OSBuildJob, error) {
+func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, error) {
 	token := uuid.New()
 
-	// wait on "osbuild" jobs for backwards compatiblity
-	jobTypes := []string{"osbuild", "osbuild:" + arch}
+	// treat osbuild jobs specially until we have found a generic way to
+	// specify dequeuing restrictions. For now, we only have one
+	// restriction: arch for osbuild jobs.
+	jts := []string{}
+	for _, t := range jobTypes {
+		if t == "osbuild" {
+			t = "osbuild:" + arch
+		}
+		jts = append(jts, t)
+	}
 
-	var args OSBuildJob
-	jobId, err := s.jobs.Dequeue(ctx, jobTypes, &args)
+	jobId, jobType, args, err := s.jobs.Dequeue(ctx, jts)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, nil, err
+		return uuid.Nil, uuid.Nil, "", nil, err
 	}
 
 	if s.artifactsDir != "" {
 		err := os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
 		if err != nil {
-			return uuid.Nil, uuid.Nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
+			return uuid.Nil, uuid.Nil, "", nil, fmt.Errorf("cannot create artifact directory: %v", err)
 		}
 	}
 
@@ -191,7 +196,11 @@ func (s *Server) RequestOSBuildJob(ctx context.Context, arch string) (uuid.UUID,
 	defer s.runningMutex.Unlock()
 	s.running[token] = jobId
 
-	return token, jobId, &args, nil
+	if jobType == "osbuild:"+arch {
+		jobType = "osbuild"
+	}
+
+	return token, jobId, jobType, args, nil
 }
 
 func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
@@ -257,16 +266,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	if len(body.Types) != 1 || body.Types[0] != "osbuild" {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid job types")
-	}
-
-	token, jobId, jobArgs, err := h.server.RequestOSBuildJob(ctx.Request().Context(), body.Arch)
-	if err != nil {
-		return err
-	}
-
-	serializedArgs, err := json.Marshal(jobArgs)
+	token, jobId, jobType, jobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
 	if err != nil {
 		return err
 	}
@@ -280,8 +280,8 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		Id:               jobId,
 		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
 		ArtifactLocation: artifactLocation,
-		Type:             "osbuild",
-		Args:             serializedArgs,
+		Type:             jobType,
+		Args:             jobArgs,
 	})
 }
 
@@ -305,7 +305,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 		return ctx.JSON(http.StatusOK, getJobResponse{})
 	}
 
-	status, err := h.server.JobStatus(jobId)
+	status, err := h.server.JobStatus(jobId, &json.RawMessage{})
 	if err != nil {
 		return err
 	}

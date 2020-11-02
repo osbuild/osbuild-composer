@@ -194,7 +194,7 @@ type composeStatus struct {
 	Result   *osbuild.Result
 }
 
-func composeStateFromJobStatus(js *worker.JobStatus) ComposeState {
+func composeStateFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ComposeState {
 	if js.Canceled {
 		return ComposeFailed
 	}
@@ -207,7 +207,7 @@ func composeStateFromJobStatus(js *worker.JobStatus) ComposeState {
 		return ComposeRunning
 	}
 
-	if js.Result.Success {
+	if result.Success {
 		return ComposeFinished
 	}
 
@@ -244,14 +244,17 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 		}
 	}
 
+	// All jobs are "osbuild" jobs.
+	var result worker.OSBuildJobResult
+
 	// is it ok to ignore this error?
-	jobStatus, _ := api.workers.JobStatus(jobId)
+	jobStatus, _ := api.workers.JobStatus(jobId, &result)
 	return &composeStatus{
-		State:    composeStateFromJobStatus(jobStatus),
+		State:    composeStateFromJobStatus(jobStatus, &result),
 		Queued:   jobStatus.Queued,
 		Started:  jobStatus.Started,
 		Finished: jobStatus.Finished,
-		Result:   jobStatus.Result.OSBuildOutput,
+		Result:   result.OSBuildOutput,
 	}
 }
 
