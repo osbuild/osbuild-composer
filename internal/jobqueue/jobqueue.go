@@ -14,6 +14,7 @@ package jobqueue
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -38,11 +39,9 @@ type JobQueue interface {
 	// Waits until a job with a type of any of `jobTypes` is available, or `ctx` is
 	// canceled.
 	//
-	// All jobs in `jobTypes` must take the same type of `args`, corresponding to
-	// the one that was passed to Enqueue().
-	//
-	// Returns the job's id or an error.
-	Dequeue(ctx context.Context, jobTypes []string, args interface{}) (uuid.UUID, error)
+	// Returns the job's id, type, and arguments, or an error. Arguments
+	// can be unmarshaled to the type given in Enqueue().
+	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, string, json.RawMessage, error)
 
 	// Mark the job with `id` as finished. `result` must fit the associated
 	// job type and must be serializable to JSON.
