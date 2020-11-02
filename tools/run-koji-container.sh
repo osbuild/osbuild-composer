@@ -47,11 +47,9 @@ koji_start() {
   # create a share directory which is used to share files between the host and containers
   mkdir "${SHARE_DIR}"
 
-  # generate self-signed certificates in the share directory
-  openssl req -new -nodes -x509 -days 365 -keyout "${SHARE_DIR}/ca-key.pem" -out "${SHARE_DIR}/ca-crt.pem" -subj "/CN=osbuild.org"
-  openssl genrsa -out "${SHARE_DIR}/key.pem" 2048
-  openssl req -new -sha256 -key "${SHARE_DIR}/key.pem"	-out "${SHARE_DIR}/csr.pem" -subj "/CN=localhost"
-  openssl x509 -req -in "${SHARE_DIR}/csr.pem"  -CA "${SHARE_DIR}/ca-crt.pem" -CAkey "${SHARE_DIR}/ca-key.pem" -CAcreateserial -out "${SHARE_DIR}/crt.pem"
+  cp /etc/osbuild-composer/kojihub-key.pem "${SHARE_DIR}/key.pem"
+  cp /etc/osbuild-composer/kojihub-crt.pem "${SHARE_DIR}/crt.pem"
+  cp /etc/osbuild-composer/ca-crt.pem "${SHARE_DIR}/ca-crt.pem"
 
   ${CONTAINER_RUNTIME} network create org.osbuild.koji
 
