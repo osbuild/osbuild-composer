@@ -53,44 +53,6 @@ jobs:
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
-  koji:
-    name: "麹 Koji test"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Go 1.13
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.13
-        id: go
-
-        # We need python for koji client.
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-        # Koji from pip is missing its config file.
-        # To fix this, the default Fedora 32 config is included in the repo
-        # and installed here. See the last line of the script.
-      - name: Install koji client
-        run: |
-          sudo apt-get install -y libkrb5-dev krb5-config
-          python -m pip install --upgrade pip
-          pip install koji
-          sudo cp .github/koji.conf /etc/koji.conf
-
-      - name: Run unit tests
-        run: |
-          sudo tools/run-koji-container.sh start
-          koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
-          env KRB5_CONFIG=../../../.github/krb5.conf go test -v -race -covermode atomic -coverprofile=coverage.txt -tags koji_test ./internal/upload/koji
-          sudo tools/run-koji-container.sh stop
-
-      - name: Send coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
   shellcheck:
     name: "🐚 Shellcheck"
     runs-on: ubuntu-latest

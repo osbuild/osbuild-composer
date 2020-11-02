@@ -137,6 +137,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-koji-tests %{goipath}/cmd/osbuild-koji-tests
 go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/cloud-cleaner %{goipath}/cmd/cloud-cleaner
 
 %endif
@@ -175,6 +176,7 @@ install -m 0755 -vp _bin/osbuild-weldr-tests                    %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-koji-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/provision.sh                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/image-info                            %{buildroot}%{_libexecdir}/osbuild-composer-test/
@@ -219,6 +221,9 @@ install -m 0644 -vp test/data/kerberos/*                        %{buildroot}%{_d
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/keyring
 install -m 0644 -vp test/data/keyring/id_rsa.pub                %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
 install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_datadir}/tests/osbuild-composer/keyring/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/koji
+install -m 0644 -vp test/data/koji/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/koji/
 
 %if 0%{?rhel}
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/vendor
