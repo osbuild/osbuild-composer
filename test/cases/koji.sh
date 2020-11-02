@@ -46,10 +46,10 @@ sudo cp \
     "${OSBUILD_COMPOSER_TEST_DATA}"/kerberos/krb5-local.conf \
     /etc/krb5.conf.d/local
 
-greenprint "Adding generated CA cert for Koji"
+greenprint "Adding the testsuite's CA cert to the system trust store"
 sudo cp \
-    /tmp/osbuild-composer-koji-test/ca-crt.pem \
-    /etc/pki/ca-trust/source/anchors/koji-ca-crt.pem
+    /etc/osbuild-composer/ca-crt.pem \
+    /etc/pki/ca-trust/source/anchors/osbuild-composer-tests-ca-crt.pem
 sudo update-ca-trust
 
 greenprint "Restarting composer to pick up new config"
@@ -77,5 +77,5 @@ sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop
 
 greenprint "Removing generated CA cert"
 sudo rm \
-    /etc/pki/ca-trust/source/anchors/koji-ca-crt.pem
+    /etc/pki/ca-trust/source/anchors/osbuild-composer-tests-ca-crt.pem
 sudo update-ca-trust

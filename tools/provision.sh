@@ -80,6 +80,19 @@ pushd $CADIR
     # Client keys are used by tests to access the composer APIs. Allow all users access.
     sudo chmod 644 "$CERTDIR"/client-key.pem
 
+    # Generate a kojihub certificate.
+    sudo openssl req -config $OPENSSL_CONFIG \
+        -keyout "$CERTDIR"/kojihub-key.pem \
+        -new -nodes \
+        -out /tmp/kojihub-csr.pem \
+        -subj "/CN=localhost/emailAddress=osbuild@example.com" \
+        -addext "subjectAltName=DNS:localhost"
+
+    sudo openssl ca -batch -config $OPENSSL_CONFIG \
+        -extensions osbuild_server_ext \
+        -in /tmp/kojihub-csr.pem \
+        -out "$CERTDIR"/kojihub-crt.pem
+
 popd
 
 sudo systemctl start osbuild-remote-worker.socket
