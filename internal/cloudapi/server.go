@@ -215,17 +215,18 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 
-	status, err := server.workers.JobStatus(jobId)
+	var result worker.OSBuildJobResult
+	status, err := server.workers.JobStatus(jobId, &result)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
 		return
 	}
 
 	response := ComposeStatus{
-		Status: composeStatusFromJobStatus(status),
+		Status: composeStatusFromJobStatus(status, &result),
 		ImageStatuses: &[]ImageStatus{
 			{
-				Status: composeStatusFromJobStatus(status),
+				Status: composeStatusFromJobStatus(status, &result),
 			},
 		},
 	}
@@ -236,7 +237,7 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	}
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
 	if js.Canceled {
 		return StatusFailure
 	}
@@ -249,7 +250,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus) string {
 		return StatusRunning
 	}
 
-	if js.Result.Success {
+	if result.Success {
 		return StatusSuccess
 	}
 
