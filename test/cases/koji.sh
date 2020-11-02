@@ -69,6 +69,9 @@ greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
 koji --server=http://localhost:8080/kojihub buildinfo 1
 
+greenprint "Run the integration test"
+sudo /usr/libexec/osbuild-composer-test/osbuild-koji-tests
+
 greenprint "Stopping containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop
 

@@ -1,6 +1,11 @@
-//+build koji_test
+// This command contains some tests for the koji integration. It's a bit
+// different from the other cmd/*-tests executables because it cannot be
+// currently run as a "base test". Instead, it's run as a part of the
+// koji.sh test because it needs a working Koji instance to pass.
 
-package koji_test
+// +build integration
+
+package main
 
 import (
 	"crypto/rand"
@@ -191,7 +196,7 @@ func TestKojiImport(t *testing.T) {
 	cmd := exec.Command(
 		"koji",
 		"--server", server,
-		"-c", "../../../.github/koji.conf",
+		"-c", "/usr/share/tests/osbuild-composer/koji/koji.conf",
 		"--keytab", credentials.KeyTab,
 		"--principal", credentials.Principal,
 		"list-builds",
