@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const trustedCADir = "/etc/osbuild-composer-test/ca"
+
 type connectionConfig struct {
 	CACertFile     string
 	ClientKeyFile  string
@@ -48,16 +50,19 @@ func TestWorkerAPIAuth(t *testing.T) {
 		cases := []struct {
 			caseDesc string
 			subj     string
+			addext   string
 			success  bool
 		}{
-			{"valid CN 1", "/CN=worker.osbuild.org", true},
-			{"valid CN 2", "/CN=localhost", true},
-			{"invalid CN", "/CN=example.com", false},
+			{"valid CN 1", "/CN=worker.osbuild.org/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:worker.osbuild.org", true},
+			{"valid CN 2", "/CN=localhost/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:localhost", true},
+			{"invalid CN", "/CN=example.com/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com", false},
 		}
+
+		authority := &ca{BaseDir: trustedCADir}
 
 		for _, c := range cases {
 			t.Run(c.caseDesc, func(t *testing.T) {
-				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.subj)
+				ckp, err := authority.newCertificateKeyPair(c.subj, osbuildClientExt, c.addext)
 				require.NoError(t, err)
 				defer ckp.remove()
 
@@ -68,12 +73,12 @@ func TestWorkerAPIAuth(t *testing.T) {
 
 	t.Run("certificate signed by an untrusted CA", func(t *testing.T) {
 		// generate a new CA
-		ca, err := newSelfSignedCertificateKeyPair("/CN=osbuild.org")
+		ca, err := newCA("/CN=untrusted.osbuild.org")
 		require.NoError(t, err)
 		defer ca.remove()
 
 		// create a new certificate and signed it with the new CA
-		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "/CN=localhost")
+		ckp, err := ca.newCertificateKeyPair("/CN=localhost/emailAddress=osbuild@example.com", osbuildClientExt, "")
 		require.NoError(t, err)
 		defer ckp.remove()
 
@@ -95,16 +100,19 @@ func TestKojiAPIAuth(t *testing.T) {
 		cases := []struct {
 			caseDesc string
 			subj     string
+			addext   string
 			success  bool
 		}{
-			{"valid CN 1", "/CN=client.osbuild.org", true},
-			{"valid CN 2", "/CN=localhost", true},
-			{"invalid CN", "/CN=example.com", false},
+			{"valid CN and SAN 1", "/CN=client.osbuild.org/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:client.osbuild.org", true},
+			{"valid CN and SAN 2", "/CN=localhost/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:localhost", true},
+			{"invalid CN and SAN", "/CN=example.com/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com", false},
 		}
+
+		authority := &ca{BaseDir: trustedCADir}
 
 		for _, c := range cases {
 			t.Run(c.caseDesc, func(t *testing.T) {
-				ckp, err := newCertificateKeyPair("/etc/osbuild-composer/ca-crt.pem", "/etc/osbuild-composer/ca-key.pem", c.subj)
+				ckp, err := authority.newCertificateKeyPair(c.subj, osbuildClientExt, c.addext)
 				require.NoError(t, err)
 				defer ckp.remove()
 
@@ -115,12 +123,12 @@ func TestKojiAPIAuth(t *testing.T) {
 
 	t.Run("certificate signed by an untrusted CA", func(t *testing.T) {
 		// generate a new CA
-		ca, err := newSelfSignedCertificateKeyPair("/CN=osbuild.org")
+		ca, err := newCA("/CN=osbuild.org")
 		require.NoError(t, err)
 		defer ca.remove()
 
 		// create a new certificate and signed it with the new CA
-		ckp, err := newCertificateKeyPair(ca.certificate(), ca.key(), "/CN=localhost")
+		ckp, err := ca.newCertificateKeyPair("/CN=localhost/emailAddress=osbuild@example.com", osbuildClientExt, "subjectAltName=DNS:localhost")
 		require.NoError(t, err)
 		defer ckp.remove()
 
