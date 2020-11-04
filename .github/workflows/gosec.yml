@@ -1,0 +1,28 @@
+name: gosec
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 5 * * *' # Daily at 05:00 UTC
+
+jobs:
+  coverity:
+    name: "🔎 gosec check"
+    if: github.repository == 'osbuild/osbuild-composer'
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@v2.5.0
+        with:
+          args: "-exclude=G307 ./..."
