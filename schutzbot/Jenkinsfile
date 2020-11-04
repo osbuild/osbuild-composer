@@ -351,6 +351,8 @@ void preserve_logs(test_slug) {
 
     // Make a directory for the log files and move the logs there.
     sh "mkdir ${test_slug} && mv *.log *.jpg ${test_slug}/ || true"
+    // The workspace directory is not used everywhere, tests use temporary directory under /tmp/logs.
+    sh "mkdir -p ${test_slug} && find /tmp/logs/ -name '*.log' -exec mv {} ${test_slug}/ \\; || true"
 
     // Artifact the logs.
     archiveArtifacts (
