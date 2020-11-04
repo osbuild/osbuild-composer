@@ -3,6 +3,8 @@ set -euo pipefail
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 TESTS_PATH=/usr/libexec/osbuild-composer-test
+mkdir --parents /tmp/logs
+LOGS_DIRECTORY=$(mktemp --directory --tmpdir=/tmp/logs)
 
 PASSED_TESTS=()
 FAILED_TESTS=()
@@ -27,7 +29,7 @@ run_test_case () {
     echo "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
-    if sudo "${1}" -test.v | tee "${WORKSPACE}"/"${TEST_NAME}".log; then
+    if sudo "${1}" -test.v | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
