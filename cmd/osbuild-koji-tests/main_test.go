@@ -43,7 +43,8 @@ func TestKojiRefund(t *testing.T) {
 	require.True(t, ok)
 
 	transport.TLSClientConfig = &tls.Config{
-		RootCAs: certPool,
+		RootCAs:    certPool,
+		MinVersion: tls.VersionTLS12,
 	}
 
 	// login
@@ -103,7 +104,8 @@ func TestKojiImport(t *testing.T) {
 	require.True(t, ok)
 
 	transport.TLSClientConfig = &tls.Config{
-		RootCAs: certPool,
+		RootCAs:    certPool,
+		MinVersion: tls.VersionTLS12,
 	}
 
 	// login

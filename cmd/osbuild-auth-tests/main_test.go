@@ -45,6 +45,7 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 	return &tls.Config{
 		RootCAs:      roots,
 		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
 	}, nil
 }
 
