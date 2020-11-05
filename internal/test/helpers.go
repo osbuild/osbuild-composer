@@ -10,16 +10,16 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"path"
 	"testing"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 type API interface {
@@ -214,7 +214,7 @@ func SetUpTemporaryRepository() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cmd := exec.Command("createrepo_c", path.Join(dir))
+	cmd := exec.Command("createrepo_c", dir)
 	err = cmd.Start()
 	if err != nil {
 		return "", err

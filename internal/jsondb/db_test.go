@@ -49,7 +49,7 @@ func TestDegenerate(t *testing.T) {
 		db := jsondb.New(dir, 0755)
 
 		// write-only file
-		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0644)
+		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 600)
 		require.NoError(t, err)
 
 		var d document
