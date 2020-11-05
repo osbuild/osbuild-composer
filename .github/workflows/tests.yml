@@ -45,7 +45,7 @@ jobs:
         run: sudo apt-get install -y libkrb5-dev
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
+        run: $(go env GOPATH)/bin/golangci-lint run
 
       - name: Run unit tests
         run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
