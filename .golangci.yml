@@ -1,3 +1,7 @@
+linters:
+  enable:
+    - gosec
+
 linters-settings:
   govet:
     disable:
