@@ -12,22 +12,18 @@ ARCH=$(uname -m)
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    # Bypass ostree test on rhel 8.2
-    "rhel-8.2")
-        exit 0;;
     "fedora-32")
         IMAGE_TYPE=fedora-iot-commit
         OSTREE_REF="fedora/32/${ARCH}/iot"
         OS_VARIANT="fedora32"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "rhel-8.3")
-        # Override old rhel-8-beta.json because test needs latest systemd and redhat-release
-        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/
-        sudo systemctl restart osbuild-composer.socket
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        BOOT_LOCATION="http://download.devel.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.3/compose/BaseOS/x86_64/os/";;
+        OS_VARIANT="rhel8.3"
+        # When 8.3 was released, it wasn't available on all RH internal
+        # mirrors, therefore the Boston mirror is hardcoded.
+        BOOT_LOCATION="http://download.eng.bos.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
     *) ;;
 esac
 
@@ -151,9 +147,13 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     if [[ $blueprint_name == upgrade ]]; then
-        # Leave new version composer-cli here in case it got updated.
-        # sudo composer-cli --json compose start-ostree --ref $OSTREE_REF --parent $COMMIT_HASH $blueprint_name $IMAGE_TYPE | tee $COMPOSE_START
-        sudo composer-cli --json compose start-ostree "$blueprint_name" $IMAGE_TYPE "$OSTREE_REF" "$COMMIT_HASH" | tee "$COMPOSE_START"
+        # composer-cli in Fedora 32 has a different start-ostree arguments
+        # see https://github.com/weldr/lorax/pull/1051
+        if [[ "${ID}-${VERSION_ID}" == fedora-32 ]]; then
+            sudo composer-cli --json compose start-ostree "$blueprint_name" $IMAGE_TYPE "$OSTREE_REF" "$COMMIT_HASH" | tee "$COMPOSE_START"
+        else
+            sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
+        fi
     else
         sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     fi

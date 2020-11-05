@@ -243,6 +243,18 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8 OSTree') {
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    steps {
+                        unstash 'rhel8cdn'
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-ostree')
+                        }
+                    }
+                }
 
                 stage('EL8.3 Base') {
                     agent { label "rhel83cloudbase && x86_64 && aws" }
@@ -301,18 +313,6 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel83-integration')
-                        }
-                    }
-                }
-                stage('EL8.3 OSTree') {
-                    agent { label "rhel83cloudbase && psi && x86_64" }
-                    steps {
-                        unstash 'rhel83'
-                        run_tests('ostree')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel83-ostree')
                         }
                     }
                 }
