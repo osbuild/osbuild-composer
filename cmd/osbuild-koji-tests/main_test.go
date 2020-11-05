@@ -195,6 +195,7 @@ func TestKojiImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// check if the build is really there:
+	buildId := strconv.Itoa(importResult.BuildID)
 	cmd := exec.Command(
 		"koji",
 		"--server", server,
@@ -202,7 +203,7 @@ func TestKojiImport(t *testing.T) {
 		"--keytab", credentials.KeyTab,
 		"--principal", credentials.Principal,
 		"list-builds",
-		"--buildid", strconv.Itoa(importResult.BuildID),
+		"--buildid", buildId,
 	)
 
 	// sample output:

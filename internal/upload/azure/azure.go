@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	// Azure uses MD5 hashes
+	// #gosec G501
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -72,6 +74,8 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	}
 
 	// Hash the imageFile
+	// Azure uses MD5 hashes
+	// #gosec G501
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
 		return fmt.Errorf("cannot create md5 of the image: %v", err)
