@@ -263,20 +263,13 @@ func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *fsJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error) {
+func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
 	}
 
-	if !j.FinishedAt.IsZero() && !j.Canceled {
-		err = json.Unmarshal(j.Result, result)
-		if err != nil {
-			err = fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
-			return
-		}
-	}
-
+	result = j.Result
 	queued = j.QueuedAt
 	started = j.StartedAt
 	finished = j.FinishedAt

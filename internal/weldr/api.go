@@ -247,8 +247,10 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
 
-	// is it ok to ignore this error?
-	jobStatus, _ := api.workers.JobStatus(jobId, &result)
+	jobStatus, _, err := api.workers.JobStatus(jobId, &result)
+	if err != nil {
+		panic(err)
+	}
 	return &composeStatus{
 		State:    composeStateFromJobStatus(jobStatus, &result),
 		Queued:   jobStatus.Queued,
