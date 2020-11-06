@@ -122,7 +122,7 @@ pipeline {
                     environment { TEST_TYPE = "base" }
                     steps {
                         unstash 'fedora32'
-                        run_tests('base')
+                        run_tests('base', 'bios')
                     }
                     post {
                         always {
@@ -143,7 +143,7 @@ pipeline {
                     }
                     steps {
                         unstash 'fedora32'
-                        run_tests('image')
+                        run_tests('image', 'bios')
                     }
                     post {
                         always {
@@ -164,7 +164,7 @@ pipeline {
                     }
                     steps {
                         unstash 'fedora32'
-                        run_tests('integration')
+                        run_tests('integration', 'bios')
                     }
                     post {
                         always {
@@ -176,7 +176,7 @@ pipeline {
                     agent { label "f32cloudbase && psi && x86_64" }
                     steps {
                         unstash 'fedora32'
-                        run_tests('ostree')
+                        run_tests('ostree', 'bios')
                     }
                     post {
                         always {
@@ -255,7 +255,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests('base')
+                        run_tests('base', 'bios')
                     }
                     post {
                         always {
@@ -277,7 +277,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests('image')
+                        run_tests('image', 'bios')
                     }
                     post {
                         always {
@@ -299,7 +299,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests('integration')
+                        run_tests('integration', 'bios')
                     }
                     post {
                         always {
@@ -311,7 +311,7 @@ pipeline {
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     steps {
                         unstash 'rhel8cdn'
-                        run_tests('ostree')
+                        run_tests('ostree', 'bios')
                     }
                     post {
                         always {
@@ -326,7 +326,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel84'
-                        run_tests('base')
+                        run_tests('base', 'hybrid')
                     }
                     post {
                         always {
@@ -347,7 +347,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel84'
-                        run_tests('image')
+                        run_tests('image', 'hybrid')
                     }
                     post {
                         always {
@@ -368,7 +368,7 @@ pipeline {
                     }
                     steps {
                         unstash 'rhel84'
-                        run_tests('integration')
+                        run_tests('integration', 'hybrid')
                     }
                     post {
                         always {
@@ -380,7 +380,7 @@ pipeline {
                     agent { label "rhel84cloudbase && psi && x86_64" }
                     steps {
                         unstash 'rhel84'
-                        run_tests('ostree')
+                        run_tests('ostree', 'hybrid')
                     }
                     post {
                         always {
@@ -417,7 +417,7 @@ pipeline {
 
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
-void run_tests(test_type) {
+void run_tests(test_type, boot_type) {
 
     // Get CI machine details.
     sh (
@@ -460,11 +460,19 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/koji.sh"
         )
 
-        // Run the qcow2 test.
+        // Run the qcow2 BIOS boot test.
         sh (
-            label: "Integration test: QCOW2",
+            label: "Integration test: QCOW2, BIOS boot",
             script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2"
         )
+
+        if (boot_type == 'hybrid') {
+            // Run the qcow2 UEFI boot test.
+            sh (
+                label: "Integration test: QCOW2, UEFI boot",
+                script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2 uefi"
+            )
+        }
 
         // Run the openstack test.
         sh (
