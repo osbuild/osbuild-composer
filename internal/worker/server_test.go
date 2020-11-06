@@ -90,11 +90,12 @@ func TestCancel(t *testing.T) {
 	jobId, err := server.Enqueue(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	token, j, typ, args, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 	require.Equal(t, "osbuild", typ)
 	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
 
 	err = server.Cancel(jobId)
 	require.NoError(t, err)

@@ -173,7 +173,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, error) {
+func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
 	token := uuid.New()
 
 	// treat osbuild jobs specially until we have found a generic way to
@@ -187,15 +187,21 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jts = append(jts, t)
 	}
 
-	jobId, _, jobType, args, err := s.jobs.Dequeue(ctx, jts)
+	jobId, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jts)
 	if err != nil {
-		return uuid.Nil, uuid.Nil, "", nil, err
+		return uuid.Nil, uuid.Nil, "", nil, nil, err
+	}
+
+	var dynamicArgs []json.RawMessage
+	for _, depID := range depIDs {
+		result, _, _, _, _, _ := s.jobs.JobStatus(depID)
+		dynamicArgs = append(dynamicArgs, result)
 	}
 
 	if s.artifactsDir != "" {
 		err := os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
 		if err != nil {
-			return uuid.Nil, uuid.Nil, "", nil, fmt.Errorf("cannot create artifact directory: %v", err)
+			return uuid.Nil, uuid.Nil, "", nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
 		}
 	}
 
@@ -207,7 +213,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jobType = "osbuild"
 	}
 
-	return token, jobId, jobType, args, nil
+	return token, jobId, jobType, args, dynamicArgs, nil
 }
 
 func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
@@ -273,7 +279,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	token, jobId, jobType, jobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
+	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
 	if err != nil {
 		return err
 	}
@@ -289,6 +295,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		ArtifactLocation: artifactLocation,
 		Type:             jobType,
 		Args:             jobArgs,
+		DynamicArgs:      dynamicJobArgs,
 	})
 }
 
