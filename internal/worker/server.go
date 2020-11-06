@@ -88,9 +88,16 @@ func (s *Server) Enqueue(arch string, job *OSBuildJob) (uuid.UUID, error) {
 }
 
 func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, error) {
-	queued, started, finished, canceled, err := s.jobs.JobStatus(id, result)
+	rawResult, queued, started, finished, canceled, err := s.jobs.JobStatus(id)
 	if err != nil {
 		return nil, err
+	}
+
+	if !finished.IsZero() && !canceled {
+		err = json.Unmarshal(rawResult, result)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
+		}
 	}
 
 	// For backwards compatibility: OSBuildJobResult didn't use to have a

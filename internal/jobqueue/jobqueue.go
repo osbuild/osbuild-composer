@@ -56,7 +56,7 @@ type JobQueue interface {
 	// finished, respectively.
 	//
 	// If the job is finished, its result will be returned in `result`.
-	JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error)
+	JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, err error)
 }
 
 var (
