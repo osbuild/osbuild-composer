@@ -105,7 +105,7 @@ pipeline {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
-                        run_tests('base')
+                        run_tests('base', 'bios')
                     }
                     post {
                         always {
@@ -125,7 +125,7 @@ pipeline {
                         DISTRO_CODE = "fedora32"
                     }
                     steps {
-                        run_tests('image')
+                        run_tests('image', 'bios')
                     }
                     post {
                         always {
@@ -145,7 +145,7 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
-                        run_tests('integration')
+                        run_tests('integration', 'bios')
                     }
                     post {
                         always {
@@ -156,7 +156,7 @@ pipeline {
                 stage('F32 OSTree') {
                     agent { label "f32cloudbase && psi && x86_64" }
                     steps {
-                        run_tests('ostree')
+                        run_tests('ostree', 'bios')
                     }
                     post {
                         always {
@@ -168,7 +168,7 @@ pipeline {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
-                        run_tests('base')
+                        run_tests('base', 'bios')
                     }
                     post {
                         always {
@@ -188,7 +188,7 @@ pipeline {
                         DISTRO_CODE = "fedora33"
                     }
                     steps {
-                        run_tests('image')
+                        run_tests('image', 'bios')
                     }
                     post {
                         always {
@@ -204,7 +204,7 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
-                        run_tests('integration')
+                        run_tests('integration', 'bios')
                     }
                     post {
                         always {
@@ -215,7 +215,7 @@ pipeline {
                 stage('F33 OSTree') {
                     agent { label "f33cloudbase && psi && x86_64" }
                     steps {
-                        run_tests('ostree')
+                        run_tests('ostree', 'bios')
                     }
                     post {
                         always {
@@ -230,7 +230,7 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
-                        run_tests('base')
+                        run_tests('base', 'bios')
                     }
                     post {
                         always {
@@ -251,7 +251,7 @@ pipeline {
                         DISTRO_CODE = "rhel8"
                     }
                     steps {
-                        run_tests('image')
+                        run_tests('image', 'bios')
                     }
                     post {
                         always {
@@ -272,7 +272,7 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
-                        run_tests('integration')
+                        run_tests('integration', 'bios')
                     }
                     post {
                         always {
@@ -283,7 +283,7 @@ pipeline {
                 stage('EL8 OSTree') {
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     steps {
-                        run_tests('ostree')
+                        run_tests('ostree', 'bios')
                     }
                     post {
                         always {
@@ -297,7 +297,7 @@ pipeline {
                         TEST_TYPE = "base"
                     }
                     steps {
-                        run_tests('base')
+                        run_tests('base', 'hybrid')
                     }
                     post {
                         always {
@@ -317,7 +317,7 @@ pipeline {
                         DISTRO_CODE = "rhel84"
                     }
                     steps {
-                        run_tests('image')
+                        run_tests('image', 'hybrid')
                     }
                     post {
                         always {
@@ -337,7 +337,7 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
-                        run_tests('integration')
+                        run_tests('integration', 'hybrid')
                     }
                     post {
                         always {
@@ -348,7 +348,7 @@ pipeline {
                 stage('EL8.4 OSTree') {
                     agent { label "rhel84cloudbase && psi && x86_64" }
                     steps {
-                        run_tests('ostree')
+                        run_tests('ostree', 'hybrid')
                     }
                     post {
                         always {
@@ -385,7 +385,7 @@ pipeline {
 
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
-void run_tests(test_type) {
+void run_tests(test_type, boot_type) {
 
     // Get CI machine details.
     sh (
@@ -428,11 +428,19 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/koji.sh"
         )
 
-        // Run the qcow2 test.
+        // Run the qcow2 BIOS boot test.
         sh (
-            label: "Integration test: QCOW2",
+            label: "Integration test: QCOW2, BIOS boot",
             script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2"
         )
+
+        if (boot_type == 'hybrid') {
+            // Run the qcow2 UEFI boot test.
+            sh (
+                label: "Integration test: QCOW2, UEFI boot",
+                script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2 uefi"
+            )
+        }
 
         // Run the openstack test.
         sh (
