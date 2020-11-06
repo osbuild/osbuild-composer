@@ -37,6 +37,7 @@ type job struct {
 	artifactLocation string
 	jobType          string
 	args             json.RawMessage
+	dynamicArgs      []json.RawMessage
 }
 
 func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
@@ -128,6 +129,7 @@ func (c *Client) RequestJob(types []string) (Job, error) {
 		id:               jr.Id,
 		jobType:          jr.Type,
 		args:             jr.Args,
+		dynamicArgs:      jr.DynamicArgs,
 		location:         location.String(),
 		artifactLocation: artifactLocation.String(),
 	}, nil
