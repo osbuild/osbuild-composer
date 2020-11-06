@@ -13,6 +13,9 @@ ARCH=$(uname -m)
 # Take the image type passed to the script or use qcow2 by default if nothing
 # was passed.
 IMAGE_TYPE=${1:-qcow2}
+# Take the boot type passed to the script or use BIOS by default if nothing
+# was passed.
+BOOT_TYPE=${2:-bios}
 
 # Select the file extension based on the image that we are building.
 IMAGE_EXTENSION=$IMAGE_TYPE
@@ -87,7 +90,7 @@ EOF
 
 # Set up variables.
 TEST_UUID=$(uuidgen)
-IMAGE_KEY=osbuild-composer-aws-test-${TEST_UUID}
+IMAGE_KEY=osbuild-composer-qemu-test-${TEST_UUID}
 INSTANCE_ADDRESS=192.168.100.50
 
 # Set up temporary files.
@@ -264,16 +267,31 @@ elif [[ $ARCH == 's390x' ]]; then
         --noautoconsole \
         --network network=integration,mac=34:49:22:B0:83:30
 else
-    sudo virt-install \
-        --name "$IMAGE_KEY" \
-        --memory 1024 \
-        --vcpus 2 \
-        --disk path="${LIBVIRT_IMAGE_PATH}" \
-        --disk path=${CLOUD_INIT_PATH},device=cdrom \
-        --import \
-        --os-variant rhel8-unknown \
-        --noautoconsole \
-        --network network=integration,mac=34:49:22:B0:83:30
+    # Both aarch64 and x86_64 support hybrid boot
+    if [[ $BOOT_TYPE == 'uefi' ]]; then
+        sudo virt-install \
+            --name "$IMAGE_KEY" \
+            --memory 1024 \
+            --vcpus 2 \
+            --disk path="${LIBVIRT_IMAGE_PATH}" \
+            --disk path=${CLOUD_INIT_PATH},device=cdrom \
+            --import \
+            --os-variant rhel8-unknown \
+            --noautoconsole \
+            --boot uefi,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd \
+            --network network=integration,mac=34:49:22:B0:83:30
+    else
+        sudo virt-install \
+            --name "$IMAGE_KEY" \
+            --memory 1024 \
+            --vcpus 2 \
+            --disk path="${LIBVIRT_IMAGE_PATH}" \
+            --disk path=${CLOUD_INIT_PATH},device=cdrom \
+            --import \
+            --os-variant rhel8-unknown \
+            --noautoconsole \
+            --network network=integration,mac=34:49:22:B0:83:30
+    fi
 fi
 
 # Set a number of maximum loops to check for our smoke test file via ssh.
@@ -302,7 +320,7 @@ done
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
 sudo virsh destroy "${IMAGE_KEY}"
-if [[ $ARCH == aarch64 ]]; then
+if [[ $ARCH == aarch64 || $BOOT_TYPE == 'uefi' ]]; then
     sudo virsh undefine "${IMAGE_KEY}" --nvram
 else
     sudo virsh undefine "${IMAGE_KEY}"
