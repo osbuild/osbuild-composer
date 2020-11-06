@@ -141,20 +141,14 @@ func (q *testJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *testJobQueue) JobStatus(id uuid.UUID, result interface{}) (queued, started, finished time.Time, canceled bool, err error) {
+func (q *testJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, err error) {
 	j, exists := q.jobs[id]
 	if !exists {
 		err = jobqueue.ErrNotExist
 		return
 	}
 
-	if !j.FinishedAt.IsZero() {
-		err = json.Unmarshal(j.Result, result)
-		if err != nil {
-			return
-		}
-	}
-
+	result = j.Result
 	queued = j.QueuedAt
 	started = j.StartedAt
 	finished = j.FinishedAt
