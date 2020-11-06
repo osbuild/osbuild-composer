@@ -63,6 +63,9 @@ paths:
                     enum:
                       - osbuild
                   args: {}
+                  dynamic_args:
+                    type: array
+                    items: {}
                 required:
                   - type
                   - location

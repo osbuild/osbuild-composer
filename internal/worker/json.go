@@ -35,11 +35,12 @@ type statusResponse struct {
 }
 
 type requestJobResponse struct {
-	Id               uuid.UUID       `json:"id"`
-	Location         string          `json:"location"`
-	ArtifactLocation string          `json:"artifact_location"`
-	Type             string          `json:"type"`
-	Args             json.RawMessage `json:"args,omitempty"`
+	Id               uuid.UUID         `json:"id"`
+	Location         string            `json:"location"`
+	ArtifactLocation string            `json:"artifact_location"`
+	Type             string            `json:"type"`
+	Args             json.RawMessage   `json:"args,omitempty"`
+	DynamicArgs      []json.RawMessage `json:"dynamic_args,omitempty"`
 }
 
 type getJobResponse struct {
