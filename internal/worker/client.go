@@ -25,6 +25,8 @@ type Job interface {
 	Id() uuid.UUID
 	Type() string
 	Args(args interface{}) error
+	DynamicArgs(i int, args interface{}) error
+	NDynamicArgs() int
 	Update(result interface{}) error
 	Canceled() (bool, error)
 	UploadArtifact(name string, reader io.Reader) error
@@ -145,6 +147,18 @@ func (j *job) Type() string {
 
 func (j *job) Args(args interface{}) error {
 	err := json.Unmarshal(j.args, args)
+	if err != nil {
+		return fmt.Errorf("error parsing job arguments: %v", err)
+	}
+	return nil
+}
+
+func (j *job) NDynamicArgs() int {
+	return len(j.dynamicArgs)
+}
+
+func (j *job) DynamicArgs(i int, args interface{}) error {
+	err := json.Unmarshal(j.dynamicArgs[i], args)
 	if err != nil {
 		return fmt.Errorf("error parsing job arguments: %v", err)
 	}
