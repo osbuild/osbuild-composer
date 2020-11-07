@@ -26,6 +26,51 @@ type OSBuildJobResult struct {
 	TargetErrors  []string        `json:"target_errors,omitempty"`
 }
 
+type KojiInitJob struct {
+	Server  string `json:"server"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Release string `json:"release"`
+}
+
+type KojiInitJobResult struct {
+	BuildID   uint64 `json:"build_id"`
+	Token     string `json:"token"`
+	KojiError error  `json:"koji_error"`
+}
+
+type OSBuildKojiJob struct {
+	Manifest      distro.Manifest `json:"manifest"`
+	ImageName     string          `json:"image_name"`
+	KojiServer    string          `json:"koji_server"`
+	KojiDirectory string          `json:"koji_directory"`
+	KojiFilename  string          `json:"koji_filename"`
+}
+
+type OSBuildKojiJobResult struct {
+	HostOS        string          `json:"host_os"`
+	Arch          string          `json:"arch"`
+	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
+	ImageHash     string          `json:"image_hash"`
+	ImageSize     uint64          `json:"image_size"`
+	KojiError     error           `json:"koji_error"`
+}
+
+type KojiFinalizeJob struct {
+	Server        string   `json:"server"`
+	Name          string   `json:"name"`
+	Version       string   `json:"version"`
+	Release       string   `json:"release"`
+	KojiFilenames []string `json:"koji_filenames"`
+	KojiDirectory string   `json:"koji_directory"`
+	TaskID        uint64   `json:"task_id"` /* https://pagure.io/koji/issue/215 */
+	StartTime     uint64   `json:"start_time"`
+}
+
+type KojiFinalizeJobResult struct {
+	KojiError error `json:"koji_error"`
+}
+
 //
 // JSON-serializable types for the HTTP API
 //

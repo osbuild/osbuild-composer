@@ -154,6 +154,16 @@ func main() {
 			Store:       store,
 			KojiServers: kojiServers,
 		},
+		"osbuild-koji": &OSBuildKojiJobImpl{
+			Store:       store,
+			KojiServers: kojiServers,
+		},
+		"koji-init": &KojiInitJobImpl{
+			KojiServers: kojiServers,
+		},
+		"koji-finalize": &KojiFinalizeJobImpl{
+			KojiServers: kojiServers,
+		},
 	}
 
 	acceptedJobTypes := []string{}
