@@ -261,7 +261,9 @@ func TestBlueprintsInfoToml(t *testing.T) {
 		Description: "Test",
 		Version:     "0.0.0",
 		Packages: []blueprint.Package{
-			{"httpd", "2.4.*"},
+			{
+				Name:    "httpd",
+				Version: "2.4.*"},
 		},
 		Groups:  []blueprint.Group{},
 		Modules: []blueprint.Package{},

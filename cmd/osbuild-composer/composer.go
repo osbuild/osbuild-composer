@@ -70,16 +70,15 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 
 	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
-	// construct job types of the form osbuild:{arch} for all arches
-	jobTypes := []string{"osbuild"}
-	jobTypesMap := map[string]bool{}
+	// construct job types of the form osbuild:{arch} and osbuild-koji:{arch} for all arches
+	jobTypes := []string{"osbuild", "koji-init", "koji-finalize"}
+	archSet := map[string]bool{}
 	for _, name := range c.distros.List() {
 		d := c.distros.GetDistro(name)
 		for _, arch := range d.ListArches() {
-			jt := "osbuild:" + arch
-			if !jobTypesMap[jt] {
-				jobTypesMap[jt] = true
-				jobTypes = append(jobTypes, jt)
+			if !archSet[arch] {
+				archSet[arch] = true
+				jobTypes = append(jobTypes, "osbuild:"+arch, "osbuild-koji:"+arch)
 			}
 		}
 	}
