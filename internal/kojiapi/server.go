@@ -2,13 +2,12 @@
 package kojiapi
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -17,7 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -76,22 +74,15 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported distribution: %s", request.Distribution))
 	}
 
-	kojiServer, err := url.Parse(request.Koji.Server)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid Koji server: %s", request.Koji.Server))
-	}
-	creds, exists := h.server.kojiServers[kojiServer.Hostname()]
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Koji server has not been configured: %s", kojiServer.Hostname()))
+	type imageRequest struct {
+		manifest distro.Manifest
+		arch     string
+		filename string
 	}
 
-	type imageRequest struct {
-		manifest     distro.Manifest
-		arch         string
-		filename     string
-		kojiFilename string
-	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
+	kojiFilenames := make([]string, len(request.ImageRequests))
+	kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
 
 	for i, ir := range request.ImageRequests {
 		arch, err := d.GetArch(ir.Architecture)
@@ -134,7 +125,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].filename = imageType.Filename()
 
-		filename := fmt.Sprintf(
+		kojiFilenames[i] = fmt.Sprintf(
 			"%s-%s-%s.%s%s",
 			request.Name,
 			request.Version,
@@ -142,69 +133,73 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			ir.Architecture,
 			splitExtension(imageType.Filename()),
 		)
-
-		imageRequests[i].kojiFilename = filename
 	}
 
-	var ir imageRequest
-	if len(imageRequests) == 1 {
-		// NOTE: the store currently does not support multi-image composes
-		ir = imageRequests[0]
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, "Only single-image composes are currently supported")
-	}
-
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-	}
-
-	k, err := koji.NewFromGSSAPI(request.Koji.Server, &creds, transport)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not log into Koji: %v", err))
-	}
-
-	defer func() {
-		err := k.Logout()
-		if err != nil {
-			log.Printf("koji logout failed: %v", err)
-		}
-	}()
-
-	buildInfo, err := k.CGInitBuild(request.Name, request.Version, request.Release)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", err))
-	}
-
-	job := worker.OSBuildJob{
-		Manifest: ir.manifest,
-		Targets: []*target.Target{
-			target.NewKojiTarget(&target.KojiTargetOptions{
-				BuildID:         uint64(buildInfo.BuildID),
-				TaskID:          uint64(request.Koji.TaskId),
-				Token:           buildInfo.Token,
-				Name:            request.Name,
-				Version:         request.Version,
-				Release:         request.Release,
-				Filename:        ir.filename,
-				UploadDirectory: "osbuild-composer-koji-" + uuid.New().String(),
-				Server:          request.Koji.Server,
-				KojiFilename:    ir.kojiFilename,
-			}),
-		},
-	}
-
-	id, err := h.server.workers.EnqueueOSBuild(ir.arch, &job)
+	initID, err := h.server.workers.EnqueueKojiInit(&worker.KojiInitJob{
+		Server:  request.Koji.Server,
+		Name:    request.Name,
+		Version: request.Version,
+		Release: request.Release,
+	})
 	if err != nil {
 		// This is a programming errror.
 		panic(err)
 	}
 
+	var buildIDs []uuid.UUID
+	for i, ir := range imageRequests {
+		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, &worker.OSBuildKojiJob{
+			Manifest:      ir.manifest,
+			ImageName:     ir.filename,
+			KojiServer:    request.Koji.Server,
+			KojiDirectory: kojiDirectory,
+			KojiFilename:  kojiFilenames[i],
+		}, initID)
+		if err != nil {
+			// This is a programming errror.
+			panic(err)
+		}
+		buildIDs = append(buildIDs, id)
+	}
+
+	id, err := h.server.workers.EnqueueKojiFinalize(&worker.KojiFinalizeJob{
+		Server:        request.Koji.Server,
+		Name:          request.Name,
+		Version:       request.Version,
+		Release:       request.Release,
+		KojiFilenames: kojiFilenames,
+		KojiDirectory: kojiDirectory,
+		TaskID:        uint64(request.Koji.TaskId),
+		StartTime:     uint64(time.Now().Unix()),
+	}, initID, buildIDs)
+	if err != nil {
+		// This is a programming errror.
+		panic(err)
+	}
+
+	// TODO: remove
+	// For backwards compatibility we must only return once the
+	// build ID is known. This logic should live in the client,
+	// and `JobStatus()` should have a way to block until it
+	// changes.
+	var initResult worker.KojiInitJobResult
+	for {
+		status, _, err := h.server.workers.JobStatus(initID, &initResult)
+		if err != nil {
+			panic(err)
+		}
+		if !status.Finished.IsZero() || status.Canceled {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if initResult.KojiError != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", initResult.KojiError))
+	}
+
 	return ctx.JSON(http.StatusCreated, &api.ComposeResponse{
 		Id:          id.String(),
-		KojiBuildId: buildInfo.BuildID,
+		KojiBuildId: int(initResult.BuildID),
 	})
 }
 
@@ -227,7 +222,7 @@ func splitExtension(filename string) string {
 	return "." + strings.Join(filenameParts[1:], ".")
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.KojiFinalizeJobResult) string {
 	if js.Canceled {
 		return "failure"
 	}
@@ -240,7 +235,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 		return "pending"
 	}
 
-	if result.Success {
+	if result.KojiError == nil {
 		return "success"
 	}
 
@@ -274,19 +269,15 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	var result worker.OSBuildJobResult
+	var result worker.KojiFinalizeJobResult
 	status, err := h.server.workers.JobStatus(id, &result)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
 	response := api.ComposeStatus{
+		// TODO: add detailed information about compose state, includeing koji buildID
 		Status: composeStatusFromJobStatus(status, &result),
-		ImageStatuses: []api.ImageStatus{
-			{
-				Status: imageStatusFromJobStatus(status, &result),
-			},
-		},
 	}
 	return ctx.JSON(http.StatusOK, response)
 }

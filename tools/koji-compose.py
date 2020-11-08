@@ -40,6 +40,10 @@ def compose_request(distro, koji, arch):
             "architecture": "x86_64",
             "image_type": "qcow2",
             "repositories": repositories
+        },{
+            "architecture": "x86_64",
+            "image_type": "ami",
+            "repositories": repositories
         }]
     }
 
