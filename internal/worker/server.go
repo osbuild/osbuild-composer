@@ -176,8 +176,8 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 	// restriction: arch for osbuild jobs.
 	jts := []string{}
 	for _, t := range jobTypes {
-		if t == "osbuild" {
-			t = "osbuild:" + arch
+		if t == "osbuild" || t == "osbuild-koji" {
+			t = t + ":" + arch
 		}
 		jts = append(jts, t)
 	}
@@ -206,6 +206,8 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 
 	if jobType == "osbuild:"+arch {
 		jobType = "osbuild"
+	} else if jobType == "osbuild-koji:"+arch {
+		jobType = "osbuild-koji"
 	}
 
 	return token, jobId, jobType, args, dynamicArgs, nil
