@@ -83,8 +83,20 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.server.Handler.ServeHTTP(writer, request)
 }
 
-func (s *Server) Enqueue(arch string, job *OSBuildJob) (uuid.UUID, error) {
+func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
 	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
+}
+
+func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
+	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
+}
+
+func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
+	return s.jobs.Enqueue("koji-init", job, nil)
+}
+
+func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
+	return s.jobs.Enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
 func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, error) {

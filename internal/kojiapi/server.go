@@ -196,7 +196,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		},
 	}
 
-	id, err := h.server.workers.Enqueue(ir.arch, &job)
+	id, err := h.server.workers.EnqueueOSBuild(ir.arch, &job)
 	if err != nil {
 		// This is a programming errror.
 		panic(err)

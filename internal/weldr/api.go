@@ -1866,7 +1866,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	} else {
 		var jobId uuid.UUID
 
-		jobId, err = api.workers.Enqueue(api.arch.Name(), &worker.OSBuildJob{
+		jobId, err = api.workers.EnqueueOSBuild(api.arch.Name(), &worker.OSBuildJob{
 			Manifest:        manifest,
 			Targets:         targets,
 			ImageName:       imageType.Filename(),

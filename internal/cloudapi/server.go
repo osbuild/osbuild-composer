@@ -188,7 +188,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := server.workers.Enqueue(ir.arch, &worker.OSBuildJob{
+	id, err := server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
 		Manifest: ir.manifest,
 		Targets:  targets,
 	})
