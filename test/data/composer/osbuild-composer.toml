@@ -2,10 +2,6 @@
 allowed_domains = [ "localhost", "client.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
 
-[koji.servers.localhost.kerberos]
-principal = "osbuild-krb@LOCAL"
-keytab = "/etc/osbuild-composer/client.keytab"
-
 [worker]
 allowed_domains = [ "localhost", "worker.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"

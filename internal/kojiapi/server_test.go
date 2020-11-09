@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +27,7 @@ func newTestKojiServer(t *testing.T) *kojiapi.Server {
 	workers := worker.NewServer(nil, testjobqueue.New(), "")
 	require.NotNil(t, workers)
 
-	server := kojiapi.NewServer(nil, workers, rpm, distros, map[string]koji.GSSAPICredentials{})
+	server := kojiapi.NewServer(nil, workers, rpm, distros)
 	require.NotNil(t, server)
 
 	return server
