@@ -263,7 +263,7 @@ func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, err error) {
+func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
@@ -274,6 +274,7 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, st
 	started = j.StartedAt
 	finished = j.FinishedAt
 	canceled = j.Canceled
+	deps = j.Dependencies
 
 	return
 }

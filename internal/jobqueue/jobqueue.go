@@ -50,13 +50,15 @@ type JobQueue interface {
 	// Cancel a job. Does nothing if the job has already finished.
 	CancelJob(id uuid.UUID) error
 
+	// If the job has finished, returns the result as raw JSON.
+	//
 	// Returns the current status of the job, in the form of three times:
 	// queued, started, and finished. `started` and `finished` might be the
 	// zero time (check with t.IsZero()), when the job is not running or
 	// finished, respectively.
 	//
-	// If the job is finished, its result will be returned in `result`.
-	JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, err error)
+	// Lastly, the IDs of the jobs dependencies are returned.
+	JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error)
 }
 
 var (
