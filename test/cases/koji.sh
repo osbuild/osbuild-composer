@@ -14,13 +14,6 @@ function greenprint {
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-if [[ $ID == rhel ]] && ! rpm -q epel-release; then
-    greenprint "📦 Setting up EPEL repository"
-    curl -Ls --retry 5 --output /tmp/epel.rpm \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo rpm -Uvh /tmp/epel.rpm
-fi
-
 greenprint "Adding podman dnsname plugin"
 if [[ $ID == rhel ]]; then
   sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
