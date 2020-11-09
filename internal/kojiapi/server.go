@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -26,17 +25,15 @@ type Server struct {
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distro.Registry
-	kojiServers map[string]koji.GSSAPICredentials
 }
 
 // NewServer creates a new koji server
-func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry, kojiServers map[string]koji.GSSAPICredentials) *Server {
+func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *Server {
 	s := &Server{
 		logger:      logger,
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
-		kojiServers: kojiServers,
 	}
 
 	return s

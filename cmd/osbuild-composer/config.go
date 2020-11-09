@@ -8,12 +8,6 @@ import (
 
 type ComposerConfigFile struct {
 	Koji struct {
-		Servers map[string]struct {
-			Kerberos *struct {
-				Principal string `toml:"principal"`
-				KeyTab    string `toml:"keytab"`
-			} `toml:"kerberos,omitempty"`
-		} `toml:"servers"`
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
 	} `toml:"koji"`

@@ -18,7 +18,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
-	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 
@@ -130,17 +129,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListe
 
 func (c *Composer) InitAPI(cert, key string, l net.Listener) error {
 	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
-
-	servers := make(map[string]koji.GSSAPICredentials)
-	for name, creds := range c.config.Koji.Servers {
-		if creds.Kerberos != nil {
-			servers[name] = koji.GSSAPICredentials{
-				Principal: creds.Kerberos.Principal,
-				KeyTab:    creds.Kerberos.KeyTab,
-			}
-		}
-	}
-	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros, servers)
+	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 
 	tlsConfig, err := createTLSConfig(&connectionConfig{
 		CACertFile:     c.config.Koji.CA,
