@@ -33,14 +33,6 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Mock is only available in EPEL for RHEL.
-if [[ $ID == rhel ]] && ! rpm -q epel-release; then
-    greenprint "📦 Setting up EPEL repository"
-    curl -Ls --retry 5 --output /tmp/epel.rpm \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo rpm -Uvh /tmp/epel.rpm
-fi
-
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
