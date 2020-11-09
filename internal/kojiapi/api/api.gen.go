@@ -34,6 +34,7 @@ type ComposeResponse struct {
 // ComposeStatus defines model for ComposeStatus.
 type ComposeStatus struct {
 	ImageStatuses []ImageStatus `json:"image_statuses"`
+	KojiBuildId   *int          `json:"koji_build_id,omitempty"`
 	KojiTaskId    int           `json:"koji_task_id"`
 	Status        string        `json:"status"`
 }
