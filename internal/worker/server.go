@@ -99,16 +99,16 @@ func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, bui
 	return s.jobs.Enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
-func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, error) {
-	rawResult, queued, started, finished, canceled, err := s.jobs.JobStatus(id)
+func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid.UUID, error) {
+	rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !finished.IsZero() && !canceled {
 		err = json.Unmarshal(rawResult, result)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
+			return nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
 		}
 	}
 
@@ -125,7 +125,7 @@ func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, error)
 		Started:  started,
 		Finished: finished,
 		Canceled: canceled,
-	}, nil
+	}, deps, nil
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
@@ -139,7 +139,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
-	status, err := s.JobStatus(id, &json.RawMessage{})
+	status, _, err := s.JobStatus(id, &json.RawMessage{})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -168,7 +168,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return errors.New("Artifacts not enabled")
 	}
 
-	status, err := s.JobStatus(id, &json.RawMessage{})
+	status, _, err := s.JobStatus(id, &json.RawMessage{})
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 
 	var dynamicArgs []json.RawMessage
 	for _, depID := range depIDs {
-		result, _, _, _, _, _ := s.jobs.JobStatus(depID)
+		result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
 		dynamicArgs = append(dynamicArgs, result)
 	}
 
@@ -323,7 +323,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 		return ctx.JSON(http.StatusOK, getJobResponse{})
 	}
 
-	status, err := h.server.JobStatus(jobId, &json.RawMessage{})
+	status, _, err := h.server.JobStatus(jobId, &json.RawMessage{})
 	if err != nil {
 		return err
 	}

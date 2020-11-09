@@ -147,21 +147,23 @@ func TestDependencies(t *testing.T) {
 		require.ElementsMatch(t, []uuid.UUID{one, two}, r)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		_, queued, started, finished, canceled, err := q.JobStatus(j)
+		_, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, started.IsZero())
 		require.True(t, finished.IsZero())
 		require.False(t, canceled)
+		require.ElementsMatch(t, deps, []uuid.UUID{one, two})
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}, []uuid.UUID{one, two}))
 
-		result, queued, started, finished, canceled, err := q.JobStatus(j)
+		result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, !started.IsZero())
 		require.True(t, !finished.IsZero())
 		require.False(t, canceled)
+		require.ElementsMatch(t, deps, []uuid.UUID{one, two})
 
 		err = json.Unmarshal(result, &testResult{})
 		require.NoError(t, err)
@@ -172,12 +174,13 @@ func TestDependencies(t *testing.T) {
 		two := pushTestJob(t, q, "test", nil, nil)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two})
-		_, queued, started, finished, canceled, err := q.JobStatus(j)
+		_, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, started.IsZero())
 		require.True(t, finished.IsZero())
 		require.False(t, canceled)
+		require.ElementsMatch(t, deps, []uuid.UUID{one, two})
 
 		r := []uuid.UUID{}
 		r = append(r, finishNextTestJob(t, q, "test", testResult{}, nil))
@@ -186,12 +189,13 @@ func TestDependencies(t *testing.T) {
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}, []uuid.UUID{one, two}))
 
-		result, queued, started, finished, canceled, err := q.JobStatus(j)
+		result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.True(t, !queued.IsZero())
 		require.True(t, !started.IsZero())
 		require.True(t, !finished.IsZero())
 		require.False(t, canceled)
+		require.ElementsMatch(t, deps, []uuid.UUID{one, two})
 
 		err = json.Unmarshal(result, &testResult{})
 		require.NoError(t, err)
@@ -248,7 +252,7 @@ func TestCancel(t *testing.T) {
 	require.NotEmpty(t, id)
 	err = q.CancelJob(id)
 	require.NoError(t, err)
-	result, _, _, _, canceled, err := q.JobStatus(id)
+	result, _, _, _, canceled, _, err := q.JobStatus(id)
 	require.NoError(t, err)
 	require.True(t, canceled)
 	require.Nil(t, result)
@@ -266,7 +270,7 @@ func TestCancel(t *testing.T) {
 	require.Equal(t, json.RawMessage("null"), args)
 	err = q.CancelJob(id)
 	require.NoError(t, err)
-	result, _, _, _, canceled, err = q.JobStatus(id)
+	result, _, _, _, canceled, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.True(t, canceled)
 	require.Nil(t, result)
@@ -286,7 +290,7 @@ func TestCancel(t *testing.T) {
 	require.NoError(t, err)
 	err = q.CancelJob(id)
 	require.NoError(t, err)
-	result, _, _, _, canceled, err = q.JobStatus(id)
+	result, _, _, _, canceled, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.False(t, canceled)
 	err = json.Unmarshal(result, &testResult{})

@@ -216,7 +216,7 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	}
 
 	var result worker.OSBuildJobResult
-	status, err := server.workers.JobStatus(jobId, &result)
+	status, _, err := server.workers.JobStatus(jobId, &result)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
 		return
