@@ -55,6 +55,38 @@ paths:
             text/plain:
               schema:
                 type: string
+  '/compose/{id}/logs':
+    get:
+      summary: Get logs for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the status of a running or finished compose. This includes whether or not it succeeded, and also meta information about the result.'
+      responses:
+        '200':
+          description: The logs for the given compose, in no particular format (though valid JSON).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeLogs'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
   /compose:
     post:
       summary: Create compose
@@ -115,6 +147,12 @@ components:
         koji_task_id:
           type: integer
           example: 203143
+    ComposeLogs:
+      required:
+        - image_logs
+      properties:
+        image_logs:
+          type: array
     ImageStatus:
       required:
         - status

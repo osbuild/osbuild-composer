@@ -298,6 +298,31 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 	})
 }
 
+// Get logs for a compose
+func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
+	id, err := uuid.Parse(idstr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	var result worker.OSBuildJobResult
+	_, err = h.server.workers.JobStatus(id, &result)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
+	}
+
+	// Return the OSBuildJobResult as-is for now. The contents of ImageLogs
+	// is not part of the API. It's meant for a human to be able to access
+	// the logs, which just happen to be in JSON.
+	response := api.ComposeLogs{
+		ImageLogs: []interface{}{
+			result,
+		},
+	}
+
+	return ctx.JSON(http.StatusOK, response)
+}
+
 // A simple echo.Binder(), which only accepts application/json, but is more
 // strict than echo's DefaultBinder. It does not handle binding query
 // parameters either.

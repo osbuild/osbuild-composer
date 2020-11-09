@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+// ComposeLogs defines model for ComposeLogs.
+type ComposeLogs struct {
+	ImageLogs []interface{} `json:"image_logs"`
+}
+
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Distribution  string         `json:"distribution"`
@@ -76,6 +81,9 @@ type ServerInterface interface {
 	// The status of a compose
 	// (GET /compose/{id})
 	GetComposeId(ctx echo.Context, id string) error
+	// Get logs for a compose.
+	// (GET /compose/{id}/logs)
+	GetComposeIdLogs(ctx echo.Context, id string) error
 	// status
 	// (GET /status)
 	GetStatus(ctx echo.Context) error
@@ -108,6 +116,22 @@ func (w *ServerInterfaceWrapper) GetComposeId(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetComposeId(ctx, id)
+	return err
+}
+
+// GetComposeIdLogs converts echo context to params.
+func (w *ServerInterfaceWrapper) GetComposeIdLogs(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetComposeIdLogs(ctx, id)
 	return err
 }
 
@@ -144,6 +168,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	router.POST("/compose", wrapper.PostCompose)
 	router.GET("/compose/:id", wrapper.GetComposeId)
+	router.GET("/compose/:id/logs", wrapper.GetComposeIdLogs)
 	router.GET("/status", wrapper.GetStatus)
 
 }

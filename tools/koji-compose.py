@@ -86,6 +86,14 @@ def main(distro, arch):
 
         time.sleep(10)
 
+    r = requests.get(f"https://localhost/api/composer-koji/v1/compose/{compose_id}/logs",
+                     cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
+                     verify="/etc/osbuild-composer/ca-crt.pem")
+    logs = r.json()
+    assert "image_logs" in logs
+    assert type(logs["image_logs"]) == list
+    assert len(logs["image_logs"]) == len(cr["image_requests"])
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
