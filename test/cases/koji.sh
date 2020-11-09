@@ -5,6 +5,7 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.
 source /etc/os-release
+ARCH=$(uname -m)
 
 # Colorful output.
 function greenprint {
@@ -56,7 +57,7 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo /usr/libexec/osbuild-composer-test/koji-compose.py "${ID}-${VERSION_ID%.*}"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "${ID}-${VERSION_ID%.*}" "${ARCH}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
