@@ -147,6 +147,9 @@ components:
         koji_task_id:
           type: integer
           example: 203143
+        koji_build_id:
+          type: integer
+          example: 42
     ComposeLogs:
       required:
         - image_logs

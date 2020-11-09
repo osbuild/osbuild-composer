@@ -222,13 +222,22 @@ func splitExtension(filename string) string {
 	return "." + strings.Join(filenameParts[1:], ".")
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.KojiFinalizeJobResult) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildKojiJobResult, result *worker.KojiFinalizeJobResult) string {
 	if js.Canceled {
 		return "failure"
 	}
 
-	if js.Started.IsZero() {
-		return "pending"
+	if initResult.KojiError != nil {
+		return "failure"
+	}
+
+	for _, buildResult := range buildResults {
+		if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
+			return "failure"
+		}
+		if buildResult.KojiError != nil {
+			return "failure"
+		}
 	}
 
 	if js.Finished.IsZero() {
@@ -242,8 +251,12 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.KojiFinaliz
 	return "failure"
 }
 
-func imageStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
+func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) string {
 	if js.Canceled {
+		return "failure"
+	}
+
+	if initResult.KojiError != nil {
 		return "failure"
 	}
 
@@ -255,7 +268,7 @@ func imageStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobRes
 		return "building"
 	}
 
-	if result.Success {
+	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == nil {
 		return "success"
 	}
 
@@ -269,15 +282,41 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	var result worker.KojiFinalizeJobResult
-	status, err := h.server.workers.JobStatus(id, &result)
+	var finalizeResult worker.KojiFinalizeJobResult
+	finalizeStatus, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
+	var initResult worker.KojiInitJobResult
+	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+	if err != nil {
+		// this is a programming error
+		panic(err)
+	}
+
+	var buildResults []worker.OSBuildKojiJobResult
+	var imageStatuses []api.ImageStatus
+	for i := 1; i < len(deps); i++ {
+		var buildResult worker.OSBuildKojiJobResult
+		jobStatus, _, err := h.server.workers.JobStatus(deps[i], &buildResult)
+		if err != nil {
+			// this is a programming error
+			panic(err)
+		}
+		buildResults = append(buildResults, buildResult)
+		imageStatuses = append(imageStatuses, api.ImageStatus{
+			Status: imageStatusFromJobStatus(jobStatus, &initResult, &buildResult),
+		})
+	}
+
 	response := api.ComposeStatus{
-		// TODO: add detailed information about compose state, includeing koji buildID
-		Status: composeStatusFromJobStatus(status, &result),
+		Status:        composeStatusFromJobStatus(finalizeStatus, &initResult, buildResults, &finalizeResult),
+		ImageStatuses: imageStatuses,
+	}
+	buildID := int(initResult.BuildID)
+	if buildID != 0 {
+		response.KojiBuildId = &buildID
 	}
 	return ctx.JSON(http.StatusOK, response)
 }
