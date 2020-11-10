@@ -119,6 +119,10 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 		require.Lenf(t, replyJSON, 0, "%s: expected no response body, but got:\n%s", path, replyJSON)
 	}
 
+	if expectedJSON == "?" {
+		return
+	}
+
 	var reply, expected interface{}
 	err = json.Unmarshal(replyJSON, &reply)
 	require.NoErrorf(t, err, "%s: json.Unmarshal failed for\n%s", path, string(replyJSON))
