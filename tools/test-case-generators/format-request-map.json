@@ -60,7 +60,8 @@
       "repositories": [],
       "filename": "commit.tar",
       "blueprint": {}
-    }
+    },
+    "overrides": {}
   },
   "openstack": {
     "boot": {
