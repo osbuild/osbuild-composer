@@ -97,9 +97,71 @@ func TestCancel(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
+	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+		`{"canceled":false}`)
+
 	err = server.Cancel(jobId)
 	require.NoError(t, err)
 
 	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		`{"canceled":true}`)
+}
+
+func TestUpdate(t *testing.T) {
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	if err != nil {
+		t.Fatalf("error getting arch from distro")
+	}
+	imageType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		t.Fatalf("error getting image type from arch")
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest")
+	}
+	server := worker.NewServer(nil, testjobqueue.New(), "")
+
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+	require.Equal(t, "osbuild", typ)
+	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
+
+	test.TestRoute(t, server, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK, `{}`)
+	test.TestRoute(t, server, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound, `*`)
+}
+
+func TestUpload(t *testing.T) {
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	if err != nil {
+		t.Fatalf("error getting arch from distro")
+	}
+	imageType, err := arch.GetImageType("qcow2")
+	if err != nil {
+		t.Fatalf("error getting image type from arch")
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest")
+	}
+	server := worker.NewServer(nil, testjobqueue.New(), "")
+
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, jobID, j)
+	require.Equal(t, "osbuild", typ)
+	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
+
+	test.TestRoute(t, server, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
 }
