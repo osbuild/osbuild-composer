@@ -332,19 +332,37 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	var result worker.OSBuildJobResult
-	_, _, err = h.server.workers.JobStatus(id, &result)
+	var finalizeResult worker.KojiFinalizeJobResult
+	_, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
-	// Return the OSBuildJobResult as-is for now. The contents of ImageLogs
+	var initResult worker.KojiInitJobResult
+	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+	if err != nil {
+		// This is a programming errror.
+		panic(err)
+	}
+
+	var buildResults []interface{}
+	for i := 1; i < len(deps); i++ {
+		var buildResult worker.OSBuildJobResult
+		_, _, err = h.server.workers.JobStatus(deps[i], &buildResult)
+		if err != nil {
+			// This is a programming error.
+			panic(err)
+		}
+		buildResults = append(buildResults, buildResult)
+	}
+
+	// Return the OSBuildJobResults as-is for now. The contents of ImageLogs
 	// is not part of the API. It's meant for a human to be able to access
 	// the logs, which just happen to be in JSON.
 	response := api.ComposeLogs{
-		ImageLogs: []interface{}{
-			result,
-		},
+		KojiInitLogs:   initResult,
+		KojiImportLogs: finalizeResult,
+		ImageLogs:      buildResults,
 	}
 
 	return ctx.JSON(http.StatusOK, response)

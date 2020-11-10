@@ -12,7 +12,9 @@ import (
 
 // ComposeLogs defines model for ComposeLogs.
 type ComposeLogs struct {
-	ImageLogs []interface{} `json:"image_logs"`
+	ImageLogs      []interface{} `json:"image_logs"`
+	KojiImportLogs interface{}   `json:"koji_import_logs"`
+	KojiInitLogs   interface{}   `json:"koji_init_logs"`
 }
 
 // ComposeRequest defines model for ComposeRequest.
