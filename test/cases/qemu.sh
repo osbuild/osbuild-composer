@@ -301,6 +301,9 @@ else
 fi
 sudo rm -f "$LIBVIRT_IMAGE_PATH" $CLOUD_INIT_PATH
 
+# Also delete the compose so we don't run out of disk space
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
   greenprint "💚 Success"
