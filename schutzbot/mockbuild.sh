@@ -68,9 +68,8 @@ sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R "$USER" "${REPO_DIR%%/*}"
 
-# Move the logs out of the way.
-greenprint "🧹 Retaining logs from mock build"
-mv "${REPO_DIR}"/*.log "$WORKSPACE"
+greenprint "🧹 Remove logs from mock build"
+rm "${REPO_DIR}"/*.log
 
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
