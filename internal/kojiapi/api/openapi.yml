@@ -152,8 +152,12 @@ components:
           example: 42
     ComposeLogs:
       required:
+        - koji_init_logs
+        - koji_import_logs
         - image_logs
       properties:
+        koji_init_logs: {}
+        koji_import_logs: {}
         image_logs:
           type: array
     ImageStatus:
