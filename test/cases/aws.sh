@@ -270,6 +270,9 @@ $AWS_CMD ec2 terminate-instances --instance-id "${INSTANCE_ID}"
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 
+# Also delete the compose so we don't run out of disk space
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+
 # Use the return code of the smoke test to determine if we passed or failed.
 # On rhel continue with the cloudapi test
 if [[ $RESULTS == 1 ]]; then
