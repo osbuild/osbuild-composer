@@ -77,6 +77,9 @@ Obsoletes: lorax-composer < 34.3
 Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
 
+# remove when F34 is EOL
+Obsoletes: osbuild-composer-koji
+
 %description
 %{common_description}
 
@@ -158,7 +161,6 @@ install -m 0644 -vp distribution/osbuild-remote-worker.socket   %{buildroot}%{_u
 install -m 0644 -vp distribution/osbuild-remote-worker@.service %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-worker@.service        %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-composer-api.socket    %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-composer-koji.socket   %{buildroot}%{_unitdir}/
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/osbuild-composer.{service,socket} %{buildroot}%{_unitdir}/
 install -m 0644 -vp distribution/osbuild-*worker*.{service,socket} %{buildroot}%{_unitdir}/
@@ -294,7 +296,6 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %package tests
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
-Requires:   %{name}-koji = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   genisoimage
@@ -345,33 +346,6 @@ Integration tests to be run on a pristine-dedicated system to test the osbuild-c
 %{_datadir}/tests/osbuild-composer/
 
 %endif
-
-%package koji
-Summary:    osbuild-composer for pushing images to Koji
-Requires:   %{name} = %{version}-%{release}
-
-# remove in F34
-Obsoletes: golang-github-osbuild-composer-rcm < %{version}-%{release}
-Provides:  golang-github-osbuild-composer-rcm = %{version}-%{release}
-# remove in the future
-Obsoletes: osbuild-composer-rcm < %{version}-%{release}
-Provides:  osbuild-composer-rcm = %{version}-%{release}
-
-%description koji
-osbuild-composer specifically for pushing images to Koji. This package is only
-needed for backwards compatibility and will be removed in the future.
-
-%files koji
-%{_unitdir}/osbuild-composer-koji.socket
-
-%post koji
-%systemd_post osbuild-composer-koji.socket
-
-%preun koji
-%systemd_preun osbuild-composer-koji.socket
-
-%postun koji
-%systemd_postun_with_restart osbuild-composer-koji.socket
 
 %changelog
 # the changelog is distribution-specific, therefore it doesn't make sense to have it upstream
