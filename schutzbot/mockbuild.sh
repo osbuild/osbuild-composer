@@ -29,9 +29,6 @@ fi
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c make mock rpm-build s3cmd
 
-# Jenkins sets a workspace variable as the root of its working directory.
-WORKSPACE=${WORKSPACE:-$(pwd)}
-
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
