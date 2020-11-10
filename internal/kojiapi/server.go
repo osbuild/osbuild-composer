@@ -333,7 +333,7 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 	}
 
 	var result worker.OSBuildJobResult
-	_, err = h.server.workers.JobStatus(id, &result)
+	_, _, err = h.server.workers.JobStatus(id, &result)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
