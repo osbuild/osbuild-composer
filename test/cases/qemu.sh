@@ -205,10 +205,18 @@ sudo kill ${WORKER_JOURNAL_PID}
 
 # Download the image.
 greenprint "📥 Downloading the image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
-LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
-sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
+
+# Current $PWD is inside /tmp, there may not be enough space for an image.
+# Let's use a bigger temporary directory for this operation.
+BIG_TEMP_DIR=/var/lib/osbuild-composer-tests
+sudo rm -rf "${BIG_TEMP_DIR}" || true
+sudo mkdir "${BIG_TEMP_DIR}"
+pushd "${BIG_TEMP_DIR}"
+    sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+    IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
+    LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
+    sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
+popd
 
 # Prepare cloud-init data.
 CLOUD_INIT_DIR=$(mktemp -d)
