@@ -66,15 +66,11 @@ const channelSize = 100
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
 // access to `dir`. If `dir` contains jobs created from previous runs, they are
 // loaded and rescheduled to run if necessary.
-func New(dir string, acceptedJobTypes []string) (*fsJobQueue, error) {
+func New(dir string) (*fsJobQueue, error) {
 	q := &fsJobQueue{
 		db:         jsondb.New(dir, 0600),
 		pending:    make(map[string]chan uuid.UUID),
 		dependants: make(map[uuid.UUID][]uuid.UUID),
-	}
-
-	for _, jt := range acceptedJobTypes {
-		q.pending[jt] = make(chan uuid.UUID, channelSize)
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
@@ -103,10 +99,6 @@ func New(dir string, acceptedJobTypes []string) (*fsJobQueue, error) {
 func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-
-	if _, exists := q.pending[jobType]; !exists {
-		return uuid.Nil, fmt.Errorf("this queue does not accept job type '%s'", jobType)
-	}
 
 	var j = job{
 		Id:           uuid.New(),
@@ -161,9 +153,12 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	// queue doesn't accept.
 	chans := []chan uuid.UUID{}
 	for _, jt := range jobTypes {
-		if c, exists := q.pending[jt]; exists {
-			chans = append(chans, c)
+		c, exists := q.pending[jt]
+		if !exists {
+			c = make(chan uuid.UUID, channelSize)
+			q.pending[jt] = c
 		}
+		chans = append(chans, c)
 	}
 
 	// Loop until finding a non-canceled job.
@@ -174,6 +169,15 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		q.mu.Unlock()
 		id, err := selectUUIDChannel(ctx, chans)
 		q.mu.Lock()
+
+		// Delete empty channels
+		for _, jt := range jobTypes {
+			c, exists := q.pending[jt]
+			if exists && len(c) == 0 {
+				close(c)
+				delete(q.pending, jt)
+			}
+		}
 
 		if err != nil {
 			return uuid.Nil, nil, "", nil, err
@@ -301,6 +305,8 @@ func (q *fsJobQueue) readJob(id uuid.UUID) (*job, error) {
 // Enqueue `job` if it is pending and all its dependencies have finished.
 // Update `q.dependants` if the job was not queued and updateDependants is true
 // (i.e., when this is a new job).
+// `q.mu` must be locked when this method is called. The only exception is
+// `New()` because no concurrent calls are possible there.
 func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	if !j.StartedAt.IsZero() {
 		return nil
@@ -321,7 +327,8 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	if depsFinished {
 		c, exists := q.pending[j.Type]
 		if !exists {
-			return fmt.Errorf("this queue doesn't accept job type '%s'", j.Type)
+			c = make(chan uuid.UUID, channelSize)
+			q.pending[j.Type] = c
 		}
 		c <- j.Id
 	} else if updateDependants {
