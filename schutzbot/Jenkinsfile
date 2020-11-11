@@ -372,22 +372,10 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/koji.sh"
         )
 
-        // Run the qcow2 test.
+        // Run the qemu test.
         sh (
-            label: "Integration test: QCOW2",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2"
-        )
-
-        // Run the openstack test.
-        sh (
-            label: "Integration test: OpenStack",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh openstack"
-        )
-
-        // Run the VHD/Azure test.
-        sh (
-            label: "Integration test: VHD",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh vhd"
+            label: "Integration test: qemu",
+            script: "/usr/libexec/tests/osbuild-composer/qemu.sh"
         )
 
         // Run the AWS test.
