@@ -372,10 +372,10 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/koji.sh"
         )
 
-        // Run the qemu test.
+        // Run the libvirt test.
         sh (
-            label: "Integration test: qemu",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh"
+            label: "Integration test: libvirt",
+            script: "/usr/libexec/tests/osbuild-composer/libvirt.sh"
         )
 
         // Run the AWS test.
