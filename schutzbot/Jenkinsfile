@@ -51,10 +51,6 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora32'
-                        )
                     }
                 }
                 stage('F33') {
@@ -68,10 +64,6 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora33'
-                        )
                     }
                 }
                 stage('EL8') {
@@ -86,10 +78,6 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel8cdn'
-                        )
                     }
                 }
             }
@@ -102,7 +90,6 @@ pipeline {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
-                        unstash 'fedora32'
                         run_tests('base')
                     }
                     post {
@@ -123,7 +110,6 @@ pipeline {
                         DISTRO_CODE = "fedora32"
                     }
                     steps {
-                        unstash 'fedora32'
                         run_tests('image')
                     }
                     post {
@@ -144,7 +130,6 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
-                        unstash 'fedora32'
                         run_tests('integration')
                     }
                     post {
@@ -156,7 +141,6 @@ pipeline {
                 stage('F32 OSTree') {
                     agent { label "f32cloudbase && psi && x86_64" }
                     steps {
-                        unstash 'fedora32'
                         run_tests('ostree')
                     }
                     post {
@@ -169,7 +153,6 @@ pipeline {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
                     steps {
-                        unstash 'fedora33'
                         run_tests('base')
                     }
                     post {
@@ -190,7 +173,6 @@ pipeline {
                         DISTRO_CODE = "fedora33"
                     }
                     steps {
-                        unstash 'fedora33'
                         run_tests('image')
                     }
                     post {
@@ -207,7 +189,6 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
-                        unstash 'fedora33'
                         run_tests('integration')
                     }
                     post {
@@ -219,7 +200,6 @@ pipeline {
                 stage('F33 OSTree') {
                     agent { label "f33cloudbase && psi && x86_64" }
                     steps {
-                        unstash 'fedora33'
                         run_tests('ostree')
                     }
                     post {
@@ -235,7 +215,6 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('base')
                     }
                     post {
@@ -257,7 +236,6 @@ pipeline {
                         DISTRO_CODE = "rhel8"
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('image')
                     }
                     post {
@@ -279,7 +257,6 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('integration')
                     }
                     post {
@@ -291,7 +268,6 @@ pipeline {
                 stage('EL8 OSTree') {
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests('ostree')
                     }
                     post {

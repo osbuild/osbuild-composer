@@ -25,6 +25,7 @@ function retry {
 
 # Get OS details.
 source /etc/os-release
+ARCH=$(uname -m)
 
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "Registering RHEL"
@@ -38,9 +39,16 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 greenprint "Adding osbuild team ssh keys"
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
-greenprint "Setting up a dnf repository for the RPMs we built via mock"
-sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
-sudo dnf repository-packages osbuild-mock list
+greenprint "Setting up a dnf repository with the RPMs we want to test"
+sudo tee /etc/yum.repos.d/osbuild-composer.repo << EOF
+[osbuild-composer]
+name=osbuild composer ${GIT_COMMIT}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority.
+priority=5
+EOF
 
 if [[ $ID == rhel ]]; then
     greenprint "Setting up EPEL repository"
