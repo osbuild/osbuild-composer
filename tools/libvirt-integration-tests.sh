@@ -7,9 +7,6 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Provision the software under tet.
-/usr/libexec/osbuild-composer-test/provision.sh
-
 # Take the image type passed to the script or use qcow2 by default if nothing
 # was passed.
 IMAGE_TYPE=${1:-qcow2}
