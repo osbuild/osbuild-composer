@@ -23,11 +23,11 @@ func cleanupTempDir(t *testing.T, dir string) {
 	require.NoError(t, err)
 }
 
-func newTemporaryQueue(t *testing.T, jobTypes []string) (jobqueue.JobQueue, string) {
+func newTemporaryQueue(t *testing.T) (jobqueue.JobQueue, string) {
 	dir, err := ioutil.TempDir("", "jobqueue-test-")
 	require.NoError(t, err)
 
-	q, err := fsjobqueue.New(dir, jobTypes)
+	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
 	require.NotNil(t, q)
 
@@ -57,13 +57,13 @@ func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result
 }
 
 func TestNonExistant(t *testing.T) {
-	q, err := fsjobqueue.New("/non-existant-directory", []string{})
+	q, err := fsjobqueue.New("/non-existant-directory")
 	require.Error(t, err)
 	require.Nil(t, q)
 }
 
 func TestErrors(t *testing.T) {
-	q, dir := newTemporaryQueue(t, []string{"test"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	// not serializable to JSON
@@ -83,7 +83,7 @@ func TestArgs(t *testing.T) {
 		S string
 	}
 
-	q, dir := newTemporaryQueue(t, []string{"fish", "octopus"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	oneargs := argument{7, "🐠"}
@@ -114,7 +114,7 @@ func TestArgs(t *testing.T) {
 }
 
 func TestJobTypes(t *testing.T) {
-	q, dir := newTemporaryQueue(t, []string{"octopus", "clownfish"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	one := pushTestJob(t, q, "octopus", nil, nil)
@@ -134,7 +134,7 @@ func TestJobTypes(t *testing.T) {
 }
 
 func TestDependencies(t *testing.T) {
-	q, dir := newTemporaryQueue(t, []string{"test"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	t.Run("done-before-pushing-dependant", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestDependencies(t *testing.T) {
 // Test that a job queue allows parallel access to multiple workers, mainly to
 // verify the quirky unlocking in Dequeue().
 func TestMultipleWorkers(t *testing.T) {
-	q, dir := newTemporaryQueue(t, []string{"octopus", "clownfish"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	done := make(chan struct{})
@@ -240,7 +240,7 @@ func TestMultipleWorkers(t *testing.T) {
 }
 
 func TestCancel(t *testing.T) {
-	q, dir := newTemporaryQueue(t, []string{"octopus", "clownfish"})
+	q, dir := newTemporaryQueue(t)
 	defer cleanupTempDir(t, dir)
 
 	// Cancel a non-existing job

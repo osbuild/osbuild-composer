@@ -31,7 +31,7 @@ func newTestKojiServer(t *testing.T, dir string) (*kojiapi.Server, *worker.Serve
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	queue, err := fsjobqueue.New(dir, []string{"osbuild:x86_64", "koji-init", "osbuild-koji:x86_64", "koji-finalize"})
+	queue, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
 
 	workerServer := worker.NewServer(nil, queue, "")
