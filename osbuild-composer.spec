@@ -348,4 +348,8 @@ Integration tests to be run on a pristine-dedicated system to test the osbuild-c
 %endif
 
 %changelog
-# the changelog is distribution-specific, therefore it doesn't make sense to have it upstream
+# the changelog is distribution-specific, therefore there's just one entry
+# to make rpmlint happy.
+
+* Wed Sep 11 2019 Image Builder team <osbuilders@redhat.com> - 0-1
+- On this day, this project was born.
