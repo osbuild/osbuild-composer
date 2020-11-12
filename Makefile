@@ -201,7 +201,7 @@ worker-key-pair: ca
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer-$(COMMIT).spec
+RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer.spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
 $(RPM_SPECFILE):
