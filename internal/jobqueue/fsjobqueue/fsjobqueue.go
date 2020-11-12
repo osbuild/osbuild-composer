@@ -59,6 +59,10 @@ type job struct {
 	Canceled bool `json:"canceled,omitempty"`
 }
 
+// The size of channels used in fsJobQueue for queueing jobs.
+// Note that each job type has its own queue.
+const channelSize = 100
+
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
 // access to `dir`. If `dir` contains jobs created from previous runs, they are
 // loaded and rescheduled to run if necessary.
@@ -70,7 +74,7 @@ func New(dir string, acceptedJobTypes []string) (*fsJobQueue, error) {
 	}
 
 	for _, jt := range acceptedJobTypes {
-		q.pending[jt] = make(chan uuid.UUID, 100)
+		q.pending[jt] = make(chan uuid.UUID, channelSize)
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
