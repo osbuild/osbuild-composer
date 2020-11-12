@@ -190,7 +190,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
-	if initResult.KojiError != nil {
+	if initResult.KojiError != "" {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", initResult.KojiError))
 	}
 
@@ -224,7 +224,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		return "failure"
 	}
 
-	if initResult.KojiError != nil {
+	if initResult.KojiError != "" {
 		return "failure"
 	}
 
@@ -232,7 +232,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
 			return "failure"
 		}
-		if buildResult.KojiError != nil {
+		if buildResult.KojiError != "" {
 			return "failure"
 		}
 	}
@@ -241,7 +241,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		return "pending"
 	}
 
-	if result.KojiError == nil {
+	if result.KojiError == "" {
 		return "success"
 	}
 
@@ -253,7 +253,7 @@ func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJ
 		return "failure"
 	}
 
-	if initResult.KojiError != nil {
+	if initResult.KojiError != "" {
 		return "failure"
 	}
 
@@ -265,7 +265,7 @@ func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJ
 		return "building"
 	}
 
-	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == nil {
+	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == "" {
 		return "success"
 	}
 
