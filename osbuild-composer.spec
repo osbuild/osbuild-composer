@@ -56,8 +56,6 @@ BuildRequires:  golang(github.com/vmware/govmomi)
 
 Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
-Requires: osbuild >= 23
-Requires: osbuild-ostree >= 23
 Requires: qemu-img
 
 Provides: weldr
@@ -261,7 +259,8 @@ cd $PWD/_build/src/%{goipath}
 %package worker
 Summary:    The worker for osbuild-composer
 Requires:   systemd
-Requires:   osbuild
+Requires:   osbuild >= 23
+Requires:   osbuild-ostree >= 23
 
 # remove in F34
 Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
