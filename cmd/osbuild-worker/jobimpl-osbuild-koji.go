@@ -84,7 +84,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	if initArgs.KojiError == nil {
+	if initArgs.KojiError == "" {
 		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, os.Stderr)
 		if err != nil {
 			return err
@@ -95,7 +95,10 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			if err != nil {
 				return err
 			}
-			result.ImageHash, result.ImageSize, result.KojiError = impl.kojiUpload(f, args.KojiServer, args.KojiDirectory, args.KojiFilename)
+			result.ImageHash, result.ImageSize, err = impl.kojiUpload(f, args.KojiServer, args.KojiDirectory, args.KojiFilename)
+			if err != nil {
+				result.KojiError = err.Error()
+			}
 		}
 	}
 

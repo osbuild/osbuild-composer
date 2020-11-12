@@ -105,7 +105,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	if initArgs.KojiError != nil {
+	if initArgs.KojiError != "" {
 		failure = true
 	}
 
@@ -127,7 +127,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		if err != nil {
 			return err
 		}
-		if !buildArgs.OSBuildOutput.Success || buildArgs.KojiError != nil {
+		if !buildArgs.OSBuildOutput.Success || buildArgs.KojiError != "" {
 			failure = true
 			break
 		}
@@ -167,9 +167,15 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	var result worker.KojiFinalizeJobResult
 	if failure {
-		result.KojiError = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+		err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+		if err != nil {
+			result.KojiError = err.Error()
+		}
 	} else {
-		result.KojiError = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
+		err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
+		if err != nil {
+			result.KojiError = err.Error()
+		}
 	}
 
 	err = job.Update(&result)

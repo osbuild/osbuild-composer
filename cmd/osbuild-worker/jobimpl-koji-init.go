@@ -60,7 +60,10 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.KojiInitJobResult
-	result.Token, result.BuildID, result.KojiError = impl.kojiInit(args.Server, args.Name, args.Version, args.Release)
+	result.Token, result.BuildID, err = impl.kojiInit(args.Server, args.Name, args.Version, args.Release)
+	if err != nil {
+		result.KojiError = err.Error()
+	}
 
 	err = job.Update(&result)
 	if err != nil {

@@ -36,7 +36,7 @@ type KojiInitJob struct {
 type KojiInitJobResult struct {
 	BuildID   uint64 `json:"build_id"`
 	Token     string `json:"token"`
-	KojiError error  `json:"koji_error"`
+	KojiError string `json:"koji_error"`
 }
 
 type OSBuildKojiJob struct {
@@ -53,7 +53,7 @@ type OSBuildKojiJobResult struct {
 	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
 	ImageHash     string          `json:"image_hash"`
 	ImageSize     uint64          `json:"image_size"`
-	KojiError     error           `json:"koji_error"`
+	KojiError     string          `json:"koji_error"`
 }
 
 type KojiFinalizeJob struct {
@@ -68,7 +68,7 @@ type KojiFinalizeJob struct {
 }
 
 type KojiFinalizeJobResult struct {
-	KojiError error `json:"koji_error"`
+	KojiError string `json:"koji_error"`
 }
 
 //
