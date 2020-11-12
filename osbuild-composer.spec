@@ -78,7 +78,7 @@ Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
 
 # remove when F34 is EOL
-Obsoletes: osbuild-composer-koji
+Obsoletes: osbuild-composer-koji <= 23
 
 %description
 %{common_description}
