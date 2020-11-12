@@ -64,3 +64,19 @@ jobs:
         ignore: vendor # We don't want to fix the code in vendored dependencies
       env:
         SHELLCHECK_OPTS: -e SC1091 -e SC2002 # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
+
+  rpmlint:
+    name: "📦 RPMlint"
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:33
+    steps:
+      - name: Install dependencies
+        run: sudo dnf install -y rpmlint rpm-build make git-core
+
+      - uses: actions/checkout@v2
+
+      - name: Create SRPM
+        run: make srpm
+
+      - name: Run rpmlint
+        run: rpmlint rpmbuild/SRPMS/*
