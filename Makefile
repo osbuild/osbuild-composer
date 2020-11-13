@@ -278,9 +278,9 @@ release:
 	@echo
 	@echo "        git tag -s -m 'osbuild-composer $(NEXT_VERSION)' v$(NEXT_VERSION) HEAD"
 	@echo
-	@echo " * Push master as well as the tag:"
+	@echo " * Push main as well as the tag:"
 	@echo
-	@echo "        git push origin master"
+	@echo "        git push origin main"
 	@echo "        git push origin v$(NEXT_VERSION)"
 	@echo
 	@echo " * Create a release on github. Use 'NEWS.md' verbatim from the"
