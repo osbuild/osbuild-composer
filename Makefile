@@ -206,7 +206,7 @@ RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild-composer.spec) > $(RPM_SPECFILE)
+	git show HEAD:osbuild-composer.spec > $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
@@ -216,6 +216,7 @@ $(RPM_TARBALL):
 srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
+		--define "commit $(COMMIT)" \
 		--with tests \
 		$(RPM_SPECFILE)
 
@@ -223,6 +224,7 @@ srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
+		--define "commit $(COMMIT)" \
 		--with tests \
 		$(RPM_SPECFILE)
 
