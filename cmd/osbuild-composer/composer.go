@@ -79,7 +79,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListener net.Listener) error {
+func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
 	archName := common.CurrentArch()
 
 	hostDistro, beta, err := c.distros.FromHost()
@@ -109,7 +109,6 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener, localWorkerListe
 	c.weldr = weldr.New(c.rpm, arch, hostDistro, repos[archName], c.logger, store, c.workers, compatOutputDir)
 
 	c.weldrListener = weldrListener
-	c.localWorkerListener = localWorkerListener
 
 	return nil
 }
@@ -133,6 +132,10 @@ func (c *Composer) InitAPI(cert, key string, l net.Listener) error {
 	return nil
 }
 
+func (c *Composer) InitLocalWorker(l net.Listener) {
+	c.localWorkerListener = l
+}
+
 func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
 	tlsConfig, err := createTLSConfig(&connectionConfig{
 		CACertFile:     c.config.Worker.CA,
@@ -153,10 +156,6 @@ func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
 //
 // Running without the weldr API is currently not supported.
 func (c *Composer) Start() error {
-	if c.weldr == nil {
-		return errors.New("weldr was not initialized")
-	}
-
 	if c.localWorkerListener != nil {
 		go func() {
 			err := c.workers.Serve(c.localWorkerListener)
@@ -200,7 +199,17 @@ func (c *Composer) Start() error {
 		}()
 	}
 
-	return c.weldr.Serve(c.weldrListener)
+	if c.weldrListener != nil {
+		go func() {
+			err := c.weldr.Serve(c.weldrListener)
+			if err != nil {
+				panic(err)
+			}
+		}()
+	}
+
+	// wait indefinitely
+	select {}
 }
 
 func (c *Composer) ensureStateDirectory(name string, perm os.FileMode) (string, error) {

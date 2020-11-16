@@ -1,0 +1,9 @@
+[Unit]
+Description=OSBuild local worker API socket
+
+[Socket]
+Service=osbuild-composer.service
+ListenStream=/run/osbuild-composer/job.socket
+
+[Install]
+WantedBy=sockets.target
