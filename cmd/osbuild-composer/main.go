@@ -65,16 +65,22 @@ func main() {
 	}
 
 	if l, exists := listeners["osbuild-composer.socket"]; exists {
-		if len(l) != 2 {
-			log.Fatalf("Expected two listeners in osbuild-composer.socket, but found %d", len(l))
+		if len(l) != 1 {
+			log.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitWeldr(repositoryConfigs, l[0], l[1])
+		err = composer.InitWeldr(repositoryConfigs, l[0])
 		if err != nil {
 			log.Fatalf("Error initializing weldr API: %v", err)
 		}
-	} else {
-		log.Fatalf("osbuild-composer.socket doesn't exist")
+	}
+
+	if l, exists := listeners["osbuild-local-worker.socket"]; exists {
+		if len(l) != 1 {
+			log.Fatal("The osbuild-local-worker.socket unit is misconfigured. It should contain only one socket.")
+		}
+
+		composer.InitLocalWorker(l[0])
 	}
 
 	if l, exists := listeners["osbuild-composer-api.socket"]; exists {

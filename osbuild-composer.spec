@@ -245,6 +245,7 @@ cd $PWD/_build/src/%{goipath}
 %{_unitdir}/osbuild-composer.service
 %{_unitdir}/osbuild-composer.socket
 %{_unitdir}/osbuild-composer-api.socket
+%{_unitdir}/osbuild-local-worker.socket
 %{_unitdir}/osbuild-remote-worker.socket
 %{_sysusersdir}/osbuild-composer.conf
 
