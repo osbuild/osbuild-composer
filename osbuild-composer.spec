@@ -153,15 +153,7 @@ install -m 0755 -vd                                             %{buildroot}%{_d
 install -m 0644 -vp repositories/*                              %{buildroot}%{_datadir}/osbuild-composer/repositories/
 
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
-install -m 0644 -vp distribution/osbuild-composer.service       %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-composer.socket        %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-remote-worker.socket   %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-remote-worker@.service %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-worker@.service        %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-composer-api.socket    %{buildroot}%{_unitdir}/
-install -m 0755 -vd                                             %{buildroot}%{_unitdir}
-install -m 0644 -vp distribution/osbuild-composer.{service,socket} %{buildroot}%{_unitdir}/
-install -m 0644 -vp distribution/osbuild-*worker*.{service,socket} %{buildroot}%{_unitdir}/
+install -m 0644 -vp distribution/*.{service,socket}             %{buildroot}%{_unitdir}/
 
 install -m 0755 -vd                                             %{buildroot}%{_sysusersdir}
 install -m 0644 -vp distribution/osbuild-composer.conf          %{buildroot}%{_sysusersdir}/
