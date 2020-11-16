@@ -156,6 +156,15 @@ func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
 //
 // Running without the weldr API is currently not supported.
 func (c *Composer) Start() error {
+	// sanity checks
+	if c.localWorkerListener == nil && c.workerListener == nil {
+		log.Fatal("neither the local worker socket nor the remote worker socket is enabled, osbuild-composer is useless without workers")
+	}
+
+	if c.apiListener == nil && c.weldrListener == nil {
+		log.Fatal("neither the weldr API socket nor the composer API socket is enabled, osbuild-composer is useless without one of these APIs enabled")
+	}
+
 	if c.localWorkerListener != nil {
 		go func() {
 			err := c.workers.Serve(c.localWorkerListener)
