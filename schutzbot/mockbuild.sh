@@ -55,7 +55,7 @@ fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock rpm-build s3cmd
+sudo dnf -y install createrepo_c mock s3cmd
 
 
 # Print some data.
@@ -63,14 +63,20 @@ greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# Build source RPMs.
-greenprint "🔧 Building source RPMs."
-make srpm
+greenprint "🔧 Building source RPM"
+git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
+sudo mock -r "$MOCK_CONFIG" --buildsrpm \
+  --define "commit ${COMMIT}" \
+  --spec ./osbuild-composer.spec \
+  --sources "./osbuild-composer-${COMMIT}.tar.gz" \
+  --resultdir ./srpm
 
-# Compile RPMs in a mock chroot
-greenprint "🎁 Building RPMs with mock"
-sudo mock -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
-    rpmbuild/SRPMS/*.src.rpm
+greenprint "🎁 Building RPMs"
+sudo mock -r "$MOCK_CONFIG" \
+    --define "commit ${COMMIT}" \
+    --with=tests \
+    --resultdir "$REPO_DIR" \
+    srpm/*.src.rpm
 
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R "$USER" "${REPO_DIR%%/*}"
