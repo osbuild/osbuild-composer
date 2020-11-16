@@ -1,7 +1,10 @@
 [Unit]
 Description=OSBuild Composer
 After=multi-user.target
-Requires=osbuild-composer.socket
+
+# Weldr API needs a local worker by default.
+# Run `systemctl mask osbuild-worker@1.service`
+# to disable it.
 Wants=osbuild-worker@1.service
 
 [Service]
