@@ -1,5 +1,5 @@
 [Unit]
-Description=OSBuild Composer API sockets
+Description=OSBuild remote worker API socket
 
 [Socket]
 Service=osbuild-composer.service
