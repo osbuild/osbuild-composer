@@ -13,22 +13,22 @@ COMPOSE_ID=$(cat COMPOSE_ID)
 
 # Create a repository file for installing the osbuild-composer RPMs
 greenprint "📜 Generating dnf repository file"
-tee osbuild-mock.repo << EOF
+tee rhel8nightly.repo << EOF
 [rhel8-nightly-baseos]
 name=${COMPOSE_ID} BaseOS
 baseurl=http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/${COMPOSE_ID}/compose/BaseOS/${ARCH}/os
 enabled=1
 gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
+priority=1
 
 [rhel8-nightly-appstream]
 name=${COMPOSE_ID} AppStream
 baseurl=http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/${COMPOSE_ID}/compose/AppStream/${ARCH}/os
 enabled=1
 gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
+# osbuild-composer repo priority is 5
+priority=1
 EOF
 
 
@@ -99,12 +99,12 @@ REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_DIR_LATEST}
 
 # amend repository file.
 greenprint "📜 Amend dnf repository file"
-tee -a osbuild-mock.repo << EOF
-[osbuild-mock]
-name=osbuild mock ${JOB_NAME}
+tee -a rhel8nightly.repo << EOF
+[osbuild-composer-tests]
+name=Tests ${JOB_NAME}
 baseurl=${REPO_URL}
 enabled=1
 gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
+# osbuild-composer repo priority is 5
+priority=1
 EOF
