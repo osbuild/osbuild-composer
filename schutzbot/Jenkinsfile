@@ -138,10 +138,8 @@ pipeline {
                 // don't build, use RPMs from the nightly trees
                 sh "schutzbot/prepare-rhel-nightly.sh"
                 stash (
-                    includes: 'osbuild-mock.repo',
-                    // the name here matches the name in EL8 sections b/c
-                    // they are executed unconditionally
-                    name: 'rhel8'
+                    includes: 'rhel8nightly.repo',
+                    name: 'rhel8nightly'
                 )
                 stash (
                     includes: 'rhel-8.json',
@@ -630,6 +628,15 @@ pipeline {
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
 void run_tests(test_type) {
+    // unstash files but avoid failure if they don't exist
+    // b/c these files are available only for nightly builds
+    try {
+        unstash 'rhel8nightly'
+        unstash 'rhel8json'
+        unstash 'rhel8betajson'
+    } catch (err) {
+        echo "ERROR during unstash: ${err}"
+    }
 
     // Get CI machine details.
     sh (

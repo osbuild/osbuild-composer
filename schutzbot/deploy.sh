@@ -86,6 +86,12 @@ if [[ "$PROJECT" != "osbuild-composer" ]]; then
   fi
 fi
 
+if [ -f "rhel8nightly.repo" ]; then
+    greenprint "Preparing repos for nightly build testing"
+    sudo mv rhel8nightly.repo /etc/yum.repos.d/
+    sudo rm -f /etc/yum.repos.d/osbuild*.repo
+fi
+
 greenprint "Installing test packages for ${PROJECT}"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
