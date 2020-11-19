@@ -203,6 +203,11 @@ components:
         snapshot_name:
           type: string
           example: 'my-snapshot'
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
     Customizations:
       type: object
       properties:

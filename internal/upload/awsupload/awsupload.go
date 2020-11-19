@@ -17,7 +17,7 @@ import (
 
 type AWS struct {
 	uploader *s3manager.Uploader
-	importer *ec2.EC2
+	ec2      *ec2.EC2
 	s3       *s3.S3
 }
 
@@ -36,7 +36,7 @@ func New(region, accessKeyID, accessKey string) (*AWS, error) {
 
 	return &AWS{
 		uploader: s3manager.NewUploader(sess),
-		importer: ec2.New(sess),
+		ec2:      ec2.New(sess),
 		s3:       s3.New(sess),
 	}, nil
 }
@@ -117,10 +117,10 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
-func (a *AWS) Register(name, bucket, key string) (*string, error) {
+func (a *AWS) Register(name, bucket, key string, shareWith []string) (*string, error) {
 	log.Printf("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
 	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
-	importTaskOutput, err := a.importer.ImportSnapshot(
+	importTaskOutput, err := a.ec2.ImportSnapshot(
 		&ec2.ImportSnapshotInput{
 			Description: aws.String(snapshotDescription),
 			DiskContainer: &ec2.SnapshotDiskContainer{
@@ -132,12 +132,13 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		},
 	)
 	if err != nil {
+		log.Printf("[AWS] error importing snapshot: %s", err)
 		return nil, err
 	}
 
 	log.Printf("[AWS] 🚚 Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
 	err = WaitUntilImportSnapshotTaskCompleted(
-		a.importer,
+		a.ec2,
 		&ec2.DescribeImportSnapshotTasksInput{
 			ImportTaskIds: []*string{
 				importTaskOutput.ImportTaskId,
@@ -158,7 +159,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 		return nil, err
 	}
 
-	importOutput, err := a.importer.DescribeImportSnapshotTasks(
+	importOutput, err := a.ec2.DescribeImportSnapshotTasks(
 		&ec2.DescribeImportSnapshotTasksInput{
 			ImportTaskIds: []*string{
 				importTaskOutput.ImportTaskId,
@@ -171,8 +172,28 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 
 	snapshotID := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
 
+	if len(shareWith) > 0 {
+		log.Printf("[AWS] 🎥 Sharing ec2 snapshot")
+		var userIds []*string
+		for _, v := range shareWith {
+			userIds = append(userIds, &v)
+		}
+		_, err := a.ec2.ModifySnapshotAttribute(
+			&ec2.ModifySnapshotAttributeInput{
+				Attribute:     aws.String("createVolumePermission"),
+				OperationType: aws.String("add"),
+				SnapshotId:    snapshotID,
+				UserIds:       userIds,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("[AWS] 📨 Shared ec2 snapshot")
+	}
+
 	// Tag the snapshot with the image name.
-	req, _ := a.importer.CreateTagsRequest(
+	req, _ := a.ec2.CreateTagsRequest(
 		&ec2.CreateTagsInput{
 			Resources: []*string{snapshotID},
 			Tags: []*ec2.Tag{
@@ -189,7 +210,7 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	}
 
 	log.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
-	registerOutput, err := a.importer.RegisterImage(
+	registerOutput, err := a.ec2.RegisterImage(
 		&ec2.RegisterImageInput{
 			Architecture:       aws.String("x86_64"),
 			VirtualizationType: aws.String("hvm"),
@@ -211,5 +232,28 @@ func (a *AWS) Register(name, bucket, key string) (*string, error) {
 	}
 
 	log.Printf("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
+
+	if len(shareWith) > 0 {
+		log.Println("[AWS] 💿 Sharing ec2 AMI")
+		var launchPerms []*ec2.LaunchPermission
+		for _, id := range shareWith {
+			launchPerms = append(launchPerms, &ec2.LaunchPermission{
+				UserId: &id,
+			})
+		}
+		_, err := a.ec2.ModifyImageAttribute(
+			&ec2.ModifyImageAttributeInput{
+				ImageId: registerOutput.ImageId,
+				LaunchPermission: &ec2.LaunchPermissionModifications{
+					Add: launchPerms,
+				},
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("[AWS] 💿 Shared AMI")
+	}
+
 	return registerOutput.ImageId, nil
 }

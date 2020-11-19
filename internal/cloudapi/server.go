@@ -157,14 +157,19 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			var share []string
+			if awsUploadOptions.Ec2.ShareWithAccounts != nil {
+				share = *awsUploadOptions.Ec2.ShareWithAccounts
+			}
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 			t := target.NewAWSTarget(&target.AWSTargetOptions{
-				Filename:        imageType.Filename(),
-				Region:          awsUploadOptions.Region,
-				AccessKeyID:     awsUploadOptions.S3.AccessKeyId,
-				SecretAccessKey: awsUploadOptions.S3.SecretAccessKey,
-				Bucket:          awsUploadOptions.S3.Bucket,
-				Key:             key,
+				Filename:          imageType.Filename(),
+				Region:            awsUploadOptions.Region,
+				AccessKeyID:       awsUploadOptions.S3.AccessKeyId,
+				SecretAccessKey:   awsUploadOptions.S3.SecretAccessKey,
+				Bucket:            awsUploadOptions.S3.Bucket,
+				Key:               key,
+				ShareWithAccounts: share,
 			})
 			if awsUploadOptions.Ec2.SnapshotName != nil {
 				t.ImageName = *awsUploadOptions.Ec2.SnapshotName

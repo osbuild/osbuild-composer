@@ -26,7 +26,7 @@ set -euxo pipefail
 # it needs variables is set to access AWS.
 #
 
-printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY > /dev/null
+printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
 
 
 #
@@ -100,7 +100,8 @@ cat > "$REQUEST_FILE" << EOF
             "ec2": {
               "access_key_id": "${AWS_ACCESS_KEY_ID}",
               "secret_access_key": "${AWS_SECRET_ACCESS_KEY}",
-              "snapshot_name": "${SNAPSHOT_NAME}"
+              "snapshot_name": "${SNAPSHOT_NAME}",
+              "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
             }
           }
         }
@@ -163,6 +164,30 @@ $AWS_CMD ec2 describe-images \
 
 AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
 SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
+SHARE_OK=1
+
+# Verify that the ec2 snapshot was shared
+$AWS_CMD ec2 describe-snapshot-attribute --snapshot-id "$SNAPSHOT_ID" --attribute createVolumePermission > "$WORKDIR/snapshot-attributes.json"
+
+SHARED_ID=$(jq -r '.CreateVolumePermissions[0].UserId' "$WORKDIR/snapshot-attributes.json")
+if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
+    SHARE_OK=0
+fi
+
+# Verify that the ec2 ami was shared
+$AWS_CMD ec2 describe-image-attribute --image-id "$AMI_IMAGE_ID" --attribute launchPermission > "$WORKDIR/ami-attributes.json"
+
+SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
+if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
+    SHARE_OK=0
+fi
 
 $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
+
+if [ "$SHARE_OK" != 1 ]; then
+    echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
+    exit 1
+fi
+
+exit 0
