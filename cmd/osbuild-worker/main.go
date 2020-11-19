@@ -151,11 +151,11 @@ func main() {
 	}
 
 	jobImpls := map[string]JobImplementation{
-		"osbuild": &OSBuildJobImpl{
+		"osbuild:" + common.CurrentArch(): &OSBuildJobImpl{
 			Store:       store,
 			KojiServers: kojiServers,
 		},
-		"osbuild-koji": &OSBuildKojiJobImpl{
+		"osbuild-koji:" + common.CurrentArch(): &OSBuildKojiJobImpl{
 			Store:       store,
 			KojiServers: kojiServers,
 		},
@@ -174,7 +174,7 @@ func main() {
 
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
+		job, err := client.RequestJob(acceptedJobTypes)
 		if err != nil {
 			log.Fatal(err)
 		}
