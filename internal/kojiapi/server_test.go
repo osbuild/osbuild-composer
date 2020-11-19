@@ -239,7 +239,7 @@ func TestCompose(t *testing.T) {
 		wg.Add(1)
 
 		go func(t *testing.T, result worker.KojiInitJobResult) {
-			token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"koji-init"})
+			token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), []string{"koji-init"})
 			require.NoError(t, err)
 			require.Equal(t, "koji-init", jobType)
 
@@ -290,9 +290,9 @@ func TestCompose(t *testing.T) {
 		}`, c.composeReplyCode, c.composeReply, "id")
 		wg.Wait()
 
-		token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"osbuild-koji"})
+		token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), []string{"osbuild-koji:x86_64"})
 		require.NoError(t, err)
-		require.Equal(t, "osbuild-koji", jobType)
+		require.Equal(t, "osbuild-koji:x86_64", jobType)
 
 		var osbuildJob worker.OSBuildKojiJob
 		err = json.Unmarshal(rawJob, &osbuildJob)
@@ -305,9 +305,9 @@ func TestCompose(t *testing.T) {
 		require.NoError(t, err)
 		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
 
-		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), "x86_64", []string{"osbuild-koji"})
+		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), []string{"osbuild-koji:x86_64"})
 		require.NoError(t, err)
-		require.Equal(t, "osbuild-koji", jobType)
+		require.Equal(t, "osbuild-koji:x86_64", jobType)
 
 		err = json.Unmarshal(rawJob, &osbuildJob)
 		require.NoError(t, err)
@@ -327,7 +327,7 @@ func TestCompose(t *testing.T) {
 			}
 		}`, http.StatusOK, `{}`)
 
-		token, finalizeID, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"koji-finalize"})
+		token, finalizeID, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), []string{"koji-finalize"})
 		require.NoError(t, err)
 		require.Equal(t, "koji-finalize", jobType)
 

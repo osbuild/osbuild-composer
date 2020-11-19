@@ -94,10 +94,10 @@ func TestCancel(t *testing.T) {
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
-	require.Equal(t, "osbuild", typ)
+	require.Equal(t, "osbuild:x86_64", typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
@@ -131,10 +131,10 @@ func TestUpdate(t *testing.T) {
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
-	require.Equal(t, "osbuild", typ)
+	require.Equal(t, "osbuild:x86_64", typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
@@ -162,10 +162,10 @@ func TestUpload(t *testing.T) {
 	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()})
 	require.NoError(t, err)
 	require.Equal(t, jobID, j)
-	require.Equal(t, "osbuild", typ)
+	require.Equal(t, "osbuild:x86_64", typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 

@@ -167,21 +167,10 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+func (s *Server) RequestJob(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
 	token := uuid.New()
 
-	// treat osbuild jobs specially until we have found a generic way to
-	// specify dequeuing restrictions. For now, we only have one
-	// restriction: arch for osbuild jobs.
-	jts := []string{}
-	for _, t := range jobTypes {
-		if t == "osbuild" || t == "osbuild-koji" {
-			t = t + ":" + arch
-		}
-		jts = append(jts, t)
-	}
-
-	jobId, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jts)
+	jobId, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jobTypes)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
@@ -202,12 +191,6 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 	s.runningMutex.Lock()
 	defer s.runningMutex.Unlock()
 	s.running[token] = jobId
-
-	if jobType == "osbuild:"+arch {
-		jobType = "osbuild"
-	} else if jobType == "osbuild-koji:"+arch {
-		jobType = "osbuild-koji"
-	}
 
 	return token, jobId, jobType, args, dynamicArgs, nil
 }
@@ -275,9 +258,26 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
+	// treat osbuild jobs specially until we have found a generic way to
+	// specify dequeuing restrictions. For now, we only have one
+	// restriction: arch for osbuild jobs.
+	jts := []string{}
+	for _, t := range body.Types {
+		if t == "osbuild" || t == "osbuild-koji" {
+			t = t + ":" + body.Arch
+		}
+		jts = append(jts, t)
+	}
+
+	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), jts)
 	if err != nil {
 		return err
+	}
+
+	if jobType == "osbuild:"+body.Arch {
+		jobType = "osbuild"
+	} else if jobType == "osbuild-koji:"+body.Arch {
+		jobType = "osbuild-koji"
 	}
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
