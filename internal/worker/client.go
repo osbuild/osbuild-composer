@@ -12,7 +12,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/common"
+
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -84,7 +84,7 @@ func NewClientUnix(path string) *Client {
 	return &Client{server, requester}
 }
 
-func (c *Client) RequestJob(types []string) (Job, error) {
+func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 	url, err := c.server.Parse("jobs")
 	if err != nil {
 		// This only happens when "jobs" cannot be parsed.
@@ -94,7 +94,7 @@ func (c *Client) RequestJob(types []string) (Job, error) {
 	var buf bytes.Buffer
 	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{
 		Types: types,
-		Arch:  common.CurrentArch(),
+		Arch:  arch,
 	})
 	if err != nil {
 		panic(err)

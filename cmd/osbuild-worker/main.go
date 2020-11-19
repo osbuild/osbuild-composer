@@ -15,6 +15,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -173,7 +174,7 @@ func main() {
 
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.RequestJob(acceptedJobTypes)
+		job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
 		if err != nil {
 			log.Fatal(err)
 		}
