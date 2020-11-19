@@ -18,7 +18,8 @@ import (
 // Ensure that the status request returns OK.
 func TestStatus(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
-	test.TestRoute(t, server, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
+	handler := server.Handler()
+	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
 
 func TestErrors(t *testing.T) {
@@ -44,7 +45,8 @@ func TestErrors(t *testing.T) {
 
 	for _, c := range cases {
 		server := worker.NewServer(nil, testjobqueue.New(), "")
-		test.TestRoute(t, server, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
+		handler := server.Handler()
+		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
 
@@ -63,11 +65,12 @@ func TestCreate(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest")
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
+	handler := server.Handler()
 
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "POST", "/api/worker/v1/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
+	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
 		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 
@@ -86,6 +89,7 @@ func TestCancel(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest")
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
+	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
@@ -97,13 +101,13 @@ func TestCancel(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
-	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		`{"canceled":false}`)
 
 	err = server.Cancel(jobId)
 	require.NoError(t, err)
 
-	test.TestRoute(t, server, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		`{"canceled":true}`)
 }
 
@@ -122,6 +126,7 @@ func TestUpdate(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest")
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
+	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
@@ -133,8 +138,8 @@ func TestUpdate(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
-	test.TestRoute(t, server, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK, `{}`)
-	test.TestRoute(t, server, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound, `*`)
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK, `{}`)
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound, `*`)
 }
 
 func TestUpload(t *testing.T) {
@@ -152,6 +157,7 @@ func TestUpload(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest")
 	}
 	server := worker.NewServer(nil, testjobqueue.New(), "")
+	handler := server.Handler()
 
 	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
@@ -163,5 +169,5 @@ func TestUpload(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
-	test.TestRoute(t, server, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
+	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
 }

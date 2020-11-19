@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path"
@@ -24,7 +23,7 @@ import (
 
 type Server struct {
 	jobs         jobqueue.JobQueue
-	server       *http.Server
+	logger       *log.Logger
 	artifactsDir string
 
 	// Currently running jobs. Workers are not handed job ids, but
@@ -50,37 +49,25 @@ type JobStatus struct {
 var ErrTokenNotExist = errors.New("worker token does not exist")
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
-	s := &Server{
+	return &Server{
 		jobs:         jobs,
+		logger:       logger,
 		artifactsDir: artifactsDir,
 		running:      make(map[uuid.UUID]uuid.UUID),
 	}
+}
 
+func (s *Server) Handler() http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
-	e.StdLogger = logger
+	e.StdLogger = s.logger
 
-	api.RegisterHandlers(e.Group(api.BasePath), &apiHandlers{s})
-
-	s.server = &http.Server{
-		ErrorLog: logger,
-		Handler:  e,
+	handler := apiHandlers{
+		server: s,
 	}
+	api.RegisterHandlers(e.Group(api.BasePath), &handler)
 
-	return s
-}
-
-func (s *Server) Serve(listener net.Listener) error {
-	err := s.server.Serve(listener)
-	if err != nil && err != http.ErrServerClosed {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	s.server.Handler.ServeHTTP(writer, request)
+	return e
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {

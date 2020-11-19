@@ -167,7 +167,11 @@ func (c *Composer) Start() error {
 
 	if c.localWorkerListener != nil {
 		go func() {
-			err := c.workers.Serve(c.localWorkerListener)
+			s := &http.Server{
+				ErrorLog: c.logger,
+				Handler:  c.workers.Handler(),
+			}
+			err := s.Serve(c.localWorkerListener)
 			if err != nil {
 				panic(err)
 			}
@@ -176,7 +180,11 @@ func (c *Composer) Start() error {
 
 	if c.workerListener != nil {
 		go func() {
-			err := c.workers.Serve(c.workerListener)
+			s := &http.Server{
+				ErrorLog: c.logger,
+				Handler:  c.workers.Handler(),
+			}
+			err := s.Serve(c.workerListener)
 			if err != nil {
 				panic(err)
 			}
