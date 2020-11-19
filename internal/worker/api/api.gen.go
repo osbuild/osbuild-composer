@@ -17,6 +17,10 @@ type Error struct {
 
 // RequestJobJSONBody defines parameters for RequestJob.
 type RequestJobJSONBody struct {
+
+	// Deprecated. The architecture is now part of the job type.
+	// If this field is set, its value will be appended to osbuild and osbuild-koji job types with a leading colon to maintain backwards compatibility. Example:
+	// `types = [osbuild, osbuild-koji, koji-init], arch = aarch64` results into: `types = [osbuild:aarch64, osbuild-koji:aarch64, koji-init]`
 	Arch  string   `json:"arch"`
 	Types []string `json:"types"`
 }

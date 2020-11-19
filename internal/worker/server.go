@@ -258,15 +258,19 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	// treat osbuild jobs specially until we have found a generic way to
-	// specify dequeuing restrictions. For now, we only have one
-	// restriction: arch for osbuild jobs.
 	jts := []string{}
-	for _, t := range body.Types {
-		if t == "osbuild" || t == "osbuild-koji" {
-			t = t + ":" + body.Arch
+	if body.Arch != "" {
+		// The worker used the old behaviour.
+		// The arch was passed in a separate field, therefore it's needed to
+		// manually append it to osbuild and osbuild-koji job types.
+		for _, t := range body.Types {
+			if t == "osbuild" || t == "osbuild-koji" {
+				t = t + ":" + body.Arch
+			}
+			jts = append(jts, t)
 		}
-		jts = append(jts, t)
+	} else {
+		jts = body.Types
 	}
 
 	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), jts)
@@ -274,10 +278,15 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	if jobType == "osbuild:"+body.Arch {
-		jobType = "osbuild"
-	} else if jobType == "osbuild-koji:"+body.Arch {
-		jobType = "osbuild-koji"
+	if body.Arch != "" {
+		// The worker used the old behaviour.
+		// We need to return osbuild and osbuild-koji jobs without the
+		// arch otherwise it will be confused.
+		if jobType == "osbuild:"+body.Arch {
+			jobType = "osbuild"
+		} else if jobType == "osbuild-koji:"+body.Arch {
+			jobType = "osbuild-koji"
+		}
 	}
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
