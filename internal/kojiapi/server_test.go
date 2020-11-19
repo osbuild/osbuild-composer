@@ -69,6 +69,7 @@ func TestCompose(t *testing.T) {
 
 	kojiServer, workerServer := newTestKojiServer(t, dir)
 	handler := kojiServer.Handler("/api/composer-koji/v1")
+	workerHandler := workerServer.Handler()
 
 	type kojiCase struct {
 		initResult       worker.KojiInitJobResult
@@ -252,7 +253,7 @@ func TestCompose(t *testing.T) {
 
 			initJobResult, err := json.Marshal(&jobResult{Result: result})
 			require.NoError(t, err)
-			test.TestRoute(t, workerServer, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK, `{}`)
+			test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK, `{}`)
 
 			wg.Done()
 		}(t, c.initResult)
@@ -302,7 +303,7 @@ func TestCompose(t *testing.T) {
 
 		buildJobResult, err := json.Marshal(&jobResult{Result: c.buildResult})
 		require.NoError(t, err)
-		test.TestRoute(t, workerServer, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
 
 		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), "x86_64", []string{"osbuild-koji"})
 		require.NoError(t, err)
@@ -314,7 +315,7 @@ func TestCompose(t *testing.T) {
 		require.Equal(t, "test.img", osbuildJob.ImageName)
 		require.NotEmpty(t, osbuildJob.KojiDirectory)
 
-		test.TestRoute(t, workerServer, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), `{
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), `{
 			"result": {
 				"arch": "x86_64",
 				"host_os": "fedora-30",
@@ -341,7 +342,7 @@ func TestCompose(t *testing.T) {
 
 		finalizeResult, err := json.Marshal(&jobResult{Result: c.finalizeResult})
 		require.NoError(t, err)
-		test.TestRoute(t, workerServer, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK, `{}`)
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK, `{}`)
 
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%v", finalizeID), ``, http.StatusOK, c.composeStatus)
 	}
