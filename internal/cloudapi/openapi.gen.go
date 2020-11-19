@@ -26,9 +26,10 @@ type AWSUploadRequestOptions struct {
 
 // AWSUploadRequestOptionsEc2 defines model for AWSUploadRequestOptionsEc2.
 type AWSUploadRequestOptionsEc2 struct {
-	AccessKeyId     string  `json:"access_key_id"`
-	SecretAccessKey string  `json:"secret_access_key"`
-	SnapshotName    *string `json:"snapshot_name,omitempty"`
+	AccessKeyId       string    `json:"access_key_id"`
+	SecretAccessKey   string    `json:"secret_access_key"`
+	ShareWithAccounts *[]string `json:"share_with_accounts,omitempty"`
+	SnapshotName      *string   `json:"snapshot_name,omitempty"`
 }
 
 // AWSUploadRequestOptionsS3 defines model for AWSUploadRequestOptionsS3.

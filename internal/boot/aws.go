@@ -97,7 +97,7 @@ func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) err
 	if err != nil {
 		return fmt.Errorf("cannot upload the image: %#v", err)
 	}
-	_, err = uploader.Register(imageName, c.Bucket, imageName)
+	_, err = uploader.Register(imageName, c.Bucket, imageName, nil)
 	if err != nil {
 		return fmt.Errorf("cannot register the image: %#v", err)
 	}
