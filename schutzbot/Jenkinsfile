@@ -72,6 +72,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        RHN_REGISTRATION_ARGS = credentials('rhn-register-args')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"

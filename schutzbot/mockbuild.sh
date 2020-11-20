@@ -46,11 +46,20 @@ if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
+# fake secret is there, don't worry
+echo "${RHN_REGISTRATION_ARGS}"
+
 # Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ -n "${RHN_REGISTRATION_ARGS:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
+    cat >/tmp/register-rhel <<EOF
+set +x
+subscription-manager register --auto-attach $RHN_REGISTRATION_ARGS
+EOF
+
+    chmod +x /tmp/register-rhel
+    sudo /tmp/register-rhel
+    rm /tmp/register-rhel
 fi
 
 # Install requirements for building RPMs in mock.
