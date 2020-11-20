@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,10 +30,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
 	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("error setting up stdout for osbuild: %v", err)
-	}
+	var stdoutBuffer bytes.Buffer
+	cmd.Stdout = &stdoutBuffer
 
 	err = cmd.Start()
 	if err != nil {
@@ -49,13 +48,15 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWr
 		return nil, fmt.Errorf("error closing osbuild's stdin: %v", err)
 	}
 
+	err = cmd.Wait()
+
+	// try to decode the output even though the job could have failed
 	var result osbuild.Result
-	err = json.NewDecoder(stdout).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %#v", err)
+	decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &result)
+	if decodeErr != nil {
+		return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
 	}
 
-	err = cmd.Wait()
 	if err != nil {
 		// ignore ExitError if output could be decoded correctly
 		if _, isExitError := err.(*exec.ExitError); !isExitError {
