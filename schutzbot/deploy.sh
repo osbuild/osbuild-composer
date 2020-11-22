@@ -23,6 +23,21 @@ function retry {
     return 0
 }
 
+function setup_repo {
+  local project=$1
+  local commit=$2
+  local priority=${3:-10}
+  greenprint "Setting up dnf repository for ${project} ${commit}"
+  sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
+[${project}]
+name=${project} ${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
+enabled=1
+gpgcheck=0
+priority=${priority}
+EOF
+}
+
 # Get OS details.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -39,32 +54,14 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 greenprint "Adding osbuild team ssh keys"
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
-greenprint "Setting up a dnf repository with the RPMs we want to test"
-sudo tee /etc/yum.repos.d/osbuild-composer.repo << EOF
-[osbuild-composer]
-name=osbuild composer ${GIT_COMMIT}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
-enabled=1
-gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority.
-priority=5
-EOF
-
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
 
+setup_repo osbuild-composer "${GIT_COMMIT}" 5
+
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
-    greenprint "Setting up a dnf repository with our unreleased osbuild depedency"
-    sudo tee /etc/yum.repos.d/osbuild.repo << EOF
-[osbuild]
-name=osbuild ${OSBUILD_GIT_COMMIT}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_GIT_COMMIT}
-enabled=1
-gpgcheck=0
-# Default dnf repo priority is 99. Lower number means higher priority. This repo may contain an old composer build, dump the priority.
-priority=10
-EOF
+  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
 fi
 
 if [[ $ID == rhel ]]; then
