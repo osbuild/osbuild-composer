@@ -1,8 +1,20 @@
 {
+  "fedora-32": {
+    "dependants": {
+      "koji-osbuild": {
+        "commit": "c282b9b1f087fc58cf96f2d1322e90bb4e75bae7"
+      }
+    }
+  },
   "rhel-8.3": {
     "dependencies": {
       "osbuild": {
         "commit": "5aee7b9fa724575daa010a55cad0558fbb7b9ad1"
+      }
+    },
+    "dependants": {
+      "koji-osbuild": {
+        "commit": "c282b9b1f087fc58cf96f2d1322e90bb4e75bae7"
       }
     }
   }

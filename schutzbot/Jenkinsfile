@@ -164,6 +164,17 @@ pipeline {
                         }
                     }
                 }
+                stage('F32: koji-osbuild') {
+                    agent { label "f32cloudbase && x86_64 && aws" }
+                    steps {
+                        run_project_tests('koji-osbuild', 'integration.sh')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-revdep-koji-osbuild')
+                        }
+                    }
+                }
                 stage('F33 Base') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
@@ -288,6 +299,17 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-ostree')
+                        }
+                    }
+                }
+                stage('EL8: koji-osbuild') {
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    steps {
+                        run_project_tests('koji-osbuild', 'integration.sh')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-revdep-koji-osbuild')
                         }
                     }
                 }
@@ -466,7 +488,14 @@ void run_tests(test_type, boot_type) {
             script: "/usr/libexec/tests/osbuild-composer/api.sh"
         )
     }
+}
 
+// Similar to run_tests, but with a more general signature: allows setting the
+// project whose -tests package to install, and the name of the test to execute
+void run_project_tests(project, test) {
+    sh "schutzbot/ci_details.sh"
+    sh "schutzbot/deploy.sh ${project}"
+    sh "/usr/libexec/tests/${project}/${test}"
 }
 
 // Move logs to a unique location and tell Jenkins to capture them on success
