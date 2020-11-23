@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 #
 # deploy-qemu IMAGE USERDATA
@@ -39,19 +39,28 @@ fi
 
 echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/cidata/meta-data"
 
-genisoimage \
-  -input-charset utf-8 \
-  -output "$workdir/cloudinit.iso" \
-  -volid cidata \
-  -joliet \
-  -rock \
-  -quiet \
-  -graft-points \
-  "$workdir/cidata/user-data" \
-  "$workdir/cidata/meta-data"
+case $(uname -s) in
+  "Linux")
+    genisoimage \
+      -input-charset utf-8 \
+      -output "$workdir/cloudinit.iso" \
+      -volid cidata \
+      -joliet \
+      -rock \
+      -quiet \
+      -graft-points \
+      "$workdir/cidata/user-data" \
+      "$workdir/cidata/meta-data"
+    ;;
+
+  "Darwin")
+    # conviently uses the last component of source as volumeid, which has to be cidata
+    hdiutil makehybrid -iso -joliet -o "$workdir/cloudinit.iso" "$workdir/cidata"
+    ;;
+esac
 
 qemu-system-x86_64 \
-  -enable-kvm \
+  -M accel=kvm:hvf \
   -m 1024 \
   -snapshot \
   -cpu host \
