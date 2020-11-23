@@ -20,17 +20,15 @@ The configuration directory may contain:
                    to this directore (`files/etc/hosts` → `/etc/hosts`). Its
                    permissions are copied over, but the owner will always be
                    root:root. Empty directories are ignored.
-
-The `python3-pyyaml` package is required to run this tool.
 """
 
 
 import argparse
 import base64
+import json
 import os
 import stat
 import sys
-import yaml
 
 
 def octal_mode_string(mode):
@@ -48,11 +46,7 @@ def main():
     p.add_argument("configdir", metavar="CONFIGDIR", help="input directory")
     args = p.parse_args()
 
-    try:
-        with open(f"{args.configdir}/user-data.yml") as f:
-            userdata = yaml.load(f, Loader=yaml.SafeLoader)
-    except FileNotFoundError:
-        userdata = {}
+    write_files = []
 
     filesdir = f"{args.configdir}/files"
     for directory, dirs, files in os.walk(filesdir, followlinks=True):
@@ -60,15 +54,18 @@ def main():
             path = f"{directory}/{name}"
             with open(path, "rb") as f:
                 content = base64.b64encode(f.read()).decode("utf-8")
-            userdata.setdefault("write_files", []).append({
+            write_files.append({
                 "path": "/" + os.path.relpath(path, filesdir),
                 "encoding": "b64",
                 "content": content,
                 "permissions": octal_mode_string(os.lstat(path).st_mode)
             })
 
-    sys.stdout.write("#cloud-config\n")
-    yaml.dump(userdata, sys.stdout, Dumper=yaml.SafeDumper)
+    with open(f"{args.configdir}/user-data.yml") as f:
+        sys.stdout.write(f.read())
+    sys.stdout.write("write_files: ")
+    json.dump(write_files, sys.stdout)
+    sys.stdout.write("\n")
 
 
 if __name__ == "__main__":
