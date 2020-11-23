@@ -12,6 +12,8 @@
 # USERDATA -- A cloud-init user-data config file, or a directory of
 #             configuration as accepted by the `gen-user-data` tool.
 #
+# In addition, if the QEMU_EXTRA_ARGS environment variable is defined, it adds
+# its content as additional arguments to qemu.
 
 set -euo pipefail
 
@@ -23,6 +25,7 @@ fi
 scriptdir=$(dirname "$0")
 image=$1
 userdata=$2
+read -ra qemu_extra_args <<< "${QEMU_EXTRA_ARGS:-}"
 workdir=$(mktemp -d "$scriptdir/qemu-tmp-XXXXXX")
 function cleanup() {
   rm -rf "$workdir"
@@ -67,4 +70,4 @@ qemu-system-x86_64 \
   -net nic,model=virtio \
   -net user,hostfwd=tcp::2222-:22,hostfwd=tcp::4430-:443 \
   -cdrom "$workdir/cloudinit.iso" \
-  "$image"
+  "${qemu_extra_args[@]}" "$image"
