@@ -25,7 +25,7 @@ type testJobQueue struct {
 
 type job struct {
 	Id           uuid.UUID
-	Type         string
+	QueueName    string
 	Args         json.RawMessage
 	Dependencies []uuid.UUID
 	Result       json.RawMessage
@@ -43,10 +43,10 @@ func New() *testJobQueue {
 	}
 }
 
-func (q *testJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (q *testJobQueue) Enqueue(queueName string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
 	var j = job{
 		Id:           uuid.New(),
-		Type:         jobType,
+		QueueName:    queueName,
 		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
 	}
@@ -69,7 +69,7 @@ func (q *testJobQueue) Enqueue(jobType string, args interface{}, dependencies []
 	// Otherwise, update dependants so that this check is done again when
 	// FinishJob() is called for a dependency.
 	if finished == len(j.Dependencies) {
-		q.pending[j.Type] = append(q.pending[j.Type], j.Id)
+		q.pending[j.QueueName] = append(q.pending[j.QueueName], j.Id)
 	} else {
 		for _, id := range j.Dependencies {
 			q.dependants[id] = append(q.dependants[id], j.Id)
@@ -79,8 +79,8 @@ func (q *testJobQueue) Enqueue(jobType string, args interface{}, dependencies []
 	return j.Id, nil
 }
 
-func (q *testJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
-	for _, t := range jobTypes {
+func (q *testJobQueue) Dequeue(ctx context.Context, queueNames []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	for _, t := range queueNames {
 		if len(q.pending[t]) == 0 {
 			continue
 		}
@@ -91,7 +91,7 @@ func (q *testJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUI
 		j := q.jobs[id]
 
 		j.StartedAt = time.Now()
-		return j.Id, j.Dependencies, j.Type, j.Args, nil
+		return j.Id, j.Dependencies, j.QueueName, j.Args, nil
 	}
 
 	return uuid.Nil, nil, "", nil, errors.New("no job available")
@@ -122,7 +122,7 @@ func (q *testJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 			return err
 		}
 		if n == len(dep.Dependencies) {
-			q.pending[dep.Type] = append(q.pending[dep.Type], dep.Id)
+			q.pending[dep.QueueName] = append(q.pending[dep.QueueName], dep.Id)
 		}
 	}
 	delete(q.dependants, id)

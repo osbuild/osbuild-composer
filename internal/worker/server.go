@@ -71,19 +71,23 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
+	queueName := toQueueName("osbuild:" + arch)
+	return s.jobs.Enqueue(queueName, job, nil)
 }
 
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
+	queueName := toQueueName("osbuild-koji:" + arch)
+	return s.jobs.Enqueue(queueName, job, []uuid.UUID{initID})
 }
 
 func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
-	return s.jobs.Enqueue("koji-init", job, nil)
+	queueName := toQueueName("koji-init")
+	return s.jobs.Enqueue(queueName, job, nil)
 }
 
 func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
+	queueName := toQueueName("koji-finalize")
+	return s.jobs.Enqueue(queueName, job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
 func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid.UUID, error) {
@@ -169,8 +173,17 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 
 func (s *Server) RequestJob(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
 	token := uuid.New()
+	var queueNames []string
+	for _, jt := range jobTypes {
+		queueNames = append(queueNames, toQueueName(jt))
+	}
 
-	jobId, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jobTypes)
+	jobId, depIDs, queueName, args, err := s.jobs.Dequeue(ctx, queueNames)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, "", nil, nil, err
+	}
+
+	jobType, err := fromQueueName(queueName)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
@@ -402,4 +415,12 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	}
 
 	return nil
+}
+
+func toQueueName(jobType string) string {
+	return jobType
+}
+
+func fromQueueName(queueName string) (string, error) {
+	return queueName, nil
 }

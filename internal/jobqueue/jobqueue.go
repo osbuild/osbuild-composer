@@ -23,25 +23,24 @@ import (
 
 // JobQueue is an interface to a simple job queue. It is safe for concurrent use.
 type JobQueue interface {
-	// Enqueues a job.
+	// Enqueues a job to queue with a certain `queueName`.
 	//
-	// `args` must be JSON-serializable and fit the given `jobType`, i.e., a worker
-	// that is running that job must know the format of `args`.
+	// `args` must be JSON-serializable.
 	//
 	// All dependencies must already exist, but the job isn't run until all of them
 	// have finished.
 	//
 	// Returns the id of the new job, or an error.
-	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error)
+	Enqueue(queueName string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error)
 
 	// Dequeues a job, blocking until one is available.
 	//
-	// Waits until a job with a type of any of `jobTypes` is available, or `ctx` is
+	// Waits until a job is available in any of queues with `queueNames`, or `ctx` is
 	// canceled.
 	//
-	// Returns the job's id, dependencies, type, and arguments, or an error. Arguments
-	// can be unmarshaled to the type given in Enqueue().
-	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+	// Returns the job's id, dependencies, name of the queue in which the job was queued
+	// and its arguments given in `Enqueue()`, or an error.
+	Dequeue(ctx context.Context, queueNames []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Mark the job with `id` as finished. `result` must fit the associated
 	// job type and must be serializable to JSON.

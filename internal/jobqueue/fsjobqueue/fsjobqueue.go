@@ -34,7 +34,7 @@ type fsJobQueue struct {
 
 	db *jsondb.JSONDatabase
 
-	// Maps job types to channels of job ids for that type.
+	// Maps queue names to channels of job ids for that name.
 	pending map[string]chan uuid.UUID
 
 	// Maps job ids to the jobs that depend on it, if any of those
@@ -47,7 +47,7 @@ type fsJobQueue struct {
 // (de)serialized on each access.
 type job struct {
 	Id           uuid.UUID       `json:"id"`
-	Type         string          `json:"type"`
+	QueueName    string          `json:"type"`
 	Args         json.RawMessage `json:"args,omitempty"`
 	Dependencies []uuid.UUID     `json:"dependencies"`
 	Result       json.RawMessage `json:"result,omitempty"`
@@ -60,7 +60,7 @@ type job struct {
 }
 
 // The size of channels used in fsJobQueue for queueing jobs.
-// Note that each job type has its own queue.
+// Note that each queue with a unique name has its own channel.
 const channelSize = 100
 
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
@@ -96,13 +96,13 @@ func New(dir string) (*fsJobQueue, error) {
 	return q, nil
 }
 
-func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (q *fsJobQueue) Enqueue(queueName string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	var j = job{
 		Id:           uuid.New(),
-		Type:         jobType,
+		QueueName:    queueName,
 		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
 	}
@@ -140,7 +140,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) Dequeue(ctx context.Context, queueNames []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -149,14 +149,13 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		return uuid.Nil, nil, "", nil, err
 	}
 
-	// Filter q.pending by the `jobTypes`. Ignore those job types that this
-	// queue doesn't accept.
+	// Filter q.pending by the `queueNames`.
 	chans := []chan uuid.UUID{}
-	for _, jt := range jobTypes {
-		c, exists := q.pending[jt]
+	for _, qn := range queueNames {
+		c, exists := q.pending[qn]
 		if !exists {
 			c = make(chan uuid.UUID, channelSize)
-			q.pending[jt] = c
+			q.pending[qn] = c
 		}
 		chans = append(chans, c)
 	}
@@ -171,11 +170,11 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		q.mu.Lock()
 
 		// Delete empty channels
-		for _, jt := range jobTypes {
-			c, exists := q.pending[jt]
+		for _, qn := range queueNames {
+			c, exists := q.pending[qn]
 			if exists && len(c) == 0 {
 				close(c)
-				delete(q.pending, jt)
+				delete(q.pending, qn)
 			}
 		}
 
@@ -200,7 +199,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
 	}
 
-	return j.Id, j.Dependencies, j.Type, j.Args, nil
+	return j.Id, j.Dependencies, j.QueueName, j.Args, nil
 }
 
 func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
@@ -325,10 +324,10 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	}
 
 	if depsFinished {
-		c, exists := q.pending[j.Type]
+		c, exists := q.pending[j.QueueName]
 		if !exists {
 			c = make(chan uuid.UUID, channelSize)
-			q.pending[j.Type] = c
+			q.pending[j.QueueName] = c
 		}
 		c <- j.Id
 	} else if updateDependants {
