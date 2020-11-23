@@ -29,13 +29,15 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+mkdir "$workdir/cidata"
+
 if [ -d "$userdata" ]; then
-  "$scriptdir/gen-user-data" "$userdata" > "$workdir/user-data"
+  "$scriptdir/gen-user-data" "$userdata" > "$workdir/cidata/user-data"
 else
-  cp "$userdata" "$workdir/user-data"
+  cp "$userdata" "$workdir/cidata/user-data"
 fi
 
-echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/meta-data"
+echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/cidata/meta-data"
 
 genisoimage \
   -input-charset utf-8 \
@@ -45,8 +47,8 @@ genisoimage \
   -rock \
   -quiet \
   -graft-points \
-  "$workdir/user-data" \
-  "$workdir/meta-data"
+  "$workdir/cidata/user-data" \
+  "$workdir/cidata/meta-data"
 
 qemu-system-x86_64 \
   -enable-kvm \
