@@ -132,7 +132,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		)
 	}
 
-	initID, err := h.server.workers.EnqueueKojiInit(&worker.KojiInitJob{
+	initID, err := h.server.workers.EnqueueKojiInit("", &worker.KojiInitJob{
 		Server:  request.Koji.Server,
 		Name:    request.Name,
 		Version: request.Version,
@@ -145,7 +145,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var buildIDs []uuid.UUID
 	for i, ir := range imageRequests {
-		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, &worker.OSBuildKojiJob{
+		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, "", &worker.OSBuildKojiJob{
 			Manifest:      ir.manifest,
 			ImageName:     ir.filename,
 			KojiServer:    request.Koji.Server,
@@ -159,7 +159,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		buildIDs = append(buildIDs, id)
 	}
 
-	id, err := h.server.workers.EnqueueKojiFinalize(&worker.KojiFinalizeJob{
+	id, err := h.server.workers.EnqueueKojiFinalize("", &worker.KojiFinalizeJob{
 		Server:        request.Koji.Server,
 		Name:          request.Name,
 		Version:       request.Version,

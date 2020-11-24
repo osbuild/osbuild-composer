@@ -67,7 +67,7 @@ func TestCreate(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 	handler := server.Handler()
 
-	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	_, err = server.EnqueueOSBuild(arch.Name(), "", &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
@@ -91,7 +91,7 @@ func TestCancel(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := server.EnqueueOSBuild(arch.Name(), "", &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
 	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()}, []string{})
@@ -128,7 +128,7 @@ func TestUpdate(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := server.EnqueueOSBuild(arch.Name(), "", &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
 	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()}, []string{})
@@ -159,7 +159,7 @@ func TestUpload(t *testing.T) {
 	server := worker.NewServer(nil, testjobqueue.New(), "")
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobID, err := server.EnqueueOSBuild(arch.Name(), "", &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
 	token, j, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), []string{"osbuild" + ":" + arch.Name()}, []string{})

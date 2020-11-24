@@ -72,23 +72,23 @@ func (s *Server) Handler() http.Handler {
 	return e
 }
 
-func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
-	queueName := toQueueName("osbuild:"+arch, "")
+func (s *Server) EnqueueOSBuild(arch string, owner string, job *OSBuildJob) (uuid.UUID, error) {
+	queueName := toQueueName("osbuild:"+arch, owner)
 	return s.jobs.Enqueue(queueName, job, nil)
 }
 
-func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
-	queueName := toQueueName("osbuild-koji:"+arch, "")
+func (s *Server) EnqueueOSBuildKoji(arch string, owner string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
+	queueName := toQueueName("osbuild-koji:"+arch, owner)
 	return s.jobs.Enqueue(queueName, job, []uuid.UUID{initID})
 }
 
-func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
-	queueName := toQueueName("koji-init", "")
+func (s *Server) EnqueueKojiInit(owner string, job *KojiInitJob) (uuid.UUID, error) {
+	queueName := toQueueName("koji-init", owner)
 	return s.jobs.Enqueue(queueName, job, nil)
 }
 
-func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
-	queueName := toQueueName("koji-finalize", "")
+func (s *Server) EnqueueKojiFinalize(owner string, job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
+	queueName := toQueueName("koji-finalize", owner)
 	return s.jobs.Enqueue(queueName, job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
