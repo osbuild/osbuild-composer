@@ -173,10 +173,14 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+func (s *Server) RequestJob(ctx context.Context, jobTypes []string, jobOwners []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
 	token := uuid.New()
 	var queueNames []string
 	for _, jt := range jobTypes {
+		for _, jo := range jobOwners {
+			queueNames = append(queueNames, toQueueName(jt, jo))
+		}
+		// add empty job owner for backward compatibility.
 		queueNames = append(queueNames, toQueueName(jt, ""))
 	}
 
@@ -288,7 +292,14 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		jts = body.Types
 	}
 
-	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), jts)
+	// Use empty slice for job owners if they're not set.
+	// For backward compatibility.
+	jos := []string{}
+	if body.Owners != nil {
+		jos = *body.Owners
+	}
+
+	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), jts, jos)
 	if err != nil {
 		return err
 	}

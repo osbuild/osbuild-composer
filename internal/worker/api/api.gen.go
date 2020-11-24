@@ -21,8 +21,12 @@ type RequestJobJSONBody struct {
 	// Deprecated. The architecture is now part of the job type.
 	// If this field is set, its value will be appended to osbuild and osbuild-koji job types with a leading colon to maintain backwards compatibility. Example:
 	// `types = [osbuild, osbuild-koji, koji-init], arch = aarch64` results into: `types = [osbuild:aarch64, osbuild-koji:aarch64, koji-init]`
-	Arch  string   `json:"arch"`
-	Types []string `json:"types"`
+	Arch string `json:"arch"`
+
+	// Denotes by which owners the worker accepts jobs. Jobs without an owner can be assigned to an arbitrary worker, this is used only for backward compatibility.
+	// If left empty, the worker can get jobs from arbitrary owners. This is important for keeping backward compatibility.
+	Owners *[]string `json:"owners,omitempty"`
+	Types  []string  `json:"types"`
 }
 
 // UpdateJobJSONBody defines parameters for UpdateJob.

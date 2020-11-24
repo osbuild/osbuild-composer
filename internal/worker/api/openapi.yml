@@ -106,6 +106,16 @@ paths:
 
                     `types = [osbuild, osbuild-koji, koji-init], arch = aarch64` results into:
                     `types = [osbuild:aarch64, osbuild-koji:aarch64, koji-init]`
+                owners:
+                  type: array
+                  items:
+                    type: string
+                  description: >
+                    Denotes by which owners the worker accepts jobs. Jobs without an owner can be assigned to
+                    an arbitrary worker, this is used only for backward compatibility.
+
+                    If left empty, the worker can get jobs from arbitrary owners. This is important for keeping
+                    backward compatibility.
               required:
                 - types
                 - arch
