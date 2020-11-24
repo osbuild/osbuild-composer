@@ -60,6 +60,17 @@ type apiHandlers struct {
 
 // PostCompose handles a new /compose POST request
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
+	tls := ctx.Request().TLS
+	if tls == nil {
+		panic("kojiapi must be always run on TLS listener")
+
+	}
+	if tls.PeerCertificates == nil || len(tls.PeerCertificates) > 0 {
+		panic("kojiapi must be always run with required peer certificates")
+	}
+	// take the job owner name from the first SAN name
+	jobOwner := (*tls.PeerCertificates[0]).DNSNames[0]
+
 	var request api.ComposeRequest
 	err := ctx.Bind(&request)
 	if err != nil {
@@ -132,7 +143,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		)
 	}
 
-	initID, err := h.server.workers.EnqueueKojiInit("", &worker.KojiInitJob{
+	initID, err := h.server.workers.EnqueueKojiInit(jobOwner, &worker.KojiInitJob{
 		Server:  request.Koji.Server,
 		Name:    request.Name,
 		Version: request.Version,
@@ -145,7 +156,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var buildIDs []uuid.UUID
 	for i, ir := range imageRequests {
-		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, "", &worker.OSBuildKojiJob{
+		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, jobOwner, &worker.OSBuildKojiJob{
 			Manifest:      ir.manifest,
 			ImageName:     ir.filename,
 			KojiServer:    request.Koji.Server,
@@ -159,7 +170,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		buildIDs = append(buildIDs, id)
 	}
 
-	id, err := h.server.workers.EnqueueKojiFinalize("", &worker.KojiFinalizeJob{
+	id, err := h.server.workers.EnqueueKojiFinalize(jobOwner, &worker.KojiFinalizeJob{
 		Server:        request.Koji.Server,
 		Name:          request.Name,
 		Version:       request.Version,
