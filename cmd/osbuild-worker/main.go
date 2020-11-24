@@ -84,6 +84,7 @@ func main() {
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
 		} `toml:"koji"`
+		AcceptedJobOwners []string `toml:"accepted_job_owners,omitempty"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -174,7 +175,7 @@ func main() {
 
 	for {
 		fmt.Println("Waiting for a new job...")
-		job, err := client.RequestJob(acceptedJobTypes)
+		job, err := client.RequestJob(acceptedJobTypes, config.AcceptedJobOwners)
 		if err != nil {
 			log.Fatal(err)
 		}

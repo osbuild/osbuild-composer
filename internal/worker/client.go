@@ -84,7 +84,7 @@ func NewClientUnix(path string) *Client {
 	return &Client{server, requester}
 }
 
-func (c *Client) RequestJob(types []string) (Job, error) {
+func (c *Client) RequestJob(types []string, owners []string) (Job, error) {
 	url, err := c.server.Parse("jobs")
 	if err != nil {
 		// This only happens when "jobs" cannot be parsed.
@@ -93,7 +93,8 @@ func (c *Client) RequestJob(types []string) (Job, error) {
 
 	var buf bytes.Buffer
 	err = json.NewEncoder(&buf).Encode(api.RequestJobJSONRequestBody{
-		Types: types,
+		Types:  types,
+		Owners: &owners,
 	})
 	if err != nil {
 		panic(err)
