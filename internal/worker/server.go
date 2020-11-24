@@ -9,8 +9,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -71,22 +73,22 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
-	queueName := toQueueName("osbuild:" + arch)
+	queueName := toQueueName("osbuild:"+arch, "")
 	return s.jobs.Enqueue(queueName, job, nil)
 }
 
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
-	queueName := toQueueName("osbuild-koji:" + arch)
+	queueName := toQueueName("osbuild-koji:"+arch, "")
 	return s.jobs.Enqueue(queueName, job, []uuid.UUID{initID})
 }
 
 func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
-	queueName := toQueueName("koji-init")
+	queueName := toQueueName("koji-init", "")
 	return s.jobs.Enqueue(queueName, job, nil)
 }
 
 func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
-	queueName := toQueueName("koji-finalize")
+	queueName := toQueueName("koji-finalize", "")
 	return s.jobs.Enqueue(queueName, job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
@@ -175,7 +177,7 @@ func (s *Server) RequestJob(ctx context.Context, jobTypes []string) (uuid.UUID, 
 	token := uuid.New()
 	var queueNames []string
 	for _, jt := range jobTypes {
-		queueNames = append(queueNames, toQueueName(jt))
+		queueNames = append(queueNames, toQueueName(jt, ""))
 	}
 
 	jobId, depIDs, queueName, args, err := s.jobs.Dequeue(ctx, queueNames)
@@ -183,7 +185,7 @@ func (s *Server) RequestJob(ctx context.Context, jobTypes []string) (uuid.UUID, 
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
 
-	jobType, err := fromQueueName(queueName)
+	jobType, _, err := fromQueueName(queueName)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
@@ -417,10 +419,63 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
-func toQueueName(jobType string) string {
-	return jobType
+// Encodes job restrictions to queueName.
+//
+// The format is the path and query part of URI: jobType[?key=value[&key2=value2]...]
+// The additional restriction is that the keys must be alphabetically sorted
+// in order to provide a canonical encoding of job restrictions.
+//
+// All values are escaped using url.QueryEscape function so it's safe to pass
+// values containing & and =.
+//
+// Currently, only jobOwner parameter is implemented.
+func toQueueName(jobType string, jobOwner string) string {
+	var params []string
+
+	if jobOwner != "" {
+		params = append(params, "owner="+url.QueryEscape(jobOwner))
+	}
+
+	queueName := jobType
+	if len(params) > 0 {
+		queueName += "?" + strings.Join(params, "&")
+	}
+	return queueName
 }
 
-func fromQueueName(queueName string) (string, error) {
-	return queueName, nil
+// Decodes queueName to job restrictions.
+//
+// The inverse operation to toQueueName.
+func fromQueueName(queueName string) (string, string, error) {
+	parts := strings.Split(queueName, "?")
+	jobType := parts[0]
+
+	if len(parts) == 1 {
+		return jobType, "", nil
+	}
+
+	var jobOwner string
+	params := strings.Split(parts[1], "&")
+	for _, p := range params {
+		keyvalue := strings.Split(p, "=")
+		if len(keyvalue) == 1 {
+			return "", "", fmt.Errorf("queue name cannot be decoded: a parameter has no value: %s", keyvalue)
+		}
+
+		key := keyvalue[0]
+		value := keyvalue[1]
+
+		value, err := url.QueryUnescape(value)
+		if err != nil {
+			return "", "", fmt.Errorf("queue name parameter '%s'='%s' cannot be decoded: %v", key, value, err)
+		}
+
+		switch key {
+		case "owner":
+			jobOwner = value
+		default:
+			return "", "", fmt.Errorf("queue name cannot be decoded: a parameter has an unknown key: %s", key)
+		}
+	}
+	return jobType, jobOwner, nil
 }
