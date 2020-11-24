@@ -114,6 +114,10 @@ func main() {
 		log.Fatalf("Could not load config file '%s': %v", configFile, err)
 	}
 
+	if len(config.AcceptedJobOwners) == 0 {
+		config.AcceptedJobOwners = []string{"_weldr"}
+	}
+
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
