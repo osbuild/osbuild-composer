@@ -55,6 +55,16 @@ func (server *Server) Handler(path string) http.Handler {
 
 // Compose handles a new /compose POST request
 func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
+	if r.TLS == nil {
+		panic("cloudapi must be always run on TLS listener")
+
+	}
+	if r.TLS.PeerCertificates == nil || len(r.TLS.PeerCertificates) > 0 {
+		panic("cloudapi must be always run with required peer certificates")
+	}
+	// take the job owner name from the first SAN name
+	jobOwner := (*r.TLS.PeerCertificates[0]).DNSNames[0]
+
 	contentType := r.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
 		http.Error(w, "Only 'application/json' content type is supported", http.StatusUnsupportedMediaType)
@@ -188,7 +198,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := server.workers.EnqueueOSBuild(ir.arch, "", &worker.OSBuildJob{
+	id, err := server.workers.EnqueueOSBuild(ir.arch, jobOwner, &worker.OSBuildJob{
 		Manifest: ir.manifest,
 		Targets:  targets,
 	})
