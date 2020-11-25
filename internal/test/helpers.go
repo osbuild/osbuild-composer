@@ -22,10 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type API interface {
-	ServeHTTP(writer http.ResponseWriter, request *http.Request)
-}
-
 func externalRequest(method, path, body string) *http.Response {
 	client := http.Client{
 		Transport: &http.Transport{
@@ -52,7 +48,7 @@ func externalRequest(method, path, body string) *http.Response {
 	return resp
 }
 
-func internalRequest(api API, method, path, body string) *http.Response {
+func internalRequest(api http.Handler, method, path, body string) *http.Response {
 	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
@@ -61,7 +57,7 @@ func internalRequest(api API, method, path, body string) *http.Response {
 	return resp.Result()
 }
 
-func SendHTTP(api API, external bool, method, path, body string) *http.Response {
+func SendHTTP(api http.Handler, external bool, method, path, body string) *http.Response {
 	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
 		if !external {
 			return nil
@@ -102,7 +98,7 @@ func dropFields(obj interface{}, fields ...string) {
 	}
 }
 
-func TestRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
+func TestRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
 	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
@@ -140,7 +136,7 @@ func TestRoute(t *testing.T, api API, external bool, method, path, body string, 
 	require.Equal(t, expected, reply)
 }
 
-func TestTOMLRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedTOML string, ignoreFields ...string) {
+func TestTOMLRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedTOML string, ignoreFields ...string) {
 	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
@@ -174,7 +170,7 @@ func TestTOMLRoute(t *testing.T, api API, external bool, method, path, body stri
 	require.Equal(t, expected, reply)
 }
 
-func TestNonJsonRoute(t *testing.T, api API, external bool, method, path, body string, expectedStatus int, expectedResponse string) {
+func TestNonJsonRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedResponse string) {
 	response := SendHTTP(api, external, method, path, body)
 	assert.Equalf(t, expectedStatus, response.StatusCode, "%s: status mismatch", path)
 
