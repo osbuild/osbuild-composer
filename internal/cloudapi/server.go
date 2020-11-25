@@ -94,8 +94,18 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		}
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
-			repositories[j].BaseURL = repo.Baseurl
 			repositories[j].RHSM = repo.Rhsm
+
+			if repo.Baseurl != nil {
+				repositories[j].BaseURL = *repo.Baseurl
+			} else if repo.Mirrorlist != nil {
+				repositories[j].MirrorList = *repo.Mirrorlist
+			} else if repo.Metalink != nil {
+				repositories[j].Metalink = *repo.Metalink
+			} else {
+				http.Error(w, "Must specify baseurl, mirrorlist, or metalink", http.StatusBadRequest)
+				return
+			}
 		}
 
 		var bp = blueprint.Blueprint{}
