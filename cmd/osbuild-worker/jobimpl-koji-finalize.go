@@ -97,16 +97,25 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	var failure bool
-
-	var initArgs worker.KojiInitJobResult
-	err = job.DynamicArgs(0, &initArgs)
+	initArgs, osbuildKojiResults, err := extractDynamicArgs(job)
 	if err != nil {
 		return err
 	}
 
-	if initArgs.KojiError != "" {
-		failure = true
+	// Check the dependencies early. Fail the koji build if any of them failed.
+	if hasFailedDependency(*initArgs, osbuildKojiResults) {
+		err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+
+		// Update the status immediately and bail out.
+		var result worker.KojiFinalizeJobResult
+		if err != nil {
+			result.KojiError = err.Error()
+		}
+		err = job.Update(&result)
+		if err != nil {
+			return fmt.Errorf("Error reporting job result: %v", err)
+		}
+		return nil
 	}
 
 	build := koji.ImageBuild{
@@ -121,16 +130,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	var buildRoots []koji.BuildRoot
 	var images []koji.Image
-	for i := 1; i < job.NDynamicArgs(); i++ {
-		var buildArgs worker.OSBuildKojiJobResult
-		err = job.DynamicArgs(i, &buildArgs)
-		if err != nil {
-			return err
-		}
-		if !buildArgs.OSBuildOutput.Success || buildArgs.KojiError != "" {
-			failure = true
-			break
-		}
+	for i, buildArgs := range osbuildKojiResults {
 		buildRoots = append(buildRoots, koji.BuildRoot{
 			ID: uint64(i),
 			Host: koji.Host{
@@ -150,7 +150,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		})
 		images = append(images, koji.Image{
 			BuildRootID:  uint64(i),
-			Filename:     args.KojiFilenames[i-1],
+			Filename:     args.KojiFilenames[i],
 			FileSize:     buildArgs.ImageSize,
 			Arch:         buildArgs.Arch,
 			ChecksumType: "md5",
@@ -166,16 +166,9 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.KojiFinalizeJobResult
-	if failure {
-		err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
-		if err != nil {
-			result.KojiError = err.Error()
-		}
-	} else {
-		err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
-		if err != nil {
-			result.KojiError = err.Error()
-		}
+	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
+	if err != nil {
+		result.KojiError = err.Error()
 	}
 
 	err = job.Update(&result)
@@ -184,4 +177,39 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	return nil
+}
+
+// Extracts dynamic args of the koji-finalize job. Returns an error if they
+// cannot be unmarshalled.
+func extractDynamicArgs(job worker.Job) (*worker.KojiInitJobResult, []worker.OSBuildKojiJobResult, error) {
+	var kojiInitResult worker.KojiInitJobResult
+	err := job.DynamicArgs(0, &kojiInitResult)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	osbuildKojiResults := make([]worker.OSBuildKojiJobResult, job.NDynamicArgs()-1)
+
+	for i := 1; i < job.NDynamicArgs(); i++ {
+		err = job.DynamicArgs(i, &osbuildKojiResults[i-1])
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return &kojiInitResult, osbuildKojiResults, nil
+}
+
+// Returns true if any of koji-finalize dependencies failed.
+func hasFailedDependency(kojiInitResult worker.KojiInitJobResult, osbuildKojiResults []worker.OSBuildKojiJobResult) bool {
+	if kojiInitResult.KojiError != "" {
+		return true
+	}
+
+	for _, r := range osbuildKojiResults {
+		if !r.OSBuildOutput.Success || r.KojiError != "" {
+			return true
+		}
+	}
+	return false
 }
