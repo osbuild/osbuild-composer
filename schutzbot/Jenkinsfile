@@ -66,6 +66,19 @@ pipeline {
                         }
                     }
                 }
+                stage('F33 aarch64') {
+                    agent { label "f33cloudbase && aarch64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
                 stage('EL8') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
@@ -237,6 +250,41 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-ostree')
+                        }
+                    }
+                }
+                stage('F33 aarch64 Base') {
+                    agent { label "f33cloudbase && aarch64 && aws" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        run_tests('base', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-aarch64-base')
+                        }
+                    }
+                }
+                stage('F33 aarch64 Image') {
+                    agent { label "f33cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "fedora33"
+                    }
+                    steps {
+                        run_tests('image', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-aarch64-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
