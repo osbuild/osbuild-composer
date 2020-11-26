@@ -38,16 +38,16 @@ func newNetworkNamespace() (NetNS, error) {
 		if os.IsNotExist(err) {
 			err := os.Mkdir(netnsDir, 0755)
 			if err != nil {
-				return "", fmt.Errorf("cannot create %s: %#v", netnsDir, err)
+				return "", fmt.Errorf("cannot create %s: %v", netnsDir, err)
 			}
 		} else {
-			return "", fmt.Errorf("cannot stat %s: %#v", netnsDir, err)
+			return "", fmt.Errorf("cannot stat %s: %v", netnsDir, err)
 		}
 	}
 
 	f, err := ioutil.TempFile(netnsDir, "osbuild-composer-namespace")
 	if err != nil {
-		return "", fmt.Errorf("cannot create a tempfile: %#v", err)
+		return "", fmt.Errorf("cannot create a tempfile: %v", err)
 	}
 
 	// We want to remove the temporary file if the namespace initialization fails.
@@ -59,14 +59,14 @@ func newNetworkNamespace() (NetNS, error) {
 		if !initOK {
 			err := os.Remove(f.Name())
 			if err != nil {
-				log.Printf("cannot remove the temporary namespace: %#v", err)
+				log.Printf("cannot remove the temporary namespace: %v", err)
 			}
 		}
 	}()
 
 	oldNS, err := os.Open("/proc/self/ns/net")
 	if err != nil {
-		return "", fmt.Errorf("cannot open the current namespace: %#v", err)
+		return "", fmt.Errorf("cannot open the current namespace: %v", err)
 	}
 
 	err = syscall.Unshare(syscall.CLONE_NEWNET)
@@ -79,7 +79,7 @@ func newNetworkNamespace() (NetNS, error) {
 			// We cannot return to the original namespace.
 			// As we don't know nothing about affected threads, let's just
 			// quit immediately.
-			log.Fatalf("returning to the original namespace failed, quitting: %#v", err)
+			log.Fatalf("returning to the original namespace failed, quitting: %v", err)
 		}
 	}()
 
@@ -88,7 +88,7 @@ func newNetworkNamespace() (NetNS, error) {
 	cmd.Stdout = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("cannot set up a loopback device in the new namespace: %#v", err)
+		return "", fmt.Errorf("cannot set up a loopback device in the new namespace: %v", err)
 	}
 
 	cmd = exec.Command("mount", "-o", "bind", "/proc/self/ns/net", f.Name())
@@ -96,7 +96,7 @@ func newNetworkNamespace() (NetNS, error) {
 	cmd.Stdout = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("cannot bind mount the new namespace: %#v", err)
+		return "", fmt.Errorf("cannot bind mount the new namespace: %v", err)
 	}
 
 	ns := NetNS(path.Base(f.Name()))
@@ -136,12 +136,12 @@ func (n NetNS) Delete() error {
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot unmount the network namespace: %#v", err)
+		return fmt.Errorf("cannot unmount the network namespace: %v", err)
 	}
 
 	err = os.Remove(n.Path())
 	if err != nil {
-		return fmt.Errorf("cannot delete the network namespace file: %#v", err)
+		return fmt.Errorf("cannot delete the network namespace file: %v", err)
 	}
 
 	return nil

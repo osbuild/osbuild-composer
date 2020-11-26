@@ -22,7 +22,7 @@ func durationMin(a, b time.Duration) time.Duration {
 func killProcessCleanly(process *os.Process, timeout time.Duration) error {
 	err := process.Signal(syscall.SIGTERM)
 	if err != nil {
-		log.Printf("cannot send SIGTERM to process, sending SIGKILL instead: %#v", err)
+		log.Printf("cannot send SIGTERM to process, sending SIGKILL instead: %v", err)
 		return process.Kill()
 	}
 

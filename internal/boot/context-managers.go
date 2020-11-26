@@ -30,7 +30,7 @@ func WithNetworkNamespace(f func(ns NetNS) error) error {
 	defer func() {
 		err := ns.Delete()
 		if err != nil {
-			log.Printf("cannot delete network namespace: %#v", err)
+			log.Printf("cannot delete network namespace: %v", err)
 		}
 	}()
 
@@ -42,13 +42,13 @@ func WithNetworkNamespace(f func(ns NetNS) error) error {
 func withTempFile(dir, pattern string, f func(file *os.File) error) error {
 	tempFile, err := ioutil.TempFile(dir, pattern)
 	if err != nil {
-		return fmt.Errorf("cannot create the temporary file: %#v", err)
+		return fmt.Errorf("cannot create the temporary file: %v", err)
 	}
 
 	defer func() {
 		err := os.Remove(tempFile.Name())
 		if err != nil {
-			log.Printf("cannot remove the temporary file: %#v", err)
+			log.Printf("cannot remove the temporary file: %v", err)
 		}
 	}()
 
@@ -58,13 +58,13 @@ func withTempFile(dir, pattern string, f func(file *os.File) error) error {
 func withTempDir(dir, pattern string, f func(dir string) error) error {
 	tempDir, err := ioutil.TempDir(dir, pattern)
 	if err != nil {
-		return fmt.Errorf("cannot create the temporary directory %#v", err)
+		return fmt.Errorf("cannot create the temporary directory %v", err)
 	}
 
 	defer func() {
 		err := os.RemoveAll(tempDir)
 		if err != nil {
-			log.Printf("cannot remove the temporary directory: %#v", err)
+			log.Printf("cannot remove the temporary directory: %v", err)
 		}
 	}()
 
@@ -89,7 +89,7 @@ func writeCloudInitISO(writer io.Writer, userData, metaData string) error {
 
 	err := isoCmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot create cloud-init iso: %#v", err)
+		return fmt.Errorf("cannot create cloud-init iso: %v", err)
 	}
 
 	return nil
@@ -110,7 +110,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 
 		err = cloudInitFile.Close()
 		if err != nil {
-			return fmt.Errorf("cannot close temporary cloudinit file: %#v", err)
+			return fmt.Errorf("cannot close temporary cloudinit file: %v", err)
 		}
 
 		var qemuCmd *exec.Cmd
@@ -163,13 +163,13 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 
 		err = qemuCmd.Start()
 		if err != nil {
-			return fmt.Errorf("cannot start the qemu process: %#v", err)
+			return fmt.Errorf("cannot start the qemu process: %v", err)
 		}
 
 		defer func() {
 			err := killProcessCleanly(qemuCmd.Process, time.Second)
 			if err != nil {
-				log.Printf("cannot kill the qemu process: %#v", err)
+				log.Printf("cannot kill the qemu process: %v", err)
 			}
 		}()
 
@@ -189,13 +189,13 @@ func WithBootedNspawnImage(image string, ns NetNS, f func() error) error {
 
 	err := cmd.Start()
 	if err != nil {
-		return fmt.Errorf("cannot start the systemd-nspawn process: %#v", err)
+		return fmt.Errorf("cannot start the systemd-nspawn process: %v", err)
 	}
 
 	defer func() {
 		err := killProcessCleanly(cmd.Process, time.Second)
 		if err != nil {
-			log.Printf("cannot kill the systemd-nspawn process: %#v", err)
+			log.Printf("cannot kill the systemd-nspawn process: %v", err)
 		}
 	}()
 
@@ -214,13 +214,13 @@ func WithBootedNspawnDirectory(dir string, ns NetNS, f func() error) error {
 
 	err := cmd.Start()
 	if err != nil {
-		return fmt.Errorf("cannot start the systemd-nspawn process: %#v", err)
+		return fmt.Errorf("cannot start the systemd-nspawn process: %v", err)
 	}
 
 	defer func() {
 		err := killProcessCleanly(cmd.Process, time.Second)
 		if err != nil {
-			log.Printf("cannot kill the systemd-nspawn process: %#v", err)
+			log.Printf("cannot kill the systemd-nspawn process: %v", err)
 		}
 	}()
 
@@ -242,7 +242,7 @@ func WithExtractedTarArchive(archive string, f func(dir string) error) error {
 
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("cannot untar the archive: %#v", err)
+			return fmt.Errorf("cannot untar the archive: %v", err)
 		}
 
 		return f(dir)
@@ -263,7 +263,7 @@ func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
 
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("ssh-keygen failed: %#v", err)
+			return fmt.Errorf("ssh-keygen failed: %v", err)
 		}
 
 		return f(privateKey, publicKey)

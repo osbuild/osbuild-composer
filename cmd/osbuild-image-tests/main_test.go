@@ -89,7 +89,7 @@ func runOsbuild(manifest []byte, store, outputDirectory string) error {
 func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
 	var imageInfoExpected interface{}
 	err := json.Unmarshal(rawImageInfoExpected, &imageInfoExpected)
-	require.NoErrorf(t, err, "cannot decode expected image info: %#v", err)
+	require.NoErrorf(t, err, "cannot decode expected image info: %v", err)
 
 	cmd := constants.GetImageInfoCommand(imagePath)
 	cmd.Stderr = os.Stderr
@@ -97,14 +97,14 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 	cmd.Stdout = writer
 
 	err = cmd.Start()
-	require.NoErrorf(t, err, "image-info cannot start: %#v", err)
+	require.NoErrorf(t, err, "image-info cannot start: %v", err)
 
 	var imageInfoGot interface{}
 	err = json.NewDecoder(reader).Decode(&imageInfoGot)
-	require.NoErrorf(t, err, "decoding image-info output failed: %#v", err)
+	require.NoErrorf(t, err, "decoding image-info output failed: %v", err)
 
 	err = cmd.Wait()
-	require.NoErrorf(t, err, "running image-info failed: %#v", err)
+	require.NoErrorf(t, err, "running image-info failed: %v", err)
 
 	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
@@ -152,7 +152,7 @@ func trySSHOnce(address string, privateKey string, ns *boot.NetNS) error {
 				return &timeoutError{}
 			}
 		} else {
-			return fmt.Errorf("ssh command failed from unknown reason: %#v", err)
+			return fmt.Errorf("ssh command failed from unknown reason: %v", err)
 		}
 	}
 
@@ -491,7 +491,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 func getAllCases() ([]string, error) {
 	cases, err := ioutil.ReadDir(constants.TestPaths.TestCasesDirectory)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list test cases: %#v", err)
+		return nil, fmt.Errorf("cannot list test cases: %v", err)
 	}
 
 	casesPaths := []string{}
@@ -522,7 +522,7 @@ func runTests(t *testing.T, cases []string) {
 		t.Run(path.Base(p), func(t *testing.T) {
 			f, err := os.Open(p)
 			if err != nil {
-				t.Skipf("%s: cannot open test case: %#v", p, err)
+				t.Skipf("%s: cannot open test case: %v", p, err)
 			}
 
 			var testcase testcaseStruct
