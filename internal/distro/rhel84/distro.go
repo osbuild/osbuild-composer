@@ -49,7 +49,7 @@ type imageType struct {
 	bootable         bool
 	rpmOstree        bool
 	defaultSize      uint64
-	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
+	assembler        func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
 func (a *architecture) Distro() distro.Distro {
@@ -326,7 +326,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		))
 	}
 
-	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
+	p.Assembler = t.assembler(options, t.arch)
 
 	return p, nil
 }
@@ -478,9 +478,10 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
-	if uefi {
+
+	if arch.Name() == "x86_64" {
 		options = osbuild.QEMUAssemblerOptions{
 			Bootloader: &osbuild.QEMUBootloader{
 				Type: "grub2",
@@ -522,75 +523,86 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 				},
 			},
 		}
-	} else {
-		if arch.Name() == "ppc64le" {
-			options = osbuild.QEMUAssemblerOptions{
-				Bootloader: &osbuild.QEMUBootloader{
-					Type:     "grub2",
-					Platform: "powerpc-ieee1275",
-				},
-				Format:   format,
-				Filename: filename,
-				Size:     imageOptions.Size,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "dos",
-				Partitions: []osbuild.QEMUPartition{
-					{
-						Size:     8192,
-						Type:     "41",
-						Bootable: true,
-					},
-					{
-						Start: 10240,
-						Filesystem: &osbuild.QEMUFilesystem{
-							Type:       "xfs",
-							UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-							Mountpoint: "/",
-						},
+	} else if arch.Name() == "aarch64" {
+		options = osbuild.QEMUAssemblerOptions{
+			Format:   format,
+			Filename: filename,
+			Size:     imageOptions.Size,
+			PTUUID:   "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			PTType:   "gpt",
+			Partitions: []osbuild.QEMUPartition{
+				{
+					Start: 2048,
+					Size:  204800,
+					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+					Filesystem: &osbuild.QEMUFilesystem{
+						Type:       "vfat",
+						UUID:       "7B77-95E7",
+						Mountpoint: "/boot/efi",
 					},
 				},
-			}
-		} else if arch.Name() == "s390x" {
-			options = osbuild.QEMUAssemblerOptions{
-				Bootloader: &osbuild.QEMUBootloader{
-					Type: "zipl",
-				},
-				Format:   format,
-				Filename: filename,
-				Size:     imageOptions.Size,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "dos",
-				Partitions: []osbuild.QEMUPartition{
-					{
-						Start:    2048,
-						Bootable: true,
-						Filesystem: &osbuild.QEMUFilesystem{
-							Type:       "xfs",
-							UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-							Mountpoint: "/",
-						},
+				{
+					Start: 206848,
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+					Filesystem: &osbuild.QEMUFilesystem{
+						Type:       "xfs",
+						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Label:      "root",
+						Mountpoint: "/",
 					},
 				},
-			}
-		} else {
-			options = osbuild.QEMUAssemblerOptions{
-				Format:   format,
-				Filename: filename,
-				Size:     imageOptions.Size,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "mbr",
-				Partitions: []osbuild.QEMUPartition{
-					{
-						Start:    2048,
-						Bootable: true,
-						Filesystem: &osbuild.QEMUFilesystem{
-							Type:       "xfs",
-							UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-							Mountpoint: "/",
-						},
+			},
+		}
+	} else if arch.Name() == "ppc64le" {
+		options = osbuild.QEMUAssemblerOptions{
+			Bootloader: &osbuild.QEMUBootloader{
+				Type:     "grub2",
+				Platform: "powerpc-ieee1275",
+			},
+			Format:   format,
+			Filename: filename,
+			Size:     imageOptions.Size,
+			PTUUID:   "0x14fc63d2",
+			PTType:   "dos",
+			Partitions: []osbuild.QEMUPartition{
+				{
+					Size:     8192,
+					Type:     "41",
+					Bootable: true,
+				},
+				{
+					Start: 10240,
+					Filesystem: &osbuild.QEMUFilesystem{
+						Type:       "xfs",
+						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Mountpoint: "/",
 					},
 				},
-			}
+			},
+		}
+	} else if arch.Name() == "s390x" {
+		options = osbuild.QEMUAssemblerOptions{
+			Bootloader: &osbuild.QEMUBootloader{
+				Type: "zipl",
+			},
+			Format:   format,
+			Filename: filename,
+			Size:     imageOptions.Size,
+			PTUUID:   "0x14fc63d2",
+			PTType:   "dos",
+			Partitions: []osbuild.QEMUPartition{
+				{
+					Start:    2048,
+					Bootable: true,
+					Filesystem: &osbuild.QEMUFilesystem{
+						Type:       "xfs",
+						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Mountpoint: "/",
+					},
+				},
+			},
 		}
 	}
 	return osbuild.NewQEMUAssembler(&options)
@@ -676,7 +688,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -730,7 +742,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -806,8 +818,8 @@ func New() distro.Distro {
 		kernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("raw", "image.raw", uefi, options, arch)
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("raw", "image.raw", options, arch)
 		},
 	}
 
@@ -887,8 +899,8 @@ func New() distro.Distro {
 		kernelOptions: "ro console=ttyS0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", options, arch)
 		},
 	}
 
@@ -914,8 +926,8 @@ func New() distro.Distro {
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options, arch)
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", options, arch)
 		},
 	}
 
@@ -929,7 +941,7 @@ func New() distro.Distro {
 		},
 		bootable:      false,
 		kernelOptions: "ro net.ifnames=0",
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return tarAssembler("root.tar.xz", "xz")
 		},
 	}
@@ -969,8 +981,8 @@ func New() distro.Distro {
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, options, arch)
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("vpc", "disk.vhd", options, arch)
 		},
 	}
 
@@ -997,8 +1009,8 @@ func New() distro.Distro {
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, options, arch)
+		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("vmdk", "disk.vmdk", options, arch)
 		},
 	}
 
