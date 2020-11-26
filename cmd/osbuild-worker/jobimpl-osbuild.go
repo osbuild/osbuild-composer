@@ -160,7 +160,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			/* TODO: communicate back the AMI */
-			_, err = a.Register(t.ImageName, options.Bucket, key, options.ShareWithAccounts)
+			_, err = a.Register(t.ImageName, options.Bucket, key, options.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				r = append(r, err)
 				continue

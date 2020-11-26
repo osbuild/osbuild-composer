@@ -17,6 +17,7 @@ func main() {
 	var filename string
 	var imageName string
 	var shareWith string
+	var arch string
 	flag.StringVar(&accessKeyID, "access-key-id", "", "access key ID")
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&region, "region", "", "target region")
@@ -25,6 +26,7 @@ func main() {
 	flag.StringVar(&filename, "image", "", "image file to upload")
 	flag.StringVar(&imageName, "name", "", "AMI name")
 	flag.StringVar(&shareWith, "account-id", "", "account id to share image with")
+	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
 	flag.Parse()
 
 	a, err := awsupload.New(region, accessKeyID, secretAccessKey)
@@ -45,7 +47,7 @@ func main() {
 	if shareWith != "" {
 		share = append(share, shareWith)
 	}
-	ami, err := a.Register(imageName, bucketName, keyName, share)
+	ami, err := a.Register(imageName, bucketName, keyName, share, arch)
 	if err != nil {
 		println(err.Error())
 		return
