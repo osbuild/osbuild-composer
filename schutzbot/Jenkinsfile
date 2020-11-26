@@ -32,39 +32,42 @@ pipeline {
             }
         }
 
-        stage("Mock build 👷🏻") {
-            // Halt the pipeline immediately if a single mock build fails.
-            // A failure to build an RPM is serious and must be
-            // investigated.
-            failFast true
-
-            parallel {
-
-                stage('F33') {
-                    agent { label "f33cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                    }
-                }
-
-            }
-        }
+        // stage("Mock build 👷🏻") {
+        //     // Halt the pipeline immediately if a single mock build fails.
+        //     // A failure to build an RPM is serious and must be
+        //     // investigated.
+        //     failFast true
+        // 
+        //     parallel {
+        // 
+        //         stage('F33') {
+        //             agent { label "f33cloudbase && x86_64 && aws" }
+        //             environment {
+        //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
+        //                 AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+        //             }
+        //             steps {
+        //                 sh "schutzbot/ci_details.sh"
+        //                 retry(3) {
+        //                     sh "schutzbot/mockbuild.sh"
+        //                 }
+        //             }
+        //         }
+        // 
+        //     }
+        // }
 
         stage("Testing 🍌") {
             parallel {
 
                 stage('F33 Base') {
                     agent { label "f33cloudbase && x86_64 && aws" }
-                    environment { TEST_TYPE = "base" }
+                    environment { 
+                        TEST_TYPE = "base"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
                     steps {
-                        run_tests('base', 'bios')
+                        run_rpmci()
                     }
                     post {
                         always {
@@ -92,33 +95,33 @@ pipeline {
                 //         }
                 //     }
                 // }
-                stage('F33 Integration') {
-                    agent { label "f33cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        run_tests('integration', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora33-integration')
-                        }
-                    }
-                }
-                stage('F33 OSTree') {
-                    agent { label "f33cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora33-ostree')
-                        }
-                    }
-                }
+                // stage('F33 Integration') {
+                //     agent { label "f33cloudbase && x86_64 && aws" }
+                //     environment {
+                //         TEST_TYPE = "integration"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                //     }
+                //     steps {
+                //         run_tests('integration', 'bios')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora33-integration')
+                //         }
+                //     }
+                // }
+                // stage('F33 OSTree') {
+                //     agent { label "f33cloudbase && psi && x86_64" }
+                //     steps {
+                //         run_tests('ostree', 'bios')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora33-ostree')
+                //         }
+                //     }
+                // }
             }
         }
     }
@@ -144,6 +147,19 @@ pipeline {
         }
     }
 
+}
+
+void run_rpmci() {
+    // Get CI machine details.
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
+
+    sh (
+        label: "Deploy rpmci",
+        script: "schutzbot/rpmci.sh"
+    )
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
