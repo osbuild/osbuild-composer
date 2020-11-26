@@ -117,7 +117,17 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
-func (a *AWS) Register(name, bucket, key string, shareWith []string) (*string, error) {
+func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string) (*string, error) {
+	rpmArchToEC2Arch := map[string]string{
+		"x86_64":  "x86_64",
+		"aarch64": "arm64",
+	}
+
+	ec2Arch, validArch := rpmArchToEC2Arch[rpmArch]
+	if !validArch {
+		return nil, fmt.Errorf("ec2 doesn't support the following arch: %s", rpmArch)
+	}
+
 	log.Printf("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
 	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
 	importTaskOutput, err := a.ec2.ImportSnapshot(
@@ -212,7 +222,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string) (*string, e
 	log.Printf("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
 	registerOutput, err := a.ec2.RegisterImage(
 		&ec2.RegisterImageInput{
-			Architecture:       aws.String("x86_64"),
+			Architecture:       aws.String(ec2Arch),
 			VirtualizationType: aws.String("hvm"),
 			Name:               aws.String(name),
 			RootDeviceName:     aws.String("/dev/sda1"),
