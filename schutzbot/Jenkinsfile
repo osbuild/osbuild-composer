@@ -359,6 +359,7 @@ pipeline {
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                     }
                     steps {
