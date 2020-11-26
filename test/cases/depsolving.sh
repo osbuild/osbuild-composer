@@ -10,9 +10,7 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 TEST_CASES=(
-  "osbuild-weldr-tests"
-  "osbuild-composer-cli-tests"
-  "osbuild-auth-tests"
+  "osbuild-dnf-json-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -38,9 +36,14 @@ run_test_case () {
     echo
 }
 
+# Use repository overrides because RHEL subscription does not allow usage of repositories
+# for multiple architectures (it provides content only for the host's architecture).
+sudo mkdir -p /etc/osbuild-composer/repositories
+# Override old rhel-8.json and rhel-8-beta.json because RHEL 8.4 test needs nightly repos
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-84.json /etc/osbuild-composer/repositories/rhel-8.json
+# If multiple tests are run and call provision.sh the symlink will need to be overriden with -f
+sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json /etc/osbuild-composer/repositories/rhel-8-beta.json
 
-# Provision the software under tet.
-/usr/libexec/osbuild-composer-test/provision.sh
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
