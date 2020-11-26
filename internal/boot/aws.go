@@ -60,7 +60,7 @@ func encodeBase64(input string) string {
 func CreateUserData(publicKeyFile string) (string, error) {
 	publicKey, err := ioutil.ReadFile(publicKeyFile)
 	if err != nil {
-		return "", fmt.Errorf("cannot read the public key: %#v", err)
+		return "", fmt.Errorf("cannot read the public key: %v", err)
 	}
 
 	userData := fmt.Sprintf(`#cloud-config
@@ -91,16 +91,16 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
 	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey)
 	if err != nil {
-		return fmt.Errorf("cannot create aws uploader: %#v", err)
+		return fmt.Errorf("cannot create aws uploader: %v", err)
 	}
 
 	_, err = uploader.Upload(imagePath, c.Bucket, imageName)
 	if err != nil {
-		return fmt.Errorf("cannot upload the image: %#v", err)
+		return fmt.Errorf("cannot upload the image: %v", err)
 	}
 	_, err = uploader.Register(imageName, c.Bucket, imageName, nil, common.CurrentArch())
 	if err != nil {
-		return fmt.Errorf("cannot register the image: %#v", err)
+		return fmt.Errorf("cannot register the image: %v", err)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func NewEC2(c *awsCredentials) (*ec2.EC2, error) {
 		Region:      aws.String(c.Region),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create aws session: %#v", err)
+		return nil, fmt.Errorf("cannot create aws session: %v", err)
 	}
 
 	return ec2.New(sess), nil
@@ -141,7 +141,7 @@ func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot describe the image: %#v", err)
+		return nil, fmt.Errorf("cannot describe the image: %v", err)
 	}
 	imageId := imageDescriptions.Images[0].ImageId
 	snapshotId := imageDescriptions.Images[0].BlockDeviceMappings[0].Ebs.SnapshotId
@@ -162,7 +162,7 @@ func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	})
 
 	if err != nil {
-		retErr = wrapErrorf(retErr, "cannot deregister the image: %#v", err)
+		retErr = wrapErrorf(retErr, "cannot deregister the image: %v", err)
 	}
 
 	// now it's possible to delete the snapshot
@@ -171,7 +171,7 @@ func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 	})
 
 	if err != nil {
-		retErr = wrapErrorf(retErr, "cannot delete the snapshot: %#v", err)
+		retErr = wrapErrorf(retErr, "cannot delete the snapshot: %v", err)
 	}
 
 	return retErr
@@ -194,7 +194,7 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 		Description: aws.String("image-tests-security-group"),
 	})
 	if err != nil {
-		return fmt.Errorf("cannot create a new security group: %#v", err)
+		return fmt.Errorf("cannot create a new security group: %v", err)
 	}
 
 	defer func() {
@@ -203,7 +203,7 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 		})
 
 		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot delete the security group: %#v", err)
+			retErr = wrapErrorf(retErr, "cannot delete the security group: %v", err)
 		}
 	}()
 
@@ -216,7 +216,7 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 		IpProtocol: aws.String("tcp"),
 	})
 	if err != nil {
-		return fmt.Errorf("canot add a rule to the security group: %#v", err)
+		return fmt.Errorf("canot add a rule to the security group: %v", err)
 	}
 
 	// Finally, run the instance from the given image and with the created security group
@@ -229,7 +229,7 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 		UserData:         aws.String(encodeBase64(userData)),
 	})
 	if err != nil {
-		return fmt.Errorf("cannot create a new instance: %#v", err)
+		return fmt.Errorf("cannot create a new instance: %v", err)
 	}
 
 	describeInstanceInput := &ec2.DescribeInstancesInput{
@@ -247,13 +247,13 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 			},
 		})
 		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot terminate the instance: %#v", err)
+			retErr = wrapErrorf(retErr, "cannot terminate the instance: %v", err)
 			return
 		}
 
 		err = e.WaitUntilInstanceTerminated(describeInstanceInput)
 		if err != nil {
-			retErr = wrapErrorf(retErr, "waiting for the instance termination failed: %#v", err)
+			retErr = wrapErrorf(retErr, "waiting for the instance termination failed: %v", err)
 		}
 	}()
 
@@ -263,13 +263,13 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 	// actually can do something useful for us.
 	err = e.WaitUntilInstanceRunning(describeInstanceInput)
 	if err != nil {
-		return fmt.Errorf("waiting for the instance to be running failed: %#v", err)
+		return fmt.Errorf("waiting for the instance to be running failed: %v", err)
 	}
 
 	// By describing the instance, we can get the ip address.
 	out, err := e.DescribeInstances(describeInstanceInput)
 	if err != nil {
-		return fmt.Errorf("cannot describe the instance: %#v", err)
+		return fmt.Errorf("cannot describe the instance: %v", err)
 	}
 
 	return f(*out.Reservations[0].Instances[0].PublicIpAddress)
