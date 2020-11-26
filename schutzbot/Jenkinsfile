@@ -189,6 +189,20 @@ pipeline {
                         }
                     }
                 }
+                stage('F32 Cross-arch depsolving') {
+                    agent { label "f32cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "depsolving"
+                    }
+                    steps {
+                        run_tests('depsolving', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('depsolving')
+                        }
+                    }
+                }
                 stage('F33 Base') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
@@ -288,6 +302,20 @@ pipeline {
                         }
                     }
                 }
+                stage('F33 Cross-arch depsolving') {
+                    agent { label "f33cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "depsolving"
+                    }
+                    steps {
+                        run_tests('depsolving', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('depsolving')
+                        }
+                    }
+                }
                 stage('EL8 Base') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
@@ -368,6 +396,20 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8 Cross-arch depsolving') {
+                    agent { label "rhel8cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "depsolving"
+                    }
+                    steps {
+                        run_tests('depsolving', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('depsolving')
+                        }
+                    }
+                }
                 stage('EL8.4 Base') {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
@@ -434,6 +476,20 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8.4 Cross-arch depsolving') {
+                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "depsolving"
+                    }
+                    steps {
+                        run_tests('depsolving', 'bios')
+                    }
+                    post {
+                        always {
+                            preserve_logs('depsolving')
+                        }
+                    }
+                }
             }
         }
     }
@@ -476,6 +532,13 @@ void run_tests(test_type) {
         label: "Deploy",
         script: "schutzbot/deploy.sh"
     )
+
+    if (test_type == 'depsolving') {
+        sh (
+            label: "Depsolving tests",
+            script: "/usr/libexec/tests/osbuild-composer/depsolving.sh"
+        )
+    }
 
     // Run the base tests.
     if (test_type == 'base') {

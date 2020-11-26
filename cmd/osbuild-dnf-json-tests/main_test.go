@@ -18,6 +18,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
@@ -49,14 +51,18 @@ func TestFetchChecksum(t *testing.T) {
 // this should run cross-arch dependency solving N-1 times.
 func TestCrossArchDepsolve(t *testing.T) {
 	// Load repositories from the definition we provide in the RPM package
-	repoDir := "/usr/share/osbuild-composer"
+	repoDir := "/usr/share/tests/osbuild-composer"
+
+	distros := []distro.Distro{fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New()}
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	for _, distroStruct := range []distro.Distro{fedora32.New(), fedora33.New()} {
+	for _, distroStruct := range distros {
 		t.Run(distroStruct.Name(), func(t *testing.T) {
 
 			// Run tests in parallel to speed up run times.
-			t.Parallel()
+			// Disable this for now, because it causes some kind of race-condition where architectures which are
+			// only defined for RHEL are tested for Fedora as well.
+			// t.Parallel()
 
 			// Set up temporary directory for rpm/dnf cache
 			dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
@@ -67,8 +73,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 			// working directory
 			rpm := rpmmd.NewRPMMD(dir, "/usr/libexec/osbuild-composer/dnf-json")
 
-			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
-			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
+			name := distroStruct.Name()
+
+			repos, err := rpmmd.LoadRepositories([]string{repoDir}, name)
+			require.NoErrorf(t, err, "Failed to LoadRepositories %v", name)
 
 			for _, archStr := range distroStruct.ListArches() {
 				t.Run(archStr, func(t *testing.T) {
@@ -80,10 +88,11 @@ func TestCrossArchDepsolve(t *testing.T) {
 							imgType, err := arch.GetImageType(imgTypeStr)
 							require.NoError(t, err)
 
+							require.True(t, len(repos[archStr]) > 0, "No repository is specified for %s %s %s", name, archStr, imgTypeStr)
+
 							buildPackages := imgType.BuildPackages()
 							_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
-
 							basePackagesInclude, basePackagesExclude := imgType.Packages(blueprint.Blueprint{})
 							_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
