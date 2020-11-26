@@ -40,52 +40,11 @@ pipeline {
 
             parallel {
 
-                stage('F32') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                    }
-                }
                 stage('F33') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                    }
-                }
-                stage('EL8') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                    }
-                }
-                stage('EL8.4') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        RHEL84_NIGHTLY_REPO = credentials('rhel84-nightly-repo')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -101,80 +60,6 @@ pipeline {
         stage("Testing 🍌") {
             parallel {
 
-                stage('F32 Base') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    environment { TEST_TYPE = "base" }
-                    steps {
-                        run_tests('base', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-base')
-                        }
-                    }
-                }
-                stage('F32 Image') {
-                    agent { label "f32cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora32"
-                    }
-                    steps {
-                        run_tests('image', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-image')
-                            sh (
-                                label: "Run cloud cleaner just in case something failed",
-                                script: "schutzbot/run_cloud_cleaner.sh"
-                            )
-                        }
-                    }
-                }
-                stage('F32 Integration') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        run_tests('integration', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-integration')
-                        }
-                    }
-                }
-                stage('F32 OSTree') {
-                    agent { label "f32cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-ostree')
-                        }
-                    }
-                }
-                stage('F32: koji-osbuild') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    steps {
-                        run_project_tests('koji-osbuild', 'integration.sh')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-revdep-koji-osbuild')
-                        }
-                    }
-                }
                 stage('F33 Base') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment { TEST_TYPE = "base" }
@@ -187,26 +72,26 @@ pipeline {
                         }
                     }
                 }
-                stage('F33 Image') {
-                    agent { label "f33cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora33"
-                    }
-                    steps {
-                        run_tests('image', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora33-image')
-                        }
-                    }
-                }
+                // stage('F33 Image') {
+                //     agent { label "f33cloudbase && psi && x86_64" }
+                //     environment {
+                //         TEST_TYPE = "image"
+                //         AWS_CREDS = credentials('aws-credentials-osbuildci')
+                //         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                //         AZURE_CREDS = credentials('azure')
+                //         OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                //         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                //         DISTRO_CODE = "fedora33"
+                //     }
+                //     steps {
+                //         run_tests('image', 'bios')
+                //     }
+                //     post {
+                //         always {
+                //             preserve_logs('fedora33-image')
+                //         }
+                //     }
+                // }
                 stage('F33 Integration') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment {
@@ -231,150 +116,6 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-ostree')
-                        }
-                    }
-                }
-                stage('EL8 Base') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        TEST_TYPE = "base"
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        run_tests('base', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-base')
-                        }
-                    }
-                }
-                stage('EL8 Image') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "rhel8"
-                    }
-                    steps {
-                        run_tests('image', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-image')
-                            sh (
-                                label: "Run cloud cleaner just in case something failed",
-                                script: "schutzbot/run_cloud_cleaner.sh"
-                            )
-                        }
-                    }
-                }
-                stage('EL8 Integration') {
-                    agent { label "rhel8cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        run_tests('integration', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-integration')
-                        }
-                    }
-                }
-                stage('EL8 OSTree') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree', 'bios')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-ostree')
-                        }
-                    }
-                }
-                stage('EL8: koji-osbuild') {
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    steps {
-                        run_project_tests('koji-osbuild', 'integration.sh')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-revdep-koji-osbuild')
-                        }
-                    }
-                }
-                stage('EL8.4 Base') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "base"
-                    }
-                    steps {
-                        run_tests('base', 'hybrid')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel84-base')
-                        }
-                    }
-                }
-                stage('EL8.4 Image') {
-                    agent { label "rhel84cloudbase && psi && x86_64" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "rhel84"
-                    }
-                    steps {
-                        run_tests('image', 'hybrid')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel84-image')
-                            sh (
-                                label: "Run cloud cleaner just in case something failed",
-                                script: "schutzbot/run_cloud_cleaner.sh"
-                            )
-                        }
-                    }
-                }
-                stage('EL8.4 Integration') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "integration"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                    }
-                    steps {
-                        run_tests('integration', 'hybrid')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel84-integration')
-                        }
-                    }
-                }
-                stage('EL8.4 OSTree') {
-                    agent { label "rhel84cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree', 'hybrid')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel84-ostree')
                         }
                     }
                 }
