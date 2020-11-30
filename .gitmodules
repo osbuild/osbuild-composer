@@ -1,3 +1,0 @@
-[submodule "osbuild"]
-	path = osbuild
-	url = https://github.com/osbuild/osbuild.git
