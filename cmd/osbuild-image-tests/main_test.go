@@ -29,6 +29,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/boot/openstacktest"
 	"github.com/osbuild/osbuild-composer/internal/boot/vmwaretest"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 )
 
@@ -47,20 +48,6 @@ type testcaseStruct struct {
 
 var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is given, no images are booted locally using qemu (this does not affect testing in clouds)")
 var failLocalBoot = flag.Bool("fail-local-boot", true, "when this flag is on (default), local boot will fail. Usually indicates missing cloud credentials")
-
-// GenerateCIArtifactName generates a new identifier for CI artifacts which is based
-// on environment variables specified by Jenkins
-// note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
-func GenerateCIArtifactName(prefix string) (string, error) {
-	distroCode := os.Getenv("DISTRO_CODE")
-	branchName := os.Getenv("BRANCH_NAME")
-	buildId := os.Getenv("BUILD_ID")
-	if branchName == "" || buildId == "" || distroCode == "" {
-		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
-	}
-
-	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
-}
 
 // runOsbuild runs osbuild with the specified manifest and output-directory.
 func runOsbuild(manifest []byte, store, outputDirectory string) error {
@@ -250,7 +237,7 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 
 	}
 
-	imageName, err := GenerateCIArtifactName("osbuild-image-tests-image-")
+	imageName, err := test.GenerateCIArtifactName("osbuild-image-tests-image-")
 	require.NoError(t, err)
 
 	e, err := boot.NewEC2(creds)
@@ -269,7 +256,7 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 		require.NoErrorf(t, err, "cannot delete the ec2 image, resources could have been leaked")
 	}()
 
-	securityGroupName, err := GenerateCIArtifactName("osbuild-image-tests-security-group-")
+	securityGroupName, err := test.GenerateCIArtifactName("osbuild-image-tests-security-group-")
 	require.NoError(t, err)
 
 	instanceTypeForArch := map[string]string{
@@ -304,7 +291,7 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 	}
 
 	// create a random test id to name all the resources used in this test
-	testId, err := GenerateCIArtifactName("")
+	testId, err := test.GenerateCIArtifactName("")
 	require.NoError(t, err)
 
 	imageName := "image-" + testId + ".vhd"
@@ -345,7 +332,7 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 
 	// create a random test id to name all the resources used in this test
-	imageName, err := GenerateCIArtifactName("osbuild-image-tests-openstack-image-")
+	imageName, err := test.GenerateCIArtifactName("osbuild-image-tests-openstack-image-")
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point
@@ -395,7 +382,7 @@ func testBootUsingVMware(t *testing.T, imagePath string) {
 	defer os.Remove(imagePath)
 
 	// create a random test id to name all the resources used in this test
-	imageName, err := GenerateCIArtifactName("osbuild-image-tests-vmware-image-")
+	imageName, err := test.GenerateCIArtifactName("osbuild-image-tests-vmware-image-")
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point

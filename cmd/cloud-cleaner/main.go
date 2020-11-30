@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+
 	"github.com/osbuild/osbuild-composer/internal/boot/azuretest"
+	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
 func panicErr(err error) {
@@ -22,19 +23,7 @@ func printErr(err error) {
 	}
 }
 
-// GenerateCIArtifactName generates a new identifier for CI artifacts which is based
-// on environment variables specified by Jenkins
-// note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
-func GenerateCIArtifactName(prefix string) (string, error) {
-	distroCode := os.Getenv("DISTRO_CODE")
-	branchName := os.Getenv("BRANCH_NAME")
-	buildId := os.Getenv("BUILD_ID")
-	if branchName == "" || buildId == "" || distroCode == "" {
-		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
-	}
 
-	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
-}
 
 func main() {
 	fmt.Println("Running a cloud cleanup")
@@ -46,7 +35,7 @@ func main() {
 		panic("empty credentials")
 	}
 	// Get test ID
-	testID, err := GenerateCIArtifactName("")
+	testID, err := test.GenerateCIArtifactName("")
 	panicErr(err)
 	// Delete the vhd image
 	imageName := "image-" + testID + ".vhd"
