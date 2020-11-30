@@ -241,11 +241,11 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		}
 	}
 
-	if result.KojiError == "" {
-		return "success"
+	if result.KojiError != "" {
+		return "failure"
 	}
 
-	return "failure"
+	return "success"
 }
 
 func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) string {
