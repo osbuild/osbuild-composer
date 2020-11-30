@@ -31,7 +31,13 @@ cat > /tmp/rpmci-config.json << STOPHERE
 	"test_invocation": {
 		"machine": "target",
 		"invoke": [
-			"/usr/libexec/tests/osbuild-composer/base_tests.sh"
+			"/usr/libexec/tests/osbuild-composer/api.sh",
+			"/usr/libexec/tests/osbuild-composer/aws.sh",
+			"/usr/libexec/tests/osbuild-composer/base_tests.sh",
+			"/usr/libexec/tests/osbuild-composer/image_tests.sh",
+			"/usr/libexec/tests/osbuild-composer/koji.sh",
+			"/usr/libexec/tests/osbuild-composer/ostree.sh",
+			"/usr/libexec/tests/osbuild-composer/qemu.sh"
 		]
 	}
 }
