@@ -898,7 +898,7 @@ func New() distro.Distro {
 		},
 		kernelOptions: "ro console=ttyS0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:      true,
-		defaultSize:   4 * GigaByte,
+		defaultSize:   10 * GigaByte,
 		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("qcow2", "disk.qcow2", options, arch)
 		},
