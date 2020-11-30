@@ -46,6 +46,12 @@ func (s *Server) Handler(path string) http.Handler {
 	e.Binder = binder{}
 	e.StdLogger = s.logger
 
+	// log errors returned from handlers
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		log.Println(c.Path(), c.QueryParams().Encode(), err.Error())
+		e.DefaultHTTPErrorHandler(err, c)
+	}
+
 	api.RegisterHandlers(e.Group(path), &apiHandlers{s})
 
 	return e
