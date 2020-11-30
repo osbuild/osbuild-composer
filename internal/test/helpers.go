@@ -18,6 +18,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -239,5 +240,7 @@ func GenerateCIArtifactName(prefix string) (string, error) {
 		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
 	}
 
-	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
+	arch := common.CurrentArch()
+
+	return fmt.Sprintf("%s%s-%s-%s-%s", prefix, distroCode, arch, branchName, buildId), nil
 }
