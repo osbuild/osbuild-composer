@@ -271,9 +271,20 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 
 	securityGroupName, err := GenerateCIArtifactName("osbuild-image-tests-security-group-")
 	require.NoError(t, err)
+
+	instanceTypeForArch := map[string]string{
+		"x86_64":  "t3.micro",
+		"aarch64": "t4g.micro",
+	}
+
+	instanceType, exists := instanceTypeForArch[common.CurrentArch()]
+	if !exists {
+		panic("unsupported AWS arch")
+	}
+
 	// boot the uploaded image and try to connect to it
 	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
-		return boot.WithBootedImageInEC2(e, securityGroupName, imageDesc, publicKey, func(address string) error {
+		return boot.WithBootedImageInEC2(e, securityGroupName, imageDesc, publicKey, instanceType, func(address string) error {
 			testSSH(t, address, privateKey, nil)
 			return nil
 		})
