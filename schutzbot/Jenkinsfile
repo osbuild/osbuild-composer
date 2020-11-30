@@ -205,6 +205,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
