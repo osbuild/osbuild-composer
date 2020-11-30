@@ -179,7 +179,7 @@ func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
 
 // WithBootedImageInEC2 runs the function f in the context of booted
 // image in AWS EC2
-func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *imageDescription, publicKey string, f func(address string) error) (retErr error) {
+func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *imageDescription, publicKey string, instanceType string, f func(address string) error) (retErr error) {
 	// generate user data with given public key
 	userData, err := CreateUserData(publicKey)
 	if err != nil {
@@ -224,7 +224,7 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 		MaxCount:         aws.Int64(1),
 		MinCount:         aws.Int64(1),
 		ImageId:          imageDesc.Id,
-		InstanceType:     aws.String("t3.micro"),
+		InstanceType:     aws.String(instanceType),
 		SecurityGroupIds: []*string{securityGroup.GroupId},
 		UserData:         aws.String(encodeBase64(userData)),
 	})
