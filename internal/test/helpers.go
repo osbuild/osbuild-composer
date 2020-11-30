@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -225,4 +226,18 @@ func SetUpTemporaryRepository() (string, error) {
 // Remove the temporary repository
 func TearDownTemporaryRepository(dir string) error {
 	return os.RemoveAll(dir)
+}
+
+// GenerateCIArtifactName generates a new identifier for CI artifacts which is based
+// on environment variables specified by Jenkins
+// note: in case of migration to sth else like Github Actions, change it to whatever variables GH Action provides
+func GenerateCIArtifactName(prefix string) (string, error) {
+	distroCode := os.Getenv("DISTRO_CODE")
+	branchName := os.Getenv("BRANCH_NAME")
+	buildId := os.Getenv("BUILD_ID")
+	if branchName == "" || buildId == "" || distroCode == "" {
+		return "", fmt.Errorf("The environment variables must specify BRANCH_NAME, BUILD_ID, and DISTRO_CODE")
+	}
+
+	return fmt.Sprintf("%s%s-%s-%s", prefix, distroCode, branchName, buildId), nil
 }
