@@ -224,6 +224,10 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		return "failure"
 	}
 
+	if js.Finished.IsZero() {
+		return "pending"
+	}
+
 	if initResult.KojiError != "" {
 		return "failure"
 	}
@@ -235,10 +239,6 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 		if buildResult.KojiError != "" {
 			return "failure"
 		}
-	}
-
-	if js.Finished.IsZero() {
-		return "pending"
 	}
 
 	if result.KojiError == "" {
