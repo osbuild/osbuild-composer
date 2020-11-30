@@ -3606,7 +3606,7 @@
           },
           "format": "qcow2",
           "filename": "disk.qcow2",
-          "size": 4294967296,
+          "size": 10737418240,
           "ptuuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
           "pttype": "gpt",
           "partitions": [
@@ -10217,7 +10217,7 @@
         "fstype": "xfs",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 4187995648,
+        "size": 10630446592,
         "start": 106954752,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d"
