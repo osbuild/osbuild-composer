@@ -305,10 +305,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		targetErrors = append(targetErrors, err.Error())
 	}
 
+	var uploadstatus string = "failure"
+	if len(targetErrors) == 0 {
+		uploadstatus = "success"
+	}
+
 	err = job.Update(&worker.OSBuildJobResult{
 		Success:       osbuildOutput.Success && len(targetErrors) == 0,
 		OSBuildOutput: osbuildOutput,
 		TargetErrors:  targetErrors,
+		UploadStatus:  uploadstatus,
 	})
 	if err != nil {
 		return fmt.Errorf("Error reporting job result: %v", err)

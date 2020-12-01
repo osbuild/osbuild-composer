@@ -248,10 +248,11 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	}
 
 	response := ComposeStatus{
-		Status: composeStatusFromJobStatus(status, &result),
-		ImageStatuses: &[]ImageStatus{
-			{
-				Status: composeStatusFromJobStatus(status, &result),
+		ImageStatus: ImageStatus{
+			Status: composeStatusFromJobStatus(status, &result),
+			UploadStatus: &UploadStatus{
+				Status: result.UploadStatus,
+				Type:   "aws",
 			},
 		},
 	}
