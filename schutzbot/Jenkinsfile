@@ -509,27 +509,27 @@ void run_tests(test_type, boot_type) {
         // Run the qcow2 BIOS boot test.
         sh (
             label: "Integration test: QCOW2, BIOS boot",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2"
+            script: "/usr/libexec/tests/osbuild-composer/libvirt.sh qcow2"
         )
 
         if (boot_type == 'hybrid') {
             // Run the qcow2 UEFI boot test.
             sh (
                 label: "Integration test: QCOW2, UEFI boot",
-                script: "/usr/libexec/tests/osbuild-composer/qemu.sh qcow2 uefi"
+                script: "/usr/libexec/tests/osbuild-composer/libvirt.sh qcow2 uefi"
             )
         }
 
         // Run the openstack test.
         sh (
             label: "Integration test: OpenStack",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh openstack"
+            script: "/usr/libexec/tests/osbuild-composer/libvirt.sh openstack"
         )
 
         // Run the VHD/Azure test.
         sh (
             label: "Integration test: VHD",
-            script: "/usr/libexec/tests/osbuild-composer/qemu.sh vhd"
+            script: "/usr/libexec/tests/osbuild-composer/libvirt.sh vhd"
         )
 
         // Run the AWS test.
