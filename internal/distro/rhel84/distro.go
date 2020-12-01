@@ -229,8 +229,7 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
 	p := &osbuild.Pipeline{}
-	// TODO add osbuild rhel84 runner
-	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel83")
+	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
 
 	if t.arch.Name() == "s390x" {
 		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{

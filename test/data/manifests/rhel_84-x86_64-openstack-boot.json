@@ -2012,7 +2012,7 @@
             }
           ]
         },
-        "runner": "org.osbuild.rhel83"
+        "runner": "org.osbuild.rhel84"
       },
       "stages": [
         {
