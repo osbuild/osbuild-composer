@@ -2,7 +2,7 @@
   "fedora-32": {
     "dependants": {
       "koji-osbuild": {
-        "commit": "c282b9b1f087fc58cf96f2d1322e90bb4e75bae7"
+        "commit": "d9cb6217ef0c2ac9433c7faf49140aca3bd1c200"
       }
     }
   },
@@ -14,7 +14,7 @@
     },
     "dependants": {
       "koji-osbuild": {
-        "commit": "c282b9b1f087fc58cf96f2d1322e90bb4e75bae7"
+        "commit": "d9cb6217ef0c2ac9433c7faf49140aca3bd1c200"
       }
     }
   }
