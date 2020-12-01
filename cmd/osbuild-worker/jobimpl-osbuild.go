@@ -115,6 +115,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	var r []error
+	var targetResults []*target.TargetResult
 
 	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
@@ -189,6 +190,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if !osbuildOutput.Success {
 				continue
 			}
+
 			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
 			if err != nil {
 				r = append(r, err)
@@ -206,12 +208,21 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 
-			/* TODO: communicate back the AMI */
-			_, err = a.Register(t.ImageName, options.Bucket, key, options.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(t.ImageName, options.Bucket, key, options.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				r = append(r, err)
 				continue
 			}
+
+			if ami == nil {
+				r = append(r, fmt.Errorf("No ami returned"))
+				continue
+			}
+
+			targetResults = append(targetResults, target.NewAWSTargetResult(&target.AWSTargetResultOptions{
+				Ami:    *ami,
+				Region: options.Region,
+			}))
 		case *target.AzureTargetOptions:
 			if !osbuildOutput.Success {
 				continue
@@ -406,6 +417,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		Success:       osbuildOutput.Success && len(targetErrors) == 0,
 		OSBuildOutput: osbuildOutput,
 		TargetErrors:  targetErrors,
+		TargetResults: targetResults,
 		UploadStatus:  uploadstatus,
 	})
 	if err != nil {

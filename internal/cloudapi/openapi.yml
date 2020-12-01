@@ -110,16 +110,23 @@ components:
       required:
         - status
         - type
+        - options
       properties:
         status:
           type: string
           enum: ['success', 'failure', 'pending', 'running']
         type:
           $ref: '#/components/schemas/UploadTypes'
+        options:
+          oneOf:
+            - $ref: '#/components/schemas/AWSUploadStatus'
     AWSUploadStatus:
       type: object
+      required:
+        - ami
+        - region
       properties:
-        ami_id:
+        ami:
           type: string
           example: 'ami-0c830793775595d4b'
     GCPUploadStatus:
