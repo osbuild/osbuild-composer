@@ -86,12 +86,6 @@ if [[ "$PROJECT" != "osbuild-composer" ]]; then
   fi
 fi
 
-if [[ $ID == rhel ]]; then
-    greenprint "Setting up EPEL repository"
-    # we need this for ansible and koji
-    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-fi
-
 greenprint "Installing test packages for ${PROJECT}"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"

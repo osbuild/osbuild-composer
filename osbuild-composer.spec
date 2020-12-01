@@ -306,7 +306,6 @@ Requires:   unzip
 Requires:   container-selinux
 Requires:   dnsmasq
 Requires:   krb5-workstation
-Requires:   koji
 Requires:   podman
 Requires:   python3
 Requires:   sssd-krb5
@@ -327,11 +326,15 @@ Requires:   qemu-kvm
 Requires:   virt-install
 Requires:   expect
 Requires:   python3-lxml
-Requires:   ansible
 Requires:   httpd
 Requires:   openssl
 %if 0%{?fedora}
 Requires:   podman-plugins
+# koji and ansible are not in RHEL repositories. Depending on them breaks RHEL
+# gating (see OSCI-1541). The test script must enable EPEL and install those
+# packages manually.
+Requires:   koji
+Requires:   ansible
 %endif
 %ifarch %{arm}
 Requires:   edk2-aarch64

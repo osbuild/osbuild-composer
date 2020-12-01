@@ -3,6 +3,14 @@ set -euxo pipefail
 
 source /etc/os-release
 
+# koji and ansible are not in RHEL repositories. Depending on them in the spec
+# file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel
+# and install koji and ansible here.
+if [[ $ID == rhel ]]; then
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo dnf install -y koji ansible
+fi
+
 sudo mkdir -p /etc/osbuild-composer
 sudo cp -a /usr/share/tests/osbuild-composer/composer/*.toml \
     /etc/osbuild-composer/
