@@ -10,6 +10,17 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+greenprint "Parsing the input object"
+INPUT=$(cat -- "${1:--}")
+AWS_ACCESS_KEY_ID="$(echo "${INPUT}" | jq .credentials.aws.access_key_id)"
+AWS_SECRET_ACCESS_KEY="$(echo "${INPUT}" | jq .credentials.aws.secret_access_key)"
+AWS_REGION="$(echo "${INPUT}" | jq .credentials.aws.region_name)"
+AWS_BUCKET="$(echo "${INPUT}" | jq .credentials.aws.bucket)"
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_REGION
+export AWS_BUCKET
+
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 

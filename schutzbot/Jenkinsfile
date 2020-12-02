@@ -32,30 +32,30 @@ pipeline {
             }
         }
 
-        // stage("Mock build 👷🏻") {
-        //     // Halt the pipeline immediately if a single mock build fails.
-        //     // A failure to build an RPM is serious and must be
-        //     // investigated.
-        //     failFast true
-        // 
-        //     parallel {
-        // 
-        //         stage('F33') {
-        //             agent { label "f33cloudbase && x86_64 && aws" }
-        //             environment {
-        //                 AWS_CREDS = credentials('aws-credentials-osbuildci')
-        //                 AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-        //             }
-        //             steps {
-        //                 sh "schutzbot/ci_details.sh"
-        //                 retry(3) {
-        //                     sh "schutzbot/mockbuild.sh"
-        //                 }
-        //             }
-        //         }
-        // 
-        //     }
-        // }
+        stage("Mock build 👷🏻") {
+            // Halt the pipeline immediately if a single mock build fails.
+            // A failure to build an RPM is serious and must be
+            // investigated.
+            failFast true
+        
+            parallel {
+        
+                stage('F33') {
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
+        
+            }
+        }
 
         stage("Testing 🍌") {
             parallel {
