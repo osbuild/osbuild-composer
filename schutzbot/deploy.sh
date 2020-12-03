@@ -75,6 +75,15 @@ fi
 if [[ "$PROJECT" != "osbuild-composer" ]]; then
   PROJECT_COMMIT=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].commit" Schutzfile)
   setup_repo "${PROJECT}" "${PROJECT_COMMIT}" 10
+
+  # Get a list of packages needed to be preinstalled before "${PROJECT}-tests".
+  # Useful mainly for EPEL.
+  PRE_INSTALL_PACKAGES=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].pre_install_packages[]?" Schutzfile)
+
+  if [ "${PRE_INSTALL_PACKAGES}" ]; then
+    # shellcheck disable=SC2086 # We need to pass multiple arguments here.
+    sudo dnf -y install ${PRE_INSTALL_PACKAGES}
+  fi
 fi
 
 if [[ $ID == rhel ]]; then
