@@ -786,9 +786,6 @@
           "sha256:9d2a2ef762444163e91c433c83ce91ef37acb2318ba168a81ac0dd4d65b834ef": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/subscription-manager-1.27.16-1.el8.x86_64.rpm"
           },
-          "sha256:9d9d1bdfba4cd852f90232ebe2c4247e7b3a88c4476578c820788a91d6838e55": {
-            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/rng-tools-6.8-3.el8.x86_64.rpm"
-          },
           "sha256:9e70cafe666de95febf05bcee7d3be9a2c5cb9bb3d361d81b2d72bde8a5e20c7": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20201010/Packages/python36-3.6.8-2.module+el8.1.0+3334+5cb623d7.x86_64.rpm"
           },
@@ -2913,9 +2910,6 @@
               },
               {
                 "checksum": "sha256:3bdf23bf017288b6de46967e083502d3a57dc6d2f760e4bcd74c23c5c999dd88"
-              },
-              {
-                "checksum": "sha256:9d9d1bdfba4cd852f90232ebe2c4247e7b3a88c4476578c820788a91d6838e55"
               },
               {
                 "checksum": "sha256:ad060f60303b6764e08657436147cc24cfc4bb1ccc1431796407ba005a7bcec0"
@@ -8123,15 +8117,6 @@
         "checksum": "sha256:3bdf23bf017288b6de46967e083502d3a57dc6d2f760e4bcd74c23c5c999dd88"
       },
       {
-        "name": "rng-tools",
-        "epoch": 0,
-        "version": "6.8",
-        "release": "3.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/rng-tools-6.8-3.el8.x86_64.rpm",
-        "checksum": "sha256:9d9d1bdfba4cd852f90232ebe2c4247e7b3a88c4476578c820788a91d6838e55"
-      },
-      {
         "name": "rootfiles",
         "epoch": 0,
         "version": "8.1",
@@ -8797,7 +8782,6 @@
       "polkitd:x:996:",
       "redhat:x:1000:",
       "render:x:998:",
-      "rngd:x:991:",
       "root:x:0:",
       "ssh_keys:x:995:",
       "sshd:x:74:",
@@ -9181,7 +9165,6 @@
       "readline-7.0-10.el8.x86_64",
       "redhat-release-8.4-0.5.el8.x86_64",
       "redhat-release-eula-8.4-0.5.el8.x86_64",
-      "rng-tools-6.8-3.el8.x86_64",
       "rootfiles-8.1-22.el8.noarch",
       "rpm-4.14.3-4.el8.x86_64",
       "rpm-build-libs-4.14.3-4.el8.x86_64",
@@ -9283,7 +9266,6 @@
       "operator:x:11:0:operator:/root:/sbin/nologin",
       "polkitd:x:998:996:User for polkitd:/:/sbin/nologin",
       "redhat:x:1000:1000::/home/redhat:/bin/bash",
-      "rngd:x:994:991:Random Number Generator Daemon:/var/lib/rngd:/sbin/nologin",
       "root:x:0:0:root:/root:/bin/bash",
       "shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown",
       "sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin",
@@ -9332,7 +9314,6 @@
       "remote-cryptsetup.target",
       "rhsm-facts.service",
       "rhsm.service",
-      "rngd-wake-threshold.service",
       "run-vmblock\\x2dfuse.mount",
       "runlevel0.target",
       "runlevel6.target",
@@ -9371,7 +9352,6 @@
       "nis-domainname.service",
       "remote-fs.target",
       "rhsmcertd.service",
-      "rngd.service",
       "rsyslog.service",
       "selinux-autorelabel-mark.service",
       "sshd.service",

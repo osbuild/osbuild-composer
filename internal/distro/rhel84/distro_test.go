@@ -254,7 +254,6 @@ func TestImageType_BasePackages(t *testing.T) {
 				"NetworkManager",
 				"redhat-release",
 				"redhat-release-eula",
-				"rng-tools",
 				"rsync",
 				"selinux-policy-targeted",
 				"tar",
@@ -296,6 +295,7 @@ func TestImageType_BasePackages(t *testing.T) {
 				"libertas-sd8787-firmware",
 				"libertas-usb8388-firmware",
 				"plymouth",
+				"rng-tools",
 
 				// TODO this cannot be removed, because the kernel (?)
 				// depends on it. The ec2 kickstart force-removes it.
@@ -328,6 +328,7 @@ func TestImageType_BasePackages(t *testing.T) {
 			},
 			excludedPackages: []string{
 				"dracut-config-rescue",
+				"rng-tools",
 			},
 			bootable: true,
 		},
