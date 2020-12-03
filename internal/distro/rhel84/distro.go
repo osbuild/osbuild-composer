@@ -666,7 +666,7 @@ func New() distro.Distro {
 			"fwupd", "usbguard",
 			"bash-completion", "tmux",
 			"ima-evm-utils",
-			"audit", "rng-tools",
+			"audit",
 			"podman", "container-selinux", "skopeo", "criu",
 			"slirp4netns", "fuse-overlayfs",
 			"clevis", "clevis-dracut", "clevis-luks",
@@ -678,10 +678,11 @@ func New() distro.Distro {
 			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
 		},
 		excludedPackages: []string{
+			"rng-tools",
 			"subscription-manager",
 		},
 		enabledServices: []string{
-			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+			"NetworkManager.service", "firewalld.service", "sshd.service",
 			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
 			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
 			"redboot-auto-reboot", "redboot-task-runner",
@@ -722,7 +723,7 @@ func New() distro.Distro {
 			"fwupd", "usbguard",
 			"bash-completion", "tmux",
 			"ima-evm-utils",
-			"audit", "rng-tools",
+			"audit",
 			"podman", "container-selinux", "skopeo", "criu",
 			"slirp4netns", "fuse-overlayfs",
 			"clevis", "clevis-dracut", "clevis-luks",
@@ -732,10 +733,11 @@ func New() distro.Distro {
 			"iwl7260-firmware",
 		},
 		excludedPackages: []string{
+			"rng-tools",
 			"subscription-manager",
 		},
 		enabledServices: []string{
-			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+			"NetworkManager.service", "firewalld.service", "sshd.service",
 			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
 			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
 			"redboot-auto-reboot", "redboot-task-runner",
@@ -765,7 +767,6 @@ func New() distro.Distro {
 			"NetworkManager",
 			"redhat-release",
 			"redhat-release-eula",
-			"rng-tools",
 			"rsync",
 			"selinux-policy-targeted",
 			"tar",
@@ -804,6 +805,7 @@ func New() distro.Distro {
 			"libertas-sd8787-firmware",
 			"libertas-usb8388-firmware",
 			"plymouth",
+			"rng-tools",
 
 			// TODO this cannot be removed, because the kernel (?)
 			// depends on it. The ec2 kickstart force-removes it.
@@ -851,7 +853,6 @@ func New() distro.Distro {
 			"subscription-manager-cockpit",
 			"redhat-release",
 			"redhat-release-eula",
-			"rng-tools",
 			"insights-client",
 			// TODO: rh-amazon-rhui-client
 		},
@@ -890,6 +891,7 @@ func New() distro.Distro {
 			"langpacks-en",
 			"fedora-release",
 			"fedora-repos",
+			"rng-tools",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
@@ -921,6 +923,7 @@ func New() distro.Distro {
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
+			"rng-tools",
 		},
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
@@ -937,6 +940,9 @@ func New() distro.Distro {
 		packages: []string{
 			"policycoreutils",
 			"selinux-policy-targeted",
+		},
+		excludedPackages: []string{
+			"rng-tools",
 		},
 		bootable:      false,
 		kernelOptions: "ro net.ifnames=0",
@@ -967,6 +973,7 @@ func New() distro.Distro {
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
+			"rng-tools",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
@@ -1000,6 +1007,7 @@ func New() distro.Distro {
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
+			"rng-tools",
 
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
