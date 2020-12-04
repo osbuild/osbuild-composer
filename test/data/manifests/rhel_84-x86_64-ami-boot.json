@@ -3090,7 +3090,7 @@
           "name": "org.osbuild.grub2",
           "options": {
             "root_fs_uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-            "kernel_opts": "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+            "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
             "legacy": "i386-pc",
             "uefi": {
               "vendor": "redhat"
@@ -8604,7 +8604,7 @@
   },
   "image-info": {
     "boot-environment": {
-      "kernelopts": "root=UUID=efe8afea-c0a8-45dc-8e6e-499279f6fa5d ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"
+      "kernelopts": "root=UUID=efe8afea-c0a8-45dc-8e6e-499279f6fa5d console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"
     },
     "bootloader": "grub",
     "bootmenu": [
