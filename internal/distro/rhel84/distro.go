@@ -816,7 +816,7 @@ func New() distro.Distro {
 			"timedatex",
 		},
 		defaultTarget: "multi-user.target",
-		kernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		kernelOptions: "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
@@ -897,7 +897,7 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		kernelOptions: "ro console=ttyS0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:      true,
 		defaultSize:   10 * GigaByte,
 		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
