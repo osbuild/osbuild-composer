@@ -287,7 +287,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewUsersStage(options))
 	}
 
-	if services := c.GetServices(); services != nil || t.enabledServices != nil {
+	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil {
 		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services, t.defaultTarget)))
 	}
 
@@ -686,6 +686,9 @@ func New() distro.Distro {
 			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
+		disabledServices: []string{
+			"rhsmcertd.service",
+		},
 		rpmOstree: true,
 		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
@@ -739,6 +742,9 @@ func New() distro.Distro {
 			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
 			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
 			"redboot-auto-reboot", "redboot-task-runner",
+		},
+		disabledServices: []string{
+			"rhsmcertd.service",
 		},
 		rpmOstree: true,
 		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
@@ -812,6 +818,9 @@ func New() distro.Distro {
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
+		},
+		disabledServices: []string{
+			"rhsmcertd.service",
 		},
 		defaultTarget: "multi-user.target",
 		kernelOptions: "ro console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
@@ -895,6 +904,9 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
+		disabledServices: []string{
+			"rhsmcertd.service",
+		},
 		kernelOptions: "ro console=ttyS0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:      true,
 		defaultSize:   10 * GigaByte,
@@ -922,6 +934,9 @@ func New() distro.Distro {
 		excludedPackages: []string{
 			"dracut-config-rescue",
 		},
+		disabledServices: []string{
+			"rhsmcertd.service",
+		},
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
@@ -937,6 +952,9 @@ func New() distro.Distro {
 		packages: []string{
 			"policycoreutils",
 			"selinux-policy-targeted",
+		},
+		disabledServices: []string{
+			"rhsmcertd.service",
 		},
 		bootable:      false,
 		kernelOptions: "ro net.ifnames=0",
@@ -976,6 +994,9 @@ func New() distro.Distro {
 			"sshd",
 			"waagent",
 		},
+		disabledServices: []string{
+			"rhsmcertd.service",
+		},
 		defaultTarget: "multi-user.target",
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
@@ -1004,6 +1025,9 @@ func New() distro.Distro {
 			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
+		},
+		disabledServices: []string{
+			"rhsmcertd.service",
 		},
 		kernelOptions: "ro net.ifnames=0",
 		bootable:      true,

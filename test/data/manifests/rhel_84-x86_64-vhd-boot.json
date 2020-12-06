@@ -3314,6 +3314,9 @@
               "sshd",
               "waagent"
             ],
+            "disabled_services": [
+              "rhsmcertd.service"
+            ],
             "default_target": "multi-user.target"
           }
         },
@@ -9721,6 +9724,7 @@
       "remote-cryptsetup.target",
       "rhsm-facts.service",
       "rhsm.service",
+      "rhsmcertd.service",
       "rngd-wake-threshold.service",
       "runlevel0.target",
       "runlevel6.target",
@@ -9762,7 +9766,6 @@
       "microcode.service",
       "nis-domainname.service",
       "remote-fs.target",
-      "rhsmcertd.service",
       "rngd.service",
       "rsyslog.service",
       "selinux-autorelabel-mark.service",

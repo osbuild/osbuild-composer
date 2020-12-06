@@ -3587,6 +3587,7 @@
               "sshd.socket"
             ],
             "disabled_services": [
+              "rhsmcertd.service",
               "bluetooth.service"
             ]
           }
@@ -10297,6 +10298,7 @@
       "remote-cryptsetup.target",
       "rhsm-facts.service",
       "rhsm.service",
+      "rhsmcertd.service",
       "rngd-wake-threshold.service",
       "runlevel0.target",
       "runlevel6.target",
@@ -10337,7 +10339,6 @@
       "nfs-convert.service",
       "nis-domainname.service",
       "remote-fs.target",
-      "rhsmcertd.service",
       "rngd.service",
       "rpcbind.service",
       "rpcbind.socket",
