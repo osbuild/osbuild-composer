@@ -1,0 +1,9 @@
+name: run rpmci
+on: [push, pull_request]
+jobs:
+  rpmci:
+    name: "Run rpmci"
+    runs-on: ubuntu-latest
+    steps:
+      - run: docker run quay.io/msehnout/rpmci:latest
+
