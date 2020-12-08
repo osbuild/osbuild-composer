@@ -31,6 +31,8 @@ Source0:        %{gosource}
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 BuildRequires:  systemd
 BuildRequires:  krb5-devel
+BuildRequires:  python3-docutils
+BuildRequires:  make
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
@@ -117,6 +119,7 @@ export GOFLAGS=-mod=vendor
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 
+make man
 
 %if %{with tests} || 0%{?rhel}
 
@@ -159,6 +162,9 @@ install -m 0755 -vd                                             %{buildroot}%{_s
 install -m 0644 -vp distribution/osbuild-composer.conf          %{buildroot}%{_sysusersdir}/
 
 install -m 0755 -vd                                             %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
+
+install -m 0755 -vd                                             %{buildroot}%{_mandir}/man7
+install -m 0644 -vp docs/*.7                                    %{buildroot}%{_mandir}/man7/
 
 %if %{with tests} || 0%{?rhel}
 
@@ -240,6 +246,7 @@ cd $PWD/_build/src/%{goipath}
 %files
 %license LICENSE
 %doc README.md
+%{_mandir}/man7/%{name}.7*
 %{_libexecdir}/osbuild-composer/osbuild-composer
 %{_libexecdir}/osbuild-composer/dnf-json
 %{_datadir}/osbuild-composer/
