@@ -5,5 +5,10 @@ jobs:
     name: "Run rpmci"
     runs-on: ubuntu-latest
     steps:
-      - run: docker run quay.io/msehnout/rpmci:latest
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create cache directory
+        run: mkdir /tmp/rpmci
+      - name: Run rpmci from quay.io
+        run: docker run quay.io/msehnout/rpmci:latest --cache /tmp/rpmci run --config rpmci/aws.json || pwd
 

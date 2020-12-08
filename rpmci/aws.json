@@ -1,0 +1,38 @@
+{
+	"target": {
+		"virtualization": {
+			"type": "ec2",
+			"ec2": {
+				"image_id": "ami-091ea242bbc6da43d",
+				"instance_type": "t2.small"
+			}
+		},
+		"rpm": "osbuild-composer-tests",
+		"invoke": [
+			"/usr/libexec/tests/osbuild-composer/aws.sh"
+		],
+		"guest_features": {
+			"credentials": {
+				"aws": {
+					"access_key_id": "AWS_ACCESS_KEY_ID",
+					"secret_access_key": "AWS_SECRET_ACCESS_KEY",
+					"region_name": "eu-central-1",
+					"bucket": "org.osbuild.test.central"
+				}
+			}
+		}
+	},
+	"rpm_repo": {
+		"provider": "existing_url",
+		"existing_url": {
+			"baseurl": "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/fedora-33/x86_64/${GIT_COMMIT}/"
+		}
+	},
+	"credentials": {
+		"aws": {
+			"access_key_id": "AWS_ACCESS_KEY_ID",
+			"secret_access_key": "AWS_SECRET_ACCESS_KEY",
+			"region_name": "eu-central-1"
+		}
+	}
+}
