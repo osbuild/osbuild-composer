@@ -185,7 +185,8 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
+	buildPackageSpecs []rpmmd.PackageSpec,
+	seed int64) (distro.Manifest, error) {
 	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs)
 	if err != nil {
 		return distro.Manifest{}, err

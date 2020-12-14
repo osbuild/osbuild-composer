@@ -5,6 +5,7 @@ package cloudapi
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -81,6 +82,9 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 	var targets []*target.Target
 
+	// use the same seed for all images so we get the same IDs
+	manifestSeed := rand.Int63()
+
 	for i, ir := range request.ImageRequests {
 		arch, err := distribution.GetArch(ir.Architecture)
 		if err != nil {
@@ -139,7 +143,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		manifest, err := imageType.Manifest(nil, imageOptions, repositories, packages, buildPackages)
+		manifest, err := imageType.Manifest(nil, imageOptions, repositories, packages, buildPackages, manifestSeed)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
 			return

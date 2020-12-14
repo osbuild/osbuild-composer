@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -87,6 +88,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	kojiFilenames := make([]string, len(request.ImageRequests))
 	kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
 
+	// use the same seed for all images so we get the same IDs
+	manifestSeed := rand.Int63()
+
 	for i, ir := range request.ImageRequests {
 		arch, err := d.GetArch(ir.Architecture)
 		if err != nil {
@@ -119,7 +123,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve build packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
 
-		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packages, buildPackages)
+		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packages, buildPackages, manifestSeed)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}

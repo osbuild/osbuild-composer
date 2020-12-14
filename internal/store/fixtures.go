@@ -57,7 +57,7 @@ func FixtureBase() *Store {
 	if err != nil {
 		panic("invalid image type qcow2 for x86_64 @ fedoratest")
 	}
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	if err != nil {
 		panic("could not create manifest")
 	}
@@ -160,7 +160,7 @@ func FixtureFinished() *Store {
 	if err != nil {
 		panic("invalid image type qcow2 for x86_64 @ fedoratest")
 	}
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	if err != nil {
 		panic("could not create manifest")
 	}

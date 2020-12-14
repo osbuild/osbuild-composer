@@ -44,6 +44,8 @@ type rpmMD struct {
 func main() {
 	var rpmmdArg bool
 	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
+	var seedArg int64
+	flag.Int64Var(&seedArg, "seed", 0, "seed for generating manifests (default: 0)")
 	flag.Parse()
 
 	// Path to composeRequet or '-' for stdin
@@ -152,7 +154,8 @@ func main() {
 			},
 			repos,
 			packageSpecs,
-			buildPackageSpecs)
+			buildPackageSpecs,
+			seedArg)
 		if err != nil {
 			panic(err.Error())
 		}

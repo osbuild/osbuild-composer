@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -84,7 +84,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -121,7 +121,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -152,7 +152,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}

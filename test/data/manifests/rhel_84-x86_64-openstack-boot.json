@@ -3304,7 +3304,7 @@
           "options": {
             "filesystems": [
               {
-                "uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+                "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
                 "vfs_type": "xfs",
                 "path": "/",
                 "options": "defaults"
@@ -3322,7 +3322,7 @@
         {
           "name": "org.osbuild.grub2",
           "options": {
-            "root_fs_uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+            "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
             "kernel_opts": "ro net.ifnames=0",
             "legacy": "i386-pc",
             "uefi": {
@@ -3389,7 +3389,7 @@
               "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
               "filesystem": {
                 "type": "xfs",
-                "uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+                "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
                 "label": "root",
                 "mountpoint": "/"
               }
@@ -9171,7 +9171,7 @@
   },
   "image-info": {
     "boot-environment": {
-      "kernelopts": "root=UUID=efe8afea-c0a8-45dc-8e6e-499279f6fa5d ro net.ifnames=0"
+      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 ro net.ifnames=0"
     },
     "bootloader": "grub",
     "bootmenu": [
@@ -9194,20 +9194,20 @@
     ],
     "fstab": [
       [
+        "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+        "/",
+        "xfs",
+        "defaults",
+        "0",
+        "0"
+      ],
+      [
         "UUID=7B77-95E7",
         "/boot/efi",
         "vfat",
         "defaults,uid=0,gid=0,umask=077,shortname=winnt",
         "0",
         "2"
-      ],
-      [
-        "UUID=efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-        "/",
-        "xfs",
-        "defaults",
-        "0",
-        "0"
       ]
     ],
     "groups": [
@@ -9730,7 +9730,7 @@
         "size": 4187995648,
         "start": 106954752,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-        "uuid": "efe8afea-c0a8-45dc-8e6e-499279f6fa5d"
+        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
       }
     ],
     "passwd": [
