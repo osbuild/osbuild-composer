@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math/rand"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -50,7 +52,7 @@ type imageType struct {
 	bootable                bool
 	rpmOstree               bool
 	defaultSize             uint64
-	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch) disk.PartitionTable
+	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable
 	assembler               func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
@@ -188,8 +190,11 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
-	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs)
+	buildPackageSpecs []rpmmd.PackageSpec,
+	seed int64) (distro.Manifest, error) {
+	source := rand.NewSource(seed)
+	rng := rand.New(source)
+	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs, rng)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
@@ -230,10 +235,10 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	}
 }
 
-func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
+func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, rng *rand.Rand) (*osbuild.Pipeline, error) {
 	var pt *disk.PartitionTable
 	if t.partitionTableGenerator != nil {
-		table := t.partitionTableGenerator(options, t.arch)
+		table := t.partitionTableGenerator(options, t.arch, rng)
 		pt = &table
 	}
 
@@ -497,7 +502,7 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) disk.PartitionTable {
+func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
 	if arch.Name() == "x86_64" {
 		return disk.PartitionTable{
 			Size: imageOptions.Size,
@@ -531,7 +536,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
-						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Label:        "root",
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
@@ -567,7 +572,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
-						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Label:        "root",
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
@@ -592,7 +597,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Start: 10240,
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
-						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
 						FSTabFreq:    0,
@@ -612,7 +617,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Bootable: true,
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
-						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
 						FSTabFreq:    0,
@@ -671,6 +676,17 @@ func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbui
 			},
 		},
 	)
+}
+
+func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
+	var id uuid.UUID
+	_, err := io.ReadFull(r, id[:])
+	if err != nil {
+		return uuid.Nil, err
+	}
+	id[6] = (id[6] & 0x0f) | 0x40 // Version 4
+	id[8] = (id[8] & 0x3f) | 0x80 // Variant is 10
+	return id, nil
 }
 
 // New creates a new distro object, defining the supported architectures and image types

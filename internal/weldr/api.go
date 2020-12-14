@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -1846,7 +1847,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		},
 		api.allRepositories(),
 		packages,
-		buildPackages)
+		buildPackages,
+		rand.Int63())
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",

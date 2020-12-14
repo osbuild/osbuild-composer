@@ -51,7 +51,7 @@ func (suite *storeTest) SetupSuite() {
 	suite.myDistro = test_distro.New()
 	suite.myArch, _ = suite.myDistro.GetArch("test_arch")
 	suite.myImageType, _ = suite.myArch.GetImageType("test_type")
-	suite.myManifest, _ = suite.myImageType.Manifest(&suite.myCustomizations, suite.myImageOptions, suite.myRepoConfig, nil, suite.myPackageSpec)
+	suite.myManifest, _ = suite.myImageType.Manifest(&suite.myCustomizations, suite.myImageOptions, suite.myRepoConfig, nil, suite.myPackageSpec, 0)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
 	}

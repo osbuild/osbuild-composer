@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const RandomTestSeed = 0
+
 func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distros ...distro.Distro) {
 	assert := assert.New(t)
 	fileNames, err := filepath.Glob(filepath.Join(pipelinePath, prefix))
@@ -89,7 +91,8 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				},
 				repos,
 				tt.RpmMD.Packages,
-				tt.RpmMD.BuildPackages)
+				tt.RpmMD.BuildPackages,
+				RandomTestSeed)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)

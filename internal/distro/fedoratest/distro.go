@@ -95,7 +95,8 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
+	buildPackageSpecs []rpmmd.PackageSpec,
+	seed int64) (distro.Manifest, error) {
 
 	return json.Marshal(
 		osbuild.Manifest{

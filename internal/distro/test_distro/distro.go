@@ -75,7 +75,7 @@ func (t *TestImageType) BuildPackages() []string {
 	return nil
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (distro.Manifest, error) {
+func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, seed int64) (distro.Manifest, error) {
 	return json.Marshal(
 		osbuild.Manifest{
 			Sources:  osbuild.Sources{},
