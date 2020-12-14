@@ -36,20 +36,21 @@ type architecture struct {
 }
 
 type imageType struct {
-	arch             *architecture
-	name             string
-	filename         string
-	mimeType         string
-	packages         []string
-	excludedPackages []string
-	enabledServices  []string
-	disabledServices []string
-	defaultTarget    string
-	kernelOptions    string
-	bootable         bool
-	rpmOstree        bool
-	defaultSize      uint64
-	assembler        func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
+	arch                    *architecture
+	name                    string
+	filename                string
+	mimeType                string
+	packages                []string
+	excludedPackages        []string
+	enabledServices         []string
+	disabledServices        []string
+	defaultTarget           string
+	kernelOptions           string
+	bootable                bool
+	rpmOstree               bool
+	defaultSize             uint64
+	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch) osbuild.QEMUAssemblerOptions
+	assembler               func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
 func (a *architecture) Distro() distro.Distro {
@@ -118,20 +119,21 @@ func (a *architecture) setImageTypes(imageTypes ...imageType) {
 	a.imageTypes = map[string]imageType{}
 	for _, it := range imageTypes {
 		a.imageTypes[it.name] = imageType{
-			arch:             a,
-			name:             it.name,
-			filename:         it.filename,
-			mimeType:         it.mimeType,
-			packages:         it.packages,
-			excludedPackages: it.excludedPackages,
-			enabledServices:  it.enabledServices,
-			disabledServices: it.disabledServices,
-			defaultTarget:    it.defaultTarget,
-			kernelOptions:    it.kernelOptions,
-			bootable:         it.bootable,
-			rpmOstree:        it.rpmOstree,
-			defaultSize:      it.defaultSize,
-			assembler:        it.assembler,
+			arch:                    a,
+			name:                    it.name,
+			filename:                it.filename,
+			mimeType:                it.mimeType,
+			packages:                it.packages,
+			excludedPackages:        it.excludedPackages,
+			enabledServices:         it.enabledServices,
+			disabledServices:        it.disabledServices,
+			defaultTarget:           it.defaultTarget,
+			kernelOptions:           it.kernelOptions,
+			bootable:                it.bootable,
+			rpmOstree:               it.rpmOstree,
+			defaultSize:             it.defaultSize,
+			partitionTableGenerator: it.partitionTableGenerator,
+			assembler:               it.assembler,
 		}
 	}
 }
@@ -325,7 +327,13 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		))
 	}
 
-	p.Assembler = t.assembler(options, t.arch)
+	var pt *osbuild.QEMUAssemblerOptions
+	if t.partitionTableGenerator != nil {
+		table := t.partitionTableGenerator(options, t.arch)
+		pt = &table
+	}
+
+	p.Assembler = t.assembler(pt, options, t.arch)
 
 	return p, nil
 }
@@ -477,19 +485,12 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-	var options osbuild.QEMUAssemblerOptions
-
+func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) osbuild.QEMUAssemblerOptions {
 	if arch.Name() == "x86_64" {
-		options = osbuild.QEMUAssemblerOptions{
-			Bootloader: &osbuild.QEMUBootloader{
-				Type: "grub2",
-			},
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			PTType:   "gpt",
+		return osbuild.QEMUAssemblerOptions{
+			Size:   imageOptions.Size,
+			PTUUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			PTType: "gpt",
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Bootable: true,
@@ -523,12 +524,10 @@ func qemuAssembler(format string, filename string, imageOptions distro.ImageOpti
 			},
 		}
 	} else if arch.Name() == "aarch64" {
-		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			PTType:   "gpt",
+		return osbuild.QEMUAssemblerOptions{
+			Size:   imageOptions.Size,
+			PTUUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			PTType: "gpt",
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Start: 2048,
@@ -555,16 +554,10 @@ func qemuAssembler(format string, filename string, imageOptions distro.ImageOpti
 			},
 		}
 	} else if arch.Name() == "ppc64le" {
-		options = osbuild.QEMUAssemblerOptions{
-			Bootloader: &osbuild.QEMUBootloader{
-				Type:     "grub2",
-				Platform: "powerpc-ieee1275",
-			},
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "0x14fc63d2",
-			PTType:   "dos",
+		return osbuild.QEMUAssemblerOptions{
+			Size:   imageOptions.Size,
+			PTUUID: "0x14fc63d2",
+			PTType: "dos",
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Size:     8192,
@@ -582,15 +575,10 @@ func qemuAssembler(format string, filename string, imageOptions distro.ImageOpti
 			},
 		}
 	} else if arch.Name() == "s390x" {
-		options = osbuild.QEMUAssemblerOptions{
-			Bootloader: &osbuild.QEMUBootloader{
-				Type: "zipl",
-			},
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "0x14fc63d2",
-			PTType:   "dos",
+		return osbuild.QEMUAssemblerOptions{
+			Size:   imageOptions.Size,
+			PTUUID: "0x14fc63d2",
+			PTType: "dos",
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Start:    2048,
@@ -604,7 +592,31 @@ func qemuAssembler(format string, filename string, imageOptions distro.ImageOpti
 			},
 		}
 	}
-	return osbuild.NewQEMUAssembler(&options)
+
+	panic("unknown arch: " + arch.Name())
+}
+
+func qemuAssembler(pt *osbuild.QEMUAssemblerOptions, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	options := pt
+
+	options.Format = format
+	options.Filename = filename
+
+	if arch.Name() == "x86_64" {
+		options.Bootloader = &osbuild.QEMUBootloader{
+			Type: "grub2",
+		}
+	} else if arch.Name() == "ppc64le" {
+		options.Bootloader = &osbuild.QEMUBootloader{
+			Type:     "grub2",
+			Platform: "powerpc-ieee1275",
+		}
+	} else if arch.Name() == "s390x" {
+		options.Bootloader = &osbuild.QEMUBootloader{
+			Type: "zipl",
+		}
+	}
+	return osbuild.NewQEMUAssembler(options)
 }
 
 func tarAssembler(filename, compression string) *osbuild.Assembler {
@@ -688,7 +700,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -743,7 +755,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -815,12 +827,13 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		defaultTarget: "multi-user.target",
-		kernelOptions: "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		bootable:      true,
-		defaultSize:   6 * GigaByte,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("raw", "image.raw", options, arch)
+		defaultTarget:           "multi-user.target",
+		kernelOptions:           "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:                true,
+		defaultSize:             6 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "raw", "image.raw", options, arch)
 		},
 	}
 
@@ -897,11 +910,12 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
-		bootable:      true,
-		defaultSize:   10 * GigaByte,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", options, arch)
+		kernelOptions:           "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+		bootable:                true,
+		defaultSize:             10 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch)
 		},
 	}
 
@@ -925,11 +939,12 @@ func New() distro.Distro {
 			"dracut-config-rescue",
 			"rng-tools",
 		},
-		kernelOptions: "ro net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", options, arch)
+		kernelOptions:           "ro net.ifnames=0",
+		bootable:                true,
+		defaultSize:             4 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch)
 		},
 	}
 
@@ -946,7 +961,7 @@ func New() distro.Distro {
 		},
 		bootable:      false,
 		kernelOptions: "ro net.ifnames=0",
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return tarAssembler("root.tar.xz", "xz")
 		},
 	}
@@ -983,12 +998,13 @@ func New() distro.Distro {
 			"sshd",
 			"waagent",
 		},
-		defaultTarget: "multi-user.target",
-		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", options, arch)
+		defaultTarget:           "multi-user.target",
+		kernelOptions:           "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		bootable:                true,
+		defaultSize:             4 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "vpc", "disk.vhd", options, arch)
 		},
 	}
 
@@ -1013,11 +1029,12 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
-		kernelOptions: "ro net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		assembler: func(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", options, arch)
+		kernelOptions:           "ro net.ifnames=0",
+		bootable:                true,
+		defaultSize:             4 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "vmdk", "disk.vmdk", options, arch)
 		},
 	}
 
