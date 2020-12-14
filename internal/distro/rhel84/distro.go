@@ -241,8 +241,17 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
 
 	if t.arch.Name() == "s390x" {
+		if pt == nil {
+			panic("s390x image must have a partition table, this is a programming error")
+		}
+
+		rootPartition := pt.RootPartition()
+		if rootPartition == nil {
+			panic("s390x image must have a root partition, this is a programming error")
+		}
+
 		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{
-			RootFsUUID: "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+			RootFsUUID: rootPartition.UUID,
 			KernelOpts: "net.ifnames=0 crashkernel=auto",
 		}))
 	}
@@ -256,7 +265,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if t.bootable {
 		if t.arch.Name() != "s390x" {
-			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi, t.arch.legacy)))
+			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(pt, t.kernelOptions, c.GetKernel(), t.arch.uefi, t.arch.legacy)))
 		}
 	}
 
@@ -448,8 +457,16 @@ func (t *imageType) systemdStageOptions(enabledServices, disabledServices []stri
 	}
 }
 
-func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
-	id := uuid.MustParse("efe8afea-c0a8-45dc-8e6e-499279f6fa5d")
+func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+	if pt == nil {
+		panic("partition table must be defined for grub2 stage, this is a programming error")
+	}
+	rootPartition := pt.RootPartition()
+	if rootPartition == nil {
+		panic("root partition must be defined for grub2 stage, this is a programming error")
+	}
+
+	id := uuid.MustParse(rootPartition.Filesystem.UUID)
 
 	if kernel != nil {
 		kernelOptions += " " + kernel.Append
