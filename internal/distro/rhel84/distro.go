@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 
@@ -49,8 +50,8 @@ type imageType struct {
 	bootable                bool
 	rpmOstree               bool
 	defaultSize             uint64
-	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch) osbuild.QEMUAssemblerOptions
-	assembler               func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
+	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch) disk.PartitionTable
+	assembler               func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
 func (a *architecture) Distro() distro.Distro {
@@ -327,7 +328,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		))
 	}
 
-	var pt *osbuild.QEMUAssemblerOptions
+	var pt *disk.PartitionTable
 	if t.partitionTableGenerator != nil {
 		table := t.partitionTableGenerator(options, t.arch)
 		pt = &table
@@ -485,13 +486,13 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) osbuild.QEMUAssemblerOptions {
+func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) disk.PartitionTable {
 	if arch.Name() == "x86_64" {
-		return osbuild.QEMUAssemblerOptions{
-			Size:   imageOptions.Size,
-			PTUUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			PTType: "gpt",
-			Partitions: []osbuild.QEMUPartition{
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
 				{
 					Bootable: true,
 					Size:     2048,
@@ -504,7 +505,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 					Size:  204800,
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "vfat",
 						UUID:       "7B77-95E7",
 						Mountpoint: "/boot/efi",
@@ -514,7 +515,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 					Start: 208896,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "xfs",
 						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
 						Label:      "root",
@@ -524,17 +525,17 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 			},
 		}
 	} else if arch.Name() == "aarch64" {
-		return osbuild.QEMUAssemblerOptions{
-			Size:   imageOptions.Size,
-			PTUUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			PTType: "gpt",
-			Partitions: []osbuild.QEMUPartition{
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
 				{
 					Start: 2048,
 					Size:  204800,
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "vfat",
 						UUID:       "7B77-95E7",
 						Mountpoint: "/boot/efi",
@@ -544,7 +545,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 					Start: 206848,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "xfs",
 						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
 						Label:      "root",
@@ -554,11 +555,11 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 			},
 		}
 	} else if arch.Name() == "ppc64le" {
-		return osbuild.QEMUAssemblerOptions{
-			Size:   imageOptions.Size,
-			PTUUID: "0x14fc63d2",
-			PTType: "dos",
-			Partitions: []osbuild.QEMUPartition{
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "0x14fc63d2",
+			Type: "dos",
+			Partitions: []disk.Partition{
 				{
 					Size:     8192,
 					Type:     "41",
@@ -566,7 +567,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 				},
 				{
 					Start: 10240,
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "xfs",
 						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
 						Mountpoint: "/",
@@ -575,15 +576,15 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 			},
 		}
 	} else if arch.Name() == "s390x" {
-		return osbuild.QEMUAssemblerOptions{
-			Size:   imageOptions.Size,
-			PTUUID: "0x14fc63d2",
-			PTType: "dos",
-			Partitions: []osbuild.QEMUPartition{
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "0x14fc63d2",
+			Type: "dos",
+			Partitions: []disk.Partition{
 				{
 					Start:    2048,
 					Bootable: true,
-					Filesystem: &osbuild.QEMUFilesystem{
+					Filesystem: &disk.Filesystem{
 						Type:       "xfs",
 						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
 						Mountpoint: "/",
@@ -596,8 +597,8 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) o
 	panic("unknown arch: " + arch.Name())
 }
 
-func qemuAssembler(pt *osbuild.QEMUAssemblerOptions, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-	options := pt
+func qemuAssembler(pt *disk.PartitionTable, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+	options := pt.QEMUAssemblerOptions()
 
 	options.Format = format
 	options.Filename = filename
@@ -616,7 +617,7 @@ func qemuAssembler(pt *osbuild.QEMUAssemblerOptions, format string, filename str
 			Type: "zipl",
 		}
 	}
-	return osbuild.NewQEMUAssembler(options)
+	return osbuild.NewQEMUAssembler(&options)
 }
 
 func tarAssembler(filename, compression string) *osbuild.Assembler {
@@ -700,7 +701,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -755,7 +756,7 @@ func New() distro.Distro {
 			"redboot-auto-reboot", "redboot-task-runner",
 		},
 		rpmOstree: true,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -832,7 +833,7 @@ func New() distro.Distro {
 		bootable:                true,
 		defaultSize:             6 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler(pt, "raw", "image.raw", options, arch)
 		},
 	}
@@ -914,7 +915,7 @@ func New() distro.Distro {
 		bootable:                true,
 		defaultSize:             10 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch)
 		},
 	}
@@ -943,7 +944,7 @@ func New() distro.Distro {
 		bootable:                true,
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch)
 		},
 	}
@@ -961,7 +962,7 @@ func New() distro.Distro {
 		},
 		bootable:      false,
 		kernelOptions: "ro net.ifnames=0",
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return tarAssembler("root.tar.xz", "xz")
 		},
 	}
@@ -1003,7 +1004,7 @@ func New() distro.Distro {
 		bootable:                true,
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler(pt, "vpc", "disk.vhd", options, arch)
 		},
 	}
@@ -1033,7 +1034,7 @@ func New() distro.Distro {
 		bootable:                true,
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
-		assembler: func(pt *osbuild.QEMUAssemblerOptions, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler(pt, "vmdk", "disk.vmdk", options, arch)
 		},
 	}
