@@ -82,6 +82,23 @@ func (pt PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 	return &options
 }
 
+// Returns the root partition (the partition whose filesystem has / as
+// a mountpoint) of the partition table. Nil is returned if there's no such
+// partition.
+func (pt PartitionTable) RootPartition() *Partition {
+	for _, p := range pt.Partitions {
+		if p.Filesystem == nil {
+			continue
+		}
+
+		if p.Filesystem.Mountpoint == "/" {
+			return &p
+		}
+	}
+
+	return nil
+}
+
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
