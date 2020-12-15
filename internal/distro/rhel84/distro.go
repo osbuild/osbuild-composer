@@ -231,6 +231,12 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 }
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
+	var pt *disk.PartitionTable
+	if t.partitionTableGenerator != nil {
+		table := t.partitionTableGenerator(options, t.arch)
+		pt = &table
+	}
+
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
 
@@ -244,8 +250,11 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
+	if pt != nil {
+		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptions()))
+	}
+
 	if t.bootable {
-		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
 		if t.arch.Name() != "s390x" {
 			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi, t.arch.legacy)))
 		}
@@ -326,12 +335,6 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 			WaitForNetwork: true,
 		},
 		))
-	}
-
-	var pt *disk.PartitionTable
-	if t.partitionTableGenerator != nil {
-		table := t.partitionTableGenerator(options, t.arch)
-		pt = &table
 	}
 
 	p.Assembler = t.assembler(pt, options, t.arch)
@@ -445,15 +448,6 @@ func (t *imageType) systemdStageOptions(enabledServices, disabledServices []stri
 	}
 }
 
-func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
-	options := osbuild.FSTabStageOptions{}
-	options.AddFilesystem("efe8afea-c0a8-45dc-8e6e-499279f6fa5d", "xfs", "/", "defaults", 0, 0)
-	if uefi {
-		options.AddFilesystem("7B77-95E7", "vfat", "/boot/efi", "defaults,uid=0,gid=0,umask=077,shortname=winnt", 0, 2)
-	}
-	return &options
-}
-
 func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("efe8afea-c0a8-45dc-8e6e-499279f6fa5d")
 
@@ -506,9 +500,12 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
 					Filesystem: &disk.Filesystem{
-						Type:       "vfat",
-						UUID:       "7B77-95E7",
-						Mountpoint: "/boot/efi",
+						Type:         "vfat",
+						UUID:         "7B77-95E7",
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
 					},
 				},
 				{
@@ -516,10 +513,13 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
-						Type:       "xfs",
-						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-						Label:      "root",
-						Mountpoint: "/",
+						Type:         "xfs",
+						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
 					},
 				},
 			},
@@ -536,9 +536,12 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
 					Filesystem: &disk.Filesystem{
-						Type:       "vfat",
-						UUID:       "7B77-95E7",
-						Mountpoint: "/boot/efi",
+						Type:         "vfat",
+						UUID:         "7B77-95E7",
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
 					},
 				},
 				{
@@ -546,10 +549,13 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
-						Type:       "xfs",
-						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-						Label:      "root",
-						Mountpoint: "/",
+						Type:         "xfs",
+						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
 					},
 				},
 			},
@@ -568,9 +574,12 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 				{
 					Start: 10240,
 					Filesystem: &disk.Filesystem{
-						Type:       "xfs",
-						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-						Mountpoint: "/",
+						Type:         "xfs",
+						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
 					},
 				},
 			},
@@ -585,9 +594,12 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch) d
 					Start:    2048,
 					Bootable: true,
 					Filesystem: &disk.Filesystem{
-						Type:       "xfs",
-						UUID:       "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
-						Mountpoint: "/",
+						Type:         "xfs",
+						UUID:         "efe8afea-c0a8-45dc-8e6e-499279f6fa5d",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
 					},
 				},
 			},
