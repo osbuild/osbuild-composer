@@ -2,10 +2,12 @@
 package kojiapi
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
+	"math"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -89,7 +91,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
 
 	// use the same seed for all images so we get the same IDs
-	manifestSeed := rand.Int63()
+	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		panic("cannot generate a manifest seed: " + err.Error())
+	}
+	manifestSeed := bigSeed.Int64()
 
 	for i, ir := range request.ImageRequests {
 		arch, err := d.GetArch(ir.Architecture)

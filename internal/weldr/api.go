@@ -3,12 +3,14 @@ package weldr
 import (
 	"archive/tar"
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	errors_package "errors"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
+	"math"
+	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -1837,6 +1839,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	size := imageType.Size(cr.Size)
+
+	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		panic("cannot generate a manifest seed: " + err.Error())
+	}
+	seed := bigSeed.Int64()
+
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
 			Size: size,
@@ -1848,7 +1857,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		api.allRepositories(),
 		packages,
 		buildPackages,
-		rand.Int63())
+		seed)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
