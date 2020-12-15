@@ -3,9 +3,11 @@
 package cloudapi
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math"
+	"math/big"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -83,7 +85,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 	var targets []*target.Target
 
 	// use the same seed for all images so we get the same IDs
-	manifestSeed := rand.Int63()
+	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		panic("cannot generate a manifest seed: " + err.Error())
+	}
+	manifestSeed := bigSeed.Int64()
 
 	for i, ir := range request.ImageRequests {
 		arch, err := distribution.GetArch(ir.Architecture)
