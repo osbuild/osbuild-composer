@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -95,7 +96,14 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 				return
 			}
 			if tt.Manifest != nil {
-				require.JSONEqf(t, string(tt.Manifest), string(got), "Distro: %s\nArch: %s\nImage type: %s\nTest case file: %s\n", d.Name(), arch.Name(), imageType.Name(), fileName)
+				var expected, actual interface{}
+				err = json.Unmarshal(tt.Manifest, &expected)
+				require.NoError(t, err)
+				err = json.Unmarshal(got, &actual)
+				require.NoError(t, err)
+
+				diff := cmp.Diff(expected, actual)
+				require.Emptyf(t, diff, "Distro: %s\nArch: %s\nImage type: %s\nTest case file: %s\n", d.Name(), arch.Name(), imageType.Name(), fileName)
 			}
 		})
 	}
