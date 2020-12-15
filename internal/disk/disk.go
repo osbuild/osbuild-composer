@@ -4,7 +4,11 @@
 // All of them can be 1:1 converted to osbuild.QEMUAssemblerOptions.
 package disk
 
-import "github.com/osbuild/osbuild-composer/internal/osbuild"
+import (
+	"sort"
+
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+)
 
 type PartitionTable struct {
 	// Size of the disk.
@@ -34,6 +38,12 @@ type Filesystem struct {
 	UUID       string
 	Label      string
 	Mountpoint string
+	// The fourth field of fstab(5); fs_mntops
+	FSTabOptions string
+	// The fifth field of fstab(5); fs_freq
+	FSTabFreq uint64
+	// The sixth field of fstab(5); fs_passno
+	FSTabPassNo uint64
 }
 
 // Converts PartitionTable to osbuild.QEMUAssemblerOptions that encode
@@ -50,6 +60,26 @@ func (pt PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
 		PTType:     pt.Type,
 		Partitions: partitions,
 	}
+}
+
+// Generates org.osbuild.fstab stage options from this partition table.
+func (pt PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
+	var options osbuild.FSTabStageOptions
+	for _, p := range pt.Partitions {
+		fs := p.Filesystem
+		if fs == nil {
+			continue
+		}
+
+		options.AddFilesystem(fs.UUID, fs.Type, fs.Mountpoint, fs.FSTabOptions, fs.FSTabFreq, fs.FSTabPassNo)
+	}
+
+	// sort the entries by PassNo to maintain backward compatibility
+	sort.Slice(options.FileSystems, func(i, j int) bool {
+		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
+	})
+
+	return &options
 }
 
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
