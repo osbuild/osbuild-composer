@@ -111,20 +111,10 @@ pipeline {
             }
         }
 
-        stage("Container build") {
-            parallel {
-                stage('aarch64') {
-                    agent { label "f33cloudbase && aarch64 && aws" }
-                    steps {
-                        sh "schutzbot/containerbuild.sh"
-                    }
-                }
-                stage('x86_64') {
-                    agent { label "f33cloudbase && x86_64 && aws" }
-                    steps {
-                        sh "schutzbot/containerbuild.sh"
-                    }
-                }
+        stage("Container build - x86_64") {
+            agent { label "f33cloudbase && x86_64 && aws" }
+            steps {
+                sh "schutzbot/containerbuild.sh"
             }
         }
 
