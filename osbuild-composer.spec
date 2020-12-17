@@ -56,6 +56,7 @@ BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
 %endif
 
+Requires: %{name}-core = %{version}-%{release}
 Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
 
@@ -246,15 +247,23 @@ cd $PWD/_build/src/%{goipath}
 %license LICENSE
 %doc README.md
 %{_mandir}/man7/%{name}.7*
-%{_libexecdir}/osbuild-composer/osbuild-composer
-%{_libexecdir}/osbuild-composer/dnf-json
-%{_datadir}/osbuild-composer/
 %{_unitdir}/osbuild-composer.service
 %{_unitdir}/osbuild-composer.socket
 %{_unitdir}/osbuild-composer-api.socket
 %{_unitdir}/osbuild-local-worker.socket
 %{_unitdir}/osbuild-remote-worker.socket
 %{_sysusersdir}/osbuild-composer.conf
+
+%package core
+Summary:    The core osbuild-composer binary
+
+%description core
+The core osbuild-composer binary. This is suitable both for spawning in containers and by systemd.
+
+%files core
+%{_libexecdir}/osbuild-composer/osbuild-composer
+%{_libexecdir}/osbuild-composer/dnf-json
+%{_datadir}/osbuild-composer/
 
 %package worker
 Summary:    The worker for osbuild-composer
