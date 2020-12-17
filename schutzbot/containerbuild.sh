@@ -13,18 +13,22 @@ COMMIT=$(git rev-parse HEAD)
 IMG_TAGS=(
         "quay.io/osbuild/osbuild-composer:f32-${COMMIT}"
         "quay.io/osbuild/osbuild-composer:f33-${COMMIT}"
+        "quay.io/osbuild/osbuild-composer:ubi8-${COMMIT}"
 )
 IMG_PATHS=(
+        "./containers/osbuild-composer/"
         "./containers/osbuild-composer/"
         "./containers/osbuild-composer/"
 )
 IMG_FROMS=(
         "docker.io/library/fedora:32"
         "docker.io/library/fedora:33"
+        "registry.access.redhat.com/ubi8"
 )
 IMG_RPMREPOS=(
         "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/fedora-32/${ARCH}/${COMMIT}"
         "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/fedora-33/${ARCH}/${COMMIT}"
+        "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/rhel-8.3/${ARCH}/${COMMIT}"
 )
 IMG_COUNT=${#IMG_TAGS[*]}
 
