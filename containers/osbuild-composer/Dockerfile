@@ -43,7 +43,7 @@ RUN \
                         "--repofrompath=ephemeral0,${OSB_RPMREPO}" \
                         "--setopt=ephemeral0.gpgcheck=0" \
                         "--setopt=ephemeral0.priority=10" \
-                        install "osbuild-composer" \
+                        install "osbuild-composer-core" \
                 && dnf clean all
 
 # Copy all our local sources, so we can access them from within the container

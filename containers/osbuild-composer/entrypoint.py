@@ -32,20 +32,6 @@ class Cli(contextlib.AbstractContextManager):
             prog="container/osbuild-composer",
         )
 
-        # --[no-]builtin-worker
-        self._parser.add_argument(
-            "--builtin-worker",
-            action="store_true",
-            dest="builtin_worker",
-            help="Enable built-in local worker",
-        )
-        self._parser.add_argument(
-            "--no-builtin-worker",
-            action="store_false",
-            dest="builtin_worker",
-            help="Disable built-in local worker",
-        )
-
         # --[no-]composer-api
         self._parser.add_argument(
             "--composer-api",
