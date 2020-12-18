@@ -1,0 +1,18 @@
+FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+COPY . .
+ENV GOFLAGS=-mod=vendor
+RUN go install ./cmd/osbuild-composer/
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+RUN microdnf install python3
+RUN mkdir -p "/usr/libexec/osbuild-composer"
+RUN mkdir -p "/etc/osbuild-composer/"
+RUN mkdir -p "/run/osbuild-composer/"
+RUN mkdir -p "/var/cache/osbuild-composer/"
+RUN mkdir -p "/var/lib/osbuild-composer/"
+COPY --from=builder /opt/app-root/src/go/bin/osbuild-composer /usr/libexec/osbuild-composer/
+COPY ./containers/osbuild-composer/entrypoint.py /opt/entrypoint.py
+COPY ./dnf-json /usr/libexec/osbuild-composer/
+
+EXPOSE 443 8700
+ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api"]
