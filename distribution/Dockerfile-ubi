@@ -14,5 +14,5 @@ COPY --from=builder /opt/app-root/src/go/bin/osbuild-composer /usr/libexec/osbui
 COPY ./containers/osbuild-composer/entrypoint.py /opt/entrypoint.py
 COPY ./dnf-json /usr/libexec/osbuild-composer/
 
-EXPOSE 443 8700
-ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api"]
+EXPOSE 9196 8700
+ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--composer-api-port", "9196"]

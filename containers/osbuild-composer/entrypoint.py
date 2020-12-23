@@ -45,6 +45,13 @@ class Cli(contextlib.AbstractContextManager):
             dest="composer_api",
             help="Disable the composer-API",
         )
+        self._parser.add_argument(
+            "--composer-api-port",
+            type=int,
+            default=443,
+            dest="composer_api_port",
+            help="Port which the composer-API listens on",
+        )
 
         # --[no-]local-worker-api
         self._parser.add_argument(
@@ -135,12 +142,12 @@ class Cli(contextlib.AbstractContextManager):
 
         # osbuild-composer-api.socket
         if self.args.composer_api:
-            print("Create composer-api socket", file=sys.stderr)
+            print("Create composer-api socket on port {}".format(self.args.composer_api_port) , file=sys.stderr)
             sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
             self._exitstack.enter_context(contextlib.closing(sock))
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            sock.bind(("::", 443))
+            sock.bind(("::", self.args.composer_api_port))
             sock.listen()
             sockets.append(sock)
             names.append("osbuild-composer-api.socket")
