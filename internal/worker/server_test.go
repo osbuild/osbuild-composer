@@ -3,21 +3,35 @@ package worker_test
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/testjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+func newTestServer(t *testing.T, tempdir string) *worker.Server {
+	q, err := fsjobqueue.New(tempdir)
+	if err != nil {
+		t.Fatalf("error creating fsjobqueue: %v", err)
+	}
+	return worker.NewServer(nil, q, "")
+}
+
 // Ensure that the status request returns OK.
 func TestStatus(t *testing.T) {
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	server := newTestServer(t, tempdir)
 	handler := server.Handler()
 	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
@@ -43,14 +57,22 @@ func TestErrors(t *testing.T) {
 		{"PATCH", "/api/worker/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
 	}
 
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
 	for _, c := range cases {
-		server := worker.NewServer(nil, testjobqueue.New(), "")
+		server := newTestServer(t, tempdir)
 		handler := server.Handler()
 		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
 }
 
 func TestCreate(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -64,7 +86,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := newTestServer(t, tempdir)
 	handler := server.Handler()
 
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -75,6 +97,10 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCancel(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -88,7 +114,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := newTestServer(t, tempdir)
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -112,6 +138,10 @@ func TestCancel(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -125,7 +155,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := newTestServer(t, tempdir)
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -143,6 +173,10 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
 	distroStruct := fedoratest.New()
 	arch, err := distroStruct.GetArch("x86_64")
 	if err != nil {
@@ -156,7 +190,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
-	server := worker.NewServer(nil, testjobqueue.New(), "")
+	server := newTestServer(t, tempdir)
 	handler := server.Handler()
 
 	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
