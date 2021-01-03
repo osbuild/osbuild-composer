@@ -19,3 +19,7 @@ podman \
 	"--file=distribution/Dockerfile-ubi" \
 	"--tag=osbuild-composer:${COMMIT}" \
 	.
+
+echo "Build migration container"
+
+

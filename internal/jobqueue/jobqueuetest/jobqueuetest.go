@@ -17,6 +17,9 @@ import (
 
 type MakeJobQueue func() (q jobqueue.JobQueue, stop func(), err error)
 
+type testResult struct {
+}
+
 func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	wrap := func(f func(t *testing.T, q jobqueue.JobQueue)) func(*testing.T) {
 		q, stop, err := makeJobQueue()
@@ -33,6 +36,30 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("job-types", wrap(testJobTypes))
 	t.Run("dependencies", wrap(testDependencies))
 	t.Run("multiple-workers", wrap(testMultipleWorkers))
+	t.Run("heartbeats", wrap(testHeartbeats))
+}
+
+func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID) uuid.UUID {
+	t.Helper()
+	id, err := q.Enqueue(jobType, args, dependencies)
+	require.NoError(t, err)
+	require.NotEmpty(t, id)
+	return id
+}
+
+func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result interface{}, deps []uuid.UUID) uuid.UUID {
+	id, tok, d, typ, args, err := q.Dequeue(context.Background(), []string{jobType})
+	require.NoError(t, err)
+	require.NotEmpty(t, id)
+	require.NotEmpty(t, tok)
+	require.ElementsMatch(t, deps, d)
+	require.Equal(t, jobType, typ)
+	require.NotNil(t, args)
+
+	err = q.FinishJob(id, result)
+	require.NoError(t, err)
+
+	return id
 }
 
 func testErrors(t *testing.T, q jobqueue.JobQueue) {
@@ -45,6 +72,24 @@ func testErrors(t *testing.T, q jobqueue.JobQueue) {
 	id, err = q.Enqueue("test", "arg0", []uuid.UUID{uuid.New()})
 	require.Error(t, err)
 	require.Equal(t, uuid.Nil, id)
+
+	// token gets removed
+	pushTestJob(t, q, "octopus", nil, nil)
+	id, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"})
+	require.NoError(t, err)
+	require.NotEmpty(t, tok)
+
+	idFromT, err := q.IdFromToken(tok)
+	require.NoError(t, err)
+	require.Equal(t, id, idFromT)
+
+	err = q.FinishJob(id, nil)
+	require.NoError(t, err)
+
+	// Make sure the token gets removed
+	id, err = q.IdFromToken(tok)
+	require.Equal(t, uuid.Nil, id)
+	require.Equal(t, jobqueue.ErrNotExist, err)
 }
 
 func testArgs(t *testing.T, q jobqueue.JobQueue) {
@@ -61,28 +106,44 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 
 	var parsedArgs argument
 
-	id, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"})
+	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"})
 	require.NoError(t, err)
 	require.Equal(t, two, id)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "octopus", typ)
 	err = json.Unmarshal(args, &parsedArgs)
 	require.NoError(t, err)
 	require.Equal(t, twoargs, parsedArgs)
 
-	id, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
+	// Read job params after Dequeue
+	jtype, jargs, jdeps, err := q.Job(id)
+	require.NoError(t, err)
+	require.Equal(t, args, jargs)
+	require.Equal(t, deps, jdeps)
+	require.Equal(t, typ, jtype)
+
+	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
 	require.NoError(t, err)
 	require.Equal(t, one, id)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "fish", typ)
 	err = json.Unmarshal(args, &parsedArgs)
 	require.NoError(t, err)
 	require.Equal(t, oneargs, parsedArgs)
+
+	jtype, jargs, jdeps, err = q.Job(id)
+	require.NoError(t, err)
+	require.Equal(t, args, jargs)
+	require.Equal(t, deps, jdeps)
+	require.Equal(t, typ, jtype)
+
+	_, _, _, err = q.Job(uuid.New())
+	require.Error(t, err)
 }
 
 func testJobTypes(t *testing.T, q jobqueue.JobQueue) {
-	type testResult struct{}
-
 	one := pushTestJob(t, q, "octopus", nil, nil)
 	two := pushTestJob(t, q, "clownfish", nil, nil)
 
@@ -91,17 +152,16 @@ func testJobTypes(t *testing.T, q jobqueue.JobQueue) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	id, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"})
+	id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"})
 	require.Equal(t, err, context.Canceled)
 	require.Equal(t, uuid.Nil, id)
+	require.Equal(t, uuid.Nil, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "", typ)
 	require.Nil(t, args)
 }
 
 func testDependencies(t *testing.T, q jobqueue.JobQueue) {
-	type testResult struct{}
-
 	t.Run("done-before-pushing-dependant", func(t *testing.T) {
 		one := pushTestJob(t, q, "test", nil, nil)
 		two := pushTestJob(t, q, "test", nil, nil)
@@ -175,9 +235,10 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 		defer close(done)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		id, deps, typ, args, err := q.Dequeue(ctx, []string{"octopus"})
+		id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"octopus"})
 		require.NoError(t, err)
 		require.NotEmpty(t, id)
+		require.NotEmpty(t, tok)
 		require.Empty(t, deps)
 		require.Equal(t, "octopus", typ)
 		require.Equal(t, json.RawMessage("null"), args)
@@ -189,9 +250,10 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 
 	// This call to Dequeue() should not block on the one in the goroutine.
 	id := pushTestJob(t, q, "clownfish", nil, nil)
-	r, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
@@ -202,8 +264,6 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 }
 
 func testCancel(t *testing.T, q jobqueue.JobQueue) {
-	type testResult struct{}
-
 	// Cancel a non-existing job
 	err := q.CancelJob(uuid.New())
 	require.Error(t, err)
@@ -223,9 +283,10 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	// Cancel a running job, which should not dequeue the canceled job from above
 	id = pushTestJob(t, q, "clownfish", nil, nil)
 	require.NotEmpty(t, id)
-	r, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
@@ -238,12 +299,13 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	err = q.FinishJob(id, &testResult{})
 	require.Error(t, err)
 
-	// Cancel a finished job, which is an error
+	// Cancel a finished job, which is a no-op
 	id = pushTestJob(t, q, "clownfish", nil, nil)
 	require.NotEmpty(t, id)
-	r, deps, typ, args, err = q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
@@ -251,6 +313,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	err = q.CancelJob(id)
 	require.Error(t, err)
+	require.Equal(t, jobqueue.ErrNotRunning, err)
 	result, _, _, _, canceled, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.False(t, canceled)
@@ -258,24 +321,37 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 }
 
-func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID) uuid.UUID {
-	t.Helper()
-	id, err := q.Enqueue(jobType, args, dependencies)
-	require.NoError(t, err)
-	require.NotEmpty(t, id)
-	return id
-}
+func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
+	id := pushTestJob(t, q, "octopus", nil, nil)
+	// No heartbeats for queued job
+	require.Empty(t, q.Heartbeats(time.Second*0))
 
-func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result interface{}, deps []uuid.UUID) uuid.UUID {
-	id, d, typ, args, err := q.Dequeue(context.Background(), []string{jobType})
+	r, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"})
 	require.NoError(t, err)
-	require.NotEmpty(t, id)
-	require.ElementsMatch(t, deps, d)
-	require.Equal(t, jobType, typ)
-	require.NotNil(t, args)
+	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 
-	err = q.FinishJob(id, result)
+	tokens := q.Heartbeats(time.Second * 0)
+	require.NoError(t, err)
+	require.Contains(t, tokens, tok)
+
+	time.Sleep(50 * time.Millisecond)
+	tokens = q.Heartbeats(time.Millisecond * 50)
+	require.NoError(t, err)
+	require.Contains(t, tokens, tok)
+
+	require.Empty(t, q.Heartbeats(time.Hour*24))
+
+	id2, err := q.IdFromToken(tok)
+	require.NoError(t, err)
+	require.Equal(t, id2, id)
+
+	err = q.FinishJob(id, &testResult{})
 	require.NoError(t, err)
 
-	return id
+	// No heartbeats for finished job
+	require.Empty(t, q.Heartbeats(time.Second*0))
+	require.NotContains(t, q.Heartbeats(time.Second*0), tok)
+	_, err = q.IdFromToken(tok)
+	require.Equal(t, err, jobqueue.ErrNotExist)
 }

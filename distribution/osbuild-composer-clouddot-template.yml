@@ -46,6 +46,8 @@ objects:
           - name: composer-config
             mountPath: "/etc/osbuild-composer"
             readOnly: true
+          - name: osbuild-composer-db
+            mountPath: ${DB_SECRETS_DIR}
           - name: state-directory
             mountPath: "/var/lib/osbuild-composer"
           - name: cache-directory
@@ -54,11 +56,46 @@ objects:
         - name: composer-config
           configMap:
             name: composer-config
+        - name: db-secrets
+          secret:
+            secretName: db
         - name: state-directory
           persistentVolumeClaim:
             claimName: osbuild-composer-state-dir
         - name: cache-directory
           emptyDir: {}
+        initContainers:
+        - name: osbuild-composer-migrate
+          image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
+          env:
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: osbuild-composer-db
+                key: db.host
+          - name: PGPORT
+            valueFrom:
+              secretKeyRef:
+                name: osbuild-composer-db
+                key: db.port
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: osbuild-composer-db
+                key: db.name
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: osbuild-composer-db
+                key: db.user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: osbuild-composer-db
+                key: db.password
+          - name: PGSSLMODE
+            value: "${PGSSLMODE}"
 
 - apiVersion: v1
   kind: Service
@@ -110,6 +147,8 @@ objects:
       [koji]
       [worker]
       identity_filter = [${WORKER_API_IDENTITY_FILTER}]
+      db_config_dir = "${DB_SECRETS_DIR}"
+      db_ssl_mode = "${PGSSLMODE}"
       [composer_api]
       identity_filter = [${COMPOSER_API_IDENTITY_FILTER}]
 
@@ -119,7 +158,7 @@ parameters:
     name: IMAGE_NAME
     value: quay.io/cloudservices/osbuild-composer
     required: true
-  - description: image-builder image tag
+  - description: osbuild-composer image tag
     name: IMAGE_TAG
     required: true
   - description: api listener port
@@ -134,3 +173,9 @@ parameters:
   - description: Identity filter for the composer api
     name: WORKER_API_IDENTITY_FILTER
     value: ""
+  - description: db-secrets directory
+    name: DB_SECRETS_DIR
+    value: "/etc/osbuild-composer/db-secrets"
+  - description: postgres sslmode to use when connecting to the db
+    name: PGSSLMODE
+    value: "require"
