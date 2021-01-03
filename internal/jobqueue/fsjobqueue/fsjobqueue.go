@@ -265,7 +265,6 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 
 	delete(q.heartbeats, j.Token)
 	delete(q.jobIdByToken, j.Token)
-	j.Token = uuid.Nil
 
 	// Write before notifying dependants, because it will be read again.
 	err = q.db.Write(id.String(), j)

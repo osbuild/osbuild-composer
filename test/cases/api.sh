@@ -33,6 +33,59 @@ fi
 /usr/libexec/osbuild-composer-test/provision.sh
 
 #
+# Set up the database queue
+#
+if which podman 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=docker
+else
+  echo No container runtime found, install podman or docker.
+  exit 2
+fi
+
+# Start the db
+sudo ${CONTAINER_RUNTIME} run -d --name osbuild-composer-db \
+    --health-cmd "pg_isready -U postgres -d osbuildcomposer" --health-interval 2s \
+    --health-timeout 2s --health-retries 10 \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=foobar \
+    -e POSTGRES_DB=osbuildcomposer \
+    -p 5432:5432 \
+    quay.io/osbuild/postgres:13-alpine
+
+# Dump the logs once to have a little more output
+sudo ${CONTAINER_RUNTIME} logs osbuild-composer-db
+
+# Initialize a module in a temp dir so we can get tern without introducing
+# vendoring inconsistency
+pushd "$(mktemp -d)"
+sudo dnf install -y go
+go mod init temp
+go get github.com/jackc/tern
+PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
+      go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
+popd
+
+cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+[koji]
+allowed_domains = [ "localhost", "client.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+
+[worker]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+pg_host = "localhost"
+pg_port = "5432"
+pg_database = "osbuildcomposer"
+pg_user = "postgres"
+pg_password = "foobar"
+pg_ssl_mode = "disable"
+EOF
+
+sudo systemctl restart osbuild-composer
+
+#
 # Which cloud provider are we testing?
 #
 
@@ -633,13 +686,15 @@ test "$UPLOAD_STATUS" = "success"
 test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
+# Make sure we get 1 job entry in the db per compose
+sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "2 rows"
+
 #
 # Save the Manifest from the osbuild-composer store
 # NOTE: The rest of the job data can contain sensitive information
 #
 # Suppressing shellcheck.  See https://github.com/koalaman/shellcheck/wiki/SC2024#exceptions
-# shellcheck disable=SC2024
-sudo jq -rM .args.manifest /var/lib/osbuild-composer/jobs/"${COMPOSE_ID}".json > "${ARTIFACTS}/manifest.json"
+sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT args->>'Manifest' FROM jobs" | sudo tee "${ARTIFACTS}/manifest.json"
 
 #
 # Verify the Cloud-provider specific upload_status options
@@ -970,7 +1025,9 @@ function verifyPackageList() {
 
 verifyPackageList
 
+#
 # Verify the identityfilter
+#
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
