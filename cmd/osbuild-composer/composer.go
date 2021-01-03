@@ -14,6 +14,8 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -61,9 +63,25 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 
 	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
-	jobs, err := fsjobqueue.New(queueDir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+	var jobs jobqueue.JobQueue
+	if config.Worker.PGDatabase != "" {
+		dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+			config.Worker.PGUser,
+			config.Worker.PGPassword,
+			config.Worker.PGHost,
+			config.Worker.PGPort,
+			config.Worker.PGDatabase,
+			config.Worker.PGSSLMode,
+		)
+		jobs, err = dbjobqueue.New(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+		}
+	} else {
+		jobs, err = fsjobqueue.New(queueDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+		}
 	}
 
 	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, c.config.Worker.IdentityFilter)

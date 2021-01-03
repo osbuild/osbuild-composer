@@ -47,6 +47,7 @@ BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
 BuildRequires:  golang(github.com/go-chi/chi)
 BuildRequires:  golang(github.com/google/uuid)
+BuildRequires:  golang(github.com/jackc/pgx/v4)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
 BuildRequires:  golang(github.com/getkin/kin-openapi/openapi3)
 BuildRequires:  golang(github.com/kolo/xmlrpc)
@@ -142,6 +143,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-te
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-koji-tests %{goipath}/cmd/osbuild-koji-tests
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-dbjobqueue-tests %{goipath}/cmd/osbuild-composer-dbjobqueue-tests
 go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/cloud-cleaner %{goipath}/cmd/cloud-cleaner
 
 %endif
@@ -175,6 +177,7 @@ install -m 0755 -vp _bin/osbuild-dnf-json-tests                 %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-image-tests                    %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/osbuild-koji-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-composer-dbjobqueue-tests      %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/define-compose-url.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/provision.sh                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
@@ -219,6 +222,9 @@ install -m 0644 -vp test/data/koji/*                            %{buildroot}%{_d
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/x509
 install -m 0644 -vp test/data/x509/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/x509/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/schemas
+install -m 0644 -vp internal/jobqueue/dbjobqueue/schemas/*      %{buildroot}%{_datadir}/tests/osbuild-composer/schemas/
 
 %endif
 
