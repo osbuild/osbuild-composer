@@ -1,0 +1,15 @@
+FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+COPY . .
+ENV GOFLAGS=-mod=vendor
+RUN go install ./cmd/osbuild-worker
+
+FROM fedora
+RUN dnf install -y qemu-img osbuild osbuild-ostree
+RUN mkdir -p "/usr/libexec/osbuild-composer"
+RUN mkdir -p "/etc/osbuild-composer/"
+RUN mkdir -p "/run/osbuild-composer/"
+RUN mkdir -p "/var/cache/osbuild-composer/"
+RUN mkdir -p "/var/lib/osbuild-composer/"
+COPY --from=builder /opt/app-root/src/go/bin/osbuild-worker /usr/libexec/osbuild-composer/
+
+ENTRYPOINT ["/usr/libexec/osbuild-composer/osbuild-worker"]
