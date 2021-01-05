@@ -384,6 +384,37 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
+// GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
+func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) error {
+	id, err := uuid.Parse(idstr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	var finalizeResult worker.KojiFinalizeJobResult
+	_, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
+	}
+
+	if len(deps) <= 1 {
+		// ID matched a job ID that's not a Finalize job. Treat it as "not found".
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: job does not exist", idstr))
+	}
+
+	manifests := make([]distro.Manifest, len(deps)-1)
+	for i, id := range deps[1:] {
+		var buildJob worker.OSBuildKojiJob
+		if _, err := h.server.workers.JobArgs(id, &buildJob); err != nil {
+			// This is a programming error.
+			panic(err)
+		}
+		manifests[i] = buildJob.Manifest
+	}
+
+	return ctx.JSON(http.StatusOK, manifests)
+}
+
 // A simple echo.Binder(), which only accepts application/json, but is more
 // strict than echo's DefaultBinder. It does not handle binding query
 // parameters either.

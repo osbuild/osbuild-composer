@@ -87,6 +87,9 @@ type ServerInterface interface {
 	// Get logs for a compose.
 	// (GET /compose/{id}/logs)
 	GetComposeIdLogs(ctx echo.Context, id string) error
+	// Get the manifests for a compose.
+	// (GET /compose/{id}/manifests)
+	GetComposeIdManifests(ctx echo.Context, id string) error
 	// status
 	// (GET /status)
 	GetStatus(ctx echo.Context) error
@@ -138,6 +141,22 @@ func (w *ServerInterfaceWrapper) GetComposeIdLogs(ctx echo.Context) error {
 	return err
 }
 
+// GetComposeIdManifests converts echo context to params.
+func (w *ServerInterfaceWrapper) GetComposeIdManifests(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetComposeIdManifests(ctx, id)
+	return err
+}
+
 // GetStatus converts echo context to params.
 func (w *ServerInterfaceWrapper) GetStatus(ctx echo.Context) error {
 	var err error
@@ -172,6 +191,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 	router.POST("/compose", wrapper.PostCompose)
 	router.GET("/compose/:id", wrapper.GetComposeId)
 	router.GET("/compose/:id/logs", wrapper.GetComposeIdLogs)
+	router.GET("/compose/:id/manifests", wrapper.GetComposeIdManifests)
 	router.GET("/status", wrapper.GetStatus)
 
 }
