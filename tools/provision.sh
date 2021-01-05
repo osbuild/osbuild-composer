@@ -37,81 +37,9 @@ CERTDIR=/etc/osbuild-composer
 OPENSSL_CONFIG=/usr/share/tests/osbuild-composer/x509/openssl.cnf
 CADIR=/etc/osbuild-composer-test/ca
 
-# The $CADIR might exist from a previous test (current Schutzbot's imperfection)
-sudo rm -rf $CADIR || true
-sudo mkdir -p $CADIR
-
-pushd $CADIR
-    sudo mkdir certs private
-    sudo touch index.txt
-
-    # Generate a CA.
-    sudo openssl req -config $OPENSSL_CONFIG \
-        -keyout private/ca.key.pem \
-        -new -nodes -x509 -extensions osbuild_ca_ext \
-        -out ca.cert.pem -subj "/CN=osbuild.org"
-
-    # Copy the private key to the location expected by the tests
-    sudo cp ca.cert.pem "$CERTDIR"/ca-crt.pem
-
-    # Generate a composer certificate.
-    sudo openssl req -config $OPENSSL_CONFIG \
-        -keyout "$CERTDIR"/composer-key.pem \
-        -new -nodes \
-        -out /tmp/composer-csr.pem \
-        -subj "/CN=localhost/emailAddress=osbuild@example.com" \
-        -addext "subjectAltName=DNS:localhost"
-
-    sudo openssl ca -batch -config $OPENSSL_CONFIG \
-        -extensions osbuild_server_ext \
-        -in /tmp/composer-csr.pem \
-        -out "$CERTDIR"/composer-crt.pem
-
-    sudo chown _osbuild-composer "$CERTDIR"/composer-*.pem
-
-    # Generate a worker certificate.
-    sudo openssl req -config $OPENSSL_CONFIG \
-        -keyout "$CERTDIR"/worker-key.pem \
-        -new -nodes \
-        -out /tmp/worker-csr.pem \
-        -subj "/CN=localhost/emailAddress=osbuild@example.com" \
-        -addext "subjectAltName=DNS:localhost"
-
-    sudo openssl ca -batch -config $OPENSSL_CONFIG \
-        -extensions osbuild_client_ext \
-        -in /tmp/worker-csr.pem \
-        -out "$CERTDIR"/worker-crt.pem
-
-    # Generate a client certificate.
-    sudo openssl req -config $OPENSSL_CONFIG \
-        -keyout "$CERTDIR"/client-key.pem \
-        -new -nodes \
-        -out /tmp/client-csr.pem \
-        -subj "/CN=client.osbuild.org/emailAddress=osbuild@example.com" \
-        -addext "subjectAltName=DNS:client.osbuild.org"
-
-    sudo openssl ca -batch -config $OPENSSL_CONFIG \
-        -extensions osbuild_client_ext \
-        -in /tmp/client-csr.pem \
-        -out "$CERTDIR"/client-crt.pem
-
-    # Client keys are used by tests to access the composer APIs. Allow all users access.
-    sudo chmod 644 "$CERTDIR"/client-key.pem
-
-    # Generate a kojihub certificate.
-    sudo openssl req -config $OPENSSL_CONFIG \
-        -keyout "$CERTDIR"/kojihub-key.pem \
-        -new -nodes \
-        -out /tmp/kojihub-csr.pem \
-        -subj "/CN=localhost/emailAddress=osbuild@example.com" \
-        -addext "subjectAltName=DNS:localhost"
-
-    sudo openssl ca -batch -config $OPENSSL_CONFIG \
-        -extensions osbuild_server_ext \
-        -in /tmp/kojihub-csr.pem \
-        -out "$CERTDIR"/kojihub-crt.pem
-
-popd
+scriptloc=$(dirname "$0")
+sudo "${scriptloc}/gen-certs.sh" "${OPENSSL_CONFIG}" "${CERTDIR}" "${CADIR}"
+sudo chown _osbuild-composer "${CERTDIR}"/composer-*.pem
 
 sudo systemctl start osbuild-remote-worker.socket
 sudo systemctl start osbuild-composer.socket
