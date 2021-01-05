@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Azure/azure-sdk-for-go v41.3.0+incompatible
-	github.com/Azure/azure-storage-blob-go v0.8.0
+	github.com/Azure/azure-storage-blob-go v0.11.1-0.20201209121048-6df5d9af221d
 	github.com/Azure/go-autorest/autorest v0.10.0
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2
 	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
@@ -22,10 +22,9 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.23.0
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
-	golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4
+	golang.org/x/sys v0.0.0-20200828194041-157a740278f4
 )
