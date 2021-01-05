@@ -1,0 +1,40 @@
+version: '2.4'
+services:
+  composer:
+    image: local/osbuild-composer
+    build:
+      context: ..
+      dockerfile: ./distribution/Dockerfile-ubi
+    volumes:
+      - ../containers/config:/etc/osbuild-composer
+    networks:
+      net:
+        ipv4_address: 172.30.0.10
+  worker:
+    image: local/osbuild-worker
+    build:
+      context: ..
+      dockerfile: ./distribution/Dockerfile-worker
+    # override the entrypoint to specify composer hostname and port
+    entrypoint: /usr/libexec/osbuild-composer/osbuild-worker composer:8700
+    volumes:
+      - ../containers/config:/etc/osbuild-composer
+    environment:
+      - CACHE_DIRECTORY=/var/cache/osbuild-worker
+    privileged: true
+    cap_add:
+      - MKNOD
+      - SYS_ADMIN
+      - NET_ADMIN
+    networks:
+      net:
+        ipv4_address: 172.30.0.20
+    depends_on:
+      - "composer"
+
+networks:
+  net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
