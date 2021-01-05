@@ -82,7 +82,7 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 	}
 
 	// Create page blob URL. Page blob is required for VM images
-	blobURL := containerURL.NewPageBlobURL(metadata.ImageName)
+	blobURL := newPageBlobURL(containerURL, metadata.ImageName)
 	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		return fmt.Errorf("cannot create the blob URL: %v", err)

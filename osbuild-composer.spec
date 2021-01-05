@@ -91,17 +91,19 @@ Obsoletes: osbuild-composer-koji <= 23
 %endif
 
 %if 0%{?fedora} && 0%{?fedora} <= 32
-# Fedora 32 and older ships a different kolo/xmlrpc API. We cannot specify
-# build tags in gobuild macro because the macro itself specifies build tags.
-# and -tags argument cannot be used more than once.
+# Fedora 32 and older ships different kolo/xmlrpc and azure/azblob APIs. We
+# cannot specify build tags in gobuild macro because the macro itself
+# specifies build tags and -tags argument cannot be used more than once.
 # Therefore, this ugly hack with build tags switcharoo is required.
 # Remove when F32 is EOL.
 
-# Remove the build constraint from the wrapper of the old API
+# Remove the build constraint from the wrappers of the old APIs
 sed -i "s$// +build kolo_xmlrpc_oldapi$// +build !kolo_xmlrpc_oldapi$" internal/upload/koji/xmlrpc-response-oldapi.go
+sed -i "s$// +build azblob_oldapi$// +build !azblob_oldapi$" internal/upload/azure/page_blob_url_oldapi.go
 
-# Add a build constraint to the wrapper of the new API
+# Add a build constraint to the wrappers of the new APIs
 sed -i "s$// +build !kolo_xmlrpc_oldapi$// +build kolo_xmlrpc_oldapi$" internal/upload/koji/xmlrpc-response.go
+sed -i "s$// +build !azblob_oldapi$// +build azblob_oldapi$" internal/upload/azure/page_blob_url.go
 %endif
 
 %build
