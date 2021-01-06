@@ -118,8 +118,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			panic("Could not initialize empty blueprint.")
 		}
-		packageSpecs, _ := imageType.Packages(*bp)
-		packages, _, err := h.server.rpmMetadata.Depsolve(packageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
+		packageSpecs, excludePackageSpecs := imageType.Packages(*bp)
+		packages, _, err := h.server.rpmMetadata.Depsolve(packageSpecs, excludePackageSpecs, repositories, d.ModulePlatformID(), arch.Name())
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
