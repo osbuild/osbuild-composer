@@ -155,7 +155,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		Release: request.Release,
 	})
 	if err != nil {
-		// This is a programming errror.
+		// This is a programming error.
 		panic(err)
 	}
 
@@ -169,7 +169,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			KojiFilename:  kojiFilenames[i],
 		}, initID)
 		if err != nil {
-			// This is a programming errror.
+			// This is a programming error.
 			panic(err)
 		}
 		buildIDs = append(buildIDs, id)
@@ -186,7 +186,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		StartTime:     uint64(time.Now().Unix()),
 	}, initID, buildIDs)
 	if err != nil {
-		// This is a programming errror.
+		// This is a programming error.
 		panic(err)
 	}
 
@@ -357,7 +357,7 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 	var initResult worker.KojiInitJobResult
 	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
 	if err != nil {
-		// This is a programming errror.
+		// This is a programming error.
 		panic(err)
 	}
 
