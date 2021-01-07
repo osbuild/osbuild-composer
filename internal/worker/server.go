@@ -121,6 +121,21 @@ func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid
 	}, deps, nil
 }
 
+// JobArgs provides access to the arguments of a job.
+func (s *Server) JobArgs(id uuid.UUID, jobArgs interface{}) (json.RawMessage, error) {
+	rawArgs, err := s.jobs.JobArgs(id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(rawArgs, jobArgs)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
+	}
+
+	return rawArgs, nil
+}
+
 func (s *Server) Cancel(id uuid.UUID) error {
 	return s.jobs.CancelJob(id)
 }
