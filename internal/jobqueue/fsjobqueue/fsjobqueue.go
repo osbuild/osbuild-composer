@@ -287,6 +287,16 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, st
 	return
 }
 
+func (q *fsJobQueue) JobArgs(id uuid.UUID) (args json.RawMessage, err error) {
+	j, err := q.readJob(id)
+	if err != nil {
+		return
+	}
+
+	args = j.Args
+	return
+}
+
 // Reads job with `id`. This is a thin wrapper around `q.db.Read`, which
 // returns the job directly, or and error if a job with `id` does not exist.
 func (q *fsJobQueue) readJob(id uuid.UUID) (*job, error) {

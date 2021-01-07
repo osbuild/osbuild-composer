@@ -59,6 +59,9 @@ type JobQueue interface {
 	//
 	// Lastly, the IDs of the jobs dependencies are returned.
 	JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error)
+
+	// Returns the job's arguments in Raw form.
+	JobArgs(id uuid.UUID) (args json.RawMessage, err error)
 }
 
 var (

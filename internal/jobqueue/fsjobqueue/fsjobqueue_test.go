@@ -103,6 +103,11 @@ func TestArgs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, twoargs, parsedArgs)
 
+	// Read args after Dequeue
+	jargs, err := q.JobArgs(id)
+	require.NoError(t, err)
+	require.Equal(t, args, jargs)
+
 	id, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
 	require.NoError(t, err)
 	require.Equal(t, one, id)
@@ -111,6 +116,14 @@ func TestArgs(t *testing.T) {
 	err = json.Unmarshal(args, &parsedArgs)
 	require.NoError(t, err)
 	require.Equal(t, oneargs, parsedArgs)
+
+	// Read args directly after Dequeue
+	jargs, err = q.JobArgs(id)
+	require.NoError(t, err)
+	require.Equal(t, args, jargs)
+
+	_, err = q.JobArgs(uuid.New())
+	require.Error(t, err)
 }
 
 func TestJobTypes(t *testing.T) {
