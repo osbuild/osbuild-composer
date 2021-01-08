@@ -295,6 +295,8 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+	} else {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
 	}
 
 	if len(ntpServers) > 0 {

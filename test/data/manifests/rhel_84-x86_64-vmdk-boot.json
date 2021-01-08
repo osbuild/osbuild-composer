@@ -3154,6 +3154,12 @@
           }
         },
         {
+          "name": "org.osbuild.timezone",
+          "options": {
+            "zone": "America/New_York"
+          }
+        },
+        {
           "name": "org.osbuild.users",
           "options": {
             "users": {
@@ -9363,6 +9369,6 @@
       "vgauthd.service",
       "vmtoolsd.service"
     ],
-    "timezone": "UTC"
+    "timezone": "New_York"
   }
 }
