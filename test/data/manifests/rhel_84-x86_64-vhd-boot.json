@@ -3292,6 +3292,12 @@
           }
         },
         {
+          "name": "org.osbuild.timezone",
+          "options": {
+            "zone": "America/New_York"
+          }
+        },
+        {
           "name": "org.osbuild.users",
           "options": {
             "users": {
@@ -9754,6 +9760,6 @@
       "unbound-anchor.timer",
       "waagent.service"
     ],
-    "timezone": "UTC"
+    "timezone": "New_York"
   }
 }

@@ -3098,6 +3098,12 @@
           }
         },
         {
+          "name": "org.osbuild.timezone",
+          "options": {
+            "zone": "America/New_York"
+          }
+        },
+        {
           "name": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
@@ -9216,6 +9222,6 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
-    "timezone": "UTC"
+    "timezone": "New_York"
   }
 }
