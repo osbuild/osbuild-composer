@@ -12,7 +12,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
@@ -24,7 +23,7 @@ import (
 )
 
 func newTestKojiServer(t *testing.T, dir string) (*kojiapi.Server, *worker.Server) {
-	rpm_fixture := rpmmd_mock.BaseFixture()
+	rpm_fixture := rpmmd_mock.BaseFixture(dir)
 	rpm := rpmmd_mock.NewRPMMDMock(rpm_fixture)
 	require.NotNil(t, rpm)
 
@@ -32,16 +31,10 @@ func newTestKojiServer(t *testing.T, dir string) (*kojiapi.Server, *worker.Serve
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	queue, err := fsjobqueue.New(dir)
-	require.NoError(t, err)
-
-	workerServer := worker.NewServer(nil, queue, "")
-	require.NotNil(t, workerServer)
-
-	kojiServer := kojiapi.NewServer(nil, workerServer, rpm, distros)
+	kojiServer := kojiapi.NewServer(nil, rpm_fixture.Workers, rpm, distros)
 	require.NotNil(t, kojiServer)
 
-	return kojiServer, workerServer
+	return kojiServer, rpm_fixture.Workers
 }
 
 func TestStatus(t *testing.T) {
