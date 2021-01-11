@@ -172,6 +172,38 @@ func TestUpdate(t *testing.T) {
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound, `*`)
 }
 
+func TestArgs(t *testing.T) {
+	distroStruct := fedoratest.New()
+	arch, err := distroStruct.GetArch("x86_64")
+	require.NoError(t, err)
+	imageType, err := arch.GetImageType("qcow2")
+	require.NoError(t, err)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	require.NoError(t, err)
+
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+	server := newTestServer(t, tempdir)
+
+	job := worker.OSBuildJob{
+		Manifest:  manifest,
+		ImageName: "test-image",
+	}
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &job)
+	require.NoError(t, err)
+
+	_, _, _, args, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.NotNil(t, args)
+
+	var jobArgs worker.OSBuildJob
+	rawArgs, err := server.JobArgs(jobId, &jobArgs)
+	require.NoError(t, err)
+	require.Equal(t, args, rawArgs)
+	require.Equal(t, job, jobArgs)
+}
+
 func TestUpload(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "worker-tests-")
 	require.NoError(t, err)

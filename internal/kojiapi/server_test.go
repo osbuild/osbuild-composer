@@ -338,6 +338,8 @@ func TestCompose(t *testing.T) {
 		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK, `{}`)
 
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%v", finalizeID), ``, http.StatusOK, c.composeStatus)
+
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%v/manifests", finalizeID), ``, http.StatusOK, `[{"pipeline": {}, "sources": {}}, {"pipeline": {}, "sources": {}}]`)
 	}
 }
 
