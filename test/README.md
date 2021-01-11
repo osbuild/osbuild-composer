@@ -60,7 +60,7 @@ tests, see `.github/workflows/tests.yml`.
 
 ## Image tests
 
-In the `test/data/cases` directory, sample image builds and their tests are
+In the `test/data/manifests` directory, sample image builds and their tests are
 collected for the various distros, architectures, configuration we support.
 
 Each test case describes how the image is built, the expected osbuild
