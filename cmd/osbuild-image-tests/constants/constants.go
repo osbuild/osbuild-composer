@@ -31,7 +31,7 @@ var TestPaths = struct {
 }{
 	ImageInfo:               "/usr/libexec/osbuild-composer-test/image-info",
 	PrivateKey:              "/usr/share/tests/osbuild-composer/keyring/id_rsa",
-	TestCasesDirectory:      "/usr/share/tests/osbuild-composer/cases",
+	TestCasesDirectory:      "/usr/share/tests/osbuild-composer/manifests",
 	UserData:                "/usr/share/tests/osbuild-composer/cloud-init/user-data",
 	MetaData:                "/usr/share/tests/osbuild-composer/cloud-init/meta-data",
 	AzureDeploymentTemplate: "/usr/share/tests/osbuild-composer/azure/deployment-template.json",
