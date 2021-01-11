@@ -137,6 +137,35 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				r = append(r, err)
 				continue
 			}
+		case *target.VMWareTargetOptions:
+			// TODO
+			if !osbuildOutput.Success {
+				continue
+			}
+			var f *os.File
+			imagePath := path.Join(outputDirectory, options.Filename)
+			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+			// we don't need the file descriptor to be opened b/c import.vmdk operates on the file path
+			f.Close()
+			imagePath = f.Name()
+
+			credentials := vmware.Credentials{
+				Username:	options.Username,
+				Password:	options.Password,
+				Host:		options.Host,
+				Cluster:	options.Cluster,
+				Datacenter:	options.Datacenter,
+				Datastore:	options.Datastore,
+			}
+			err = vmware.UploadImage(credentials, imagePath, t.ImageName)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
 
 		case *target.AWSTargetOptions:
 			if !osbuildOutput.Success {

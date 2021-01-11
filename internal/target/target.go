@@ -72,6 +72,8 @@ func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (Targ
 		options = new(LocalTargetOptions)
 	case "org.osbuild.koji":
 		options = new(KojiTargetOptions)
+	case "org.osbuild.vmware":
+		options = new(VMWareTargetOptions)
 	default:
 		return nil, errors.New("unexpected target name")
 	}
