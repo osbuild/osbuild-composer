@@ -315,7 +315,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewUsersStage(options))
 	}
 
-	if services := c.GetServices(); services != nil || t.enabledServices != nil {
+	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
 		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services, t.defaultTarget)))
 	}
 
@@ -958,6 +958,7 @@ func New() distro.Distro {
 			// https://errata.devel.redhat.com/advisory/47339 lands
 			"timedatex",
 		},
+		defaultTarget:           "multi-user.target",
 		kernelOptions:           "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:                true,
 		defaultSize:             10 * GigaByte,

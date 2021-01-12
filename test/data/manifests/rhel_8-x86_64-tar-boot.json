@@ -5431,6 +5431,7 @@
   },
   "image-info": {
     "bootmenu": [],
+    "default-target": "graphical.target",
     "groups": [
       "adm:x:4:",
       "audio:x:63:",

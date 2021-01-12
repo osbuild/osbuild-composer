@@ -8754,6 +8754,7 @@
         "version": "5.6.6-300.fc32.aarch64"
       }
     ],
+    "default-target": "graphical.target",
     "fstab": [
       [
         "UUID=46BB-8120",

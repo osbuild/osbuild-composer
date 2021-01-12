@@ -3482,6 +3482,12 @@
           }
         },
         {
+          "name": "org.osbuild.systemd",
+          "options": {
+            "default_target": "multi-user.target"
+          }
+        },
+        {
           "name": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
@@ -9529,6 +9535,7 @@
         "version": "4.18.0-240.4.el8.x86_64"
       }
     ],
+    "default-target": "multi-user.target",
     "fstab": [
       [
         "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",

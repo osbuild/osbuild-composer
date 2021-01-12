@@ -8902,6 +8902,7 @@
       "mdns",
       "dhcpv6-client"
     ],
+    "default-target": "graphical.target",
     "fstab": [
       [
         "UUID=46BB-8120",
