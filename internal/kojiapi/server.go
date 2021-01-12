@@ -384,6 +384,53 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
+// getFinalizeJob retrieves a KojiFinalizeJob and the IDs of its dependencies
+// from the job queue given its ID.  It returns an error if the ID matches a
+// job of a different type.
+func (h *apiHandlers) getFinalizeJob(id uuid.UUID) (*worker.KojiFinalizeJob, []uuid.UUID, error) {
+	job := new(worker.KojiFinalizeJob)
+	jobType, _, deps, err := h.server.workers.Job(id, job)
+	if err != nil {
+		return nil, nil, err
+	}
+	expType := "koji-finalize"
+	if jobType != expType {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
+	}
+	return job, deps, err
+}
+
+// getInitJob retrieves a KojiInitJob from the job queue given its ID.
+// It returns an error if the ID matches a job of a different type.
+func (h *apiHandlers) getInitJob(id uuid.UUID) (*worker.KojiInitJob, error) {
+	job := new(worker.KojiInitJob)
+	jobType, _, _, err := h.server.workers.Job(id, job)
+	if err != nil {
+		return nil, err
+	}
+	expType := "koji-init"
+	if jobType != expType {
+		return nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
+	}
+	return job, err
+}
+
+// getBuildJob retrieves a OSBuildKojiJob and the IDs of its dependencies from
+// the job queue given its ID.  It returns an error if the ID matches a job of
+// a different type.
+func (h *apiHandlers) getBuildJob(id uuid.UUID) (*worker.OSBuildKojiJob, []uuid.UUID, error) {
+	job := new(worker.OSBuildKojiJob)
+	jobType, _, deps, err := h.server.workers.Job(id, job)
+	if err != nil {
+		return nil, nil, err
+	}
+	expType := "osbuild-koji"
+	if !strings.HasPrefix(jobType, expType) { // Build jobs get automatic arch suffix: Check prefix
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
+	}
+	return job, deps, nil
+}
+
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
 func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) error {
 	id, err := uuid.Parse(idstr)
@@ -391,21 +438,15 @@ func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	var finalizeResult worker.KojiFinalizeJobResult
-	_, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
+	_, deps, err := h.getFinalizeJob(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
-	if len(deps) <= 1 {
-		// ID matched a job ID that's not a Finalize job. Treat it as "not found".
-		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: job does not exist", idstr))
-	}
-
 	manifests := make([]distro.Manifest, len(deps)-1)
 	for i, id := range deps[1:] {
-		var buildJob worker.OSBuildKojiJob
-		if _, _, _, err := h.server.workers.Job(id, &buildJob); err != nil {
+		buildJob, _, err := h.getBuildJob(id)
+		if err != nil {
 			// This is a programming error.
 			panic(err)
 		}
