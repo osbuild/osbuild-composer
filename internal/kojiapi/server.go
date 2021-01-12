@@ -295,12 +295,21 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	// Make sure id exists and matches a FinalizeJob
+	if _, _, err := h.getFinalizeJob(id); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
+	}
+
 	var finalizeResult worker.KojiFinalizeJobResult
 	finalizeStatus, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
+	// Make sure deps[0] matches a KojiInitJob
+	if _, err := h.getInitJob(deps[0]); err != nil {
+		panic(err)
+	}
 	var initResult worker.KojiInitJobResult
 	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
 	if err != nil {
@@ -311,6 +320,10 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 	var buildResults []worker.OSBuildKojiJobResult
 	var imageStatuses []api.ImageStatus
 	for i := 1; i < len(deps); i++ {
+		// Make sure deps[i] matches an OSBuildKojiJob
+		if _, _, err := h.getBuildJob(deps[i]); err != nil {
+			panic(err)
+		}
 		var buildResult worker.OSBuildKojiJobResult
 		jobStatus, _, err := h.server.workers.JobStatus(deps[i], &buildResult)
 		if err != nil {
@@ -348,10 +361,20 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	// Make sure id exists and matches a FinalizeJob
+	if _, _, err := h.getFinalizeJob(id); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
+	}
+
 	var finalizeResult worker.KojiFinalizeJobResult
 	_, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
+	}
+
+	// Make sure deps[0] matches a KojiInitJob
+	if _, err := h.getInitJob(deps[0]); err != nil {
+		panic(err)
 	}
 
 	var initResult worker.KojiInitJobResult
@@ -363,6 +386,10 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 
 	var buildResults []interface{}
 	for i := 1; i < len(deps); i++ {
+		// Make sure deps[i] matches an OSBuildKojiJob
+		if _, _, err := h.getBuildJob(deps[i]); err != nil {
+			panic(err)
+		}
 		var buildResult worker.OSBuildJobResult
 		_, _, err = h.server.workers.JobStatus(deps[i], &buildResult)
 		if err != nil {
