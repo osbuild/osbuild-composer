@@ -11,7 +11,9 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
@@ -375,4 +377,83 @@ func TestRequest(t *testing.T) {
 	err = json.NewDecoder(resp.Body).Decode(&status)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestJobTypeValidation(t *testing.T) {
+	dir, err := ioutil.TempDir("", "osbuild-composer-test-kojiapi-")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	server, workers := newTestKojiServer(t, dir)
+	handler := server.Handler("/api/composer-koji/v1")
+
+	// Enqueue a compose job with N images (+ an Init and a Finalize job)
+	// Enqueuing them manually gives us access to the job IDs to use in
+	// requests.
+	nImages := 4
+	initJob := worker.KojiInitJob{
+		Server:  "test-server",
+		Name:    "test-job",
+		Version: "42",
+		Release: "1",
+	}
+	initID, err := workers.EnqueueKojiInit(&initJob)
+	require.NoError(t, err)
+
+	buildJobs := make([]worker.OSBuildKojiJob, nImages)
+	buildJobIDs := make([]uuid.UUID, nImages)
+	filenames := make([]string, nImages)
+	for idx := 0; idx < nImages; idx++ {
+		fname := fmt.Sprintf("image-file-%04d", idx)
+		buildJob := worker.OSBuildKojiJob{
+			ImageName:     fmt.Sprintf("build-job-%04d", idx),
+			KojiServer:    "test-server",
+			KojiDirectory: "koji-server-test-dir",
+			KojiFilename:  fname,
+		}
+		buildID, err := workers.EnqueueOSBuildKoji(fmt.Sprintf("fake-arch-%d", idx), &buildJob, initID)
+		require.NoError(t, err)
+
+		buildJobs[idx] = buildJob
+		buildJobIDs[idx] = buildID
+		filenames[idx] = fname
+	}
+
+	finalizeJob := worker.KojiFinalizeJob{
+		Server:        "test-server",
+		Name:          "test-job",
+		Version:       "42",
+		Release:       "1",
+		KojiFilenames: filenames,
+		KojiDirectory: "koji-server-test-dir",
+		TaskID:        0,
+		StartTime:     uint64(time.Now().Unix()),
+	}
+	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs)
+	require.NoError(t, err)
+
+	// ----- Jobs queued - Test API endpoints (status, manifests, logs) ----- //
+
+	for _, path := range []string{"", "/manifests", "/logs"} {
+		// should return OK - actual result should be tested elsewhere
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", finalizeID, path), ``, http.StatusOK, "*")
+
+		// The other IDs should fail
+		msg := fmt.Sprintf("Job %s not found: expected \"koji-finalize\", found \"koji-init\" job instead", initID)
+		resp, _ := json.Marshal(map[string]string{"message": msg})
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", initID, path), ``, http.StatusNotFound, string(resp))
+
+		for idx, buildID := range buildJobIDs {
+			msg := fmt.Sprintf("Job %s not found: expected \"koji-finalize\", found \"osbuild-koji:fake-arch-%d\" job instead", buildID, idx)
+			resp, _ := json.Marshal(map[string]string{"message": msg})
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", buildID, path), ``, http.StatusNotFound, string(resp))
+		}
+
+		badID := uuid.New()
+		msg = fmt.Sprintf("Job %s not found: job does not exist", badID)
+		resp, _ = json.Marshal(map[string]string{"message": msg})
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", badID, path), ``, http.StatusNotFound, string(resp))
+	}
 }
