@@ -287,13 +287,16 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, st
 	return
 }
 
-func (q *fsJobQueue) JobArgs(id uuid.UUID) (args json.RawMessage, err error) {
+func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
 	}
 
+	jobType = j.Type
 	args = j.Args
+	dependencies = j.Dependencies
+
 	return
 }
 
