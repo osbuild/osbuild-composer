@@ -10135,6 +10135,7 @@
     }
   },
   "image-info": {
+    "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
       "mdns",

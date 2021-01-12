@@ -288,7 +288,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewUsersStage(options))
 	}
 
-	if services := c.GetServices(); services != nil || t.enabledServices != nil {
+	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
 		p.AddStage(osbuild.NewSystemdStage(t.systemdStageOptions(t.enabledServices, t.disabledServices, services, t.defaultTarget)))
 	}
 

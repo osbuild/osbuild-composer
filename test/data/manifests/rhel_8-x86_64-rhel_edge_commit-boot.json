@@ -8502,6 +8502,7 @@
     }
   },
   "image-info": {
+    "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
       "dhcpv6-client",

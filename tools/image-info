@@ -269,6 +269,10 @@ def read_services(tree, state):
     return subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
 
 
+def read_default_target(tree):
+    return subprocess_check_output(["systemctl", f"--root={tree}", "get-default"]).rstrip()
+
+
 def read_firewall_zone(tree):
     try:
         with open(f"{tree}/etc/firewalld/firewalld.conf") as f:
@@ -308,6 +312,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
 
         report["services-enabled"] = read_services(tree, "enabled")
         report["services-disabled"] = read_services(tree, "disabled")
+
+        default_target = read_default_target(tree)
+        if default_target:
+            report["default-target"] = default_target
 
         with contextlib.suppress(FileNotFoundError):
             with open(f"{tree}/etc/hostname") as f:

@@ -9193,6 +9193,7 @@
         "version": "4.18.0-240.4.el8.x86_64"
       }
     ],
+    "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
       "dhcpv6-client",

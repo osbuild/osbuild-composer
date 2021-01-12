@@ -10209,6 +10209,7 @@
         "version": "4.18.0-193.el8.s390x"
       }
     ],
+    "default-target": "graphical.target",
     "fstab": [
       [
         "UUID=0bd700f8-090f-4556-b797-b340297ea1bd",
