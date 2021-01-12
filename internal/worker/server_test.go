@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -198,10 +199,12 @@ func TestArgs(t *testing.T) {
 	require.NotNil(t, args)
 
 	var jobArgs worker.OSBuildJob
-	rawArgs, err := server.JobArgs(jobId, &jobArgs)
+	jobType, rawArgs, deps, err := server.Job(jobId, &jobArgs)
 	require.NoError(t, err)
 	require.Equal(t, args, rawArgs)
 	require.Equal(t, job, jobArgs)
+	require.Equal(t, jobType, "osbuild:"+arch.Name())
+	require.Equal(t, []uuid.UUID(nil), deps)
 }
 
 func TestUpload(t *testing.T) {

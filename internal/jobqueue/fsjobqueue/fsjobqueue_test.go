@@ -103,10 +103,12 @@ func TestArgs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, twoargs, parsedArgs)
 
-	// Read args after Dequeue
-	jargs, err := q.JobArgs(id)
+	// Read job params after Dequeue
+	jtype, jargs, jdeps, err := q.Job(id)
 	require.NoError(t, err)
 	require.Equal(t, args, jargs)
+	require.Equal(t, deps, jdeps)
+	require.Equal(t, typ, jtype)
 
 	id, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
 	require.NoError(t, err)
@@ -117,12 +119,13 @@ func TestArgs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, oneargs, parsedArgs)
 
-	// Read args directly after Dequeue
-	jargs, err = q.JobArgs(id)
+	jtype, jargs, jdeps, err = q.Job(id)
 	require.NoError(t, err)
 	require.Equal(t, args, jargs)
+	require.Equal(t, deps, jdeps)
+	require.Equal(t, typ, jtype)
 
-	_, err = q.JobArgs(uuid.New())
+	_, _, _, err = q.Job(uuid.New())
 	require.Error(t, err)
 }
 

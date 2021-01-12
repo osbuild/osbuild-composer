@@ -405,7 +405,7 @@ func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) erro
 	manifests := make([]distro.Manifest, len(deps)-1)
 	for i, id := range deps[1:] {
 		var buildJob worker.OSBuildKojiJob
-		if _, err := h.server.workers.JobArgs(id, &buildJob); err != nil {
+		if _, _, _, err := h.server.workers.Job(id, &buildJob); err != nil {
 			// This is a programming error.
 			panic(err)
 		}
