@@ -11,7 +11,7 @@ pipeline {
         ansiColor('xterm')
         // Cancel the pipeline if it runs for more than three hours.
         timeout(
-            time: 3,
+            time: 12,
             unit: "HOURS"
         )
     }
