@@ -303,7 +303,7 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 	var finalizeResult worker.KojiFinalizeJobResult
 	finalizeStatus, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Job %s not found: %s", idstr, err))
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
 	// Make sure deps[0] matches a KojiInitJob
