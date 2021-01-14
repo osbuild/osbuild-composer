@@ -256,7 +256,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		}
 
 		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{
-			RootFsUUID: rootPartition.UUID,
+			RootFsUUID: rootPartition.Filesystem.UUID,
 			KernelOpts: t.kernelOptions,
 		}))
 	}
