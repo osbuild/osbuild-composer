@@ -50,7 +50,18 @@ unit tests before going through the full workflow described above.
 *osbuild-composer* and *osbuild-composer-worker* can be run using Docker
 containers. Building and starting containers is generally faster than building
 RPMs and installing them in a VM, so this method is more convenient for
-developing and testing changes quickly.
+developing and testing changes quickly. However, using this method has several
+downsides:
+- It doesn't build the RPMs so the `.spec` file isn't tested.
+- The environment is quite different from production (e.g., installation paths,
+  privileges and permissions).
+- The setup is not complete for all required services, so some functionality
+  isn't available for testing this way (e.g., Koji Hub and all its dependent
+  services).
+
+The containers are a good way to quickly test small changes, but before
+submitting a Pull Request, it's recommended to run through all the tests using
+the [Virtual Machine](#virtual-machine) setup described above.
 
 ### Configuration
 
