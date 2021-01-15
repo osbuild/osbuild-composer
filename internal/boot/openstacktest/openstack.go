@@ -4,13 +4,14 @@ package openstacktest
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 )
 
 const WaitTimeout = 600 // in seconds
@@ -25,8 +26,8 @@ func UploadImageToOpenStack(p *gophercloud.ProviderClient, imagePath string, ima
 
 	// create a new image which gives us the ID
 	image, err := images.Create(client, images.CreateOpts{
-		Name: imageName,
-		DiskFormat: "qcow2",
+		Name:            imageName,
+		DiskFormat:      "qcow2",
 		ContainerFormat: "bare",
 	}).Extract()
 	if err != nil {
@@ -84,10 +85,10 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	server, err := servers.Create(client, servers.CreateOpts{
 		Name:      "osbuild-composer-vm-for-" + imageID,
 		FlavorRef: "77b8cf27-be16-40d9-95b1-81db4522be1e", // ci.m1.medium.ephemeral
-		Networks: []servers.Network{  // provider_net_cci_2
+		Networks: []servers.Network{ // provider_net_cci_2
 			servers.Network{UUID: "74e8faa7-87ba-41b2-a000-438013194814"},
 		},
-		ImageRef:  imageID,
+		ImageRef: imageID,
 		UserData: []byte(userData),
 	}).Extract()
 	if err != nil {
@@ -95,7 +96,7 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	}
 
 	// cleanup
-	defer func(){
+	defer func() {
 		err := servers.ForceDelete(client, server.ID).ExtractErr()
 		if err != nil {
 			fmt.Printf("Force deleting instance %s failed: %v", server.ID, err)
@@ -128,6 +129,15 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	if fixedIP == "" {
 		return fmt.Errorf("Cannot find IP address for instance %s", server.ID)
 	}
+
+	defer func() {
+		console, err := servers.ShowConsoleOutput(client, server.ID, servers.ShowConsoleOutputOpts{}).Extract()
+		if err != nil {
+			log.Print("cannot retrieve the console", err.Error())
+			return
+		}
+		fmt.Print(console)
+	}()
 
 	return f(fixedIP)
 }
