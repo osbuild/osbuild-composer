@@ -52,19 +52,36 @@ containers. Building and starting containers is generally faster than building
 RPMs and installing them in a VM, so this method is more convenient for
 developing and testing changes quickly.
 
+### Configuration
+
 Each service (*composer* and *worker*) requires a configuration file and a set
-of certificates. Use the [`tools/gen-certs.sh`](./tools/gen-certs.sh) script to
+of certificates. The storage location for these is shared between the
+containers for simplicity. By default it's configured to be at
+`./containers/config`, but this can be changed in the
+[`./distribution/.env`](./distribution/.env) file by modifying the value of the
+`$CONTAIN£R_CONFIG_DIR` variable (both absolute and relative paths work).
+
+Use the [`tools/gen-certs.sh`](./tools/gen-certs.sh) script to
 generate the certificates (using the test OpenSSL config file):
 
     ./tools/gen-certs.sh ./test/data/x509/openssl.cnf ./containers/config  ./containers/config/ca
 
-The services also require a config file (each) which they expect to be in the
+Note that the two arguments `./containers/config` and `./containers/config/ca`
+should be the same location as the `$CONTAINER_CONFIG_DIR` described above
+
+The services also require a config file each which they expect to be in the
 same directory. The following test files can be copied into it:
 
     cp ./test/data/composer/osbuild-composer.toml ./test/data/composer/osbuild-worker.toml ./containers/config/
 
-The `containers/config` directory will be mounted inside both containers (see
+The `$CONTAINER_CONFIG_DIR` (default `containers/config`) directory will be mounted inside both containers (see
 the [`docker-composer.yml`](./distribution/docker-compose.yml) file).
+
+### Build and run
+
+To build the containers, change into the `distribution/` directory and run:
+
+    docker-compose build
 
 To start the containers, change into the `distribution/` directory and run:
 
