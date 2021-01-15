@@ -6,7 +6,7 @@ services:
       context: ..
       dockerfile: ./distribution/Dockerfile-ubi
     volumes:
-      - ../containers/config:/etc/osbuild-composer
+      - ${CONTAINER_CONFIG_DIR}/:/etc/osbuild-composer
     networks:
       net:
         ipv4_address: 172.30.0.10
@@ -18,7 +18,7 @@ services:
     # override the entrypoint to specify composer hostname and port
     entrypoint: /usr/libexec/osbuild-composer/osbuild-worker composer:8700
     volumes:
-      - ../containers/config:/etc/osbuild-composer
+      - ${CONTAINER_CONFIG_DIR}/:/etc/osbuild-composer
     environment:
       - CACHE_DIRECTORY=/var/cache/osbuild-worker
     privileged: true
