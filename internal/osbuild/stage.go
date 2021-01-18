@@ -60,6 +60,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(KeymapStageOptions)
 	case "org.osbuild.firewall":
 		options = new(FirewallStageOptions)
+	case "org.osbuild.rhsm":
+		options = new(RHSMStageOptions)
 	case "org.osbuild.rpm":
 		options = new(RPMStageOptions)
 	case "org.osbuild.rpm-ostree":

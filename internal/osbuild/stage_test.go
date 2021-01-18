@@ -173,6 +173,35 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "rhsm-empty",
+			fields: fields{
+				Name:    "org.osbuild.rhsm",
+				Options: &RHSMStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.rhsm","options":{}}`),
+			},
+		},
+		{
+			name: "rhsm",
+			fields: fields{
+				Name: "org.osbuild.rhsm",
+				Options: &RHSMStageOptions{
+					DnfPlugins: &RHSMStageOptionsDnfPlugins{
+						ProductID: &RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+						SubscriptionManager: &RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"name":"org.osbuild.rhsm","options":{"dnf-plugins":{"product-id":{"enabled":false},"subscription-manager":{"enabled":false}}}}`),
+			},
+		},
+		{
 			name: "rpm-empty",
 			fields: fields{
 				Name:    "org.osbuild.rpm",
