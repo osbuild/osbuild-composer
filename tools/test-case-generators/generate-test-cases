@@ -215,7 +215,7 @@ def main(distro, arch, image_types, keep_image_info, store, output, with_customi
         filtered_request["compose-request"]["repositories"] = repos_dict[distro][arch]
 
         if distro in test_case_request["overrides"]:
-            filtered_request.update(test_case_request["overrides"][distro])
+            filtered_request["compose-request"].update(test_case_request["overrides"][distro])
 
         generate_test_case("boot", distro, arch, output_format, filtered_request, keep_image_info, store, output)
 
