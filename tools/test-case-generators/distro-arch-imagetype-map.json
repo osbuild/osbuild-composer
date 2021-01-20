@@ -1,0 +1,69 @@
+{
+    "fedora-32": {
+        "x86_64": [
+            "ami",
+            "fedora-iot-commit",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "openstack",
+            "qcow2"
+        ]
+    },
+    "fedora-33": {
+        "x86_64": [
+            "ami",
+            "fedora-iot-commit",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami"
+        ]
+    },
+    "rhel-8": {
+        "x86_64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "rhel-edge-commit",
+            "tar",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "rhel-edge-commit",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
+    },
+    "rhel-84": {
+        "x86_64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "vhd",
+            "vmdk"
+        ]
+    }
+}
