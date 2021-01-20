@@ -69,6 +69,20 @@ boot-test the image.
 
 To (re)generate these test cases use the tool
 `tools/test-case-generators/generate-test-cases`.
+Note that the `generate-test-cases` tool must be run on a host with
+the same architecture, as the one intended for the generated test
+cases. In other words, you need to generate e.g test cases for `aarch64`
+images on an `aarch64` host.
+
+Alternatively to (re)generate test cases for all architectures, or just
+the ones different from your host's architecture, you can use the tool
+`tools/test-case-generators/generate-all-test-cases`. It creates
+an ephemeral virtual machine for each necessary architecture using the
+`qemu-system-<arch>` command and generates test cases using the
+`generate-test-cases` tool inside the virtual machine. It is important
+to note that test case generation in virtual machines may take several
+hours. The `generate-all-test-cases` currently does not work with RHEL
+images because of missing "9p" filesystem support.
 
 ### Setting up Azure upload tests
 
