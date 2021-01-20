@@ -43,6 +43,17 @@ type azureUploadSettings struct {
 
 func (azureUploadSettings) isUploadSettings() {}
 
+type vmwareUploadSettings struct {
+	Host       string `json:"host"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Datacenter string `json:"datacenter"`
+	Cluster    string `json:"cluster"`
+	Datastore  string `json:"datastore"`
+}
+
+func (vmwareUploadSettings) isUploadSettings() {}
+
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -68,6 +79,8 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(azureUploadSettings)
 	case "aws":
 		settings = new(awsUploadSettings)
+	case "vmware":
+		settings = new(vmwareUploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -128,6 +141,16 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				// StorageAccount and StorageAccessKey are intentionally not included.
 			}
 			uploads = append(uploads, upload)
+		case *target.VMWareTargetOptions:
+			upload.ProviderName = "vmware"
+			upload.Settings = &vmwareUploadSettings{
+				Host:       options.Host,
+				Cluster:    options.Cluster,
+				Datacenter: options.Datacenter,
+				Datastore:  options.Datastore,
+				// Username and Password are intentionally not included.
+			}
+			uploads = append(uploads, upload)
 		}
 	}
 
@@ -160,6 +183,17 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			StorageAccount:   options.StorageAccount,
 			StorageAccessKey: options.StorageAccessKey,
 			Container:        options.Container,
+		}
+	case *vmwareUploadSettings:
+		t.Name = "org.osbuild.vmware"
+		t.Options = &target.VMWareTargetOptions{
+			Filename:   imageType.Filename(),
+			Username:   options.Username,
+			Password:   options.Password,
+			Host:       options.Host,
+			Cluster:    options.Cluster,
+			Datacenter: options.Datacenter,
+			Datastore:  options.Datastore,
 		}
 	}
 

@@ -138,7 +138,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 		case *target.VMWareTargetOptions:
-			// TODO
 			if !osbuildOutput.Success {
 				continue
 			}
@@ -154,12 +153,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imagePath = f.Name()
 
 			credentials := vmware.Credentials{
-				Username:	options.Username,
-				Password:	options.Password,
-				Host:		options.Host,
-				Cluster:	options.Cluster,
-				Datacenter:	options.Datacenter,
-				Datastore:	options.Datastore,
+				Username:   options.Username,
+				Password:   options.Password,
+				Host:       options.Host,
+				Cluster:    options.Cluster,
+				Datacenter: options.Datacenter,
+				Datastore:  options.Datastore,
 			}
 			err = vmware.UploadImage(credentials, imagePath, t.ImageName)
 			if err != nil {

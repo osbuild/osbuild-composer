@@ -12,6 +12,6 @@ type VMWareTargetOptions struct {
 
 func (VMWareTargetOptions) isTargetOptions() {}
 
-func NewVMWareTarget(options *VMWareTargetOptions) *Target{
+func NewVMWareTarget(options *VMWareTargetOptions) *Target {
 	return newTarget("org.osbuild.vmware", options)
 }
