@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -311,4 +313,34 @@ func TestCancel(t *testing.T) {
 	require.False(t, canceled)
 	err = json.Unmarshal(result, &testResult{})
 	require.NoError(t, err)
+}
+
+// Tests that multiple consumers waiting for the same job don't get an error
+// Regression test for https://github.com/osbuild/osbuild-composer/issues/1100
+func TestMultipleConsumers(t *testing.T) {
+	q, dir := newTemporaryQueue(t)
+	defer cleanupTempDir(t, dir)
+
+	const NumJobs = 50
+	wg := sync.WaitGroup{}
+
+	// create 50 consumers waiting for a kingfisher job
+	for i := 0; i < NumJobs; i++ {
+		go func() {
+			_, _, _, _, err := q.Dequeue(context.Background(), []string{"kingfisher"})
+			assert.NoError(t, err)
+			wg.Done()
+		}()
+		wg.Add(1)
+	}
+
+	// enqueue 50 kingfisher jobs
+	for i := 0; i < NumJobs; i++ {
+		_, err := q.Enqueue("kingfisher", struct{}{}, nil)
+		require.NoError(t, err)
+	}
+
+	// wait for all the goroutines to finish
+	wg.Wait()
+
 }
