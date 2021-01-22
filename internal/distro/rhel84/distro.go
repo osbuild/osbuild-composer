@@ -953,10 +953,6 @@ func New() distro.Distro {
 			"fedora-release",
 			"fedora-repos",
 			"rng-tools",
-
-			// TODO setfiles failes because of usr/sbin/timedatex. Exlude until
-			// https://errata.devel.redhat.com/advisory/47339 lands
-			"timedatex",
 		},
 		defaultTarget:           "multi-user.target",
 		kernelOptions:           "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
