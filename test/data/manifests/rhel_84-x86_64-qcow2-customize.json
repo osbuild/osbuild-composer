@@ -1192,6 +1192,9 @@
           "sha256:d4736913c9527c97b95cbd12eb3a181c3c980be9c29758fb909f2d60bf378c53": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/python3-urllib3-1.24.2-4.el8.noarch.rpm"
           },
+          "sha256:d4dc248be7aacad57e6684036d48d7fc1697bb0f1aa880c2a77dbd3ed714c642": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/timedatex-0.5-3.el8.x86_64.rpm"
+          },
           "sha256:d570af0578f5b2c6225f1f2354404f65bccf91c3974e98dcbc0c7b55a61b9b46": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/grep-3.1-6.el8.x86_64.rpm"
           },
@@ -3268,6 +3271,9 @@
               },
               {
                 "checksum": "sha256:9137a707b7793567b38e7d8dba78fcf3f70c39320e68a9ee0b745b3a77f182ee"
+              },
+              {
+                "checksum": "sha256:d4dc248be7aacad57e6684036d48d7fc1697bb0f1aa880c2a77dbd3ed714c642"
               },
               {
                 "checksum": "sha256:a16b38fc2975ab7c8b6200fafb7e577c7434c5c0ab0683653f1f4f630e05a053"
@@ -8999,6 +9005,15 @@
         "checksum": "sha256:9137a707b7793567b38e7d8dba78fcf3f70c39320e68a9ee0b745b3a77f182ee"
       },
       {
+        "name": "timedatex",
+        "epoch": 0,
+        "version": "0.5",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20201010/Packages/timedatex-0.5-3.el8.x86_64.rpm",
+        "checksum": "sha256:d4dc248be7aacad57e6684036d48d7fc1697bb0f1aa880c2a77dbd3ed714c642"
+      },
+      {
         "name": "trousers",
         "epoch": 0,
         "version": "0.3.14",
@@ -10156,6 +10171,7 @@
       "tar-1.30-5.el8.x86_64",
       "tcpdump-4.9.3-1.el8.x86_64",
       "teamd-1.31-2.el8.x86_64",
+      "timedatex-0.5-3.el8.x86_64",
       "trousers-0.3.14-4.el8.x86_64",
       "trousers-lib-0.3.14-4.el8.x86_64",
       "tuned-2.14.0-3.el8.noarch",
@@ -10309,6 +10325,7 @@
       "cloud-init.service",
       "crond.service",
       "dbus-org.freedesktop.nm-dispatcher.service",
+      "dbus-org.freedesktop.timedate1.service",
       "dnf-makecache.timer",
       "getty@.service",
       "import-state.service",
@@ -10330,6 +10347,7 @@
       "sssd-kcm.socket",
       "sssd.service",
       "syslog.service",
+      "timedatex.service",
       "tuned.service",
       "unbound-anchor.timer"
     ],
