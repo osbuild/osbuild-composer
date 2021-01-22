@@ -243,6 +243,23 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 
 	log.Printf("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
 
+	// Tag the image with the image name.
+	req, _ = a.ec2.CreateTagsRequest(
+		&ec2.CreateTagsInput{
+			Resources: []*string{registerOutput.ImageId},
+			Tags: []*ec2.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(name),
+				},
+			},
+		},
+	)
+	err = req.Send()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(shareWith) > 0 {
 		log.Println("[AWS] 💿 Sharing ec2 AMI")
 		var launchPerms []*ec2.LaunchPermission

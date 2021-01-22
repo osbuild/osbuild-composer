@@ -263,6 +263,12 @@ for LOOP_COUNTER in {0..10}; do
     sleep 5
 done
 
+# Ensure the image was properly tagged.
+IMAGE_TAG=$($AWS_CMD ec2 describe-images --image-ids "${AMI_IMAGE_ID}" | jq -r '.Images[0].Tags[] | select(.Key=="Name") | .Value')
+if [[ ! $IMAGE_TAG == "${IMAGE_KEY}" ]]; then
+    RESULTS=0
+fi
+
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
 SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$AMI_DATA")
