@@ -88,6 +88,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	end_time := time.Now()
 
+	var streamOptimizedPath string = ""
+
 	if osbuildOutput.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, args.ImageName)
@@ -96,6 +98,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if err != nil {
 				return err
 			}
+			streamOptimizedPath = f.Name()
 		} else {
 			f, err = os.Open(imagePath)
 			if err != nil {
@@ -141,16 +144,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if !osbuildOutput.Success {
 				continue
 			}
-			var f *os.File
-			imagePath := path.Join(outputDirectory, options.Filename)
-			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-			// we don't need the file descriptor to be opened b/c import.vmdk operates on the file path
-			f.Close()
-			imagePath = f.Name()
 
 			credentials := vmware.Credentials{
 				Username:   options.Username,
@@ -160,6 +153,29 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				Datacenter: options.Datacenter,
 				Datastore:  options.Datastore,
 			}
+
+			tempDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-vmware-*")
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			defer func() {
+				err := os.RemoveAll(tempDirectory)
+				if err != nil {
+					log.Printf("Error removing temporary directory for vmware symlink(%s): %v", tempDirectory, err)
+				}
+			}()
+
+			// create a symlink so that uploaded image has the name specified by user
+			imageName := t.ImageName + ".vmdk"
+			imagePath := path.Join(tempDirectory, imageName)
+			err = os.Symlink(streamOptimizedPath, imagePath)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
 			err = vmware.UploadImage(credentials, imagePath, t.ImageName)
 			if err != nil {
 				r = append(r, err)
