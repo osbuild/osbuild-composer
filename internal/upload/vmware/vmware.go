@@ -36,7 +36,9 @@ func OpenAsStreamOptimizedVmdk(imagePath string) (*os.File, error) {
 	return f, err
 }
 
-func UploadImage(creds Credentials, imagePath, imageName string) error {
+// UploadImage is a function that uploads a stream optimized vmdk image to vSphere
+// uploaded image will be present in a directory of the same name
+func UploadImage(creds Credentials, imagePath string) error {
 	args := []string{
 		"import.vmdk",
 		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
@@ -45,7 +47,6 @@ func UploadImage(creds Credentials, imagePath, imageName string) error {
 		fmt.Sprintf("-dc=%s", creds.Datacenter),
 		fmt.Sprintf("-ds=%s", creds.Datastore),
 		imagePath,
-		imageName,
 	}
 	retcode := cli.Run(args)
 

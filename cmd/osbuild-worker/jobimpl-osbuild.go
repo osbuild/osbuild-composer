@@ -176,7 +176,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 
-			err = vmware.UploadImage(credentials, imagePath, t.ImageName)
+			err = vmware.UploadImage(credentials, imagePath)
 			if err != nil {
 				r = append(r, err)
 				continue
