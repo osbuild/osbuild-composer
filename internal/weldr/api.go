@@ -666,6 +666,19 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
+	// Is there an existing System Repo using this id?
+	for _, n := range api.systemRepoNames() {
+		if n == source.GetKey() {
+			// Users cannot replace system repos
+			errors := responseError{
+				ID:  "SystemSource",
+				Msg: fmt.Sprintf("%s is a system source, it cannot be changed.", source.GetKey()),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+	}
+
 	api.store.PushSource(source.GetKey(), source.SourceConfig())
 
 	statusResponseOK(writer)
