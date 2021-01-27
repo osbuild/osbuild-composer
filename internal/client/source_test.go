@@ -9,6 +9,7 @@
 package client
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -86,6 +87,73 @@ func TestPOSTInvalidJSONSourceV1(t *testing.T) {
 	resp, err := PostJSONSourceV1(testState.socket, source)
 	require.NoError(t, err, "POST source failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
+}
+
+// POST a JSON system source using V0 API
+func TestPOSTSystemJSONSourceV0(t *testing.T) {
+	sources_list, api, err := ListSourcesV0(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+
+	// Cannot override system sources
+	source := `{
+		"name": "REPO-NAME",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`
+
+	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
+		// skip repository names which are not present b/c this test can be
+		// executed both as a unit test and as an integration test
+		if !Include(sources_list, repoName) {
+			continue
+		}
+		useSource := strings.Replace(source, "REPO-NAME", repoName, 1)
+
+		resp, err := PostJSONSourceV0(testState.socket, useSource)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.False(t, resp.Status, "did not return an error")
+		msg := fmt.Sprintf("%s is a system source, it cannot be changed.", repoName)
+		require.Equal(t, APIErrorMsg{ID: "SystemSource", Msg: msg}, resp.Errors[0])
+	}
+}
+
+// POST a JSON system source using V1 API
+func TestPOSTSystemJSONSourceV1(t *testing.T) {
+	sources_list, api, err := ListSourcesV1(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+
+	// Cannot override system sources
+	source := `{
+        "id": "REPO-NAME",
+		"name": "json package system repo",
+		"url": "file://REPO-PATH",
+		"type": "yum-baseurl",
+		"proxy": "https://proxy-url/",
+		"check_ssl": true,
+		"check_gpg": true,
+		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+	}`
+
+	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
+		// skip repository names which are not present b/c this test can be
+		// executed both as a unit test and as an integration test
+		if !Include(sources_list, repoName) {
+			continue
+		}
+		useSource := strings.Replace(source, "REPO-NAME", repoName, 1)
+
+		resp, err := PostJSONSourceV1(testState.socket, useSource)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.False(t, resp.Status, "did not return an error")
+		msg := fmt.Sprintf("%s is a system source, it cannot be changed.", repoName)
+		require.Equal(t, APIErrorMsg{ID: "SystemSource", Msg: msg}, resp.Errors[0])
+	}
 }
 
 // POST a new TOML source using V0 API
@@ -221,6 +289,71 @@ func TestPOSTWrongTOMLSourceV1(t *testing.T) {
 	resp, err := PostTOMLSourceV1(testState.socket, source)
 	require.NoError(t, err, "POST source failed with a client error")
 	require.False(t, resp.Status, "did not return an error")
+}
+
+// POST a TOML system source using V0 API
+func TestPOSTTOMLSystemSourceV0(t *testing.T) {
+	sources_list, api, err := ListSourcesV0(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+
+	source := `
+		name = "REPO-NAME"
+		url = "file://REPO-PATH"
+		type = "yum-baseurl"
+		proxy = "https://proxy-url/"
+		check_ssl = true
+		check_gpg = true
+		gpgkey_urls = ["https://url/path/to/gpg-key"]
+	`
+	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
+	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
+		// skip repository names which are not present b/c this test can be
+		// executed both as a unit test and as an integration test
+		if !Include(sources_list, repoName) {
+			continue
+		}
+		useSource := strings.Replace(source, "REPO-NAME", repoName, 1)
+
+		resp, err := PostTOMLSourceV0(testState.socket, useSource)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.False(t, resp.Status, "did not return an error")
+		msg := fmt.Sprintf("%s is a system source, it cannot be changed.", repoName)
+		require.Equal(t, APIErrorMsg{ID: "SystemSource", Msg: msg}, resp.Errors[0])
+	}
+}
+
+// POST a new TOML system source using V1 API
+func TestPOSTTOMLSystemSourceV1(t *testing.T) {
+	sources_list, api, err := ListSourcesV1(testState.socket)
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, api, "ListSources failed: %#v", api)
+
+	source := `
+		id = "REPO-NAME"
+		name = "toml package repo"
+		url = "file://REPO-PATH"
+		type = "yum-baseurl"
+		proxy = "https://proxy-url/"
+		check_ssl = true
+		check_gpg = true
+		gpgkey_urls = ["https://url/path/to/gpg-key"]
+	`
+	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
+	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
+		// skip repository names which are not present b/c this test can be
+		// executed both as a unit test and as an integration test
+		if !Include(sources_list, repoName) {
+			continue
+		}
+		useSource := strings.Replace(source, "REPO-NAME", repoName, 1)
+
+		resp, err := PostTOMLSourceV1(testState.socket, useSource)
+		require.NoError(t, err, "POST source failed with a client error")
+		require.False(t, resp.Status, "did not return an error")
+		msg := fmt.Sprintf("%s is a system source, it cannot be changed.", repoName)
+		require.Equal(t, APIErrorMsg{ID: "SystemSource", Msg: msg}, resp.Errors[0])
+	}
 }
 
 // list sources using the v0 API
