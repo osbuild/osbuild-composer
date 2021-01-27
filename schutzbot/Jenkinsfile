@@ -147,6 +147,10 @@ pipeline {
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
                             )
+                            sh (
+                                label: "Do nothing",
+                                script: "echo Nothing"
+                            )
                         }
                     }
                 }
@@ -222,6 +226,10 @@ pipeline {
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
                             )
+                            sh (
+                                label: "Do nothing",
+                                script: "echo Nothing"
+                            )
                         }
                     }
                 }
@@ -285,6 +293,10 @@ pipeline {
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
                             )
+                            sh (
+                                label: "Do nothing",
+                                script: "echo Nothing"
+                            )
                         }
                     }
                 }
@@ -324,6 +336,10 @@ pipeline {
                             sh (
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                            sh (
+                                label: "Do nothing",
+                                script: "echo Nothing"
                             )
                         }
                     }
@@ -402,6 +418,10 @@ pipeline {
                             sh (
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                            sh (
+                                label: "Do nothing",
+                                script: "echo Nothing"
                             )
                         }
                     }
