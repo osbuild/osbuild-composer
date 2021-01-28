@@ -134,9 +134,6 @@ def parse_unit_files(s, expected_state):
             continue
         r.append(unit)
 
-    # deduplicate and sort
-    r = list(set(r))
-    r.sort()
     return r
 
 
@@ -265,8 +262,69 @@ def rpm_packages(tree, is_ostree):
     return list(sorted(pkgs))
 
 
+@contextlib.contextmanager
+def change_root(root):
+    real_root = os.open("/", os.O_RDONLY)
+    try:
+        os.chroot(root)
+        yield None
+    finally:
+        os.fchdir(real_root)
+        os.chroot(".")
+        os.close(real_root)
+
+
 def read_services(tree, state):
-    return subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
+    services_state = subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
+
+    # Since systemd v246, some services previously reported as "enabled" /
+    # "disabled" are now reported as "alias". There is no systemd command, that
+    # would take an "alias" unit and report its state as enabled/disabled
+    # and could run on a different tree (with "--root" option).
+    # To make the produced list of services in the given state consistent on
+    # pre/post v246 systemd versions, check all "alias" units and append them
+    # to the list, if their target is also listed in 'services_state'.
+    if state != "alias":
+        services_alias = subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, "alias")))
+
+        for alias in services_alias:
+            # The service may be in one of the following places (output of
+            # "systemd-analyze unit-paths", it should not change too often).
+            unit_paths = [
+                "/etc/systemd/system.control",
+                "/run/systemd/system.control",
+                "/run/systemd/transient",
+                "/run/systemd/generator.early",
+                "/etc/systemd/system",
+                "/run/systemd/system",
+                "/run/systemd/generator",
+                "/usr/local/lib/systemd/system",
+                "/usr/lib/systemd/system",
+                "/run/systemd/generator.late"
+            ]
+
+            with change_root(tree):
+                for path in unit_paths:
+                    unit_path = os.path.join(path, alias)
+                    if os.path.exists(unit_path):
+                        real_unit_path = os.path.realpath(unit_path)
+                        # Skip the alias, if there was a symlink cycle.
+                        # When symbolic link cycles occur, the returned path will
+                        # be one member of the cycle, but no guarantee is made about
+                        # which member that will be.
+                        if os.path.islink(real_unit_path):
+                            continue
+
+                        # Append the alias unit to the list, if its target is
+                        # already there.
+                        if os.path.basename(real_unit_path) in services_state:
+                            services_state.append(alias)
+
+    # deduplicate and sort
+    services_state = list(set(services_state))
+    services_state.sort()
+
+    return services_state
 
 
 def read_default_target(tree):

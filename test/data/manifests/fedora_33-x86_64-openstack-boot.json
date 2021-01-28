@@ -9711,12 +9711,12 @@
         "version": "5.8.15-301.fc33.x86_64"
       }
     ],
+    "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
       "mdns",
       "dhcpv6-client"
     ],
-    "default-target": "graphical.target",
     "fstab": [
       [
         "UUID=76a22bf4-f153-4541-b6c7-0332c0dfaeac",
@@ -10235,6 +10235,7 @@
       "rdisc.service",
       "rdma.service",
       "remote-cryptsetup.target",
+      "runlevel0.target",
       "serial-getty@.service",
       "sshd-keygen@.service",
       "sshd.socket",
@@ -10260,12 +10261,19 @@
       "NetworkManager-wait-online.service",
       "NetworkManager.service",
       "auditd.service",
+      "autovt@.service",
       "chronyd.service",
       "cloud-config.service",
       "cloud-final.service",
       "cloud-init-local.service",
       "cloud-init.service",
+      "ctrl-alt-del.target",
       "dbus-broker.service",
+      "dbus-org.fedoraproject.FirewallD1.service",
+      "dbus-org.freedesktop.home1.service",
+      "dbus-org.freedesktop.nm-dispatcher.service",
+      "dbus-org.freedesktop.resolve1.service",
+      "dbus.service",
       "dbus.socket",
       "dnf-makecache.timer",
       "firewalld.service",
@@ -10276,6 +10284,7 @@
       "reboot.target",
       "remote-fs.target",
       "rpmdb-rebuild.service",
+      "runlevel6.target",
       "selinux-autorelabel-mark.service",
       "sshd.service",
       "sssd-kcm.socket",
