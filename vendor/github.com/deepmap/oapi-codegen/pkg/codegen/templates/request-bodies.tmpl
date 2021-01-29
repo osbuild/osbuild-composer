@@ -1,0 +1,6 @@
+{{range .}}{{$opid := .OperationId}}
+{{range .Bodies}}
+// {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
+type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
+{{end}}
+{{end}}

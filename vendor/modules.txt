@@ -78,12 +78,21 @@ github.com/coreos/go-systemd/activation
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/deepmap/oapi-codegen v1.3.12
+github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+github.com/deepmap/oapi-codegen/pkg/codegen
+github.com/deepmap/oapi-codegen/pkg/codegen/templates
 github.com/deepmap/oapi-codegen/pkg/runtime
 github.com/deepmap/oapi-codegen/pkg/types
+github.com/deepmap/oapi-codegen/pkg/util
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/dimchansky/utfbom v1.1.0
 github.com/dimchansky/utfbom
+# github.com/getkin/kin-openapi v0.13.0
+github.com/getkin/kin-openapi/jsoninfo
+github.com/getkin/kin-openapi/openapi3
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
 # github.com/go-chi/chi v4.0.2+incompatible
 github.com/go-chi/chi
 # github.com/gobwas/glob v0.2.3
