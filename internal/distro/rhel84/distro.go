@@ -958,10 +958,8 @@ func New() distro.Distro {
 			"libertas-usb8388-firmware",
 			"nss",
 			"plymouth",
+			"rng-tools",
 			"udisks2",
-		},
-		enabledServices: []string{
-			"rngd.service",
 		},
 		defaultTarget:           "multi-user.target",
 		kernelOptions:           "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
