@@ -6,12 +6,12 @@ and disabled services. To remedy these differences the following changes have
 been made:
 
 The following packages have been added to our qcow2 image: oddjob, 
-oddjob-mkhomedir, psmisc, authselect-compat, rng-tools, dbxtool.
+oddjob-mkhomedir, psmisc, authselect-compat, dbxtool.
 
 The following packages have been removed from our qcow2 image: 
 dnf-plugin-spacewalk, fwupd, nss, and udisks2.
 
-The following services have been enabled: rngd.service, nfs-convert.service.
+The following services have been enabled: nfs-convert.service.
 
 The following services have been removed/disabled: mdmonitor.service, 
 udisks2.service, fwupd-refresh.timer, mdcheck_continue.timer, 
