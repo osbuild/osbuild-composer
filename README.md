@@ -45,7 +45,7 @@ provided infrastructure and services.
 
 The requirements for this project are:
 
- * `osbuild >= 11`
+ * `osbuild >= 23`
  * `systemd >= 244`
 
 At build-time, the following software is required:
