@@ -329,6 +329,18 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
+	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
+	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+		Kernel: osbuild.SysconfigKernelOptions{
+			UpdateDefault: true,
+			DefaultKernel: "kernel",
+		},
+		Network: osbuild.SysconfigNetworkOptions{
+			Networking: true,
+			NoZeroConf: true,
+		},
+	}))
+
 	if t.rpmOstree {
 		p.AddStage(osbuild.NewRPMOSTreeStage(&osbuild.RPMOSTreeStageOptions{
 			EtcGroupMembers: []string{

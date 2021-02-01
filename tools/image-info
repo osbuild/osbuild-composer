@@ -358,6 +358,30 @@ def read_fstab(tree):
             result = sorted([line.split() for line in f if line and not line.startswith("#")])
     return result
 
+# Create a nested dictionary for all supported sysconfigs 
+def read_sysconfig(tree):
+    result = {}
+    sysconfig_paths = {
+        "kernel": f"{tree}/etc/sysconfig/kernel",
+        "network": f"{tree}/etc/sysconfig/network"
+    }
+    # iterate through supported configs
+    # based on https://github.com/osbuild/osbuild/blob/main/osbuild/util/osrelease.py#L17
+    for name, path in sysconfig_paths.items():
+        with contextlib.suppress(FileNotFoundError):
+            with open(path) as f:
+                # if file exists start with empty array of values
+                result[name] = {}
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line[0] == "#":
+                        continue
+                    key, value = line.split("=", 1)
+                    result[name][key] = value.strip('"')
+    return result
+ 
 
 def append_filesystem(report, tree, *, is_ostree=False):
     if os.path.exists(f"{tree}/etc/os-release"):
@@ -389,6 +413,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if fstab:
             report["fstab"] = fstab
 
+        sysconfig = read_sysconfig(tree)
+        if sysconfig:
+            report["sysconfig"] = sysconfig
+            
         with open(f"{tree}/etc/passwd") as f:
             report["passwd"] = sorted(f.read().strip().split("\n"))
 
