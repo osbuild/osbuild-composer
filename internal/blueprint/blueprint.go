@@ -103,6 +103,14 @@ func (b *Blueprint) GetPackages() []string {
 	for _, group := range b.Groups {
 		packages = append(packages, "@"+group.Name)
 	}
+
+	if kc := b.Customizations.GetKernel(); kc != nil && kc.Name != "" {
+		kpkg := Package{Name: b.Customizations.Kernel.Name}
+		packages = append(packages, kpkg.ToNameVersion())
+	} else { // no Kernel specified; add default
+		kpkg := Package{Name: "kernel"}
+		packages = append(packages, kpkg.ToNameVersion())
+	}
 	return packages
 }
 
