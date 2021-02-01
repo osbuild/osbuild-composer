@@ -780,7 +780,6 @@ func newDistro(isCentos bool) distro.Distro {
 		packages: []string{
 			"redhat-release", // TODO: is this correct for Edge?
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"basesystem", "bash", "platform-python",
 			"shadow-utils", "chrony", "setup", "shadow-utils",
@@ -837,7 +836,6 @@ func newDistro(isCentos bool) distro.Distro {
 		packages: []string{
 			"redhat-release", // TODO: is this correct for Edge?
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"basesystem", "bash", "platform-python",
 			"shadow-utils", "chrony", "setup", "shadow-utils",
@@ -899,7 +897,6 @@ func newDistro(isCentos bool) distro.Distro {
 			"dhcp-client",
 			"gdisk",
 			"insights-client",
-			"kernel",
 			"langpacks-en",
 			"net-tools",
 			"NetworkManager",
@@ -981,7 +978,6 @@ func newDistro(isCentos bool) distro.Distro {
 			"dosfstools",
 			"dracut-norescue",
 			"insights-client",
-			"kernel",
 			"NetworkManager",
 			"nfs-utils",
 			"oddjob",
@@ -1058,7 +1054,6 @@ func newDistro(isCentos bool) distro.Distro {
 			"langpacks-en",
 
 			// From the lorax kickstart
-			"kernel",
 			"selinux-policy-targeted",
 			"cloud-init",
 			"qemu-guest-agent",
@@ -1105,7 +1100,6 @@ func newDistro(isCentos bool) distro.Distro {
 			"langpacks-en",
 
 			// From the lorax kickstart
-			"kernel",
 			"selinux-policy-targeted",
 			"chrony",
 			"WALinuxAgent",
@@ -1145,7 +1139,6 @@ func newDistro(isCentos bool) distro.Distro {
 			"@core",
 			"chrony",
 			"firewalld",
-			"kernel",
 			"langpacks-en",
 			"open-vm-tools",
 			"selinux-policy-targeted",

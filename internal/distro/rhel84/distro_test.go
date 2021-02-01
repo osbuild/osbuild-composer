@@ -292,7 +292,6 @@ func TestImageType_BasePackages(t *testing.T) {
 				"@core",
 				"dhcp-client",
 				"gdisk",
-				"kernel",
 				"langpacks-en",
 				"net-tools",
 				"NetworkManager",
@@ -302,6 +301,9 @@ func TestImageType_BasePackages(t *testing.T) {
 				"selinux-policy-targeted",
 				"tar",
 				"yum-utils",
+
+				// Default from Blueprint
+				"kernel",
 			},
 			bootloaderPackages: []string{
 				"dracut-config-generic",
@@ -361,11 +363,13 @@ func TestImageType_BasePackages(t *testing.T) {
 				"@Core",
 				"langpacks-en",
 				// From the lorax kickstart
-				"kernel",
 				"selinux-policy-targeted",
 				"cloud-init",
 				"qemu-guest-agent",
 				"spice-vdagent",
+
+				// Default from Blueprint
+				"kernel",
 			},
 			bootloaderPackages: []string{
 				"dracut-config-generic",

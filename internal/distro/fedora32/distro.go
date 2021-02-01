@@ -540,7 +540,6 @@ func New() distro.Distro {
 			"fedora-release-iot",
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
 			"sssd-client", "libsss_sudo", "shadow-utils",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"rpm-ostree", "polkit", "lvm2",
 			"chrony", "zram",
@@ -598,7 +597,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"langpacks-en",
 			"libxcrypt-compat",
@@ -662,7 +660,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"spice-vdagent",
 			"qemu-guest-agent",
@@ -695,7 +692,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"langpacks-en",
 			"net-tools",
@@ -733,7 +729,6 @@ func New() distro.Distro {
 			"@core",
 			"chrony",
 			"firewalld",
-			"kernel",
 			"langpacks-en",
 			"open-vm-tools",
 			"selinux-policy-targeted",
