@@ -111,3 +111,46 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 		})
 	}
 }
+
+func isOSTree(imgType distro.ImageType) bool {
+	for _, pkg := range imgType.BuildPackages() {
+		if pkg == "rpm-ostree" {
+			return true
+		}
+	}
+	return false
+}
+
+var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
+
+// Returns the number of known kernels in the package list
+func kernelCount(imgType distro.ImageType) int {
+	pkgs, _ := imgType.Packages(blueprint.Blueprint{})
+	n := 0
+	for _, pkg := range pkgs {
+		for _, kernel := range knownKernels {
+			if kernel == pkg {
+				n++
+			}
+		}
+	}
+	return n
+}
+
+func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
+	for _, archName := range d.ListArches() {
+		arch, err := d.GetArch(archName)
+		assert.NoError(t, err)
+		for _, typeName := range arch.ListImageTypes() {
+			imgType, err := arch.GetImageType(typeName)
+			assert.NoError(t, err)
+			nk := kernelCount(imgType)
+			// at least one kernel for general image types
+			// exactly one kernel for OSTree commits
+			if nk < 1 || (isOSTree(imgType) && nk != 1) {
+				assert.Fail(t, fmt.Sprintf("%s Kernel count", d.Name()),
+					"Image type %s (arch %s) specifies %d Kernel packages", typeName, archName, nk)
+			}
+		}
+	}
+}

@@ -433,3 +433,7 @@ func TestRhel8_ModulePlatformID(t *testing.T) {
 	distro := rhel8.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
 }
+
+func TestRhel8_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, rhel8.New())
+}
