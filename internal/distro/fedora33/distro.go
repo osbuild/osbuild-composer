@@ -552,7 +552,6 @@ func New() distro.Distro {
 			"fedora-release-iot",
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
 			"sssd-client", "libsss_sudo", "shadow-utils",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"rpm-ostree", "polkit", "lvm2",
 			"cryptsetup", "pinentry",
@@ -614,7 +613,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"langpacks-en",
 			"libxcrypt-compat",
@@ -645,7 +643,6 @@ func New() distro.Distro {
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packages: []string{
-			"kernel-core",
 			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",
@@ -682,7 +679,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"spice-vdagent",
 			"qemu-guest-agent",
@@ -717,7 +713,6 @@ func New() distro.Distro {
 		packages: []string{
 			"@Core",
 			"chrony",
-			"kernel",
 			"selinux-policy-targeted",
 			"langpacks-en",
 			"net-tools",
@@ -755,7 +750,6 @@ func New() distro.Distro {
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packages: []string{
-			"kernel-core",
 			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",

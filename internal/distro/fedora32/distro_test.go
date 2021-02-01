@@ -227,7 +227,6 @@ func TestImageType_BasePackages(t *testing.T) {
 			basePackages: []string{
 				"@Core",
 				"chrony",
-				"kernel",
 				"selinux-policy-targeted",
 				"langpacks-en",
 				"libxcrypt-compat",
@@ -235,6 +234,9 @@ func TestImageType_BasePackages(t *testing.T) {
 				"cloud-init",
 				"checkpolicy",
 				"net-tools",
+
+				// Default from Blueprint
+				"kernel",
 			},
 			bootloaderPackages: []string{
 				"dracut-config-generic",
@@ -250,7 +252,6 @@ func TestImageType_BasePackages(t *testing.T) {
 			basePackages: []string{
 				"@Core",
 				"chrony",
-				"kernel",
 				"selinux-policy-targeted",
 				"spice-vdagent",
 				"qemu-guest-agent",
@@ -258,6 +259,9 @@ func TestImageType_BasePackages(t *testing.T) {
 				"langpacks-en",
 				"cloud-init",
 				"libdrm",
+
+				// Default from Blueprint
+				"kernel",
 			},
 			bootloaderPackages: []string{
 				"dracut-config-generic",

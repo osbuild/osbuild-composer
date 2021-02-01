@@ -169,7 +169,6 @@ func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	if t.bootable {
 		packages = append(packages, t.arch.bootloaderPackages...)
 	}
-
 	return packages, t.excludedPackages
 }
 
@@ -638,7 +637,6 @@ func New() distro.Distro {
 		packages: []string{
 			"redhat-release", // TODO: is this correct for Edge?
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"basesystem", "bash", "platform-python",
 			"shadow-utils", "chrony", "setup", "shadow-utils",
@@ -694,7 +692,6 @@ func New() distro.Distro {
 		packages: []string{
 			"redhat-release", // TODO: is this correct for Edge?
 			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"kernel",
 			"dracut-config-generic", "dracut-network",
 			"basesystem", "bash", "platform-python",
 			"shadow-utils", "chrony", "setup", "shadow-utils",
@@ -755,7 +752,6 @@ func New() distro.Distro {
 			"dhcp-client",
 			"gdisk",
 			"insights-client",
-			"kernel",
 			"langpacks-en",
 			"net-tools",
 			"NetworkManager",
@@ -826,7 +822,6 @@ func New() distro.Distro {
 			"@core",
 			"chrony",
 			"dnf",
-			"kernel",
 			"yum",
 			"nfs-utils",
 			"dnf-utils",
@@ -912,7 +907,6 @@ func New() distro.Distro {
 			"langpacks-en",
 
 			// From the lorax kickstart
-			"kernel",
 			"selinux-policy-targeted",
 			"cloud-init",
 			"qemu-guest-agent",
@@ -954,7 +948,6 @@ func New() distro.Distro {
 			"langpacks-en",
 
 			// From the lorax kickstart
-			"kernel",
 			"selinux-policy-targeted",
 			"chrony",
 			"WALinuxAgent",
@@ -992,7 +985,6 @@ func New() distro.Distro {
 			"@core",
 			"chrony",
 			"firewalld",
-			"kernel",
 			"langpacks-en",
 			"open-vm-tools",
 			"selinux-policy-targeted",
