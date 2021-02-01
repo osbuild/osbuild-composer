@@ -146,11 +146,13 @@ do
     https://localhost/api/composer/v1/compose/"$COMPOSE_ID")
 
   COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-  UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status')
+  UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
+  UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
 
   if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
     test "$COMPOSE_STATUS" = "success"
     test "$UPLOAD_STATUS" = "success"
+    test "$UPLOAD_TYPE" = "aws"
     break
   fi
 
