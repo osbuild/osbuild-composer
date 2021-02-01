@@ -586,3 +586,7 @@ func TestRhel84_ModulePlatformID(t *testing.T) {
 	centos := rhel84.NewCentos()
 	assert.Equal(t, "platform:el8", centos.ModulePlatformID())
 }
+
+func TestRhel84_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, rhel84.New())
+}

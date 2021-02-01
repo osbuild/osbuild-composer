@@ -369,3 +369,7 @@ func TestFedora32_ModulePlatformID(t *testing.T) {
 	distro := fedora32.New()
 	assert.Equal(t, "platform:f32", distro.ModulePlatformID())
 }
+
+func TestFedora32_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, fedora32.New())
+}
