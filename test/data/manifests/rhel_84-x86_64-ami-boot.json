@@ -3285,6 +3285,19 @@
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
           }
+        },
+        {
+          "name": "org.osbuild.sysconfig",
+          "options": {
+            "kernel": {
+              "update_default": true,
+              "default_kernel": "kernel"
+            },
+            "network": {
+              "networking": true,
+              "no_zero_conf": true
+            }
+          }
         }
       ],
       "assembler": {
@@ -9700,6 +9713,16 @@
       "udisks2.service",
       "unbound-anchor.timer"
     ],
+    "sysconfig": {
+      "kernel": {
+        "DEFAULTKERNEL": "kernel",
+        "UPDATEDEFAULT": "yes"
+      },
+      "network": {
+        "NETWORKING": "yes",
+        "NOZEROCONF": "yes"
+      }
+    },
     "timezone": "New_York"
   }
 }
