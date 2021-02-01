@@ -1664,7 +1664,7 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 	bpChange, err := api.store.GetBlueprintChange(name, commit)
 	if err != nil {
 		errors := responseError{
-			ID:  "BlueprintsError",
+			ID:  "UnknownCommit",
 			Msg: err.Error(),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
