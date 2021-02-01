@@ -9,7 +9,7 @@
   "rhel-8.3": {
     "dependencies": {
       "osbuild": {
-        "commit": "5aee7b9fa724575daa010a55cad0558fbb7b9ad1"
+        "commit": "20a142d8f9b8b5d0a69f4d91631dc94118d209ca"
       }
     },
     "dependants": {
