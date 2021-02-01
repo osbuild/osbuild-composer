@@ -13,6 +13,7 @@ type Customizations struct {
 }
 
 type KernelCustomization struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty"`
 	Append string `json:"append" toml:"append"`
 }
 
