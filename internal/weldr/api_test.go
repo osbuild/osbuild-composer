@@ -3,6 +3,7 @@ package weldr
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -531,6 +532,45 @@ func TestBlueprintsDepsolve(t *testing.T) {
 		test.TestRoute(t, api, false, "GET", "/api/v0/blueprints/depsolve/test", ``, c.ExpectedStatus, c.ExpectedJSON)
 		test.SendHTTP(api, false, "DELETE", "/api/v0/blueprints/delete/test", ``)
 	}
+}
+
+func TestBlueprintsUndo(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	rand.Seed(time.Now().UnixNano())
+	id := strconv.Itoa(rand.Int())
+	ignoreFields := []string{"commit", "timestamp"}
+
+	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"`+id+`","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.1"}`)
+	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"`+id+`","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}, {"name": "tmux", "version":"*"}],"version":"0.1.0"}`)
+
+	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/"+id, ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"Recipe `+id+`, version 0.1.0 saved.","revision":null,"timestamp":""},{"commit":"","message":"Recipe `+id+`, version 0.0.1 saved.","revision":null,"timestamp":""}],"name":"`+id+`","total":2}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
+
+	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/"+id, ``)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var changes BlueprintsChangesV0
+	err = json.Unmarshal(body, &changes)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(changes.BlueprintsChanges))
+	require.Equal(t, 2, len(changes.BlueprintsChanges[0].Changes))
+	commit := changes.BlueprintsChanges[0].Changes[1].Commit
+
+	// Undo an unknown commit
+	test.TestRoute(t, api, true, "POST", "/api/v0/blueprints/undo/"+id+"/d7e5fa641aad45300242a0f273827576e32bfc03", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownCommit","msg":"Unknown commit"}]}`)
+
+	// Undo a known commit
+	test.TestRoute(t, api, true, "POST", "/api/v0/blueprints/undo/"+id+"/"+commit, ``, http.StatusOK, `{"status":true}`)
+
+	// Check to make sure the undo is present
+	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/"+id, ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"`+id+`.toml reverted to commit `+commit+`","revision":null,"timestamp":""},{"commit":"","message":"Recipe `+id+`, version 0.1.0 saved.","revision":null,"timestamp":""},{"commit":"","message":"Recipe `+id+`, version 0.0.1 saved.","revision":null,"timestamp":""}],"name":"`+id+`","total":3}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
+
+	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/"+id, ``)
 }
 
 func TestCompose(t *testing.T) {
