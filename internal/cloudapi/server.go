@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,chi-server,client -o openapi.gen.go openapi.yml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,chi-server -o openapi.gen.go openapi.yml
 
 package cloudapi
 
@@ -102,20 +102,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution), http.StatusBadRequest)
 			return
 		}
-		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
-		for j, repo := range ir.Repositories {
-			repositories[j].RHSM = repo.Rhsm
 
-			if repo.Baseurl != nil {
-				repositories[j].BaseURL = *repo.Baseurl
-			} else if repo.Mirrorlist != nil {
-				repositories[j].MirrorList = *repo.Mirrorlist
-			} else if repo.Metalink != nil {
-				repositories[j].Metalink = *repo.Metalink
-			} else {
-				http.Error(w, "Must specify baseurl, mirrorlist, or metalink", http.StatusBadRequest)
-				return
-			}
+		repositories, err := makeRepoConfigs(ir.Repositories)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		var bp = blueprint.Blueprint{}
@@ -280,4 +271,74 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 	}
 
 	return StatusFailure
+}
+
+func (server *Server) Packages(w http.ResponseWriter, r *http.Request) {
+	contentType := r.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		http.Error(w, "Only 'application/json' content type is supported", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var request PackagesRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "Could not parse JSON body", http.StatusBadRequest)
+		return
+	}
+
+	distribution := server.distros.GetDistro(request.Distribution)
+	if distribution == nil {
+		http.Error(w, fmt.Sprintf("Unsupported distribution: %s", request.Distribution), http.StatusBadRequest)
+		return
+	}
+
+	arch, err := distribution.GetArch(request.Architecture)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unsupported architecture '%s' for distribution '%s'", request.Architecture, request.Distribution), http.StatusBadRequest)
+		return
+	}
+
+	repoConfigs, err := makeRepoConfigs(request.Repositories)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	pkgsMetadata, _, err := server.rpmMetadata.FetchMetadata(repoConfigs, distribution.ModulePlatformID(), arch.Name())
+	if err != nil {
+		http.Error(w, "Unable to fetch pacakge metadata", http.StatusInternalServerError)
+		return
+	}
+
+	pkgs := []string{}
+	for _, p := range pkgsMetadata {
+		pkgs = append(pkgs, p.Name)
+	}
+
+	response := &PackagesResponse{
+		Packages: pkgs,
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		panic("Failed to write response")
+	}
+}
+
+func makeRepoConfigs(repos []Repository) ([]rpmmd.RepoConfig, error) {
+	repositories := make([]rpmmd.RepoConfig, len(repos))
+	for j, repo := range repos {
+		repositories[j].RHSM = repo.Rhsm
+		if repo.Baseurl != nil {
+			repositories[j].BaseURL = *repo.Baseurl
+		} else if repo.Mirrorlist != nil {
+			repositories[j].MirrorList = *repo.Mirrorlist
+		} else if repo.Metalink != nil {
+			repositories[j].Metalink = *repo.Metalink
+		} else {
+			return nil, fmt.Errorf("Must specify baseurl, mirrorlist, or metalink")
+		}
+	}
+	return repositories, nil
 }

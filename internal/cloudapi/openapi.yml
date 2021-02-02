@@ -60,6 +60,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposeResult'
+  /packages:
+    post:
+      summary: Get packages
+      description: Get a list of packages for a given distribution and repositories
+      operationId: packages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackagesRequest'
+      responses:
+        '200':
+          description: List of packages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackagesResponse'
 
 components:
   schemas:
@@ -254,3 +272,27 @@ components:
           type: string
           format: uuid
           example: '123e4567-e89b-12d3-a456-426655440000'
+    PackagesRequest:
+      required:
+        - distribution
+        - architecture
+        - repositories
+      properties:
+        distribution:
+          type: string
+          example: 'fedora-33'
+        architecture:
+          type: string
+          example: 'x86_64'
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+    PackagesResponse:
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            type: string

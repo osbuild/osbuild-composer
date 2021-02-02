@@ -64,6 +64,7 @@ AWS_CMD="aws --region $AWS_REGION --output json --color on"
 #
 
 REQUEST_FILE="${WORKDIR}/request.json"
+PKGS_REQUEST_FILE="${WORKDIR}/pkgs_request.json"
 ARCH=$(uname -m)
 SNAPSHOT_NAME=$(uuidgen)
 
@@ -114,6 +115,31 @@ cat > "$REQUEST_FILE" << EOF
 }
 EOF
 
+cat > "$PKGS_REQUEST_FILE" <<EOF
+{
+    "distribution": "$DISTRO",
+    "architecture": "$ARCH",
+    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json)
+}
+EOF
+
+
+#
+# Fetch a list of packages
+#
+OUTPUT=$(curl \
+             --silent \
+             --show-error \
+             --cacert /etc/osbuild-composer/ca-crt.pem \
+             --key /etc/osbuild-composer/client-key.pem \
+             --cert /etc/osbuild-composer/client-crt.pem \
+             --header 'Content-Type: application/json' \
+             --request POST \
+             --data @"$PKGS_REQUEST_FILE" \
+             https://localhost/api/composer/v1/packages)
+
+PKGS_LEN=$(echo "$OUTPUT" | jq -r '.packages' | jq length)
+test $PKGS_LEN -gt 0
 
 #
 # Send the request and wait for the job to finish.
