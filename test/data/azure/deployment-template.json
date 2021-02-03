@@ -134,7 +134,7 @@
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "properties": {
-        "hyperVGeneration": "V1",
+        "hyperVGeneration": "V2",
         "storageProfile": {
           "osDisk": {
             "osType": "Linux",
