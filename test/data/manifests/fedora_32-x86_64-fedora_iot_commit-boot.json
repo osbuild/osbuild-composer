@@ -10213,11 +10213,9 @@
       "VERSION_ID": "32"
     },
     "ostree": {
-      "refs": {
-        "fedora/32/x86_64/iot": {
-          "inputhash": "e7a265e665ce2765c90c1a51ba187202e8b77b4e0aadddfc545189171cb9c31f"
-        }
-      },
+      "refs": [
+        "fedora/32/x86_64/iot"
+      ],
       "repo": {
         "core.mode": "archive-z2"
       }

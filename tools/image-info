@@ -499,9 +499,6 @@ def append_ostree_repo(report, repo):
     resolved = {r: ostree("rev-parse", r).stdout.strip() for r in refs}
     commit = resolved[refs[0]]
 
-    refs = {r: {"inputhash": ostree("show", "--print-metadata-key=rpmostree.inputhash", resolved[r]).stdout.strip("'\n")} for r in refs}
-    report["ostree"]["refs"] = refs
-
     with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
         tree = os.path.join(tmpdir, "tree")
         ostree("checkout", "--force-copy", commit, tree)
