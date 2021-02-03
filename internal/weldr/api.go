@@ -8,6 +8,7 @@ import (
 	errors_package "errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
@@ -590,7 +591,28 @@ func DecodeSourceConfigV0(body io.Reader, contentType string) (source SourceConf
 	if contentType == "application/json" {
 		err = json.NewDecoder(body).Decode(&source)
 	} else if contentType == "text/x-toml" {
-		_, err = toml.DecodeReader(body, &source)
+		// Read all of body in case it needs to be parsed twice
+		var data []byte
+		data, err = ioutil.ReadAll(body)
+		if err != nil {
+			return source, err
+		}
+
+		// First try to parse [ID]\n...SOURCE... form
+		var srcMap map[string]SourceConfigV0
+		err = toml.Unmarshal(data, &srcMap)
+		if err != nil {
+			// Failed, parse it again without [ID] mapping
+			err = toml.Unmarshal(data, &source)
+		} else {
+			// It is possible more than 1 source could be posted. We only use the first, after sorting
+			keys := make([]string, 0, len(srcMap))
+			for k := range srcMap {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			source = srcMap[keys[0]]
+		}
 	} else {
 		err = errors_package.New("blueprint must be in json or toml format")
 	}
@@ -602,7 +624,33 @@ func DecodeSourceConfigV1(body io.Reader, contentType string) (source SourceConf
 	if contentType == "application/json" {
 		err = json.NewDecoder(body).Decode(&source)
 	} else if contentType == "text/x-toml" {
-		_, err = toml.DecodeReader(body, &source)
+		// Read all of body in case it needs to be parsed twice
+		var data []byte
+		data, err = ioutil.ReadAll(body)
+		if err != nil {
+			return source, err
+		}
+
+		// First try to parse [ID]\n...SOURCE... form
+		var srcMap map[string]SourceConfigV1
+		err = toml.Unmarshal(data, &srcMap)
+		if err != nil {
+			// Failed, parse it without [ID]
+			err = toml.Unmarshal(data, &source)
+		} else {
+			// It is possible more than 1 source could be posted. We only use the first, after sorting
+			keys := make([]string, 0, len(srcMap))
+			for k := range srcMap {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			source = srcMap[keys[0]]
+
+			// If no id was set, use the ID from the map
+			if len(source.ID) == 0 {
+				source.ID = keys[0]
+			}
+		}
 	} else {
 		err = errors_package.New("blueprint must be in json or toml format")
 	}
