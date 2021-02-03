@@ -8276,11 +8276,9 @@
       "VERSION_ID": "8.3"
     },
     "ostree": {
-      "refs": {
-        "rhel/8/aarch64/edge": {
-          "inputhash": "e58e63f14f7edbb5add61ef8f65bf84f5934cdb0e4119caeca5a5e04461f65d3"
-        }
-      },
+      "refs": [
+        "rhel/8/aarch64/edge"
+      ],
       "repo": {
         "core.mode": "archive-z2"
       }
