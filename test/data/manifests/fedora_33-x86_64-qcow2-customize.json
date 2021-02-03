@@ -24,7 +24,7 @@
         }
       ],
       "customizations": {
-        "hosname": "my-host",
+        "hostname": "my-host",
         "kernel": {
           "append": "debug"
         },
@@ -3495,7 +3495,7 @@
         {
           "name": "org.osbuild.hostname",
           "options": {
-            "hostname": "localhost.localdomain"
+            "hostname": "my-host"
           }
         },
         {
@@ -9443,7 +9443,7 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
-    "hostname": "localhost.localdomain",
+    "hostname": "my-host",
     "image-format": "qcow2",
     "os-release": {
       "ANSI_COLOR": "0;38;2;60;110;180",
