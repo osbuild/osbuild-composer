@@ -109,7 +109,7 @@ CUSTOMIZATIONS_BLUEPRINT =  {
         }
     ],
     "customizations": {
-        "hosname": "my-host",
+        "hostname": "my-host",
         "kernel": {
             "append": "debug"
         },
