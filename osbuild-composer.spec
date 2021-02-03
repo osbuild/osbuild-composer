@@ -351,6 +351,9 @@ Requires:   ansible
 %ifarch %{arm}
 Requires:   edk2-aarch64
 %endif
+%ifarch x86_64
+Requires:   edk2-ovmf
+%endif
 
 %description tests
 Integration tests to be run on a pristine-dedicated system to test the osbuild-composer package.

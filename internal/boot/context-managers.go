@@ -133,6 +133,9 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 				"-smp", strconv.Itoa(runtime.NumCPU()),
 				"-m", "1024",
 				"-snapshot",
+				// we probably need to be able to boot with&without UEFI
+				"-bios", "/usr/share/edk2/ovmf/OVMF_CODE.secboot.fd",
+				"-boot", "efi",
 				"-M", "accel=kvm",
 				"-cdrom", cloudInitFile.Name(),
 				"-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::22-:22",
