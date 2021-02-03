@@ -24,6 +24,23 @@
     },
     "overrides": {}
   },
+  "rhel-edge-commit-rt": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "rhel-edge-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {
+        "customizations": {
+          "kernel": {
+            "name": "kernel-rt"
+          }
+        }
+      }
+    },
+    "overrides": {}
+  },
   "fedora-iot-commit": {
     "compose-request": {
       "distro": "",
@@ -32,6 +49,23 @@
       "repositories": [],
       "filename": "commit.tar",
       "blueprint": {}
+    },
+    "overrides": {}
+  },
+  "fedora-iot-commit-debug": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "fedora-iot-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {
+        "customizations": {
+          "kernel": {
+            "name": "kernel-debug"
+          }
+        }
+      }
     },
     "overrides": {}
   },
