@@ -1,5 +1,39 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 27:
+
+  * Starting from this release, we are putting longer news posts in
+    `docs/news/*/`. We strongly encourage everyone to take a look at them!
+
+  * OSBuild Composer now ships with a new osbuild-composer-core subpackage.
+    It neither requires systemd nor a local worker, so it's perfect to use in
+    a container. Just connect a remote worker to it and you are good to go!
+
+  * The RHEL 8.4 guest image is now much closer to its original kickstart
+    definition.
+    
+  * The API for Koji now supports retrieving manifests.
+
+  * Uploaded AMIs now have a name tag, making them easier to search for in
+    the AWS console.
+    
+  * The repository now contains a `Dockerfile` and `docker-compose.yml` for
+    a quick setup of a development environment. Feel free to use it and let
+    us know if you find it useful. We strongly recommend reading `HACKING.md`
+    to learn about some caveats of this setup.
+    
+  * The bug allowing users to override a system repository in the Weldr API
+    is now fixed.
+    
+  * The project now requires Go 1.14.
+
+Contributions from: Achilleas Koutsou, Brian C. Lane, David Rheinsberg,
+                    Jacob Kozol, Lars Karlitski, Major Hayden, Ondřej Budai,
+                    Sanne Raymaekers, Tomas Hozza, Tom Gundersen
+
+— Kořenov, 2020-02-04
+
+
 ## CHANGES WITH 26:
 
   * RHEL 8.4 images got plenty of updates:
