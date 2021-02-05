@@ -58,6 +58,25 @@ fi
 
 AWS_CMD="aws --region $AWS_REGION --output json --color on"
 
+#
+# Make sure /openapi.json and /version endpoints return success
+#
+
+curl \
+    --silent \
+    --show-error \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
+    https://localhost/api/composer/v1/version | jq .
+
+curl \
+    --silent \
+    --show-error \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
+    https://localhost/api/composer/v1/openapi.json | jq .
 
 #
 # Prepare a request to be sent to the composer API.
