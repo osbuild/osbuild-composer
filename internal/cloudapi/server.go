@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,chi-server,client -o openapi.gen.go openapi.yml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,spec,chi-server,client -o openapi.gen.go openapi.yml
 
 package cloudapi
 
@@ -288,4 +288,33 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 	}
 
 	return StatusFailure
+}
+
+// GetOpenapiJson handles a /openapi.json GET request
+func (server *Server) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
+	spec, err := GetSwagger()
+	if err != nil {
+		http.Error(w, "Could not load openapi spec", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(spec)
+	if err != nil {
+		panic("Failed to write response")
+	}
+}
+
+// GetVersion handles a /version GET request
+func (server *Server) GetVersion(w http.ResponseWriter, r *http.Request) {
+	spec, err := GetSwagger()
+	if err != nil {
+		http.Error(w, "Could not load version", http.StatusInternalServerError)
+		return
+	}
+	version := Version{spec.Info.Version}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(version)
+	if err != nil {
+		panic("Failed to write response")
+	}
 }
