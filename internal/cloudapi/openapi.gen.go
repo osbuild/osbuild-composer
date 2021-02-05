@@ -5,10 +5,13 @@ package cloudapi
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
 	"io"
 	"io/ioutil"
@@ -112,6 +115,11 @@ const (
 	UploadTypes_aws UploadTypes = "aws"
 )
 
+// Version defines model for Version.
+type Version struct {
+	Version string `json:"version"`
+}
+
 // ComposeJSONBody defines parameters for Compose.
 type ComposeJSONBody ComposeRequest
 
@@ -196,6 +204,12 @@ type ClientInterface interface {
 
 	// ComposeStatus request
 	ComposeStatus(ctx context.Context, id string) (*http.Response, error)
+
+	// GetOpenapiJson request
+	GetOpenapiJson(ctx context.Context) (*http.Response, error)
+
+	// GetVersion request
+	GetVersion(ctx context.Context) (*http.Response, error)
 }
 
 func (c *Client) ComposeWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -230,6 +244,36 @@ func (c *Client) Compose(ctx context.Context, body ComposeJSONRequestBody) (*htt
 
 func (c *Client) ComposeStatus(ctx context.Context, id string) (*http.Response, error) {
 	req, err := NewComposeStatusRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOpenapiJson(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetOpenapiJsonRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetVersion(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetVersionRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -316,6 +360,60 @@ func NewComposeStatusRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetOpenapiJsonRequest generates requests for GetOpenapiJson
+func NewGetOpenapiJsonRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/openapi.json")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetVersionRequest generates requests for GetVersion
+func NewGetVersionRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/version")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
 	ClientInterface
@@ -352,6 +450,12 @@ type ClientWithResponsesInterface interface {
 
 	// ComposeStatus request
 	ComposeStatusWithResponse(ctx context.Context, id string) (*ComposeStatusResponse, error)
+
+	// GetOpenapiJson request
+	GetOpenapiJsonWithResponse(ctx context.Context) (*GetOpenapiJsonResponse, error)
+
+	// GetVersion request
+	GetVersionWithResponse(ctx context.Context) (*GetVersionResponse, error)
 }
 
 type ComposeResponse struct {
@@ -398,6 +502,49 @@ func (r ComposeStatusResponse) StatusCode() int {
 	return 0
 }
 
+type GetOpenapiJsonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOpenapiJsonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOpenapiJsonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Version
+}
+
+// Status returns HTTPResponse.Status
+func (r GetVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // ComposeWithBodyWithResponse request with arbitrary body returning *ComposeResponse
 func (c *ClientWithResponses) ComposeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ComposeResponse, error) {
 	rsp, err := c.ComposeWithBody(ctx, contentType, body)
@@ -422,6 +569,24 @@ func (c *ClientWithResponses) ComposeStatusWithResponse(ctx context.Context, id 
 		return nil, err
 	}
 	return ParseComposeStatusResponse(rsp)
+}
+
+// GetOpenapiJsonWithResponse request returning *GetOpenapiJsonResponse
+func (c *ClientWithResponses) GetOpenapiJsonWithResponse(ctx context.Context) (*GetOpenapiJsonResponse, error) {
+	rsp, err := c.GetOpenapiJson(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOpenapiJsonResponse(rsp)
+}
+
+// GetVersionWithResponse request returning *GetVersionResponse
+func (c *ClientWithResponses) GetVersionWithResponse(ctx context.Context) (*GetVersionResponse, error) {
+	rsp, err := c.GetVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetVersionResponse(rsp)
 }
 
 // ParseComposeResponse parses an HTTP response from a ComposeWithResponse call
@@ -476,6 +641,51 @@ func ParseComposeStatusResponse(rsp *http.Response) (*ComposeStatusResponse, err
 	return response, nil
 }
 
+// ParseGetOpenapiJsonResponse parses an HTTP response from a GetOpenapiJsonWithResponse call
+func ParseGetOpenapiJsonResponse(rsp *http.Response) (*GetOpenapiJsonResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOpenapiJsonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseGetVersionResponse parses an HTTP response from a GetVersionWithResponse call
+func ParseGetVersionResponse(rsp *http.Response) (*GetVersionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Version
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Create compose
@@ -484,6 +694,12 @@ type ServerInterface interface {
 	// The status of a compose
 	// (GET /compose/{id})
 	ComposeStatus(w http.ResponseWriter, r *http.Request, id string)
+	// get the openapi json specification
+	// (GET /openapi.json)
+	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
+	// get the service version
+	// (GET /version)
+	GetVersion(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -516,6 +732,20 @@ func (siw *ServerInterfaceWrapper) ComposeStatus(w http.ResponseWriter, r *http.
 	siw.Handler.ComposeStatus(w, r.WithContext(ctx), id)
 }
 
+// GetOpenapiJson operation middleware
+func (siw *ServerInterfaceWrapper) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	siw.Handler.GetOpenapiJson(w, r.WithContext(ctx))
+}
+
+// GetVersion operation middleware
+func (siw *ServerInterfaceWrapper) GetVersion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	siw.Handler.GetVersion(w, r.WithContext(ctx))
+}
+
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
 	return HandlerFromMux(si, chi.NewRouter())
@@ -533,6 +763,68 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Get("/compose/{id}", wrapper.ComposeStatus)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get("/openapi.json", wrapper.GetOpenapiJson)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get("/version", wrapper.GetVersion)
+	})
 
 	return r
+}
+
+// Base64 encoded, gzipped, json marshaled Swagger object
+var swaggerSpec = []string{
+
+	"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",
+	"5PXaVxYAAA==",
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file.
+func GetSwagger() (*openapi3.Swagger, error) {
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(zr)
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("error loading Swagger: %s", err)
+	}
+	return swagger, nil
 }
