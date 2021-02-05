@@ -9,6 +9,27 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 paths:
+  /version:
+    get:
+      summary: get the service version
+      description: "get the service version"
+      operationId: getVersion
+      responses:
+        '200':
+          description: a service version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+  /openapi.json:
+    get:
+      summary: get the openapi json specification
+      operationId: getOpenapiJson
+      tags:
+        - meta
+      responses:
+        '200':
+          description: returns this document
   /compose/{id}:
     get:
       summary: The status of a compose
@@ -63,6 +84,12 @@ paths:
 
 components:
   schemas:
+    Version:
+      required:
+        - version
+      properties:
+        version:
+          type: string
     ComposeStatus:
       required:
         - image_status
