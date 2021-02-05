@@ -24,6 +24,7 @@ type OSBuildJobResult struct {
 	Success       bool            `json:"success"`
 	OSBuildOutput *osbuild.Result `json:"osbuild_output,omitempty"`
 	TargetErrors  []string        `json:"target_errors,omitempty"`
+	UploadStatus  string          `json:"upload_status"`
 }
 
 type KojiInitJob struct {
