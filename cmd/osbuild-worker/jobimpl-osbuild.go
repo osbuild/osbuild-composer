@@ -88,7 +88,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	end_time := time.Now()
 
-	var streamOptimizedPath string = ""
+	streamOptimizedPath := ""
 
 	if osbuildOutput.Success && args.ImageName != "" {
 		var f *os.File
