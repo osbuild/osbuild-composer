@@ -343,6 +343,7 @@ pipeline {
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         run_tests('integration')
@@ -420,6 +421,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         run_tests('integration')
@@ -530,6 +532,14 @@ void run_tests(test_type) {
             label: "Integration test: API",
             script: "/usr/libexec/tests/osbuild-composer/api.sh"
         )
+
+        if (env.VCENTER_CREDS) {
+            // Run the VMWare test.
+            sh (
+                label: "Integration test: VMWare",
+                script: "/usr/libexec/tests/osbuild-composer/vmware.sh"
+            )
+        }
     }
 }
 
