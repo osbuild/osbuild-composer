@@ -221,6 +221,11 @@ components:
       properties:
         subscription:
           $ref: '#/components/schemas/Subscription'
+        packages:
+          type: array
+          example: ['postgres']
+          items:
+            type: string
     Subscription:
       type: object
       required:

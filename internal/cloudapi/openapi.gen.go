@@ -58,6 +58,7 @@ type ComposeStatus struct {
 
 // Customizations defines model for Customizations.
 type Customizations struct {
+	Packages     *[]string     `json:"packages,omitempty"`
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
