@@ -1977,6 +1977,9 @@
                     "checksum": "sha256:e835f84cdda741b66c3f315a0db71c8209ff4cb451f5ae3afde35b2eda0dd929"
                   },
                   {
+                    "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+                  },
+                  {
                     "checksum": "sha256:24c7b8b233b0a5a23ff5d42ba56f0ee40372234f91e4fabe36d68e8077157e23"
                   },
                   {
@@ -1996,6 +1999,9 @@
                   },
                   {
                     "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+                  },
+                  {
+                    "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
                   },
                   {
                     "checksum": "sha256:ef221ca565f17ed425997e97fdeb5fc27261910659fa61372b18d93e1a5613e9"
@@ -3581,6 +3587,19 @@
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
           }
+        },
+        {
+          "name": "org.osbuild.rhsm",
+          "options": {
+            "dnf-plugins": {
+              "product-id": {
+                "enabled": false
+              },
+              "subscription-manager": {
+                "enabled": false
+              }
+            }
+          }
         }
       ],
       "assembler": {
@@ -5157,6 +5176,15 @@
         "checksum": "sha256:e835f84cdda741b66c3f315a0db71c8209ff4cb451f5ae3afde35b2eda0dd929"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.11",
@@ -5218,6 +5246,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.3.0.r-20210120/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.11.0",
+        "release": "8.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
+        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
       },
       {
         "name": "readline",
@@ -10171,9 +10208,21 @@
       "user1:x:1000:1000::/home/user1:/bin/bash",
       "user2:x:1020:1050:description 2:/home/home2:/bin/sh"
     ],
+    "rhsm": {
+      "dnf-plugins": {
+        "product-id": {
+          "enabled": false
+        },
+        "subscription-manager": {
+          "enabled": false
+        }
+      }
+    },
     "rpm-verify": {
       "changed": {
         "/etc/chrony.conf": "S.5....T.",
+        "/etc/dnf/plugins/product-id.conf": "..5....T.",
+        "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
         "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",

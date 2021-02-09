@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import configparser
 import contextlib
 import errno
 import functools
@@ -358,6 +359,42 @@ def read_fstab(tree):
             result = sorted([line.split() for line in f if line and not line.startswith("#")])
     return result
 
+
+# Read configuration changes possible via org.osbuild.rhsm stage
+def read_rhsm(tree):
+    result = {}
+
+    # Check RHSM DNF plugins configuration and allowed options
+    dnf_plugins_config = {
+        "product-id": f"{tree}/etc/dnf/plugins/product-id.conf",
+        "subscription-manager": f"{tree}/etc/dnf/plugins/subscription-manager.conf"
+    }
+
+    for plugin_name, plugin_path in dnf_plugins_config.items():
+        with contextlib.suppress(FileNotFoundError):
+            with open(plugin_path) as f:
+                parser = configparser.ConfigParser()
+                parser.read_file(f)
+                # only read "enabled" option from "main" section
+                with contextlib.suppress(configparser.NoSectionError, configparser.NoOptionError):
+                    # get the value as the first thing, in case it raises an exception
+                    enabled = parser.getboolean("main", "enabled")
+
+                    try:
+                        dnf_plugins_dict = result["dnf-plugins"]
+                    except KeyError as _:
+                        dnf_plugins_dict = result["dnf-plugins"] = {}
+
+                    try:
+                        plugin_dict = dnf_plugins_dict[plugin_name]
+                    except KeyError as _:
+                        plugin_dict = dnf_plugins_dict[plugin_name] = {}
+
+                    plugin_dict["enabled"] = enabled
+
+    return result
+
+
 # Create a nested dictionary for all supported sysconfigs 
 def read_sysconfig(tree):
     result = {}
@@ -412,6 +449,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         fstab = read_fstab(tree)
         if fstab:
             report["fstab"] = fstab
+
+        rhsm = read_rhsm(tree)
+        if rhsm:
+            report["rhsm"] = rhsm
 
         sysconfig = read_sysconfig(tree)
         if sysconfig:

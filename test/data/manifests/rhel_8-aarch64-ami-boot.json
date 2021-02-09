@@ -1713,6 +1713,9 @@
                     "checksum": "sha256:f74dcf1a854453ea75c5159ac909c01c983cf3d2d6d46f762dfe973fdd1c55dd"
                   },
                   {
+                    "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+                  },
+                  {
                     "checksum": "sha256:3a3207904e90b42a3fcf474f906e4c1544dbdccafa0d7e6e0406c32fd31e2a63"
                   },
                   {
@@ -1732,6 +1735,9 @@
                   },
                   {
                     "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+                  },
+                  {
+                    "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
                   },
                   {
                     "checksum": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
@@ -4613,6 +4619,15 @@
         "checksum": "sha256:f74dcf1a854453ea75c5159ac909c01c983cf3d2d6d46f762dfe973fdd1c55dd"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.11",
@@ -4674,6 +4689,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.11.0",
+        "release": "8.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
+        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
       },
       {
         "name": "readline",
@@ -9007,6 +9031,16 @@
       "tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin",
       "unbound:x:997:994:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
     ],
+    "rhsm": {
+      "dnf-plugins": {
+        "product-id": {
+          "enabled": true
+        },
+        "subscription-manager": {
+          "enabled": true
+        }
+      }
+    },
     "rpm-verify": {
       "changed": {
         "/boot/efi/EFI": ".M.......",
