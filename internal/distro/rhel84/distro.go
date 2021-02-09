@@ -363,6 +363,20 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 			WaitForNetwork: true,
 		},
 		))
+	} else {
+		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
+		if t.Name() == "qcow2" {
+			p.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
+				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
+					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
+				},
+			}))
+		}
 	}
 
 	p.Assembler = t.assembler(pt, options, t.arch)
@@ -1111,6 +1125,7 @@ func New() distro.Distro {
 			"glibc",
 			"policycoreutils",
 			"python36",
+			"python3-iniparse", // dependency of org.osbuild.rhsm stage
 			"qemu-img",
 			"selinux-policy-targeted",
 			"systemd",

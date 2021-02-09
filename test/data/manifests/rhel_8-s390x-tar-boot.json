@@ -465,6 +465,9 @@
           "sha256:90cad0b0149c8e21613247039af49e91e138aa5e3e7d158022cfd274f349b123": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/perl-libs-5.26.3-416.el8.s390x.rpm"
           },
+          "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm"
+          },
           "sha256:957f0ffdff9579966c5c0b8cccbd8d41bec7520aa48f7704b01f7ea62dee52e2": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/coreutils-8.30-8.el8.s390x.rpm"
           },
@@ -476,6 +479,9 @@
           },
           "sha256:998276e153886e014ce37c429a0f22b76f3ca955c1c9ba89999ce3dface1cf10": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/libyaml-0.1.7-5.el8.s390x.rpm"
+          },
+          "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm"
           },
           "sha256:9b88cba46414a21b780f2fc25f8e76a0cc144aabf1bec1eb9873e10369cd27c3": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/keyutils-libs-1.5.10-6.el8.s390x.rpm"
@@ -1312,6 +1318,9 @@
                     "checksum": "sha256:a4323036608c3e7708d688843b869177d58a17b3b39dd9baf69e53c6542c0ff6"
                   },
                   {
+                    "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+                  },
+                  {
                     "checksum": "sha256:f3b45fd08cba7c338a8103d236ba4fd2c9bbe36e6d4ef96ddcb6a722d4cf529e"
                   },
                   {
@@ -1331,6 +1340,9 @@
                   },
                   {
                     "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+                  },
+                  {
+                    "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
                   },
                   {
                     "checksum": "sha256:3e1977c9b662e295f67e2114694d4a11d87215346cd7836c8fe8b9cec050f357"
@@ -3753,6 +3765,15 @@
         "checksum": "sha256:a4323036608c3e7708d688843b869177d58a17b3b39dd9baf69e53c6542c0ff6"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.11",
@@ -3814,6 +3835,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.11.0",
+        "release": "8.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
+        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
       },
       {
         "name": "readline",

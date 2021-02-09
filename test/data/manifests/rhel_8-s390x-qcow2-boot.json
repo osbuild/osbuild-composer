@@ -2033,6 +2033,9 @@
                     "checksum": "sha256:a4323036608c3e7708d688843b869177d58a17b3b39dd9baf69e53c6542c0ff6"
                   },
                   {
+                    "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+                  },
+                  {
                     "checksum": "sha256:f3b45fd08cba7c338a8103d236ba4fd2c9bbe36e6d4ef96ddcb6a722d4cf529e"
                   },
                   {
@@ -2052,6 +2055,9 @@
                   },
                   {
                     "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+                  },
+                  {
+                    "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
                   },
                   {
                     "checksum": "sha256:3e1977c9b662e295f67e2114694d4a11d87215346cd7836c8fe8b9cec050f357"
@@ -3686,6 +3692,19 @@
           "name": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+          }
+        },
+        {
+          "name": "org.osbuild.rhsm",
+          "options": {
+            "dnf-plugins": {
+              "product-id": {
+                "enabled": false
+              },
+              "subscription-manager": {
+                "enabled": false
+              }
+            }
           }
         }
       ],
@@ -5347,6 +5366,15 @@
         "checksum": "sha256:a4323036608c3e7708d688843b869177d58a17b3b39dd9baf69e53c6542c0ff6"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.11",
@@ -5408,6 +5436,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.11.0",
+        "release": "8.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
+        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
       },
       {
         "name": "readline",
@@ -10715,8 +10752,20 @@
       "tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin",
       "unbound:x:997:993:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
     ],
+    "rhsm": {
+      "dnf-plugins": {
+        "product-id": {
+          "enabled": false
+        },
+        "subscription-manager": {
+          "enabled": false
+        }
+      }
+    },
     "rpm-verify": {
       "changed": {
+        "/etc/dnf/plugins/product-id.conf": "..5....T.",
+        "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
         "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",

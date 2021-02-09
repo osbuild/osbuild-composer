@@ -384,6 +384,9 @@
           "sha256:923b89c7c2ee61033b0860230fe2e833748364eb7a2ee64ca22523d09a23273c": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/kpartx-0.8.4-5.el8.aarch64.rpm"
           },
+          "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm"
+          },
           "sha256:95a000eb1262fce9d451592a13df5d713ebd0abeb88d90411d384174828153f5": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/grub2-common-2.02-90.el8.noarch.rpm"
           },
@@ -398,6 +401,9 @@
           },
           "sha256:98f838a9775269a0f796151bd54d52c7ac91d4bf1365186772f243bfafbb136a": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/libaio-0.3.112-1.el8.aarch64.rpm"
+          },
+          "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm"
           },
           "sha256:9bc0e71d942cc7946a01105a1a350e11877b6781d9495930cc360cf66ad493bc": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/libselinux-2.9-3.el8.aarch64.rpm"
@@ -1198,6 +1204,9 @@
                     "checksum": "sha256:f74dcf1a854453ea75c5159ac909c01c983cf3d2d6d46f762dfe973fdd1c55dd"
                   },
                   {
+                    "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+                  },
+                  {
                     "checksum": "sha256:3a3207904e90b42a3fcf474f906e4c1544dbdccafa0d7e6e0406c32fd31e2a63"
                   },
                   {
@@ -1217,6 +1226,9 @@
                   },
                   {
                     "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+                  },
+                  {
+                    "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
                   },
                   {
                     "checksum": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
@@ -3403,6 +3415,15 @@
         "checksum": "sha256:f74dcf1a854453ea75c5159ac909c01c983cf3d2d6d46f762dfe973fdd1c55dd"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.11",
@@ -3464,6 +3485,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.11.0",
+        "release": "8.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.3.0.r-20210120/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
+        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
       },
       {
         "name": "readline",
