@@ -77,6 +77,20 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var bp = blueprint.Blueprint{}
+	err = bp.Initialize()
+	if err != nil {
+		http.Error(w, "Unable to initialize blueprint", http.StatusInternalServerError)
+		return
+	}
+	if request.Customizations != nil && request.Customizations.Packages != nil {
+		for _, p := range *request.Customizations.Packages {
+			bp.Packages = append(bp.Packages, blueprint.Package{
+				Name: p,
+			})
+		}
+	}
+
 	type imageRequest struct {
 		manifest distro.Manifest
 		arch     string
@@ -116,13 +130,6 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Must specify baseurl, mirrorlist, or metalink", http.StatusBadRequest)
 				return
 			}
-		}
-
-		var bp = blueprint.Blueprint{}
-		err = bp.Initialize()
-		if err != nil {
-			http.Error(w, "Unable to initialize blueprint", http.StatusInternalServerError)
-			return
 		}
 
 		packageSpecs, excludePackageSpecs := imageType.Packages(bp)
