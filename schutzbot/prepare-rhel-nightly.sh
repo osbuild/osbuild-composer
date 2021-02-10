@@ -8,7 +8,7 @@ function greenprint {
 
 ARCH=$(uname -m)
 
-curl -L http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8/COMPOSE_ID > COMPOSE_ID
+curl -L http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.4/COMPOSE_ID > COMPOSE_ID
 COMPOSE_ID=$(cat COMPOSE_ID)
 
 # Create a repository file for installing the osbuild-composer RPMs
