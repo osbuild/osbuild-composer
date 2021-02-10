@@ -70,7 +70,7 @@ of certificates. The storage location for these is shared between the
 containers for simplicity. By default it's configured to be at
 `./containers/config`, but this can be changed in the
 [`./distribution/.env`](./distribution/.env) file by modifying the value of the
-`$CONTAIN£R_CONFIG_DIR` variable (both absolute and relative paths work).
+`$CONTAINER_CONFIG_DIR` variable (both absolute and relative paths work).
 
 Use the [`tools/gen-certs.sh`](./tools/gen-certs.sh) script to
 generate the certificates (using the test OpenSSL config file):
