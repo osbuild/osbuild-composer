@@ -59,11 +59,9 @@ jobs:
           WEBHOOK_PAYLOAD: ${{ toJSON(github.event) }}
           SQS_REGION: us-east-1
           SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/933752197999/schutzbot_webhook_sqs-staging"
-          AWS_ACCESS_KEY_ID: ${{ secrets.WEBHOOK_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.WEBHOOK_AWS_SECRET_ACCESS_KEY }}
         run: |
           #!/bin/bash
-          pip3 install boto3
+          pip3 install boto3 botocore
           schutzbot/send_webhook.py
 
   shellcheck:
