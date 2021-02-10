@@ -222,6 +222,11 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 }
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
+
+	if kernelOpts := c.GetKernel(); kernelOpts != nil && kernelOpts.Append != "" && t.rpmOstree {
+		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
+	}
+
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora32")
 

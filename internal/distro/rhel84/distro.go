@@ -236,6 +236,11 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 }
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, rng *rand.Rand) (*osbuild.Pipeline, error) {
+
+	if kernelOpts := c.GetKernel(); kernelOpts != nil && kernelOpts.Append != "" && t.rpmOstree {
+		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
+	}
+
 	var pt *disk.PartitionTable
 	if t.partitionTableGenerator != nil {
 		table := t.partitionTableGenerator(options, t.arch, rng)
