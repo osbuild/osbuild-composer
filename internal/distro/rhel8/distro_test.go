@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/stretchr/testify/assert"
@@ -348,6 +349,33 @@ func TestImageType_BasePackages(t *testing.T) {
 
 func TestDistro_Manifest(t *testing.T) {
 	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "rhel_8-*", rhel8.New())
+}
+
+// Check that Manifest() function returns an error for unsupported
+// configurations.
+func TestDistro_ManifestError(t *testing.T) {
+	// Currently, the only unsupported configuration is OSTree commit types
+	// with Kernel boot options
+	r8distro := rhel8.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Kernel: &blueprint.KernelCustomization{
+				Append: "debug",
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
+			if imgTypeName == "rhel-edge-commit" {
+				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
 }
 
 func TestRhel8_ListArches(t *testing.T) {

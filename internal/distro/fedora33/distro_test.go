@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/stretchr/testify/assert"
@@ -295,6 +296,34 @@ func TestImageType_BasePackages(t *testing.T) {
 
 func TestDistro_Manifest(t *testing.T) {
 	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "fedora_33*", fedora33.New())
+}
+
+// Check that Manifest() function returns an error for unsupported
+// configurations.
+func TestDistro_ManifestError(t *testing.T) {
+	// Currently, the only unsupported configuration is OSTree commit types
+	// with Kernel boot options
+	f33distro := fedora33.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Kernel: &blueprint.KernelCustomization{
+				Append: "debug",
+			},
+		},
+	}
+
+	for _, archName := range f33distro.ListArches() {
+		arch, _ := f33distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
+			if imgTypeName == "fedora-iot-commit" {
+				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
 }
 
 func TestFedora33_ListArches(t *testing.T) {
