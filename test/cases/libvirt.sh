@@ -14,5 +14,6 @@ source /etc/os-release
 
 # RHEL 8.4 images also supports uefi, check that
 if [[ "${ID}-${VERSION_ID}" == "rhel-8.4" ]]; then
+  echo "🐄 Booting qcow2 image in UEFI mode on RHEL"
   /usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2 uefi
 fi
