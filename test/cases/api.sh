@@ -35,7 +35,20 @@ printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_T
 #
 
 WORKDIR=$(mktemp -d)
+AMI_IMAGE_ID=
+SNAPSHOT_ID=
+INSTANCE_ID=
+AWS_CMD=
 function cleanup() {
+  if [ -n "$AWS_CMD" ]; then
+    set +e
+    $AWS_CMD ec2 terminate-instances --instance-ids "$INSTANCE_ID"
+    $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
+    $AWS_CMD ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
+    $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
+    set -e
+  fi
+
   rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
@@ -85,19 +98,24 @@ curl \
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
 SNAPSHOT_NAME=$(uuidgen)
+SSH_USER=
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.4")
     DISTRO="rhel-84"
+    SSH_USER="cloud-user"
   ;;
   "rhel-8.2" | "rhel-8.3")
     DISTRO="rhel-8"
+    SSH_USER="cloud-user"
   ;;
   "fedora-32")
     DISTRO="fedora-32"
+    SSH_USER="fedora"
   ;;
   "fedora-33")
     DISTRO="fedora-33"
+    SSH_USER="fedora"
   ;;
 esac
 
@@ -213,8 +231,32 @@ if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
     SHARE_OK=0
 fi
 
-$AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
-$AWS_CMD ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
+# Create key-pair
+$AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
+chmod 400 ./keypair.pem
+
+# Create an instance based on the ami
+$AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
+
+$AWS_CMD ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+
+$AWS_CMD ec2 describe-instances --instance-ids "$INSTANCE_ID" > "$WORKDIR/instances.json"
+HOST=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$WORKDIR/instances.json")
+
+echo "⏱ Waiting for AWS instance to respond to ssh"
+for LOOP_COUNTER in {0..30}; do
+    if ssh-keyscan "$HOST" > /dev/null 2>&1; then
+        echo "SSH is up!"
+        # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
+        break
+    fi
+    echo "Retrying in 5 seconds... $LOOP_COUNTER"
+    sleep 5
+done
+
+# Check if postgres is installed
+ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
 
 if [ "$SHARE_OK" != 1 ]; then
     echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
