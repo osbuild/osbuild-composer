@@ -1314,7 +1314,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		if bp == nil {
 			rerr := responseError{
 				ID:  "UnknownBlueprint",
-				Msg: fmt.Sprintf("%s: blueprint_not_found", name),
+				Msg: fmt.Sprintf("%s: blueprint not found", name),
 			}
 			errors = append(errors, rerr)
 			break
