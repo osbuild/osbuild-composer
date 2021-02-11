@@ -71,6 +71,10 @@ func UploadImage(credentials Credentials, metadata ImageMetadata, fileName strin
 		return fmt.Errorf("cannot stat the image: %v", err)
 	}
 
+	if stat.Size()%512 != 0 {
+		return errors.New("size for azure image must be aligned to 512 bytes")
+	}
+
 	// Hash the imageFile
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
