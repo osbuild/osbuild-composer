@@ -923,7 +923,6 @@ func New() distro.Distro {
 			"cloud-utils-growpart",
 			"cockpit-system",
 			"cockpit-ws",
-			"dbxtool",
 			"dhcp-client",
 			"dnf",
 			"dnf-utils",
