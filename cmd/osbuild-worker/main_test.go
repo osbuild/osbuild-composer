@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/stretchr/testify/require"
 	"testing"
