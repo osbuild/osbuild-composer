@@ -99,6 +99,9 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "fedora-33")
     DISTRO="fedora-33"
   ;;
+  "centos-8")
+    DISTRO="centos-8"
+  ;;
 esac
 
 cat > "$REQUEST_FILE" << EOF

@@ -13,6 +13,10 @@ ARCH=$(uname -m)
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
+if [[ $ID == centos ]]; then
+  MOCK_CONFIG="centos-stream-$(uname -m)"
+fi
+
 # The commit this script operates on.
 COMMIT=$(git rev-parse HEAD)
 
@@ -39,7 +43,7 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
 fi
 
 # Mock and s3cmd is only available in EPEL for RHEL.
-if [[ $ID == rhel ]] && ! rpm -q epel-release; then
+if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm

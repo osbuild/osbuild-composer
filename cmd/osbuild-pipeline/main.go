@@ -73,7 +73,7 @@ func main() {
 		}
 	}
 
-	distros, err := distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New())
+	distros, err := distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
 	if err != nil {
 		panic(err)
 	}

@@ -25,7 +25,7 @@ else
 fi
 
 greenprint "Adding podman dnsname plugin"
-if [[ $ID == rhel ]]; then
+if [[ $ID == rhel || $ID == centos ]]; then
   sudo cp /usr/share/tests/osbuild-composer/vendor/87-podman-bridge.conflist /etc/cni/net.d/
   sudo cp /usr/share/tests/osbuild-composer/vendor/dnsname /usr/libexec/cni/
 fi

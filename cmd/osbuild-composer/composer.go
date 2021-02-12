@@ -63,7 +63,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, err
 	}
 
-	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New())
+	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
 	if err != nil {
 		return nil, fmt.Errorf("Error loading distros: %v", err)
 	}
@@ -83,7 +83,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
 	archName := common.CurrentArch()
 
-	hostDistro, beta, err := c.distros.FromHost()
+	hostDistro, beta, isStream, err := c.distros.FromHost()
 	if err != nil {
 		return err
 	}
@@ -100,6 +100,11 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 	}
 	if beta {
 		name += "-beta"
+	}
+
+	// override repository for centos stream, remove when CentOS 8 is EOL
+	if isStream && name == "centos-8" {
+		name = "centos-stream-8"
 	}
 
 	repos, err := rpmmd.LoadRepositories(repoPaths, name)

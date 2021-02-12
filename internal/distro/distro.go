@@ -160,30 +160,32 @@ func (r *Registry) List() []string {
 	return list
 }
 
-func (r *Registry) FromHost() (Distro, bool, error) {
-	name, beta, err := GetHostDistroName()
+func (r *Registry) FromHost() (Distro, bool, bool, error) {
+	name, beta, isStream, err := GetHostDistroName()
 	if err != nil {
-		return nil, false, err
+		return nil, false, false, err
 	}
 
 	d := r.GetDistro(name)
 	if d == nil {
-		return nil, false, errors.New("unknown distro: " + name)
+		return nil, false, false, errors.New("unknown distro: " + name)
 	}
 
-	return d, beta, nil
+	return d, beta, isStream, nil
 }
 
-func GetHostDistroName() (string, bool, error) {
+func GetHostDistroName() (string, bool, bool, error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
 	defer f.Close()
 	osrelease, err := readOSRelease(f)
 	if err != nil {
-		return "", false, err
+		return "", false, false, err
 	}
+
+	isStream := osrelease["NAME"] == "CentOS Stream"
 
 	// NOTE: We only consider major releases up until rhel 8.4
 	version := strings.Split(osrelease["VERSION_ID"], ".")
@@ -194,7 +196,7 @@ func GetHostDistroName() (string, bool, error) {
 
 	// TODO: We should probably index these things by the full CPE
 	beta := strings.Contains(osrelease["CPE_NAME"], "beta")
-	return name, beta, nil
+	return name, beta, isStream, nil
 }
 
 // GetRedHatRelease returns the content of /etc/redhat-release

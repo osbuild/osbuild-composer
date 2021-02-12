@@ -20,12 +20,14 @@ import (
 )
 
 const name = "rhel-84"
+const centosName = "centos-8"
 const modulePlatformID = "platform:el8"
 
 type distribution struct {
 	arches        map[string]architecture
 	imageTypes    map[string]imageType
 	buildPackages []string
+	isCentos      bool
 }
 
 type architecture struct {
@@ -175,6 +177,11 @@ func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 		packages = append(packages, t.arch.bootloaderPackages...)
 	}
 
+	if t.arch.distro.isCentos {
+		// drop insights from centos, it's not available there
+		packages = removePackage(packages, "insights-client")
+	}
+
 	return packages, t.excludedPackages
 }
 
@@ -208,6 +215,9 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 }
 
 func (d *distribution) Name() string {
+	if d.isCentos {
+		return centosName
+	}
 	return name
 }
 
@@ -248,7 +258,11 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	}
 
 	p := &osbuild.Pipeline{}
-	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
+	if t.arch.distro.isCentos {
+		p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.centos8")
+	} else {
+		p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
+	}
 
 	if t.arch.Name() == "s390x" {
 		if pt == nil {
@@ -512,8 +526,14 @@ func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions str
 
 	var uefiOptions *osbuild.GRUB2UEFI
 	if uefi {
+		var vendor string
+		if t.arch.distro.isCentos {
+			vendor = "centos"
+		} else {
+			vendor = "redhat"
+		}
 		uefiOptions = &osbuild.GRUB2UEFI{
-			Vendor: "redhat",
+			Vendor: vendor,
 		}
 	}
 
@@ -722,8 +742,29 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 	return id, nil
 }
 
+func removePackage(packages []string, packageToRemove string) []string {
+	for i, pkg := range packages {
+		if pkg == packageToRemove {
+			// override the package with the last one from the list
+			packages[i] = packages[len(packages)-1]
+
+			// drop the last package from the slice
+			return packages[:len(packages)-1]
+		}
+	}
+	return packages
+}
+
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
+	return newDistro(false)
+}
+
+func NewCentos() distro.Distro {
+	return newDistro(true)
+}
+
+func newDistro(isCentos bool) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	edgeImgTypeX86_64 := imageType{
@@ -1137,6 +1178,7 @@ func New() distro.Distro {
 			"xfsprogs",
 			"xz",
 		},
+		isCentos: isCentos,
 	}
 	x8664 := architecture{
 		distro: &r,
