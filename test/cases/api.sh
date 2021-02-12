@@ -85,16 +85,16 @@ esac
 cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "customizations": {
+    "packages": [
+      "postgresql"
+    ]
+  },
   "image_requests": [
     {
       "architecture": "$ARCH",
       "image_type": "ami",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "customizations": {
-        "packages": [
-          "postgres"
-        ]
-      },
       "upload_requests": [
         {
           "type": "aws",
