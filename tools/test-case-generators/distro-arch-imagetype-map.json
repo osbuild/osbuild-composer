@@ -64,6 +64,21 @@
             "qcow2-customize",
             "vhd",
             "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "rhel-edge-commit",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
         ]
     }
 }
