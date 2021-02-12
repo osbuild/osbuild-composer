@@ -3,13 +3,30 @@ package rhel84_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+type rhelFamilyDistro struct {
+	name   string
+	distro distro.Distro
+}
+
+var rhelFamilyDistros = []rhelFamilyDistro{
+	{
+		name:   "rhel",
+		distro: rhel84.New(),
+	},
+	{
+		name:   "centos",
+		distro: rhel84.NewCentos(),
+	},
+}
 
 func TestFilenameFromType(t *testing.T) {
 	type args struct {
@@ -65,24 +82,29 @@ func TestFilenameFromType(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dist := rhel84.New()
-			arch, _ := dist.GetArch("x86_64")
-			imgType, err := arch.GetImageType(tt.args.outputFormat)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr {
-				got := imgType.Filename()
-				got1 := imgType.MIMEType()
-				if got != tt.want {
-					t.Errorf("ImageType.Filename()  got = %v, want %v", got, tt.want)
-				}
-				if got1 != tt.want1 {
-					t.Errorf("ImageType.MIMEType() got1 = %v, want %v", got1, tt.want1)
-				}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					dist := dist.distro
+					arch, _ := dist.GetArch("x86_64")
+					imgType, err := arch.GetImageType(tt.args.outputFormat)
+					if (err != nil) != tt.wantErr {
+						t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
+						return
+					}
+					if !tt.wantErr {
+						got := imgType.Filename()
+						got1 := imgType.MIMEType()
+						if got != tt.want {
+							t.Errorf("ImageType.Filename()  got = %v, want %v", got, tt.want)
+						}
+						if got1 != tt.want1 {
+							t.Errorf("ImageType.MIMEType() got1 = %v, want %v", got1, tt.want1)
+						}
+					}
+				})
+
 			}
 		})
 	}
@@ -118,24 +140,27 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"ppc64le": nil,
 		"s390x":   nil,
 	}
-	d := rhel84.New()
-	for _, archLabel := range d.ListArches() {
-		archStruct, err := d.GetArch(archLabel)
-		if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
-			continue
-		}
-		for _, itLabel := range archStruct.ListImageTypes() {
-			itStruct, err := archStruct.GetImageType(itLabel)
-			if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
-				continue
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			d := dist.distro
+			for _, archLabel := range d.ListArches() {
+				archStruct, err := d.GetArch(archLabel)
+				if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
+					continue
+				}
+				for _, itLabel := range archStruct.ListImageTypes() {
+					itStruct, err := archStruct.GetImageType(itLabel)
+					if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
+						continue
+					}
+					assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
+				}
 			}
-			assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
-		}
+		})
 	}
 }
 
 func TestImageType_Name(t *testing.T) {
-	distro := rhel84.New()
 	imgMap := []struct {
 		arch     string
 		imgNames []string
@@ -177,16 +202,21 @@ func TestImageType_Name(t *testing.T) {
 			},
 		},
 	}
-	for _, mapping := range imgMap {
-		arch, err := distro.GetArch(mapping.arch)
-		if assert.NoError(t, err) {
-			for _, imgName := range mapping.imgNames {
-				imgType, err := arch.GetImageType(imgName)
+
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, mapping := range imgMap {
+				arch, err := dist.distro.GetArch(mapping.arch)
 				if assert.NoError(t, err) {
-					assert.Equalf(t, imgName, imgType.Name(), "arch: %s", mapping.arch)
+					for _, imgName := range mapping.imgNames {
+						imgType, err := arch.GetImageType(imgName)
+						if assert.NoError(t, err) {
+							assert.Equalf(t, imgName, imgType.Name(), "arch: %s", mapping.arch)
+						}
+					}
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -219,27 +249,31 @@ func TestImageType_Size(t *testing.T) {
 		},
 	}
 
-	distro := rhel84.New()
-	arch, err := distro.GetArch("x86_64")
-	if assert.NoError(t, err) {
-		for _, mapping := range sizeMap {
-			imgType, err := arch.GetImageType(mapping.name)
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			arch, err := dist.distro.GetArch("x86_64")
 			if assert.NoError(t, err) {
-				size := imgType.Size(mapping.inputSize)
-				assert.Equalf(t, mapping.outputSize, size, "Image type: %s, input size: %d, expected: %d, got: %d",
-					mapping.name, mapping.inputSize, mapping.outputSize, size)
+				for _, mapping := range sizeMap {
+					imgType, err := arch.GetImageType(mapping.name)
+					if assert.NoError(t, err) {
+						size := imgType.Size(mapping.inputSize)
+						assert.Equalf(t, mapping.outputSize, size, "Image type: %s, input size: %d, expected: %d, got: %d",
+							mapping.name, mapping.inputSize, mapping.outputSize, size)
+					}
+				}
 			}
-		}
+		})
 	}
 }
 
 func TestImageType_BasePackages(t *testing.T) {
 	pkgMaps := []struct {
-		name               string
-		basePackages       []string
-		bootloaderPackages []string
-		excludedPackages   []string
-		bootable           bool
+		name                 string
+		basePackages         []string
+		bootloaderPackages   []string
+		excludedPackages     []string
+		bootable             bool
+		rhelOnlyBasePackages []string
 	}{
 		{
 			name: "ami",
@@ -252,7 +286,6 @@ func TestImageType_BasePackages(t *testing.T) {
 				"@core",
 				"dhcp-client",
 				"gdisk",
-				"insights-client",
 				"kernel",
 				"langpacks-en",
 				"net-tools",
@@ -311,6 +344,9 @@ func TestImageType_BasePackages(t *testing.T) {
 				"timedatex",
 			},
 			bootable: true,
+			rhelOnlyBasePackages: []string{
+				"insights-client",
+			},
 		},
 		{
 			name: "openstack",
@@ -338,27 +374,36 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootable: true,
 		},
 	}
-	distro := rhel84.New()
-	arch, err := distro.GetArch("x86_64")
-	assert.NoError(t, err)
 
-	for _, pkgMap := range pkgMaps {
-		imgType, err := arch.GetImageType(pkgMap.name)
-		assert.NoError(t, err)
-		basePackages, excludedPackages := imgType.Packages(blueprint.Blueprint{})
-		assert.Equalf(
-			t,
-			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),
-			basePackages,
-			"image type: %s",
-			pkgMap.name,
-		)
-		assert.Equalf(t, pkgMap.excludedPackages, excludedPackages, "image type: %s", pkgMap.name)
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			arch, err := dist.distro.GetArch("x86_64")
+			assert.NoError(t, err)
+
+			for _, pkgMap := range pkgMaps {
+				imgType, err := arch.GetImageType(pkgMap.name)
+				assert.NoError(t, err)
+				basePackages, excludedPackages := imgType.Packages(blueprint.Blueprint{})
+				expectedPackages := append(pkgMap.basePackages, pkgMap.bootloaderPackages...)
+				if dist.name == "rhel" {
+					expectedPackages = append(expectedPackages, pkgMap.rhelOnlyBasePackages...)
+				}
+				assert.ElementsMatchf(
+					t,
+					expectedPackages,
+					basePackages,
+					"image type: %s",
+					pkgMap.name,
+				)
+				assert.Equalf(t, pkgMap.excludedPackages, excludedPackages, "image type: %s", pkgMap.name)
+			}
+		})
 	}
 }
 
 func TestDistro_Manifest(t *testing.T) {
 	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "rhel_84*", rhel84.New())
+	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "centos_8*", rhel84.NewCentos())
 }
 
 // Check that Manifest() function returns an error for unsupported
@@ -440,23 +485,28 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 		},
 	}
 
-	distro := rhel84.New()
-	for _, mapping := range imgMap {
-		arch, err := distro.GetArch(mapping.arch)
-		require.NoError(t, err)
-		imageTypes := arch.ListImageTypes()
-		require.ElementsMatch(t, mapping.imgNames, imageTypes)
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, mapping := range imgMap {
+				arch, err := dist.distro.GetArch(mapping.arch)
+				require.NoError(t, err)
+				imageTypes := arch.ListImageTypes()
+				require.ElementsMatch(t, mapping.imgNames, imageTypes)
+			}
+		})
 	}
 }
 
 func TestRhel84_ListArches(t *testing.T) {
-	distro := rhel84.New()
-	arches := distro.ListArches()
-	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			arches := dist.distro.ListArches()
+			assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
+		})
+	}
 }
 
 func TestRhel84_GetArch(t *testing.T) {
-	distro := rhel84.New()
 	arches := []struct {
 		name          string
 		errorExpected bool
@@ -479,15 +529,19 @@ func TestRhel84_GetArch(t *testing.T) {
 		},
 	}
 
-	for _, a := range arches {
-		actualArch, err := distro.GetArch(a.name)
-		if !a.errorExpected {
-			assert.Equal(t, a.name, actualArch.Name())
-			assert.NoError(t, err)
-		} else {
-			assert.Nil(t, actualArch)
-			assert.Error(t, err)
-		}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, a := range arches {
+				actualArch, err := dist.distro.GetArch(a.name)
+				if !a.errorExpected {
+					assert.Equal(t, a.name, actualArch.Name())
+					assert.NoError(t, err)
+				} else {
+					assert.Nil(t, actualArch)
+					assert.Error(t, err)
+				}
+			}
+		})
 	}
 }
 
@@ -496,7 +550,15 @@ func TestRhel84_Name(t *testing.T) {
 	assert.Equal(t, "rhel-84", distro.Name())
 }
 
+func TestCentos_Name(t *testing.T) {
+	distro := rhel84.NewCentos()
+	assert.Equal(t, "centos-8", distro.Name())
+}
+
 func TestRhel84_ModulePlatformID(t *testing.T) {
 	distro := rhel84.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
+
+	centos := rhel84.NewCentos()
+	assert.Equal(t, "platform:el8", centos.ModulePlatformID())
 }

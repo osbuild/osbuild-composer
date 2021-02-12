@@ -118,6 +118,19 @@ pipeline {
                         }
                     }
                 }
+                stage('CS8') {
+                    agent { label "cs8cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
 
             }
         }
@@ -585,6 +598,79 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel84-ostree')
+                        }
+                    }
+                }
+                stage('CS8 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && x86_64 && aws" }
+                    environment {
+                        TEST_TYPE = "base"
+                    }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-base')
+                        }
+                    }
+                }
+                stage('CS8 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "centos-stream8"
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
+                stage('CS8 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                    }
+                    steps {
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-integration')
                         }
                     }
                 }

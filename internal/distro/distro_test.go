@@ -18,20 +18,21 @@ func TestDistro_Manifest(t *testing.T) {
 		t,
 		"../../test/data/manifests/",
 		"*",
-		fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(),
+		fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos(),
 	)
 }
 
 // Test that all distros are registered properly and that Registry.List() works.
 func TestDistro_RegistryList(t *testing.T) {
 	expected := []string{
+		"centos-8",
 		"fedora-32",
 		"fedora-33",
 		"rhel-8",
 		"rhel-84",
 	}
 
-	distros, err := distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New())
+	distros, err := distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
 	require.NoError(t, err)
 
 	require.Equalf(t, expected, distros.List(), "unexpected list of distros")
