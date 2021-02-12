@@ -6,7 +6,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
