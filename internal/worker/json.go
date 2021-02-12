@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
