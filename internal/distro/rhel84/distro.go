@@ -10,7 +10,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 
 	"github.com/google/uuid"
 

@@ -7,7 +7,7 @@ package disk
 import (
 	"sort"
 
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 )
 
 type PartitionTable struct {
