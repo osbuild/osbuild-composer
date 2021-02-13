@@ -146,6 +146,7 @@ func TestImageType_Name(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
+				"rhel-edge-commit",
 				"tar",
 				"vhd",
 				"vmdk",
@@ -157,6 +158,7 @@ func TestImageType_Name(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
+				"rhel-edge-commit",
 				"tar",
 			},
 		},
@@ -170,6 +172,7 @@ func TestImageType_Name(t *testing.T) {
 		{
 			arch: "s390x",
 			imgNames: []string{
+				"qcow2",
 				"tar",
 			},
 		},
