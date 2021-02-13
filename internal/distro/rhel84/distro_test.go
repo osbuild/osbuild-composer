@@ -206,9 +206,15 @@ func TestImageType_Name(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
+				if mapping.arch == "s390x" && dist.name == "centos" {
+					continue
+				}
 				arch, err := dist.distro.GetArch(mapping.arch)
 				if assert.NoError(t, err) {
 					for _, imgName := range mapping.imgNames {
+						if imgName == "rhel-edge-commit" && dist.name == "centos" {
+							continue
+						}
 						imgType, err := arch.GetImageType(imgName)
 						if assert.NoError(t, err) {
 							assert.Equalf(t, imgName, imgType.Name(), "arch: %s", mapping.arch)
@@ -444,8 +450,9 @@ func TestDistro_ManifestError(t *testing.T) {
 
 func TestArchitecture_ListImageTypes(t *testing.T) {
 	imgMap := []struct {
-		arch     string
-		imgNames []string
+		arch                     string
+		imgNames                 []string
+		rhelAdditionalImageTypes []string
 	}{
 		{
 			arch: "x86_64",
@@ -453,11 +460,11 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
-				"rhel-edge-commit",
 				"tar",
 				"vhd",
 				"vmdk",
 			},
+			rhelAdditionalImageTypes: []string{"rhel-edge-commit"},
 		},
 		{
 			arch: "aarch64",
@@ -465,9 +472,9 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ami",
 				"qcow2",
 				"openstack",
-				"rhel-edge-commit",
 				"tar",
 			},
+			rhelAdditionalImageTypes: []string{"rhel-edge-commit"},
 		},
 		{
 			arch: "ppc64le",
@@ -488,28 +495,40 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
+				if mapping.arch == "s390x" && dist.name == "centos" {
+					continue
+				}
 				arch, err := dist.distro.GetArch(mapping.arch)
 				require.NoError(t, err)
 				imageTypes := arch.ListImageTypes()
-				require.ElementsMatch(t, mapping.imgNames, imageTypes)
+
+				var expectedImageTypes []string
+				expectedImageTypes = append(expectedImageTypes, mapping.imgNames...)
+				if dist.name == "rhel" {
+					expectedImageTypes = append(expectedImageTypes, mapping.rhelAdditionalImageTypes...)
+				}
+
+				require.ElementsMatch(t, expectedImageTypes, imageTypes)
 			}
 		})
 	}
 }
 
 func TestRhel84_ListArches(t *testing.T) {
-	for _, dist := range rhelFamilyDistros {
-		t.Run(dist.name, func(t *testing.T) {
-			arches := dist.distro.ListArches()
-			assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
-		})
-	}
+	arches := rhel84.New().ListArches()
+	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
+}
+
+func TestCentos_ListArches(t *testing.T) {
+	arches := rhel84.NewCentos().ListArches()
+	assert.Equal(t, []string{"aarch64", "ppc64le", "x86_64"}, arches)
 }
 
 func TestRhel84_GetArch(t *testing.T) {
 	arches := []struct {
-		name          string
-		errorExpected bool
+		name                  string
+		errorExpected         bool
+		errorExpectedInCentos bool
 	}{
 		{
 			name: "x86_64",
@@ -521,7 +540,8 @@ func TestRhel84_GetArch(t *testing.T) {
 			name: "ppc64le",
 		},
 		{
-			name: "s390x",
+			name:                  "s390x",
+			errorExpectedInCentos: true,
 		},
 		{
 			name:          "foo-arch",
@@ -533,7 +553,7 @@ func TestRhel84_GetArch(t *testing.T) {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, a := range arches {
 				actualArch, err := dist.distro.GetArch(a.name)
-				if a.errorExpected {
+				if a.errorExpected || (a.errorExpectedInCentos && dist.name == "centos") {
 					assert.Nil(t, actualArch)
 					assert.Error(t, err)
 				} else {
