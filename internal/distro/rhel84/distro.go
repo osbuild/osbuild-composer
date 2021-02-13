@@ -84,8 +84,11 @@ func (d *distribution) GetArch(arch string) (distro.Arch, error) {
 	return &a, nil
 }
 
-func (d *distribution) setArches(arches ...architecture) {
-	d.arches = map[string]architecture{}
+func (d *distribution) addArches(arches ...architecture) {
+	if d.arches == nil {
+		d.arches = map[string]architecture{}
+	}
+
 	for _, a := range arches {
 		d.arches[a.name] = architecture{
 			distro:             d,
@@ -120,8 +123,11 @@ func (a *architecture) GetImageType(imageType string) (distro.ImageType, error) 
 	return &t, nil
 }
 
-func (a *architecture) setImageTypes(imageTypes ...imageType) {
-	a.imageTypes = map[string]imageType{}
+func (a *architecture) addImageTypes(imageTypes ...imageType) {
+	if a.imageTypes == nil {
+		a.imageTypes = map[string]imageType{}
+	}
+
 	for _, it := range imageTypes {
 		a.imageTypes[it.name] = imageType{
 			arch:                    a,
@@ -1195,15 +1201,18 @@ func newDistro(isCentos bool) distro.Distro {
 		legacy: "i386-pc",
 		uefi:   true,
 	}
-	x8664.setImageTypes(
+	x8664.addImageTypes(
 		amiImgType,
-		edgeImgTypeX86_64,
 		qcow2ImageType,
 		openstackImgType,
 		tarImgType,
 		vhdImgType,
 		vmdkImgType,
 	)
+
+	if !isCentos {
+		x8664.addImageTypes(edgeImgTypeX86_64)
+	}
 
 	aarch64 := architecture{
 		distro: &r,
@@ -1217,13 +1226,16 @@ func newDistro(isCentos bool) distro.Distro {
 		},
 		uefi: true,
 	}
-	aarch64.setImageTypes(
+	aarch64.addImageTypes(
 		amiImgType,
-		edgeImgTypeAarch64,
 		qcow2ImageType,
 		openstackImgType,
 		tarImgType,
 	)
+
+	if !isCentos {
+		aarch64.addImageTypes(edgeImgTypeAarch64)
+	}
 
 	ppc64le := architecture{
 		distro: &r,
@@ -1241,7 +1253,7 @@ func newDistro(isCentos bool) distro.Distro {
 		legacy: "powerpc-ieee1275",
 		uefi:   false,
 	}
-	ppc64le.setImageTypes(
+	ppc64le.addImageTypes(
 		qcow2ImageType,
 		tarImgType,
 	)
@@ -1255,12 +1267,16 @@ func newDistro(isCentos bool) distro.Distro {
 		},
 		uefi: false,
 	}
-	s390x.setImageTypes(
+	s390x.addImageTypes(
 		tarImgType,
 		qcow2ImageType,
 	)
 
-	r.setArches(x8664, aarch64, ppc64le, s390x)
+	r.addArches(x8664, aarch64, ppc64le)
+
+	if !isCentos {
+		r.addArches(s390x)
+	}
 
 	return &r
 }
