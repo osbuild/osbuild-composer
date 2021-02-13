@@ -48,7 +48,7 @@ jobs:
         run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
 
       - name: Run unit tests
-        run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
+        run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
 
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
