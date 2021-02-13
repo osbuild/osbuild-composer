@@ -351,10 +351,24 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 		userData, err := boot.CreateUserData(publicKey)
 		require.NoErrorf(t, err, "Creating user data failed: %v", err)
 
-		return openstacktest.WithBootedImageInOpenStack(provider, image.ID, userData, func(address string) error {
-			testSSH(t, address, privateKey, nil)
-			return nil
-		})
+		for i := 0; i < 50; i++ {
+			t.Run(fmt.Sprintf("attempt %d", i), func(t *testing.T) {
+				err := openstacktest.WithBootedImageInOpenStack(provider, image.ID, userData, func(address string) error {
+					testSSH(t, address, privateKey, nil)
+					return nil
+				})
+
+				if err != nil {
+					fmt.Println("test failed")
+				} else {
+					fmt.Println("test successful")
+				}
+
+				require.NoError(t, err)
+			})
+		}
+
+		return nil
 	})
 	require.NoError(t, err)
 }
