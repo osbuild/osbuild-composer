@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFilenameFromType(t *testing.T) {
@@ -390,6 +391,58 @@ func TestDistro_ManifestError(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		}
+	}
+}
+
+func TestArchitecture_ListImageTypes(t *testing.T) {
+	imgMap := []struct {
+		arch     string
+		imgNames []string
+	}{
+		{
+			arch: "x86_64",
+			imgNames: []string{
+				"ami",
+				"qcow2",
+				"openstack",
+				"rhel-edge-commit",
+				"tar",
+				"vhd",
+				"vmdk",
+			},
+		},
+		{
+			arch: "aarch64",
+			imgNames: []string{
+				"ami",
+				"qcow2",
+				"openstack",
+				"rhel-edge-commit",
+				"tar",
+			},
+		},
+		{
+			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
+		},
+		{
+			arch: "s390x",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
+		},
+	}
+
+	distro := rhel84.New()
+	for _, mapping := range imgMap {
+		arch, err := distro.GetArch(mapping.arch)
+		require.NoError(t, err)
+		imageTypes := arch.ListImageTypes()
+		require.ElementsMatch(t, mapping.imgNames, imageTypes)
 	}
 }
 
