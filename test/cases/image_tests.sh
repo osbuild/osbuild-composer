@@ -9,6 +9,12 @@ WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 IMAGE_TEST_CASE_RUNNER=/usr/libexec/osbuild-composer-test/osbuild-image-tests
 IMAGE_TEST_CASES_PATH=/usr/share/tests/osbuild-composer/manifests
 
+# aarch64 machines in AWS don't supported nested KVM so we run only
+# testing against cloud vendors, don't boot with qemu-kvm!
+if [[ "${ARCH}" == "aarch64" ]]; then
+    IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} --disable-local-boot"
+fi
+
 PASSED_TESTS=()
 FAILED_TESTS=()
 
@@ -88,7 +94,7 @@ cd $WORKING_DIRECTORY
 
 # Run each test case.
 for TEST_CASE in $(get_test_cases); do
-    run_test_case $IMAGE_TEST_CASE_RUNNER "$TEST_CASE"
+    run_test_case "$IMAGE_TEST_CASE_RUNNER" "$TEST_CASE"
 done
 
 # Print a report of the test results.
