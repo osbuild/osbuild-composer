@@ -119,6 +119,7 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   ;;
   "centos-8")
     DISTRO="centos-8"
+    SSH_USER="cloud-user"
   ;;
 esac
 
