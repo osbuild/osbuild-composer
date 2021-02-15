@@ -138,6 +138,20 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8 aarch64') {
+                    agent { label "rhel8cloudbase && aarch64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
                 stage('EL8.4') {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
@@ -154,6 +168,19 @@ pipeline {
                 }
                 stage('CS8') {
                     agent { label "cs8cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        retry(3) {
+                            sh "schutzbot/mockbuild.sh"
+                        }
+                    }
+                }
+                stage('CS8 aarch64') {
+                    agent { label "cs8cloudbase && aarch64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
@@ -627,6 +654,27 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8 aarch64 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "rhel8cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "base"
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                    }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('el8-aarch64-base')
+                        }
+                    }
+                }
                 stage('EL8.4 Base') {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
@@ -783,6 +831,56 @@ pipeline {
                     post {
                         always {
                             preserve_logs('cs8-integration')
+                        }
+                    }
+                }
+                stage('CS8 aarch64 Base') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "base"
+                    }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-aarch64-base')
+                        }
+                    }
+                }
+                stage('CS8 aarch64 Image') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "centos-stream8"
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-aarch64-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }

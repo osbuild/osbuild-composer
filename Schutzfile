@@ -9,7 +9,7 @@
   "rhel-8.3": {
     "dependencies": {
       "osbuild": {
-        "commit": "6f1350d72d210767062a8e346e1472305703686b"
+        "commit": "e4e527b5b7cdf8bb6e48a6ec3ace7d9d9b155bc0"
       }
     },
     "dependants": {
@@ -24,7 +24,7 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "6f1350d72d210767062a8e346e1472305703686b"
+        "commit": "e4e527b5b7cdf8bb6e48a6ec3ace7d9d9b155bc0"
       }
     }
   }
