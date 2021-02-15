@@ -688,7 +688,9 @@ pipeline {
                         unstash 'compose_id'
                         def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
 
-                        telegramSend "💚 CI passed for osbuild-composer ${composeId} ${env.BUILD_URL}"
+                        telegramSend """💚 CI passed for osbuild-composer ${composeId} ${env.BUILD_URL},
+CC: [@atodorov_kiwi](tg://user?id=1047018883)
+"""
                     } else if (env.BRANCH_NAME == 'main') {
                         telegramSend "💚 CI passed for osbuild-composer main branch ${env.BUILD_URL}"
                     }
@@ -702,7 +704,9 @@ pipeline {
                         unstash 'compose_id'
                         def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
 
-                        telegramSend "💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL}"
+                        telegramSend """💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL},
+CC: [@atodorov_kiwi](tg://user?id=1047018883)
+"""
                     } else if (env.BRANCH_NAME == 'main') {
                         telegramSend "💣 CI failed for osbuild-composer main branch ${env.BUILD_URL}"
                     }
