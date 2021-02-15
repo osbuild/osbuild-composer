@@ -1,8 +1,10 @@
+var cron_string = BRANCH_NAME == "main" ? "@daily" : ""
+
 pipeline {
     agent none
 
     triggers {
-        cron('@daily')
+        cron(cron_string)
     }
 
     environment {
@@ -816,7 +818,7 @@ void preserve_logs(test_slug) {
 void detect_build_cause() {
     def buildCause = currentBuild.getBuildCauses().get(0)
 
-    if ( buildCause.shortDescription == 'Started by timer') {
+    if ( buildCause.shortDescription == 'Started by timer' && env.BRANCH_NAME == 'main') {
         return "cron"
     }
 
