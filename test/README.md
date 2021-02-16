@@ -173,10 +173,21 @@ an issue where the first line in the credentials file gets lost resulting in
 incomplete credentials. The work-around is to define a dummy ENV variable on
 the first line!
 
-
 ## Integration testing
 
-This will consume the osbuild-composer API surface via the `composer-cli`
+Since `osbuild-composer` externally provides two types of API, there also
+multiple types of integration tests available.
+
+Types of APIs tested:
+- *Weldr API* - the original API provided by `lorax-composer`, for which
+  `osbuild-composer` is a drop-in replacement. This API is mostly tested through
+  the `composer-cli` tool, which consumes the *Weldr API*.
+- *Cloud API* - the brand new API provided by `osbuild-composer`, which is
+  currently used by the *Image Builder* service.
+
+### Weldr API integration testing
+
+This will consume the osbuild-composer *Weldr API* surface via the `composer-cli`
 command line interface. Implementation is under
 `cmd/osbuild-composer-cli-tests/`.
 
@@ -189,7 +200,7 @@ checkout is:
 * `dnf install rpmbuild/RPMS/x86_64/osbuild-composer-*.rpm` - this will
   install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
 * `systemctl start osbuild-composer`
-* `/usr/libexec/tests/osbuild-composer/osbuild-composer-cli-tests` to execute
+* `/usr/libexec/osbuild-composer-test/osbuild-composer-cli-tests` to execute
   the test suite.
 
 It is best that you use a fresh system for installing and running the tests!
@@ -206,6 +217,65 @@ from the local directory without installing it:
 * `make build` - will build everything under `cmd/`
 * `./osbuild-composer-cli-tests` - will execute the freshly built integration test suite
 
+### Cloud API integration testing
+
+*Cloud API* integration tests use the new REST API of `osbuild-composer` to request
+an image build for a selected footprint. If the target is a public cloud environment
+then the image is uploaded to the specific cloud provider as part of the compose.
+
+The easiest way to get started with integration testing from a git
+checkout is:
+
+* `dnf -y install rpm-build`
+* `dnf -y builddep osbuild-composer.spec`
+* `make rpm` to build the software under test
+* `dnf install rpmbuild/RPMS/x86_64/osbuild-composer-*.rpm` - this will
+  install both osbuild-composer, its -debuginfo, -debugsource and -tests packages
+* `systemctl start osbuild-composer`
+* `/usr/libexec/tests/osbuild-composer/api.sh <CLOUD_PROVIDER>` to execute
+  the integration testing with a specific cloud provider. Valid `CLOUD_PROVIDER`
+  values are `aws` and `gcp`.
+
+It is best that you use a fresh system for installing and running the tests!
+
+The *Cloud API* integration testing usually consists from:
+
+- Test existing *Cloud API* endpoints and their responses.
+- Request a new compose.
+- Test uploading of the image to specific cloud provider and sharing
+  of the image with specified accounts.
+- Optionally there are additional tests performed on the image, such as:
+  - Create a VM instance with the cloud provider and uploaded image.
+  - Run various checks on the VM instance.
+- The last step is cleanup of resources uploaded and created with the cloud provider
+  as part of the integration test.
+
+#### Setting up AWS integration tests
+
+The following environment variables are required
+
+- `AWS_REGION`
+- `AWS_BUCKET`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_API_TEST_SHARE_ACCOUNT`
+
+To execute the AWS integration tests, complete steps from *Cloud API integration testing*
+section and run `/usr/libexec/tests/osbuild-composer/api.sh aws`.
+
+#### Setting up GCP integration tests
+
+The following environment variables are required:
+
+- `GOOGLE_APPLICATION_CREDENTIALS` - path to [Google authentication credentials][gcp_creds] file.
+- `GCP_REGION`
+- `GCP_BUCKET`
+- `GCP_API_TEST_SHARE_ACCOUNT`
+
+To execute the GCP integration tests, complete steps from *Cloud API integration testing*
+section and run `/usr/libexec/tests/osbuild-composer/api.sh gcp`.
+
+[gcp_creds]: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
 
 ## Downstream testing notes
 
