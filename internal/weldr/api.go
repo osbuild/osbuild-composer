@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	errors_package "errors"
 	"fmt"
@@ -1798,6 +1799,36 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
+func ostreeResolveRef(location, ref string) (string, error) {
+	u, err := url.Parse(location)
+	if err != nil {
+		return "", err
+	}
+	u, err = u.Parse("refs/heads/")
+	if err != nil {
+		return "", err
+	}
+	u, err = u.Parse(ref)
+	if err != nil {
+		return "", err
+	}
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	parent := strings.TrimSpace(string(body))
+	// Check that this is at least a hex string.
+	_, err = hex.DecodeString(parent)
+	if err != nil {
+		return "", err
+	}
+	return parent, nil
+}
+
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1806,6 +1837,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	type OSTreeRequest struct {
+		URL    string `json:"url"`
 		Ref    string `json:"ref"`
 		Parent string `json:"parent"`
 	}
@@ -1881,6 +1913,31 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
+	}
+
+	// Fetch parent ostree commit from ref + url if commit is not
+	// provided. The parameter name "parent" is perhaps slightly misleading
+	// as it represent whatever commit sha the image type requires, not
+	// strictly speaking just the parent commit.
+	if cr.OSTree.Ref != "" && cr.OSTree.URL != "" {
+		if cr.OSTree.Parent != "" {
+			errors := responseError{
+				ID:  "OSTreeOptionsError",
+				Msg: "Supply at most one of Parent and URL",
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+		parent, err := ostreeResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
+		if err != nil {
+			errors := responseError{
+				ID:  "OSTreeCommitError",
+				Msg: err.Error(),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+		cr.OSTree.Parent = parent
 	}
 
 	packages, buildPackages, err := api.depsolveBlueprint(bp, imageType)
