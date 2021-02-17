@@ -4260,6 +4260,7 @@
           "name": "org.osbuild.systemd",
           "options": {
             "enabled_services": [
+              "nfs-convert.service",  
               "sshd.socket"
             ],
             "disabled_services": [
@@ -11697,7 +11698,6 @@
       "halt.target",
       "kexec.target",
       "nfs-blkmap.service",
-      "nfs-convert.service",
       "nfs-server.service",
       "oddjobd.service",
       "poweroff.target",
@@ -11744,6 +11744,7 @@
       "loadmodules.service",
       "microcode.service",
       "nfs-client.target",
+      "nfs-convert.service",
       "nis-domainname.service",
       "remote-fs.target",
       "rhsmcertd.service",

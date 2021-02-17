@@ -4160,6 +4160,9 @@
         {
           "name": "org.osbuild.systemd",
           "options": {
+            "enabled_services": [
+              "nfs-convert.service"
+            ],
             "default_target": "multi-user.target"
           }
         },
@@ -11587,7 +11590,6 @@
       "halt.target",
       "kexec.target",
       "nfs-blkmap.service",
-      "nfs-convert.service",
       "nfs-server.service",
       "oddjobd.service",
       "poweroff.target",
@@ -11635,6 +11637,7 @@
       "loadmodules.service",
       "microcode.service",
       "nfs-client.target",
+      "nfs-convert.service",
       "nis-domainname.service",
       "remote-fs.target",
       "rhsmcertd.service",

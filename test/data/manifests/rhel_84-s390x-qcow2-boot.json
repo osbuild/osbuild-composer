@@ -3644,6 +3644,9 @@
         {
           "name": "org.osbuild.systemd",
           "options": {
+            "enabled_services": [
+              "nfs-convert.service"
+            ],
             "default_target": "multi-user.target"
           }
         },
@@ -10696,7 +10699,6 @@
       "insights-client.timer",
       "kexec.target",
       "nfs-blkmap.service",
-      "nfs-convert.service",
       "nfs-server.service",
       "oddjobd.service",
       "poweroff.target",
@@ -10743,6 +10745,7 @@
       "kdump.service",
       "loadmodules.service",
       "nfs-client.target",
+      "nfs-convert.service",
       "nis-domainname.service",
       "qemu-guest-agent.service",
       "remote-fs.target",
