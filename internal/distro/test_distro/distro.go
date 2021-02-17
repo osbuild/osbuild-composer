@@ -63,6 +63,10 @@ func (t *TestImageType) MIMEType() string {
 	return "application/x-test"
 }
 
+func (t *TestImageType) OSTreeRef() string {
+	return ""
+}
+
 func (t *TestImageType) Size(size uint64) uint64 {
 	return 0
 }

@@ -1856,6 +1856,11 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	// set default ostree ref, if one not provided
+	if cr.OSTree.Ref == "" {
+		cr.OSTree.Ref = imageType.OSTreeRef()
+	}
+
 	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
 		return
 	}

@@ -88,6 +88,9 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				distro.ImageOptions{
 					Size: imageType.Size(0),
+					OSTree: distro.OSTreeImageOptions{
+						Ref: imageType.OSTreeRef(),
+					},
 				},
 				repos,
 				tt.RpmMD.Packages,
