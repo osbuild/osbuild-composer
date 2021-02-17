@@ -18,6 +18,7 @@ import (
 
 const name = "fedora-33"
 const modulePlatformID = "platform:f33"
+const ostreeRef = "fedora/33/%s/iot"
 
 type distribution struct {
 	arches        map[string]architecture
@@ -144,6 +145,13 @@ func (t *imageType) Filename() string {
 
 func (t *imageType) MIMEType() string {
 	return t.mimeType
+}
+
+func (t *imageType) OSTreeRef() string {
+	if t.rpmOstree {
+		return fmt.Sprintf(ostreeRef, t.arch.name)
+	}
+	return ""
 }
 
 func (t *imageType) Size(size uint64) uint64 {
@@ -525,13 +533,9 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 }
 
 func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-	ref := options.OSTree.Ref
-	if ref == "" {
-		ref = fmt.Sprintf("fedora/33/%s/iot", arch.Name())
-	}
 	return osbuild.NewOSTreeCommitAssembler(
 		&osbuild.OSTreeCommitAssemblerOptions{
-			Ref:    ref,
+			Ref:    options.OSTree.Ref,
 			Parent: options.OSTree.Parent,
 			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
 				Filename: "commit.tar",

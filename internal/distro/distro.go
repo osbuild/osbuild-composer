@@ -65,6 +65,9 @@ type ImageType interface {
 	// Retrns the MIME-type for the image type.
 	MIMEType() string
 
+	// Returns the default OSTree ref for the image type.
+	OSTreeRef() string
+
 	// Returns the proper image size for a given output format. If the input size
 	// is 0 the default value for the format will be returned.
 	Size(size uint64) uint64

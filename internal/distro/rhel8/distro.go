@@ -18,6 +18,7 @@ import (
 
 const name = "rhel-8"
 const modulePlatformID = "platform:el8"
+const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
 	arches        map[string]architecture
@@ -146,6 +147,13 @@ func (t *imageType) Filename() string {
 
 func (t *imageType) MIMEType() string {
 	return t.mimeType
+}
+
+func (t *imageType) OSTreeRef() string {
+	if t.rpmOstree {
+		return fmt.Sprintf(ostreeRef, t.arch.name)
+	}
+	return ""
 }
 
 func (t *imageType) Size(size uint64) uint64 {
@@ -611,13 +619,9 @@ func tarAssembler(filename, compression string) *osbuild.Assembler {
 }
 
 func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-	ref := options.OSTree.Ref
-	if ref == "" {
-		ref = fmt.Sprintf("rhel/8/%s/edge", arch.Name())
-	}
 	return osbuild.NewOSTreeCommitAssembler(
 		&osbuild.OSTreeCommitAssemblerOptions{
-			Ref:    ref,
+			Ref:    options.OSTree.Ref,
 			Parent: options.OSTree.Parent,
 			Tar: osbuild.OSTreeCommitAssemblerTarOptions{
 				Filename: "commit.tar",
