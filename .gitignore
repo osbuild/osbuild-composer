@@ -1,6 +1,8 @@
 __pycache__
 
 .vscode
+.DS_Store
 
+/containers/config/
 /bin
 /rpmbuild
