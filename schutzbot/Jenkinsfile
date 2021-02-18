@@ -275,6 +275,23 @@ pipeline {
                         }
                     }
                 }
+                stage('F32 New OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f32cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree-ng')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-ostree-ng')
+                        }
+                    }
+                }
                 stage('F32: koji-osbuild') {
                     when {
                         expression {
@@ -377,6 +394,23 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-ostree')
+                        }
+                    }
+                }
+                stage('F33 New OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f33cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree-ng')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-ostree-ng')
                         }
                     }
                 }
@@ -521,6 +555,23 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8 New OSTree') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree-ng')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-ostree-ng')
+                        }
+                    }
+                }
                 stage('EL8: koji-osbuild') {
                     when {
                         expression {
@@ -602,6 +653,17 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel84-ostree')
+                        }
+                    }
+                }
+                stage('EL8.4 New OSTree') {
+                    agent { label "rhel84cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree-ng')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-ostree-ng')
                         }
                     }
                 }
@@ -763,6 +825,13 @@ void run_tests(test_type) {
         sh (
             label: "OSTree tests",
             script: "/usr/libexec/tests/osbuild-composer/ostree.sh"
+        )
+    }
+
+    if (test_type == 'ostree-ng') {
+        sh (
+            label: "New OSTree tests",
+            script: "/usr/libexec/tests/osbuild-composer/ostree-ng.sh"
         )
     }
 
