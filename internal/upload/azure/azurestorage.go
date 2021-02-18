@@ -15,6 +15,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/google/uuid"
 )
 
 // StorageClient is a client for the Azure Storage API,
@@ -46,6 +47,9 @@ type BlobMetadata struct {
 	ContainerName  string
 	BlobName       string
 }
+
+// DefaultUploadThreads defines a tested default value for the UploadPageBlob method's threads parameter.
+const DefaultUploadThreads = 16
 
 // UploadPageBlob takes the metadata and credentials required to upload the image specified by `fileName`
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
@@ -168,4 +172,32 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	}
 
 	return nil
+}
+
+// CreateStorageContainerIfNotExist creates an empty storage container inside
+// a storage account. If a container with the same name already exists,
+// this method is no-op.
+func (c StorageClient) CreateStorageContainerIfNotExist(ctx context.Context, storageAccount, name string) error {
+	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", storageAccount, name))
+	containerURL := azblob.NewContainerURL(*URL, c.pipeline)
+
+	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+	if err != nil {
+		if storageErr, ok := err.(azblob.StorageError); ok && storageErr.(azblob.StorageError).ServiceCode() == azblob.ServiceCodeContainerAlreadyExists {
+			return nil
+		}
+		return fmt.Errorf("cannot create a storage container: %v", err)
+	}
+
+	return nil
+}
+
+// RandomStorageAccountName returns a randomly generated name that can be used
+// for a storage account. This means that it must use only alphanumeric
+// characters and its length must be 24 or lower.
+func RandomStorageAccountName(prefix string) string {
+	id := uuid.New().String()
+	id = strings.ReplaceAll(id, "-", "")
+
+	return (prefix + id)[:24]
 }

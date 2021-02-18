@@ -49,6 +49,8 @@ func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (Ta
 		options = new(AWSTargetResultOptions)
 	case "org.osbuild.gcp":
 		options = new(GCPTargetResultOptions)
+	case "org.osbuild.azure.image":
+		options = new(AzureImageTargetResultOptions)
 	default:
 		return nil, fmt.Errorf("Unexpected target result name: %s", trName)
 	}

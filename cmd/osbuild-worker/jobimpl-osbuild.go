@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,9 +11,11 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -29,6 +33,7 @@ type OSBuildJobImpl struct {
 	Output       string
 	KojiServers  map[string]koji.GSSAPICredentials
 	GCPCredsPath string
+	AzureCreds   *azure.Credentials
 }
 
 func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
@@ -295,6 +300,125 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResults = append(targetResults, target.NewGCPTargetResult(&target.GCPTargetResultOptions{
 				ImageName: t.ImageName,
 				ProjectID: g.GetProjectID(),
+			}))
+
+		case *target.AzureImageTargetOptions:
+			ctx := context.Background()
+
+			if impl.AzureCreds == nil {
+				r = append(r, errors.New("osbuild job has org.osbuild.azure.image target but this worker doesn't have azure credentials"))
+				continue
+			}
+
+			c, err := azure.NewClient(*impl.AzureCreds, options.TenantID)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+			log.Print("[Azure] 🔑 Logged in Azure")
+
+			storageAccountTag := azure.Tag{
+				Name:  "imageBuilderStorageAccount",
+				Value: fmt.Sprintf("location=%s", options.Location),
+			}
+
+			storageAccount, err := c.GetResourceNameByTag(
+				ctx,
+				options.SubscriptionID,
+				options.ResourceGroup,
+				storageAccountTag,
+			)
+			if err != nil {
+				r = append(r, fmt.Errorf("searching for a storage account failed: %v", err))
+				continue
+			}
+
+			if storageAccount == "" {
+				log.Print("[Azure] 📦 Creating a new storage account")
+				const storageAccountPrefix = "ib"
+				storageAccount = azure.RandomStorageAccountName(storageAccountPrefix)
+
+				err := c.CreateStorageAccount(
+					ctx,
+					options.SubscriptionID,
+					options.ResourceGroup,
+					storageAccount,
+					options.Location,
+					storageAccountTag,
+				)
+				if err != nil {
+					r = append(r, fmt.Errorf("creating a new storage account failed: %v", err))
+					continue
+				}
+			}
+
+			log.Print("[Azure] 🔑📦 Retrieving a storage account key")
+			storageAccessKey, err := c.GetStorageAccountKey(
+				ctx,
+				options.SubscriptionID,
+				options.ResourceGroup,
+				storageAccount,
+			)
+			if err != nil {
+				r = append(r, fmt.Errorf("retrieving the storage account key failed: %v", err))
+				continue
+			}
+
+			azureStorageClient, err := azure.NewStorageClient(storageAccount, storageAccessKey)
+			if err != nil {
+				r = append(r, fmt.Errorf("creating the storage client failed: %v", err))
+				continue
+			}
+
+			storageContainer := "imagebuilder"
+
+			log.Print("[Azure] 📦 Ensuring that we have a storage container")
+			err = azureStorageClient.CreateStorageContainerIfNotExist(ctx, storageAccount, storageContainer)
+			if err != nil {
+				r = append(r, fmt.Errorf("cannot create a storage container: %v", err))
+				continue
+			}
+
+			blobName := t.ImageName
+			if !strings.HasSuffix(blobName, ".vhd") {
+				blobName += ".vhd"
+			}
+
+			log.Print("[Azure] ⬆ Uploading the image")
+			err = azureStorageClient.UploadPageBlob(
+				azure.BlobMetadata{
+					StorageAccount: storageAccount,
+					ContainerName:  storageContainer,
+					BlobName:       blobName,
+				},
+				path.Join(outputDirectory, options.Filename),
+				azure.DefaultUploadThreads,
+			)
+			if err != nil {
+				r = append(r, fmt.Errorf("uploading the image failed: %v", err))
+				continue
+			}
+
+			log.Print("[Azure] 📝 Registering the image")
+			err = c.RegisterImage(
+				ctx,
+				options.SubscriptionID,
+				options.ResourceGroup,
+				storageAccount,
+				storageContainer,
+				blobName,
+				t.ImageName,
+				options.Location,
+			)
+			if err != nil {
+				r = append(r, fmt.Errorf("registering the image failed: %v", err))
+				continue
+			}
+
+			log.Print("[Azure] 🎉 Image uploaded and registered!")
+
+			targetResults = append(targetResults, target.NewAzureImageTargetResult(&target.AzureImageTargetResultOptions{
+				ImageName: t.ImageName,
 			}))
 
 		case *target.KojiTargetOptions:

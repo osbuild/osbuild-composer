@@ -15,6 +15,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -86,6 +87,9 @@ func main() {
 		GCP struct {
 			Credentials string `toml:"credentials"`
 		} `toml:"gcp"`
+		Azure *struct {
+			Credentials string `toml:"credentials"`
+		} `toml:"azure"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -154,12 +158,24 @@ func main() {
 		}
 	}
 
+	// Load Azure credentials early. If the credentials file is malformed,
+	// we can report the issue early instead of waiting for the first osbuild
+	// job with the org.osbuild.azure.image target.
+	var azureCredentials *azure.Credentials
+	if config.Azure != nil {
+		azureCredentials, err = azure.ParseAzureCredentialsFile(config.Azure.Credentials)
+		if err != nil {
+			log.Fatalf("cannot load azure credentials: %v", err)
+		}
+	}
+
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
 			Store:        store,
 			Output:       output,
 			KojiServers:  kojiServers,
 			GCPCredsPath: config.GCP.Credentials,
+			AzureCreds:   azureCredentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:       store,

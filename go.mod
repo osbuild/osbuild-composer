@@ -5,6 +5,7 @@ go 1.14
 require (
 	cloud.google.com/go v0.75.0
 	cloud.google.com/go/storage v1.10.0
+	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v41.3.0+incompatible
 	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/Azure/go-autorest/autorest v0.10.0
