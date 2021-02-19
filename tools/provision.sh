@@ -19,6 +19,16 @@ sudo mkdir -p /etc/osbuild-worker
 sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker.toml \
     /etc/osbuild-worker/
 
+# if GCP credentials are defined in the ENV, add them to the worker's configuration
+GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
+if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+    # The credentials file must be copied to a different location. Jenkins places
+    # it into /tmp and as a restult, the worker would not see it due to using PrivateTmp=true.
+    GCP_CREDS_WORKER_PATH="/etc/osbuild-worker/gcp-credentials.json"
+    sudo cp "$GOOGLE_APPLICATION_CREDENTIALS" "$GCP_CREDS_WORKER_PATH"
+    echo -e "\n[gcp]\ncredentials = \"$GCP_CREDS_WORKER_PATH\"\n" | sudo tee -a /etc/osbuild-worker/osbuild-worker.toml
+fi
+
 # Copy rpmrepo snapshots for use in weldr tests
 sudo mkdir -p /etc/osbuild-composer/repositories
 # Copy all fedora repo overrides

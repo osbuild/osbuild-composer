@@ -11,6 +11,8 @@ pipeline {
         AWS_REGION = "us-east-2"
         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
         BUILD_CAUSE = detect_build_cause()
+        GCP_BUCKET = "osbuild-composer-testing"
+        GCP_REGION = "us-east4"
     }
 
     options {
@@ -554,6 +556,8 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
+                        GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                     }
                     steps {
                         run_tests('integration')
@@ -661,6 +665,8 @@ pipeline {
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
+                        GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                     }
                     steps {
                         run_tests('integration')
@@ -756,6 +762,8 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
+                        GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                     }
                     steps {
                         run_tests('integration')
@@ -880,11 +888,19 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/aws.sh"
         )
 
-        // Run the API test.
+        // Run the API test with AWS.
         sh (
-            label: "Integration test: API",
-            script: "/usr/libexec/tests/osbuild-composer/api.sh"
+            label: "Integration test: API (AWS)",
+            script: "/usr/libexec/tests/osbuild-composer/api.sh aws"
         )
+
+        if (env.GOOGLE_APPLICATION_CREDENTIALS) {
+            // Run the API test with GCP.
+            sh (
+                label: "Integration test: API (GCP)",
+                script: "/usr/libexec/tests/osbuild-composer/api.sh gcp"
+            )
+        }
 
         if (env.VCENTER_CREDS) {
             // Run the VMWare test.
