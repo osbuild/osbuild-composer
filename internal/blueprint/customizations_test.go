@@ -1,8 +1,9 @@
 package blueprint
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetHostname(t *testing.T) {
@@ -22,6 +23,7 @@ func TestGetKernel(t *testing.T) {
 
 	expectedKernel := KernelCustomization{
 		Append: "--test",
+		Name:   "kernel",
 	}
 
 	TestCustomizations := Customizations{
@@ -214,7 +216,7 @@ func TestNoCustomizationsInBlueprint(t *testing.T) {
 	assert.Nil(t, TestBP.Customizations.GetHostname())
 	assert.Nil(t, TestBP.Customizations.GetUsers())
 	assert.Nil(t, TestBP.Customizations.GetGroups())
-	assert.Nil(t, TestBP.Customizations.GetKernel())
+	assert.Equal(t, &KernelCustomization{Name: "kernel"}, TestBP.Customizations.GetKernel())
 	assert.Nil(t, TestBP.Customizations.GetFirewall())
 	assert.Nil(t, TestBP.Customizations.GetServices())
 

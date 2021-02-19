@@ -155,11 +155,21 @@ func (c *Customizations) GetGroups() []GroupCustomization {
 }
 
 func (c *Customizations) GetKernel() *KernelCustomization {
-	if c == nil {
-		return nil
+	var name string
+	var append string
+	if c != nil && c.Kernel != nil {
+		name = c.Kernel.Name
+		append = c.Kernel.Append
 	}
 
-	return c.Kernel
+	if name == "" {
+		name = "kernel"
+	}
+
+	return &KernelCustomization{
+		Name:   name,
+		Append: append,
+	}
 }
 
 func (c *Customizations) GetFirewall() *FirewallCustomization {

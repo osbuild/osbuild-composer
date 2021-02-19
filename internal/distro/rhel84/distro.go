@@ -303,7 +303,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if t.bootable {
 		if t.arch.Name() != "s390x" {
-			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(pt, t.kernelOptions, c.GetKernel(), t.arch.uefi, t.arch.legacy)))
+			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(pt, t.kernelOptions, c.GetKernel(), packageSpecs, t.arch.uefi, t.arch.legacy)))
 		}
 	}
 
@@ -523,7 +523,7 @@ func (t *imageType) systemdStageOptions(enabledServices, disabledServices []stri
 	}
 }
 
-func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *blueprint.KernelCustomization, packages []rpmmd.PackageSpec, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
 	if pt == nil {
 		panic("partition table must be defined for grub2 stage, this is a programming error")
 	}
@@ -532,13 +532,12 @@ func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions str
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
 
-	id := uuid.MustParse(rootPartition.Filesystem.UUID)
-
-	if kernel != nil {
-		kernelOptions += " " + kernel.Append
+	stageOptions := osbuild.GRUB2StageOptions{
+		RootFilesystemUUID: uuid.MustParse(rootPartition.Filesystem.UUID),
+		KernelOptions:      kernelOptions,
+		Legacy:             legacy,
 	}
 
-	var uefiOptions *osbuild.GRUB2UEFI
 	if uefi {
 		var vendor string
 		if t.arch.distro.isCentos {
@@ -546,21 +545,28 @@ func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions str
 		} else {
 			vendor = "redhat"
 		}
-		uefiOptions = &osbuild.GRUB2UEFI{
+		stageOptions.UEFI = &osbuild.GRUB2UEFI{
 			Vendor: vendor,
 		}
 	}
 
 	if !uefi {
-		legacy = t.arch.legacy
+		stageOptions.Legacy = t.arch.legacy
 	}
 
-	return &osbuild.GRUB2StageOptions{
-		RootFilesystemUUID: id,
-		KernelOptions:      kernelOptions,
-		Legacy:             legacy,
-		UEFI:               uefiOptions,
+	if kernel != nil {
+		if kernel.Append != "" {
+			stageOptions.KernelOptions += " " + kernel.Append
+		}
+		for _, pkg := range packages {
+			if pkg.Name == kernel.Name {
+				stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + pkg.Version + "-" + pkg.Release + "." + pkg.Arch
+				break
+			}
+		}
 	}
+
+	return &stageOptions
 }
 
 func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
