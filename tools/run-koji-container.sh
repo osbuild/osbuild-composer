@@ -57,13 +57,13 @@ koji_start() {
     -e POSTGRES_USER=koji \
     -e POSTGRES_PASSWORD=kojipass \
     -e POSTGRES_DB=koji \
-    quay.io/osbuild/postgres:v1
+    quay.io/osbuild/postgres:13-alpine
 
   ${CONTAINER_RUNTIME} run -d --name org.osbuild.koji.kdc \
     --network org.osbuild.koji \
     -v "${SHARE_DIR}:/share:z" \
     -p 88:88/udp \
-    quay.io/osbuild/kdc:v1
+    quay.io/osbuild/kdc:latest
 
   # initialize krb pricipals and create keytabs for them
   # HTTP/localhost@LOCAL for kojihub
@@ -84,7 +84,7 @@ koji_start() {
     -e POSTGRES_PASSWORD=kojipass \
     -e POSTGRES_DB=koji \
     -e POSTGRES_HOST=org.osbuild.koji.postgres \
-    quay.io/osbuild/koji:v1
+    quay.io/osbuild/koji:latest
 
   # TODO: we need to wait for the database to be initialized here. A better method should be used.
   sleep 10
