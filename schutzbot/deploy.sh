@@ -94,4 +94,8 @@ fi
 
 greenprint "Installing test packages for ${PROJECT}"
 # Note: installing only -tests to catch missing dependencies
-retry sudo dnf -y install "${PROJECT}-tests"
+if [[ $ID == rhel ]]; then
+    retry sudo dnf -y install osbuild-composer-tests podman-3.0.0-0.38rc2
+else
+    retry sudo dnf -y install "${PROJECT}-tests"
+fi
