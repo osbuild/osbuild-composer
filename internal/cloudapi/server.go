@@ -297,7 +297,7 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 			Status: composeStatusFromJobStatus(status, &result),
 			UploadStatus: &UploadStatus{
 				Status: result.UploadStatus,
-				Type:   "aws",
+				Type:   "", // Do not return the upload for now, since it is not returned from the worker
 			},
 		},
 	}
