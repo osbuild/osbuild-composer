@@ -438,7 +438,7 @@ func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
-	if kernel != nil {
+	if kernel != nil && kernel.Append != "" {
 		kernelOptions += " " + kernel.Append
 	}
 
