@@ -117,6 +117,8 @@ func main() {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 	store := path.Join(cacheDirectory, "osbuild-store")
+	output := path.Join(cacheDirectory, "output")
+	_ = os.Mkdir(output, os.ModeDir)
 
 	kojiServers := make(map[string]koji.GSSAPICredentials)
 	for server, creds := range config.KojiServers {
@@ -152,10 +154,12 @@ func main() {
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
 			Store:       store,
+			Output:      output,
 			KojiServers: kojiServers,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:       store,
+			Output:      output,
 			KojiServers: kojiServers,
 		},
 		"koji-init": &KojiInitJobImpl{

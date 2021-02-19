@@ -18,6 +18,7 @@ import (
 
 type OSBuildKojiJobImpl struct {
 	Store       string
+	Output      string
 	KojiServers map[string]koji.GSSAPICredentials
 }
 
@@ -54,7 +55,7 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 }
 
 func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
-	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
+	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
