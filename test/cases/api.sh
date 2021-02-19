@@ -2,7 +2,8 @@
 
 #
 # Test osbuild-composer's main API endpoint by building a sample image and
-# uploading it to AWS.
+# uploading it to the appropriate cloud provider. The test currently supports
+# AWS and GCP.
 #
 # This script sets `-x` and is meant to always be run like that. This is
 # simpler than adding extensive error reporting, which would make this script
@@ -20,56 +21,153 @@ set -euxo pipefail
 
 /usr/libexec/osbuild-composer-test/provision.sh
 
-
 #
-# Verify that this script is running in the right environment. In particular,
-# it needs variables is set to access AWS.
+# Which cloud provider are we testing?
 #
 
-printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+CLOUD_PROVIDER_AWS="aws"
+CLOUD_PROVIDER_GCP="gcp"
 
+CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+    echo "Testing AWS"
+    ;;
+  "$CLOUD_PROVIDER_GCP")
+    echo "Testing Google Cloud Platform"
+    ;;
+  *)
+    echo "Unknown cloud provider '$CLOUD_PROVIDER'. Supported are '$CLOUD_PROVIDER_AWS', '$CLOUD_PROVIDER_GCP'"
+    exit 1
+    ;;
+esac
+
+#
+# Verify that this script is running in the right environment.
+#
+
+# Check that needed variables are set to access AWS.
+function checkEnvAWS() {
+  printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+}
+
+# Check that needed variables are set to access GCP.
+function checkEnvGCP() {
+  printenv GOOGLE_APPLICATION_CREDENTIALS GCP_BUCKET GCP_REGION GCP_API_TEST_SHARE_ACCOUNT > /dev/null
+}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+    checkEnvAWS
+    ;;
+  "$CLOUD_PROVIDER_GCP")
+    checkEnvGCP
+    ;;
+esac
 
 #
 # Create a temporary directory and ensure it gets deleted when this script
 # terminates in any way.
 #
 
-WORKDIR=$(mktemp -d)
-AMI_IMAGE_ID=
-SNAPSHOT_ID=
-INSTANCE_ID=
-AWS_CMD=
-function cleanup() {
+function cleanupAWS() {
+  # since this function can be called at any time, ensure that we don't expand unbound variables
+  AWS_CMD="${AWS_CMD:-}"
+  AWS_INSTANCE_ID="${AWS_INSTANCE_ID:-}"
+  AMI_IMAGE_ID="${AMI_IMAGE_ID:-}"
+  AWS_SNAPSHOT_ID="${AWS_SNAPSHOT_ID:-}"
+
   if [ -n "$AWS_CMD" ]; then
     set +e
-    $AWS_CMD ec2 terminate-instances --instance-ids "$INSTANCE_ID"
+    $AWS_CMD ec2 terminate-instances --instance-ids "$AWS_INSTANCE_ID"
     $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
-    $AWS_CMD ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
+    $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
     set -e
   fi
+}
+
+function cleanupGCP() {
+  # since this function can be called at any time, ensure that we don't expand unbound variables
+  GCP_CMD="${GCP_CMD:-}"
+  GCP_IMAGE_NAME="${GCP_IMAGE_NAME:-}"
+
+  if [ -n "$GCP_CMD" ]; then
+    set +e
+    $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
+    set -e
+  fi
+}
+
+WORKDIR=$(mktemp -d)
+function cleanup() {
+  case $CLOUD_PROVIDER in
+    "$CLOUD_PROVIDER_AWS")
+      cleanupAWS
+      ;;
+    "$CLOUD_PROVIDER_GCP")
+      cleanupGCP
+      ;;
+  esac
 
   rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
 
 #
+# Install the necessary cloud provider client tools
+#
+
+#
 # Install the aws client from the upstream release, because it doesn't seem to
 # be available as a RHEL package.
 #
-
-if ! hash aws; then
+function installClientAWS() {
+  if ! hash aws; then
     mkdir "$WORKDIR/aws"
     pushd "$WORKDIR/aws"
-        curl -Ls --retry 5 --output awscliv2.zip \
-            https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-        unzip awscliv2.zip > /dev/null
-        sudo ./aws/install > /dev/null
-        aws --version
+      curl -Ls --retry 5 --output awscliv2.zip \
+        https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+      unzip awscliv2.zip > /dev/null
+      sudo ./aws/install > /dev/null
+      aws --version
     popd
-fi
+  fi
 
-AWS_CMD="aws --region $AWS_REGION --output json --color on"
+  AWS_CMD="aws --region $AWS_REGION --output json --color on"
+}
+
+#
+# Install the gcp clients from the upstream release
+#
+function installClientGCP() {
+  if ! hash gcloud; then
+    sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
+[google-cloud-sdk]
+name=Google Cloud SDK
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM
+  fi
+
+  sudo dnf -y install google-cloud-sdk
+  GCP_CMD="gcloud --format=json --quiet"
+  $GCP_CMD --version
+}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+    installClientAWS
+    ;;
+  "$CLOUD_PROVIDER_GCP")
+    installClientGCP
+    ;;
+esac
 
 #
 # Make sure /openapi.json and /version endpoints return success
@@ -97,7 +195,6 @@ curl \
 
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
-SNAPSHOT_NAME=$(uuidgen)
 SSH_USER=
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
@@ -123,7 +220,10 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   ;;
 esac
 
-cat > "$REQUEST_FILE" << EOF
+function createReqFileAWS() {
+  AWS_SNAPSHOT_NAME=$(uuidgen)
+
+  cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
   "customizations": {
@@ -149,7 +249,7 @@ cat > "$REQUEST_FILE" << EOF
             "ec2": {
               "access_key_id": "${AWS_ACCESS_KEY_ID}",
               "secret_access_key": "${AWS_SECRET_ACCESS_KEY}",
-              "snapshot_name": "${SNAPSHOT_NAME}",
+              "snapshot_name": "${AWS_SNAPSHOT_NAME}",
               "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
             }
           }
@@ -159,7 +259,44 @@ cat > "$REQUEST_FILE" << EOF
   ]
 }
 EOF
+}
 
+function createReqFileGCP() {
+  GCP_IMAGE_NAME="image-$(uuidgen)"
+
+  cat > "$REQUEST_FILE" << EOF
+{
+  "distribution": "$DISTRO",
+  "image_requests": [
+    {
+      "architecture": "$ARCH",
+      "image_type": "vmdk",
+      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "upload_requests": [
+        {
+          "type": "gcp",
+          "options": {
+            "bucket": "${GCP_BUCKET}",
+            "region": "${GCP_REGION}",
+            "image_name": "${GCP_IMAGE_NAME}",
+            "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
+          }
+        }
+      ]
+    }
+  ]
+}
+EOF
+}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+    createReqFileAWS
+    ;;
+  "$CLOUD_PROVIDER_GCP")
+    createReqFileGCP
+  ;;
+esac
 
 #
 # Send the request and wait for the job to finish.
@@ -198,73 +335,107 @@ do
   if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
     test "$COMPOSE_STATUS" = "success"
     test "$UPLOAD_STATUS" = "success"
-    test "$UPLOAD_TYPE" = "aws"
+    test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
     break
   fi
 
   sleep 30
 done
 
-
 #
-# Verify the image landed in EC2, and delete it.
+# Verify the image landed in the appropriate cloud provider, and delete it.
 #
 
-$AWS_CMD ec2 describe-images \
+# Verify image in EC2 on AWS
+function verifyInAWS() {
+  $AWS_CMD ec2 describe-images \
     --owners self \
-    --filters Name=name,Values="$SNAPSHOT_NAME" \
+    --filters Name=name,Values="$AWS_SNAPSHOT_NAME" \
     > "$WORKDIR/ami.json"
 
-AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
-SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
-SHARE_OK=1
+  AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
+  AWS_SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
+  SHARE_OK=1
 
-# Verify that the ec2 snapshot was shared
-$AWS_CMD ec2 describe-snapshot-attribute --snapshot-id "$SNAPSHOT_ID" --attribute createVolumePermission > "$WORKDIR/snapshot-attributes.json"
+  # Verify that the ec2 snapshot was shared
+  $AWS_CMD ec2 describe-snapshot-attribute --snapshot-id "$AWS_SNAPSHOT_ID" --attribute createVolumePermission > "$WORKDIR/snapshot-attributes.json"
 
-SHARED_ID=$(jq -r '.CreateVolumePermissions[0].UserId' "$WORKDIR/snapshot-attributes.json")
-if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
+  SHARED_ID=$(jq -r '.CreateVolumePermissions[0].UserId' "$WORKDIR/snapshot-attributes.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
     SHARE_OK=0
-fi
+  fi
 
-# Verify that the ec2 ami was shared
-$AWS_CMD ec2 describe-image-attribute --image-id "$AMI_IMAGE_ID" --attribute launchPermission > "$WORKDIR/ami-attributes.json"
+  # Verify that the ec2 ami was shared
+  $AWS_CMD ec2 describe-image-attribute --image-id "$AMI_IMAGE_ID" --attribute launchPermission > "$WORKDIR/ami-attributes.json"
 
-SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
-if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
+  SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
     SHARE_OK=0
-fi
+  fi
 
-# Create key-pair
-$AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
-chmod 400 ./keypair.pem
+  # Create key-pair
+  $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
+  chmod 400 ./keypair.pem
 
-# Create an instance based on the ami
-$AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
-INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
+  # Create an instance based on the ami
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+  AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
-$AWS_CMD ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+  $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"
 
-$AWS_CMD ec2 describe-instances --instance-ids "$INSTANCE_ID" > "$WORKDIR/instances.json"
-HOST=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$WORKDIR/instances.json")
+  $AWS_CMD ec2 describe-instances --instance-ids "$AWS_INSTANCE_ID" > "$WORKDIR/instances.json"
+  HOST=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$WORKDIR/instances.json")
 
-echo "⏱ Waiting for AWS instance to respond to ssh"
-for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan "$HOST" > /dev/null 2>&1; then
-        echo "SSH is up!"
-        # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
-        break
-    fi
-    echo "Retrying in 5 seconds... $LOOP_COUNTER"
-    sleep 5
-done
+  echo "⏱ Waiting for AWS instance to respond to ssh"
+  for LOOP_COUNTER in {0..30}; do
+      if ssh-keyscan "$HOST" > /dev/null 2>&1; then
+          echo "SSH is up!"
+          # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
+          break
+      fi
+      echo "Retrying in 5 seconds... $LOOP_COUNTER"
+      sleep 5
+  done
 
-# Check if postgres is installed
-ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
+  # Check if postgres is installed
+  ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
 
-if [ "$SHARE_OK" != 1 ]; then
+  if [ "$SHARE_OK" != 1 ]; then
     echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
     exit 1
-fi
+  fi
+}
+
+# Verify image in Compute Node on GCP
+function verifyInGCP() {
+  # Authenticate
+  $GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
+  # Extract and set the default project to be used for commands
+  GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
+  $GCP_CMD config set project "$GCP_PROJECT"
+
+  # Verify that the image was shared
+  SHARE_OK=1
+  $GCP_CMD compute images get-iam-policy "$GCP_IMAGE_NAME" > "$WORKDIR/image-iam-policy.json"
+  SHARED_ACCOUNT=$(jq -r '.bindings[0].members[0]' "$WORKDIR/image-iam-policy.json")
+  SHARED_ROLE=$(jq -r '.bindings[0].role' "$WORKDIR/image-iam-policy.json")
+  if [ "$SHARED_ACCOUNT" != "$GCP_API_TEST_SHARE_ACCOUNT" ] || [ "$SHARED_ROLE" != "roles/compute.imageUser" ]; then
+    SHARE_OK=0
+  fi
+
+  if [ "$SHARE_OK" != 1 ]; then
+    echo "GCP image wasn't shared with the GCP_API_TEST_SHARE_ACCOUNT. 😢"
+    exit 1
+  fi
+}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+  verifyInAWS
+  ;;
+  "$CLOUD_PROVIDER_GCP")
+  verifyInGCP
+  ;;
+esac
 
 exit 0
