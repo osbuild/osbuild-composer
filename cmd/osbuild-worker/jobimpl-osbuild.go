@@ -25,6 +25,7 @@ import (
 
 type OSBuildJobImpl struct {
 	Store       string
+	Output      string
 	KojiServers map[string]koji.GSSAPICredentials
 }
 
@@ -62,7 +63,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
-	outputDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-*")
+	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
@@ -154,7 +155,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				Datastore:  options.Datastore,
 			}
 
-			tempDirectory, err := ioutil.TempDir("/var/tmp", "osbuild-worker-vmware-*")
+			tempDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-vmware-*")
 			if err != nil {
 				r = append(r, err)
 				continue
