@@ -335,7 +335,9 @@ do
   if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
     test "$COMPOSE_STATUS" = "success"
     test "$UPLOAD_STATUS" = "success"
-    test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+    # Do not check the return type for now, since it is not returned from cloudapi
+    # test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+    test "$UPLOAD_TYPE" = ""
     break
   fi
 
