@@ -3858,7 +3858,8 @@
             "legacy": "i386-pc",
             "uefi": {
               "vendor": "centos"
-            }
+            },
+            "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-277.el8.x86_64"
           }
         },
         {
@@ -10257,7 +10258,8 @@
   },
   "image-info": {
     "boot-environment": {
-      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto"
+      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+      "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-277.el8.x86_64"
     },
     "bootloader": "grub",
     "bootmenu": [

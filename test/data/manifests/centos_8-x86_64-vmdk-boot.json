@@ -3949,7 +3949,8 @@
             "legacy": "i386-pc",
             "uefi": {
               "vendor": "centos"
-            }
+            },
+            "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-277.el8.x86_64"
           }
         },
         {
@@ -10462,7 +10463,8 @@
   },
   "image-info": {
     "boot-environment": {
-      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 ro net.ifnames=0"
+      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 ro net.ifnames=0",
+      "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-277.el8.x86_64"
     },
     "bootloader": "grub",
     "bootmenu": [
