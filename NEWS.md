@@ -1,5 +1,37 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28:
+
+  * OSBuild Composer can now build CentOS Stream 8 images!
+
+  * OSBuild Composer can now upload images to VMWare!
+
+  * Cloudapi contains new /openapi.json and /version endpoints. The already
+    existing `POST /compose` endpoint now supports specification of additional
+    packages.
+
+  * Blueprints now support definition of alternative kernels, such as kernel-rt,
+    using the `customizations.kernel.name` key.
+
+  * Attempt to use the `customization.kernel.append` key in a blueprint for the
+    OSTree image type now results in error, because the customization was ignored.
+
+  * OSBuild dependency now requires version 24 because of its new sysconfig and
+    RHSM stages.
+
+  * RHEL qcow2 images now come with disabled product-id and subscription-manager
+    plugins in dnf to make them consistent with images produced by imagefactory.
+
+  * OSTree `parent` can now be replaced with `url` pointing to a repository
+    that contains the parent commit.
+
+Contributions from: Achilleas Koutsou, Alexander Todorov, Antonio Murdaca,
+                    Brian C. Lane, Chloe Kaubisch, Jacob Kozol, Jozef Mikovic,
+                    Major Hayden, Martin Sehnoutka, Ondřej Budai, Sanne Raymaekers,
+                    Tomas Hozza, Tom Gundersen
+
+— Brno, 2021-02-20
+
 ## CHANGES WITH 27:
 
   * Starting from this release, we are putting longer news posts in
