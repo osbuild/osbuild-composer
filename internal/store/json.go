@@ -326,19 +326,20 @@ func (store *Store) toStoreV0() *storeV0 {
 }
 
 var imageTypeCompatMapping = map[string]string{
-	"vhd":               "Azure",
-	"ami":               "AWS",
-	"liveiso":           "LiveISO",
-	"openstack":         "OpenStack",
-	"qcow2":             "qcow2",
-	"vmdk":              "VMWare",
-	"ext4-filesystem":   "Raw-filesystem",
-	"partitioned-disk":  "Partitioned-disk",
-	"tar":               "Tar",
-	"fedora-iot-commit": "fedora-iot-commit",
-	"rhel-edge-commit":  "rhel-edge-commit",
-	"test_type":         "test_type",         // used only in json_test.go
-	"test_type_invalid": "test_type_invalid", // used only in json_test.go
+	"vhd":                 "Azure",
+	"ami":                 "AWS",
+	"liveiso":             "LiveISO",
+	"openstack":           "OpenStack",
+	"qcow2":               "qcow2",
+	"vmdk":                "VMWare",
+	"ext4-filesystem":     "Raw-filesystem",
+	"partitioned-disk":    "Partitioned-disk",
+	"tar":                 "Tar",
+	"fedora-iot-commit":   "fedora-iot-commit",
+	"rhel-edge-commit":    "rhel-edge-commit",
+	"rhel-edge-container": "rhen-edge-container",
+	"test_type":           "test_type",         // used only in json_test.go
+	"test_type_invalid":   "test_type_invalid", // used only in json_test.go
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
