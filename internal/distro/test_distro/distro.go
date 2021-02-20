@@ -82,6 +82,9 @@ func (t *TestImageType) BuildPackages() []string {
 func (t *TestImageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
 	return nil
 }
+func (t *TestImageType) Exports() []string {
+	return []string{"assembler"}
+}
 
 func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, seed int64) (distro.Manifest, error) {
 	return json.Marshal(

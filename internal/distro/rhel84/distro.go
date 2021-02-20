@@ -26,7 +26,7 @@ const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
 	arches        map[string]architecture
-	imageTypes    map[string]imageType
+	imageTypes    map[string]distro.ImageType
 	buildPackages []string
 	isCentos      bool
 }
@@ -38,7 +38,7 @@ type architecture struct {
 	buildPackages      []string
 	legacy             string
 	uefi               bool
-	imageTypes         map[string]imageType
+	imageTypes         map[string]distro.ImageType
 }
 
 type imageType struct {
@@ -121,16 +121,15 @@ func (a *architecture) GetImageType(imageType string) (distro.ImageType, error) 
 		return nil, errors.New("invalid image type: " + imageType)
 	}
 
-	return &t, nil
+	return t, nil
 }
 
 func (a *architecture) addImageTypes(imageTypes ...imageType) {
 	if a.imageTypes == nil {
-		a.imageTypes = map[string]imageType{}
+		a.imageTypes = map[string]distro.ImageType{}
 	}
-
 	for _, it := range imageTypes {
-		a.imageTypes[it.name] = imageType{
+		a.imageTypes[it.name] = &imageType{
 			arch:                    a,
 			name:                    it.name,
 			filename:                it.filename,
@@ -146,6 +145,28 @@ func (a *architecture) addImageTypes(imageTypes ...imageType) {
 			defaultSize:             it.defaultSize,
 			partitionTableGenerator: it.partitionTableGenerator,
 			assembler:               it.assembler,
+		}
+	}
+}
+
+// For the secondary implementation of image type.
+// Temporary; for supporting the new Manifest schema, until everything is
+// ported.
+func (a *architecture) addS2ImageTypes(imageTypes ...imageTypeS2) {
+	for _, it := range imageTypes {
+		a.imageTypes[it.name] = &imageTypeS2{
+			arch:             a,
+			name:             it.name,
+			filename:         it.filename,
+			mimeType:         it.mimeType,
+			packageSets:      it.packageSets,
+			enabledServices:  it.enabledServices,
+			disabledServices: it.disabledServices,
+			defaultTarget:    it.defaultTarget,
+			kernelOptions:    it.kernelOptions,
+			bootable:         it.bootable,
+			rpmOstree:        it.rpmOstree,
+			defaultSize:      it.defaultSize,
 		}
 	}
 }
@@ -218,6 +239,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 			Include: t.BuildPackages(),
 		},
 	}
+}
+
+func (t *imageType) Exports() []string {
+	return []string{"assembler"}
 }
 
 func (t *imageType) Manifest(c *blueprint.Customizations,
@@ -1181,7 +1206,7 @@ func newDistro(isCentos bool) distro.Distro {
 	}
 
 	r := distribution{
-		imageTypes: map[string]imageType{},
+		imageTypes: map[string]distro.ImageType{},
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",
@@ -1214,6 +1239,123 @@ func newDistro(isCentos bool) distro.Distro {
 		legacy: "i386-pc",
 		uefi:   true,
 	}
+
+	edgeOCIImgTypeX86_64 := imageTypeS2{
+		name:     "rhel-edge-container",
+		filename: "rhel84-container.tar",
+		mimeType: "application/x-tar",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": {
+				Include: []string{
+					"redhat-release", // TODO: is this correct for Edge?
+					"glibc", "glibc-minimal-langpack", "nss-altfiles",
+					"dracut-config-generic", "dracut-network",
+					"basesystem", "bash", "platform-python",
+					"shadow-utils", "chrony", "setup", "shadow-utils",
+					"sudo", "systemd", "coreutils", "util-linux",
+					"curl", "vim-minimal",
+					"rpm", "rpm-ostree", "polkit",
+					"lvm2", "cryptsetup", "pinentry",
+					"e2fsprogs", "dosfstools",
+					"keyutils", "gnupg2",
+					"attr", "xz", "gzip",
+					"firewalld", "iptables",
+					"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
+					"wpa_supplicant",
+					"dnsmasq", "traceroute",
+					"hostname", "iproute", "iputils",
+					"openssh-clients", "procps-ng", "rootfiles",
+					"openssh-server", "passwd",
+					"policycoreutils", "policycoreutils-python-utils",
+					"selinux-policy-targeted", "setools-console",
+					"less", "tar", "rsync",
+					"fwupd", "usbguard",
+					"bash-completion", "tmux",
+					"ima-evm-utils",
+					"audit",
+					"podman", "container-selinux", "skopeo", "criu",
+					"slirp4netns", "fuse-overlayfs",
+					"clevis", "clevis-dracut", "clevis-luks",
+					"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
+					// x86 specific
+					"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
+					"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+					"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+					"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
+				},
+				Exclude: []string{
+					"rng-tools",
+					"subscription-manager",
+				},
+			},
+			"container": {Include: []string{"httpd"}},
+		},
+		enabledServices: []string{
+			"NetworkManager.service", "firewalld.service", "sshd.service",
+			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
+			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
+			"redboot-auto-reboot", "redboot-task-runner",
+		},
+		rpmOstree: true,
+	}
+
+	edgeOCIImgTypeArch64 := imageTypeS2{
+		name:     "rhel-edge-container",
+		filename: "rhel84-container.tar",
+		mimeType: "application/x-tar",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": {
+				Include: []string{
+					"redhat-release", // TODO: is this correct for Edge?
+					"glibc", "glibc-minimal-langpack", "nss-altfiles",
+					"dracut-config-generic", "dracut-network",
+					"basesystem", "bash", "platform-python",
+					"shadow-utils", "chrony", "setup", "shadow-utils",
+					"sudo", "systemd", "coreutils", "util-linux",
+					"curl", "vim-minimal",
+					"rpm", "rpm-ostree", "polkit",
+					"lvm2", "cryptsetup", "pinentry",
+					"e2fsprogs", "dosfstools",
+					"keyutils", "gnupg2",
+					"attr", "xz", "gzip",
+					"firewalld", "iptables",
+					"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
+					"wpa_supplicant",
+					"dnsmasq", "traceroute",
+					"hostname", "iproute", "iputils",
+					"openssh-clients", "procps-ng", "rootfiles",
+					"openssh-server", "passwd",
+					"policycoreutils", "policycoreutils-python-utils",
+					"selinux-policy-targeted", "setools-console",
+					"less", "tar", "rsync",
+					"fwupd", "usbguard",
+					"bash-completion", "tmux",
+					"ima-evm-utils",
+					"audit",
+					"podman", "container-selinux", "skopeo", "criu",
+					"slirp4netns", "fuse-overlayfs",
+					"clevis", "clevis-dracut", "clevis-luks",
+					"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
+					// aarch64 specific
+					"grub2-efi-aa64", "efibootmgr", "shim-aa64",
+					"iwl7260-firmware",
+				},
+				Exclude: []string{
+					"rng-tools",
+					"subscription-manager",
+				},
+			},
+			"container": {Include: []string{"httpd"}},
+		},
+		enabledServices: []string{
+			"NetworkManager.service", "firewalld.service", "sshd.service",
+			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
+			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
+			"redboot-auto-reboot", "redboot-task-runner",
+		},
+		rpmOstree: true,
+	}
+
 	x8664.addImageTypes(
 		amiImgType,
 		qcow2ImageType,
@@ -1225,6 +1367,7 @@ func newDistro(isCentos bool) distro.Distro {
 
 	if !isCentos {
 		x8664.addImageTypes(edgeImgTypeX86_64)
+		x8664.addS2ImageTypes(edgeOCIImgTypeX86_64)
 	}
 
 	aarch64 := architecture{
@@ -1248,6 +1391,7 @@ func newDistro(isCentos bool) distro.Distro {
 
 	if !isCentos {
 		aarch64.addImageTypes(edgeImgTypeAarch64)
+		aarch64.addS2ImageTypes(edgeOCIImgTypeArch64)
 	}
 
 	ppc64le := architecture{
