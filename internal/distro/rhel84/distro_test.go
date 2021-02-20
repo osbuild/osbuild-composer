@@ -446,7 +446,7 @@ func TestDistro_ManifestError(t *testing.T) {
 				Size: imgType.Size(0),
 			}
 			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
-			if imgTypeName == "rhel-edge-commit" {
+			if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
 			} else {
 				assert.NoError(t, err)
@@ -471,7 +471,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"vhd",
 				"vmdk",
 			},
-			rhelAdditionalImageTypes: []string{"rhel-edge-commit"},
+			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container"},
 		},
 		{
 			arch: "aarch64",
@@ -481,7 +481,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"openstack",
 				"tar",
 			},
-			rhelAdditionalImageTypes: []string{"rhel-edge-commit"},
+			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container"},
 		},
 		{
 			arch: "ppc64le",

@@ -99,6 +99,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	return nil
 }
 
+func (t *imageType) Exports() []string {
+	return []string{"assembler"}
+}
+
 func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
