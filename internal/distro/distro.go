@@ -76,6 +76,9 @@ type ImageType interface {
 	// image type.
 	PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet
 
+	// Returns the names of the stages that will produce the build output.
+	Exports() []string
+
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to build an image, given output format with all packages and customizations
 	// specified in the given blueprint. The packageSpecSets must be labelled in
