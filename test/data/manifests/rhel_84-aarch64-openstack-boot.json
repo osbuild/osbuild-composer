@@ -3446,7 +3446,8 @@
             "kernel_opts": "ro net.ifnames=0",
             "uefi": {
               "vendor": "redhat"
-            }
+            },
+            "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-275.el8.aarch64"
           }
         },
         {
@@ -9470,7 +9471,8 @@
   },
   "image-info": {
     "boot-environment": {
-      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 ro net.ifnames=0"
+      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 ro net.ifnames=0",
+      "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-275.el8.aarch64"
     },
     "bootloader": "unknown",
     "bootmenu": [
