@@ -273,8 +273,8 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 24
-Requires:   osbuild-ostree >= 24
+Requires:   osbuild >= 26
+Requires:   osbuild-ostree >= 26
 
 # remove in F34
 Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
