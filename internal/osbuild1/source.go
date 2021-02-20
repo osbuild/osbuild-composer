@@ -30,7 +30,7 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 		case "org.osbuild.files":
 			source = new(FilesSource)
 		default:
-			return errors.New("unexpected suorce name" + name)
+			return errors.New("unexpected source name" + name)
 		}
 		err = json.Unmarshal(rawSource, source)
 		if err != nil {
