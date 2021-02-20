@@ -85,8 +85,9 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	exports := []string{"assembler"} // NOTE: Koji API doesn't support new image types yet
 	if initArgs.KojiError == "" {
-		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, os.Stderr)
+		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 		if err != nil {
 			return err
 		}
