@@ -18,6 +18,7 @@ type OSBuildJob struct {
 	Targets         []*target.Target `json:"targets,omitempty"`
 	ImageName       string           `json:"image_name,omitempty"`
 	StreamOptimized bool             `json:"stream_optimized,omitempty"`
+	Exports         []string         `json:"export_stages,omitempty"`
 }
 
 type OSBuildJobResult struct {
