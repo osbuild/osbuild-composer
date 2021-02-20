@@ -16,13 +16,17 @@ import (
 // Note that osbuild returns non-zero when the pipeline fails. This function
 // does not return an error in this case. Instead, the failure is communicated
 // with its corresponding logs through osbuild.Result.
-func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, errorWriter io.Writer) (*osbuild.Result, error) {
+func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports []string, errorWriter io.Writer) (*osbuild.Result, error) {
 	cmd := exec.Command(
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,
 		"--json", "-",
 	)
+
+	for _, export := range exports {
+		cmd.Args = append(cmd.Args, "--export", export)
+	}
 	cmd.Stderr = errorWriter
 
 	stdin, err := cmd.StdinPipe()

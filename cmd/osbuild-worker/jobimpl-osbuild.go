@@ -89,7 +89,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	start_time := time.Now()
 
-	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, os.Stderr)
+	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, args.Exports, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -98,9 +98,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	streamOptimizedPath := ""
 
+	// NOTE: Currently OSBuild supports multiple exports, but this isn't used
+	// by any of the image types and it can't be specified during the request.
+	// Use the first (and presumably only) export for the imagePath.
+	exportPath := args.Exports[0]
 	if osbuildOutput.Success && args.ImageName != "" {
 		var f *os.File
-		imagePath := path.Join(outputDirectory, args.ImageName)
+		imagePath := path.Join(outputDirectory, exportPath, args.ImageName)
 		if args.StreamOptimized {
 			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
 			if err != nil {
@@ -129,7 +133,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 			var f *os.File
-			imagePath := path.Join(outputDirectory, options.Filename)
+			imagePath := path.Join(outputDirectory, exportPath, options.Filename)
 			if options.StreamOptimized {
 				f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
 				if err != nil {
