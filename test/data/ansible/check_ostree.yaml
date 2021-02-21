@@ -7,6 +7,28 @@
     failed_counter: "0"
 
   tasks:
+    # default kernel or rt kernel
+    - name: check installed kernel
+      command: uname -r
+      register: result_kernel
+
+    # case: check rt kernel installed (rt kernel only)
+    - name: check rt kernel installed
+      block:
+        - assert:
+            that:
+              - "'rt' in result_kernel.stdout"
+            fail_msg: "rt kernel not installed, ostree upgrade might be failed"
+            success_msg: "rt kernel installed in ostree upgrade"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'rt' in result_kernel.stdout"
+
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
       command: rpm-ostree status --json
@@ -234,9 +256,10 @@
       delegate_to: localhost
 
     - name: check dmesg error and fail log
-      shell: dmesg --notime | grep -i "error\|fail"
+      shell: dmesg --notime | grep -i "error\|fail" || true
       register: result_dmesg_error
 
+    # (RHEL)default kernel has error and fail log
     - name: no more error or failed log
       block:
         - assert:
@@ -252,8 +275,29 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] == "RedHat"
+      when:
+        - ansible_facts['distribution'] == "RedHat"
+        - "'rt' not in result_kernel.stdout"
 
+    # (RHEL)rt kernel does not have any error or fail log
+    - name: no any error or fail log
+      block:
+        - assert:
+            that:
+              - result_dmesg_error.stdout == ""
+            fail_msg: "found error or fail log in rt kernel test"
+            success_msg: "no error or fail log found"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'rt' in result_kernel.stdout"
+
+    # (Fedora)default kernel has error and fail log
     - name: no more error or failed log
       block:
         - assert:
@@ -270,13 +314,16 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] == "Fedora"
+      when:
+        - ansible_facts['distribution'] == "Fedora"
+        - "'rt' not in result_kernel.stdout"
 
     # case: check running container with podman
     - name: run ubi8 image
       command: podman run registry.access.redhat.com/ubi8/ubi-minimal:latest cat /etc/redhat-release
       register: podman_result
       become: yes
+      ignore_errors: yes  # due to https://bugzilla.redhat.com/show_bug.cgi?id=1903983
 
     - name: run container test
       block:
