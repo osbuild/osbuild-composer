@@ -260,6 +260,14 @@ name = "python36"
 version = "*"
 EOF
 
+# No rt kernel package repo for Fedora and RHEL 8
+if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
+    cat >> "$BLUEPRINT_FILE" << EOF
+[customizations.kernel]
+name = "kernel-rt"
+EOF
+fi
+
 # Build installation image.
 build_image "$BLUEPRINT_FILE" ostree
 
@@ -401,6 +409,14 @@ version = "*"
 name = "wget"
 version = "*"
 EOF
+
+# No rt kernel package repo for Fedora and RHEL 8
+if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
+    cat >> "$BLUEPRINT_FILE" << EOF
+[customizations.kernel]
+name = "kernel-rt"
+EOF
+fi
 
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
