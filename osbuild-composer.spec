@@ -204,6 +204,9 @@ install -m 0644 -vp test/data/cloud-init/*                      %{buildroot}%{_d
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/composer
 install -m 0644 -vp test/data/composer/*                        %{buildroot}%{_datadir}/tests/osbuild-composer/composer/
 
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/worker
+install -m 0644 -vp test/data/worker/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/worker/
+
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/repositories
 install -m 0644 -vp test/data/repositories/*                    %{buildroot}%{_datadir}/tests/osbuild-composer/repositories/
 
