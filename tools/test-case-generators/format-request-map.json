@@ -24,6 +24,17 @@
     },
     "overrides": {}
   },
+  "rhel-edge-container": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "rhel-edge-container",
+      "repositories": [],
+      "filename": "rhel84-container.tar",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "rhel-edge-commit-rt": {
     "compose-request": {
       "distro": "",
