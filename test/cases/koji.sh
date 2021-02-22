@@ -27,11 +27,6 @@ fi
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
 
-greenprint "Copying custom worker config"
-sudo mkdir -p /etc/osbuild-worker
-sudo cp "${OSBUILD_COMPOSER_TEST_DATA}"/composer/osbuild-worker.toml \
-    /etc/osbuild-worker/
-
 greenprint "Adding kerberos config"
 sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
