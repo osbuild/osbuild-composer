@@ -205,8 +205,46 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 
 			targets = append(targets, t)
+		} else if uploadRequest.Type == "gcp" {
+			var gcpUploadOptions GCPUploadRequestOptions
+			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+			if err != nil {
+				http.Error(w, "Unable to marshal gcp upload request", http.StatusInternalServerError)
+				return
+			}
+			err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
+			if err != nil {
+				http.Error(w, "Unable to unmarshal gcp upload request", http.StatusInternalServerError)
+				return
+			}
+
+			var share []string
+			if gcpUploadOptions.ShareWithAccounts != nil {
+				share = *gcpUploadOptions.ShareWithAccounts
+			}
+			var region string
+			if gcpUploadOptions.Region != nil {
+				region = *gcpUploadOptions.Region
+			}
+			object := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			t := target.NewGCPTarget(&target.GCPTargetOptions{
+				Filename:          imageType.Filename(),
+				Region:            region,
+				Os:                "", // not exposed in cloudapi for now
+				Bucket:            gcpUploadOptions.Bucket,
+				Object:            object,
+				ShareWithAccounts: share,
+			})
+			// Import will fail if an image with this name already exists
+			if gcpUploadOptions.ImageName != nil {
+				t.ImageName = *gcpUploadOptions.ImageName
+			} else {
+				t.ImageName = object
+			}
+
+			targets = append(targets, t)
 		} else {
-			http.Error(w, "Unknown upload request type, only aws is supported", http.StatusBadRequest)
+			http.Error(w, "Unknown upload request type, only 'aws' and 'gcp' is supported", http.StatusBadRequest)
 			return
 		}
 	}

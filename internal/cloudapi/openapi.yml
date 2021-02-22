@@ -122,6 +122,15 @@ components:
         ami_id:
           type: string
           example: 'ami-0c830793775595d4b'
+    GCPUploadStatus:
+      type: object
+      properties:
+        project_id:
+          type: string
+          example: 'ascendant-braid-303513'
+        image_name:
+          type: string
+          example: 'my-image'
     ComposeRequest:
       type: object
       required:
@@ -188,9 +197,10 @@ components:
         options:
           oneOf:
             -  $ref: '#/components/schemas/AWSUploadRequestOptions'
+            -  $ref: '#/components/schemas/GCPUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws']
+      enum: ['aws', 'gcp']
     AWSUploadRequestOptions:
       type: object
       required:
@@ -241,6 +251,59 @@ components:
         share_with_accounts:
           type: array
           example: ['123456789012']
+          items:
+            type: string
+    GCPUploadRequestOptions:
+      type: object
+      required:
+        - bucket
+      properties:
+        region:
+          type: string
+          example: 'eu'
+          description: |
+            The GCP region where the OS image will be imported to and shared from.
+            The value must be a valid GCP location. See https://cloud.google.com/storage/docs/locations.
+            If not specified, the multi-region location closest to the source
+            (source Storage Bucket location) is chosen automatically.
+        bucket:
+          type: string
+          example: 'my-example-bucket'
+          description: 'Name of an existing STANDARD Storage class Bucket.'
+# don't expose the os type for now
+#        os:
+#          type: string
+#          example: 'rhel-8-byol'
+#          description: 'OS of the disk image being imported needed for installation of GCP guest tools.'
+        image_name:
+          type: string
+          example: 'my-image'
+          description: |
+            The name to use for the imported and shared Compute Node image.
+            The image name must be unique within the GCP project, which is used
+            for the OS image upload and import. If not specified a random
+            'composer-api-<uuid>' string is used as the image name.
+        share_with_accounts:
+          type: array
+          example: [
+            'user:alice@example.com',
+            'serviceAccount:my-other-app@appspot.gserviceaccount.com',
+            'group:admins@example.com',
+            'domain:example.com'
+            ]
+          description: |
+            List of valid Google accounts to share the imported Compute Node image with.
+            Each string must contain a specifier of the account type. Valid formats are:
+              - 'user:{emailid}': An email address that represents a specific
+                Google account. For example, 'alice@example.com'.
+              - 'serviceAccount:{emailid}': An email address that represents a
+                service account. For example, 'my-other-app@appspot.gserviceaccount.com'.
+              - 'group:{emailid}': An email address that represents a Google group.
+                For example, 'admins@example.com'.
+              - 'domain:{domain}': The G Suite domain (primary) that represents all
+                the users of that domain. For example, 'google.com' or 'example.com'.
+            If not specified, the imported Compute Node image is not shared with any
+            account.
           items:
             type: string
     Customizations:
