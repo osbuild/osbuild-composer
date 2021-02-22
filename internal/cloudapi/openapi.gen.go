@@ -65,6 +65,39 @@ type Customizations struct {
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
+// GCPUploadRequestOptions defines model for GCPUploadRequestOptions.
+type GCPUploadRequestOptions struct {
+
+	// Name of an existing STANDARD Storage class Bucket.
+	Bucket string `json:"bucket"`
+
+	// The name to use for the imported and shared Compute Node image.
+	// The image name must be unique within the GCP project, which is used
+	// for the OS image upload and import. If not specified a random
+	// 'composer-api-<uuid>' string is used as the image name.
+	ImageName *string `json:"image_name,omitempty"`
+
+	// The GCP region where the OS image will be imported to and shared from.
+	// The value must be a valid GCP location. See https://cloud.google.com/storage/docs/locations.
+	// If not specified, the multi-region location closest to the source
+	// (source Storage Bucket location) is chosen automatically.
+	Region *string `json:"region,omitempty"`
+
+	// List of valid Google accounts to share the imported Compute Node image with.
+	// Each string must contain a specifier of the account type. Valid formats are:
+	//   - 'user:{emailid}': An email address that represents a specific
+	//     Google account. For example, 'alice@example.com'.
+	//   - 'serviceAccount:{emailid}': An email address that represents a
+	//     service account. For example, 'my-other-app@appspot.gserviceaccount.com'.
+	//   - 'group:{emailid}': An email address that represents a Google group.
+	//     For example, 'admins@example.com'.
+	//   - 'domain:{domain}': The G Suite domain (primary) that represents all
+	//     the users of that domain. For example, 'google.com' or 'example.com'.
+	// If not specified, the imported Compute Node image is not shared with any
+	// account.
+	ShareWithAccounts *[]string `json:"share_with_accounts,omitempty"`
+}
+
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
 	Architecture   string          `json:"architecture"`
@@ -114,6 +147,7 @@ type UploadTypes string
 // List of UploadTypes
 const (
 	UploadTypes_aws UploadTypes = "aws"
+	UploadTypes_gcp UploadTypes = "gcp"
 )
 
 // Version defines model for Version.
@@ -777,33 +811,43 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"hdgNkL9ru/0nAAD//+8m7NSkFgAA",
+	"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",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

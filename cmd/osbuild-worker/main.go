@@ -83,6 +83,9 @@ func main() {
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
 		} `toml:"koji"`
+		GCP struct {
+			Credentials string `toml:"credentials"`
+		} `toml:"gcp"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -153,9 +156,10 @@ func main() {
 
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
-			Store:       store,
-			Output:      output,
-			KojiServers: kojiServers,
+			Store:        store,
+			Output:       output,
+			KojiServers:  kojiServers,
+			GCPCredsPath: config.GCP.Credentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:       store,

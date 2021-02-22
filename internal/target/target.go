@@ -3,9 +3,10 @@ package target
 import (
 	"encoding/json"
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"time"
 )
 
 type Target struct {
@@ -68,6 +69,8 @@ func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (Targ
 		options = new(AzureTargetOptions)
 	case "org.osbuild.aws":
 		options = new(AWSTargetOptions)
+	case "org.osbuild.gcp":
+		options = new(GCPTargetOptions)
 	case "org.osbuild.local":
 		options = new(LocalTargetOptions)
 	case "org.osbuild.koji":

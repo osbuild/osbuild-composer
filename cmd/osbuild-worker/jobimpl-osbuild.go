@@ -18,15 +18,17 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
+	"github.com/osbuild/osbuild-composer/internal/upload/gcp"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type OSBuildJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
+	Store        string
+	Output       string
+	KojiServers  map[string]koji.GSSAPICredentials
+	GCPCredsPath string
 }
 
 func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
@@ -235,6 +237,51 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				r = append(r, err)
 				continue
 			}
+		case *target.GCPTargetOptions:
+			if !osbuildOutput.Success {
+				continue
+			}
+
+			// Check if the credentials file was provided in the worker configuration,
+			// otherwise let it up to the Google client library to authenticate
+			var gcpCreds []byte
+			if impl.GCPCredsPath != "" {
+				gcpCreds, err = ioutil.ReadFile(impl.GCPCredsPath)
+				if err != nil {
+					r = append(r, err)
+					continue
+				}
+			} else {
+				gcpCreds = nil
+			}
+
+			g, err := gcp.New(gcpCreds)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = g.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Object)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = g.Import(options.Bucket, options.Object, t.ImageName, options.Os, options.Region)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+
+			err = g.Share(t.ImageName, options.ShareWithAccounts)
+			if err != nil {
+				r = append(r, err)
+				continue
+			}
+			// TODO: report back the information below, which is necessary to find and use the image
+			// imageName := t.ImageName
+			// projectID := gcp.GetProjectID()
+
 		case *target.KojiTargetOptions:
 			// Koji for some reason needs TLS renegotiation enabled.
 			// Clone the default http transport and enable renegotiation.
