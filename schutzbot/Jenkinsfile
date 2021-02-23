@@ -1,4 +1,4 @@
-def cron_string = BRANCH_NAME == "main" ? "@daily" : ""
+def cron_string = BRANCH_NAME == "rhel-8.4.0" ? "@daily" : ""
 
 pipeline {
     agent none
@@ -224,7 +224,7 @@ CC: [@atodorov_kiwi](tg://user?id=1047018883)
                         unstash 'compose_id'
                         def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
 
-                        telegramSend """💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL},
+                        telegramSend """💣 CI failed for osbuild-composer rhel-8.4.0 branch ${composeId} ${env.BUILD_URL},
 CC: [@atodorov_kiwi](tg://user?id=1047018883)
 """
                     } else if (env.BRANCH_NAME == 'main') {
