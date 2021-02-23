@@ -78,12 +78,19 @@ if [[ $VERSION_ID == 8.4 ]]; then
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 fi
 
+# Use chroot() call instead of nspawn until a bug in F34 is fixed
+# https://bugzilla.redhat.com/show_bug.cgi?id=1931452
+if [[ "$NAME" == "Fedora" && "$VERSION_ID" == "34" ]]; then
+  MOCK_WORKAROUND="--isolation=simple"
+fi
+
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
 sudo mock -r "$MOCK_CONFIG" --buildsrpm \
   --define "commit ${COMMIT}" \
   --spec ./osbuild-composer.spec \
   --sources "./osbuild-composer-${COMMIT}.tar.gz" \
+  ${MOCK_WORKAROUND:-} \
   --resultdir ./srpm
 
 greenprint "🎁 Building RPMs"
@@ -91,6 +98,7 @@ sudo mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
     --with=tests \
     --resultdir "$REPO_DIR" \
+    ${MOCK_WORKAROUND:-} \
     srpm/*.src.rpm
 
 # Change the ownership of all of our repo files from root to our CI user.
