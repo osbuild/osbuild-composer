@@ -17,13 +17,14 @@ def get_subprocess_stdout(*args, **kwargs):
     return sp.stdout
 
 
-def run_osbuild(manifest, store, output):
+def run_osbuild(manifest, store, output, export):
     with tempfile.TemporaryFile(dir="/tmp", prefix="osbuild-test-case-generator-", suffix=".log") as log:
         try:
             subprocess.run(["osbuild",
                             "--store", store,
                             "--output-directory", output,
                             "--checkpoint", "build"
+                            "--export", export,
                             "-"],
                             stdout=log,
                             stderr=subprocess.STDOUT,
@@ -70,8 +71,17 @@ class TestCaseGenerator:
 
         if no_image_info == False:
             with tempfile.TemporaryDirectory(dir=store, prefix="test-case-output-") as output:
-                run_osbuild(self.test_case["manifest"], store, output)
-                image_file = os.path.join(output, self.test_case["compose-request"]["filename"])
+                manifest = self.test_case["manifest"]
+                version = manifest.get("version", "1")
+                if version == "1":
+                    export = "assembler"
+                elif version == "2":
+                    export = manifest["pipelines"][-1]["name"]
+                else:
+                    print(f"Unknown manifest format version {version}")
+                    sys.exit(1)
+                run_osbuild(manifest, store, output, export)
+                image_file = os.path.join(output, export, self.test_case["compose-request"]["filename"])
                 image_info = get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8")
                 self.test_case["image-info"] = json.loads(image_info)
 
