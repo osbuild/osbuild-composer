@@ -132,6 +132,9 @@ func main() {
 		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
 			distro.ImageOptions{
 				Size: imageType.Size(0),
+				OSTree: distro.OSTreeImageOptions{
+					Ref: imageType.OSTreeRef(), // use default OSTreeRef for image type
+				},
 			},
 			repos,
 			packageSpecSets,
