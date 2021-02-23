@@ -318,23 +318,6 @@ pipeline {
                         }
                     }
                 }
-                stage('F32: koji-osbuild') {
-                    when {
-                        expression {
-                            return env.BUILD_CAUSE != 'cron';
-                        }
-                    }
-
-                    agent { label "f32cloudbase && x86_64 && aws" }
-                    steps {
-                        run_project_tests('koji-osbuild', 'integration.sh')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-revdep-koji-osbuild')
-                        }
-                    }
-                }
                 stage('F33 Base') {
                     when {
                         expression {
@@ -484,6 +467,23 @@ pipeline {
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
                             )
+                        }
+                    }
+                }
+                stage('F33: koji-osbuild') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    steps {
+                        run_project_tests('koji-osbuild', 'integration.sh')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-revdep-koji-osbuild')
                         }
                     }
                 }
