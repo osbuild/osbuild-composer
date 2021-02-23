@@ -5,10 +5,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -287,8 +289,11 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 }
 
 func runComposer(t *testing.T, command ...string) []byte {
+	fmt.Printf("Running composer-cli %s\n", strings.Join(command, " "))
 	cmd := exec.Command("composer-cli", command...)
 	stdout, err := cmd.StdoutPipe()
+	require.Nilf(t, err, "Could not create command: %v", err)
+	stderr, err := cmd.StderrPipe()
 	require.Nilf(t, err, "Could not create command: %v", err)
 
 	err = cmd.Start()
@@ -297,8 +302,11 @@ func runComposer(t *testing.T, command ...string) []byte {
 	contents, err := ioutil.ReadAll(stdout)
 	require.NoError(t, err, "Could not read stdout from command")
 
+	errcontents, err := ioutil.ReadAll(stderr)
+	require.NoError(t, err, "Could not read stderr from command")
+
 	err = cmd.Wait()
-	require.NoErrorf(t, err, "Command failed: %v", err)
+	require.NoErrorf(t, err, "Command failed (%v): %v", err, string(errcontents))
 
 	return contents
 }
