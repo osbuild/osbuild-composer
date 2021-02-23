@@ -243,8 +243,36 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 
 			targets = append(targets, t)
+		} else if uploadRequest.Type == UploadTypes_azure {
+			var azureUploadOptions AzureUploadRequestOptions
+			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+			if err != nil {
+				http.Error(w, "Unable to marshal azure upload request", http.StatusInternalServerError)
+				return
+			}
+			err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
+			if err != nil {
+				http.Error(w, "Unable to unmarshal azure upload request", http.StatusInternalServerError)
+				return
+			}
+			t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
+				Filename:       imageType.Filename(),
+				TenantID:       azureUploadOptions.TenantId,
+				Location:       azureUploadOptions.Location,
+				SubscriptionID: azureUploadOptions.SubscriptionId,
+				ResourceGroup:  azureUploadOptions.ResourceGroup,
+			})
+
+			if azureUploadOptions.ImageName != nil {
+				t.ImageName = *azureUploadOptions.ImageName
+			} else {
+				// if ImageName wasn't given, generate a random one
+				t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
+			}
+
+			targets = append(targets, t)
 		} else {
-			http.Error(w, "Unknown upload request type, only 'aws' and 'gcp' is supported", http.StatusBadRequest)
+			http.Error(w, "Unknown upload request type, only 'aws', 'azure' and 'gcp' are supported", http.StatusBadRequest)
 			return
 		}
 	}
@@ -318,6 +346,12 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 			uploadOptions = GCPUploadStatus{
 				ImageName: gcpOptions.ImageName,
 				ProjectId: gcpOptions.ProjectID,
+			}
+		case "org.osbuild.azure.image":
+			uploadType = UploadTypes_azure
+			gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
+			uploadOptions = AzureUploadStatus{
+				ImageName: gcpOptions.ImageName,
 			}
 		default:
 			http.Error(w, fmt.Sprintf("Job %s returned unknown upload target results %s", id, tr.Name), http.StatusInternalServerError)

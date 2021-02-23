@@ -121,6 +121,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
+            - $ref: '#/components/schemas/AzureUploadStatus'
     AWSUploadStatus:
       type: object
       required:
@@ -142,6 +143,14 @@ components:
         project_id:
           type: string
           example: 'ascendant-braid-303513'
+        image_name:
+          type: string
+          example: 'my-image'
+    AzureUploadStatus:
+      type: object
+      required:
+        - image_name
+      properties:
         image_name:
           type: string
           example: 'my-image'
@@ -212,9 +221,10 @@ components:
           oneOf:
             -  $ref: '#/components/schemas/AWSUploadRequestOptions'
             -  $ref: '#/components/schemas/GCPUploadRequestOptions'
+            -  $ref: '#/components/schemas/AzureUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp']
+      enum: ['aws', 'gcp', 'azure']
     AWSUploadRequestOptions:
       type: object
       required:
@@ -320,6 +330,45 @@ components:
             account.
           items:
             type: string
+    AzureUploadRequestOptions:
+      type: object
+      required:
+        - tenant_id
+        - subscription_id
+        - resource_group
+        - location
+      properties:
+        tenant_id:
+          type: string
+          example: '5c7ef5b6-1c3f-4da0-a622-0b060239d7d7'
+          description: |
+            ID of the tenant where the image should be uploaded. This link explains how
+            to find it in the Azure Portal:
+            https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
+        subscription_id:
+          type: string
+          example: '4e5d8b2c-ab24-4413-90c5-612306e809e2'
+          description: |
+            ID of subscription where the image should be uploaded.
+        resource_group:
+          type: string
+          example: 'ToucanResourceGroup'
+          description: |
+            Name of the resource group where the image should be uploaded.
+        location:
+          type: string
+          example: 'westeurope'
+          description: |
+            Location where the image should be uploaded and registered. This link explain
+            how to list all locations:
+            https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
+        image_name:
+          type: string
+          example: 'my-image'
+          description: |
+            Name of the uploaded image. It must be unique in the given resource group.
+            If name is omitted from the request, a random one based on a UUID is
+            generated.
     Customizations:
       type: object
       properties:
