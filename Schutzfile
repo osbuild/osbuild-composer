@@ -1,5 +1,5 @@
 {
-  "fedora-32": {
+  "fedora-33": {
     "dependants": {
       "koji-osbuild": {
         "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174"
