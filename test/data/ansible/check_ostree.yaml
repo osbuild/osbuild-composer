@@ -275,7 +275,7 @@
 
     # case: check running container with podman
     - name: run ubi8 image
-      command: podman run ubi8-minimal:latest cat /etc/redhat-release
+      command: podman run registry.access.redhat.com/ubi8/ubi-minimal:latest cat /etc/redhat-release
       register: podman_result
       become: yes
 
