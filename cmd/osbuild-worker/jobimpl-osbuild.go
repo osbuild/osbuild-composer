@@ -87,9 +87,19 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	exports := args.Exports
+	if len(exports) == 0 {
+		// job did not define exports, likely coming from an older version of composer
+		// fall back to default "assembler"
+		exports = []string{"assembler"}
+	} else if len(exports) > 1 {
+		// this worker only supports returning one (1) export
+		return fmt.Errorf("at most one build artifact can be exported")
+	}
+
 	start_time := time.Now()
 
-	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, args.Exports, os.Stderr)
+	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -101,7 +111,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// NOTE: Currently OSBuild supports multiple exports, but this isn't used
 	// by any of the image types and it can't be specified during the request.
 	// Use the first (and presumably only) export for the imagePath.
-	exportPath := args.Exports[0]
+	exportPath := exports[0]
 	if osbuildOutput.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, exportPath, args.ImageName)
