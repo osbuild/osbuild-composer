@@ -616,6 +616,9 @@
           "sha256:88f4bd19a6cf6eba5e6f2b5bba80819b5ccddb0476aadc53c8df13f9c45b1e58": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/l/libarchive-3.4.2-1.fc32.x86_64.rpm"
           },
+          "sha256:89c972ec7d2ab305c91c23bc248562c76f0ae645a9ed9f94d312e2f57c4d38fe": {
+            "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/k/kernel-5.6.6-300.fc32.x86_64.rpm"
+          },
           "sha256:8a0c00a69f9cb3a9ffacaf1cdc162c38a1faca76c9b976cb177bdc988902f2d4": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/p/popt-1.16-19.fc32.x86_64.rpm"
           },
@@ -804,6 +807,9 @@
           },
           "sha256:b821e9e8bf66abacaed4a386f9ed8ffa17f4f8be3db55e1ac31d52ba2d1faa1b": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/c/crypto-policies-scripts-20191128-5.gitcd267a5.fc32.noarch.rpm"
+          },
+          "sha256:b98687828b1d222ea73ebb8457450913dac58dd0be2e430a93bb7e98ba816505": {
+            "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/k/kernel-modules-5.6.6-300.fc32.x86_64.rpm"
           },
           "sha256:bb154a90c968150172036d86f0c9fc2a24b5799718bc4d835cb10d0758890c67": {
             "url": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/l/libnfsidmap-2.4.3-0.fc32.x86_64.rpm"
@@ -2412,7 +2418,15 @@
                 "check_gpg": true
               },
               {
+                "checksum": "sha256:89c972ec7d2ab305c91c23bc248562c76f0ae645a9ed9f94d312e2f57c4d38fe",
+                "check_gpg": true
+              },
+              {
                 "checksum": "sha256:a1613e90865db93fb578b8ee1a4ee40bd396c6c9f2fb2a14757acacecb9f23e8",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:b98687828b1d222ea73ebb8457450913dac58dd0be2e430a93bb7e98ba816505",
                 "check_gpg": true
               },
               {
@@ -6693,6 +6707,16 @@
         "check_gpg": true
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "5.6.6",
+        "release": "300.fc32",
+        "arch": "x86_64",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/k/kernel-5.6.6-300.fc32.x86_64.rpm",
+        "checksum": "sha256:89c972ec7d2ab305c91c23bc248562c76f0ae645a9ed9f94d312e2f57c4d38fe",
+        "check_gpg": true
+      },
+      {
         "name": "kernel-core",
         "epoch": 0,
         "version": "5.6.6",
@@ -6700,6 +6724,16 @@
         "arch": "x86_64",
         "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/k/kernel-core-5.6.6-300.fc32.x86_64.rpm",
         "checksum": "sha256:a1613e90865db93fb578b8ee1a4ee40bd396c6c9f2fb2a14757acacecb9f23e8",
+        "check_gpg": true
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "5.6.6",
+        "release": "300.fc32",
+        "arch": "x86_64",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/k/kernel-modules-5.6.6-300.fc32.x86_64.rpm",
+        "checksum": "sha256:b98687828b1d222ea73ebb8457450913dac58dd0be2e430a93bb7e98ba816505",
         "check_gpg": true
       },
       {
@@ -9299,7 +9333,9 @@
       "kbd-2.2.0-1.fc32.x86_64",
       "kbd-legacy-2.2.0-1.fc32.noarch",
       "kbd-misc-2.2.0-1.fc32.noarch",
+      "kernel-5.6.6-300.fc32.x86_64",
       "kernel-core-5.6.6-300.fc32.x86_64",
+      "kernel-modules-5.6.6-300.fc32.x86_64",
       "keyutils-libs-1.6-4.fc32.x86_64",
       "kmod-27-1.fc32.x86_64",
       "kmod-libs-27-1.fc32.x86_64",

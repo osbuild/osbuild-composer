@@ -1,6 +1,6 @@
 {
   "boot": {
-    "type": "qemu"
+    "type": "vmware"
   },
   "compose-request": {
     "distro": "fedora-33",
@@ -337,6 +337,9 @@
           "sha256:495ce50d147bdc637061d21a8dcb3563f3189f0055f8cd7ed87cbd8c1d3f3fac": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/x/xz-5.2.5-3.fc33.x86_64.rpm"
           },
+          "sha256:49cf91c54e6d60bbd479f237a7db40be3b50c7b143a18209ea55e3d2f4c18830": {
+            "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/k/kernel-5.8.15-301.fc33.x86_64.rpm"
+          },
           "sha256:4a1227b0a536573cbe71fede072d0bd7ac203e616cf2af1e31889aded6bb8634": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/g/gnupg2-2.2.23-1.fc33.x86_64.rpm"
           },
@@ -453,6 +456,9 @@
           },
           "sha256:6b5c7c46f0a177bf9c8b89ae3eb251a5e7315424c326cc62871b004bcaed414d": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/w/whois-nls-5.5.7-1.fc33.noarch.rpm"
+          },
+          "sha256:6bf58da366702e9e7cedf3a1560a623aec008621bfb7776665297bf073b29168": {
+            "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/a/alsa-sof-firmware-1.5-2.fc33.noarch.rpm"
           },
           "sha256:6c235bd211f68e4ed925bc6a03b8b0e5c30f1de41cb7cd1c0c79f9996024eede": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/g/grub2-pc-modules-2.04-31.fc33.noarch.rpm"
@@ -747,6 +753,9 @@
           },
           "sha256:af2777ec0c6ee867b5ecad024de55fce1afccb5567cd48501611e073536d332f": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/s/syslinux-extlinux-nonlinux-6.04-0.16.fc33.noarch.rpm"
+          },
+          "sha256:af378d963906ce5fbd91065c68319f169c078c7623b75cb6613530cb1c027b69": {
+            "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/k/kernel-modules-5.8.15-301.fc33.x86_64.rpm"
           },
           "sha256:af6c6f788555064ff9c7d3b32b2d4edde5e33e958384a909459ce33940755971": {
             "url": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/f/fuse-libs-2.9.9-10.fc33.x86_64.rpm"
@@ -2066,6 +2075,10 @@
                 "check_gpg": true
               },
               {
+                "checksum": "sha256:6bf58da366702e9e7cedf3a1560a623aec008621bfb7776665297bf073b29168",
+                "check_gpg": true
+              },
+              {
                 "checksum": "sha256:2200dd65dff57b773532153d3626ecb5914bd7826c42c689ca34be3f60ac3fe2",
                 "check_gpg": true
               },
@@ -2458,7 +2471,15 @@
                 "check_gpg": true
               },
               {
+                "checksum": "sha256:49cf91c54e6d60bbd479f237a7db40be3b50c7b143a18209ea55e3d2f4c18830",
+                "check_gpg": true
+              },
+              {
                 "checksum": "sha256:d8f263272b87175ece88f200f6b843c89c4294ee2abf630ff38485abac90fb47",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:af378d963906ce5fbd91065c68319f169c078c7623b75cb6613530cb1c027b69",
                 "check_gpg": true
               },
               {
@@ -5868,6 +5889,16 @@
         "check_gpg": true
       },
       {
+        "name": "alsa-sof-firmware",
+        "epoch": 0,
+        "version": "1.5",
+        "release": "2.fc33",
+        "arch": "noarch",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/a/alsa-sof-firmware-1.5-2.fc33.noarch.rpm",
+        "checksum": "sha256:6bf58da366702e9e7cedf3a1560a623aec008621bfb7776665297bf073b29168",
+        "check_gpg": true
+      },
+      {
         "name": "alternatives",
         "epoch": 0,
         "version": "1.14",
@@ -6848,6 +6879,16 @@
         "check_gpg": true
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "5.8.15",
+        "release": "301.fc33",
+        "arch": "x86_64",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/k/kernel-5.8.15-301.fc33.x86_64.rpm",
+        "checksum": "sha256:49cf91c54e6d60bbd479f237a7db40be3b50c7b143a18209ea55e3d2f4c18830",
+        "check_gpg": true
+      },
+      {
         "name": "kernel-core",
         "epoch": 0,
         "version": "5.8.15",
@@ -6855,6 +6896,16 @@
         "arch": "x86_64",
         "remote_location": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/k/kernel-core-5.8.15-301.fc33.x86_64.rpm",
         "checksum": "sha256:d8f263272b87175ece88f200f6b843c89c4294ee2abf630ff38485abac90fb47",
+        "check_gpg": true
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "5.8.15",
+        "release": "301.fc33",
+        "arch": "x86_64",
+        "remote_location": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/Packages/k/kernel-modules-5.8.15-301.fc33.x86_64.rpm",
+        "checksum": "sha256:af378d963906ce5fbd91065c68319f169c078c7623b75cb6613530cb1c027b69",
         "check_gpg": true
       },
       {
@@ -9372,6 +9423,7 @@
       "NetworkManager-1.26.2-2.fc33.x86_64",
       "NetworkManager-libnm-1.26.2-2.fc33.x86_64",
       "acl-2.2.53-9.fc33.x86_64",
+      "alsa-sof-firmware-1.5-2.fc33.noarch",
       "alternatives-1.14-3.fc33.x86_64",
       "audit-3.0-0.21.20191104git1c2f876.fc33.x86_64",
       "audit-libs-3.0-0.21.20191104git1c2f876.fc33.x86_64",
@@ -9471,7 +9523,9 @@
       "kbd-2.3.0-2.fc33.x86_64",
       "kbd-legacy-2.3.0-2.fc33.noarch",
       "kbd-misc-2.3.0-2.fc33.noarch",
+      "kernel-5.8.15-301.fc33.x86_64",
       "kernel-core-5.8.15-301.fc33.x86_64",
+      "kernel-modules-5.8.15-301.fc33.x86_64",
       "keyutils-libs-1.6-5.fc33.x86_64",
       "kmod-27-3.fc33.x86_64",
       "kmod-libs-27-3.fc33.x86_64",

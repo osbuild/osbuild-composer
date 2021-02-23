@@ -78,6 +78,9 @@
           "sha256:0b4118e4f4aec595982dbb9f4b48999284e9e51dfd45d251d930f1541d8a8020": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/expat-2.2.5-4.el8.x86_64.rpm"
           },
+          "sha256:0c650fbc8eb56cd94cd374509cfd9707997ff745e962b1cf2b018df8175c692a": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-syspurpose-1.28.9-1.el8.x86_64.rpm"
+          },
           "sha256:0d612ef49922f8eff2d2c96e8da290f77dacf7b667f6b8a9be751bd6394fcf73": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libxcrypt-4.1.1-4.el8.x86_64.rpm"
           },
@@ -192,6 +195,9 @@
           "sha256:208dcd6b67c5d9569f64bcc259b365db3abdd0e786494a50a556dbf65355cd9a": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libmbim-1.20.2-1.el8.x86_64.rpm"
           },
+          "sha256:20dec130e4fd0a2146443791ca7ade6e079cea691d93711813d5f483b691c55a": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-ethtool-0.14-3.el8.x86_64.rpm"
+          },
           "sha256:217a8c5975fb72687b26606867f4cc7b3fae0fc6d10335d986b7f13808a2e7a7": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/rsync-3.1.3-12.el8.x86_64.rpm"
           },
@@ -245,6 +251,9 @@
           },
           "sha256:2b4744ba961f3e27814c005ab38c5d899ee3dd5990132a6f88c28ccd053be54b": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/iwl6050-firmware-41.28.5.1-101.el8.1.noarch.rpm"
+          },
+          "sha256:2cfcc3d6163dfaf7ce76998be992bd0b70dd7cbb838430cecf2aff04cd435d24": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/virt-what-1.18-6.el8.x86_64.rpm"
           },
           "sha256:2e8fd9d87a922b1441538318c401b1e4353b87a9e8000ca76b0cee681ec79c45": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libnghttp2-1.33.0-3.el8_2.1.x86_64.rpm"
@@ -378,6 +387,9 @@
           "sha256:48dcfdf2bdfd84c0a7cab26e7626929f773db792910399a1b18108cb0e32208a": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/openssl-libs-1.1.1g-12.el8_3.x86_64.rpm"
           },
+          "sha256:49ea248bc51c089015b2169887bedb5faf3f97f97479077929baf3272ad18d54": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-inotify-0.9.6-13.el8.noarch.rpm"
+          },
           "sha256:4a62975251933dcaff77fdbd7704e8a12bea0ecb6eaaae5ea5e552bedd6788ec": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libidn2-2.2.0-1.el8.x86_64.rpm"
           },
@@ -401,6 +413,9 @@
           },
           "sha256:4da971c6e5a8a759c919dc9cde21324ee2b309c96b46eb000b4f251a287b08b1": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/keyutils-libs-1.5.10-6.el8.x86_64.rpm"
+          },
+          "sha256:4dca84d24de4ee22cb0c051f9f77a9690b7ecc24ef46ab32851a3e576db9f7ff": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-librepo-1.12.0-3.el8.x86_64.rpm"
           },
           "sha256:4dd4425cb822049b615b5fc05a15a7088bb3984125cceb447e4b226bf26a22d3": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/openldap-2.4.46-16.el8.x86_64.rpm"
@@ -449,6 +464,9 @@
           },
           "sha256:55a58ea1e63e2cc102d82ab4d02e04e90e2c03819b2a2dee74395905868eb5fd": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/memstrack-0.1.11-1.el8.x86_64.rpm"
+          },
+          "sha256:566ecf6ce5a039d18ff1d742d1b6953818cccceb00c03ef487ad47404adffee2": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/subscription-manager-1.28.9-1.el8.x86_64.rpm"
           },
           "sha256:56856e839d716f9211172e3b573ad24445d0e82c03eba22438fb10320bbcfc0d": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/iputils-20180629-6.el8.x86_64.rpm"
@@ -521,6 +539,9 @@
           },
           "sha256:6431a43da4fa2af839b5cc47c462d26b6d5c60f11bdd9045d363a9ba8ea8b781": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/nettle-3.4.1-2.el8.x86_64.rpm"
+          },
+          "sha256:66e1d5bace0debb2216ddf1691c62dab24622c84e70bb091714f38069be72792": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/sqlite-3.26.0-13.el8.x86_64.rpm"
           },
           "sha256:6745b40a87d7633509401de65b8690fcb4aba78827476cfb7323454e7c097c33": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/crypto-policies-scripts-20200713-1.git51d1222.el8.noarch.rpm"
@@ -626,6 +647,9 @@
           },
           "sha256:7c332912363b625e9dfa39e4335dc996620e7a3c59fb4d41f062d04497886b9f": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/iwl1000-firmware-39.31.5.1-101.el8.1.noarch.rpm"
+          },
+          "sha256:7d3931f1f8ea44964be5abed7aec8c3b803e761624809a31a427b819fa54fa37": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dateutil-2.6.1-6.el8.noarch.rpm"
           },
           "sha256:7d504d8d0c5e1ca9d838a9621983737998317f937efd6328f18cc56674432b33": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/NetworkManager-wwan-1.30.0-0.6.el8.x86_64.rpm"
@@ -744,6 +768,9 @@
           "sha256:9889833f56ee91ce8b7c2cb6258698b4e1f8f1824d03825f042c9ff6e8025ece": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/libjose-10-2.el8.x86_64.rpm"
           },
+          "sha256:98a589d7e1cdea9d974aa43f688e55333eed11ce7cb2037d45cc2e69bce579b3": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/usermode-1.113-1.el8.x86_64.rpm"
+          },
           "sha256:98afa549d41462a811cce159dc06e06840bcf24eca9d784f77e19214d149e7d7": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/libblockdev-fs-2.24-5.el8.x86_64.rpm"
           },
@@ -773,6 +800,9 @@
           },
           "sha256:9cf2e24fdbe89f25b8283291fd3fcaf73ca60554bbf5767932c38882cdd0e3c4": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/cracklib-2.9.6-15.el8.x86_64.rpm"
+          },
+          "sha256:9da4490289df4e4903520bd29d8e5b03ee9d1fd97992019ec5885e27f90dc632": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dnf-plugins-core-4.0.18-2.el8.noarch.rpm"
           },
           "sha256:9e70cafe666de95febf05bcee7d3be9a2c5cb9bb3d361d81b2d72bde8a5e20c7": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/python36-3.6.8-2.module+el8.1.0+3334+5cb623d7.x86_64.rpm"
@@ -969,6 +999,9 @@
           "sha256:c79d94c1289135a659a54a2328f40b5739db9afc969d5fa601db67f4e07ffcfe": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/krb5-libs-1.18.2-8.el8.x86_64.rpm"
           },
+          "sha256:c80dbed0d6b54625d39b620319adbe0927a4a59a9c805e5707ed7269b1dca0d2": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/subscription-manager-rhsm-certificates-1.28.9-1.el8.x86_64.rpm"
+          },
           "sha256:c847a91e2358602511c3001a66510c87fc49bf05161348d8f7c4abca8727c29e": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/rpm-plugin-systemd-inhibit-4.14.3-4.el8.x86_64.rpm"
           },
@@ -1020,6 +1053,9 @@
           "sha256:d2b538478cdacafaef97486a94316f8b027d801105fdf94de20ebe2e98472c32": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libselinux-utils-2.9-5.el8.x86_64.rpm"
           },
+          "sha256:d2b777ea98ee644997029994136723cf4fa78e97afeaceab39f76b545b51792b": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dmidecode-3.12.2-15.el8.x86_64.rpm"
+          },
           "sha256:d31afc5532d581167003977d88771f22255923bf3a1aec4dabb5ac98ec910234": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/gettext-libs-0.19.8.1-17.el8.x86_64.rpm"
           },
@@ -1043,6 +1079,9 @@
           },
           "sha256:d6aefd16f938e736ef5f3009bf2c67ef3953a6d82ed9c2e8a405dbd4a2f28d0f": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/bash-4.4.19-14.el8.x86_64.rpm"
+          },
+          "sha256:d6b85d0546747e8c64ff9926be2a814b09ce5a2aebfeaa739c266180496b5dfc": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dmidecode-3.2-8.el8.x86_64.rpm"
           },
           "sha256:d6d0a2382bd84b539a709c10aa273d980369430cfaa4c96371a3754ba9511275": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/fuse3-3.2.1-12.el8.x86_64.rpm"
@@ -1085,6 +1124,9 @@
           },
           "sha256:dd6c970a0b0f9dd3509036090669a64af1449cde2f02810a5f666db9936fdd4c": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/shim-x64-15-16.el8.x86_64.rpm"
+          },
+          "sha256:e1af6a1336a85e91cf68b515adb0f6c4f57666fb26888194a4321453cf946b21": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-subscription-manager-rhsm-1.28.9-1.el8.x86_64.rpm"
           },
           "sha256:e233a9ecfbf657192902180f6a67a225e5ec0194834df672eaeb2b3a50e8fb49": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/info-6.5-6.el8.x86_64.rpm"
@@ -1170,6 +1212,9 @@
           "sha256:ef8b376e982b02dea7eb7a0e5aa80eb5526c17e87e0b04eb75deae6e9c54dee5": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/e2fsprogs-1.45.6-1.el8.x86_64.rpm"
           },
+          "sha256:f04554b4e4c9e5e8d48251840e2a994ac3349ad4387d2c7fecbd5a6d70e02849": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dnf-plugin-subscription-manager-1.28.9-1.el8.x86_64.rpm"
+          },
           "sha256:f0cb56a04fa3b27c1a3bb8896372077234123b36fe3461aca8ddc7b912030ce8": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/kbd-legacy-2.0.4-10.el8.noarch.rpm"
           },
@@ -1193,6 +1238,9 @@
           },
           "sha256:f43d8fbd83779706c5d2d8ebec56b9cf7178dab9e02b53f952d0abbd198963ec": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libsepol-2.9-2.el8.x86_64.rpm"
+          },
+          "sha256:f65164e882881ea96672081f0d990f51372d3d3d8dbeb63360c5b3a28ef6e229": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-libxml2-2.9.7-9.el8.x86_64.rpm"
           },
           "sha256:f65b195bd738fb4a12b7761b868cd9caecaa67a547c927cc27c0762c5da97d03": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/libblockdev-swap-2.24-5.el8.x86_64.rpm"
@@ -2104,6 +2152,18 @@
                 "checksum": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
               },
               {
+                "checksum": "sha256:d6b85d0546747e8c64ff9926be2a814b09ce5a2aebfeaa739c266180496b5dfc"
+              },
+              {
+                "checksum": "sha256:e381bbfcb84a338d74ab793c99529368708c61b466e222983d50fd7e026970cd"
+              },
+              {
+                "checksum": "sha256:0d7867b42fb1882445ddcce818f1660b10da8873fa33f50432c1e7c3ba4e7f03"
+              },
+              {
+                "checksum": "sha256:f04554b4e4c9e5e8d48251840e2a994ac3349ad4387d2c7fecbd5a6d70e02849"
+              },
+              {
                 "checksum": "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3"
               },
               {
@@ -2413,6 +2473,9 @@
                 "checksum": "sha256:c4074dcf1be5305379967c6ce11e30ce3a1a26320f7888b5dbda7d0454304ba9"
               },
               {
+                "checksum": "sha256:a8edffe76202b2826531ff3601508295d01247323cb6810c4f2f097a761cef42"
+              },
+              {
                 "checksum": "sha256:d0982bac60512aaf37a99078e24446337ab6210db07ed95c49baeb9a3811dd2b"
               },
               {
@@ -2423,6 +2486,9 @@
               },
               {
                 "checksum": "sha256:b16b74a33e1cbbdf69ce43d869eafc87b325510de731e07d41f3325aa1645fdb"
+              },
+              {
+                "checksum": "sha256:a195617d4655dfadc36e2f9806542f232ec70cc87bfe92219c600bc72c4ac637"
               },
               {
                 "checksum": "sha256:0391105afa53c9503b59591615bd7c98e2f7a4cd94ff4fd1451c4234522f3880"
@@ -2537,6 +2603,9 @@
               },
               {
                 "checksum": "sha256:4a95dbaad30dfee445cb89fa5c047f56b4588c16a5442ef4043158f709c857c9"
+              },
+              {
+                "checksum": "sha256:bd37c05e277205686dade257e19f95839fad32f2278872dbc9969c50ec9da0b6"
               },
               {
                 "checksum": "sha256:37ecb157872f2178dfa1e47a6914ffb5b40c5cf0b13c66364110f80a4fe1428c"
@@ -2764,16 +2833,52 @@
                 "checksum": "sha256:8f00781eb679c6baf359099fa2a672ffccfc8e43b7c03c1dc635619cb25ff01d"
               },
               {
+                "checksum": "sha256:7d3931f1f8ea44964be5abed7aec8c3b803e761624809a31a427b819fa54fa37"
+              },
+              {
                 "checksum": "sha256:5a85222c8e9997a8b609b915a8fbae756de9b9bff732db852fb15fe0524f2d86"
               },
               {
                 "checksum": "sha256:589fa333c866d9a59bc607ec6c45b7df30c8602c80c16b2aac2c0f916ebed6e7"
               },
               {
+                "checksum": "sha256:d2b777ea98ee644997029994136723cf4fa78e97afeaceab39f76b545b51792b"
+              },
+              {
+                "checksum": "sha256:ae590ec0f4e8f7cb01d25168a6f68e54f383b8e5d3fe5676a3f2cd1247051a5d"
+              },
+              {
+                "checksum": "sha256:9da4490289df4e4903520bd29d8e5b03ee9d1fd97992019ec5885e27f90dc632"
+              },
+              {
+                "checksum": "sha256:20dec130e4fd0a2146443791ca7ade6e079cea691d93711813d5f483b691c55a"
+              },
+              {
                 "checksum": "sha256:32d056d0f1c064512e4d27bdc2c9a23591d7c74838ef3436e451c90ac3b05b97"
               },
               {
                 "checksum": "sha256:86d305a1466a596f8b436561d674f2510f268bed9e73f56c87da1dd120f99c18"
+              },
+              {
+                "checksum": "sha256:a811a350cc471cee1728991b5f5b20889b9d7b5cd6589773de6afc2617544510"
+              },
+              {
+                "checksum": "sha256:c4fab880fc77cba297766e3f09b7242dcf0891dc11a596b390b78259656dffcd"
+              },
+              {
+                "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+              },
+              {
+                "checksum": "sha256:49ea248bc51c089015b2169887bedb5faf3f97f97479077929baf3272ad18d54"
+              },
+              {
+                "checksum": "sha256:24c7b8b233b0a5a23ff5d42ba56f0ee40372234f91e4fabe36d68e8077157e23"
+              },
+              {
+                "checksum": "sha256:6359e73edb3d26b7ab574eca2a5a038fa3551f7d4f5cfaa10afd38f8f79fc679"
+              },
+              {
+                "checksum": "sha256:4dca84d24de4ee22cb0c051f9f77a9690b7ecc24ef46ab32851a3e576db9f7ff"
               },
               {
                 "checksum": "sha256:e94996bf2ae48bac0e76cb66f7cc17f67d60e86a04f9e38f34eff1d75bb351c6"
@@ -2785,6 +2890,9 @@
                 "checksum": "sha256:685303e8947faecb0ecbf0c3fbf401097024a00056791f6586ef3c5a484883a9"
               },
               {
+                "checksum": "sha256:f65164e882881ea96672081f0d990f51372d3d3d8dbeb63360c5b3a28ef6e229"
+              },
+              {
                 "checksum": "sha256:e96825366b16b94086294dcfce37c6ba4958c4748aed64c343a8d2cddc280ab1"
               },
               {
@@ -2792,6 +2900,9 @@
               },
               {
                 "checksum": "sha256:e64a9ad8cf69086aa214b2f1082021600ac89abea338727f6bc5444190ceff42"
+              },
+              {
+                "checksum": "sha256:526a65d5c3860f82e02781b55e7581bac168a611aa61ba603a06007ed5b34213"
               },
               {
                 "checksum": "sha256:db8bc154626bdd906a1f50104031a5042bbe91db7f5a1473657795eedd4158c6"
@@ -2809,6 +2920,12 @@
                 "checksum": "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d"
               },
               {
+                "checksum": "sha256:e1af6a1336a85e91cf68b515adb0f6c4f57666fb26888194a4321453cf946b21"
+              },
+              {
+                "checksum": "sha256:0c650fbc8eb56cd94cd374509cfd9707997ff745e962b1cf2b018df8175c692a"
+              },
+              {
                 "checksum": "sha256:ef221ca565f17ed425997e97fdeb5fc27261910659fa61372b18d93e1a5613e9"
               },
               {
@@ -2824,10 +2941,16 @@
                 "checksum": "sha256:d8c6548dee8dbd053eeff29a9a7d110a7c28e3137781707c66f8ab4e03271279"
               },
               {
+                "checksum": "sha256:584b39de639e9f0a25687b8c7ef05500a0084a3bc4c8afb0a2137868ab357d14"
+              },
+              {
                 "checksum": "sha256:15510ab45e249c5711bb6d10d7470a009345dcd45b00d8b2dd90ca61e9206d64"
               },
               {
                 "checksum": "sha256:5565b2a9f21fd81ef8005e285b273fd5b369281df4ec6369941d9f92e25c8510"
+              },
+              {
+                "checksum": "sha256:c847a91e2358602511c3001a66510c87fc49bf05161348d8f7c4abca8727c29e"
               },
               {
                 "checksum": "sha256:217a8c5975fb72687b26606867f4cc7b3fae0fc6d10335d986b7f13808a2e7a7"
@@ -2857,7 +2980,16 @@
                 "checksum": "sha256:dd6c970a0b0f9dd3509036090669a64af1449cde2f02810a5f666db9936fdd4c"
               },
               {
+                "checksum": "sha256:66e1d5bace0debb2216ddf1691c62dab24622c84e70bb091714f38069be72792"
+              },
+              {
                 "checksum": "sha256:4e0c74fabe6c631afdc533f7923e6e7c1381b3bb538d2b1fbb085088f9f53cb0"
+              },
+              {
+                "checksum": "sha256:566ecf6ce5a039d18ff1d742d1b6953818cccceb00c03ef487ad47404adffee2"
+              },
+              {
+                "checksum": "sha256:c80dbed0d6b54625d39b620319adbe0927a4a59a9c805e5707ed7269b1dca0d2"
               },
               {
                 "checksum": "sha256:ec9adedf0d5d2d096acf4739e2eefab8095498037e13dac9b283e17a9c54259a"
@@ -2902,10 +3034,16 @@
                 "checksum": "sha256:5993a1b691dc77ea966c083de8e19c40ada9ea56618df934b2e5c80a12426308"
               },
               {
+                "checksum": "sha256:98a589d7e1cdea9d974aa43f688e55333eed11ce7cb2037d45cc2e69bce579b3"
+              },
+              {
                 "checksum": "sha256:ba6b82d280db2e64db7d4b68cfe0096caa0205c3fff41c427f89c0abe280a3f0"
               },
               {
                 "checksum": "sha256:947b4e4eebec21501ca62e2a7ff9baae0e4e7c59584fbba4b6276a402cfbb45b"
+              },
+              {
+                "checksum": "sha256:2cfcc3d6163dfaf7ce76998be992bd0b70dd7cbb838430cecf2aff04cd435d24"
               },
               {
                 "checksum": "sha256:ba59385282b2647341121bfe54aba8384012e9d48616636872c6d5e9b4263440"
@@ -3088,6 +3226,9 @@
                 "checksum": "sha256:ffe769e8d404589e60b0760d91669cd61e1320b5eeac85f9e8e624acdc845e76"
               },
               {
+                "checksum": "sha256:8c4b5140b61fa1e491d76462c2137e81d19c5fbc7e0a91329d91c8d8427ea696"
+              },
+              {
                 "checksum": "sha256:e7003a8ad124f95a3352dc1abcfd25897622090cf2ed20f4e9138dae6d05fd28"
               },
               {
@@ -3104,6 +3245,9 @@
               },
               {
                 "checksum": "sha256:5c5605445bf887d5e259a4d73b8362bdc2a291ad19e3ce8552e713a801bf6624"
+              },
+              {
+                "checksum": "sha256:6a43c0a0605f6a5e3e155ca1d2e1bfdf5a8986a282b04c1c160d9e0148fb02af"
               },
               {
                 "checksum": "sha256:5198a34b9edda3361e16f39fe6d9e1b23dc5d8230ed07adf4675470cbd0db89f"
@@ -5656,6 +5800,42 @@
         "checksum": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
       },
       {
+        "name": "dmidecode",
+        "epoch": 1,
+        "version": "3.2",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dmidecode-3.2-8.el8.x86_64.rpm",
+        "checksum": "sha256:d6b85d0546747e8c64ff9926be2a814b09ce5a2aebfeaa739c266180496b5dfc"
+      },
+      {
+        "name": "dnf",
+        "epoch": 0,
+        "version": "4.4.2",
+        "release": "3.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dnf-4.4.2-3.el8.noarch.rpm",
+        "checksum": "sha256:e381bbfcb84a338d74ab793c99529368708c61b466e222983d50fd7e026970cd"
+      },
+      {
+        "name": "dnf-data",
+        "epoch": 0,
+        "version": "4.4.2",
+        "release": "3.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dnf-data-4.4.2-3.el8.noarch.rpm",
+        "checksum": "sha256:0d7867b42fb1882445ddcce818f1660b10da8873fa33f50432c1e7c3ba4e7f03"
+      },
+      {
+        "name": "dnf-plugin-subscription-manager",
+        "epoch": 0,
+        "version": "1.28.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/dnf-plugin-subscription-manager-1.28.9-1.el8.x86_64.rpm",
+        "checksum": "sha256:f04554b4e4c9e5e8d48251840e2a994ac3349ad4387d2c7fecbd5a6d70e02849"
+      },
+      {
         "name": "dosfstools",
         "epoch": 0,
         "version": "4.1",
@@ -6583,6 +6763,15 @@
         "checksum": "sha256:c4074dcf1be5305379967c6ce11e30ce3a1a26320f7888b5dbda7d0454304ba9"
       },
       {
+        "name": "libcomps",
+        "epoch": 0,
+        "version": "0.1.11",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libcomps-0.1.11-4.el8.x86_64.rpm",
+        "checksum": "sha256:a8edffe76202b2826531ff3601508295d01247323cb6810c4f2f097a761cef42"
+      },
+      {
         "name": "libcroco",
         "epoch": 0,
         "version": "0.6.12",
@@ -6617,6 +6806,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libdb-utils-5.3.28-40.el8.x86_64.rpm",
         "checksum": "sha256:b16b74a33e1cbbdf69ce43d869eafc87b325510de731e07d41f3325aa1645fdb"
+      },
+      {
+        "name": "libdnf",
+        "epoch": 0,
+        "version": "0.55.0",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libdnf-0.55.0-1.el8.x86_64.rpm",
+        "checksum": "sha256:a195617d4655dfadc36e2f9806542f232ec70cc87bfe92219c600bc72c4ac637"
       },
       {
         "name": "libedit",
@@ -6959,6 +7157,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/libreport-filesystem-2.9.5-15.el8.x86_64.rpm",
         "checksum": "sha256:4a95dbaad30dfee445cb89fa5c047f56b4588c16a5442ef4043158f709c857c9"
+      },
+      {
+        "name": "librhsm",
+        "epoch": 0,
+        "version": "0.0.3",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/librhsm-0.0.3-4.el8.x86_64.rpm",
+        "checksum": "sha256:bd37c05e277205686dade257e19f95839fad32f2278872dbc9969c50ec9da0b6"
       },
       {
         "name": "libseccomp",
@@ -7636,6 +7843,15 @@
         "checksum": "sha256:8f00781eb679c6baf359099fa2a672ffccfc8e43b7c03c1dc635619cb25ff01d"
       },
       {
+        "name": "python3-dateutil",
+        "epoch": 1,
+        "version": "2.6.1",
+        "release": "6.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dateutil-2.6.1-6.el8.noarch.rpm",
+        "checksum": "sha256:7d3931f1f8ea44964be5abed7aec8c3b803e761624809a31a427b819fa54fa37"
+      },
+      {
         "name": "python3-dbus",
         "epoch": 0,
         "version": "1.2.4",
@@ -7654,6 +7870,42 @@
         "checksum": "sha256:589fa333c866d9a59bc607ec6c45b7df30c8602c80c16b2aac2c0f916ebed6e7"
       },
       {
+        "name": "python3-dmidecode",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "15.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dmidecode-3.12.2-15.el8.x86_64.rpm",
+        "checksum": "sha256:d2b777ea98ee644997029994136723cf4fa78e97afeaceab39f76b545b51792b"
+      },
+      {
+        "name": "python3-dnf",
+        "epoch": 0,
+        "version": "4.4.2",
+        "release": "3.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dnf-4.4.2-3.el8.noarch.rpm",
+        "checksum": "sha256:ae590ec0f4e8f7cb01d25168a6f68e54f383b8e5d3fe5676a3f2cd1247051a5d"
+      },
+      {
+        "name": "python3-dnf-plugins-core",
+        "epoch": 0,
+        "version": "4.0.18",
+        "release": "2.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-dnf-plugins-core-4.0.18-2.el8.noarch.rpm",
+        "checksum": "sha256:9da4490289df4e4903520bd29d8e5b03ee9d1fd97992019ec5885e27f90dc632"
+      },
+      {
+        "name": "python3-ethtool",
+        "epoch": 0,
+        "version": "0.14",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-ethtool-0.14-3.el8.x86_64.rpm",
+        "checksum": "sha256:20dec130e4fd0a2146443791ca7ade6e079cea691d93711813d5f483b691c55a"
+      },
+      {
         "name": "python3-firewall",
         "epoch": 0,
         "version": "0.8.2",
@@ -7670,6 +7922,69 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-gobject-base-3.28.3-2.el8.x86_64.rpm",
         "checksum": "sha256:86d305a1466a596f8b436561d674f2510f268bed9e73f56c87da1dd120f99c18"
+      },
+      {
+        "name": "python3-gpg",
+        "epoch": 0,
+        "version": "1.13.1",
+        "release": "7.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-gpg-1.13.1-7.el8.x86_64.rpm",
+        "checksum": "sha256:a811a350cc471cee1728991b5f5b20889b9d7b5cd6589773de6afc2617544510"
+      },
+      {
+        "name": "python3-hawkey",
+        "epoch": 0,
+        "version": "0.55.0",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-hawkey-0.55.0-1.el8.x86_64.rpm",
+        "checksum": "sha256:c4fab880fc77cba297766e3f09b7242dcf0891dc11a596b390b78259656dffcd"
+      },
+      {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "31.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
+        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
+      },
+      {
+        "name": "python3-inotify",
+        "epoch": 0,
+        "version": "0.9.6",
+        "release": "13.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-inotify-0.9.6-13.el8.noarch.rpm",
+        "checksum": "sha256:49ea248bc51c089015b2169887bedb5faf3f97f97479077929baf3272ad18d54"
+      },
+      {
+        "name": "python3-libcomps",
+        "epoch": 0,
+        "version": "0.1.11",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-libcomps-0.1.11-4.el8.x86_64.rpm",
+        "checksum": "sha256:24c7b8b233b0a5a23ff5d42ba56f0ee40372234f91e4fabe36d68e8077157e23"
+      },
+      {
+        "name": "python3-libdnf",
+        "epoch": 0,
+        "version": "0.55.0",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-libdnf-0.55.0-1.el8.x86_64.rpm",
+        "checksum": "sha256:6359e73edb3d26b7ab574eca2a5a038fa3551f7d4f5cfaa10afd38f8f79fc679"
+      },
+      {
+        "name": "python3-librepo",
+        "epoch": 0,
+        "version": "1.12.0",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-librepo-1.12.0-3.el8.x86_64.rpm",
+        "checksum": "sha256:4dca84d24de4ee22cb0c051f9f77a9690b7ecc24ef46ab32851a3e576db9f7ff"
       },
       {
         "name": "python3-libs",
@@ -7699,6 +8014,15 @@
         "checksum": "sha256:685303e8947faecb0ecbf0c3fbf401097024a00056791f6586ef3c5a484883a9"
       },
       {
+        "name": "python3-libxml2",
+        "epoch": 0,
+        "version": "2.9.7",
+        "release": "9.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-libxml2-2.9.7-9.el8.x86_64.rpm",
+        "checksum": "sha256:f65164e882881ea96672081f0d990f51372d3d3d8dbeb63360c5b3a28ef6e229"
+      },
+      {
         "name": "python3-nftables",
         "epoch": 1,
         "version": "0.9.3",
@@ -7724,6 +8048,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-policycoreutils-2.9-9.el8.noarch.rpm",
         "checksum": "sha256:e64a9ad8cf69086aa214b2f1082021600ac89abea338727f6bc5444190ceff42"
+      },
+      {
+        "name": "python3-rpm",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-rpm-4.14.3-4.el8.x86_64.rpm",
+        "checksum": "sha256:526a65d5c3860f82e02781b55e7581bac168a611aa61ba603a06007ed5b34213"
       },
       {
         "name": "python3-setools",
@@ -7771,6 +8104,24 @@
         "checksum": "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d"
       },
       {
+        "name": "python3-subscription-manager-rhsm",
+        "epoch": 0,
+        "version": "1.28.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-subscription-manager-rhsm-1.28.9-1.el8.x86_64.rpm",
+        "checksum": "sha256:e1af6a1336a85e91cf68b515adb0f6c4f57666fb26888194a4321453cf946b21"
+      },
+      {
+        "name": "python3-syspurpose",
+        "epoch": 0,
+        "version": "1.28.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-syspurpose-1.28.9-1.el8.x86_64.rpm",
+        "checksum": "sha256:0c650fbc8eb56cd94cd374509cfd9707997ff745e962b1cf2b018df8175c692a"
+      },
+      {
         "name": "readline",
         "epoch": 0,
         "version": "7.0",
@@ -7816,6 +8167,15 @@
         "checksum": "sha256:d8c6548dee8dbd053eeff29a9a7d110a7c28e3137781707c66f8ab4e03271279"
       },
       {
+        "name": "rpm-build-libs",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/rpm-build-libs-4.14.3-4.el8.x86_64.rpm",
+        "checksum": "sha256:584b39de639e9f0a25687b8c7ef05500a0084a3bc4c8afb0a2137868ab357d14"
+      },
+      {
         "name": "rpm-libs",
         "epoch": 0,
         "version": "4.14.3",
@@ -7832,6 +8192,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/rpm-plugin-selinux-4.14.3-4.el8.x86_64.rpm",
         "checksum": "sha256:5565b2a9f21fd81ef8005e285b273fd5b369281df4ec6369941d9f92e25c8510"
+      },
+      {
+        "name": "rpm-plugin-systemd-inhibit",
+        "epoch": 0,
+        "version": "4.14.3",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/rpm-plugin-systemd-inhibit-4.14.3-4.el8.x86_64.rpm",
+        "checksum": "sha256:c847a91e2358602511c3001a66510c87fc49bf05161348d8f7c4abca8727c29e"
       },
       {
         "name": "rsync",
@@ -7915,6 +8284,15 @@
         "checksum": "sha256:dd6c970a0b0f9dd3509036090669a64af1449cde2f02810a5f666db9936fdd4c"
       },
       {
+        "name": "sqlite",
+        "epoch": 0,
+        "version": "3.26.0",
+        "release": "13.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/sqlite-3.26.0-13.el8.x86_64.rpm",
+        "checksum": "sha256:66e1d5bace0debb2216ddf1691c62dab24622c84e70bb091714f38069be72792"
+      },
+      {
         "name": "sqlite-libs",
         "epoch": 0,
         "version": "3.26.0",
@@ -7922,6 +8300,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/sqlite-libs-3.26.0-13.el8.x86_64.rpm",
         "checksum": "sha256:4e0c74fabe6c631afdc533f7923e6e7c1381b3bb538d2b1fbb085088f9f53cb0"
+      },
+      {
+        "name": "subscription-manager",
+        "epoch": 0,
+        "version": "1.28.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/subscription-manager-1.28.9-1.el8.x86_64.rpm",
+        "checksum": "sha256:566ecf6ce5a039d18ff1d742d1b6953818cccceb00c03ef487ad47404adffee2"
+      },
+      {
+        "name": "subscription-manager-rhsm-certificates",
+        "epoch": 0,
+        "version": "1.28.9",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/subscription-manager-rhsm-certificates-1.28.9-1.el8.x86_64.rpm",
+        "checksum": "sha256:c80dbed0d6b54625d39b620319adbe0927a4a59a9c805e5707ed7269b1dca0d2"
       },
       {
         "name": "sudo",
@@ -8050,6 +8446,15 @@
         "checksum": "sha256:5993a1b691dc77ea966c083de8e19c40ada9ea56618df934b2e5c80a12426308"
       },
       {
+        "name": "usermode",
+        "epoch": 0,
+        "version": "1.113",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/usermode-1.113-1.el8.x86_64.rpm",
+        "checksum": "sha256:98a589d7e1cdea9d974aa43f688e55333eed11ce7cb2037d45cc2e69bce579b3"
+      },
+      {
         "name": "util-linux",
         "epoch": 0,
         "version": "2.32.1",
@@ -8066,6 +8471,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/vim-minimal-8.0.1763-15.el8.x86_64.rpm",
         "checksum": "sha256:947b4e4eebec21501ca62e2a7ff9baae0e4e7c59584fbba4b6276a402cfbb45b"
+      },
+      {
+        "name": "virt-what",
+        "epoch": 0,
+        "version": "1.18",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/virt-what-1.18-6.el8.x86_64.rpm",
+        "checksum": "sha256:2cfcc3d6163dfaf7ce76998be992bd0b70dd7cbb838430cecf2aff04cd435d24"
       },
       {
         "name": "which",
@@ -8608,6 +9022,15 @@
         "checksum": "sha256:ffe769e8d404589e60b0760d91669cd61e1320b5eeac85f9e8e624acdc845e76"
       },
       {
+        "name": "python3-unbound",
+        "epoch": 0,
+        "version": "1.7.3",
+        "release": "15.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/python3-unbound-1.7.3-15.el8.x86_64.rpm",
+        "checksum": "sha256:8c4b5140b61fa1e491d76462c2137e81d19c5fbc7e0a91329d91c8d8427ea696"
+      },
+      {
         "name": "rpm-ostree",
         "epoch": 0,
         "version": "2020.7",
@@ -8660,6 +9083,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/udisks2-2.9.0-5.el8.x86_64.rpm",
         "checksum": "sha256:5c5605445bf887d5e259a4d73b8362bdc2a291ad19e3ce8552e713a801bf6624"
+      },
+      {
+        "name": "unbound-libs",
+        "epoch": 0,
+        "version": "1.7.3",
+        "release": "15.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/unbound-libs-1.7.3-15.el8.x86_64.rpm",
+        "checksum": "sha256:6a43c0a0605f6a5e3e155ca1d2e1bfdf5a8986a282b04c1c160d9e0148fb02af"
       },
       {
         "name": "usbguard",
@@ -8720,13 +9152,13 @@
       "audio:x:63:",
       "bin:x:1:",
       "cdrom:x:11:",
-      "chrony:x:993:",
-      "clevis:x:994:",
+      "chrony:x:992:",
+      "clevis:x:993:",
       "daemon:x:2:",
       "dbus:x:81:",
       "dialout:x:18:",
       "disk:x:6:",
-      "dnsmasq:x:992:",
+      "dnsmasq:x:991:",
       "floppy:x:19:",
       "ftp:x:50:",
       "games:x:20:",
@@ -8750,6 +9182,7 @@
       "tape:x:33:",
       "tss:x:59:clevis",
       "tty:x:5:",
+      "unbound:x:994:",
       "users:x:100:",
       "utempter:x:35:",
       "utmp:x:22:",
@@ -8839,6 +9272,10 @@
       "dhcp-common-4.3.6-44.el8.noarch",
       "dhcp-libs-4.3.6-44.el8.x86_64",
       "diffutils-3.6-6.el8.x86_64",
+      "dmidecode-3.2-8.el8.x86_64",
+      "dnf-4.4.2-3.el8.noarch",
+      "dnf-data-4.4.2-3.el8.noarch",
+      "dnf-plugin-subscription-manager-1.28.9-1.el8.x86_64",
       "dnsmasq-2.79-14.el8.x86_64",
       "dosfstools-4.1-6.el8.x86_64",
       "dracut-049-133.git20210112.el8.x86_64",
@@ -8965,10 +9402,12 @@
       "libcap-2.26-4.el8.x86_64",
       "libcap-ng-0.7.9-5.el8.x86_64",
       "libcom_err-1.45.6-1.el8.x86_64",
+      "libcomps-0.1.11-4.el8.x86_64",
       "libcroco-0.6.12-4.el8_2.1.x86_64",
       "libcurl-7.61.1-17.el8.x86_64",
       "libdb-5.3.28-40.el8.x86_64",
       "libdb-utils-5.3.28-40.el8.x86_64",
+      "libdnf-0.55.0-1.el8.x86_64",
       "libedit-3.1-23.20170329cvs.el8.x86_64",
       "libevent-2.1.8-5.el8.x86_64",
       "libfdisk-2.32.1-26.el8.x86_64",
@@ -9011,6 +9450,7 @@
       "libqmi-utils-1.24.0-1.el8.x86_64",
       "librepo-1.12.0-3.el8.x86_64",
       "libreport-filesystem-2.9.5-15.el8.x86_64",
+      "librhsm-0.0.3-4.el8.x86_64",
       "libseccomp-2.4.3-1.el8.x86_64",
       "libsecret-0.18.6-1.el8.x86_64",
       "libselinux-2.9-5.el8.x86_64",
@@ -9106,30 +9546,49 @@
       "protobuf-c-1.3.0-4.el8.x86_64",
       "publicsuffix-list-dafsa-20180723-1.el8.noarch",
       "python3-audit-3.0-0.17.20191104git1c2f876.el8.x86_64",
+      "python3-dateutil-2.6.1-6.el8.noarch",
       "python3-dbus-1.2.4-15.el8.x86_64",
       "python3-decorator-4.2.1-2.el8.noarch",
+      "python3-dmidecode-3.12.2-15.el8.x86_64",
+      "python3-dnf-4.4.2-3.el8.noarch",
+      "python3-dnf-plugins-core-4.0.18-2.el8.noarch",
+      "python3-ethtool-0.14-3.el8.x86_64",
       "python3-firewall-0.8.2-3.el8.noarch",
       "python3-gobject-base-3.28.3-2.el8.x86_64",
+      "python3-gpg-1.13.1-7.el8.x86_64",
+      "python3-hawkey-0.55.0-1.el8.x86_64",
+      "python3-iniparse-0.4-31.el8.noarch",
+      "python3-inotify-0.9.6-13.el8.noarch",
+      "python3-libcomps-0.1.11-4.el8.x86_64",
+      "python3-libdnf-0.55.0-1.el8.x86_64",
+      "python3-librepo-1.12.0-3.el8.x86_64",
       "python3-libs-3.6.8-34.el8.x86_64",
       "python3-libselinux-2.9-5.el8.x86_64",
       "python3-libsemanage-2.9-4.el8.x86_64",
+      "python3-libxml2-2.9.7-9.el8.x86_64",
       "python3-nftables-0.9.3-16.el8.x86_64",
       "python3-pip-wheel-9.0.3-19.el8.noarch",
       "python3-policycoreutils-2.9-9.el8.noarch",
+      "python3-rpm-4.14.3-4.el8.x86_64",
       "python3-setools-4.3.0-2.el8.x86_64",
       "python3-setuptools-wheel-39.2.0-6.el8.noarch",
       "python3-six-1.11.0-8.el8.noarch",
       "python3-slip-0.6.4-11.el8.noarch",
       "python3-slip-dbus-0.6.4-11.el8.noarch",
+      "python3-subscription-manager-rhsm-1.28.9-1.el8.x86_64",
+      "python3-syspurpose-1.28.9-1.el8.x86_64",
+      "python3-unbound-1.7.3-15.el8.x86_64",
       "readline-7.0-10.el8.x86_64",
       "redhat-release-8.4-0.5.el8.x86_64",
       "redhat-release-eula-8.4-0.5.el8.x86_64",
       "rootfiles-8.1-22.el8.noarch",
       "rpm-4.14.3-4.el8.x86_64",
+      "rpm-build-libs-4.14.3-4.el8.x86_64",
       "rpm-libs-4.14.3-4.el8.x86_64",
       "rpm-ostree-2020.7-1.el8.x86_64",
       "rpm-ostree-libs-2020.7-1.el8.x86_64",
       "rpm-plugin-selinux-4.14.3-4.el8.x86_64",
+      "rpm-plugin-systemd-inhibit-4.14.3-4.el8.x86_64",
       "rsync-3.1.3-12.el8.x86_64",
       "runc-1.0.0-69.rc92.module+el8.4.0+9425+98db097b.x86_64",
       "sed-4.5-2.el8.x86_64",
@@ -9142,7 +9601,10 @@
       "shim-x64-15-16.el8.x86_64",
       "skopeo-1.2.1-3.module+el8.4.0+9425+98db097b.x86_64",
       "slirp4netns-1.1.8-1.module+el8.4.0+9425+98db097b.x86_64",
+      "sqlite-3.26.0-13.el8.x86_64",
       "sqlite-libs-3.26.0-13.el8.x86_64",
+      "subscription-manager-1.28.9-1.el8.x86_64",
+      "subscription-manager-rhsm-certificates-1.28.9-1.el8.x86_64",
       "sudo-1.8.29-6.el8.x86_64",
       "systemd-239-43.el8.x86_64",
       "systemd-libs-239-43.el8.x86_64",
@@ -9158,10 +9620,13 @@
       "trousers-lib-0.3.15-1.el8.x86_64",
       "tzdata-2020f-1.el8.noarch",
       "udisks2-2.9.0-5.el8.x86_64",
+      "unbound-libs-1.7.3-15.el8.x86_64",
       "usbguard-0.7.8-7.el8.x86_64",
       "usbguard-selinux-0.7.8-7.el8.noarch",
+      "usermode-1.113-1.el8.x86_64",
       "util-linux-2.32.1-26.el8.x86_64",
       "vim-minimal-8.0.1763-15.el8.x86_64",
+      "virt-what-1.18-6.el8.x86_64",
       "volume_key-libs-0.3.11-5.el8.x86_64",
       "which-2.21-12.el8.x86_64",
       "wpa_supplicant-2.9-3.el8.x86_64",
@@ -9177,11 +9642,11 @@
     "passwd-system": [
       "adm:x:3:4:adm:/var/adm:/sbin/nologin",
       "bin:x:1:1:bin:/bin:/sbin/nologin",
-      "chrony:x:996:993::/var/lib/chrony:/sbin/nologin",
-      "clevis:x:997:994:Clevis Decryption Framework unprivileged user:/var/cache/clevis:/sbin/nologin",
+      "chrony:x:995:992::/var/lib/chrony:/sbin/nologin",
+      "clevis:x:996:993:Clevis Decryption Framework unprivileged user:/var/cache/clevis:/sbin/nologin",
       "daemon:x:2:2:daemon:/sbin:/sbin/nologin",
       "dbus:x:81:81:System message bus:/:/sbin/nologin",
-      "dnsmasq:x:992:992:Dnsmasq DHCP and DNS server:/var/lib/dnsmasq:/sbin/nologin",
+      "dnsmasq:x:991:991:Dnsmasq DHCP and DNS server:/var/lib/dnsmasq:/sbin/nologin",
       "ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin",
       "games:x:12:100:games:/usr/games:/sbin/nologin",
       "halt:x:7:0:halt:/sbin:/sbin/halt",
@@ -9195,8 +9660,19 @@
       "sync:x:5:0:sync:/sbin:/bin/sync",
       "systemd-coredump:x:999:997:systemd Core Dumper:/:/sbin/nologin",
       "systemd-resolve:x:193:193:systemd Resolver:/:/sbin/nologin",
-      "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin"
+      "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin",
+      "unbound:x:997:994:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
     ],
+    "rhsm": {
+      "dnf-plugins": {
+        "product-id": {
+          "enabled": true
+        },
+        "subscription-manager": {
+          "enabled": true
+        }
+      }
+    },
     "services-disabled": [
       "blk-availability.service",
       "chrony-dnssrv@.timer",
@@ -9224,6 +9700,8 @@
       "rdisc.service",
       "reboot.target",
       "remote-cryptsetup.target",
+      "rhsm-facts.service",
+      "rhsm.service",
       "rpm-ostree-bootstatus.service",
       "rpm-ostreed-automatic.timer",
       "runlevel0.target",
@@ -9250,6 +9728,7 @@
       "dbus-org.freedesktop.nm-dispatcher.service",
       "dbus-org.freedesktop.timedate1.service",
       "dm-event.socket",
+      "dnf-makecache.timer",
       "firewalld.service",
       "getty@.service",
       "greenboot-grub2-set-counter.service",
@@ -9269,10 +9748,12 @@
       "redboot-auto-reboot.service",
       "redboot-task-runner.service",
       "remote-fs.target",
+      "rhsmcertd.service",
       "selinux-autorelabel-mark.service",
       "sshd.service",
       "timedatex.service",
-      "udisks2.service"
+      "udisks2.service",
+      "unbound-anchor.timer"
     ],
     "sysconfig": {
       "kernel": {
