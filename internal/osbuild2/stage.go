@@ -97,6 +97,10 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(SystemdStageOptions)
 	case "org.osbuild.script":
 		options = new(ScriptStageOptions)
+	case "org.osbuild.sysconfig":
+		options = new(SysconfigStageOptions)
+	case "org.osbuild.kernel-cmdline":
+		options = new(KernelCmdlineStageOptions)
 	case "org.osbuild.rpm":
 		options = new(RPMStageOptions)
 		inputs = new(RPMStageInputs)
@@ -109,8 +113,10 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	case "org.osbuild.ostree.pull":
 		options = new(OSTreePullStageOptions)
 		inputs = new(OSTreePullStageInputs)
+	case "org.osbuild.ostree.init":
+		options = new(OSTreeInitStageOptions)
 	case "org.osbuild.ostree.preptree":
-		options = new(RPMOSTreePrepTreeStageOptions)
+		options = new(OSTreePrepTreeStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
