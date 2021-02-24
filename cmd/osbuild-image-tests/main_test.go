@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -50,8 +51,8 @@ var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is
 var failLocalBoot = flag.Bool("fail-local-boot", true, "when this flag is on (default), local boot will fail. Usually indicates missing cloud credentials")
 
 // runOsbuild runs osbuild with the specified manifest and output-directory.
-func runOsbuild(manifest []byte, store, outputDirectory string) error {
-	cmd := constants.GetOsbuildCommand(store, outputDirectory)
+func runOsbuild(manifest []byte, store, outputDirectory string, exports []string) error {
+	cmd := constants.GetOsbuildCommand(store, outputDirectory, exports)
 
 	cmd.Stdin = bytes.NewReader(manifest)
 	var outBuffer bytes.Buffer
@@ -466,12 +467,16 @@ func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 		require.NoError(t, err, "error removing temporary output directory")
 	}()
 
-	err = runOsbuild(testcase.Manifest, store, outputDirectory)
+	// NOTE(akoutsou) 1to2t: new v2 manifests name their last pipeline
+	// "assembler" for compatibility with v1
+	exports := []string{"assembler"}
+	err = runOsbuild(testcase.Manifest, store, outputDirectory, exports)
 	require.NoError(t, err)
 
-	imagePath := fmt.Sprintf("%s/%s", outputDirectory, testcase.ComposeRequest.Filename)
-
-	testImage(t, testcase, imagePath)
+	for _, export := range exports {
+		imagePath := filepath.Join(outputDirectory, export, testcase.ComposeRequest.Filename)
+		testImage(t, testcase, imagePath)
+	}
 }
 
 // getAllCases returns paths to all testcases in the testcase directory

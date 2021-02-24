@@ -4,14 +4,18 @@ package constants
 
 import "os/exec"
 
-func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
-	return exec.Command(
+func GetOsbuildCommand(store, outputDirectory string, exports []string) *exec.Cmd {
+	cmd := exec.Command(
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,
 		"--json",
 		"-",
 	)
+	for _, export := range exports {
+		cmd.Args = append(cmd.Args, "--export", export)
+	}
+	return cmd
 }
 
 func GetImageInfoCommand(imagePath string) *exec.Cmd {
