@@ -70,6 +70,10 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(SystemdStageOptions)
 	case "org.osbuild.script":
 		options = new(ScriptStageOptions)
+	case "org.osbuild.sysconfig":
+		options = new(SysconfigStageOptions)
+	case "org.osbuild.kernel-cmdline":
+		options = new(KernelCmdlineStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage name: %s", rawStage.Name)
 	}
