@@ -1246,114 +1246,28 @@ func newDistro(isCentos bool) distro.Distro {
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			"packages": {
-				Include: []string{
-					"redhat-release", // TODO: is this correct for Edge?
-					"glibc", "glibc-minimal-langpack", "nss-altfiles",
-					"dracut-config-generic", "dracut-network",
-					"basesystem", "bash", "platform-python",
-					"shadow-utils", "chrony", "setup", "shadow-utils",
-					"sudo", "systemd", "coreutils", "util-linux",
-					"curl", "vim-minimal",
-					"rpm", "rpm-ostree", "polkit",
-					"lvm2", "cryptsetup", "pinentry",
-					"e2fsprogs", "dosfstools",
-					"keyutils", "gnupg2",
-					"attr", "xz", "gzip",
-					"firewalld", "iptables",
-					"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
-					"wpa_supplicant",
-					"dnsmasq", "traceroute",
-					"hostname", "iproute", "iputils",
-					"openssh-clients", "procps-ng", "rootfiles",
-					"openssh-server", "passwd",
-					"policycoreutils", "policycoreutils-python-utils",
-					"selinux-policy-targeted", "setools-console",
-					"less", "tar", "rsync",
-					"fwupd", "usbguard",
-					"bash-completion", "tmux",
-					"ima-evm-utils",
-					"audit",
-					"podman", "container-selinux", "skopeo", "criu",
-					"slirp4netns", "fuse-overlayfs",
-					"clevis", "clevis-dracut", "clevis-luks",
-					"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
-					// x86 specific
-					"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
-					"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
-					"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
-					"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
-				},
-				Exclude: []string{
-					"rng-tools",
-					"subscription-manager",
-				},
+				Include: edgeImgTypeX86_64.packages,
+				Exclude: edgeImgTypeX86_64.excludedPackages,
 			},
 			"container": {Include: []string{"httpd"}},
 		},
-		enabledServices: []string{
-			"NetworkManager.service", "firewalld.service", "sshd.service",
-			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
-			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
-			"redboot-auto-reboot", "redboot-task-runner",
-		},
-		rpmOstree: true,
+		enabledServices: edgeImgTypeX86_64.enabledServices,
+		rpmOstree:       true,
 	}
 
-	edgeOCIImgTypeArch64 := imageTypeS2{
+	edgeOCIImgTypeAarch64 := imageTypeS2{
 		name:     "rhel-edge-container",
 		filename: "rhel84-container.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			"packages": {
-				Include: []string{
-					"redhat-release", // TODO: is this correct for Edge?
-					"glibc", "glibc-minimal-langpack", "nss-altfiles",
-					"dracut-config-generic", "dracut-network",
-					"basesystem", "bash", "platform-python",
-					"shadow-utils", "chrony", "setup", "shadow-utils",
-					"sudo", "systemd", "coreutils", "util-linux",
-					"curl", "vim-minimal",
-					"rpm", "rpm-ostree", "polkit",
-					"lvm2", "cryptsetup", "pinentry",
-					"e2fsprogs", "dosfstools",
-					"keyutils", "gnupg2",
-					"attr", "xz", "gzip",
-					"firewalld", "iptables",
-					"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
-					"wpa_supplicant",
-					"dnsmasq", "traceroute",
-					"hostname", "iproute", "iputils",
-					"openssh-clients", "procps-ng", "rootfiles",
-					"openssh-server", "passwd",
-					"policycoreutils", "policycoreutils-python-utils",
-					"selinux-policy-targeted", "setools-console",
-					"less", "tar", "rsync",
-					"fwupd", "usbguard",
-					"bash-completion", "tmux",
-					"ima-evm-utils",
-					"audit",
-					"podman", "container-selinux", "skopeo", "criu",
-					"slirp4netns", "fuse-overlayfs",
-					"clevis", "clevis-dracut", "clevis-luks",
-					"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
-					// aarch64 specific
-					"grub2-efi-aa64", "efibootmgr", "shim-aa64",
-					"iwl7260-firmware",
-				},
-				Exclude: []string{
-					"rng-tools",
-					"subscription-manager",
-				},
+				Include: edgeImgTypeAarch64.packages,
+				Exclude: edgeImgTypeAarch64.excludedPackages,
 			},
 			"container": {Include: []string{"httpd"}},
 		},
-		enabledServices: []string{
-			"NetworkManager.service", "firewalld.service", "sshd.service",
-			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
-			"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
-			"redboot-auto-reboot", "redboot-task-runner",
-		},
-		rpmOstree: true,
+		enabledServices: edgeImgTypeAarch64.enabledServices,
+		rpmOstree:       true,
 	}
 
 	x8664.addImageTypes(
@@ -1391,7 +1305,7 @@ func newDistro(isCentos bool) distro.Distro {
 
 	if !isCentos {
 		aarch64.addImageTypes(edgeImgTypeAarch64)
-		aarch64.addS2ImageTypes(edgeOCIImgTypeArch64)
+		aarch64.addS2ImageTypes(edgeOCIImgTypeAarch64)
 	}
 
 	ppc64le := architecture{
