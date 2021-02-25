@@ -219,12 +219,6 @@ install -m 0644 -vp test/data/koji/*                            %{buildroot}%{_d
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/x509
 install -m 0644 -vp test/data/x509/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/x509/
 
-%if 0%{?rhel}
-install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/vendor
-install -m 0644 -vp test/data/vendor/87-podman-bridge.conflist  %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
-install -m 0755 -vp test/data/vendor/dnsname                    %{buildroot}%{_datadir}/tests/osbuild-composer/vendor/
-%endif
-
 %endif
 
 %check
@@ -341,8 +335,8 @@ Requires:   expect
 Requires:   python3-lxml
 Requires:   httpd
 Requires:   openssl
-%if 0%{?fedora}
 Requires:   podman-plugins
+%if 0%{?fedora}
 # koji and ansible are not in RHEL repositories. Depending on them breaks RHEL
 # gating (see OSCI-1541). The test script must enable EPEL and install those
 # packages manually.
