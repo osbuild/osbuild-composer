@@ -8,12 +8,12 @@ import (
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 )
 
-const WaitTimeout = 600 // in seconds
+const WaitTimeout = 30 * 60 // 30 minutes in seconds
 
 func UploadImageToOpenStack(p *gophercloud.ProviderClient, imagePath string, imageName string) (*images.Image, error) {
 	client, err := openstack.NewImageServiceV2(p, gophercloud.EndpointOpts{
@@ -25,8 +25,8 @@ func UploadImageToOpenStack(p *gophercloud.ProviderClient, imagePath string, ima
 
 	// create a new image which gives us the ID
 	image, err := images.Create(client, images.CreateOpts{
-		Name: imageName,
-		DiskFormat: "qcow2",
+		Name:            imageName,
+		DiskFormat:      "qcow2",
 		ContainerFormat: "bare",
 	}).Extract()
 	if err != nil {
@@ -84,10 +84,10 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	server, err := servers.Create(client, servers.CreateOpts{
 		Name:      "osbuild-composer-vm-for-" + imageID,
 		FlavorRef: "77b8cf27-be16-40d9-95b1-81db4522be1e", // ci.m1.medium.ephemeral
-		Networks: []servers.Network{  // provider_net_cci_2
+		Networks: []servers.Network{ // provider_net_cci_2
 			servers.Network{UUID: "74e8faa7-87ba-41b2-a000-438013194814"},
 		},
-		ImageRef:  imageID,
+		ImageRef: imageID,
 		UserData: []byte(userData),
 	}).Extract()
 	if err != nil {
@@ -95,7 +95,7 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	}
 
 	// cleanup
-	defer func(){
+	defer func() {
 		err := servers.ForceDelete(client, server.ID).ExtractErr()
 		if err != nil {
 			fmt.Printf("Force deleting instance %s failed: %v", server.ID, err)
