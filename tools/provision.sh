@@ -23,10 +23,27 @@ sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker.toml \
 GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
 if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
     # The credentials file must be copied to a different location. Jenkins places
-    # it into /tmp and as a restult, the worker would not see it due to using PrivateTmp=true.
+    # it into /tmp and as a result, the worker would not see it due to using PrivateTmp=true.
     GCP_CREDS_WORKER_PATH="/etc/osbuild-worker/gcp-credentials.json"
     sudo cp "$GOOGLE_APPLICATION_CREDENTIALS" "$GCP_CREDS_WORKER_PATH"
     echo -e "\n[gcp]\ncredentials = \"$GCP_CREDS_WORKER_PATH\"\n" | sudo tee -a /etc/osbuild-worker/osbuild-worker.toml
+fi
+
+# if Azure credentials are defined in the env, create the credentials file
+AZURE_CLIENT_ID="${AZURE_CLIENT_ID:-}"
+AZURE_CLIENT_SECRET="${AZURE_CLIENT_SECRET:-}"
+if [[ -n "$AZURE_CLIENT_ID" && -n "$AZURE_CLIENT_SECRET" ]]; then
+    set +x
+    sudo tee /etc/osbuild-worker/azure-credentials.toml > /dev/null << EOF
+client_id =     "$AZURE_CLIENT_ID"
+client_secret = "$AZURE_CLIENT_SECRET"
+EOF
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
+[azure]
+credentials = "/etc/osbuild-worker/azure-credentials.toml"
+EOF
+    set -x
 fi
 
 # Copy rpmrepo snapshots for use in weldr tests

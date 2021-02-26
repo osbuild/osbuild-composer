@@ -27,6 +27,7 @@ set -euxo pipefail
 
 CLOUD_PROVIDER_AWS="aws"
 CLOUD_PROVIDER_GCP="gcp"
+CLOUD_PROVIDER_AZURE="azure"
 
 CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
 
@@ -36,6 +37,9 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_GCP")
     echo "Testing Google Cloud Platform"
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    echo "Testing Azure"
     ;;
   *)
     echo "Unknown cloud provider '$CLOUD_PROVIDER'. Supported are '$CLOUD_PROVIDER_AWS', '$CLOUD_PROVIDER_GCP'"
@@ -57,12 +61,20 @@ function checkEnvGCP() {
   printenv GOOGLE_APPLICATION_CREDENTIALS GCP_BUCKET GCP_REGION GCP_API_TEST_SHARE_ACCOUNT > /dev/null
 }
 
+# Check that needed variables are set to access Azure.
+function checkEnvAzure() {
+  printenv AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_LOCATION AZURE_CLIENT_ID AZURE_CLIENT_SECRET > /dev/null
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     checkEnvAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
     checkEnvGCP
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    checkEnvAzure
     ;;
 esac
 
@@ -102,6 +114,23 @@ function cleanupGCP() {
   fi
 }
 
+function cleanupAzure() {
+  # since this function can be called at any time, ensure that we don't expand unbound variables
+  AZURE_CMD="${AZURE_CMD:-}"
+  AZURE_IMAGE_NAME="${AZURE_IMAGE_NAME:-}"
+
+  # do not run clean-up if the image name is not yet defined
+  if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
+    set +e
+    $AZURE_CMD image delete --resource-group sharing-research --name "$AZURE_IMAGE_NAME"
+
+    # find a storage account by its tag
+    AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
+    $AZURE_CMD storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT"
+    set -e
+  fi
+}
+
 WORKDIR=$(mktemp -d)
 function cleanup() {
   case $CLOUD_PROVIDER in
@@ -110,6 +139,9 @@ function cleanup() {
       ;;
     "$CLOUD_PROVIDER_GCP")
       cleanupGCP
+      ;;
+    "$CLOUD_PROVIDER_AZURE")
+      cleanupAzure
       ;;
   esac
 
@@ -162,12 +194,33 @@ EOM
   $GCP_CMD --version
 }
 
+function installClientAzure() {
+  if ! hash az; then
+    # this installation method is taken from the official docs:
+    # https://docs.microsoft.com/cs-cz/cli/azure/install-azure-cli-linux?pivots=dnf
+    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    echo -e "[azure-cli]
+name=Azure CLI
+baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
+  fi
+
+  sudo dnf install -y azure-cli
+  AZURE_CMD="az"
+  $AZURE_CMD version
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     installClientAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
     installClientGCP
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    installClientAzure
     ;;
 esac
 
@@ -296,12 +349,44 @@ function createReqFileGCP() {
 EOF
 }
 
+function createReqFileAzure() {
+  AZURE_IMAGE_NAME="osbuild-composer-api-test-$(uuidgen)"
+
+  cat > "$REQUEST_FILE" << EOF
+{
+  "distribution": "$DISTRO",
+  "image_requests": [
+    {
+      "architecture": "$ARCH",
+      "image_type": "vhd",
+      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "upload_requests": [
+        {
+          "type": "azure",
+          "options": {
+            "tenant_id": "${AZURE_TENANT_ID}",
+            "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+            "resource_group": "${AZURE_RESOURCE_GROUP}",
+            "location": "${AZURE_LOCATION}",
+            "image_name": "${AZURE_IMAGE_NAME}"
+          }
+        }
+      ]
+    }
+  ]
+}
+EOF
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     createReqFileAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
     createReqFileGCP
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    createReqFileAzure
     ;;
 esac
 
@@ -377,12 +462,22 @@ function checkUploadStatusOptionsGCP() {
   test "$PROJECT_ID" = "$GCP_PROJECT"
 }
 
+function checkUploadStatusOptionsAzure() {
+  local IMAGE_NAME
+  IMAGE_NAME=$(echo "$UPLOAD_OPTIONS" | jq -r '.image_name')
+
+  test "$IMAGE_NAME" = "$AZURE_IMAGE_NAME"
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     checkUploadStatusOptionsAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
     checkUploadStatusOptionsGCP
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    checkUploadStatusOptionsAzure
     ;;
 esac
 
@@ -504,12 +599,30 @@ function verifyInGCP() {
   ssh -oStrictHostKeyChecking=no -i "$GCP_SSH_KEY" "$SSH_USER"@"$HOST" rpm -q postgresql
 }
 
+# Verify image in Azure
+function verifyInAzure() {
+  set +x
+  $AZURE_CMD login --service-principal --username "${AZURE_CLIENT_ID}" --password "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
+  set -x
+
+  # verify that the image exists
+  $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
+
+  # Boot testing is currently blocked due to
+  # https://github.com/Azure/azure-cli/issues/17123
+  # Without this issue fixed or worked around, I'm not able to delete the disk
+  # attached to the VM.
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     verifyInAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
     verifyInGCP
+    ;;
+  "$CLOUD_PROVIDER_AZURE")
+    verifyInAzure
     ;;
 esac
 
