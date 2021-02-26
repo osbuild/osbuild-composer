@@ -13,6 +13,10 @@ pipeline {
         BUILD_CAUSE = detect_build_cause()
         GCP_BUCKET = "osbuild-composer-testing"
         GCP_REGION = "us-east4"
+        AZURE_TENANT_ID = "1710d22c-ccf0-4421-8ba7-0135cfaecb90"
+        AZURE_SUBSCRIPTION_ID = "8d026bb1-2a65-454d-a88f-c896db94c4f8"
+        AZURE_RESOURCE_GROUP = "sharing-research"
+        AZURE_LOCATION = "westeurope"
     }
 
     options {
@@ -276,6 +280,8 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
                     }
                     steps {
                         run_tests('integration')
@@ -381,6 +387,8 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
                     }
                     steps {
                         run_tests('integration')
@@ -667,6 +675,8 @@ pipeline {
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
                     }
                     steps {
                         run_tests('integration')
@@ -764,6 +774,8 @@ pipeline {
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
                     }
                     steps {
                         run_tests('integration')
@@ -901,6 +913,11 @@ void run_tests(test_type) {
                 script: "/usr/libexec/tests/osbuild-composer/api.sh gcp"
             )
         }
+
+        sh (
+            label: "Integration test: API (Azure)",
+            script: "/usr/libexec/tests/osbuild-composer/api.sh azure"
+        )
 
         if (env.VCENTER_CREDS) {
             // Run the VMWare test.
