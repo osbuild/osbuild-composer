@@ -92,9 +92,11 @@ function cleanupGCP() {
   # since this function can be called at any time, ensure that we don't expand unbound variables
   GCP_CMD="${GCP_CMD:-}"
   GCP_IMAGE_NAME="${GCP_IMAGE_NAME:-}"
+  GCP_INSTANCE_NAME="${GCP_INSTANCE_NAME:-}"
 
   if [ -n "$GCP_CMD" ]; then
     set +e
+    $GCP_CMD compute instances delete --zone="$GCP_REGION-a" "$GCP_INSTANCE_NAME"
     $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
     set -e
   fi
@@ -267,10 +269,15 @@ function createReqFileGCP() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "customizations": {
+    "packages": [
+      "postgresql"
+    ]
+  },
   "image_requests": [
     {
       "architecture": "$ARCH",
-      "image_type": "vmdk",
+      "image_type": "vhd",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
       "upload_requests": [
         {
@@ -348,6 +355,21 @@ done
 # Verify the image landed in the appropriate cloud provider, and delete it.
 #
 
+# Reusable function, which waits for a given host to respond to SSH
+function _instanceWaitSSH() {
+  local HOST="$1"
+
+  for LOOP_COUNTER in {0..30}; do
+      if ssh-keyscan "$HOST" > /dev/null 2>&1; then
+          echo "SSH is up!"
+          # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
+          break
+      fi
+      echo "Retrying in 5 seconds... $LOOP_COUNTER"
+      sleep 5
+  done
+}
+
 # Verify image in EC2 on AWS
 function verifyInAWS() {
   $AWS_CMD ec2 describe-images \
@@ -389,15 +411,7 @@ function verifyInAWS() {
   HOST=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$WORKDIR/instances.json")
 
   echo "⏱ Waiting for AWS instance to respond to ssh"
-  for LOOP_COUNTER in {0..30}; do
-      if ssh-keyscan "$HOST" > /dev/null 2>&1; then
-          echo "SSH is up!"
-          # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
-          break
-      fi
-      echo "Retrying in 5 seconds... $LOOP_COUNTER"
-      sleep 5
-  done
+  _instanceWaitSSH "$HOST"
 
   # Check if postgres is installed
   ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
@@ -429,6 +443,30 @@ function verifyInGCP() {
     echo "GCP image wasn't shared with the GCP_API_TEST_SHARE_ACCOUNT. 😢"
     exit 1
   fi
+
+  # Verify that the image boots and have customizations applied
+  # Create SSH keys to use
+  GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
+  ssh-keygen -t rsa -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
+  GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
+
+  echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
+
+  # create the instance
+  GCP_INSTANCE_NAME="gcp-instance-$(uuidgen)"
+
+  $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
+    --zone="$GCP_REGION-a" \
+    --image-project="$GCP_PROJECT" \
+    --image="$GCP_IMAGE_NAME" \
+    --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
+  HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_REGION-a" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+
+  echo "⏱ Waiting for GCP instance to respond to ssh"
+  _instanceWaitSSH "$HOST"
+
+  # Check if postgres is installed
+  ssh -oStrictHostKeyChecking=no -i "$GCP_SSH_KEY" "$SSH_USER"@"$HOST" rpm -q postgresql
 }
 
 case $CLOUD_PROVIDER in
