@@ -33,14 +33,15 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 }
 
 type azureCredentials struct {
-	azure.Credentials
-	ContainerName  string
-	SubscriptionID string
-	ClientID       string
-	ClientSecret   string
-	TenantID       string
-	Location       string
-	ResourceGroup  string
+	StorageAccount   string
+	StorageAccessKey string
+	ContainerName    string
+	SubscriptionID   string
+	ClientID         string
+	ClientSecret     string
+	TenantID         string
+	Location         string
+	ResourceGroup    string
 }
 
 // getAzureCredentialsFromEnv gets the credentials from environment variables
@@ -67,17 +68,15 @@ func GetAzureCredentialsFromEnv() (*azureCredentials, error) {
 	}
 
 	return &azureCredentials{
-		Credentials: azure.Credentials{
-			StorageAccount:   storageAccount,
-			StorageAccessKey: storageAccessKey,
-		},
-		ContainerName:  containerName,
-		SubscriptionID: subscriptionId,
-		ClientID:       clientId,
-		ClientSecret:   clientSecret,
-		TenantID:       tenantId,
-		Location:       location,
-		ResourceGroup:  resourceGroup,
+		StorageAccount:   storageAccount,
+		StorageAccessKey: storageAccessKey,
+		ContainerName:    containerName,
+		SubscriptionID:   subscriptionId,
+		ClientID:         clientId,
+		ClientSecret:     clientSecret,
+		TenantID:         tenantId,
+		Location:         location,
+		ResourceGroup:    resourceGroup,
 	}, nil
 }
 
@@ -87,7 +86,11 @@ func UploadImageToAzure(c *azureCredentials, imagePath string, imageName string)
 		ContainerName: c.ContainerName,
 		ImageName:     imageName,
 	}
-	err := azure.UploadImage(c.Credentials, metadata, imagePath, 16)
+	client, err := azure.NewStorageClient(c.StorageAccount, c.StorageAccessKey)
+	if err != nil {
+		return err
+	}
+	err = client.UploadPageBlob(metadata, imagePath, 16)
 	if err != nil {
 		return fmt.Errorf("upload to azure failed: %v", err)
 	}

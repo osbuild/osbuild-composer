@@ -37,13 +37,20 @@ func main() {
 
 	fmt.Println("Image to upload is:", fileName)
 
-	err := azure.UploadImage(azure.Credentials{
-		StorageAccount:   storageAccount,
-		StorageAccessKey: storageAccessKey,
-	}, azure.ImageMetadata{
-		ImageName:     path.Base(fileName),
-		ContainerName: containerName,
-	}, fileName, threads)
+	c, err := azure.NewStorageClient(storageAccount, storageAccessKey)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = c.UploadImage(
+		azure.ImageMetadata{
+			ImageName:     path.Base(fileName),
+			ContainerName: containerName,
+		},
+		fileName,
+		threads,
+	)
 
 	if err != nil {
 		fmt.Println("Error: ", err)

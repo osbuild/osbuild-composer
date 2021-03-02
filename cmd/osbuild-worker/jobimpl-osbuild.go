@@ -227,18 +227,20 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if !osbuildOutput.Success {
 				continue
 			}
-			credentials := azure.Credentials{
-				StorageAccount:   options.StorageAccount,
-				StorageAccessKey: options.StorageAccessKey,
+
+			azureStorageClient, err := azure.NewStorageClient(options.StorageAccount, options.StorageAccessKey)
+			if err != nil {
+				r = append(r, err)
+				continue
 			}
+
 			metadata := azure.ImageMetadata{
 				ContainerName: options.Container,
 				ImageName:     t.ImageName,
 			}
 
 			const azureMaxUploadGoroutines = 4
-			err := azure.UploadImage(
-				credentials,
+			err = azureStorageClient.UploadImage(
 				metadata,
 				path.Join(outputDirectory, options.Filename),
 				azureMaxUploadGoroutines,
