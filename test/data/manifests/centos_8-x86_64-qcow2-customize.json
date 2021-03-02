@@ -74,7 +74,7 @@
         },
         "locale": {
           "languages": [
-            "en_US"
+            "el_CY.UTF-8"
           ],
           "keyboard": "dvorak"
         },
@@ -4191,7 +4191,7 @@
         {
           "name": "org.osbuild.locale",
           "options": {
-            "language": "en_US"
+            "language": "el_CY.UTF-8"
           }
         },
         {
