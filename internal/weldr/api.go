@@ -1915,6 +1915,18 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	// Check for test parameter
+	q, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	testMode := q.Get("test")
+
 	// Fetch parent ostree commit from ref + url if commit is not
 	// provided. The parameter name "parent" is perhaps slightly misleading
 	// as it represent whatever commit sha the image type requires, not
@@ -1928,14 +1940,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		parent, err := ostreeResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
-		if err != nil {
-			errors := responseError{
-				ID:  "OSTreeCommitError",
-				Msg: err.Error(),
+		var parent string
+		if testMode == "1" || testMode == "2" {
+			// Fake a parent commit for test requests
+			parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
+		} else {
+			// Resolve the URL and get the parent commit
+			parent, err = ostreeResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
+			if err != nil {
+				errors := responseError{
+					ID:  "OSTreeCommitError",
+					Msg: err.Error(),
+				}
+				statusResponseError(writer, http.StatusBadRequest, errors)
+				return
 			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
 		}
 		cr.OSTree.Parent = parent
 	}
@@ -1947,17 +1966,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			Msg: err.Error(),
 		}
 		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-
-	// Check for test parameter
-	q, err := url.ParseQuery(request.URL.RawQuery)
-	if err != nil {
-		errors := responseError{
-			ID:  "InvalidChars",
-			Msg: fmt.Sprintf("invalid query string: %v", err),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -1990,7 +1998,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	testMode := q.Get("test")
 	if testMode == "1" {
 		// Create a failed compose
 		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false)
