@@ -625,6 +625,36 @@ func TestCompose(t *testing.T) {
 			},
 		},
 	}
+	expectedComposeOSTreeRef := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType,
+			Manifest:    manifest,
+		},
+	}
+	expectedComposeOSTreeURL := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBFinished,
+			ImageType:   imgType,
+			Manifest:    manifest,
+		},
+	}
 
 	var cases = []struct {
 		External        bool
@@ -639,6 +669,9 @@ func TestCompose(t *testing.T) {
 		{true, "POST", "/api/v0/compose", `{"blueprint_name": "http-server","compose_type": "qcow2","branch": "master"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`, nil, []string{"build_id"}},
 		{false, "POST", "/api/v0/compose", `{"blueprint_name": "test","compose_type": "qcow2","branch": "master"}`, http.StatusOK, `{"status": true}`, expectedComposeLocal, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","upload":{"image_name":"test_upload","provider":"aws","settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}}`, http.StatusOK, `{"status": true}`, expectedComposeLocalAndAws, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeRef, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose?test=2", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"http://ostree/"}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeURL, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeCommitError","msg":"Get \"/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
