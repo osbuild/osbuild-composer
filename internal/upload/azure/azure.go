@@ -13,47 +13,55 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 )
 
-// Credentials contains credentials to connect to your account
-// It uses so called "Client credentials", see the official documentation for more information:
-// https://docs.microsoft.com/en-us/azure/go/azure-sdk-go-authorization#available-authentication-types-and-methods
-type Credentials struct {
-	StorageAccount   string
-	StorageAccessKey string
+// StorageClient is a client for the Azure Storage API,
+// see the docs: https://docs.microsoft.com/en-us/rest/api/storageservices/
+type StorageClient struct {
+	pipeline pipeline.Pipeline
+}
+
+// NewStorageClient creates a new client for Azure Storage API.
+// See the following keys how to retrieve the storageAccessKey using the
+// Azure's API:
+// https://docs.microsoft.com/en-us/rest/api/storagerp/storageaccounts/listkeys
+func NewStorageClient(storageAccount, storageAccessKey string) (*StorageClient, error) {
+	credential, err := azblob.NewSharedKeyCredential(storageAccount, storageAccessKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create shared key credential: %v", err)
+	}
+
+	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+	return &StorageClient{
+		pipeline: p,
+	}, nil
 }
 
 // ImageMetadata contains information needed to store the image in a proper place.
 // In case of Azure cloud storage this includes container name and blob name.
 type ImageMetadata struct {
-	ContainerName string
-	ImageName     string
+	StorageAccount string
+	ContainerName  string
+	ImageName      string
 }
 
 // UploadImage takes the metadata and credentials required to upload the image specified by `fileName`
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
-func UploadImage(credentials Credentials, metadata ImageMetadata, fileName string, threads int) error {
+func (c StorageClient) UploadImage(metadata ImageMetadata, fileName string, threads int) error {
 	// Azure cannot create an image from a storage blob without .vhd extension
 	if !strings.HasSuffix(metadata.ImageName, ".vhd") {
 		metadata.ImageName = metadata.ImageName + ".vhd"
 	}
 
-	// Create a default request pipeline using your storage account name and account key.
-	credential, err := azblob.NewSharedKeyCredential(credentials.StorageAccount, credentials.StorageAccessKey)
-	if err != nil {
-		return fmt.Errorf("cannot create azure credentials: %v", err)
-	}
-
-	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
-
 	// get storage account blob service URL endpoint.
-	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", credentials.StorageAccount, metadata.ContainerName))
+	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", metadata.StorageAccount, metadata.ContainerName))
 
 	// Create a ContainerURL object that wraps the container URL and a request
 	// pipeline to make requests.
-	containerURL := azblob.NewContainerURL(*URL, p)
+	containerURL := azblob.NewContainerURL(*URL, c.pipeline)
 
 	// Create the container, use a never-expiring context
 	ctx := context.Background()
