@@ -826,6 +826,7 @@ func newDistro(isCentos bool) distro.Distro {
 		},
 		excludedPackages: []string{
 			"rng-tools",
+			"subscription-manager",
 		},
 		enabledServices: []string{
 			"NetworkManager.service", "firewalld.service", "sshd.service",
@@ -879,6 +880,7 @@ func newDistro(isCentos bool) distro.Distro {
 		},
 		excludedPackages: []string{
 			"rng-tools",
+			"subscription-manager",
 		},
 		enabledServices: []string{
 			"NetworkManager.service", "firewalld.service", "sshd.service",
