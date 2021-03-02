@@ -313,7 +313,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	}
 
 	if keyboard != nil {
