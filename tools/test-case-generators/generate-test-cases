@@ -153,7 +153,7 @@ CUSTOMIZATIONS_BLUEPRINT =  {
         },
         "locale": {
             "languages": [
-                "en_US"
+                "el_CY.UTF-8"
             ],
             "keyboard": "dvorak"
         },
