@@ -54,16 +54,25 @@ func runOsbuild(manifest []byte, store, outputDirectory string) error {
 	cmd := constants.GetOsbuildCommand(store, outputDirectory)
 
 	cmd.Stdin = bytes.NewReader(manifest)
-	var outBuffer bytes.Buffer
+	var outBuffer, errBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
-	cmd.Stderr = &outBuffer
+	cmd.Stderr = &errBuffer
 
 	err := cmd.Run()
 	if err != nil {
-		// Pretty print the osbuild error output.
-		buf := new(bytes.Buffer)
-		_ = json.Indent(buf, outBuffer.Bytes(), "", "    ")
-		fmt.Println(buf)
+		fmt.Println("stdout:")
+		// stdout is json, indent it, otherwise we get a huge one-liner
+		var formattedStdout bytes.Buffer
+		indentErr := json.Indent(&formattedStdout, outBuffer.Bytes(), "", "  ")
+		if indentErr == nil {
+			fmt.Println(formattedStdout.String())
+		} else {
+			// fallback to raw output if json indent failed
+			fmt.Println(outBuffer.String())
+		}
+
+		// stderr isn't structured, print it as is
+		fmt.Printf("stderr:\n%s", errBuffer.String())
 
 		return fmt.Errorf("running osbuild failed: %v", err)
 	}
