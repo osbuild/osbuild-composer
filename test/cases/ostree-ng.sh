@@ -31,7 +31,7 @@ case "${ID}-${VERSION_ID}" in
         # mirrors, therefore the Boston mirror is hardcoded.
         BOOT_LOCATION="http://download.eng.bos.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
     "rhel-8.4")
-        IMAGE_TYPE=rhel-edge-commit
+        IMAGE_TYPE=rhel-edge-container
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         BOOT_LOCATION="http://download.devel.redhat.com/nightly/rhel-8/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/";;
@@ -219,14 +219,22 @@ clean_up () {
     fi
     # Remove qcow2 file.
     sudo rm -f "$LIBVIRT_IMAGE_PATH"
-    # Remove extracted upgrade image-tar.
-    sudo rm -rf "$UPGRADE_PATH"
-    # Remove "remote" repo.
-    sudo rm -rf "${HTTPD_PATH}"/{repo,compose.json}
+
+    if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
+        # Remove any status containers if exist
+        sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+        # Remove all images
+        sudo podman rmi -f -a
+    else
+        # Remove extracted upgrade image-tar.
+        sudo rm -rf "$UPGRADE_PATH"
+        # Remove "remote" repo.
+        sudo rm -rf "${HTTPD_PATH}"/{repo,compose.json}
+        # Stop httpd
+        sudo systemctl disable httpd --now
+    fi
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
-    # Stop httpd
-    sudo systemctl disable httpd --now
 }
 
 # Test result checking
@@ -271,17 +279,41 @@ fi
 # Build installation image.
 build_image "$BLUEPRINT_FILE" ostree
 
-# Start httpd to serve ostree repo.
-greenprint "🚀 Starting httpd daemon"
-sudo systemctl start httpd
-
 # Download the image and extract tar into web server root folder.
 greenprint "📥 Downloading and extracting the image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
-HTTPD_PATH="/var/www/html"
-sudo tar -xf "${IMAGE_FILENAME}" -C ${HTTPD_PATH}
-sudo rm -f "$IMAGE_FILENAME"
+
+if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
+    # Do not use httpd, but edge container
+    sudo systemctl stop httpd
+    # Remove any status containers if exist
+    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+    # Remove all images
+    sudo podman rmi -f -a
+    # Deal with rhel-edge container
+    IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
+    sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+    # Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
+    sudo restorecon -R /var/lib/containers/storage/overlay/
+    sudo podman images
+    sudo rm -f "$IMAGE_FILENAME"
+    # Get image id to run image
+    EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+    sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
+    # Wait for container to be running
+    until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+        sleep 1;
+    done;
+else
+    # Start httpd to serve ostree repo.
+    greenprint "🚀 Starting httpd daemon"
+    sudo systemctl start httpd
+    # Deal with edge image
+    IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
+    HTTPD_PATH="/var/www/html"
+    sudo tar -xf "${IMAGE_FILENAME}" -C ${HTTPD_PATH}
+    sudo rm -f "$IMAGE_FILENAME"
+fi
 
 # Clean compose and blueprints.
 greenprint "Clean up osbuild-composer"
@@ -424,29 +456,54 @@ build_image "$BLUEPRINT_FILE" upgrade
 # Download the image and extract tar into web server root folder.
 greenprint "📥 Downloading and extracting the image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
-UPGRADE_PATH="$(pwd)/upgrade"
-mkdir -p "$UPGRADE_PATH"
-sudo tar -xf "$IMAGE_FILENAME" -C "$UPGRADE_PATH"
-sudo rm -f "$IMAGE_FILENAME"
+
+if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
+    # Remove any status containers if exist
+    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+    # Remove all images
+    sudo podman rmi -f -a
+    # Deal with rhel-edge container
+    IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
+    sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+    # Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
+    sudo restorecon -R /var/lib/containers/storage/overlay/
+    sudo podman images
+    sudo rm -f "$IMAGE_FILENAME"
+    # Get image id to run image
+    EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+    sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
+    # Wait for container to be running
+    until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+        sleep 1;
+    done;
+    # Get ostree commit value.
+    greenprint "Get ostree image commit value"
+    UPGRADE_HASH=$(curl ${URL}refs/heads/rhel/8/x86_64/edge)
+else
+    IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
+    UPGRADE_PATH="$(pwd)/upgrade"
+    mkdir -p "$UPGRADE_PATH"
+    sudo tar -xf "$IMAGE_FILENAME" -C "$UPGRADE_PATH"
+    sudo rm -f "$IMAGE_FILENAME"
+
+    # Introduce new ostree commit into repo.
+    greenprint "Introduce new ostree commit into repo"
+    sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" "$OSTREE_REF"
+    sudo ostree summary --update --repo "${HTTPD_PATH}/repo"
+
+    # Ensure SELinux is happy with all objects files.
+    greenprint "👿 Running restorecon on web server root folder"
+    sudo restorecon -Rv "${HTTPD_PATH}/repo" > /dev/null
+
+    # Get ostree commit value.
+    greenprint "Get ostree image commit value"
+    UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
+fi
 
 # Clean compose and blueprints.
 greenprint "Clean up osbuild-composer again"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
-
-# Introduce new ostree commit into repo.
-greenprint "Introduce new ostree commit into repo"
-sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" "$OSTREE_REF"
-sudo ostree summary --update --repo "${HTTPD_PATH}/repo"
-
-# Ensure SELinux is happy with all objects files.
-greenprint "👿 Running restorecon on web server root folder"
-sudo restorecon -Rv "${HTTPD_PATH}/repo" > /dev/null
-
-# Get ostree commit value.
-greenprint "Get ostree image commit value"
-UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
