@@ -16,6 +16,7 @@ type GRUB2StageOptions struct {
 	KernelOptions      string     `json:"kernel_opts,omitempty"`
 	Legacy             string     `json:"legacy,omitempty"`
 	UEFI               *GRUB2UEFI `json:"uefi,omitempty"`
+	SavedEntry         string     `json:"saved_entry,omitempty"`
 }
 
 type GRUB2UEFI struct {
