@@ -82,9 +82,9 @@ func GetAzureCredentialsFromEnv() (*azureCredentials, error) {
 
 // UploadImageToAzure mimics the upload feature of osbuild-composer.
 func UploadImageToAzure(c *azureCredentials, imagePath string, imageName string) error {
-	metadata := azure.ImageMetadata{
+	metadata := azure.BlobMetadata{
 		ContainerName: c.ContainerName,
-		ImageName:     imageName,
+		BlobName:      imageName,
 	}
 	client, err := azure.NewStorageClient(c.StorageAccount, c.StorageAccessKey)
 	if err != nil {

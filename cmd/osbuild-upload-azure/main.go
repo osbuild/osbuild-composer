@@ -43,9 +43,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = c.UploadImage(
-		azure.ImageMetadata{
-			ImageName:     path.Base(fileName),
+	err = c.UploadPageBlob(
+		azure.BlobMetadata{
+			BlobName:      path.Base(fileName),
 			ContainerName: containerName,
 		},
 		fileName,
