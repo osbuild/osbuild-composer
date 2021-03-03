@@ -291,8 +291,7 @@ function createReqFileAWS() {
       "architecture": "$ARCH",
       "image_type": "ami",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_requests": [
-        {
+      "upload_request": {
           "type": "aws",
           "options": {
             "region": "${AWS_REGION}",
@@ -308,8 +307,7 @@ function createReqFileAWS() {
               "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
             }
           }
-        }
-      ]
+      }
     }
   ]
 }
@@ -332,8 +330,7 @@ function createReqFileGCP() {
       "architecture": "$ARCH",
       "image_type": "vhd",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_requests": [
-        {
+      "upload_request": {
           "type": "gcp",
           "options": {
             "bucket": "${GCP_BUCKET}",
@@ -341,8 +338,7 @@ function createReqFileGCP() {
             "image_name": "${GCP_IMAGE_NAME}",
             "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
           }
-        }
-      ]
+      }
     }
   ]
 }
@@ -360,8 +356,7 @@ function createReqFileAzure() {
       "architecture": "$ARCH",
       "image_type": "vhd",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_requests": [
-        {
+      "upload_request": {
           "type": "azure",
           "options": {
             "tenant_id": "${AZURE_TENANT_ID}",
@@ -370,8 +365,7 @@ function createReqFileAzure() {
             "location": "${AZURE_LOCATION}",
             "image_name": "${AZURE_IMAGE_NAME}"
           }
-        }
-      ]
+      }
     }
   ]
 }
