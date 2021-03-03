@@ -289,9 +289,11 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				r = append(r, err)
 				continue
 			}
-			// TODO: report back the information below, which is necessary to find and use the image
-			// imageName := t.ImageName
-			// projectID := gcp.GetProjectID()
+
+			targetResults = append(targetResults, target.NewGCPTargetResult(&target.GCPTargetResultOptions{
+				ImageName: t.ImageName,
+				ProjectID: g.GetProjectID(),
+			}))
 
 		case *target.KojiTargetOptions:
 			// Koji for some reason needs TLS renegotiation enabled.

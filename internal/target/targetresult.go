@@ -47,6 +47,8 @@ func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (Ta
 	switch trName {
 	case "org.osbuild.aws":
 		options = new(AWSTargetResultOptions)
+	case "org.osbuild.gcp":
+		options = new(GCPTargetResultOptions)
 	default:
 		return nil, fmt.Errorf("Unexpected target result name: %s", trName)
 	}
