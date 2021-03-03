@@ -8,15 +8,6 @@ type OSTreePullStageOptions struct {
 
 func (OSTreePullStageOptions) isStageOptions() {}
 
-// A new org.osbuild.ostree.pull stage to pull OSTree commits into an existing repo
-func NewOSTreePullStage(options *OSTreePullStageOptions, inputs Inputs) *Stage {
-	return &Stage{
-		Type:    "org.osbuild.ostree.pull",
-		Inputs:  inputs,
-		Options: options,
-	}
-}
-
 type OSTreePullStageInput struct {
 	inputCommon
 	References OSTreePullStageReferences `json:"references"`
@@ -36,4 +27,13 @@ func (OSTreePullStageReferences) isReferences() {}
 
 type OSTreePullStageReference struct {
 	Ref string `json:"ref"`
+}
+
+// A new org.osbuild.ostree.pull stage to pull OSTree commits into an existing repo
+func NewOSTreePullStage(options *OSTreePullStageOptions, inputs *OSTreePullStageInputs) *Stage {
+	return &Stage{
+		Type:    "org.osbuild.ostree.pull",
+		Inputs:  inputs,
+		Options: options,
+	}
 }
