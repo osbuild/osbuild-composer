@@ -120,6 +120,7 @@ components:
         options:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/GCPUploadStatus'
     AWSUploadStatus:
       type: object
       required:
@@ -129,8 +130,14 @@ components:
         ami:
           type: string
           example: 'ami-0c830793775595d4b'
+        region:
+          type: string
+          example: 'eu-west-1'
     GCPUploadStatus:
       type: object
+      required:
+        - project_id
+        - image_name
       properties:
         project_id:
           type: string

@@ -203,23 +203,23 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.4")
     DISTRO="rhel-84"
     SSH_USER="cloud-user"
-  ;;
+    ;;
   "rhel-8.2" | "rhel-8.3")
     DISTRO="rhel-8"
     SSH_USER="cloud-user"
-  ;;
+    ;;
   "fedora-32")
     DISTRO="fedora-32"
     SSH_USER="fedora"
-  ;;
+    ;;
   "fedora-33")
     DISTRO="fedora-33"
     SSH_USER="fedora"
-  ;;
+    ;;
   "centos-8")
     DISTRO="centos-8"
     SSH_USER="cloud-user"
-  ;;
+    ;;
 esac
 
 function createReqFileAWS() {
@@ -302,7 +302,7 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_GCP")
     createReqFileGCP
-  ;;
+    ;;
 esac
 
 #
@@ -338,18 +338,53 @@ do
   COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
   UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
   UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
+  UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
 
   if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
     test "$COMPOSE_STATUS" = "success"
     test "$UPLOAD_STATUS" = "success"
-    # Do not check the return type for now, since it is not returned from cloudapi
-    # test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
-    test "$UPLOAD_TYPE" = ""
+    test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
     break
   fi
 
   sleep 30
 done
+
+#
+# Verify the Cloud-provider specific upload_status options
+#
+
+function checkUploadStatusOptionsAWS() {
+  local AMI
+  AMI=$(echo "$UPLOAD_OPTIONS" | jq -r '.ami')
+  local REGION
+  REGION=$(echo "$UPLOAD_OPTIONS" | jq -r '.region')
+
+  # AWS ID consist of resource identifier followed by a 17-character string
+  echo "$AMI" | grep -e 'ami-[[:alnum:]]\{17\}' -
+  test "$REGION" = "$AWS_REGION"
+}
+
+function checkUploadStatusOptionsGCP() {
+  GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
+
+  local IMAGE_NAME
+  IMAGE_NAME=$(echo "$UPLOAD_OPTIONS" | jq -r '.image_name')
+  local PROJECT_ID
+  PROJECT_ID=$(echo "$UPLOAD_OPTIONS" | jq -r '.project_id')
+
+  test "$IMAGE_NAME" = "$GCP_IMAGE_NAME"
+  test "$PROJECT_ID" = "$GCP_PROJECT"
+}
+
+case $CLOUD_PROVIDER in
+  "$CLOUD_PROVIDER_AWS")
+    checkUploadStatusOptionsAWS
+    ;;
+  "$CLOUD_PROVIDER_GCP")
+    checkUploadStatusOptionsGCP
+    ;;
+esac
 
 #
 # Verify the image landed in the appropriate cloud provider, and delete it.
@@ -471,11 +506,11 @@ function verifyInGCP() {
 
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
-  verifyInAWS
-  ;;
+    verifyInAWS
+    ;;
   "$CLOUD_PROVIDER_GCP")
-  verifyInGCP
-  ;;
+    verifyInGCP
+    ;;
 esac
 
 exit 0

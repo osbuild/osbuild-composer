@@ -292,13 +292,49 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 
+	var us *UploadStatus
+	if result.TargetResults != nil {
+		// Only single upload target is allowed, therefore only a single upload target result is allowed as well
+		if len(result.TargetResults) != 1 {
+			http.Error(w, fmt.Sprintf("Job %s returned more upload target results than allowed", id), http.StatusInternalServerError)
+			return
+		}
+		tr := *result.TargetResults[0]
+
+		var uploadType UploadTypes
+		var uploadOptions interface{}
+
+		switch tr.Name {
+		case "org.osbuild.aws":
+			uploadType = UploadTypes_aws
+			awsOptions := tr.Options.(*target.AWSTargetResultOptions)
+			uploadOptions = AWSUploadStatus{
+				Ami:    awsOptions.Ami,
+				Region: awsOptions.Region,
+			}
+		case "org.osbuild.gcp":
+			uploadType = UploadTypes_gcp
+			gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
+			uploadOptions = GCPUploadStatus{
+				ImageName: gcpOptions.ImageName,
+				ProjectId: gcpOptions.ProjectID,
+			}
+		default:
+			http.Error(w, fmt.Sprintf("Job %s returned unknown upload target results %s", id, tr.Name), http.StatusInternalServerError)
+			return
+		}
+
+		us = &UploadStatus{
+			Status:  result.UploadStatus,
+			Type:    uploadType,
+			Options: uploadOptions,
+		}
+	}
+
 	response := ComposeStatus{
 		ImageStatus: ImageStatus{
-			Status: composeStatusFromJobStatus(status, &result),
-			UploadStatus: &UploadStatus{
-				Status: result.UploadStatus,
-				Type:   "", // Do not return the upload for now, since it is not returned from the worker
-			},
+			Status:       composeStatusFromJobStatus(status, &result),
+			UploadStatus: us,
 		},
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
