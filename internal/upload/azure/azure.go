@@ -39,21 +39,21 @@ func NewStorageClient(storageAccount, storageAccessKey string) (*StorageClient, 
 	}, nil
 }
 
-// ImageMetadata contains information needed to store the image in a proper place.
+// BlobMetadata contains information needed to store the image in a proper place.
 // In case of Azure cloud storage this includes container name and blob name.
-type ImageMetadata struct {
+type BlobMetadata struct {
 	StorageAccount string
 	ContainerName  string
-	ImageName      string
+	BlobName       string
 }
 
-// UploadImage takes the metadata and credentials required to upload the image specified by `fileName`
+// UploadPageBlob takes the metadata and credentials required to upload the image specified by `fileName`
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
-func (c StorageClient) UploadImage(metadata ImageMetadata, fileName string, threads int) error {
+func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, threads int) error {
 	// Azure cannot create an image from a storage blob without .vhd extension
-	if !strings.HasSuffix(metadata.ImageName, ".vhd") {
-		metadata.ImageName = metadata.ImageName + ".vhd"
+	if !strings.HasSuffix(metadata.BlobName, ".vhd") {
+		metadata.BlobName = metadata.BlobName + ".vhd"
 	}
 
 	// get storage account blob service URL endpoint.
@@ -94,7 +94,7 @@ func (c StorageClient) UploadImage(metadata ImageMetadata, fileName string, thre
 	}
 
 	// Create page blob URL. Page blob is required for VM images
-	blobURL := newPageBlobURL(containerURL, metadata.ImageName)
+	blobURL := newPageBlobURL(containerURL, metadata.BlobName)
 	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		return fmt.Errorf("cannot create the blob URL: %v", err)

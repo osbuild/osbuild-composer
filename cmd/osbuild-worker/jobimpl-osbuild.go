@@ -234,13 +234,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 
-			metadata := azure.ImageMetadata{
+			metadata := azure.BlobMetadata{
 				ContainerName: options.Container,
-				ImageName:     t.ImageName,
+				BlobName:      t.ImageName,
 			}
 
 			const azureMaxUploadGoroutines = 4
-			err = azureStorageClient.UploadImage(
+			err = azureStorageClient.UploadPageBlob(
 				metadata,
 				path.Join(outputDirectory, options.Filename),
 				azureMaxUploadGoroutines,
