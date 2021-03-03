@@ -9,9 +9,11 @@ Version:        28
 %gometa
 
 %global common_description %{expand:
-An image building service based on osbuild
-It is inspired by lorax-composer and exposes the same API.
-As such, it is a drop-in replacement.
+A service for building customized OS artifacts, such as VM images and OSTree
+commits, that uses osbuild under the hood. Besides building images for local
+usage, it can also upload images directly to cloud.
+
+It is compatible with composer-cli and cockpit-composer clients.
 }
 
 Name:           osbuild-composer
