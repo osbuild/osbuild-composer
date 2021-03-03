@@ -165,11 +165,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		imageRequests[i].manifest = manifest
 		imageRequests[i].arch = arch.Name()
 
-		if len(ir.UploadRequests) != 1 {
-			http.Error(w, "Only compose requests with a single upload target are currently supported", http.StatusBadRequest)
-			return
-		}
-		uploadRequest := (ir.UploadRequests)[0]
+		uploadRequest := ir.UploadRequest
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 		if uploadRequest.Type == UploadTypes_aws {
 			var awsUploadOptions AWSUploadRequestOptions

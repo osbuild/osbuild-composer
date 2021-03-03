@@ -174,7 +174,7 @@ components:
         - architecture
         - image_type
         - repositories
-        - upload_requests
+        - upload_request
       properties:
         architecture:
           type: string
@@ -186,10 +186,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
-        upload_requests:
-          type: array
-          items:
-            $ref: '#/components/schemas/UploadRequest'
+        upload_request:
+          $ref: '#/components/schemas/UploadRequest'
     Repository:
       type: object
       required:
