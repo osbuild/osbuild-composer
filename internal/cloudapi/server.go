@@ -171,7 +171,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		}
 		uploadRequest := (ir.UploadRequests)[0]
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
-		if uploadRequest.Type == "aws" {
+		if uploadRequest.Type == UploadTypes_aws {
 			var awsUploadOptions AWSUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
@@ -205,7 +205,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 
 			targets = append(targets, t)
-		} else if uploadRequest.Type == "gcp" {
+		} else if uploadRequest.Type == UploadTypes_gcp {
 			var gcpUploadOptions GCPUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
