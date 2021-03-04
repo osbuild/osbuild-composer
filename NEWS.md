@@ -1,5 +1,21 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 29:
+
+  * Cloud API supports Google Cloud Platform as an upload target!
+
+  * Cloud API now includes additional information about the upload target in
+    response for "upload status". It works for both AWS and GCP.
+
+  * The kernel osbuild-composer installs is now marked as the `saved_entry`
+    making sure subsequent kernel installations do not change the default.
+
+Contributions from: Alexander Todorov, Chloe Kaubisch, David Rheinsberg, Martin
+                    Sehnoutka, Ondřej Budai, Sanne Raymaekers, Tomas Hozza, Tom
+                    Gundersen
+
+— Brno, 2021-03-04
+
 ## CHANGES WITH 28:
 
   * OSBuild Composer can now build CentOS Stream 8 images!
