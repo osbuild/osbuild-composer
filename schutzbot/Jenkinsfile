@@ -1,4 +1,6 @@
-def cron_string = BRANCH_NAME == "main" ? "@daily" : ""
+// defined in rhel-8.4 branch but keep here in case
+// we decide to run something else via cron in the future
+def cron_string = ""
 
 pipeline {
     agent none
