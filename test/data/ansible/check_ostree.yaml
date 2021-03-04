@@ -241,9 +241,8 @@
       block:
         - assert:
             that:
-              - result_dmesg_error.stdout_lines | length == 2
-              - "'pcieport 0000:00:01.6: Failed to check link status' in result_dmesg_error.stdout"
-              - "'Error: Driver \\'pcspkr\\' is already registered, aborting' in result_dmesg_error.stdout"
+              - result_dmesg_error.stdout_lines | length <= 2
+              - "'pcieport 0000:00:01.6: Failed to check link status' in result_dmesg_error.stdout or 'Error: Driver \\'pcspkr\\' is already registered, aborting' in result_dmesg_error.stdout"
             fail_msg: "more or less error and failed log"
             success_msg: "everything works as expected"
       always:
