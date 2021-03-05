@@ -240,8 +240,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			metadata := azure.BlobMetadata{
-				ContainerName: options.Container,
-				BlobName:      t.ImageName,
+				StorageAccount: options.StorageAccount,
+				ContainerName:  options.Container,
+				BlobName:       t.ImageName,
 			}
 
 			const azureMaxUploadGoroutines = 4
