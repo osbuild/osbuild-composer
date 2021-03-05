@@ -45,8 +45,9 @@ func main() {
 
 	err = c.UploadPageBlob(
 		azure.BlobMetadata{
-			BlobName:      path.Base(fileName),
-			ContainerName: containerName,
+			StorageAccount: storageAccount,
+			BlobName:       path.Base(fileName),
+			ContainerName:  containerName,
 		},
 		fileName,
 		threads,
