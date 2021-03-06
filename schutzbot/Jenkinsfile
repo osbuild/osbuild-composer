@@ -165,7 +165,18 @@ pipeline {
                         }
                     }
                 }
+                stage("Container build - x86_64") {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
 
+                    agent { label "f33cloudbase && x86_64 && aws" }
+                    steps {
+                        sh "schutzbot/containerbuild.sh"
+                    }
+                }
             }
         }
 
@@ -200,19 +211,6 @@ pipeline {
                     includes: 'COMPOSE_ID',
                     name: 'compose_id'
                 )
-            }
-        }
-
-        stage("Container build - x86_64") {
-            when {
-                expression {
-                    return env.BUILD_CAUSE != 'cron';
-                }
-            }
-
-            agent { label "f33cloudbase && x86_64 && aws" }
-            steps {
-                sh "schutzbot/containerbuild.sh"
             }
         }
 
