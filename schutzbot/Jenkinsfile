@@ -566,6 +566,8 @@ pipeline {
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
                     }
                     steps {
                         run_tests('integration')
