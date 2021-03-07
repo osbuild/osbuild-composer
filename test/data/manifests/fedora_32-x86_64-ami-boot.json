@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "aws"
-  },
   "compose-request": {
     "distro": "fedora-32",
     "arch": "x86_64",

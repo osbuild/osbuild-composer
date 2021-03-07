@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "qemu"
-  },
   "compose-request": {
     "distro": "rhel-84",
     "arch": "aarch64",

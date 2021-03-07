@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "aws"
-  },
   "compose-request": {
     "distro": "rhel-8",
     "arch": "aarch64",

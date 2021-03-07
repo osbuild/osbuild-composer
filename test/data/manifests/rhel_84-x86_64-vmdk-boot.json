@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "vmware"
-  },
   "compose-request": {
     "distro": "rhel-84",
     "arch": "x86_64",
