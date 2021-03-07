@@ -94,6 +94,7 @@ def generate_test_case(test_type, distro, arch, output_format, test_case_request
             pass
     with open(file_name, 'w') as case_file:
         json.dump(test_case, case_file, indent=2)
+        case_file.write("\n")
 
 
 CUSTOMIZATIONS_BLUEPRINT =  {
