@@ -1,8 +1,5 @@
 {
   "ami": {
-    "boot": {
-      "type": "aws"
-    },
     "compose-request": {
       "distro": "",
       "arch": "",
@@ -172,9 +169,6 @@
     }
   },
   "qcow2": {
-    "boot": {
-      "type": "qemu"
-    },
     "compose-request": {
       "distro": "",
       "arch": "",
@@ -218,9 +212,6 @@
     }
   },
   "vhd": {
-    "boot": {
-      "type": "azure"
-    },
     "compose-request": {
       "distro": "",
       "arch": "",
@@ -264,9 +255,6 @@
     }
   },
   "vmdk": {
-    "boot": {
-      "type": "qemu"
-    },
     "compose-request": {
       "distro": "",
       "arch": "",

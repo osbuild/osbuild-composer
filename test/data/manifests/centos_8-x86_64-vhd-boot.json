@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "azure"
-  },
   "compose-request": {
     "distro": "centos-8",
     "arch": "x86_64",
