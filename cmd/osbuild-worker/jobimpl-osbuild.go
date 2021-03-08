@@ -280,19 +280,43 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 
-			err = g.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Object)
+			log.Printf("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
+			_, err = g.StorageObjectUpload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Object)
 			if err != nil {
 				r = append(r, err)
 				continue
 			}
 
-			err = g.Import(options.Bucket, options.Object, t.ImageName, options.Os, options.Region)
-			if err != nil {
+			log.Printf("[GCP] 📥 Importing image into Compute Node as '%s'", t.ImageName)
+			imageBuild, importErr := g.ComputeImageImport(options.Bucket, options.Object, t.ImageName, options.Os, options.Region)
+			if imageBuild != nil {
+				log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
+				log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
+			}
+
+			// Cleanup storage before checking for errors
+			log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", options.Bucket, options.Object)
+			if err = g.StorageObjectDelete(options.Bucket, options.Object); err != nil {
+				log.Printf("[GCP] Encountered error while deleting object: %v", err)
+			}
+
+			deleted, errs := g.StorageImageImportCleanup(t.ImageName)
+			for _, d := range deleted {
+				log.Printf("[GCP] 🧹 Deleted image import job file '%s'", d)
+			}
+			for _, e := range errs {
+				log.Printf("[GCP] Encountered error during image import cleanup: %v", e)
+			}
+
+			// check error from ComputeImageImport()
+			if importErr != nil {
 				r = append(r, err)
 				continue
 			}
+			log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(t.ImageName))
 
-			err = g.Share(t.ImageName, options.ShareWithAccounts)
+			log.Printf("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
+			err = g.ComputeImageShare(t.ImageName, options.ShareWithAccounts)
 			if err != nil {
 				r = append(r, err)
 				continue
