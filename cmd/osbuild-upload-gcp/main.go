@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"log"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/gcp"
 )
@@ -51,40 +51,60 @@ func main() {
 		var err error
 		credentials, err = ioutil.ReadFile(credentialsPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error while reading credentials: %s\n", err)
-			return
+			log.Fatalf("[GCP] Error while reading credentials: %v", err)
 		}
 	}
 
 	g, err := gcp.New(credentials)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		log.Fatalf("[GCP] Failed to create new GCP object: %v", err)
 	}
 
 	// Upload image to the Storage
 	if !skipUpload {
-		if err := g.Upload(imageFile, bucketName, objectName); err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return
+		log.Printf("[GCP] 🚀 Uploading image to: %s/%s", bucketName, objectName)
+		_, err := g.StorageObjectUpload(imageFile, bucketName, objectName)
+		if err != nil {
+			log.Fatalf("[GCP] Uploading image failed: %v", err)
 		}
 	}
 
 	// Import Image to Compute Node
 	if !skipImport {
-		err = g.Import(bucketName, objectName, imageName, osFamily, region)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return
+		log.Printf("[GCP] 📥 Importing image into Compute Node as '%s'", imageName)
+		imageBuild, importErr := g.ComputeImageImport(bucketName, objectName, imageName, osFamily, region)
+		if imageBuild != nil {
+			log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
+			log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
 		}
+
+		// Cleanup storage before checking for errors
+		log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucketName, objectName)
+		if err = g.StorageObjectDelete(bucketName, objectName); err != nil {
+			log.Printf("[GCP] Encountered error while deleting object: %v", err)
+		}
+
+		deleted, errs := g.StorageImageImportCleanup(imageName)
+		for _, d := range deleted {
+			log.Printf("[GCP] 🧹 Deleted image import job file '%s'", d)
+		}
+		for _, e := range errs {
+			log.Printf("[GCP] Encountered error during image import cleanup: %v", e)
+		}
+
+		// check error from ComputeImageImport()
+		if importErr != nil {
+			log.Fatalf("[GCP] Importing image failed: %v", err)
+		}
+		log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(imageName))
 	}
 
 	// Share the imported Image with specified accounts using IAM policy
 	if len(shareWith) > 0 {
-		err = g.Share(imageName, []string(shareWith))
+		log.Printf("[GCP] 🔗 Sharing the image with: %+v", shareWith)
+		err = g.ComputeImageShare(imageName, []string(shareWith))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return
+			log.Fatalf("[GCP] Sharing image failed: %s", err)
 		}
 	}
 }
