@@ -534,7 +534,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	var targetErrors []string
 	for _, err := range r {
-		targetErrors = append(targetErrors, err.Error())
+		errStr := err.Error()
+		fmt.Printf("target errored: %s", errStr)
+		targetErrors = append(targetErrors, errStr)
 	}
 
 	var uploadstatus string = "failure"
