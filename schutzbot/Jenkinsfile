@@ -357,7 +357,7 @@ void preserve_logs(test_slug) {
 void detect_build_cause() {
     def buildCause = currentBuild.getBuildCauses().get(0)
 
-    if ( buildCause.shortDescription == 'Started by timer' && env.BRANCH_NAME == 'main') {
+    if ( buildCause.shortDescription == 'Started by timer' ) {
         return "cron"
     }
 
