@@ -138,12 +138,12 @@ pipeline {
                         }
                     }
                 }
-                stage('EL8.4') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                stage('EL8.5') {
+                    agent { label "rhel85cloudbase && x86_64 && psi" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        RHEL84_NIGHTLY_REPO = credentials('rhel84-nightly-repo')
+                        RHEL_NIGHTLY_REPO = credentials('rhel85-nightly-repo')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -627,8 +627,8 @@ pipeline {
                         }
                     }
                 }
-                stage('EL8.4 Base') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                stage('EL8.5 Base') {
+                    agent { label "rhel85cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "base"
                     }
@@ -637,12 +637,12 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('rhel84-base')
+                            preserve_logs('rhel85-base')
                         }
                     }
                 }
-                stage('EL8.4 Image') {
-                    agent { label "rhel84cloudbase && psi && x86_64" }
+                stage('EL8.5 Image') {
+                    agent { label "rhel85cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -650,14 +650,14 @@ pipeline {
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "rhel84"
+                        DISTRO_CODE = "rhel85"
                     }
                     steps {
                         run_tests('image')
                     }
                     post {
                         always {
-                            preserve_logs('rhel84-image')
+                            preserve_logs('rhel85-image')
                             sh (
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
@@ -665,8 +665,8 @@ pipeline {
                         }
                     }
                 }
-                stage('EL8.4 Integration') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
+                stage('EL8.5 Integration') {
+                    agent { label "rhel85cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
@@ -683,29 +683,29 @@ pipeline {
                     }
                     post {
                         always {
-                            preserve_logs('rhel84-integration')
+                            preserve_logs('rhel85-integration')
                         }
                     }
                 }
-                stage('EL8.4 OSTree') {
-                    agent { label "rhel84cloudbase && psi && x86_64" }
+                stage('EL8.5 OSTree') {
+                    agent { label "rhel85cloudbase && psi && x86_64" }
                     steps {
                         run_tests('ostree')
                     }
                     post {
                         always {
-                            preserve_logs('rhel84-ostree')
+                            preserve_logs('rhel85-ostree')
                         }
                     }
                 }
-                stage('EL8.4 New OSTree') {
-                    agent { label "rhel84cloudbase && psi && x86_64" }
+                stage('EL8.5 New OSTree') {
+                    agent { label "rhel85cloudbase && psi && x86_64" }
                     steps {
                         run_tests('ostree-ng')
                     }
                     post {
                         always {
-                            preserve_logs('rhel84-ostree-ng')
+                            preserve_logs('rhel85-ostree-ng')
                         }
                     }
                 }
