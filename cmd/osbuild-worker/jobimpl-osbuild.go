@@ -98,27 +98,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	streamOptimizedPath := ""
 
-	if osbuildOutput.Success && args.ImageName != "" {
-		var f *os.File
-		imagePath := path.Join(outputDirectory, args.ImageName)
-		if args.StreamOptimized {
-			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
-			if err != nil {
-				return err
-			}
-			streamOptimizedPath = f.Name()
-		} else {
-			f, err = os.Open(imagePath)
-			if err != nil {
-				return err
-			}
-		}
-		err = job.UploadArtifact(args.ImageName, f)
-		if err != nil {
-			return err
-		}
-	}
-
 	var r []error
 	var targetResults []*target.TargetResult
 
