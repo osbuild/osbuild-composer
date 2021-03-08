@@ -16,7 +16,7 @@ pipeline {
         AZURE_TENANT_ID = "1710d22c-ccf0-4421-8ba7-0135cfaecb90"
         AZURE_SUBSCRIPTION_ID = "8d026bb1-2a65-454d-a88f-c896db94c4f8"
         AZURE_RESOURCE_GROUP = "sharing-research"
-        AZURE_LOCATION = "westeurope"
+        AZURE_LOCATION = "eastus"
     }
 
     options {
