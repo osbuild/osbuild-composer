@@ -315,11 +315,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(t.ImageName))
 
-			log.Printf("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
-			err = g.ComputeImageShare(t.ImageName, options.ShareWithAccounts)
-			if err != nil {
-				r = append(r, err)
-				continue
+			if len(options.ShareWithAccounts) > 0 {
+				log.Printf("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
+				err = g.ComputeImageShare(t.ImageName, options.ShareWithAccounts)
+				if err != nil {
+					r = append(r, err)
+					continue
+				}
 			}
 
 			targetResults = append(targetResults, target.NewGCPTargetResult(&target.GCPTargetResultOptions{
