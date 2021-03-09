@@ -443,6 +443,8 @@ func TestDistro_ManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
 			if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
+			} else if imgTypeName == "rhel-edge-installer" {
+				assert.EqualError(t, err, "boot ISO image type \"rhel-edge-installer\" requires specifying a URL from which to retrieve the OSTree commit")
 			} else {
 				assert.NoError(t, err)
 			}
@@ -466,7 +468,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"vhd",
 				"vmdk",
 			},
-			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container"},
+			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container", "rhel-edge-installer"},
 		},
 		{
 			arch: "aarch64",

@@ -338,6 +338,7 @@ var imageTypeCompatMapping = map[string]string{
 	"fedora-iot-commit":   "fedora-iot-commit",
 	"rhel-edge-commit":    "rhel-edge-commit",
 	"rhel-edge-container": "rhen-edge-container",
+	"rhel-edge-installer": "rhen-edge-installer",
 	"test_type":           "test_type",         // used only in json_test.go
 	"test_type_invalid":   "test_type_invalid", // used only in json_test.go
 }
