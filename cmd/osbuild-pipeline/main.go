@@ -35,11 +35,6 @@ type composeRequest struct {
 	Repositories []repository        `json:"repositories"`
 }
 
-type rpmMD struct {
-	BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
-	Packages      []rpmmd.PackageSpec `json:"packages"`
-}
-
 func main() {
 	var rpmmdArg bool
 	flag.BoolVar(&rpmmdArg, "rpmmd", false, "output rpmmd struct instead of pipeline manifest")
@@ -116,32 +111,27 @@ func main() {
 		}
 	}
 
-	packages, excludePkgs := imageType.Packages(composeRequest.Blueprint)
+	packageSets := imageType.PackageSets(composeRequest.Blueprint)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	rpmmd := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
-	packageSpecs, checksums, err := rpmmd.Depsolve(packages, excludePkgs, repos, d.ModulePlatformID(), arch.Name())
-	if err != nil {
-		panic("Could not depsolve: " + err.Error())
-	}
+	rpm_md := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
-	buildPkgs := imageType.BuildPackages()
-	buildPackageSpecs, _, err := rpmmd.Depsolve(buildPkgs, nil, repos, d.ModulePlatformID(), arch.Name())
-	if err != nil {
-		panic("Could not depsolve build packages: " + err.Error())
+	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+	for name, packages := range packageSets {
+		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), arch.Name())
+		if err != nil {
+			panic("Could not depsolve: " + err.Error())
+		}
+		packageSpecSets[name] = packageSpecs
 	}
 
 	var bytes []byte
 	if rpmmdArg {
-		rpmMDInfo := rpmMD{
-			BuildPackages: buildPackageSpecs,
-			Packages:      packageSpecs,
-		}
-		bytes, err = json.Marshal(rpmMDInfo)
+		bytes, err = json.Marshal(packageSpecSets)
 		if err != nil {
 			panic(err)
 		}
@@ -151,8 +141,7 @@ func main() {
 				Size: imageType.Size(0),
 			},
 			repos,
-			packageSpecs,
-			buildPackageSpecs,
+			packageSpecSets,
 			seedArg)
 		if err != nil {
 			panic(err.Error())

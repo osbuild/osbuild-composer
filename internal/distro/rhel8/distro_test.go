@@ -126,7 +126,9 @@ func TestImageType_BuildPackages(t *testing.T) {
 			if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
 				continue
 			}
-			assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
+			buildPkgs := itStruct.PackageSets(blueprint.Blueprint{})["build-packages"]
+			assert.NotNil(t, buildPkgs)
+			assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs.Include)
 		}
 	}
 }
@@ -339,15 +341,16 @@ func TestImageType_BasePackages(t *testing.T) {
 	for _, pkgMap := range pkgMaps {
 		imgType, err := arch.GetImageType(pkgMap.name)
 		assert.NoError(t, err)
-		basePackages, excludedPackages := imgType.Packages(blueprint.Blueprint{})
+		packages := imgType.PackageSets(blueprint.Blueprint{})["packages"]
+		assert.NotNil(t, packages)
 		assert.Equalf(
 			t,
 			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),
-			basePackages,
+			packages.Include,
 			"image type: %s",
 			pkgMap.name,
 		)
-		assert.Equalf(t, pkgMap.excludedPackages, excludedPackages, "image type: %s", pkgMap.name)
+		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "image type: %s", pkgMap.name)
 	}
 }
 
@@ -372,7 +375,7 @@ func TestDistro_ManifestError(t *testing.T) {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "rhel-edge-commit" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
 			} else {
