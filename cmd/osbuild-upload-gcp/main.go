@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/osbuild/osbuild-composer/internal/upload/gcp"
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 )
 
 type strArrayFlag []string

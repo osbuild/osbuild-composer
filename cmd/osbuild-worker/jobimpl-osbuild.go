@@ -16,13 +16,13 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
-	"github.com/osbuild/osbuild-composer/internal/upload/gcp"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
