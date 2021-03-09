@@ -121,13 +121,15 @@ func TestImageType_BuildPackages(t *testing.T) {
 				t.Errorf("d.GetArch(%v) returned err = %v; expected nil", archLabel, err)
 				continue
 			}
+			buildPkgs := itStruct.PackageSets(blueprint.Blueprint{})["build-packages"]
+			assert.NotNil(t, buildPkgs)
 			if itLabel == "fedora-iot-commit" {
 				// For now we only include rpm-ostree when building fedora-iot-commit image types, this we may want
 				// to reconsider. The only reason to specia-case it is that it might pull in a lot of dependencies
 				// for a niche usecase.
-				assert.ElementsMatch(t, append(buildPackages[archLabel], "rpm-ostree"), itStruct.BuildPackages())
+				assert.ElementsMatch(t, append(buildPackages[archLabel], "rpm-ostree"), buildPkgs.Include)
 			} else {
-				assert.ElementsMatch(t, buildPackages[archLabel], itStruct.BuildPackages())
+				assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs.Include)
 			}
 		}
 	}
@@ -280,15 +282,16 @@ func TestImageType_BasePackages(t *testing.T) {
 	for _, pkgMap := range pkgMaps {
 		imgType, err := arch.GetImageType(pkgMap.name)
 		assert.NoError(t, err)
-		basePackages, excludedPackages := imgType.Packages(blueprint.Blueprint{})
+		packages := imgType.PackageSets(blueprint.Blueprint{})["packages"]
+		assert.NotNil(t, packages)
 		assert.Equalf(
 			t,
 			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),
-			basePackages,
+			packages.Include,
 			"image type: %s",
 			pkgMap.name,
 		)
-		assert.Equalf(t, pkgMap.excludedPackages, excludedPackages, "image type: %s", pkgMap.name)
+		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "image type: %s", pkgMap.name)
 	}
 }
 
@@ -314,7 +317,7 @@ func TestDistro_ManifestError(t *testing.T) {
 		arch, _ := f32distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "fedora-iot-commit" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
 			} else {

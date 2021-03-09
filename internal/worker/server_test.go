@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -111,7 +111,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -152,7 +152,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}
@@ -179,7 +179,7 @@ func TestArgs(t *testing.T) {
 	require.NoError(t, err)
 	imageType, err := arch.GetImageType("qcow2")
 	require.NoError(t, err)
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	require.NoError(t, err)
 
 	tempdir, err := ioutil.TempDir("", "worker-tests-")
@@ -221,7 +221,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch")
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest")
 	}

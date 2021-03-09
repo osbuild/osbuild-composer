@@ -95,11 +95,14 @@ func (t *imageType) BuildPackages() []string {
 	return nil
 }
 
+func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
+	return nil
+}
+
 func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec,
+	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 
 	return json.Marshal(
