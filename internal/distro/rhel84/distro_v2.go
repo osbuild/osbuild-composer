@@ -24,6 +24,7 @@ type imageTypeS2 struct {
 	defaultTarget    string
 	kernelOptions    string
 	bootable         bool
+	bootISO          bool
 	rpmOstree        bool
 	defaultSize      uint64
 }
@@ -69,19 +70,18 @@ func (t *imageTypeS2) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	if timezone != nil {
 		packages = append(packages, "chrony")
 	}
-	if t.bootable {
-		packages = append(packages, t.arch.bootloaderPackages...)
-	}
-
 	return packages, t.packageSets["packages"].Exclude
 }
 
 func (t *imageTypeS2) BuildPackages() []string {
-	packages := append(t.arch.distro.buildPackages, t.arch.buildPackages...)
+	buildPackages := append(t.arch.distro.buildPackages, t.arch.buildPackages...)
 	if t.rpmOstree {
-		packages = append(packages, "rpm-ostree")
+		buildPackages = append(buildPackages, "rpm-ostree")
 	}
-	return packages
+	if t.bootISO {
+		buildPackages = append(buildPackages, t.packageSets["build"].Include...)
+	}
+	return buildPackages
 }
 
 func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
@@ -122,20 +122,32 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 	// flatten spec sets for sources
 	allPackageSpecs := make([]rpmmd.PackageSpec, 0)
 	for _, specs := range packageSpecSets {
-
 		allPackageSpecs = append(allPackageSpecs, specs...)
+	}
+
+	var commits []ostreeCommit
+	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+		commit := ostreeCommit{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}
+		commits = []ostreeCommit{commit}
 	}
 	return json.Marshal(
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   t.sources(allPackageSpecs),
+			Sources:   t.sources(allPackageSpecs, commits),
 		},
 	)
 }
 
-func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec) osbuild.Sources {
-	source := &osbuild.CurlSource{
+// local type for ostree sommit metadata used to define commit sources
+type ostreeCommit struct {
+	Checksum string
+	URL      string
+}
+
+func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostreeCommit) osbuild.Sources {
+	sources := osbuild.Sources{}
+	curl := &osbuild.CurlSource{
 		Items: make(map[string]osbuild.CurlSourceItem),
 	}
 	for _, pkg := range packages {
@@ -146,34 +158,68 @@ func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec) osbuild.Sources {
 				Name: "org.osbuild.rhsm",
 			}
 		}
-		source.Items[pkg.Checksum] = item
+		curl.Items[pkg.Checksum] = item
 	}
-	return osbuild.Sources{
-		"org.osbuild.curl": source,
+	if len(curl.Items) > 0 {
+		sources["org.osbuild.curl"] = curl
 	}
+
+	ostree := &osbuild.OSTreeSource{
+		Items: make(map[string]osbuild.OSTreeSourceItem),
+	}
+	for _, commit := range ostreeCommits {
+		item := new(osbuild.OSTreeSourceItem)
+		item.Remote.URL = commit.URL
+		ostree.Items[commit.Checksum] = *item
+	}
+	if len(ostree.Items) > 0 {
+		sources["org.osbuild.ostree"] = ostree
+	}
+	return sources
 }
 
-func (t *imageTypeS2) pipelines(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	if kernelOpts := c.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
+func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+
+	if t.bootISO {
+		if options.OSTree.Parent == "" {
+			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
+		}
+		if customizations != nil {
+			return nil, fmt.Errorf("boot ISO image type %q does not support blueprint customizations", t.name)
+		}
+	}
+
+	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
-	pipelines := make([]osbuild.Pipeline, 0, 5)
+	pipelines := make([]osbuild.Pipeline, 0)
 
 	pipelines = append(pipelines, *t.buildPipeline(repos, packageSetSpecs["build-packages"]))
 
-	if t.rpmOstree {
-		// NOTE(akoutsou) 1to2t: Currently all images of type imageTypeS2 are ostree
-		treePipeline, err := t.ostreeTreePipeline(repos, packageSetSpecs["packages"], c)
+	if t.bootISO {
+		var kernelPkg rpmmd.PackageSpec
+		for _, pkg := range packageSetSpecs["installer"] {
+			if pkg.Name == "kernel" {
+				kernelPkg = pkg
+				break
+			}
+		}
+		// TODO: panic if not found
+		kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
+		pipelines = append(pipelines, *t.anacondaTreePipeline(repos, packageSetSpecs["installer"], options, kernelVer))
+		pipelines = append(pipelines, *t.bootISOTreePipeline(kernelVer))
+		pipelines = append(pipelines, *t.bootISOPipeline())
+	} else {
+		treePipeline, err := t.ostreeTreePipeline(repos, packageSetSpecs["packages"], customizations)
 		if err != nil {
 			return nil, err
 		}
 		pipelines = append(pipelines, *treePipeline)
 		pipelines = append(pipelines, *t.ostreeCommitPipeline(options))
+		pipelines = append(pipelines, *t.containerTreePipeline(repos, packageSetSpecs["container"], options, customizations))
+		pipelines = append(pipelines, *t.containerPipeline())
 	}
-
-	pipelines = append(pipelines, *t.containerTreePipeline(repos, packageSetSpecs["container"], options, c))
-	pipelines = append(pipelines, *t.containerPipeline())
 
 	return pipelines, nil
 }
@@ -236,7 +282,9 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
 	}
 
-	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
+	if !t.bootISO {
+		p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
+	}
 
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
 	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
@@ -250,7 +298,7 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 		},
 	}))
 
-	p.AddStage(osbuild.NewRPMOSTreePrepTreeStage(&osbuild.RPMOSTreePrepTreeStageOptions{
+	p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 		EtcGroupMembers: []string{
 			// NOTE: We may want to make this configurable.
 			"wheel", "docker",
@@ -296,7 +344,7 @@ func (t *imageTypeS2) containerTreePipeline(repos []rpmmd.RepoConfig, packages [
 
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: "/var/www/html/repo"},
-		t.ostreePullStageInputs(options),
+		t.ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", t.OSTreeRef()),
 	))
 	return p
 }
@@ -323,6 +371,74 @@ func (t *imageTypeS2) containerPipeline() *osbuild.Pipeline {
 	return p
 }
 
+func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = "anaconda-tree"
+	p.Build = "name:build"
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/ostree/repo"}))
+	p.AddStage(osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: "/ostree/repo"},
+		t.ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+	))
+	p.AddStage(osbuild.NewBuildstampStage(t.buildStampStageOptions()))
+	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+
+	rootPassword := ""
+	rootUser := osbuild.UsersStageOptionsUser{
+		Password: &rootPassword,
+	}
+
+	installUID := 0
+	installGID := 0
+	installHome := "/root"
+	installShell := "/usr/libexec/anaconda/run-anaconda"
+	installPassword := ""
+	installUser := osbuild.UsersStageOptionsUser{
+		UID:      &installUID,
+		GID:      &installGID,
+		Home:     &installHome,
+		Shell:    &installShell,
+		Password: &installPassword,
+	}
+	usersStageOptions := &osbuild.UsersStageOptions{
+		Users: map[string]osbuild.UsersStageOptionsUser{
+			"root":    rootUser,
+			"install": installUser,
+		},
+	}
+
+	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
+	p.AddStage(osbuild.NewAnacondaStage(t.anacondaStageOptions()))
+	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
+	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
+	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(options.OSTree.URL)))
+
+	return p
+}
+
+func (t *imageTypeS2) bootISOTreePipeline(kernelVer string) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = "bootiso-tree"
+	p.Build = "name:build"
+
+	p.AddStage(osbuild.NewBootISOMonoStage(t.bootISOMonoStageOptions(kernelVer), t.bootISOMonoStageInputs()))
+	p.AddStage(osbuild.NewDiscinfoStage(t.discinfoStageOptions()))
+
+	return p
+}
+func (t *imageTypeS2) bootISOPipeline() *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	// NOTE(akoutsou) 1to2t: final pipeline should always be named "assembler"
+	p.Name = "assembler"
+	p.Build = "name:build"
+
+	p.AddStage(osbuild.NewXorrisofsStage(t.xorrisofsStageOptions(), t.xorrisofsStageInputs()))
+	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: t.Filename()}))
+
+	return p
+}
+
 func (t *imageTypeS2) rpmStageInputs(specs []rpmmd.PackageSpec) *osbuild.RPMStageInputs {
 	stageInput := new(osbuild.RPMStageInput)
 	stageInput.Type = "org.osbuild.files"
@@ -339,13 +455,13 @@ func pkgRefs(specs []rpmmd.PackageSpec) osbuild.RPMStageReferences {
 	return refs
 }
 
-func (t *imageTypeS2) ostreePullStageInputs(options distro.ImageOptions) *osbuild.OSTreePullStageInputs {
+func (t *imageTypeS2) ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePullStageInputs {
 	pullStageInput := new(osbuild.OSTreePullStageInput)
 	pullStageInput.Type = "org.osbuild.ostree"
-	pullStageInput.Origin = "org.osbuild.pipeline"
+	pullStageInput.Origin = origin
 
 	inputRefs := make(map[string]osbuild.OSTreePullStageReference)
-	inputRefs["name:ostree-commit"] = osbuild.OSTreePullStageReference{Ref: t.OSTreeRef()}
+	inputRefs[source] = osbuild.OSTreePullStageReference{Ref: commitRef}
 	pullStageInput.References = inputRefs
 	return &osbuild.OSTreePullStageInputs{Commits: pullStageInput}
 }
@@ -369,9 +485,17 @@ func (t *imageTypeS2) rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStag
 }
 
 func (t *imageTypeS2) selinuxStageOptions() *osbuild.SELinuxStageOptions {
-	return &osbuild.SELinuxStageOptions{
+
+	options := &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}
+	if t.bootISO {
+		options.Labels = map[string]string{
+			"/usr/bin/cp":  "system_u:object_r:install_exec_t:s0",
+			"/usr/bin/tar": "system_u:object_r:install_exec_t:s0",
+		}
+	}
+	return options
 }
 
 func (t *imageTypeS2) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
@@ -447,4 +571,174 @@ func (t *imageTypeS2) systemdStageOptions(enabledServices, disabledServices []st
 		DisabledServices: disabledServices,
 		DefaultTarget:    target,
 	}
+}
+
+func (t *imageTypeS2) buildStampStageOptions() *osbuild.BuildstampStageOptions {
+	return &osbuild.BuildstampStageOptions{
+		Arch:    t.Arch().Name(),
+		Product: "Red Hat Enterprise Linux",
+		Version: "8.4",
+		Variant: "edge",
+		Final:   true,
+	}
+}
+
+func (t *imageTypeS2) anacondaStageOptions() *osbuild.AnacondaStageOptions {
+	return &osbuild.AnacondaStageOptions{
+		KickstartModules: []string{
+			"org.fedoraproject.Anaconda.Modules.Network",
+			"org.fedoraproject.Anaconda.Modules.Payloads",
+			"org.fedoraproject.Anaconda.Modules.Storage",
+		},
+	}
+}
+
+func (t *imageTypeS2) loraxScriptStageOptions() *osbuild.LoraxScriptStageOptions {
+	return &osbuild.LoraxScriptStageOptions{
+		Path:     "99-generic/runtime-postinstall.tmpl",
+		BaseArch: t.Arch().Name(),
+	}
+}
+
+func (t *imageTypeS2) dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
+	kernel := []string{kernelVer}
+	modules := []string{
+		"bash",
+		"systemd",
+		"fips",
+		"systemd-initrd",
+		"modsign",
+		"nss-softokn",
+		"rdma",
+		"rngd",
+		"i18n",
+		"convertfs",
+		"network-manager",
+		"network",
+		"ifcfg",
+		"url-lib",
+		"drm",
+		"plymouth",
+		"prefixdevname",
+		"prefixdevname-tools",
+		"anaconda",
+		"crypt",
+		"dm",
+		"dmsquash-live",
+		"kernel-modules",
+		"kernel-modules-extra",
+		"kernel-network-modules",
+		"livenet",
+		"lvm",
+		"mdraid",
+		"multipath",
+		"qemu",
+		"qemu-net",
+		"fcoe",
+		"fcoe-uefi",
+		"iscsi",
+		"lunmask",
+		"nfs",
+		"resume",
+		"rootfs-block",
+		"terminfo",
+		"udev-rules",
+		"biosdevname",
+		"dracut-systemd",
+		"pollcdrom",
+		"usrmount",
+		"base",
+		"fs-lib",
+		"img-lib",
+		"shutdown",
+		"uefi-lib",
+	}
+	return &osbuild.DracutStageOptions{
+		Kernel:  kernel,
+		Modules: modules,
+		Install: []string{"/.buildstamp"},
+	}
+}
+
+func (t *imageTypeS2) kickstartStageOptions(ostreeURL string) *osbuild.KickstartStageOptions {
+	return &osbuild.KickstartStageOptions{
+		Path: "/usr/share/anaconda/interactive-defaults.ks",
+		OSTree: osbuild.OSTreeOptions{
+			OSName: "rhel",
+			URL:    ostreeURL,
+			Ref:    t.OSTreeRef(),
+			GPG:    false,
+		},
+	}
+}
+
+func (t *imageTypeS2) bootISOMonoStageOptions(kernelVer string) *osbuild.BootISOMonoStageOptions {
+	return &osbuild.BootISOMonoStageOptions{
+		Product: osbuild.Product{
+			Name:    "Red Hat Enterprise Linux",
+			Version: "8.4",
+		},
+		ISOLabel: fmt.Sprintf("RHEL-8-4-0-BaseOS-%s", t.Arch().Name()),
+		Kernel:   kernelVer,
+		EFI: osbuild.EFI{
+			Architectures: []string{
+				"IA32",
+				"X64",
+			},
+			Vendor: "redhat",
+		},
+		ISOLinux: osbuild.ISOLinux{
+			Enabled: true,
+			Debug:   false,
+		},
+		Templates: "80-rhel",
+		RootFS: osbuild.RootFS{
+			Size: 4096,
+			Compression: osbuild.FSCompression{
+				Method: "xz",
+				Options: osbuild.FSCompressionOptions{
+					// TODO: based on image arch
+					BCJ: "x86",
+				},
+			},
+		},
+	}
+}
+
+func (t *imageTypeS2) bootISOMonoStageInputs() *osbuild.BootISOMonoStageInputs {
+	rootfsInput := new(osbuild.BootISOMonoStageInput)
+	rootfsInput.Type = "org.osbuild.tree"
+	rootfsInput.Origin = "org.osbuild.pipeline"
+	rootfsInput.References = osbuild.BootISOMonoStageReferences{"name:anaconda-tree"}
+	return &osbuild.BootISOMonoStageInputs{
+		RootFS: rootfsInput,
+	}
+}
+
+func (t *imageTypeS2) discinfoStageOptions() *osbuild.DiscinfoStageOptions {
+	return &osbuild.DiscinfoStageOptions{
+		BaseArch: t.Arch().Name(),
+		Release:  "202010217.n.0",
+	}
+}
+
+func (t *imageTypeS2) xorrisofsStageOptions() *osbuild.XorrisofsStageOptions {
+	return &osbuild.XorrisofsStageOptions{
+		Filename: t.Filename(),
+		VolID:    fmt.Sprintf("RHEL-8-4-0-BaseOS-%s", t.Arch().Name()),
+		Boot: osbuild.XorrisofsBoot{
+			Image:   "isolinux/isolinux.bin",
+			Catalog: "isolinux/boot.cat",
+		},
+		EFI:          "images/efiboot.img",
+		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
+	}
+}
+
+func (t *imageTypeS2) xorrisofsStageInputs() *osbuild.XorrisofsStageInputs {
+	input := new(osbuild.XorrisofsStageInput)
+	input.Type = "org.osbuild.tree"
+	input.Origin = "org.osbuild.pipeline"
+	input.References = osbuild.XorrisofsStageReferences{"name:bootiso-tree"}
+	return &osbuild.XorrisofsStageInputs{Tree: input}
 }
