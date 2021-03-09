@@ -132,17 +132,15 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		packageSpecs, excludePackageSpecs := imageType.Packages(bp)
-		packages, _, err := server.rpmMetadata.Depsolve(packageSpecs, excludePackageSpecs, repositories, distribution.ModulePlatformID(), arch.Name())
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusInternalServerError)
-			return
-		}
-		buildPackageSpecs := imageType.BuildPackages()
-		buildPackages, _, err := server.rpmMetadata.Depsolve(buildPackageSpecs, nil, repositories, distribution.ModulePlatformID(), arch.Name())
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to depsolve build packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusInternalServerError)
-			return
+		packageSets := imageType.PackageSets(bp)
+		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
+		for name, packages := range packageSets {
+			pkgs, _, err := server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusInternalServerError)
+				return
+			}
+			pkgSpecSets[name] = pkgs
 		}
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
@@ -156,7 +154,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		manifest, err := imageType.Manifest(nil, imageOptions, repositories, packages, buildPackages, manifestSeed)
+		manifest, err := imageType.Manifest(nil, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
 			return

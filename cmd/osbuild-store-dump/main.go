@@ -16,17 +16,17 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpmmd rpmmd.RPMMD, repos []rpmmd.RepoConfig) distro.Manifest {
-	packages, excludePackages := t.Packages(bp)
-	pkgs, _, err := rpmmd.Depsolve(packages, excludePackages, repos, d.ModulePlatformID(), a.Name())
-	if err != nil {
-		panic(err)
+func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpm_md rpmmd.RPMMD, repos []rpmmd.RepoConfig) distro.Manifest {
+	packageSets := t.PackageSets(bp)
+	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
+	for name, packages := range packageSets {
+		pkgs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), a.Name())
+		if err != nil {
+			panic(err)
+		}
+		pkgSpecSets[name] = pkgs
 	}
-	buildPkgs, _, err := rpmmd.Depsolve(t.BuildPackages(), nil, repos, d.ModulePlatformID(), a.Name())
-	if err != nil {
-		panic(err)
-	}
-	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgs, buildPkgs, 0)
+	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgSpecSets, 0)
 	if err != nil {
 		panic(err)
 	}

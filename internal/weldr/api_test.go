@@ -578,7 +578,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType("qcow2")
 	require.NoError(t, err)
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
 	require.NoError(t, err)
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{

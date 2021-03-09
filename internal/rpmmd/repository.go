@@ -96,6 +96,13 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 	}
 }
 
+// The inputs to depsolve, a set of packages to include and a set of
+// packages to exclude.
+type PackageSet struct {
+	Include []string
+	Exclude []string
+}
+
 // TODO: the public API of this package should not be reused for serialization.
 type PackageSpec struct {
 	Name           string `json:"name"`
@@ -159,7 +166,7 @@ type RPMMD interface {
 	// Depsolve takes a list of required content (specs), explicitly unwanted content (excludeSpecs), list
 	// or repositories, and platform ID for modularity. It returns a list of all packages (with solved
 	// dependencies) that will be installed into the system.
-	Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error)
+	Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error)
 }
 
 type DNFError struct {
@@ -377,7 +384,7 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 	return reply.Packages, checksums, err
 }
 
-func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
+func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
 
 	for i, repo := range repos {
@@ -395,7 +402,7 @@ func (r *rpmmdImpl) Depsolve(specs, excludeSpecs []string, repos []RepoConfig, m
 		CacheDir         string          `json:"cachedir"`
 		ModulePlatformID string          `json:"module_platform_id"`
 		Arch             string          `json:"arch"`
-	}{specs, excludeSpecs, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
+	}{packageSet.Include, packageSet.Exclude, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
 	var reply struct {
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []dnfPackageSpec  `json:"dependencies"`
@@ -479,6 +486,6 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 }
 
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID string, arch string) (err error) {
-	pkg.Dependencies, _, err = rpmmd.Depsolve([]string{pkg.Name}, nil, repos, modulePlatformID, arch)
+	pkg.Dependencies, _, err = rpmmd.Depsolve(PackageSet{Include: []string{pkg.Name}}, repos, modulePlatformID, arch)
 	return
 }

@@ -118,18 +118,18 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			panic("Could not initialize empty blueprint.")
 		}
-		packageSpecs, excludePackageSpecs := imageType.Packages(*bp)
-		packages, _, err := h.server.rpmMetadata.Depsolve(packageSpecs, excludePackageSpecs, repositories, d.ModulePlatformID(), arch.Name())
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
-		}
-		buildPackageSpecs := imageType.BuildPackages()
-		buildPackages, _, err := h.server.rpmMetadata.Depsolve(buildPackageSpecs, nil, repositories, d.ModulePlatformID(), arch.Name())
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve build packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+
+		packageSets := imageType.PackageSets(*bp)
+		packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+		for name, packages := range packageSets {
+			packageSpecs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, d.ModulePlatformID(), arch.Name())
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+			}
+			packageSpecSets[name] = packageSpecs
 		}
 
-		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packages, buildPackages, manifestSeed)
+		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packageSpecSets, manifestSeed)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}

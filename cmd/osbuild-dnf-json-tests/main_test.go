@@ -80,12 +80,12 @@ func TestCrossArchDepsolve(t *testing.T) {
 							imgType, err := arch.GetImageType(imgTypeStr)
 							require.NoError(t, err)
 
-							buildPackages := imgType.BuildPackages()
-							_, _, err = rpm.Depsolve(buildPackages, []string{}, repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							packages := imgType.PackageSets(blueprint.Blueprint{})
+
+							_, _, err = rpm.Depsolve(packages["build-packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
 
-							basePackagesInclude, basePackagesExclude := imgType.Packages(blueprint.Blueprint{})
-							_, _, err = rpm.Depsolve(basePackagesInclude, basePackagesExclude, repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							_, _, err = rpm.Depsolve(packages["packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr)
 							assert.NoError(t, err)
 						})
 					}
