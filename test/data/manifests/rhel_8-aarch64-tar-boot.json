@@ -5351,11 +5351,7 @@
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-appstream-8.3.0.r-20210120/Packages/xkeyboard-config-2.28-1.el8.noarch.rpm",
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
-    ],
-    "checksums": {
-      "0": "sha256:517831776ae84fa2d1ceb52c043cd0bd50fc06e3761046f60f730b25f02c9519",
-      "1": "sha256:be9adc924571c59331c75639df3d3dc6c7214954db7ac000c2f06eadff631aa5"
-    }
+    ]
   },
   "image-info": {
     "bootmenu": [],
