@@ -10125,11 +10125,7 @@
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-appstream-8.3.0.r-20210120/Packages/xkeyboard-config-2.28-1.el8.noarch.rpm",
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
-    ],
-    "checksums": {
-      "0": "sha256:46d16db63c077144fb5fb7b18dfec918599e99b02ab7b29dd952eaa6b552a26b",
-      "1": "sha256:6ba75631f79a77c901ba2aff970179d3dbccc247428dd09543fca08f983f3091"
-    }
+    ]
   },
   "image-info": {
     "bootloader": "unknown",

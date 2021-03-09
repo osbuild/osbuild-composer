@@ -10571,10 +10571,7 @@
         "checksum": "sha256:1ecfd9041524f8dab2eba10eab59c912eeae09acb3c3e8ada018fe13d23dda73",
         "check_gpg": true
       }
-    ],
-    "checksums": {
-      "0": "sha256:7a75be2ebd56e44c9d33252a12158c8b7079331e9c73aa62c609414299dabf06"
-    }
+    ]
   },
   "image-info": {
     "default-target": "graphical.target",
