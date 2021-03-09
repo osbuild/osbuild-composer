@@ -38,7 +38,6 @@ type composeRequest struct {
 type rpmMD struct {
 	BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
 	Packages      []rpmmd.PackageSpec `json:"packages"`
-	Checksums     map[string]string   `json:"checksums"`
 }
 
 func main() {
@@ -141,7 +140,6 @@ func main() {
 		rpmMDInfo := rpmMD{
 			BuildPackages: buildPackageSpecs,
 			Packages:      packageSpecs,
-			Checksums:     checksums,
 		}
 		bytes, err = json.Marshal(rpmMDInfo)
 		if err != nil {

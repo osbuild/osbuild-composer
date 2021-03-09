@@ -9223,12 +9223,7 @@
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-appstream-8.4.0.n-20210120/Packages/xmlsec1-openssl-1.2.25-4.el8.x86_64.rpm",
         "checksum": "sha256:7d07d9055f557acf574e238327f003dc1a77dd119406e2326c844d17b818417c"
       }
-    ],
-    "checksums": {
-      "0": "sha256:9a3756ebef6ab7caf590c69d436846bcdcc97ff037e82967cab1f90cfb2c6ec0",
-      "1": "sha256:bfd8cfbc7ab499d9699c564f92303ee241104ce5410b9dacf2e2f6c6623eecde",
-      "2": "sha256:21e8f75a343be3b15ee3ddcfde690e9d8d3e71640ec5e8fe7ad9c64fa93ffb77"
-    }
+    ]
   },
   "image-info": {
     "boot-environment": {
