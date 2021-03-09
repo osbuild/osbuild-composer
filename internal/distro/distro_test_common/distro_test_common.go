@@ -38,14 +38,10 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			Repositories []repository         `json:"repositories"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
-		type rpmMD struct {
-			BuildPackages []rpmmd.PackageSpec `json:"build-packages"`
-			Packages      []rpmmd.PackageSpec `json:"packages"`
-		}
 		var tt struct {
-			ComposeRequest *composeRequest `json:"compose-request"`
-			RpmMD          *rpmMD          `json:"rpmmd"`
-			Manifest       distro.Manifest `json:"manifest,omitempty"`
+			ComposeRequest *composeRequest                `json:"compose-request"`
+			PackageSets    map[string][]rpmmd.PackageSpec `json:"rpmmd"`
+			Manifest       distro.Manifest                `json:"manifest,omitempty"`
 		}
 		file, err := ioutil.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -93,8 +89,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 					},
 				},
 				repos,
-				tt.RpmMD.Packages,
-				tt.RpmMD.BuildPackages,
+				tt.PackageSets,
 				RandomTestSeed)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
@@ -116,7 +111,8 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 }
 
 func isOSTree(imgType distro.ImageType) bool {
-	for _, pkg := range imgType.BuildPackages() {
+	packageSets := imgType.PackageSets(blueprint.Blueprint{})
+	for _, pkg := range packageSets["build-packages"].Include {
 		if pkg == "rpm-ostree" {
 			return true
 		}
@@ -128,7 +124,7 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType) int {
-	pkgs, _ := imgType.Packages(blueprint.Blueprint{})
+	pkgs := imgType.PackageSets(blueprint.Blueprint{})["packages"].Include
 	n := 0
 	for _, pkg := range pkgs {
 		for _, kernel := range knownKernels {

@@ -72,17 +72,16 @@ type ImageType interface {
 	// is 0 the default value for the format will be returned.
 	Size(size uint64) uint64
 
-	// Returns the default packages to include and exclude when making the image
-	// type.
-	Packages(bp blueprint.Blueprint) ([]string, []string)
-
-	// Returns the build packages for the output type.
-	BuildPackages() []string
+	// Returns the sets of packages to include and exclude when building the image.
+	// Indexed by a string label. How each set is labeled and used depends on the
+	// image type.
+	PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet
 
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to build an image, given output format with all packages and customizations
-	// specified in the given blueprint.
-	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, seed int64) (Manifest, error)
+	// specified in the given blueprint. The packageSpecSets must be labelled in
+	// the same way as the originating PackageSets.
+	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, seed int64) (Manifest, error)
 }
 
 // The ImageOptions specify options for a specific image build

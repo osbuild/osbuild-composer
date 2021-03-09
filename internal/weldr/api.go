@@ -1038,7 +1038,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
-	packages, _, err := api.rpmmd.Depsolve(names, nil, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
 
 	if err != nil {
 		errors := responseError{
@@ -1233,7 +1233,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, _, err := api.depsolveBlueprint(blueprint, nil)
+		dependencies, err := api.depsolveBlueprint(blueprint)
 
 		if err != nil {
 			blueprintsErrors = append(blueprintsErrors, responseError{
@@ -1322,7 +1322,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		}
 		// Make a copy of the blueprint since we will be replacing the version globs
 		blueprint := bp.DeepCopy()
-		dependencies, _, err := api.depsolveBlueprint(&blueprint, nil)
+		dependencies, err := api.depsolveBlueprint(&blueprint)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1829,6 +1829,19 @@ func ostreeResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
+func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
+	packageSets := imageType.PackageSets(*bp)
+	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+	for name, packageSet := range packageSets {
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+		if err != nil {
+			return nil, err
+		}
+		packageSpecSets[name] = packageSpecs
+	}
+	return packageSpecSets, nil
+}
+
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1959,7 +1972,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		cr.OSTree.Parent = parent
 	}
 
-	packages, buildPackages, err := api.depsolveBlueprint(bp, imageType)
+	packageSets, err := api.depsolveBlueprintForImageType(bp, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -1986,8 +1999,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			},
 		},
 		api.allRepositories(),
-		packages,
-		buildPackages,
+		packageSets,
 		seed)
 	if err != nil {
 		errors := responseError{
@@ -2738,32 +2750,13 @@ func (api *API) allRepositories() []rpmmd.RepoConfig {
 	return repos
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint, imageType distro.ImageType) ([]rpmmd.PackageSpec, []rpmmd.PackageSpec, error) {
-	repos := api.allRepositories()
-
-	specs := bp.GetPackages()
-	excludeSpecs := []string{}
-	if imageType != nil {
-		// When the output type is known, include the base packages in the depsolve
-		// transaction.
-		specs, excludeSpecs = imageType.Packages(*bp)
-	}
-
-	packages, _, err := api.rpmmd.Depsolve(specs, excludeSpecs, repos, api.distro.ModulePlatformID(), api.arch.Name())
+func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	buildPackages := []rpmmd.PackageSpec{}
-	if imageType != nil {
-		buildSpecs := imageType.BuildPackages()
-		buildPackages, _, err = api.rpmmd.Depsolve(buildSpecs, nil, repos, api.distro.ModulePlatformID(), api.arch.Name())
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return packages, buildPackages, err
+	return packages, err
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

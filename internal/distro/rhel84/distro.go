@@ -207,22 +207,34 @@ func (t *imageType) BuildPackages() []string {
 	return packages
 }
 
+func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
+	includePackages, excludePackages := t.Packages(bp)
+	return map[string]rpmmd.PackageSet{
+		"packages": {
+			Include: includePackages,
+			Exclude: excludePackages,
+		},
+		"build-packages": {
+			Include: t.BuildPackages(),
+		},
+	}
+}
+
 func (t *imageType) Manifest(c *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecs,
-	buildPackageSpecs []rpmmd.PackageSpec,
+	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 	source := rand.NewSource(seed)
 	rng := rand.New(source)
-	pipeline, err := t.pipeline(c, options, repos, packageSpecs, buildPackageSpecs, rng)
+	pipeline, err := t.pipeline(c, options, repos, packageSpecSets["packages"], packageSpecSets["build-packages"], rng)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
 
 	return json.Marshal(
 		osbuild.Manifest{
-			Sources:  *sources(append(packageSpecs, buildPackageSpecs...)),
+			Sources:  *sources(append(packageSpecSets["packages"], packageSpecSets["build-packages"]...)),
 			Pipeline: *pipeline,
 		},
 	)
