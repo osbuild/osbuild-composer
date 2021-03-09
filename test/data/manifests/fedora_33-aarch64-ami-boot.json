@@ -9792,10 +9792,7 @@
         "checksum": "sha256:99e5ac897d4dd06f0d22ddf9bd064c6081ea699a7ebc7d0c3907743128eb59f4",
         "check_gpg": true
       }
-    ],
-    "checksums": {
-      "0": "sha256:30f081c69fa61c9bb8f7ba043d73698d1765c8cd62ccf2df5173e26bde458002"
-    }
+    ]
   },
   "image-info": {
     "boot-environment": {
