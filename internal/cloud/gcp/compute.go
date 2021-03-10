@@ -204,3 +204,40 @@ func (g *GCP) ComputeImageShare(imageName string, shareWith []string) error {
 
 	return nil
 }
+
+// ComputeImageDelete deletes a Compute Node image with the given name. If the
+// image existed and was successfully deleted, no error is returned.
+//
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeImageDelete(image string) error {
+	ctx := context.Background()
+
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	_, err = computeService.Images.Delete(g.creds.ProjectID, image).Context(ctx).Do()
+
+	return err
+}
+
+// ComputeInstanceDelete deletes a Compute Node instance with the given name and
+// running in the given zone. If the instance existed and was successfully deleted,
+// no error is returned.
+//
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeInstanceDelete(zone, instance string) error {
+	ctx := context.Background()
+
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	_, err = computeService.Instances.Delete(g.creds.ProjectID, zone, instance).Context(ctx).Do()
+
+	return err
+}

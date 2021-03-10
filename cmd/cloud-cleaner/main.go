@@ -3,52 +3,136 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"log"
+	"os"
+	"sync"
 
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"github.com/osbuild/osbuild-composer/internal/boot/azuretest"
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
-func panicErr(err error) {
+func cleanupGCP(testID string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	log.Println("[GCP] Running clean up")
+
+	GCPRegion, ok := os.LookupEnv("GCP_REGION")
+	if !ok {
+		log.Println("[GCP] Error: 'GCP_REGION' is not set in the environment.")
+		return
+	}
+	// api.sh test uses '--zone="$GCP_REGION-a"'
+	GCPZone := fmt.Sprintf("%s-a", GCPRegion)
+	// max 62 characters
+	// Must be a match of regex '[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?|[1-9][0-9]{0,19}'
+	// use sha224sum to get predictable testID without invalid characters
+	testIDhash := fmt.Sprintf("%x", sha256.Sum224([]byte(testID)))
+
+	// Resource names to clean up
+	GCPInstance := fmt.Sprintf("vm-%s", testIDhash)
+	GCPImage := fmt.Sprintf("image-%s", testIDhash)
+
+	// It does not matter if there was any error. If the credentials file was
+	// read successfully then 'creds' should be non-nil, otherwise it will be
+	// nil. Both values are acceptable for creating a new "GCP" instance.
+	// If 'creds' is nil, then GCP library will try to authenticate using
+	// the instance permissions.
+	creds, err := gcp.GetCredentialsFromEnv()
 	if err != nil {
-		panic(err)
+		log.Printf("[GCP] Error: %v. This may not be an issue.", err)
+	}
+
+	// If this fails, there is no point in continuing
+	g, err := gcp.New(creds)
+	if err != nil {
+		log.Printf("[GCP] Error: %v", err)
+		return
+	}
+
+	// Try to delete potentially running instance
+	log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
+		"This should fail if the test succedded.", GCPInstance, GCPZone)
+	err = g.ComputeInstanceDelete(GCPZone, GCPInstance)
+	if err != nil {
+		log.Printf("[GCP] Error: %v", err)
+	}
+
+	// Try to clean up storage of cache objects after image import job
+	log.Println("[GCP] 🧹 Cleaning up cache objects from storage after image " +
+		"import. This should fail if the test succedded.")
+	cacheObjects, errs := g.StorageImageImportCleanup(GCPImage)
+	for _, err = range errs {
+		log.Printf("[GCP] Error: %v", err)
+	}
+	for _, cacheObject := range cacheObjects {
+		log.Printf("[GCP] 🧹 Deleted image import job file %s", cacheObject)
+	}
+
+	// Try to delete the imported image
+	log.Printf("[GCP] 🧹 Deleting image %s. This should fail if the test succedded.", GCPImage)
+	err = g.ComputeImageDelete(GCPImage)
+	if err != nil {
+		log.Printf("[GCP] Error: %v", err)
 	}
 }
 
-func printErr(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
+func cleanupAzure(testID string, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-
-
-func main() {
-	fmt.Println("Running a cloud cleanup")
+	log.Println("[Azure] Running clean up")
 
 	// Load Azure credentials
 	creds, err := azuretest.GetAzureCredentialsFromEnv()
-	panicErr(err)
-	if creds == nil {
-		panic("empty credentials")
+	if err != nil {
+		log.Printf("[Azure] Error: %v", err)
+		return
 	}
-	// Get test ID
-	testID, err := test.GenerateCIArtifactName("")
-	panicErr(err)
+	if creds == nil {
+		log.Println("[Azure] Error: empty credentials")
+		return
+	}
+
 	// Delete the vhd image
 	imageName := "image-" + testID + ".vhd"
-	fmt.Println("Running delete image from Azure, this should fail if the test succedded")
+	log.Println("[Azure] Deleting image. This should fail if the test succedded.")
 	err = azuretest.DeleteImageFromAzure(creds, imageName)
-	printErr(err)
+	if err != nil {
+		log.Printf("[Azure] Error: %v", err)
+	}
 
 	// Delete all remaining resources (see the full list in the CleanUpBootedVM function)
-	fmt.Println("Running clean up booted VM, this should fail if the test succedded")
+	log.Println("[Azure] Cleaning up booted VM. This should fail if the test succedded.")
 	parameters := azuretest.NewDeploymentParameters(creds, imageName, testID, "")
 	clientCredentialsConfig := auth.NewClientCredentialsConfig(creds.ClientID, creds.ClientSecret, creds.TenantID)
 	authorizer, err := clientCredentialsConfig.Authorizer()
-	panicErr(err)
+	if err != nil {
+		log.Printf("[Azure] Error: %v", err)
+		return
+	}
+
 	err = azuretest.CleanUpBootedVM(creds, parameters, authorizer, testID)
-	printErr(err)
+	if err != nil {
+		log.Printf("[Azure] Error: %v", err)
+	}
+}
+
+func main() {
+	log.Println("Running a cloud cleanup")
+
+	// Get test ID
+	testID, err := test.GenerateCIArtifactName("")
+	if err != nil {
+		log.Fatalf("Failed to get testID: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go cleanupAzure(testID, &wg)
+	go cleanupGCP(testID, &wg)
+	wg.Wait()
 }
