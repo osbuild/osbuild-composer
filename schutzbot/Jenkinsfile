@@ -949,10 +949,13 @@ void preserve_logs(test_slug) {
     // The workspace directory is not used everywhere, tests use temporary directory under /tmp/logs.
     sh "mkdir -p ${test_slug} && find /tmp/logs/ -name '*.log' -exec mv {} ${test_slug}/ \\; || true"
 
+    // Artifact the repo file.
+    sh "mkdir -p ${test_slug} && cp /etc/yum.repos.d/osbuild*.repo ${test_slug}/ || true"
+
     // Artifact the logs.
     archiveArtifacts (
         allowEmptyArchive: true,
-        artifacts: "${test_slug}/*.log,${test_slug}/*.jpg"
+        artifacts: "${test_slug}/*.log,${test_slug}/*.jpg,${test_slug}/*.repo"
     )
 
 }
