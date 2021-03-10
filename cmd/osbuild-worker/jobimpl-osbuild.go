@@ -70,16 +70,49 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
-	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
-	if err != nil {
-		return fmt.Errorf("error creating temporary output directory: %v", err)
+	// Initialize variables needed for reporting back to osbuild-composer
+	var outputDirectory string
+	var r []error
+	var targetResults []*target.TargetResult
+	var osbuildOutput *osbuild.Result = &osbuild.Result{
+		Success: false,
 	}
+
 	defer func() {
-		err := os.RemoveAll(outputDirectory)
+		var targetErrors []string
+		for _, err := range r {
+			errStr := err.Error()
+			fmt.Printf("target errored: %s", errStr)
+			targetErrors = append(targetErrors, errStr)
+		}
+
+		var uploadstatus string = "failure"
+		if len(targetErrors) == 0 {
+			uploadstatus = "success"
+		}
+
+		// In all cases it is necessary to report result back to osbuild-composer worker API
+		err := job.Update(&worker.OSBuildJobResult{
+			Success:       osbuildOutput.Success && len(targetErrors) == 0,
+			OSBuildOutput: osbuildOutput,
+			TargetErrors:  targetErrors,
+			TargetResults: targetResults,
+			UploadStatus:  uploadstatus,
+		})
+		if err != nil {
+			log.Printf("Error reporting job result: %v", err)
+		}
+
+		err = os.RemoveAll(outputDirectory)
 		if err != nil {
 			log.Printf("Error removing temporary output directory (%s): %v", outputDirectory, err)
 		}
 	}()
+
+	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
+	if err != nil {
+		return fmt.Errorf("error creating temporary output directory: %v", err)
+	}
 
 	var args worker.OSBuildJob
 	err = job.Args(&args)
@@ -99,7 +132,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	start_time := time.Now()
 
-	osbuildOutput, err := RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
+	osbuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -132,9 +165,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			return err
 		}
 	}
-
-	var r []error
-	var targetResults []*target.TargetResult
 
 	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
@@ -558,29 +588,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		default:
 			r = append(r, fmt.Errorf("invalid target type"))
 		}
-	}
-
-	var targetErrors []string
-	for _, err := range r {
-		errStr := err.Error()
-		fmt.Printf("target errored: %s", errStr)
-		targetErrors = append(targetErrors, errStr)
-	}
-
-	var uploadstatus string = "failure"
-	if len(targetErrors) == 0 {
-		uploadstatus = "success"
-	}
-
-	err = job.Update(&worker.OSBuildJobResult{
-		Success:       osbuildOutput.Success && len(targetErrors) == 0,
-		OSBuildOutput: osbuildOutput,
-		TargetErrors:  targetErrors,
-		TargetResults: targetResults,
-		UploadStatus:  uploadstatus,
-	})
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
 	}
 
 	return nil
