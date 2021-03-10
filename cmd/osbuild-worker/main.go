@@ -15,6 +15,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -124,6 +125,7 @@ func main() {
 		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 	store := path.Join(cacheDirectory, "osbuild-store")
+	rpmmd_cache := path.Join(cacheDirectory, "rpmmd")
 	output := path.Join(cacheDirectory, "output")
 	_ = os.Mkdir(output, os.ModeDir)
 
@@ -187,6 +189,9 @@ func main() {
 		},
 		"koji-finalize": &KojiFinalizeJobImpl{
 			KojiServers: kojiServers,
+		},
+		"depsolve": &DepsolveJobImpl{
+			RPMMD: rpmmd.NewRPMMD(rpmmd_cache, "/usr/libexec/osbuild-composer/dnf-json"),
 		},
 	}
 
