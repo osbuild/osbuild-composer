@@ -3,6 +3,7 @@ package worker
 import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -70,6 +71,19 @@ type KojiFinalizeJob struct {
 
 type KojiFinalizeJobResult struct {
 	KojiError string `json:"koji_error"`
+}
+
+type DepsolveJob struct {
+	PackageSets      map[string]rpmmd.PackageSet `json:"package_sets"`
+	Repos            []rpmmd.RepoConfig          `json:"repos"`
+	ModulePlatformID string                      `json:"module_platform_id"`
+	Arch             string                      `json:"arch"`
+	Releasever       string                      `json:"releasever"`
+}
+
+type DepsolveJobResult struct {
+	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
+	Error        string                         `json:"error"`
 }
 
 //
