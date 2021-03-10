@@ -252,6 +252,18 @@ REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
 SSH_USER=
 
+# Generate a string, which can be used as a predictable resource name,
+# especially when running the test in Jenkins where we may need to clean up
+# resources in case the test unexpectedly fails or is canceled
+JENKINS_HOME="${JENKINS_HOME:-}"
+if [[ -n "$JENKINS_HOME" ]]; then
+  # in Jenkins, imitate GenerateCIArtifactName() from internal/test/helpers.go
+  TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
+else
+  # if not running in Jenkins, generate ID not relying on specific env variables
+  TEST_ID=$(uuidgen);
+fi
+
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.4")
     DISTRO="rhel-84"
@@ -315,7 +327,14 @@ EOF
 }
 
 function createReqFileGCP() {
-  GCP_IMAGE_NAME="image-$(uuidgen)"
+  # constrains for GCP resource IDs:
+  # - max 62 characters
+  # - must be a match of regex '[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?|[1-9][0-9]{0,19}'
+  #
+  # use sha224sum to get predictable 56 characters long testID without invalid characters
+  GCP_TEST_ID_HASH="$(echo -n "$TEST_ID" | sha224sum - | sed -E 's/([a-z0-9])\s+-/\1/')"
+
+  GCP_IMAGE_NAME="image-$GCP_TEST_ID_HASH"
 
   cat > "$REQUEST_FILE" << EOF
 {
@@ -577,7 +596,8 @@ function verifyInGCP() {
   echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
 
   # create the instance
-  GCP_INSTANCE_NAME="gcp-instance-$(uuidgen)"
+  # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
+  GCP_INSTANCE_NAME="vm-$GCP_TEST_ID_HASH"
 
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_REGION-a" \

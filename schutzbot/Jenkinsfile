@@ -272,12 +272,12 @@ pipeline {
                     agent { label "f32cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora32"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora32"
                     }
                     steps {
                         run_tests('image')
@@ -302,6 +302,7 @@ pipeline {
                     agent { label "f32cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
+                        DISTRO_CODE = "fedora32"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
@@ -379,12 +380,12 @@ pipeline {
                     agent { label "f33cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora33"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora33"
                     }
                     steps {
                         run_tests('image')
@@ -409,6 +410,7 @@ pipeline {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
+                        DISTRO_CODE = "fedora33"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
@@ -486,11 +488,11 @@ pipeline {
                     agent { label "f33cloudbase && aarch64 && aws" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora33"
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "fedora33"
                     }
                     steps {
                         run_tests('image')
@@ -553,13 +555,13 @@ pipeline {
                     agent { label "rhel8cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "rhel8"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "rhel8"
                     }
                     steps {
                         run_tests('image')
@@ -584,6 +586,7 @@ pipeline {
                     agent { label "rhel8cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
+                        DISTRO_CODE = "rhel8"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
@@ -600,6 +603,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-integration')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -693,12 +700,12 @@ pipeline {
                     agent { label "rhel84cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "rhel84"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "rhel84"
                     }
                     steps {
                         run_tests('image')
@@ -717,6 +724,7 @@ pipeline {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
+                        DISTRO_CODE = "rhel84"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
@@ -732,6 +740,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel84-integration')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -787,12 +799,12 @@ pipeline {
                     agent { label "cs8cloudbase && psi && x86_64" }
                     environment {
                         TEST_TYPE = "image"
+                        DISTRO_CODE = "centos-stream8"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
                         OPENSTACK_CREDS = credentials("psi-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                        DISTRO_CODE = "centos-stream8"
                     }
                     steps {
                         run_tests('image')
@@ -817,6 +829,7 @@ pipeline {
                     agent { label "cs8cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
+                        DISTRO_CODE = "centos-stream8"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
@@ -831,6 +844,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('cs8-integration')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
