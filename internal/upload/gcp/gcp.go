@@ -173,8 +173,7 @@ func (g *GCP) StorageImageImportCleanup(imageName string) ([]string, []error) {
 	}
 
 	// Clean up the cache bucket
-	imageGetCall := computeService.Images.Get(g.creds.ProjectID, imageName)
-	image, err := imageGetCall.Do()
+	image, err := computeService.Images.Get(g.creds.ProjectID, imageName).Context(ctx).Do()
 	if err != nil {
 		// Without the image, we can not determine which objects to delete, just return
 		errors = append(errors, fmt.Errorf("failed to get image: %v", err))
@@ -384,8 +383,7 @@ func (g *GCP) ComputeImageShare(imageName string, shareWith []string) error {
 	imageDesiredRole := "roles/compute.imageUser"
 
 	// Get the current Policy set on the Image
-	existingPolicyCall := computeService.Images.GetIamPolicy(g.creds.ProjectID, imageName)
-	policy, err := existingPolicyCall.Do()
+	policy, err := computeService.Images.GetIamPolicy(g.creds.ProjectID, imageName).Context(ctx).Do()
 	if err != nil {
 		return fmt.Errorf("failed to get image's policy: %v", err)
 	}
@@ -403,8 +401,7 @@ func (g *GCP) ComputeImageShare(imageName string, shareWith []string) error {
 	req := &compute.GlobalSetPolicyRequest{
 		Policy: newPolicy,
 	}
-	newPolicyCall := computeService.Images.SetIamPolicy(g.creds.ProjectID, imageName, req)
-	_, err = newPolicyCall.Do()
+	_, err = computeService.Images.SetIamPolicy(g.creds.ProjectID, imageName, req).Context(ctx).Do()
 	if err != nil {
 		return fmt.Errorf("failed to set new image policy: %v", err)
 	}
