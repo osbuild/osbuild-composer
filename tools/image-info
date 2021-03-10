@@ -395,7 +395,7 @@ def read_rhsm(tree):
     return result
 
 
-# Create a nested dictionary for all supported sysconfigs 
+# Create a nested dictionary for all supported sysconfigs
 def read_sysconfig(tree):
     result = {}
     sysconfig_paths = {
@@ -418,7 +418,7 @@ def read_sysconfig(tree):
                     key, value = line.split("=", 1)
                     result[name][key] = value.strip('"')
     return result
- 
+
 
 def append_filesystem(report, tree, *, is_ostree=False):
     if os.path.exists(f"{tree}/etc/os-release"):
@@ -457,7 +457,7 @@ def append_filesystem(report, tree, *, is_ostree=False):
         sysconfig = read_sysconfig(tree)
         if sysconfig:
             report["sysconfig"] = sysconfig
-            
+
         with open(f"{tree}/etc/passwd") as f:
             report["passwd"] = sorted(f.read().strip().split("\n"))
 

@@ -42,6 +42,7 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
   exit 0
 fi
 
+# TODO: update to install correct version once epel-9 is out
 # Mock and s3cmd is only available in EPEL for RHEL.
 if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
