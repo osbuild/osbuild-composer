@@ -425,6 +425,89 @@ pipeline {
                         }
                     }
                 }
+                stage('F34 Base') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f34cloudbase && x86_64 && aws" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora34-base')
+                        }
+                    }
+                }
+                stage('F34 Integration') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f34cloudbase && x86_64 && aws" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        DISTRO_CODE = "fedora_34"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                    }
+                    steps {
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora34-integration')
+                        }
+                    }
+                }
+                stage('F34 OSTree') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f34cloudbase && psi && x86_64" }
+                    steps {
+                        run_tests('ostree')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora34-ostree')
+                        }
+                    }
+                }
+                stage('F34 aarch64 Base') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f34cloudbase && aarch64 && aws" }
+                    environment { TEST_TYPE = "base" }
+                    steps {
+                        run_tests('base')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora34-aarch64-base')
+                        }
+                    }
+                }
                 stage('EL8 Base') {
                     when {
                         beforeAgent true

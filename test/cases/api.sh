@@ -280,6 +280,10 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
     DISTRO="fedora-33"
     SSH_USER="fedora"
     ;;
+  "fedora-34")
+    DISTRO="fedora-34"
+    SSH_USER="fedora"
+    ;;
   "centos-8")
     DISTRO="centos-8"
     SSH_USER="cloud-user"
