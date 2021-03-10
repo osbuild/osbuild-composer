@@ -84,7 +84,7 @@ func main() {
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
 		} `toml:"koji"`
-		GCP struct {
+		GCP *struct {
 			Credentials string `toml:"credentials"`
 		} `toml:"gcp"`
 		Azure *struct {
@@ -169,13 +169,25 @@ func main() {
 		}
 	}
 
+	// Check if the credentials file was provided in the worker configuration,
+	// and load it early to prevent potential failure due to issues with the file.
+	// Note that the content validity of the provided file is not checked and
+	// can not be reasonable checked with GCP other than by making real API calls.
+	var gcpCredentials []byte
+	if config.GCP != nil {
+		gcpCredentials, err = ioutil.ReadFile(config.GCP.Credentials)
+		if err != nil {
+			log.Fatalf("cannot load GCP credentials: %v", err)
+		}
+	}
+
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
-			Store:        store,
-			Output:       output,
-			KojiServers:  kojiServers,
-			GCPCredsPath: config.GCP.Credentials,
-			AzureCreds:   azureCredentials,
+			Store:       store,
+			Output:      output,
+			KojiServers: kojiServers,
+			GCPCreds:    gcpCredentials,
+			AzureCreds:  azureCredentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:       store,

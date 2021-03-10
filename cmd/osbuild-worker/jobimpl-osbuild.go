@@ -29,11 +29,11 @@ import (
 )
 
 type OSBuildJobImpl struct {
-	Store        string
-	Output       string
-	KojiServers  map[string]koji.GSSAPICredentials
-	GCPCredsPath string
-	AzureCreds   *azure.Credentials
+	Store       string
+	Output      string
+	KojiServers map[string]koji.GSSAPICredentials
+	GCPCreds    []byte
+	AzureCreds  *azure.Credentials
 }
 
 func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
@@ -261,20 +261,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				continue
 			}
 
-			// Check if the credentials file was provided in the worker configuration,
-			// otherwise let it up to the Google client library to authenticate
-			var gcpCreds []byte
-			if impl.GCPCredsPath != "" {
-				gcpCreds, err = ioutil.ReadFile(impl.GCPCredsPath)
-				if err != nil {
-					r = append(r, err)
-					continue
-				}
-			} else {
-				gcpCreds = nil
-			}
-
-			g, err := gcp.New(gcpCreds)
+			g, err := gcp.New(impl.GCPCreds)
 			if err != nil {
 				r = append(r, err)
 				continue
