@@ -715,7 +715,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                             if stderr.find("net/http: TLS handshake timeout") != -1:
                                 continue
                         else:
-                            log.info("Generating test case for %s-%s-%s - SUCCEEDED", distro, arch, image_type)
+                            log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
 
                         # don't retry if the process ended successfully or if there was a different error
                         break

@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
 )
 
 // When adding support for a new distribution, add it here.
@@ -20,6 +21,7 @@ var supportedDistros = []func() distro.Distro{
 	rhel8.New,
 	rhel84.New,
 	rhel84.NewCentos,
+	rhel90.New,
 }
 
 type Registry struct {
