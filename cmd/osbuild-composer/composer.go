@@ -14,6 +14,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -21,7 +22,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
@@ -33,7 +33,7 @@ type Composer struct {
 	stateDir string
 	cacheDir string
 	logger   *log.Logger
-	distros  *distro.Registry
+	distros  *distroregistry.Registry
 
 	rpm rpmmd.RPMMD
 
@@ -63,7 +63,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, err
 	}
 
-	c.distros, err = distro.NewRegistry(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
+	c.distros, err = distroregistry.New(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
 	if err != nil {
 		return nil, fmt.Errorf("Error loading distros: %v", err)
 	}

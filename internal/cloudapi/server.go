@@ -15,6 +15,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -31,11 +32,11 @@ const (
 type Server struct {
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
-	distros     *distro.Registry
+	distros     *distroregistry.Registry
 }
 
 // NewServer creates a new cloud server
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distro.Registry) *Server {
+func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
 	server := &Server{
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
