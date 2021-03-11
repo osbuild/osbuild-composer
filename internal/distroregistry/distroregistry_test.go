@@ -25,5 +25,5 @@ func TestRegistry_List(t *testing.T) {
 	distros, err := distroregistry.New(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
 	require.NoError(t, err)
 
-	require.Equalf(t, expected, distros.List(), "unexpected list of distros")
+	require.ElementsMatch(t, expected, distros.List(), "unexpected list of distros")
 }
