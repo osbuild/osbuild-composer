@@ -6,7 +6,21 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 )
+
+// When adding support for a new distribution, add it here.
+// Note that this is a constant, do not write to this array.
+var supportedDistros = []func() distro.Distro{
+	fedora32.New,
+	fedora33.New,
+	rhel8.New,
+	rhel84.New,
+	rhel84.NewCentos,
+}
 
 type Registry struct {
 	distros map[string]distro.Distro
@@ -24,6 +38,23 @@ func New(distros ...distro.Distro) (*Registry, error) {
 		reg.distros[name] = d
 	}
 	return reg, nil
+}
+
+// NewDefault creates a Registry with all distributions supported by
+// osbuild-composer. If you need to add a distribution here, see the
+// supportedDistros variable.
+func NewDefault() *Registry {
+	var distros []distro.Distro
+	for _, distroInitializer := range supportedDistros {
+		distros = append(distros, distroInitializer())
+	}
+
+	registry, err := New(distros...)
+	if err != nil {
+		panic(fmt.Sprintf("two supported distros have the same name, this is a programming error: %v", err))
+	}
+
+	return registry
 }
 
 func (r *Registry) GetDistro(name string) distro.Distro {
