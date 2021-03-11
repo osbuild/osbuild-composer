@@ -15,6 +15,14 @@ import (
 	"google.golang.org/api/option"
 )
 
+const (
+	// MetadataKeyImageName contains a key name used to store metadata on
+	// a Storage object with the intended name of the image.
+	// The metadata can be then used to associate the object with actual
+	// image build using the image name.
+	MetadataKeyImageName string = "osbuild-composer-image-name"
+)
+
 // StorageObjectUpload uploads an OS image to specified Cloud Storage bucket and object.
 // The bucket must exist. MD5 sum of the image file and uploaded object is
 // compared after the upload to verify the integrity of the uploaded image.
@@ -23,7 +31,7 @@ import (
 //
 // Uses:
 //	- Storage API
-func (g *GCP) StorageObjectUpload(filename, bucket, object string) (*storage.ObjectAttrs, error) {
+func (g *GCP) StorageObjectUpload(filename, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
 	ctx := context.Background()
 
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
@@ -56,6 +64,10 @@ func (g *GCP) StorageObjectUpload(filename, bucket, object string) (*storage.Obj
 
 	// Uploaded data is rejected if its MD5 hash does not match the set value.
 	wc.MD5 = imageFileHash.Sum(nil)
+
+	if metadata != nil {
+		wc.ObjectAttrs.Metadata = metadata
+	}
 
 	if _, err = io.Copy(wc, imageFile); err != nil {
 		return nil, fmt.Errorf("uploading the image failed: %v", err)
