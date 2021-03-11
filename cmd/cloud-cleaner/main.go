@@ -28,6 +28,11 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	}
 	// api.sh test uses '--zone="$GCP_REGION-a"'
 	GCPZone := fmt.Sprintf("%s-a", GCPRegion)
+	GCPBucket, ok := os.LookupEnv("GCP_BUCKET")
+	if !ok {
+		log.Println("[GCP] Error: 'GCP_BUCKET' is not set in the environment.")
+		return
+	}
 	// max 62 characters
 	// Must be a match of regex '[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?|[1-9][0-9]{0,19}'
 	// use sha224sum to get predictable testID without invalid characters
@@ -71,6 +76,18 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	}
 	for _, cacheObject := range cacheObjects {
 		log.Printf("[GCP] 🧹 Deleted image import job file %s", cacheObject)
+	}
+
+	// Try to find the potentially uploaded Storage objects using custom metadata
+	objects, err := g.StorageListObjectsByMetadata(GCPBucket, map[string]string{gcp.MetadataKeyImageName: GCPImage})
+	if err != nil {
+		log.Printf("[GCP] Error: %v", err)
+	}
+	for _, obj := range objects {
+		if err = g.StorageObjectDelete(obj.Bucket, obj.Name); err != nil {
+			log.Printf("[GCP] Error: %v", err)
+		}
+		log.Printf("[GCP] 🧹 Deleted object %s/%s related to build of image %s", obj.Bucket, obj.Name, GCPImage)
 	}
 
 	// Try to delete the imported image
