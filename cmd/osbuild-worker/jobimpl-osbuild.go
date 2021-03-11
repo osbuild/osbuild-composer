@@ -268,7 +268,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			log.Printf("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
-			_, err = g.StorageObjectUpload(path.Join(outputDirectory, options.Filename), options.Bucket, options.Object)
+			_, err = g.StorageObjectUpload(path.Join(outputDirectory, options.Filename),
+				options.Bucket, options.Object, map[string]string{gcp.MetadataKeyImageName: t.ImageName})
 			if err != nil {
 				r = append(r, err)
 				continue

@@ -63,7 +63,8 @@ func main() {
 	// Upload image to the Storage
 	if !skipUpload {
 		log.Printf("[GCP] 🚀 Uploading image to: %s/%s", bucketName, objectName)
-		_, err := g.StorageObjectUpload(imageFile, bucketName, objectName)
+		_, err := g.StorageObjectUpload(imageFile, bucketName, objectName,
+			map[string]string{gcp.MetadataKeyImageName: imageName})
 		if err != nil {
 			log.Fatalf("[GCP] Uploading image failed: %v", err)
 		}
