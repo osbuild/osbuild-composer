@@ -3,11 +3,12 @@ package fedora32_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestFilenameFromType(t *testing.T) {
@@ -293,10 +294,6 @@ func TestImageType_BasePackages(t *testing.T) {
 		)
 		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "image type: %s", pkgMap.name)
 	}
-}
-
-func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "fedora_32*", fedora32.New())
 }
 
 // Check that Manifest() function returns an error for unsupported

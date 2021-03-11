@@ -414,11 +414,6 @@ func TestImageType_BasePackages(t *testing.T) {
 	}
 }
 
-func TestDistro_Manifest(t *testing.T) {
-	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "rhel_84*", rhel84.New())
-	distro_test_common.TestDistro_Manifest(t, "../../../test/data/manifests/", "centos_8*", rhel84.NewCentos())
-}
-
 // Check that Manifest() function returns an error for unsupported
 // configurations.
 func TestDistro_ManifestError(t *testing.T) {
