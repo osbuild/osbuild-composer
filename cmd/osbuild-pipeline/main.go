@@ -65,10 +65,6 @@ func main() {
 	}
 
 	distros := distroregistry.NewDefault()
-	if err != nil {
-		panic(err)
-	}
-
 	d := distros.GetDistro(composeRequest.Distro)
 	if d == nil {
 		_, _ = fmt.Fprintf(os.Stderr, "The provided distribution '%s' is not supported. Use one of these:\n", composeRequest.Distro)
