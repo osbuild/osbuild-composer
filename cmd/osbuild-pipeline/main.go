@@ -9,10 +9,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -68,7 +64,7 @@ func main() {
 		}
 	}
 
-	distros, err := distroregistry.New(fedora32.New(), fedora33.New(), rhel8.New(), rhel84.New(), rhel84.NewCentos())
+	distros := distroregistry.NewDefault()
 	if err != nil {
 		panic(err)
 	}
