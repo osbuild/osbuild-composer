@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -123,57 +122,6 @@ func (m *Manifest) UnmarshalJSON(payload []byte) error {
 	}
 	*m = Manifest(raw)
 	return nil
-}
-
-type Registry struct {
-	distros map[string]Distro
-}
-
-func NewRegistry(distros ...Distro) (*Registry, error) {
-	reg := &Registry{
-		distros: make(map[string]Distro),
-	}
-	for _, distro := range distros {
-		name := distro.Name()
-		if _, exists := reg.distros[name]; exists {
-			return nil, fmt.Errorf("NewRegistry: passed two distros with the same name: %s", distro.Name())
-		}
-		reg.distros[name] = distro
-	}
-	return reg, nil
-}
-
-func (r *Registry) GetDistro(name string) Distro {
-	distro, ok := r.distros[name]
-	if !ok {
-		return nil
-	}
-
-	return distro
-}
-
-// List returns the names of all distros in a Registry, sorted alphabetically.
-func (r *Registry) List() []string {
-	list := []string{}
-	for _, distro := range r.distros {
-		list = append(list, distro.Name())
-	}
-	sort.Strings(list)
-	return list
-}
-
-func (r *Registry) FromHost() (Distro, bool, bool, error) {
-	name, beta, isStream, err := GetHostDistroName()
-	if err != nil {
-		return nil, false, false, err
-	}
-
-	d := r.GetDistro(name)
-	if d == nil {
-		return nil, false, false, errors.New("unknown distro: " + name)
-	}
-
-	return d, beta, isStream, nil
 }
 
 func GetHostDistroName() (string, bool, bool, error) {

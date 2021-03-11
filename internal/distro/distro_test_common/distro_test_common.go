@@ -9,11 +9,13 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 const RandomTestSeed = 0
@@ -64,7 +66,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			}
 		}
 		t.Run(path.Base(fileName), func(t *testing.T) {
-			distros, err := distro.NewRegistry(distros...)
+			distros, err := distroregistry.New(distros...)
 			require.NoError(t, err)
 			d := distros.GetDistro(tt.ComposeRequest.Distro)
 			if d == nil {
