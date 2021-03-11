@@ -20,7 +20,7 @@ import (
 
 const RandomTestSeed = 0
 
-func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distros ...distro.Distro) {
+func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, registry *distroregistry.Registry) {
 	assert := assert.New(t)
 	fileNames, err := filepath.Glob(filepath.Join(pipelinePath, prefix))
 	assert.NoErrorf(err, "Could not read pipelines directory '%s': %v", pipelinePath, err)
@@ -66,9 +66,8 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, distr
 			}
 		}
 		t.Run(path.Base(fileName), func(t *testing.T) {
-			distros, err := distroregistry.New(distros...)
 			require.NoError(t, err)
-			d := distros.GetDistro(tt.ComposeRequest.Distro)
+			d := registry.GetDistro(tt.ComposeRequest.Distro)
 			if d == nil {
 				t.Errorf("unknown distro: %v", tt.ComposeRequest.Distro)
 				return
