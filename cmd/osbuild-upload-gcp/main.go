@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -60,10 +61,12 @@ func main() {
 		log.Fatalf("[GCP] Failed to create new GCP object: %v", err)
 	}
 
+	ctx := context.Background()
+
 	// Upload image to the Storage
 	if !skipUpload {
 		log.Printf("[GCP] 🚀 Uploading image to: %s/%s", bucketName, objectName)
-		_, err := g.StorageObjectUpload(imageFile, bucketName, objectName,
+		_, err := g.StorageObjectUpload(ctx, imageFile, bucketName, objectName,
 			map[string]string{gcp.MetadataKeyImageName: imageName})
 		if err != nil {
 			log.Fatalf("[GCP] Uploading image failed: %v", err)
@@ -73,7 +76,7 @@ func main() {
 	// Import Image to Compute Node
 	if !skipImport {
 		log.Printf("[GCP] 📥 Importing image into Compute Node as '%s'", imageName)
-		imageBuild, importErr := g.ComputeImageImport(bucketName, objectName, imageName, osFamily, region)
+		imageBuild, importErr := g.ComputeImageImport(ctx, bucketName, objectName, imageName, osFamily, region)
 		if imageBuild != nil {
 			log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
 			log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
@@ -81,11 +84,11 @@ func main() {
 
 		// Cleanup storage before checking for errors
 		log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucketName, objectName)
-		if err = g.StorageObjectDelete(bucketName, objectName); err != nil {
+		if err = g.StorageObjectDelete(ctx, bucketName, objectName); err != nil {
 			log.Printf("[GCP] Encountered error while deleting object: %v", err)
 		}
 
-		deleted, errs := g.StorageImageImportCleanup(imageName)
+		deleted, errs := g.StorageImageImportCleanup(ctx, imageName)
 		for _, d := range deleted {
 			log.Printf("[GCP] 🧹 Deleted image import job file '%s'", d)
 		}
@@ -103,7 +106,7 @@ func main() {
 	// Share the imported Image with specified accounts using IAM policy
 	if len(shareWith) > 0 {
 		log.Printf("[GCP] 🔗 Sharing the image with: %+v", shareWith)
-		err = g.ComputeImageShare(imageName, []string(shareWith))
+		err = g.ComputeImageShare(ctx, imageName, []string(shareWith))
 		if err != nil {
 			log.Fatalf("[GCP] Sharing image failed: %s", err)
 		}

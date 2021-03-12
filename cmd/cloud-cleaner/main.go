@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"log"
@@ -59,10 +60,12 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 		return
 	}
 
+	ctx := context.Background()
+
 	// Try to delete potentially running instance
 	log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
 		"This should fail if the test succedded.", GCPInstance, GCPZone)
-	err = g.ComputeInstanceDelete(GCPZone, GCPInstance)
+	err = g.ComputeInstanceDelete(ctx, GCPZone, GCPInstance)
 	if err != nil {
 		log.Printf("[GCP] Error: %v", err)
 	}
@@ -70,7 +73,7 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	// Try to clean up storage of cache objects after image import job
 	log.Println("[GCP] 🧹 Cleaning up cache objects from storage after image " +
 		"import. This should fail if the test succedded.")
-	cacheObjects, errs := g.StorageImageImportCleanup(GCPImage)
+	cacheObjects, errs := g.StorageImageImportCleanup(ctx, GCPImage)
 	for _, err = range errs {
 		log.Printf("[GCP] Error: %v", err)
 	}
@@ -79,12 +82,12 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	}
 
 	// Try to find the potentially uploaded Storage objects using custom metadata
-	objects, err := g.StorageListObjectsByMetadata(GCPBucket, map[string]string{gcp.MetadataKeyImageName: GCPImage})
+	objects, err := g.StorageListObjectsByMetadata(ctx, GCPBucket, map[string]string{gcp.MetadataKeyImageName: GCPImage})
 	if err != nil {
 		log.Printf("[GCP] Error: %v", err)
 	}
 	for _, obj := range objects {
-		if err = g.StorageObjectDelete(obj.Bucket, obj.Name); err != nil {
+		if err = g.StorageObjectDelete(ctx, obj.Bucket, obj.Name); err != nil {
 			log.Printf("[GCP] Error: %v", err)
 		}
 		log.Printf("[GCP] 🧹 Deleted object %s/%s related to build of image %s", obj.Bucket, obj.Name, GCPImage)
@@ -92,7 +95,7 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 
 	// Try to delete the imported image
 	log.Printf("[GCP] 🧹 Deleting image %s. This should fail if the test succedded.", GCPImage)
-	err = g.ComputeImageDelete(GCPImage)
+	err = g.ComputeImageDelete(ctx, GCPImage)
 	if err != nil {
 		log.Printf("[GCP] Error: %v", err)
 	}
