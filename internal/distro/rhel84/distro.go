@@ -999,6 +999,7 @@ func newDistro(isCentos bool) distro.Distro {
 			"dracut-norescue",
 			"insights-client",
 			"NetworkManager",
+			"net-tools",
 			"nfs-utils",
 			"oddjob",
 			"oddjob-mkhomedir",
