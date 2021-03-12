@@ -1224,6 +1224,9 @@
           "sha256:d3192605b3aa6c19118f95e14f69f4394424eb09f7649e127223bbfbff676758": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-appstream-8.4.0.n-20210120/Packages/python3-cairo-1.16.3-6.el8.ppc64le.rpm"
           },
+          "sha256:d381673d6d7fe39f88f7966b5dbbe733695f1dc6243aad15aba04548f0d99d9b": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.ppc64le.rpm"
+          },
           "sha256:d3b6d1d0bc08398ecdc1ecab089318d829414811e5ccf63c2a5ffb80f8f92138": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-appstream-8.4.0.n-20210120/Packages/python3-gobject-3.28.3-2.el8.ppc64le.rpm"
           },
@@ -2937,6 +2940,9 @@
               },
               {
                 "checksum": "sha256:bcd9e55362d6afab44a89acd877c8c0a8ae27572028bfc9282f3bfec0d21e27c"
+              },
+              {
+                "checksum": "sha256:d381673d6d7fe39f88f7966b5dbbe733695f1dc6243aad15aba04548f0d99d9b"
               },
               {
                 "checksum": "sha256:68c10fbde60ad63306c334df256056bc93eb04d56eaba5ddc40254e81e815056"
@@ -7970,6 +7976,15 @@
         "checksum": "sha256:bcd9e55362d6afab44a89acd877c8c0a8ae27572028bfc9282f3bfec0d21e27c"
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.ppc64le.rpm",
+        "checksum": "sha256:d381673d6d7fe39f88f7966b5dbbe733695f1dc6243aad15aba04548f0d99d9b"
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -10474,6 +10489,7 @@
       "ncurses-6.1-7.20180224.el8.ppc64le",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.ppc64le",
+      "net-tools-2.0-0.52.20160912git.el8.ppc64le",
       "nettle-3.4.1-2.el8.ppc64le",
       "newt-0.52.20-11.el8.ppc64le",
       "nfs-utils-2.3.3-40.el8.ppc64le",
@@ -10772,6 +10788,7 @@
       "missing": []
     },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",

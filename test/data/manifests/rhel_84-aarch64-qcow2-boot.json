@@ -1245,6 +1245,9 @@
           "sha256:edae480b0177d04b0b3ff54105c77c0cf4ec565c5234b10e2967f912290c4758": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-appstream-8.4.0.n-20210120/Packages/cairo-gobject-1.15.12-3.el8.aarch64.rpm"
           },
+          "sha256:edba68c63891b1171417b8d3af5827cc45a37210d18d701c0e178870e5435031": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.aarch64.rpm"
+          },
           "sha256:edc0261e273aee274fba4eaa21bf87650ff8efd64175f8501c55c02af2f806cf": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.4.0.n-20210120/Packages/teamd-1.31-2.el8.aarch64.rpm"
           },
@@ -2787,6 +2790,9 @@
               },
               {
                 "checksum": "sha256:f99f5edde9ad4574b84264c467420c910b31f78683fbf1b63d106a7e6c9d64a3"
+              },
+              {
+                "checksum": "sha256:edba68c63891b1171417b8d3af5827cc45a37210d18d701c0e178870e5435031"
               },
               {
                 "checksum": "sha256:e2c4ac0f7abf75cbcc7a6fb35412820c267f1a8ce614f41b60d901918c4616d5"
@@ -7650,6 +7656,15 @@
         "checksum": "sha256:f99f5edde9ad4574b84264c467420c910b31f78683fbf1b63d106a7e6c9d64a3"
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-aarch64-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.aarch64.rpm",
+        "checksum": "sha256:edba68c63891b1171417b8d3af5827cc45a37210d18d701c0e178870e5435031"
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -9748,6 +9763,7 @@
       "ncurses-6.1-7.20180224.el8.aarch64",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.aarch64",
+      "net-tools-2.0-0.52.20160912git.el8.aarch64",
       "nettle-3.4.1-2.el8.aarch64",
       "newt-0.52.20-11.el8.aarch64",
       "nfs-utils-2.3.3-40.el8.aarch64",
@@ -10001,6 +10017,7 @@
       "missing": []
     },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",

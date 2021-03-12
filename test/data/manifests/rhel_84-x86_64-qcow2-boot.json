@@ -1232,6 +1232,9 @@
           "sha256:e64a9ad8cf69086aa214b2f1082021600ac89abea338727f6bc5444190ceff42": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/python3-policycoreutils-2.9-9.el8.noarch.rpm"
           },
+          "sha256:e67a1c5f02c3e6fdccaad455fddf0dfdf812069da87d841a22df910bf361cfb9": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm"
+          },
           "sha256:e716ce0df8a72f26e415b8edd533b97e4213f0384a0fb64e08894f6eae694795": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/NetworkManager-tui-1.30.0-0.6.el8.x86_64.rpm"
           },
@@ -2830,6 +2833,9 @@
               },
               {
                 "checksum": "sha256:6d2ad3959103e46354f7491ff7911759016fa262581b0149ed5b3433b24a8129"
+              },
+              {
+                "checksum": "sha256:e67a1c5f02c3e6fdccaad455fddf0dfdf812069da87d841a22df910bf361cfb9"
               },
               {
                 "checksum": "sha256:6431a43da4fa2af839b5cc47c462d26b6d5c60f11bdd9045d363a9ba8ea8b781"
@@ -7779,6 +7785,15 @@
         "checksum": "sha256:6d2ad3959103e46354f7491ff7911759016fa262581b0149ed5b3433b24a8129"
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-x86_64-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm",
+        "checksum": "sha256:e67a1c5f02c3e6fdccaad455fddf0dfdf812069da87d841a22df910bf361cfb9"
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -9889,6 +9904,7 @@
       "ncurses-6.1-7.20180224.el8.x86_64",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.x86_64",
+      "net-tools-2.0-0.52.20160912git.el8.x86_64",
       "nettle-3.4.1-2.el8.x86_64",
       "newt-0.52.20-11.el8.x86_64",
       "nfs-utils-2.3.3-40.el8.x86_64",
@@ -10153,6 +10169,7 @@
       "missing": []
     },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",

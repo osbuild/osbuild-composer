@@ -966,6 +966,9 @@
           "sha256:a9170790817d95e7103c2e2067af1d5112335d4684ce53a1c5ae4e7d13705ae1": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.4.0.n-20210120/Packages/kernel-tools-4.18.0-275.el8.s390x.rpm"
           },
+          "sha256:a9668870e64558cf26850b4bb2281f54ac2e9f9d55fb2f51c16fe320b4862a71": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.s390x.rpm"
+          },
           "sha256:a9ee9660e50908c2da6a3e71168d9478d2f9287354ff970f3702cc397dd0512e": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.4.0.n-20210120/Packages/zlib-1.2.11-17.el8.s390x.rpm"
           },
@@ -2896,6 +2899,9 @@
               },
               {
                 "checksum": "sha256:7e1b890a9e063d4041fc924cb55067db762b32980d5e30fed11e4a7a3696d026"
+              },
+              {
+                "checksum": "sha256:a9668870e64558cf26850b4bb2281f54ac2e9f9d55fb2f51c16fe320b4862a71"
               },
               {
                 "checksum": "sha256:349084cd9788761cea2c2b80d3969560df7a76e9909f3a0e8fba1120a98aa043"
@@ -7942,6 +7948,15 @@
         "checksum": "sha256:7e1b890a9e063d4041fc924cb55067db762b32980d5e30fed11e4a7a3696d026"
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-s390x-baseos-8.4.0.n-20210120/Packages/net-tools-2.0-0.52.20160912git.el8.s390x.rpm",
+        "checksum": "sha256:a9668870e64558cf26850b4bb2281f54ac2e9f9d55fb2f51c16fe320b4862a71"
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -10390,6 +10405,7 @@
       "ncurses-6.1-7.20180224.el8.s390x",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.s390x",
+      "net-tools-2.0-0.52.20160912git.el8.s390x",
       "nettle-3.4.1-2.el8.s390x",
       "newt-0.52.20-11.el8.s390x",
       "nfs-utils-2.3.3-40.el8.s390x",
@@ -10674,6 +10690,7 @@
       "missing": []
     },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",
