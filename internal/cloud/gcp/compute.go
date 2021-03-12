@@ -43,8 +43,7 @@ import (
 //
 // Uses:
 //	- Cloud Build API
-func (g *GCP) ComputeImageImport(bucket, object, imageName, os, region string) (*cloudbuildpb.Build, error) {
-	ctx := context.Background()
+func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName, os, region string) (*cloudbuildpb.Build, error) {
 	cloudbuildClient, err := cloudbuild.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Cloud Build client: %v", err)
@@ -105,6 +104,24 @@ func (g *GCP) ComputeImageImport(bucket, object, imageName, os, region string) (
 
 	// Wait for the build to finish
 	for {
+		select {
+		case <-time.After(30 * time.Second):
+			// Just check the build status below
+		case <-ctx.Done():
+			// cancel the build
+			cancelBuildReq := &cloudbuildpb.CancelBuildRequest{
+				ProjectId: imageBuild.ProjectId,
+				Id:        imageBuild.Id,
+			}
+			// since the provided ctx has been canceled, create a new one to cancel the build
+			ctx = context.Background()
+			// !NOTE: Cancelling the build leaves behind all resources that it created and didn't manage to clean up
+			imageBuild, err = cloudbuildClient.CancelBuild(ctx, cancelBuildReq)
+			if err != nil {
+				return imageBuild, fmt.Errorf("failed to cancel the image import build job: %v", err)
+			}
+		}
+
 		imageBuild, err = cloudbuildClient.GetBuild(ctx, getBuldReq)
 		if err != nil {
 			return imageBuild, fmt.Errorf("failed to get the build info: %v", err)
@@ -113,7 +130,6 @@ func (g *GCP) ComputeImageImport(bucket, object, imageName, os, region string) (
 		if imageBuild.Status != cloudbuildpb.Build_WORKING && imageBuild.Status != cloudbuildpb.Build_QUEUED {
 			break
 		}
-		time.Sleep(time.Second * 30)
 	}
 
 	if imageBuild.Status != cloudbuildpb.Build_SUCCESS {
@@ -148,9 +164,7 @@ func (g *GCP) ComputeImageURL(imageName string) string {
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeImageShare(imageName string, shareWith []string) error {
-	ctx := context.Background()
-
+func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith []string) error {
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine client: %v", err)
@@ -210,9 +224,7 @@ func (g *GCP) ComputeImageShare(imageName string, shareWith []string) error {
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeImageDelete(image string) error {
-	ctx := context.Background()
-
+func (g *GCP) ComputeImageDelete(ctx context.Context, image string) error {
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine client: %v", err)
@@ -229,9 +241,7 @@ func (g *GCP) ComputeImageDelete(image string) error {
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeInstanceDelete(zone, instance string) error {
-	ctx := context.Background()
-
+func (g *GCP) ComputeInstanceDelete(ctx context.Context, zone, instance string) error {
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine client: %v", err)

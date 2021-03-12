@@ -31,9 +31,7 @@ const (
 //
 // Uses:
 //	- Storage API
-func (g *GCP) StorageObjectUpload(filename, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
-	ctx := context.Background()
-
+func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Storage client: %v", err)
@@ -85,9 +83,7 @@ func (g *GCP) StorageObjectUpload(filename, bucket, object string, metadata map[
 //
 // Uses:
 //	- Storage API
-func (g *GCP) StorageObjectDelete(bucket, object string) error {
-	ctx := context.Background()
-
+func (g *GCP) StorageObjectDelete(ctx context.Context, bucket, object string) error {
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Storage client: %v", err)
@@ -114,11 +110,9 @@ func (g *GCP) StorageObjectDelete(bucket, object string) error {
 // Uses:
 //	- Compute Engine API
 //	- Storage API
-func (g *GCP) StorageImageImportCleanup(imageName string) ([]string, []error) {
+func (g *GCP) StorageImageImportCleanup(ctx context.Context, imageName string) ([]string, []error) {
 	var deletedObjects []string
 	var errors []error
-
-	ctx := context.Background()
 
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
@@ -205,9 +199,8 @@ func (g *GCP) StorageImageImportCleanup(imageName string) ([]string, []error) {
 //
 // Uses:
 //	- Storage API
-func (g *GCP) StorageListObjectsByMetadata(bucket string, metadata map[string]string) ([]*storage.ObjectAttrs, error) {
+func (g *GCP) StorageListObjectsByMetadata(ctx context.Context, bucket string, metadata map[string]string) ([]*storage.ObjectAttrs, error) {
 	var matchedObjectAttr []*storage.ObjectAttrs
-	ctx := context.Background()
 
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
