@@ -239,16 +239,21 @@ identified and with the mutual understanding that PRs related to
 that RHBZ must include an automated test reproducer.
 
 
-## Cron jobs for nightly builds testing
+## Cron jobs for internal builds testing
 
 The Schutzbot Pipeline contains conditional sections that facilitate test execution
-against nightly builds. This is achieved by running different preparation steps while
+against internal builds. This is achieved by running different preparation steps while
 the testing stage remains the same. The main difference is that SUT is not compiled
 locally but installed directly from OS repositories!
 
-### Replay nightly Pipeline manually
+By default we test against latest nightly builds. If you wish to test against other
+flavors (e.g. rel-eng) specify the `COMPOSE_URL` environment variable to point to
+the respective URL (stopping before the `/compose/` path). See
+`schutzbot/prepare-rhel-internal.sh` for more details.
 
-If you wish to execute the nightly Pipeline by hand, often to verify changes made to it
+### Replay internal Pipeline manually
+
+If you wish to execute the internal Pipeline by hand, often to verify changes made to it
 then do the following:
 
 1. Wait for `schutzbot-psi/pr-head` to report any status on the pull request.
@@ -269,4 +274,4 @@ then do the following:
    !['Modify build cause'](./pipeline_replay_02.png)
 
 5. Click the ***Run*** button - the newly started Pipeline will be forced to take the
-   nightly branches instead of the regular ones
+   internal branches instead of the regular ones
