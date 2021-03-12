@@ -1997,6 +1997,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			OSTree: distro.OSTreeImageOptions{
 				Ref:    cr.OSTree.Ref,
 				Parent: cr.OSTree.Parent,
+				URL:    cr.OSTree.URL,
 			},
 		},
 		api.allRepositories(),
