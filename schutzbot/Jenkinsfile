@@ -180,7 +180,7 @@ pipeline {
             }
         }
 
-        stage("Prepare EL8 nightly 🤔") {
+        stage("Prepare EL8 internal 🤔") {
             agent { label "rhel8cloudbase && x86_64 && psi" }
 
             when {
@@ -193,11 +193,11 @@ pipeline {
                 AWS_CREDS = credentials('aws-credentials-osbuildci')
             }
             steps {
-                // don't build, use RPMs from the nightly trees
-                sh "schutzbot/prepare-rhel-nightly.sh"
+                // don't build, use RPMs from the internal trees
+                sh "schutzbot/prepare-rhel-internal.sh"
                 stash (
-                    includes: 'rhel8nightly.repo',
-                    name: 'rhel8nightly'
+                    includes: 'rhel8internal.repo',
+                    name: 'rhel8internal'
                 )
                 stash (
                     includes: 'rhel-8.json',
@@ -831,9 +831,9 @@ CC: [@atodorov_kiwi](tg://user?id=1047018883)
 // need to copy/paste the same lines over and over above.
 void run_tests(test_type) {
     // unstash files but avoid failure if they don't exist
-    // b/c these files are available only for nightly builds
+    // b/c these files are available only for internal builds
     try {
-        unstash 'rhel8nightly'
+        unstash 'rhel8internal'
         unstash 'rhel8json'
         unstash 'rhel8betajson'
     } catch (err) {
