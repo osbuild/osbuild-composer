@@ -86,9 +86,9 @@ if [[ "$PROJECT" != "osbuild-composer" ]]; then
   fi
 fi
 
-if [ -f "rhel8nightly.repo" ]; then
-    greenprint "Preparing repos for nightly build testing"
-    sudo mv rhel8nightly.repo /etc/yum.repos.d/
+if [ -f "rhel8internal.repo" ]; then
+    greenprint "Preparing repos for internal build testing"
+    sudo mv rhel8internal.repo /etc/yum.repos.d/
     sudo rm -f /etc/yum.repos.d/osbuild*.repo
 fi
 

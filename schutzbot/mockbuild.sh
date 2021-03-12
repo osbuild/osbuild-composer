@@ -67,7 +67,7 @@ greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# rhel 8.4 will run off of the nightly repos and does not have a redhat subscription
+# rhel 8.4 will run off of the internal repos and does not have a redhat subscription
 if [[ $VERSION_ID == 8.4 ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
     sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
