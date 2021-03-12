@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -63,6 +64,21 @@ func FixtureBase() *Store {
 	}
 	s := New(nil, arch, nil)
 
+	pkgs := []rpmmd.PackageSpec{
+		{
+			Name:    "test1",
+			Epoch:   0,
+			Version: "2.11.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}, {
+			Name:    "test2",
+			Epoch:   3,
+			Version: "4.2.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}}
+
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
@@ -74,6 +90,7 @@ func FixtureBase() *Store {
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 			},
+			Packages: []rpmmd.PackageSpec{},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
@@ -85,6 +102,7 @@ func FixtureBase() *Store {
 				JobCreated:  date,
 				JobStarted:  date,
 			},
+			Packages: []rpmmd.PackageSpec{},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000002"): {
 			Blueprint: &b,
@@ -97,6 +115,7 @@ func FixtureBase() *Store {
 				JobStarted:  date,
 				JobFinished: date,
 			},
+			Packages: []rpmmd.PackageSpec{},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
@@ -109,6 +128,20 @@ func FixtureBase() *Store {
 				JobStarted:  date,
 				JobFinished: date,
 			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Manifest:    manifest,
+				Targets:     []*target.Target{localTarget, awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+			},
+			Packages: pkgs,
 		},
 	}
 
@@ -166,6 +199,21 @@ func FixtureFinished() *Store {
 	}
 	s := New(nil, arch, nil)
 
+	pkgs := []rpmmd.PackageSpec{
+		{
+			Name:    "test1",
+			Epoch:   0,
+			Version: "2.11.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}, {
+			Name:    "test2",
+			Epoch:   3,
+			Version: "4.2.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}}
+
 	s.blueprints[bName] = b
 	s.composes = map[uuid.UUID]Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
@@ -177,6 +225,7 @@ func FixtureFinished() *Store {
 				Targets:     []*target.Target{localTarget, awsTarget},
 				JobCreated:  date,
 			},
+			Packages: []rpmmd.PackageSpec{},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
@@ -188,6 +237,7 @@ func FixtureFinished() *Store {
 				JobCreated:  date,
 				JobStarted:  date,
 			},
+			Packages: []rpmmd.PackageSpec{},
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
@@ -200,6 +250,19 @@ func FixtureFinished() *Store {
 				JobStarted:  date,
 				JobFinished: date,
 			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Manifest:    manifest,
+				Targets:     []*target.Target{localTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+			},
+			Packages: pkgs,
 		},
 	}
 

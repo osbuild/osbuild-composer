@@ -39,6 +39,7 @@ type storeTest struct {
 	myRepoConfig     []rpmmd.RepoConfig
 	myPackageSpec    []rpmmd.PackageSpec
 	myImageOptions   distro.ImageOptions
+	myPackages       []rpmmd.PackageSpec
 }
 
 //func to initialize some default values before the suite is ran
@@ -55,9 +56,24 @@ func (suite *storeTest) SetupSuite() {
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
 	}
+	suite.myPackages = []rpmmd.PackageSpec{
+		{
+			Name:    "test1",
+			Epoch:   0,
+			Version: "2.11.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}, {
+			Name:    "test2",
+			Epoch:   3,
+			Version: "4.2.2",
+			Release: "1.fc35",
+			Arch:    "x86_64",
+		}}
 	suite.myCompose = Compose{
 		Blueprint:  &suite.myBP,
 		ImageBuild: suite.myImageBuild,
+		Packages:   suite.myPackages,
 	}
 	suite.myImageBuild = ImageBuild{
 		ID: 123,
@@ -244,25 +260,38 @@ func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
 
 func (suite *storeTest) TestPushCompose() {
 	testID := uuid.New()
-	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New())
+	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), []rpmmd.PackageSpec{})
 	suite.NoError(err)
 	suite.Panics(func() {
-		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New())
+		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New(), []rpmmd.PackageSpec{})
 	})
 	suite.NoError(err)
+
+	// Test with PackageSets
 	testID = uuid.New()
+	err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), suite.myPackages)
+	suite.NoError(err)
 }
 
 func (suite *storeTest) TestPushTestCompose() {
 	ID := uuid.New()
-	err := suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true)
+	err := suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true, []rpmmd.PackageSpec{})
 	suite.NoError(err)
 	suite.Equal(common.ImageBuildState(2), suite.myStore.composes[ID].ImageBuild.QueueStatus)
 	ID = uuid.New()
-	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false)
+	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false, []rpmmd.PackageSpec{})
 	suite.NoError(err)
 	suite.Equal(common.ImageBuildState(3), suite.myStore.composes[ID].ImageBuild.QueueStatus)
 
+	// Test with PackageSets
+	ID = uuid.New()
+	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true, suite.myPackages)
+	suite.NoError(err)
+	suite.Equal(common.ImageBuildState(2), suite.myStore.composes[ID].ImageBuild.QueueStatus)
+	ID = uuid.New()
+	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false, suite.myPackages)
+	suite.NoError(err)
+	suite.Equal(common.ImageBuildState(3), suite.myStore.composes[ID].ImageBuild.QueueStatus)
 }
 
 func (suite *storeTest) TestGetAllComposes() {
