@@ -98,6 +98,7 @@ type ImageOptions struct {
 type OSTreeImageOptions struct {
 	Ref    string
 	Parent string
+	URL    string
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
