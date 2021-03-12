@@ -1139,6 +1139,9 @@
           "sha256:c5359c27606e5e72856c40c3428e7de03d9cfd9dc4e67f2bb6889b2ccb0e1bea": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/libpwquality-1.4.4-1.el8.x86_64.rpm"
           },
+          "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm"
+          },
           "sha256:c5b5967a094ced90899052a82e2c245529b75ba3f46e0ce1a89cfc95edb935ea": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/python3-dateutil-2.6.1-6.el8.noarch.rpm"
           },
@@ -3332,6 +3335,10 @@
               },
               {
                 "checksum": "sha256:440ef0473d6f85c6f173020dab18d376d466b7b960876fba54772f88d4bfe050",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca",
                 "check_gpg": true
               },
               {
@@ -9025,6 +9032,16 @@
         "check_gpg": true
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "x86_64",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm",
+        "checksum": "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca",
+        "check_gpg": true
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -11306,6 +11323,7 @@
       "ncurses-6.1-7.20180224.el8.x86_64",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.x86_64",
+      "net-tools-2.0-0.52.20160912git.el8.x86_64",
       "nettle-3.4.1-2.el8.x86_64",
       "newt-0.52.20-11.el8.x86_64",
       "nfs-utils-2.3.3-41.el8.x86_64",
@@ -11568,6 +11586,7 @@
       "missing": []
     },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",
