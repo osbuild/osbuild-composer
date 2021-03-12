@@ -298,7 +298,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			// check error from ComputeImageImport()
 			if importErr != nil {
-				r = append(r, err)
+				r = append(r, importErr)
 				continue
 			}
 			log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(t.ImageName))

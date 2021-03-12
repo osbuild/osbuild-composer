@@ -95,7 +95,7 @@ func main() {
 
 		// check error from ComputeImageImport()
 		if importErr != nil {
-			log.Fatalf("[GCP] Importing image failed: %v", err)
+			log.Fatalf("[GCP] Importing image failed: %v", importErr)
 		}
 		log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(imageName))
 	}
