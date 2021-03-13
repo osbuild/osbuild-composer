@@ -705,8 +705,6 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                             log.info("Retrying image test case generation (%d of %d)", i, go_tls_timeout_retries)
 
                         stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
-                        # clean up the osbuild-store dir
-                        runner.run_command_check_call(f"sudo rm -rf {guest_osbuild_store_dir}/*")
 
                         if retcode != 0:
                             log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
