@@ -9,6 +9,7 @@ func GetOsbuildCommand(store, outputDirectory string) *exec.Cmd {
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,
+		"--checkpoint", "build",
 		"--json",
 		"-",
 	)
