@@ -23,6 +23,7 @@ def run_osbuild(manifest, store, output):
             subprocess.run(["osbuild",
                             "--store", store,
                             "--output-directory", output,
+                            "--checkpoint", "build"
                             "-"],
                             stdout=log,
                             stderr=subprocess.STDOUT,
