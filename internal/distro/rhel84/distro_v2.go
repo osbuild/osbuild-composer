@@ -726,6 +726,7 @@ func (t *imageTypeS2) xorrisofsStageOptions() *osbuild.XorrisofsStageOptions {
 	return &osbuild.XorrisofsStageOptions{
 		Filename: t.Filename(),
 		VolID:    fmt.Sprintf("RHEL-8-4-0-BaseOS-%s", t.Arch().Name()),
+		SysID:    "LINUX",
 		Boot: osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
