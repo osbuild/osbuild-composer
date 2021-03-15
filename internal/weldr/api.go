@@ -2015,10 +2015,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false)
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false, packageSets["packages"])
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true)
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true, packageSets["packages"])
 	} else {
 		var jobId uuid.UUID
 
@@ -2030,7 +2030,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			Exports:         imageType.Exports(),
 		})
 		if err == nil {
-			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId)
+			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packageSets["packages"])
 		}
 	}
 
@@ -2339,27 +2339,22 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	type Dependencies struct {
-		Packages []map[string]interface{} `json:"packages"`
-	}
-
 	var reply struct {
-		ID          uuid.UUID            `json:"id"`
-		Config      string               `json:"config"`    // anaconda config, let's ignore this field
-		Blueprint   *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
-		Commit      string               `json:"commit"`    // empty for now
-		Deps        Dependencies         `json:"deps"`      // empty for now
-		ComposeType string               `json:"compose_type"`
-		QueueStatus string               `json:"queue_status"`
-		ImageSize   uint64               `json:"image_size"`
-		Uploads     []uploadResponse     `json:"uploads,omitempty"`
+		ID        uuid.UUID            `json:"id"`
+		Config    string               `json:"config"`    // anaconda config, let's ignore this field
+		Blueprint *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
+		Commit    string               `json:"commit"`    // empty for now
+		Deps      struct {
+			Packages []rpmmd.PackageSpec `json:"packages"`
+		} `json:"deps"`
+		ComposeType string           `json:"compose_type"`
+		QueueStatus string           `json:"queue_status"`
+		ImageSize   uint64           `json:"image_size"`
+		Uploads     []uploadResponse `json:"uploads,omitempty"`
 	}
 
 	reply.ID = id
 	reply.Blueprint = compose.Blueprint
-	reply.Deps = Dependencies{
-		Packages: make([]map[string]interface{}, 0),
-	}
 	// Weldr API assumes only one image build per compose, that's why only the
 	// 1st build is considered
 	composeStatus := api.getComposeStatus(compose)
@@ -2371,6 +2366,14 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		reply.Uploads = targetsToUploadResponses(compose.ImageBuild.Targets, composeStatus.State)
 	}
 
+	// Add package dependencies from the compose
+	// This information may not be included for the compose
+	dependencies := compose.Packages
+	// Sort dependencies by Name (names should be unique so no need to sort by EVRA)
+	sort.Slice(dependencies, func(i, j int) bool {
+		return dependencies[i].Name < dependencies[j].Name
+	})
+	reply.Deps.Packages = dependencies
 	err = json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
 }
