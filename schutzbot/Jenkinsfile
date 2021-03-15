@@ -852,7 +852,7 @@ pipeline {
                         }
                     }
 
-                    agent { label "cs8cloudbase && x86_64 && psi" }
+                    agent { label "cs8cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
                         DISTRO_CODE = "centos-stream8"
