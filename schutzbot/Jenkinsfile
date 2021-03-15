@@ -522,6 +522,29 @@ pipeline {
                         }
                     }
                 }
+                stage('F33 aarch64 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f33cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                    }
+                    steps {
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-aarch64-integration')
+                        }
+                    }
+                }
                 stage('F33: koji-osbuild') {
                     when {
                         beforeAgent true
@@ -926,6 +949,29 @@ pipeline {
                                 label: "Run cloud cleaner just in case something failed",
                                 script: "schutzbot/run_cloud_cleaner.sh"
                             )
+                        }
+                    }
+                }
+                stage('CS8 aarch64 Integration') {
+                    when {
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "integration"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
+                    }
+                    steps {
+                        run_tests('integration')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-aarch64-integration')
                         }
                     }
                 }

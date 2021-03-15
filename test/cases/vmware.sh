@@ -3,7 +3,15 @@ set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer
 
+# Get OS data.
 source /etc/os-release
+ARCH=$(uname -m)
+
+if [[ "$ARCH" != "x86_64" ]]; then
+  # VMware currently doesn't support other architectures than x86_64.
+  echo "VMware test is only supported on x86_64, skipping."
+  exit 0
+fi
 
 # Colorful output.
 function greenprint {

@@ -7,6 +7,12 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 source /etc/os-release
 ARCH=$(uname -m)
 
+if [[ "$ARCH" != "x86_64" ]]; then
+  # We don't currently build containers for other architecture than x86_64.
+  echo "Koji test is only supported on x86_64 because we don't build container for other architectures, skipping."
+  exit 0
+fi
+
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
