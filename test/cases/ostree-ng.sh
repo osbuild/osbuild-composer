@@ -1,45 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
-URL=http://192.168.100.1/repo/
-
-# Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
-
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-# Set os-variant and boot location used by virt-install.
-case "${ID}-${VERSION_ID}" in
-    "fedora-32")
-        IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/32/${ARCH}/iot"
-        OS_VARIANT="fedora32"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
-    "fedora-33")
-        IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/33/${ARCH}/iot"
-        OS_VARIANT="fedora33"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/";;
-    "rhel-8.3")
-        IMAGE_TYPE=rhel-edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8.3"
-        # When 8.3 was released, it wasn't available on all RH internal
-        # mirrors, therefore the Boston mirror is hardcoded.
-        BOOT_LOCATION="http://download.eng.bos.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
-    "rhel-8.4")
-        IMAGE_TYPE=rhel-edge-container
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        BOOT_LOCATION="http://download.devel.redhat.com/nightly/rhel-8/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/";;
-    *)
-        echo "unsupported distro: ${ID}-${VERSION_ID}"
-        exit 1;;
-esac
-
+# Do not use httpd, but container
+sudo systemctl disable --now httpd
 
 # Colorful output.
 function greenprint {
@@ -79,23 +45,24 @@ fi
 
 # Allow anyone in the wheel group to talk to libvirt.
 greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-WHEEL_GROUP=wheel
-if [[ $ID == rhel ]]; then
-    WHEEL_GROUP=adm
-fi
 sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
 polkit.addRule(function(action, subject) {
     if (action.id == "org.libvirt.unix.manage" &&
-        subject.isInGroup("${WHEEL_GROUP}")) {
+        subject.isInGroup("adm")) {
             return polkit.Result.YES;
     }
 });
 EOF
 
 # Set up variables.
+OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+ARCH=$(uname -m)
+OSTREE_REF="rhel/8/${ARCH}/edge"
+OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
 GUEST_ADDRESS=192.168.100.50
+URL=http://192.168.100.1/repo/
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -136,13 +103,8 @@ get_compose_metadata () {
 
 # Build ostree image.
 build_image() {
-    blueprint_file=$1
-    blueprint_name=$2
-
-    # Prepare the blueprint for the compose.
-    greenprint "📋 Preparing blueprint"
-    sudo composer-cli blueprints push "$blueprint_file"
-    sudo composer-cli blueprints depsolve "$blueprint_name"
+    blueprint_name=$1
+    image_type=$2
 
     # Get worker unit file so we can watch the journal.
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
@@ -151,19 +113,20 @@ build_image() {
 
     # Start the compose.
     greenprint "🚀 Starting compose"
-    if [[ $blueprint_name == upgrade ]]; then
+    if [ $# -eq 3 ]; then
+        repo_url=$3
         sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
             \"blueprint_name\": \"$blueprint_name\",
-            \"compose_type\": \"$IMAGE_TYPE\",
+            \"compose_type\": \"$image_type\",
             \"ostree\": {
-                \"url\": \"$URL\",
+                \"url\": \"$repo_url\",
                 \"ref\": \"$OSTREE_REF\"
             }
         }" | tee "$COMPOSE_START"
     else
         sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
             \"blueprint_name\": \"$blueprint_name\",
-            \"compose_type\": \"$IMAGE_TYPE\"
+            \"compose_type\": \"$image_type\"
         }" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
@@ -220,19 +183,11 @@ clean_up () {
     # Remove qcow2 file.
     sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
-    if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
-        # Remove any status containers if exist
-        sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-        # Remove all images
-        sudo podman rmi -f -a
-    else
-        # Remove extracted upgrade image-tar.
-        sudo rm -rf "$UPGRADE_PATH"
-        # Remove "remote" repo.
-        sudo rm -rf "${HTTPD_PATH}"/{repo,compose.json}
-        # Stop httpd
-        sudo systemctl disable httpd --now
-    fi
+    # Remove any status containers if exist
+    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+    # Remove all images
+    sudo podman rmi -f -a
+
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
 }
@@ -249,16 +204,16 @@ check_result () {
     fi
 }
 
-##################################################
+##########################################################
 ##
-## ostree image/commit installation
+## rhel-edge container image for building installer image
 ##
-##################################################
+##########################################################
 
 # Write a blueprint for ostree image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "ostree"
-description = "A base ostree image"
+name = "container"
+description = "A base rhel-edge container image"
 version = "0.0.1"
 modules = []
 groups = []
@@ -266,59 +221,105 @@ groups = []
 [[packages]]
 name = "python36"
 version = "*"
-EOF
 
-# No rt kernel package repo for Fedora and RHEL 8
-if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
-    cat >> "$BLUEPRINT_FILE" << EOF
 [customizations.kernel]
 name = "kernel-rt"
+
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzxo5dEcS+LDK/OFAfHo6740EyoDM8aYaCkBala0FnWfMMTOq7PQe04ahB0eFLS3IlQtK5bpgzxBdFGVqF6uT5z4hhaPjQec0G3+BD5Pxo6V+SxShKZo+ZNGU3HVrF9p2V7QH0YFQj5B8F6AicA3fYh2BVUFECTPuMpy5A52ufWu0r4xOFmbU7SIhRQRAQz2u4yjXqBsrpYptAvyzzoN4gjUhNnwOHSPsvFpWoBFkWmqn0ytgHg3Vv9DlHW+45P02QH1UFedXR2MqLnwRI30qqtaOkVS+9rE/dhnR+XPpHHG+hv2TgMDAuQ3IK7Ab5m/yCbN73cxFifH4LST0vVG3Jx45xn+GTeHHhfkAfBSCtya6191jixbqyovpRunCBKexI5cfRPtWOitM3m7Mq26r7LpobMM+oOLUm4p0KKNIthWcmK9tYwXWSuGGfUQ+Y8gt7E0G06ZGbCPHOrxJ8lYQqXsif04piONPA/c9Hq43O99KPNGShONCS9oPFdOLRT3U= ostree-image-test"
+home = "/home/admin/"
+groups = ["wheel"]
 EOF
-fi
 
-# Build installation image.
-build_image "$BLUEPRINT_FILE" ostree
+greenprint "📄 container blueprint"
+cat "$BLUEPRINT_FILE"
 
-# Download the image and extract tar into web server root folder.
-greenprint "📥 Downloading and extracting the image"
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing container blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve container
+
+# Build container image.
+build_image container rhel-edge-container
+
+# Download the image
+greenprint "📥 Downloading the container image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 
-if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
-    # Do not use httpd, but edge container
-    sudo systemctl stop httpd
-    # Remove any status containers if exist
-    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-    # Remove all images
-    sudo podman rmi -f -a
-    # Deal with rhel-edge container
-    IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
-    sudo podman pull "oci-archive:${IMAGE_FILENAME}"
-    # Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
-    sudo restorecon -R /var/lib/containers/storage/overlay/
-    sudo podman images
-    sudo rm -f "$IMAGE_FILENAME"
-    # Get image id to run image
-    EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
-    sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
-    # Wait for container to be running
-    until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
-        sleep 1;
-    done;
-else
-    # Start httpd to serve ostree repo.
-    greenprint "🚀 Starting httpd daemon"
-    sudo systemctl start httpd
-    # Deal with edge image
-    IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
-    HTTPD_PATH="/var/www/html"
-    sudo tar -xf "${IMAGE_FILENAME}" -C ${HTTPD_PATH}
-    sudo rm -f "$IMAGE_FILENAME"
-fi
+# Clear container running env
+greenprint "🧹 Clearing container running env"
+# Remove any status containers if exist
+sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+# Remove all images
+sudo podman rmi -f -a
+
+# Deal with rhel-edge container
+greenprint "🗜 Extracting and running the image"
+IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
+sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+# Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
+sudo restorecon -R /var/lib/containers/storage/overlay/
+sudo podman images
+# Clear image file
+sudo rm -f "$IMAGE_FILENAME"
+# Get image id to run image
+EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
+# Wait for container to be running
+until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+    sleep 1;
+done;
 
 # Clean compose and blueprints.
-greenprint "Clean up osbuild-composer"
+greenprint "Clean up container blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete ostree > /dev/null
+sudo composer-cli blueprints delete container > /dev/null
+
+########################################################
+##
+## rhel-edge installer image building from container image
+##
+########################################################
+
+# Write a blueprint for installer image.
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "installer"
+description = "A rhel-edge installer image"
+version = "0.0.1"
+modules = []
+groups = []
+EOF
+
+greenprint "📄 installer blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing installer blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve installer
+
+# Build installer image.
+build_image installer rhel-edge-installer "$URL"
+
+# Download the image
+greenprint "📥 Downloading the installer image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+ISO_FILENAME="${COMPOSE_ID}-rhel84-boot.iso"
+sudo mv "${ISO_FILENAME}" /var/lib/libvirt/images
+
+# Clean compose and blueprints.
+greenprint "🧹 Clean up installer blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete installer > /dev/null
+
+########################################################
+##
+## install rhel-edge image with installer(ISO)
+##
+########################################################
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
@@ -338,9 +339,6 @@ keyboard us
 timezone --utc Etc/UTC
 
 selinux --enforcing
-rootpw --lock --iscrypted locked
-user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
-sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
 
 bootloader --timeout=1 --append="net.ifnames=0 modprobe.blacklist=vc4"
 
@@ -349,10 +347,17 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=${URL} --ref=${OSTREE_REF}
+ostreesetup --nogpg --osname=rhel-edge --remote=rhel-edge --url=file:///ostree/repo --ref=${OSTREE_REF}
 poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
+
+# Create /var/home/admin user home directory because osbuild can't do that
+mkdir -p /var/home/admin/.ssh
+cat > /var/home/admin/.ssh/authorized_keys << EOF
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzxo5dEcS+LDK/OFAfHo6740EyoDM8aYaCkBala0FnWfMMTOq7PQe04ahB0eFLS3IlQtK5bpgzxBdFGVqF6uT5z4hhaPjQec0G3+BD5Pxo6V+SxShKZo+ZNGU3HVrF9p2V7QH0YFQj5B8F6AicA3fYh2BVUFECTPuMpy5A52ufWu0r4xOFmbU7SIhRQRAQz2u4yjXqBsrpYptAvyzzoN4gjUhNnwOHSPsvFpWoBFkWmqn0ytgHg3Vv9DlHW+45P02QH1UFedXR2MqLnwRI30qqtaOkVS+9rE/dhnR+XPpHHG+hv2TgMDAuQ3IK7Ab5m/yCbN73cxFifH4LST0vVG3Jx45xn+GTeHHhfkAfBSCtya6191jixbqyovpRunCBKexI5cfRPtWOitM3m7Mq26r7LpobMM+oOLUm4p0KKNIthWcmK9tYwXWSuGGfUQ+Y8gt7E0G06ZGbCPHOrxJ8lYQqXsif04piONPA/c9Hq43O99KPNGShONCS9oPFdOLRT3U= ostree-image-test
+EOF
+chown admin:admin /var/home/admin
 
 # no sudo password for user admin
 echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
@@ -385,9 +390,9 @@ echo "(Don't worry -- that out-of-space error was expected.)"
 STOPHERE
 
 # Install ostree image via anaconda.
-greenprint "Install ostree image via anaconda"
+greenprint "💿 Install ostree image via installer(ISO)"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
+                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
@@ -395,7 +400,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location ${BOOT_LOCATION} \
+                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
@@ -421,14 +426,14 @@ check_result
 
 ##################################################
 ##
-## ostree image/commit upgrade
+## upgrade rhel-edge with new upgrade container
 ##
 ##################################################
 
 # Write a blueprint for ostree image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "upgrade"
-description = "An upgrade ostree image"
+description = "An upgrade rhel-edge container image"
 version = "0.0.2"
 modules = []
 groups = []
@@ -440,70 +445,71 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
-EOF
 
-# No rt kernel package repo for Fedora and RHEL 8
-if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
-    cat >> "$BLUEPRINT_FILE" << EOF
 [customizations.kernel]
 name = "kernel-rt"
+
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzxo5dEcS+LDK/OFAfHo6740EyoDM8aYaCkBala0FnWfMMTOq7PQe04ahB0eFLS3IlQtK5bpgzxBdFGVqF6uT5z4hhaPjQec0G3+BD5Pxo6V+SxShKZo+ZNGU3HVrF9p2V7QH0YFQj5B8F6AicA3fYh2BVUFECTPuMpy5A52ufWu0r4xOFmbU7SIhRQRAQz2u4yjXqBsrpYptAvyzzoN4gjUhNnwOHSPsvFpWoBFkWmqn0ytgHg3Vv9DlHW+45P02QH1UFedXR2MqLnwRI30qqtaOkVS+9rE/dhnR+XPpHHG+hv2TgMDAuQ3IK7Ab5m/yCbN73cxFifH4LST0vVG3Jx45xn+GTeHHhfkAfBSCtya6191jixbqyovpRunCBKexI5cfRPtWOitM3m7Mq26r7LpobMM+oOLUm4p0KKNIthWcmK9tYwXWSuGGfUQ+Y8gt7E0G06ZGbCPHOrxJ8lYQqXsif04piONPA/c9Hq43O99KPNGShONCS9oPFdOLRT3U= ostree-image-test"
+home = "/home/admin/"
+groups = ["wheel"]
 EOF
-fi
+
+greenprint "📄 upgrade blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing upgrade blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
-build_image "$BLUEPRINT_FILE" upgrade
+build_image upgrade rhel-edge-container "$URL"
 
-# Download the image and extract tar into web server root folder.
-greenprint "📥 Downloading and extracting the image"
+# Download the image
+greenprint "📥 Downloading the upgrade image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 
-if [[ "${ID}-${VERSION_ID}" == rhel-8.4 ]]; then
-    # Remove any status containers if exist
-    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-    # Remove all images
-    sudo podman rmi -f -a
-    # Deal with rhel-edge container
-    IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
-    sudo podman pull "oci-archive:${IMAGE_FILENAME}"
-    # Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
-    sudo restorecon -R /var/lib/containers/storage/overlay/
-    sudo podman images
-    sudo rm -f "$IMAGE_FILENAME"
-    # Get image id to run image
-    EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
-    sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
-    # Wait for container to be running
-    until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
-        sleep 1;
-    done;
-    # Get ostree commit value.
-    greenprint "Get ostree image commit value"
-    UPGRADE_HASH=$(curl ${URL}refs/heads/rhel/8/x86_64/edge)
-else
-    IMAGE_FILENAME="${COMPOSE_ID}-commit.tar"
-    UPGRADE_PATH="$(pwd)/upgrade"
-    mkdir -p "$UPGRADE_PATH"
-    sudo tar -xf "$IMAGE_FILENAME" -C "$UPGRADE_PATH"
-    sudo rm -f "$IMAGE_FILENAME"
+# Clear container running env
+greenprint "🧹 Clearing container running env"
+# Remove any status containers if exist
+sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+# Remove all images
+sudo podman rmi -f -a
 
-    # Introduce new ostree commit into repo.
-    greenprint "Introduce new ostree commit into repo"
-    sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" "$OSTREE_REF"
-    sudo ostree summary --update --repo "${HTTPD_PATH}/repo"
+# Deal with rhel-edge container
+greenprint "🗜 Extracting and running the image"
+IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
+sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+# Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
+sudo restorecon -R /var/lib/containers/storage/overlay/
+sudo podman images
+# Clear image file
+sudo rm -f "$IMAGE_FILENAME"
+# Get image id to run image
+EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+sudo podman run -d --name rhel-edge --network host "${EDGE_IMAGE_ID}"
+# Wait for container to be running
+until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+    sleep 1;
+done;
 
-    # Ensure SELinux is happy with all objects files.
-    greenprint "👿 Running restorecon on web server root folder"
-    sudo restorecon -Rv "${HTTPD_PATH}/repo" > /dev/null
-
-    # Get ostree commit value.
-    greenprint "Get ostree image commit value"
-    UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
-fi
+# Get ostree commit value.
+greenprint "🕹 Get ostree upgrade commit value"
+UPGRADE_HASH=$(curl ${URL}refs/heads/rhel/8/x86_64/edge)
 
 # Clean compose and blueprints.
-greenprint "Clean up osbuild-composer again"
+greenprint "Clean up upgrade blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
+
+# Config remote repository for upgrade
+greenprint "Config remote repository for upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo ostree remote delete rhel-edge'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} "sudo ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${URL}"
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
@@ -541,7 +547,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
