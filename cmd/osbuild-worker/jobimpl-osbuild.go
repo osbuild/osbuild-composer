@@ -2,23 +2,18 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
@@ -130,14 +125,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return fmt.Errorf("at most one build artifact can be exported")
 	}
 
-	start_time := time.Now()
-
 	osbuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 	if err != nil {
 		return err
 	}
-
-	end_time := time.Now()
 
 	streamOptimizedPath := ""
 
@@ -168,31 +159,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	for _, t := range args.Targets {
 		switch options := t.Options.(type) {
-		case *target.LocalTargetOptions:
-			if !osbuildOutput.Success {
-				continue
-			}
-			var f *os.File
-			imagePath := path.Join(outputDirectory, exportPath, options.Filename)
-			if options.StreamOptimized {
-				f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
-				if err != nil {
-					r = append(r, err)
-					continue
-				}
-			} else {
-				f, err = os.Open(imagePath)
-				if err != nil {
-					r = append(r, err)
-					continue
-				}
-			}
-
-			err = job.UploadArtifact(options.Filename, f)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
 		case *target.VMWareTargetOptions:
 			if !osbuildOutput.Success {
 				continue
@@ -479,112 +445,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResults = append(targetResults, target.NewAzureImageTargetResult(&target.AzureImageTargetResultOptions{
 				ImageName: t.ImageName,
 			}))
-
-		case *target.KojiTargetOptions:
-			// Koji for some reason needs TLS renegotiation enabled.
-			// Clone the default http transport and enable renegotiation.
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.TLSClientConfig = &tls.Config{
-				Renegotiation: tls.RenegotiateOnceAsClient,
-			}
-
-			kojiServer, _ := url.Parse(options.Server)
-			creds, exists := impl.KojiServers[kojiServer.Hostname()]
-			if !exists {
-				r = append(r, fmt.Errorf("Koji server has not been configured: %s", kojiServer.Hostname()))
-				continue
-			}
-
-			k, err := koji.NewFromGSSAPI(options.Server, &creds, transport)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			defer func() {
-				err := k.Logout()
-				if err != nil {
-					log.Printf("koji logout failed: %v", err)
-				}
-			}()
-
-			if !osbuildOutput.Success {
-				err = k.CGFailBuild(int(options.BuildID), options.Token)
-				if err != nil {
-					log.Printf("CGFailBuild failed: %v", err)
-				}
-				continue
-			}
-
-			f, err := os.Open(path.Join(outputDirectory, options.Filename))
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			hash, filesize, err := k.Upload(f, options.UploadDirectory, options.KojiFilename)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			hostOS, err := distro.GetRedHatRelease()
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
-
-			build := koji.ImageBuild{
-				BuildID:   options.BuildID,
-				TaskID:    options.TaskID,
-				Name:      options.Name,
-				Version:   options.Version,
-				Release:   options.Release,
-				StartTime: start_time.Unix(),
-				EndTime:   end_time.Unix(),
-			}
-			buildRoots := []koji.BuildRoot{
-				{
-					ID: 1,
-					Host: koji.Host{
-						Os:   hostOS,
-						Arch: common.CurrentArch(),
-					},
-					ContentGenerator: koji.ContentGenerator{
-						Name:    "osbuild",
-						Version: "0", // TODO: put the correct version here
-					},
-					Container: koji.Container{
-						Type: "none",
-						Arch: common.CurrentArch(),
-					},
-					Tools: []koji.Tool{},
-					RPMs:  osbuildStagesToRPMs(osbuildOutput.Build.Stages),
-				},
-			}
-			output := []koji.Image{
-				{
-					BuildRootID:  1,
-					Filename:     options.KojiFilename,
-					FileSize:     uint64(filesize),
-					Arch:         common.CurrentArch(),
-					ChecksumType: "md5",
-					MD5:          hash,
-					Type:         "image",
-					RPMs:         osbuildStagesToRPMs(osbuildOutput.Stages),
-					Extra: koji.ImageExtra{
-						Info: koji.ImageExtraInfo{
-							Arch: "noarch",
-						},
-					},
-				},
-			}
-
-			_, err = k.CGImport(build, buildRoots, output, options.UploadDirectory, options.Token)
-			if err != nil {
-				r = append(r, err)
-				continue
-			}
 		default:
 			r = append(r, fmt.Errorf("invalid target type"))
 		}
