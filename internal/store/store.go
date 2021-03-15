@@ -331,7 +331,15 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 	return composes
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID, manifest distro.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, jobId uuid.UUID) error {
+func (s *Store) PushCompose(composeID uuid.UUID,
+	manifest distro.Manifest,
+	imageType distro.ImageType,
+	bp *blueprint.Blueprint,
+	size uint64,
+	targets []*target.Target,
+	jobId uuid.UUID,
+	packages []rpmmd.PackageSpec) error {
+
 	if _, exists := s.GetCompose(composeID); exists {
 		panic("a compose with this id already exists")
 	}
@@ -352,6 +360,7 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest distro.Manifest, image
 				Size:       size,
 				JobID:      jobId,
 			},
+			Packages: packages,
 		}
 		return nil
 	})
@@ -361,7 +370,15 @@ func (s *Store) PushCompose(composeID uuid.UUID, manifest distro.Manifest, image
 // PushTestCompose is used for testing
 // Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
 // It does not actually run a compose job
-func (s *Store) PushTestCompose(composeID uuid.UUID, manifest distro.Manifest, imageType distro.ImageType, bp *blueprint.Blueprint, size uint64, targets []*target.Target, testSuccess bool) error {
+func (s *Store) PushTestCompose(composeID uuid.UUID,
+	manifest distro.Manifest,
+	imageType distro.ImageType,
+	bp *blueprint.Blueprint,
+	size uint64,
+	targets []*target.Target,
+	testSuccess bool,
+	packages []rpmmd.PackageSpec) error {
+
 	if targets == nil {
 		targets = []*target.Target{}
 	}
@@ -386,6 +403,7 @@ func (s *Store) PushTestCompose(composeID uuid.UUID, manifest distro.Manifest, i
 				JobStarted:  time.Now(),
 				Size:        size,
 			},
+			Packages: packages,
 		}
 		return nil
 	})
