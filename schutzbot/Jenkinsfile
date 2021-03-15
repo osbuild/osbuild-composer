@@ -814,7 +814,7 @@ pipeline {
                         }
                     }
 
-                    agent { label "cs8cloudbase && x86_64 && psi" }
+                    agent { label "cs8cloudbase && x86_64 && aws" }
                     environment {
                         TEST_TYPE = "integration"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
