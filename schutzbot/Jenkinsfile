@@ -47,6 +47,7 @@ pipeline {
 
         stage("Mock build 👷🏻") {
             when {
+                beforeAgent true
                 expression {
                     return env.BUILD_CAUSE != 'cron';
                 }
@@ -194,6 +195,7 @@ pipeline {
                 }
                 stage("Container build - x86_64") {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -211,6 +213,7 @@ pipeline {
             agent { label "rhel8cloudbase && x86_64 && psi" }
 
             when {
+                beforeAgent true
                 expression {
                     return env.BUILD_CAUSE == 'cron';
                 }
@@ -246,6 +249,7 @@ pipeline {
 
                 stage('F32 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -264,6 +268,7 @@ pipeline {
                 }
                 stage('F32 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -294,6 +299,7 @@ pipeline {
                 }
                 stage('F32 Integration') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -319,6 +325,7 @@ pipeline {
                 }
                 stage('F32 OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -336,6 +343,7 @@ pipeline {
                 }
                 stage('F32 New OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -353,6 +361,7 @@ pipeline {
                 }
                 stage('F33 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -371,6 +380,7 @@ pipeline {
                 }
                 stage('F33 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -401,6 +411,7 @@ pipeline {
                 }
                 stage('F33 Integration') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -426,6 +437,7 @@ pipeline {
                 }
                 stage('F33 OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -443,6 +455,7 @@ pipeline {
                 }
                 stage('F33 New OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -460,6 +473,7 @@ pipeline {
                 }
                 stage('F33 aarch64 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -478,6 +492,7 @@ pipeline {
                 }
                 stage('F33 aarch64 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -507,6 +522,7 @@ pipeline {
                 }
                 stage('F33: koji-osbuild') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -524,6 +540,7 @@ pipeline {
                 }
                 stage('EL8 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -545,6 +562,7 @@ pipeline {
                 }
                 stage('EL8 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -576,6 +594,7 @@ pipeline {
                 }
                 stage('EL8 Integration') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -605,6 +624,7 @@ pipeline {
                 }
                 stage('EL8 OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -622,6 +642,7 @@ pipeline {
                 }
                 stage('EL8 New OSTree') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -639,6 +660,7 @@ pipeline {
                 }
                 stage('EL8: koji-osbuild') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -656,6 +678,7 @@ pipeline {
                 }
                 stage('EL8 aarch64 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -759,6 +782,7 @@ pipeline {
                 }
                 stage('CS8 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -779,6 +803,7 @@ pipeline {
                 }
                 stage('CS8 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -809,6 +834,7 @@ pipeline {
                 }
                 stage('CS8 Integration') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -836,6 +862,7 @@ pipeline {
                 }
                 stage('CS8 aarch64 Base') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
@@ -856,6 +883,7 @@ pipeline {
                 }
                 stage('CS8 aarch64 Image') {
                     when {
+                        beforeAgent true
                         expression {
                             return env.BUILD_CAUSE != 'cron';
                         }
