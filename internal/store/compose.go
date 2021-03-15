@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -74,6 +75,7 @@ func (ib *ImageBuild) GetLocalTargetOptions() *target.LocalTargetOptions {
 type Compose struct {
 	Blueprint  *blueprint.Blueprint
 	ImageBuild ImageBuild
+	Packages   []rpmmd.PackageSpec
 }
 
 // DeepCopy creates a copy of the Compose structure
@@ -83,8 +85,12 @@ func (c *Compose) DeepCopy() Compose {
 		bpCopy := *c.Blueprint
 		newBpPtr = &bpCopy
 	}
+	pkgs := make([]rpmmd.PackageSpec, len(c.Packages))
+	copy(pkgs, c.Packages)
+
 	return Compose{
 		Blueprint:  newBpPtr,
 		ImageBuild: c.ImageBuild.DeepCopy(),
+		Packages:   pkgs,
 	}
 }
