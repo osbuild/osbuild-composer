@@ -318,8 +318,10 @@ locally but installed directly from OS repositories!
 
 By default we test against latest nightly builds. If you wish to test against other
 flavors (e.g. rel-eng) specify the `COMPOSE_URL` environment variable to point to
-the respective URL (stopping before the `/compose/` path). See
+the respective URL (stopping before the `/compose/` path). See the image below or
 `schutzbot/prepare-rhel-internal.sh` for more details.
+
+!['Define COMPOSE_URL'](./define_compose_url.png)
 
 ### Replay internal Pipeline manually
 
