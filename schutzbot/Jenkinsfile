@@ -342,24 +342,6 @@ pipeline {
                         }
                     }
                 }
-                stage('F32 New OSTree') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            return env.BUILD_CAUSE != 'cron';
-                        }
-                    }
-
-                    agent { label "f32cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree-ng')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-ostree-ng')
-                        }
-                    }
-                }
                 stage('F33 Base') {
                     when {
                         beforeAgent true
@@ -452,24 +434,6 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-ostree')
-                        }
-                    }
-                }
-                stage('F33 New OSTree') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            return env.BUILD_CAUSE != 'cron';
-                        }
-                    }
-
-                    agent { label "f33cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree-ng')
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora33-ostree-ng')
                         }
                     }
                 }
@@ -644,24 +608,6 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-ostree')
-                        }
-                    }
-                }
-                stage('EL8 New OSTree') {
-                    when {
-                        beforeAgent true
-                        expression {
-                            return env.BUILD_CAUSE != 'cron';
-                        }
-                    }
-
-                    agent { label "rhel8cloudbase && psi && x86_64" }
-                    steps {
-                        run_tests('ostree-ng')
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel8-ostree-ng')
                         }
                     }
                 }
