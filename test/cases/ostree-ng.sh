@@ -4,6 +4,11 @@ set -euo pipefail
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
+
+# Get OS data.
+source /etc/os-release
+ARCH=$(uname -m)
+
 # Do not use httpd, but container
 sudo systemctl disable --now httpd
 
