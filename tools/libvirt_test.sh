@@ -298,7 +298,7 @@ case $ARCH in
         MAX_LOOPS=60
         ;;
     *)
-        MAX_LOOPS=30
+        MAX_LOOPS=300
         ;;
 esac
 
