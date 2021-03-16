@@ -24,6 +24,8 @@ jobs:
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check that source has been prepared
         run: |
@@ -69,6 +71,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Run ShellCheck
       uses: ludeeus/action-shellcheck@0.5.0
       with:
@@ -85,6 +89,8 @@ jobs:
         run: sudo dnf install -y rpmlint rpm-build make git-core
 
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Create SRPM
         run: make srpm
