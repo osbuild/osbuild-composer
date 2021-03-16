@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1044,6 +1045,7 @@ func Test_newComposeV0(t *testing.T) {
 						QueueStatus: common.IBFinished,
 					},
 				},
+				Packages: []rpmmd.PackageSpec{},
 			},
 		},
 	}
@@ -1140,6 +1142,7 @@ func Test_newComposeFromV0(t *testing.T) {
 					JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
 					QueueStatus: common.IBFinished,
 				},
+				Packages: []rpmmd.PackageSpec{},
 			},
 		},
 	}
@@ -1261,6 +1264,7 @@ func Test_newComposesV0(t *testing.T) {
 							QueueStatus: common.IBFinished,
 						},
 					},
+					Packages: []rpmmd.PackageSpec{},
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
@@ -1291,6 +1295,7 @@ func Test_newComposesV0(t *testing.T) {
 							QueueStatus: common.IBFinished,
 						},
 					},
+					Packages: []rpmmd.PackageSpec{},
 				},
 			},
 		},
@@ -1418,6 +1423,7 @@ func Test_newComposesFromV0(t *testing.T) {
 						JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
 						QueueStatus: common.IBFinished,
 					},
+					Packages: []rpmmd.PackageSpec{},
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
@@ -1446,6 +1452,7 @@ func Test_newComposesFromV0(t *testing.T) {
 						JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
 						QueueStatus: common.IBFinished,
 					},
+					Packages: []rpmmd.PackageSpec{},
 				},
 			},
 		},
