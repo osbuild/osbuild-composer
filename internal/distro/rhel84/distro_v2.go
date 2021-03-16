@@ -372,13 +372,14 @@ func (t *imageTypeS2) containerPipeline() *osbuild.Pipeline {
 }
 
 func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) *osbuild.Pipeline {
+	ostreeRepoPath := "/ostree/repo"
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/ostree/repo"}))
+	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: "/ostree/repo"},
+		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
 		t.ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 	p.AddStage(osbuild.NewBuildstampStage(t.buildStampStageOptions()))
@@ -412,7 +413,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	p.AddStage(osbuild.NewAnacondaStage(t.anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
-	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(options.OSTree.URL)))
+	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath))))
 
 	return p
 }
