@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -272,6 +273,7 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 			return nil, err
 		}
 		p.AddStage(osbuild.NewUsersStage(options))
+		p.AddStage(osbuild.NewFirstBootStage(t.usersFirstBootOptions(options)))
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
@@ -530,6 +532,27 @@ func (t *imageTypeS2) userStageOptions(users []blueprint.UserCustomization) (*os
 	}
 
 	return &options, nil
+}
+
+func (t *imageTypeS2) usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
+	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+1)
+	// workaround for creating authorized_keys file for user
+	varhome := filepath.Join("/var", "home")
+	for name, user := range usersStageOptions.Users {
+		if user.Key != nil {
+			sshdir := filepath.Join(varhome, name, ".ssh")
+			cmds = append(cmds, fmt.Sprintf("mkdir -p %s", sshdir))
+			cmds = append(cmds, fmt.Sprintf("sh -c 'echo %q >> %q'", *user.Key, filepath.Join(sshdir, "authorized_keys")))
+			cmds = append(cmds, fmt.Sprintf("chown %s:%s -Rc %s", name, name, sshdir))
+		}
+	}
+	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", varhome))
+	options := &osbuild.FirstBootStageOptions{
+		Commands:       cmds,
+		WaitForNetwork: false,
+	}
+
+	return options
 }
 
 func (t *imageTypeS2) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
