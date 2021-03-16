@@ -51,7 +51,7 @@ func Test_imageTypeToCompatString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := imageTypeToCompatString(tt.args.input)
 			if got != tt.want {
-				t.Errorf("imageTypeStringToCompatString() got = %v, want %v", got, tt.want)
+				t.Errorf("imageTypeStringToCompatString() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -96,7 +96,7 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := imageTypeFromCompatString(tt.args.input, tt.args.arch)
 			if got != tt.want {
-				t.Errorf("imageTypeStringFromCompatString() got = %v, want %v", got, tt.want)
+				t.Errorf("imageTypeStringFromCompatString() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -112,7 +112,7 @@ func TestMarshalEmpty(t *testing.T) {
 	storeV0 := store1.toStoreV0()
 	store2 := newStoreFromV0(*storeV0, arch, nil)
 	if !reflect.DeepEqual(store1, store2) {
-		t.Errorf("marshal/unmarshal roundtrip not a noop for empty store: %v != %v", store1, store2)
+		t.Errorf("marshal/unmarshal roundtrip not a noop for empty store:\n got: %#v\n want: %#v", store1, store2)
 	}
 }
 
@@ -126,7 +126,7 @@ func TestMarshalFinished(t *testing.T) {
 	storeV0 := store1.toStoreV0()
 	store2 := newStoreFromV0(*storeV0, arch, nil)
 	if !reflect.DeepEqual(store1, store2) {
-		t.Errorf("marshal/unmarshal roundtrip not a noop for base store: %v != %v", store1, store2)
+		t.Errorf("marshal/unmarshal roundtrip not a noop for base store:\n got: %#v\n want: %#v", store2, store1)
 	}
 }
 
@@ -168,7 +168,7 @@ func TestStore_toStoreV0(t *testing.T) {
 				blueprintsCommits: tt.fields.blueprintsCommits,
 			}
 			if got := store.toStoreV0(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Store.toStoreV0() = %v, want %v", got, tt.want)
+				t.Errorf("Store.toStoreV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -196,7 +196,7 @@ func Test_newStoreFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newStoreFromV0(tt.args.storeStruct, tt.args.arch, nil); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newStoreFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newStoreFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -270,7 +270,7 @@ func Test_newCommitsV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newCommitsV0(tt.args.commits); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newCommitsV0() = %v, want %v", got, tt.want)
+				t.Errorf("newCommitsV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -379,7 +379,7 @@ func Test_newCommitsFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newCommitsFromV0(tt.args.commits, tt.args.changes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newCommitsFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newCommitsFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -425,7 +425,7 @@ func Test_newBlueprintsFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newBlueprintsFromV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newBlueprintsFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newBlueprintsFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -471,7 +471,7 @@ func Test_newBlueprintsV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newBlueprintsV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newBlueprintsV0() = %v, want %v", got, tt.want)
+				t.Errorf("newBlueprintsV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -517,7 +517,7 @@ func Test_newWorkspaceFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newWorkspaceFromV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newWorkspaceFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newWorkspaceFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -563,7 +563,7 @@ func Test_newWorkspaceV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newWorkspaceV0(tt.blueprints); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newWorkspaceV0() = %v, want %v", got, tt.want)
+				t.Errorf("newWorkspaceV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -681,7 +681,7 @@ func Test_newChangesFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newChangesFromV0(tt.changes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newChangesFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newChangesFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -800,7 +800,7 @@ func Test_newChangesV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newChangesV0(tt.changes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newChangesV0() = %v, want %v", got, tt.want)
+				t.Errorf("newChangesV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -883,7 +883,7 @@ func Test_newSourceConfigsFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newSourceConfigsFromV0(tt.sources); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newSourceConfigsFromV0() = %v, want %v", got, tt.want)
+				t.Errorf("newSourceConfigsFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -966,7 +966,7 @@ func Test_newSourcesFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newSourcesV0(tt.sources); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newSourcesV0() = %v, want %v", got, tt.want)
+				t.Errorf("newSourcesV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -1052,7 +1052,7 @@ func Test_newComposeV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newComposeV0(tt.compose); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newComposeV0() = %#v, want %#v", got, tt.want)
+				t.Errorf("newComposeV0() =\n got %#v\n want %#v", got, tt.want)
 			}
 		})
 	}
@@ -1154,7 +1154,7 @@ func Test_newComposeFromV0(t *testing.T) {
 					t.Errorf("newComposeFromV0() error = %v", err)
 				}
 			} else if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newComposeFromV0() = %#v, want %#v", got, tt.want)
+				t.Errorf("newComposeFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -1303,7 +1303,7 @@ func Test_newComposesV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newComposesV0(tt.composes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newComposesV0() = %#v, want %#v", got, tt.want)
+				t.Errorf("newComposesV0() =\n got %#v\n want %#v", got, tt.want)
 			}
 		})
 	}
@@ -1460,7 +1460,7 @@ func Test_newComposesFromV0(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newComposesFromV0(tt.composes, tt.arch, nil); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newComposesFromV0() = %#v, want %#v", got, tt.want)
+				t.Errorf("newComposesFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
@@ -1545,7 +1545,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 					t.Errorf("newImageBuildFromV0() error = %v", err)
 				}
 			} else if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newImageBuildFromV0() = %#v, want %#v", got, tt.want)
+				t.Errorf("newImageBuildFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
 	}
