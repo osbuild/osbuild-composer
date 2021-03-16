@@ -20,8 +20,12 @@ import (
 // The Build job usually creates a number of cache files in the Storage.
 // This method does not do any cleanup, regardless if the image import succeeds or fails.
 //
-// To delete the Storage object used for image import, use StorageObjectDelete().
-// To cleanup cache files after the Build job, use StorageImageImportCleanup().
+// To delete the Storage object (image) used for the image import, use StorageObjectDelete().
+//
+// To delete all potentially left over resources after the Build job, use CloudbuildBuildCleanup().
+// This is especially important in case the image import is cancelled via the passed Context.
+// Cancelling the build leaves behind all resources that it created - instances and disks.
+// Therefore if you don't clean up the resources, they'll continue running and costing you money.
 //
 // bucket - Google storage bucket name with the uploaded image
 // object - Google storage object name of the uploaded image
@@ -115,7 +119,7 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 			}
 			// since the provided ctx has been canceled, create a new one to cancel the build
 			ctx = context.Background()
-			// !NOTE: Cancelling the build leaves behind all resources that it created and didn't manage to clean up
+			// Cancelling the build leaves behind all resources that it created (instances and disks)
 			imageBuild, err = cloudbuildClient.CancelBuild(ctx, cancelBuildReq)
 			if err != nil {
 				return imageBuild, fmt.Errorf("failed to cancel the image import build job: %v", err)
@@ -248,6 +252,39 @@ func (g *GCP) ComputeInstanceDelete(ctx context.Context, zone, instance string) 
 	}
 
 	_, err = computeService.Instances.Delete(g.creds.ProjectID, zone, instance).Context(ctx).Do()
+
+	return err
+}
+
+// ComputeInstanceGet fetches a Compute Engine instance information. If fetching the information
+// was successful, it is returned to the caller, otherwise <nil> is returned with a proper error.
+//
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeInstanceGet(ctx context.Context, zone, instance string) (*compute.Instance, error) {
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	resp, err := computeService.Instances.Get(g.creds.ProjectID, zone, instance).Context(ctx).Do()
+
+	return resp, err
+}
+
+// ComputeDiskDelete deletes a Compute Engine disk with the given name and
+// running in the given zone. If the disk existed and was successfully deleted,
+// no error is returned.
+//
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeDiskDelete(ctx context.Context, zone, disk string) error {
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	_, err = computeService.Disks.Delete(g.creds.ProjectID, zone, disk).Context(ctx).Do()
 
 	return err
 }
