@@ -170,11 +170,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	manifest, packages = getManifest(bp2, t2, a, d, rpmmd, repos)
+	manifest, packages = getManifest(bp1, t2, a, d, rpmmd, repos)
 	err = s.PushCompose(id2,
 		manifest,
 		t2,
-		&bp2,
+		&bp1,
 		0,
 		[]*target.Target{
 			awsTarget,
