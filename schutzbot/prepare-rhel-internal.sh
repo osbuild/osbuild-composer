@@ -17,7 +17,7 @@ COMPOSE_URL="${COMPOSE_URL:-http://download.devel.redhat.com/rhel-8/nightly/RHEL
 
 # in case COMPOSE_URL was defined from the outside refresh COMPOSE_ID file,
 # used for telegram messages in case of success/failure
-curl -L "$COMPOSE_URL" > COMPOSE_ID
+curl -L "$COMPOSE_URL/COMPOSE_ID" > COMPOSE_ID
 
 # Create a repository file for installing the osbuild-composer RPMs
 greenprint "📜 Generating dnf repository file"
