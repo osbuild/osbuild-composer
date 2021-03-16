@@ -16,7 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpm_md rpmmd.RPMMD, repos []rpmmd.RepoConfig) distro.Manifest {
+func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpm_md rpmmd.RPMMD, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
 	packageSets := t.PackageSets(bp)
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range packageSets {
@@ -31,7 +31,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		panic(err)
 	}
 
-	return manifest
+	return manifest, pkgSpecSets["packages"]
 }
 
 func main() {
@@ -155,8 +155,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	manifest, packages := getManifest(bp2, t1, a, d, rpmmd, repos)
 	err = s.PushCompose(id1,
-		getManifest(bp2, t1, a, d, rpmmd, repos),
+		manifest,
 		t1,
 		&bp2,
 		0,
@@ -164,12 +165,14 @@ func main() {
 			awsTarget,
 		},
 		id1,
+		packages,
 	)
 	if err != nil {
 		panic(err)
 	}
+	manifest, packages = getManifest(bp2, t2, a, d, rpmmd, repos)
 	err = s.PushCompose(id2,
-		getManifest(bp2, t2, a, d, rpmmd, repos),
+		manifest,
 		t2,
 		&bp2,
 		0,
@@ -177,6 +180,7 @@ func main() {
 			awsTarget,
 		},
 		id2,
+		packages,
 	)
 	if err != nil {
 		panic(err)
