@@ -22,6 +22,11 @@ set -euxo pipefail
 /usr/libexec/osbuild-composer-test/provision.sh
 
 #
+# Get architecture
+#
+ARCH=$(uname -m)
+
+#
 # Which cloud provider are we testing?
 #
 
@@ -46,6 +51,14 @@ case $CLOUD_PROVIDER in
     exit 1
     ;;
 esac
+
+#
+# aarch64 only supports aws
+#
+if [[ "$ARCH" == "aarch64" && "$CLOUD_PROVIDER" != "$CLOUD_PROVIDER_AWS" ]]; then
+  echo "$CLOUD_PROVIDER isn't supported on aarch64, skipping,"
+  exit 0
+fi
 
 #
 # Verify that this script is running in the right environment.
@@ -544,8 +557,15 @@ function verifyInAWS() {
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
 
+  if [[ "$ARCH" == "x86_64" ]]; then
+    INSTANCE_TYPE="t2.micro"
+  elif [[ "$ARCH" == "aarch64" ]]; then
+    INSTANCE_TYPE="t4g.micro"
+  fi
+
+
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type "$INSTANCE_TYPE" --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"

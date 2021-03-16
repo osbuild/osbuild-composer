@@ -275,7 +275,7 @@ else
             --import \
             --os-variant rhel8-unknown \
             --noautoconsole \
-            --boot uefi,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd \
+            --boot uefi \
             --network network=integration,mac=34:49:22:B0:83:30
     else
         sudo virt-install \
@@ -298,7 +298,7 @@ case $ARCH in
         MAX_LOOPS=60
         ;;
     *)
-        MAX_LOOPS=30
+        MAX_LOOPS=300
         ;;
 esac
 

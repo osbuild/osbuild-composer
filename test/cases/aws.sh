@@ -4,6 +4,7 @@ set -euo pipefail
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 source /etc/os-release
+ARCH=$(uname -m)
 
 # Colorful output.
 function greenprint {
@@ -26,7 +27,7 @@ if ! hash aws; then
     greenprint "Installing awscli"
     pushd /tmp
         curl -Ls --retry 5 --output awscliv2.zip \
-            https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+            "https://awscli.amazonaws.com/awscli-exe-linux-$ARCH.zip"
         unzip awscliv2.zip > /dev/null
         sudo ./aws/install > /dev/null
         aws --version
@@ -200,13 +201,19 @@ tee "$AWS_INSTANCE_JSON" > /dev/null << EOF
 }
 EOF
 
+if [[ "$ARCH" == "x86_64" ]]; then
+  INSTANCE_TYPE="t3a.micro"
+elif [[ "$ARCH" == "aarch64" ]]; then
+  INSTANCE_TYPE="t4g.micro"
+fi
+
 # Build instance in AWS with our image.
 greenprint "👷🏻 Building instance in AWS"
 $AWS_CMD ec2 run-instances \
     --associate-public-ip-address \
     --key-name personal_servers \
     --image-id "${AMI_IMAGE_ID}" \
-    --instance-type t3a.micro \
+    --instance-type "${INSTANCE_TYPE}" \
     --user-data file://"${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/user-data \
     --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
 
