@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -31,6 +32,7 @@ type workspaceV0 map[string]blueprint.Blueprint
 type composeV0 struct {
 	Blueprint   *blueprint.Blueprint `json:"blueprint"`
 	ImageBuilds []imageBuildV0       `json:"image_builds"`
+	Packages    []rpmmd.PackageSpec  `json:"packages"`
 }
 
 type composesV0 map[uuid.UUID]composeV0
@@ -148,9 +150,14 @@ func newComposeFromV0(composeStruct composeV0, arch distro.Arch) (Compose, error
 		return Compose{}, err
 	}
 	bp := composeStruct.Blueprint.DeepCopy()
+
+	pkgs := make([]rpmmd.PackageSpec, len(composeStruct.Packages))
+	copy(pkgs, composeStruct.Packages)
+
 	return Compose{
 		Blueprint:  &bp,
 		ImageBuild: ib,
+		Packages:   pkgs,
 	}, nil
 }
 
@@ -254,6 +261,10 @@ func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
 
 func newComposeV0(compose Compose) composeV0 {
 	bp := compose.Blueprint.DeepCopy()
+
+	pkgs := make([]rpmmd.PackageSpec, len(compose.Packages))
+	copy(pkgs, compose.Packages)
+
 	return composeV0{
 		Blueprint: &bp,
 		ImageBuilds: []imageBuildV0{
@@ -270,6 +281,7 @@ func newComposeV0(compose Compose) composeV0 {
 				QueueStatus: compose.ImageBuild.QueueStatus,
 			},
 		},
+		Packages: pkgs,
 	}
 }
 
