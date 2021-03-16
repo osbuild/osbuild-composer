@@ -292,20 +292,21 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if imageBuild != nil {
 				log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
 				log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
+
+				// Cleanup all resources potentially left after the image import job
+				deleted, err := g.CloudbuildBuildCleanup(ctx, imageBuild.Id)
+				for _, d := range deleted {
+					log.Printf("[GCP] 🧹 Deleted resource after image import job: %s", d)
+				}
+				if err != nil {
+					log.Printf("[GCP] Encountered error during image import cleanup: %v", err)
+				}
 			}
 
 			// Cleanup storage before checking for errors
 			log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", options.Bucket, options.Object)
 			if err = g.StorageObjectDelete(ctx, options.Bucket, options.Object); err != nil {
 				log.Printf("[GCP] Encountered error while deleting object: %v", err)
-			}
-
-			deleted, errs := g.StorageImageImportCleanup(ctx, args.Targets[0].ImageName)
-			for _, d := range deleted {
-				log.Printf("[GCP] 🧹 Deleted image import job file '%s'", d)
-			}
-			for _, e := range errs {
-				log.Printf("[GCP] Encountered error during image import cleanup: %v", e)
 			}
 
 			// check error from ComputeImageImport()
