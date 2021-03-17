@@ -355,13 +355,6 @@ poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
 
-# Create /var/home/admin user home directory because osbuild can't do that
-mkdir -p /var/home/admin/.ssh
-cat > /var/home/admin/.ssh/authorized_keys << EOF
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost
-EOF
-chown admin:admin /var/home/admin
-
 # no sudo password for user admin
 echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 
@@ -375,13 +368,6 @@ ONBOOT="yes"
 TYPE="Ethernet"
 PERSISTENT_DHCLIENT="yes"
 EOF
-
-echo "Packages within this iot or edge image:"
-echo "-----------------------------------------------------------------------"
-rpm -qa | sort
-echo "-----------------------------------------------------------------------"
-# Note that running rpm recreates the rpm db files which aren't needed/wanted
-rm -f /var/lib/rpm/__db*
 
 echo "Zeroing out empty space."
 # This forces the filesystem to reclaim space from deleted files
