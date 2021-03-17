@@ -314,6 +314,13 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
+	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+		Kernel: osbuild.SysconfigKernelOptions{
+			UpdateDefault: true,
+			DefaultKernel: "kernel-core",
+		},
+	}))
+
 	if t.rpmOstree {
 		p.AddStage(osbuild.NewRPMOSTreeStage(&osbuild.RPMOSTreeStageOptions{
 			EtcGroupMembers: []string{
