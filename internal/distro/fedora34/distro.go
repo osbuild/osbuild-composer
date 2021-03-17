@@ -685,7 +685,7 @@ func New() distro.Distro {
 			"cloud-init-local.service",
 		},
 		bootable:    true,
-		defaultSize: 2 * GigaByte,
+		defaultSize: 5 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
 		},
