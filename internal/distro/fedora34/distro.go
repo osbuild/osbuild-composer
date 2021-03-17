@@ -666,6 +666,7 @@ func New() distro.Distro {
 			"systemd-udev",
 			"selinux-policy-targeted",
 			"langpacks-en",
+			"qemu-guest-agent",
 		},
 		excludedPackages: []string{
 			"dracut-config-rescue",
