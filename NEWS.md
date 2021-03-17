@@ -1,5 +1,35 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.1:
+
+* OSBuild Composer can now generate Manifests that conform to the new OSBuild
+  schema. Two new image types are added that take advantage of the new schema:
+
+    * `rhel-edge-container`: Creates an OCI container with an embedded
+      `rhel-edge-commit`.  Running the container starts a web server that
+      serves the commit.
+
+    * `rhel-edge-installer`: Creates a boot ISO image that embeds a
+      `rhel-edge-commit`.  The commit is pulled from a URL during the compose
+      of the boot ISO.
+
+  Requesting a `rhel-edge-installer` requires specifying a URL, otherwise the
+  request will fail.  Blueprint customizations have no effect on the boot ISO
+  and also cause the request to fail if any are specified.
+
+* RHEL 8.4: By marking the kernel we install as the `saved_entry`, we make
+  sure that installing additional/subsequent kernels do not unintentienally
+  change the default kernel to be booted into.
+  
+* RHEL 8.4: The default language is now correctly set to en_US.UTF-8 instead
+  of en_US.
+
+Contributions from: Achilleas Koutsou, Aleksandar Todorov, Brian C. Lane,
+                    Christian Kellner, David Rheinsberg, Ondřej Budai,
+                    Tom Gundersen, Xiaofeng Wang
+
+— Liberec, 2021-03-17
+
 ## CHANGES WITH 28:
 
   * OSBuild Composer can now build CentOS Stream 8 images!
