@@ -272,8 +272,6 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if hostname := c.GetHostname(); hostname != nil {
 		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	} else {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: "localhost.localdomain"}))
 	}
 
 	timezone, ntpServers := c.GetTimezoneSettings()
