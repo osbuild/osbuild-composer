@@ -322,7 +322,7 @@ func (t *imageTypeS2) ostreeCommitPipeline(options distro.ImageOptions) *osbuild
 
 	p.AddStage(osbuild.NewOSTreeCommitStage(
 		&osbuild.OSTreeCommitStageOptions{
-			Ref:       t.OSTreeRef(),
+			Ref:       options.OSTree.Ref,
 			OSVersion: "8.4", // NOTE: Set on image type?
 			Parent:    options.OSTree.Parent,
 		},
@@ -346,7 +346,7 @@ func (t *imageTypeS2) containerTreePipeline(repos []rpmmd.RepoConfig, packages [
 
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: "/var/www/html/repo"},
-		t.ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", t.OSTreeRef()),
+		t.ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
 	))
 	return p
 }
@@ -415,7 +415,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	p.AddStage(osbuild.NewAnacondaStage(t.anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
-	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath))))
+	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
 
 	return p
 }
@@ -684,13 +684,13 @@ func (t *imageTypeS2) dracutStageOptions(kernelVer string) *osbuild.DracutStageO
 	}
 }
 
-func (t *imageTypeS2) kickstartStageOptions(ostreeURL string) *osbuild.KickstartStageOptions {
+func (t *imageTypeS2) kickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
 		Path: "/usr/share/anaconda/interactive-defaults.ks",
 		OSTree: osbuild.OSTreeOptions{
 			OSName: "rhel",
 			URL:    ostreeURL,
-			Ref:    t.OSTreeRef(),
+			Ref:    ostreeRef,
 			GPG:    false,
 		},
 	}
