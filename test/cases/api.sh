@@ -159,14 +159,8 @@ trap cleanup EXIT
 #
 function installClientAWS() {
   if ! hash aws; then
-    mkdir "$WORKDIR/aws"
-    pushd "$WORKDIR/aws"
-      curl -Ls --retry 5 --output awscliv2.zip \
-        https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-      unzip awscliv2.zip > /dev/null
-      sudo ./aws/install > /dev/null
-      aws --version
-    popd
+    sudo dnf install -y awscli
+    aws --version
   fi
 
   AWS_CMD="aws --region $AWS_REGION --output json --color on"

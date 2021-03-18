@@ -24,13 +24,8 @@ fi
 # We need awscli to talk to AWS.
 if ! hash aws; then
     greenprint "Installing awscli"
-    pushd /tmp
-        curl -Ls --retry 5 --output awscliv2.zip \
-            https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-        unzip awscliv2.zip > /dev/null
-        sudo ./aws/install > /dev/null
-        aws --version
-    popd
+    sudo dnf install -y awscli
+    aws --version
 fi
 
 TEST_UUID=$(uuidgen)
