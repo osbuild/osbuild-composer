@@ -1,5 +1,15 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.2:
+
+  * The new image type introduced in 28.1 ignores the ostree ref supplied by
+    the user and always uses the default rhel/8/edge instead. This is now
+    fixed.
+
+Contributions from: Achilleas Koutsou
+
+— Liberec, 2021-03-18
+
 ## CHANGES WITH 28.1:
 
 * OSBuild Composer can now generate Manifests that conform to the new OSBuild
