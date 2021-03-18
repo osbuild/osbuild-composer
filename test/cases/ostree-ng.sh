@@ -60,7 +60,7 @@ EOF
 
 # Set up variables.
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
-OSTREE_REF="rhel/8/${ARCH}/edge"
+OSTREE_REF="test/rhel/8/${ARCH}/edge"
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
@@ -129,7 +129,10 @@ build_image() {
     else
         sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
             \"blueprint_name\": \"$blueprint_name\",
-            \"compose_type\": \"$image_type\"
+            \"compose_type\": \"$image_type\",
+            \"ostree\": {
+                \"ref\": \"$OSTREE_REF\"
+            }
         }" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
@@ -488,7 +491,7 @@ done;
 
 # Get ostree commit value.
 greenprint "🕹 Get ostree upgrade commit value"
-UPGRADE_HASH=$(curl ${URL}refs/heads/rhel/8/x86_64/edge)
+UPGRADE_HASH=$(curl ${URL}refs/heads/"${OSTREE_REF}")
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up upgrade blueprint and compose"
