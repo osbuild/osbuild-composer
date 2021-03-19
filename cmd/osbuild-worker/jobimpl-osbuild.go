@@ -451,7 +451,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		default:
-			err = fmt.Errorf("invalid target type")
+			err = fmt.Errorf("invalid target type: %s", args.Targets[0].Name)
 			appendTargetError(osbuildJobResult, err)
 			return nil
 		}
