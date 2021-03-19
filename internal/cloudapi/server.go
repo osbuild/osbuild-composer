@@ -21,13 +21,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-const (
-	StatusPending = "pending"
-	StatusRunning = "running"
-	StatusSuccess = "success"
-	StatusFailure = "failure"
-)
-
 // Server represents the state of the cloud Server
 type Server struct {
 	workers     *worker.Server
@@ -373,24 +366,26 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 	}
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
 	if js.Canceled {
-		return StatusFailure
+		return ImageStatusValue_failure
 	}
 
 	if js.Started.IsZero() {
-		return StatusPending
+		return ImageStatusValue_pending
 	}
 
 	if js.Finished.IsZero() {
-		return StatusRunning
+		// TODO: handle also ImageStatusValue_uploading
+		// TODO: handle also ImageStatusValue_registering
+		return ImageStatusValue_building
 	}
 
 	if result.Success {
-		return StatusSuccess
+		return ImageStatusValue_success
 	}
 
-	return StatusFailure
+	return ImageStatusValue_failure
 }
 
 // GetOpenapiJson handles a /openapi.json GET request

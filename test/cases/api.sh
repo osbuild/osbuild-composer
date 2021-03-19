@@ -432,12 +432,24 @@ do
   UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
   UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
 
-  if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
-    test "$COMPOSE_STATUS" = "success"
-    test "$UPLOAD_STATUS" = "success"
-    test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
-    break
-  fi
+  case "$COMPOSE_STATUS" in
+    # valid status values for compose which is not yet finished
+    "pending"|"building"|"uploading"|"registering")
+      ;;
+    "success")
+      test "$UPLOAD_STATUS" = "success"
+      test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+      break
+      ;;
+    "failure")
+      echo "Image compose failed"
+      exit 1
+      ;;
+    *)
+      echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+      exit 1
+      ;;
+  esac
 
   sleep 30
 done
