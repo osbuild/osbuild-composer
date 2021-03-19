@@ -1,7 +1,6 @@
 package osbuild1
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -127,29 +126,64 @@ func (cr *Result) Write(writer io.Writer) error {
 	return nil
 }
 
-func (cr *Result) UnmarshalJSON(data []byte) error {
-	// NOTE(akoutsou) 1to2t: result format depends on the osbuild version; this
-	// unmarshaller tries to read both old and new versions
-	type resultAlias Result
-	crv1 := new(resultAlias)
+// isV2Result returns true if data contains a json-encoded osbuild result
+// in version 2 schema.
+//
+// It detects the schema version by checking if the decoded json contains
+// a "type" field at the top-level.
+//
+// error is non-nil when data isn't a json-encoded object.
+func isV2Result(data []byte) (bool, error) {
+	var v2ResultStub struct {
+		Type string `json:"type"`
+	}
 
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&crv1); err == nil {
-		*cr = Result(*crv1)
+	err := json.Unmarshal(data, &v2ResultStub)
+	if err != nil {
+		return false, err
+	}
+
+	return v2ResultStub.Type != "", nil
+}
+
+// UnmarshalJSON decodes json-encoded data into a Result struct.
+//
+// Note that this function is smart and if a result from manifest v2 is given,
+// it detects it and converts it to a result like it would be returned for
+// manifest v1. This conversion is always lossy.
+//
+// TODO: We might want to get rid of the smart behaviour and make this method
+//       dumb again.
+func (cr *Result) UnmarshalJSON(data []byte) error {
+	// detect if the input is v2 result
+	v2Result, err := isV2Result(data)
+	if err != nil {
+		return err
+	}
+	if v2Result {
+		// do the best-effort conversion from v2
+		var crv2 osbuild2.Result
+
+		// NOTE: Using plain (non-strict) Unmarshal here.  The format of the new
+		// osbuild output schema is not yet fixed and is likely to change, so
+		// disallowing unknown fields will likely cause failures in the near future.
+		if err := json.Unmarshal(data, &crv2); err != nil {
+			return err
+		}
+		cr.fromV2(crv2)
 		return nil
 	}
 
-	// try osbuild2 result object
-	crv2 := new(osbuild2.Result)
-
-	// NOTE: Using plain (non-strict) Unmarshal here.  The format of the new
-	// osbuild output schema is not yet fixed and is likely to change, so
-	// disallowing unknown fields will likely cause failures in the near future.
-	if err := json.Unmarshal(data, &crv2); err != nil {
+	// otherwise, unmarshal using a type alias to prevent recursive calls
+	// of this method.
+	type resultAlias Result
+	var crv1 resultAlias
+	err = json.Unmarshal(data, &crv1)
+	if err != nil {
 		return err
 	}
-	cr.fromV2(crv2)
+
+	*cr = Result(crv1)
 	return nil
 }
 
@@ -157,7 +191,7 @@ func (cr *Result) UnmarshalJSON(data []byte) error {
 // values:
 // - Compose success status
 // - Output of Stages (Log) as flattened list of v1 StageResults
-func (cr *Result) fromV2(crv2 *osbuild2.Result) {
+func (cr *Result) fromV2(crv2 osbuild2.Result) {
 	cr.Success = crv2.Success
 	// Empty build and assembler results for new types of jobs
 	cr.Build = new(buildResult)
