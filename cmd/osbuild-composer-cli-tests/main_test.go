@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -20,8 +21,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
-
-	"testing"
 )
 
 func TestComposeCommands(t *testing.T) {
@@ -32,7 +31,7 @@ func TestComposeCommands(t *testing.T) {
 	bp := blueprint.Blueprint{
 		Name:        "empty",
 		Description: "Test blueprint in toml format",
-		Packages: []blueprint.Package{{Name: "bash", Version: "*"}},
+		Packages:    []blueprint.Package{{Name: "bash", Version: "*"}},
 	}
 	pushBlueprint(t, &bp)
 	defer deleteBlueprint(t, &bp)
@@ -180,6 +179,11 @@ func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
 	status := waitForCompose(t, uuid)
 	logs := getLogs(t, uuid)
 	assert.NotEmpty(t, logs, "logs are empty after the build is finished/failed")
+
+	// A sanity check for logs - every log for a compose should contain at
+	// least one mention of org.osbuild.rpm stage.
+	// This check should prevent bugs where we lose logs for all stages.
+	assert.Contains(t, logs, "org.osbuild.rpm")
 
 	if !assert.Equalf(t, "FINISHED", status, "Unexpected compose result: %s", status) {
 		log.Print("logs from the build: ", logs)
