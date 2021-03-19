@@ -70,6 +70,70 @@ func TestUnmarshal(t *testing.T) {
 	assert.Empty(t, package2.SigGPG)
 }
 
+func TestUnmarshalV1Success(t *testing.T) {
+	var result Result
+	err := json.Unmarshal([]byte(v1ResultSuccess), &result)
+	assert.NoError(t, err)
+
+	assert.True(t, result.Success)
+
+	assert.True(t, result.Build.Success)
+	assert.Len(t, result.Build.Stages, 2)
+	assert.True(t, result.Build.Stages[1].Success)
+	assert.Equal(t, "org.osbuild.rpm", result.Build.Stages[0].Name)
+
+	assert.Len(t, result.Stages, 11)
+	assert.True(t, result.Stages[10].Success)
+	assert.Equal(t, result.Stages[0].Name, "org.osbuild.rpm")
+
+	assert.True(t, result.Assembler.Success)
+	assert.Equal(t, result.Assembler.Name, "org.osbuild.qemu")
+}
+
+func TestUnmarshalV1Failure(t *testing.T) {
+	var result Result
+	err := json.Unmarshal([]byte(v1ResultFailure), &result)
+	assert.NoError(t, err)
+
+	assert.False(t, result.Success)
+
+	assert.True(t, result.Build.Success)
+	assert.Len(t, result.Build.Stages, 2)
+	assert.True(t, result.Build.Stages[1].Success)
+	assert.Equal(t, "org.osbuild.rpm", result.Build.Stages[0].Name)
+
+	assert.Len(t, result.Stages, 9)
+	assert.False(t, result.Stages[8].Success)
+	assert.Equal(t, result.Stages[0].Name, "org.osbuild.rpm")
+
+	assert.Nil(t, result.Assembler)
+}
+
+func TestUnmarshalV2Success(t *testing.T) {
+	var result Result
+	err := json.Unmarshal([]byte(v2ResultSuccess), &result)
+	assert.NoError(t, err)
+
+	assert.True(t, result.Success)
+
+	assert.Len(t, result.Stages, 16)
+	assert.True(t, result.Stages[15].Success)
+	assert.NotEmpty(t, result.Stages[0].Name)
+}
+
+func TestUnmarshalV2Failure(t *testing.T) {
+	var result Result
+	err := json.Unmarshal([]byte(v2ResultFailure), &result)
+	assert.NoError(t, err)
+
+	assert.False(t, result.Success)
+
+	assert.Len(t, result.Stages, 7)
+	assert.True(t, result.Stages[5].Success)
+	assert.False(t, result.Stages[6].Success)
+	assert.NotEmpty(t, result.Stages[0].Name)
+}
+
 func TestWriteFull(t *testing.T) {
 
 	const testOptions = `{"msg": "test"}`
