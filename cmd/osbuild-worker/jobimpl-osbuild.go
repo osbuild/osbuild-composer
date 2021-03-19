@@ -65,7 +65,7 @@ func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
 
 func appendTargetError(res *worker.OSBuildJobResult, err error) {
 	errStr := err.Error()
-	fmt.Printf("target errored: %s", errStr)
+	log.Printf("target errored: %s", errStr)
 	res.TargetErrors = append(res.TargetErrors, errStr)
 }
 
