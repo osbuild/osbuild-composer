@@ -1,5 +1,16 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.3:
+
+  * Version 28.1 introduced a regression causing logs from osbuild to be
+    improperly decoded. As a result, all API log routes were returning
+    empty logs. This is now fixed and all logs should be available as
+    before.
+
+Contributions from: Ondřej Budai
+
+— Liberec, 2021-03-19
+
 ## CHANGES WITH 28.2:
 
   * The new image type introduced in 28.1 ignores the ostree ref supplied by
