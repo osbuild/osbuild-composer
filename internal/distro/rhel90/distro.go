@@ -283,6 +283,8 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(*t.arch, repos, packageSpecs)))
 	p.AddStage(osbuild.NewFixBLSStage())
 
+	p.AddStage(osbuild.NewResolvConfStage(t.resolvConfOptions()))
+
 	if pt != nil {
 		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptions()))
 	}
@@ -458,6 +460,10 @@ func (t *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbu
 	}
 
 	return &options, nil
+}
+
+func (t *imageType) resolvConfOptions() *osbuild.ResolvConfStageOptions {
+	return &osbuild.ResolvConfStageOptions{}
 }
 
 func (t *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
