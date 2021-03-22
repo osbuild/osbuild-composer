@@ -314,7 +314,23 @@ build_image installer rhel-edge-installer "$URL"
 greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-rhel84-boot.iso"
-sudo mv "${ISO_FILENAME}" /var/lib/libvirt/images
+ISO_HEADLESS_FILENAME="${COMPOSE_ID}-rhel84-headless-boot.iso"
+
+# Write kickstart file for ostree image installation.
+greenprint "📑 Generate kickstart file"
+tee "$KS_FILE" > /dev/null << STOPHERE
+text
+zerombr
+clearpart --all --initlabel --disklabel=msdos
+autopart --nohome --noswap --type=plain
+ostreesetup --osname=rhel --url=file:///ostree/repo --ref=${OSTREE_REF} --nogpg
+poweroff
+STOPHERE
+
+greenprint "🪓 Make the installer headless"
+sudo mkksiso --cmdline "console=ttyS0,115200" "${KS_FILE}" "${ISO_FILENAME}" "${ISO_HEADLESS_FILENAME}"
+sudo rm "${ISO_FILENAME}"
+sudo mv "${ISO_HEADLESS_FILENAME}" /var/lib/libvirt/images
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
@@ -336,29 +352,16 @@ greenprint "🖥 Create qcow2 file for virt install"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
-# Write kickstart file for ostree image installation.
-greenprint "📑 Generate kickstart file"
-tee "$KS_FILE" > /dev/null << STOPHERE
-text
-zerombr
-clearpart --all --initlabel --disklabel=msdos
-autopart --nohome --noswap --type=plain
-ostreesetup --osname=rhel --url=file:///ostree/repo --ref=${OSTREE_REF} --nogpg
-poweroff
-STOPHERE
-
 # Install ostree image via anaconda.
 greenprint "💿 Install ostree image via installer(ISO)"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}"\
+sudo virt-install  --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --location "/var/lib/libvirt/images/${ISO_HEADLESS_FILENAME}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

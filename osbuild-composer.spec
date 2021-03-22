@@ -334,6 +334,7 @@ Requires:   libvirt-daemon-driver-secret
 Requires:   libvirt-daemon-driver-storage
 Requires:   libvirt-daemon-driver-storage-disk
 Requires:   libvirt-daemon-kvm
+Requires:   lorax
 Requires:   qemu-img
 Requires:   qemu-kvm
 Requires:   virt-install
