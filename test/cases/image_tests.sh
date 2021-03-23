@@ -5,6 +5,13 @@ set -euo pipefail
 source /etc/os-release
 ARCH=$(uname -m)
 
+# Set WORKSPACE to current dir if unset
+WORKSPACE=${WORKSPACE:=$(pwd)}
+
+# Set variables for tests to pass on s390x
+BUILD_ID=${BUILD_ID:='s390x'}
+DISTRO_CODE=${BUILD_ID:='EL8'}
+
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 IMAGE_TEST_CASE_RUNNER=/usr/libexec/osbuild-composer-test/osbuild-image-tests
 IMAGE_TEST_CASES_PATH=/usr/share/tests/osbuild-composer/manifests

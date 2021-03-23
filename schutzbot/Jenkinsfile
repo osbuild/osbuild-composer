@@ -738,6 +738,28 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8.4 s390x Base') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "rhel8cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "base"
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                    }
+                    steps {
+                        sh 'tools/run-s390x-tests.sh base'
+                    }
+                    post {
+                        always {
+                            preserve_logs('el8-s390x-base')
+                        }
+                    }
+                }
                 stage('CS8 Base') {
                     when {
                         beforeAgent true

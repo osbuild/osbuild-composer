@@ -3,6 +3,9 @@ set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
+# Set WORKSPACE to current dir if unset
+WORKSPACE=${WORKSPACE:=$(pwd)}
+
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -252,10 +255,10 @@ if [[ $ARCH == 'ppc64le' ]]; then
         --network network=integration,mac=34:49:22:B0:83:30 \
         --qemu-commandline="-machine pseries,cap-cfpc=broken,cap-sbbc=broken,cap-ibs=broken,cap-ccf-assist=off,cap-large-decr=off"
 elif [[ $ARCH == 's390x' ]]; then
-    # Our s390x machines are highly constrained on resources.
+    # Our s390x machines are slightly constrained on resources.
     sudo virt-install \
         --name "$IMAGE_KEY" \
-        --memory 512 \
+        --memory 2048 \
         --vcpus 1 \
         --disk path="${LIBVIRT_IMAGE_PATH}" \
         --disk path=${CLOUD_INIT_PATH},device=cdrom \
