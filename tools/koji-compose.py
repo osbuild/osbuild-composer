@@ -26,6 +26,19 @@ def compose_request(distro, koji, arch):
         test_repositories = json.load(f)
 
     repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
+    image_requests = [{
+            "architecture": "x86_64",
+            "image_type": "qcow2",
+            "repositories": repositories
+        }]
+
+    #TODO: Remove this condition once there is rhel9 support for AMI image type
+    if distro != "rhel-90":
+        image_requests.append({
+            "architecture": "x86_64",
+            "image_type": "ami",
+            "repositories": repositories
+        })
 
     req = {
         "name": "name",
@@ -36,15 +49,7 @@ def compose_request(distro, koji, arch):
             "server": koji,
             "task_id": 1
         },
-        "image_requests": [{
-            "architecture": "x86_64",
-            "image_type": "qcow2",
-            "repositories": repositories
-        },{
-            "architecture": "x86_64",
-            "image_type": "ami",
-            "repositories": repositories
-        }]
+        "image_requests": image_requests
     }
 
     return req
