@@ -10,6 +10,12 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+#TODO: Remove this once there is rhel9 support for AMI image type
+if [[ $DISTRO_CODE == rhel_90 ]]; then
+    greenprint "Skipped"
+    exit 0
+fi
+
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 

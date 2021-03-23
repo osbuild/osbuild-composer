@@ -16,13 +16,7 @@ function greenprint {
 /usr/libexec/osbuild-composer-test/provision.sh
 
 greenprint "Defining distro selector"
-# if the distro is RHEL 8.4 the distro includes the minor release number
-if [[ "${ID}-${VERSION_ID}" == "rhel-8.4" ]]; then
-    DISTRO_SELECTOR="${ID}-${VERSION_ID//.}"
-# otherwise the minor release number can be dropped
-else
-    DISTRO_SELECTOR="${ID}-${VERSION_ID%.*}"
-fi
+DISTRO_SELECTOR="${DISTRO_CODE//_/-}"
 
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
