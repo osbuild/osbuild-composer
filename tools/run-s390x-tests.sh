@@ -8,17 +8,18 @@ DISTRO=$(curl -L http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-R
 TEST_RUN=$1
 
 run_command () {
-    ssh root@"$BEAKER_HOSTNAME" "$1"
+    ssh root@"$BEAKER_HOSTNAME" "\$1"
 }
 
 # Add beaker-client repo
-sudo tee "/etc/yum.repos.d/beaker-client.repo" <<EOF
+cat > beaker-client.repo <<EOF
 [beaker-client]
-name=Baker Client - RHEL 8
+name=Beaker Client - RedHatEnterpriseLinux8
 baseurl=http://download.eng.bos.redhat.com/beakerrepos/client/RedHatEnterpriseLinux8/
 enabled=1
 gpgcheck=0
 EOF
+sudo mv beaker-client.repo /etc/yum.repos.d/
 
 # Install beaker-client
 sudo dnf install -y beaker-client
@@ -93,6 +94,8 @@ case $TEST_RUN in
       run_command "./osbuild-composer/test/cases/base_tests.sh"
       ;;
     image)
+      export DISTRO_CODE="rhel8"
+      export BUILD_ID="$JOB_ID"
       run_command "./osbuild-composer/test/cases/image_tests.sh"
       ;;
     libvirt)
