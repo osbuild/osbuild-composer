@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -671,7 +673,7 @@ func TestCompose(t *testing.T) {
 		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","upload":{"image_name":"test_upload","provider":"aws","settings":{"region":"frankfurt","accessKeyID":"accesskey","secretAccessKey":"secretkey","bucket":"clay","key":"imagekey"}}}`, http.StatusOK, `{"status": true}`, expectedComposeLocalAndAws, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeRef, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose?test=2", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"http://ostree/"}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeURL, []string{"build_id"}},
-		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeCommitError","msg":"Get \"/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeCommitError","msg":"Get \"invalid-url/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
@@ -1337,5 +1339,57 @@ func TestModulesList(t *testing.T) {
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestOstreeResolveRef(t *testing.T) {
+	goodRef := "5330bb1b8820944567f519de66ad6354c729b6b490dea1c5a7ba320c9f147c58"
+	badRef := "<html>not a ref</html>"
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("/refs/heads/rhel/8/x86_64/edge", func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+	handler.HandleFunc("/refs/heads/test_forbidden", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "", http.StatusForbidden)
+	})
+	handler.HandleFunc("/refs/heads/get_bad_ref", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, badRef)
+	})
+
+	handler.HandleFunc("/refs/heads/test_redir", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/refs/heads/valid/ostree/ref", http.StatusFound)
+	})
+	handler.HandleFunc("/refs/heads/valid/ostree/ref", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, goodRef)
+	})
+
+	srv := httptest.NewServer(handler)
+	defer srv.Close()
+
+	type input struct {
+		location string
+		ref      string
+	}
+	validCases := map[input]string{
+		{srv.URL, "test_redir"}:       goodRef,
+		{srv.URL, "valid/ostree/ref"}: goodRef,
+	}
+	for in, expOut := range validCases {
+		out, err := ostreeResolveRef(in.location, in.ref)
+		assert.NoError(t, err)
+		assert.Equal(t, expOut, out)
+	}
+
+	errCases := map[input]string{
+		{"not-a-url", "a-bad-ref"}:             "Get \"not-a-url/refs/heads/a-bad-ref\": unsupported protocol scheme \"\"",
+		{"http://0.0.0.0:10/repo", "whatever"}: "Get \"http://0.0.0.0:10/repo/refs/heads/whatever\": dial tcp 0.0.0.0:10: connect: connection refused",
+		{srv.URL, "rhel/8/x86_64/edge"}:        fmt.Sprintf("ostree repository \"%s/refs/heads/rhel/8/x86_64/edge\" returned status: 404 Not Found", srv.URL),
+		{srv.URL, "test_forbidden"}:            fmt.Sprintf("ostree repository \"%s/refs/heads/test_forbidden\" returned status: 403 Forbidden", srv.URL),
+		{srv.URL, "get_bad_ref"}:               fmt.Sprintf("ostree repository \"%s/refs/heads/get_bad_ref\" returned invalid reference", srv.URL),
+	}
+	for in, expMsg := range errCases {
+		_, err := ostreeResolveRef(in.location, in.ref)
+		assert.EqualError(t, err, expMsg)
 	}
 }
