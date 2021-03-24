@@ -1806,17 +1806,13 @@ func ostreeResolveRef(location, ref string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u, err = u.Parse("refs/heads/")
-	if err != nil {
-		return "", err
-	}
-	u, err = u.Parse(ref)
-	if err != nil {
-		return "", err
-	}
+	u.Path = path.Join(u.Path, "refs/heads/", ref)
 	resp, err := http.Get(u.String())
 	if err != nil {
 		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -1826,7 +1822,7 @@ func ostreeResolveRef(location, ref string) (string, error) {
 	// Check that this is at least a hex string.
 	_, err = hex.DecodeString(parent)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("ostree repository %q returned invalid reference", u.String())
 	}
 	return parent, nil
 }
