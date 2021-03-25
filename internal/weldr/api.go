@@ -89,6 +89,7 @@ func (api *API) systemRepoNames() (names []string) {
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
 func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
 	api := &API{
@@ -370,6 +371,18 @@ func verifyStringsWithRegex(writer http.ResponseWriter, strings []string, re *re
 		return false
 	}
 	return true
+}
+
+func verifyOSTreeRef(writer http.ResponseWriter, ref string, re *regexp.Regexp) bool {
+	if len(ref) > 0 && re.MatchString(ref) {
+		return true
+	}
+	errors := responseError{
+		ID:  "InvalidChars",
+		Msg: "Invalid ostree ref",
+	}
+	statusResponseError(writer, http.StatusBadRequest, errors)
+	return false
 }
 
 func statusResponseError(writer http.ResponseWriter, code int, errors ...responseError) {
@@ -1902,6 +1915,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	// set default ostree ref, if one not provided
 	if cr.OSTree.Ref == "" {
 		cr.OSTree.Ref = imageType.OSTreeRef()
+	} else if !verifyOSTreeRef(writer, cr.OSTree.Ref, ValidOSTreeRef) {
+		return
 	}
 
 	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {

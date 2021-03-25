@@ -679,6 +679,7 @@ func TestCompose(t *testing.T) {
 		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeRef, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose?test=2", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"http://ostree/"}}`, http.StatusOK, `{"status": true}`, expectedComposeOSTreeURL, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeCommitError","msg":"Get \"invalid-url/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test","compose_type":"qcow2","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"InvalidChars","msg":"Invalid ostree ref"}]}`, expectedComposeOSTreeURL, []string{"build_id"}},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
