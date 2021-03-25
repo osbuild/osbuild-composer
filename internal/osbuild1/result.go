@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
@@ -197,13 +198,42 @@ func (cr *Result) fromV2(crv2 osbuild2.Result) {
 	cr.Build = new(buildResult)
 	cr.Assembler = new(rawAssemblerResult)
 
+	// crv2.Log contains a map of pipelines. Unfortunately, Go doesn't
+	// preserve the order of keys in a map. See:
+	// https://github.com/golang/go/issues/27179
+	//
+	// I think it makes sense for this function to always return
+	// a well-defined output, therefore we need to invent an ordering
+	// for pipeline results. Otherwise, the ordering is basically random.
+	//
+	// The following lines convert the map of pipeline results to an array
+	// of pipeline results. In the last step, the array is sorted by
+	// the pipeline name. This isn't ideal but at least it's predictable.
+	//
+	// See: https://github.com/osbuild/osbuild/issues/619
+	type pipelineResult struct {
+		pipelineName string
+		stageResults []osbuild2.StageResult
+	}
+
+	var pipelineResults []pipelineResult
+
+	for pname, stageResults := range crv2.Log {
+		pipelineResults = append(pipelineResults, pipelineResult{pipelineName: pname, stageResults: stageResults})
+	}
+
+	// Sort the pipelineResult array by the pipeline name to ensure a stable order.
+	sort.Slice(pipelineResults, func(i, j int) bool {
+		return pipelineResults[i].pipelineName < pipelineResults[j].pipelineName
+	})
+
 	// convert all stages logs from all pipelines into v1 StageResult objects
-	for pname, stages := range crv2.Log {
-		for idx, stage := range stages {
+	for _, pr := range pipelineResults {
+		for idx, stage := range pr.stageResults {
 			stageResult := StageResult{
 				// Create uniquely identifiable name for the stage:
 				// <pipeline name>:<stage index>-<stage type>
-				Name:    fmt.Sprintf("%s:%d-%s", pname, idx, stage.Type),
+				Name:    fmt.Sprintf("%s:%d-%s", pr.pipelineName, idx, stage.Type),
 				Success: stage.Success,
 				Output:  stage.Output,
 			}
