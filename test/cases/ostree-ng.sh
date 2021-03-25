@@ -65,7 +65,7 @@ OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
 GUEST_ADDRESS=192.168.100.50
-URL=http://192.168.100.1/repo/
+URL=http://192.168.100.1/repo
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -127,6 +127,7 @@ build_image() {
             }
         }" | tee "$COMPOSE_START"
     else
+        # Test ref begining with /
         sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
             \"blueprint_name\": \"$blueprint_name\",
             \"compose_type\": \"$image_type\",
@@ -308,7 +309,8 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve installer
 
 # Build installer image.
-build_image installer rhel-edge-installer "$URL"
+# Test --url arg following by URL with tailling slash for bz#1942029
+build_image installer rhel-edge-installer "${URL}/"
 
 # Download the image
 greenprint "📥 Downloading the installer image"
@@ -459,6 +461,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
+# Test --url arg following by URL without tailling slash for bz#1942029
 build_image upgrade rhel-edge-container "$URL"
 
 # Download the image
@@ -491,7 +494,7 @@ done;
 
 # Get ostree commit value.
 greenprint "🕹 Get ostree upgrade commit value"
-UPGRADE_HASH=$(curl ${URL}refs/heads/"${OSTREE_REF}")
+UPGRADE_HASH=$(curl ${URL}/refs/heads/"${OSTREE_REF}")
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up upgrade blueprint and compose"
