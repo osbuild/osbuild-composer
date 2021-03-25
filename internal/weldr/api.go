@@ -933,7 +933,8 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	// handle both projects/info and modules/info, the latter includes dependencies
-	modulesRequested := strings.HasPrefix(request.URL.Path, "/api/v0/modules")
+	modulesRequested := strings.HasPrefix(request.URL.Path, "/api/v0/modules") ||
+		strings.HasPrefix(request.URL.Path, "/api/v1/modules")
 
 	var errorId, unknownErrorId string
 	if modulesRequested {
