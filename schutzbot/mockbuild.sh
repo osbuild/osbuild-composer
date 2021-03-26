@@ -26,9 +26,13 @@ REPO_BUCKET=osbuild-composer-repos
 # Public URL for the S3 bucket with our artifacts.
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
+# Used in the gitlab CI proof of concept so it can upload its rpms to
+# a different location.
+EXTRA_REPO_PATH_SEGMENT="${EXTRA_REPO_PATH_SEGMENT:-}"
+
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
-REPO_PATH=osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
+REPO_PATH=${EXTRA_REPO_PATH_SEGMENT}osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
