@@ -73,6 +73,9 @@ cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
 
+# fallback for gitlab
+GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
+
 setup_repo osbuild-composer "${GIT_COMMIT}" 5
 
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
