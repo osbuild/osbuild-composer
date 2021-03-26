@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -87,7 +88,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 
 	// TODO: refactor to be more generic
 	name := hostDistro.Name()
-	if name == "rhel-84" {
+	if strings.HasPrefix(name, "rhel-8") {
 		name = "rhel-8"
 	}
 	if beta {
