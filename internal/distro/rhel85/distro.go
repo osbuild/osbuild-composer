@@ -161,7 +161,20 @@ func (t *imageType) Size(size uint64) uint64 {
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	return nil
+	sets := make(map[string]rpmmd.PackageSet)
+	for name, pkgSet := range t.packageSets {
+		if name == "packages" {
+			// combine image packages with blueprint
+			pkgSet.Include = append(pkgSet.Include, bp.GetPackages()...)
+			timezone, _ := bp.Customizations.GetTimezoneSettings()
+			if timezone != nil {
+				pkgSet.Include = append(pkgSet.Include, "chrony")
+			}
+		}
+		sets[name] = pkgSet
+	}
+	return sets
+
 }
 
 func (t *imageType) Exports() []string {
