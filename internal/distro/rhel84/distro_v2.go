@@ -152,7 +152,7 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 	)
 }
 
-// local type for ostree sommit metadata used to define commit sources
+// local type for ostree commit metadata used to define commit sources
 type ostreeCommit struct {
 	Checksum string
 	URL      string
