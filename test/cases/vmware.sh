@@ -163,7 +163,7 @@ if [[ $COMPOSE_STATUS != FINISHED ]]; then
 fi
 
 # Stop watching the worker journal.
-sudo kill ${WORKER_JOURNAL_PID}
+sudo pkill -P ${WORKER_JOURNAL_PID}
 
 greenprint "👷🏻 Building VM in vSphere"
 $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \

@@ -151,7 +151,7 @@ build_image() {
     fi
 
     # Stop watching the worker journal.
-    sudo kill ${WORKER_JOURNAL_PID}
+    sudo pkill -P ${WORKER_JOURNAL_PID}
 }
 
 # Wait for the ssh server up to be.

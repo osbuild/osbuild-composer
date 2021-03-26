@@ -180,7 +180,7 @@ $AWS_CMD ec2 describe-images \
 AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$AMI_DATA")
 
 # Stop watching the worker journal.
-sudo kill ${WORKER_JOURNAL_PID}
+sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # NOTE(mhayden): Getting TagSpecifications to play along with bash's
 # parsing of curly braces and square brackets is nuts, so we just write some
