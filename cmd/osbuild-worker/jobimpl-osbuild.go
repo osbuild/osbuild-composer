@@ -287,7 +287,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			log.Printf("[GCP] 📥 Importing image into Compute Node as '%s'", args.Targets[0].ImageName)
+			log.Printf("[GCP] 📥 Importing image into Compute Engine as '%s'", args.Targets[0].ImageName)
 			imageBuild, importErr := g.ComputeImageImport(ctx, options.Bucket, options.Object, args.Targets[0].ImageName, options.Os, options.Region)
 			if imageBuild != nil {
 				log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)

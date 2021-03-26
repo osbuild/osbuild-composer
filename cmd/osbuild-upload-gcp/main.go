@@ -40,7 +40,7 @@ func main() {
 	flag.StringVar(&objectName, "object", "", "Target Storage Object name")
 	flag.StringVar(&region, "region", "", "Target region for the uploaded image")
 	flag.StringVar(&osFamily, "os", "", "OS type used to determine which version of GCP guest tools to install")
-	flag.StringVar(&imageName, "image-name", "", "Image name after import to Compute Node")
+	flag.StringVar(&imageName, "image-name", "", "Image name after import to Compute Engine")
 	flag.StringVar(&imageFile, "image", "", "Image file to upload")
 	flag.Var(&shareWith, "share-with", "Accounts to share the image with. Can be set multiple times. Allowed values are 'user:{emailid}' / 'serviceAccount:{emailid}' / 'group:{emailid}' / 'domain:{domain}'.")
 	flag.BoolVar(&skipUpload, "skip-upload", false, "Use to skip Image Upload step")
@@ -73,9 +73,9 @@ func main() {
 		}
 	}
 
-	// Import Image to Compute Node
+	// Import Image to Compute Engine
 	if !skipImport {
-		log.Printf("[GCP] 📥 Importing image into Compute Node as '%s'", imageName)
+		log.Printf("[GCP] 📥 Importing image into Compute Engine as '%s'", imageName)
 		imageBuild, importErr := g.ComputeImageImport(ctx, bucketName, objectName, imageName, osFamily, region)
 		if imageBuild != nil {
 			log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)

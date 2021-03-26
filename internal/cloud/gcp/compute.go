@@ -14,7 +14,7 @@ import (
 )
 
 // ComputeImageImport imports a previously uploaded image by submitting a Cloud Build API
-// job. The job builds an image into Compute Node from an image uploaded to the
+// job. The job builds an image into Compute Engine from an image uploaded to the
 // storage.
 //
 // The Build job usually creates a number of cache files in the Storage.
@@ -211,7 +211,7 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 	// they can't use because of insufficient permissions.
 	//
 	// Even without the ability to view / list shared images, the user can still
-	// create a Compute Node instance using the image via API or 'gcloud' tool.
+	// create a Compute Engine instance using the image via API or 'gcloud' tool.
 	//
 	// Custom role to enable account to only list images in the project.
 	// Without this role, the account won't be able to list and see the image
@@ -223,7 +223,7 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 	return nil
 }
 
-// ComputeImageDelete deletes a Compute Node image with the given name. If the
+// ComputeImageDelete deletes a Compute Engine image with the given name. If the
 // image existed and was successfully deleted, no error is returned.
 //
 // Uses:
@@ -239,7 +239,7 @@ func (g *GCP) ComputeImageDelete(ctx context.Context, image string) error {
 	return err
 }
 
-// ComputeInstanceDelete deletes a Compute Node instance with the given name and
+// ComputeInstanceDelete deletes a Compute Engine instance with the given name and
 // running in the given zone. If the instance existed and was successfully deleted,
 // no error is returned.
 //

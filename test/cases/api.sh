@@ -576,7 +576,7 @@ function verifyInAWS() {
   fi
 }
 
-# Verify image in Compute Node on GCP
+# Verify image in Compute Engine on GCP
 function verifyInGCP() {
   # Authenticate
   $GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
