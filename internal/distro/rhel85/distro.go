@@ -246,6 +246,26 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	return nil
 }
 
+func (t *imageType) installerPipelines(options distro.ImageOptions, repos []rpmmd.RepoConfig, installerPackages []rpmmd.PackageSpec) ([]osbuild.Pipeline, error) {
+	kernelPkg := new(rpmmd.PackageSpec)
+	for _, pkg := range installerPackages {
+		if pkg.Name == "kernel" {
+			kernelPkg = &pkg
+			break
+		}
+	}
+	if kernelPkg == nil {
+		return nil, fmt.Errorf("kernel package not found in installer package set")
+	}
+	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *t.anacondaTreePipeline(repos, installerPackages, options, kernelVer))
+	pipelines = append(pipelines, *t.bootISOTreePipeline(kernelVer))
+	pipelines = append(pipelines, *t.bootISOPipeline())
+	return pipelines, nil
+
+}
+
 func (t *imageType) pipelines(customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	return nil, fmt.Errorf("not implemented")
 }
