@@ -752,6 +752,10 @@ func (t *imageType) kickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.
 }
 
 func (t *imageType) bootISOMonoStageOptions(kernelVer string) *osbuild.BootISOMonoStageOptions {
+	comprOptions := new(osbuild.FSCompressionOptions)
+	if bcj := osbuild.BCJOption(t.arch.Name()); bcj != "" {
+		comprOptions.BCJ = bcj
+	}
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
 			Name:    "Red Hat Enterprise Linux",
@@ -774,11 +778,8 @@ func (t *imageType) bootISOMonoStageOptions(kernelVer string) *osbuild.BootISOMo
 		RootFS: osbuild.RootFS{
 			Size: 4096,
 			Compression: osbuild.FSCompression{
-				Method: "xz",
-				Options: osbuild.FSCompressionOptions{
-					// TODO: based on image arch
-					BCJ: "x86",
-				},
+				Method:  "xz",
+				Options: comprOptions,
 			},
 		},
 	}
