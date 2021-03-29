@@ -732,7 +732,7 @@ func (t *imageTypeS2) bootISOMonoStageOptions(kernelVer string) *osbuild.BootISO
 			Size: 4096,
 			Compression: osbuild.FSCompression{
 				Method: "xz",
-				Options: osbuild.FSCompressionOptions{
+				Options: &osbuild.FSCompressionOptions{
 					// TODO: based on image arch
 					BCJ: "x86",
 				},

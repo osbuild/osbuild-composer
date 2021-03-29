@@ -37,12 +37,26 @@ type RootFS struct {
 }
 
 type FSCompression struct {
-	Method  string               `json:"method"`
-	Options FSCompressionOptions `json:"options,omitempty"`
+	Method  string                `json:"method"`
+	Options *FSCompressionOptions `json:"options,omitempty"`
 }
 
 type FSCompressionOptions struct {
 	BCJ string `json:"bcj"`
+}
+
+// BCJOption returns the appropriate xz branch/call/jump (BCJ) filter for the
+// given architecture
+func BCJOption(arch string) string {
+	switch arch {
+	case "x86_64":
+		return "x86"
+	case "aarch64":
+		return "arm"
+	case "ppc64le":
+		return "powerpc"
+	}
+	return ""
 }
 
 func (BootISOMonoStageOptions) isStageOptions() {}
