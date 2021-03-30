@@ -10226,7 +10226,6 @@
         "/etc/chrony.conf": "S.5....T.",
         "/etc/dnf/plugins/product-id.conf": "..5....T.",
         "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
-        "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",
         "/var/log/lastlog": ".M....G..",

@@ -9155,7 +9155,6 @@
     },
     "rpm-verify": {
       "changed": {
-        "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",
         "/var/log/lastlog": ".M....G..",

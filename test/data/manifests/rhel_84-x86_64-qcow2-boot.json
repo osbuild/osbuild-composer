@@ -10157,7 +10157,6 @@
         "/boot/efi/EFI/redhat/grubx64.efi": ".......T.",
         "/etc/dnf/plugins/product-id.conf": "..5....T.",
         "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
-        "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/run/cockpit": ".M.......",
         "/sys": ".M.......",

@@ -9445,6 +9445,7 @@
       "changed": {
         "/boot/System.map-5.8.15-301.fc33.x86_64": ".M.......",
         "/boot/initramfs-5.8.15-301.fc33.x86_64.img": ".M.......",
+        "/etc/machine-id": ".M.......",
         "/etc/udev/hwdb.bin": ".M.......",
         "/lib/modules/5.8.15-301.fc33.x86_64/modules.builtin.alias.bin": ".......T.",
         "/proc": ".M.......",

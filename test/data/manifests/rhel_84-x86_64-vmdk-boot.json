@@ -9834,7 +9834,6 @@
         "/etc/fwupd/remotes.d/lvfs.conf": ".......T.",
         "/etc/fwupd/remotes.d/vendor-directory.conf": ".......T.",
         "/etc/fwupd/remotes.d/vendor.conf": ".......T.",
-        "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",
         "/var/log/lastlog": ".M....G..",
