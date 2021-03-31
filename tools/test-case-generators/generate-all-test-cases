@@ -437,7 +437,7 @@ class BaseRunner(contextlib.AbstractContextManager):
         if sysname == "Linux":
             subprocess.check_call(
                 [
-                    "genisoimage",
+                    "mkisofs",
                     "-input-charset", "utf-8",
                     "-output", iso_path,
                     "-volid", "cidata",

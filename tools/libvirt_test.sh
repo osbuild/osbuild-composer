@@ -228,7 +228,7 @@ greenprint "💿 Creating a cloud-init ISO"
 CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 rm -f $CLOUD_INIT_PATH
 pushd "$CLOUD_INIT_DIR"
-    sudo genisoimage -o $CLOUD_INIT_PATH -V cidata \
+    sudo mkisofs -o $CLOUD_INIT_PATH -V cidata \
         -r -J user-data meta-data network-config > /dev/null 2>&1
 popd
 
