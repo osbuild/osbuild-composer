@@ -311,7 +311,7 @@ Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   composer-cli
 Requires:   createrepo_c
-Requires:   genisoimage
+Requires:   xorriso
 Requires:   qemu-kvm-core
 Requires:   systemd-container
 Requires:   jq

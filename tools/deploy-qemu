@@ -44,7 +44,7 @@ echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/cidata/meta-dat
 
 case $(uname -s) in
   "Linux")
-    genisoimage \
+    mkisofs \
       -input-charset utf-8 \
       -output "$workdir/cloudinit.iso" \
       -volid cidata \

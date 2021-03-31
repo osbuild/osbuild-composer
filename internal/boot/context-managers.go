@@ -75,7 +75,7 @@ func withTempDir(dir, pattern string, f func(dir string) error) error {
 // metaData and writes it to the writer
 func writeCloudInitISO(writer io.Writer, userData, metaData string) error {
 	isoCmd := exec.Command(
-		"genisoimage",
+		"mkisofs",
 		"-quiet",
 		"-input-charset", "utf-8",
 		"-volid", "cidata",
