@@ -3,9 +3,12 @@ def cron_string = BRANCH_NAME == "main" ? "@daily" : ""
 pipeline {
     agent none
 
-    triggers {
-        cron(cron_string)
-    }
+// Don't run the nightly test on main. Main currently doesn't match the
+// osbuild-composer version shipped in any RHEL versions.
+// We should resume this when we start rebasing again.
+//    triggers {
+//        cron(cron_string)
+//    }
 
     environment {
         AWS_REGION = "us-east-2"
