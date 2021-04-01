@@ -2,7 +2,9 @@
 This pull request includes:
 
 - [ ] adequate testing for the new functionality or fixed issue
-- [ ] adequate documentation informing people about the change
+- [ ] adequate documentation informing people about the change such as
+  - [ ] create a file in [news/unreleased](https://github.com/osbuild/osbuild-composer/tree/main/docs/news/unreleased) directory if this change should be mentioned in the release news
+  - [ ] submit a PR for the [guides](https://github.com/osbuild/guides) repository if this PR changed any behavior described there: https://www.osbuild.org/guides/
 
 <!--
 Thanks for proposing a change to osbuild-composer!
