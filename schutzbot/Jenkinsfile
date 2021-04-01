@@ -594,6 +594,13 @@ pipeline {
                     }
                 }
                 stage('EL9.0 Integration') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "integration"
