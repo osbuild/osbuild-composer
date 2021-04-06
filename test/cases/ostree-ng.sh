@@ -253,8 +253,6 @@ sudo podman rmi -f -a
 greenprint "🗜 Extracting and running the image"
 IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
 sudo podman pull "oci-archive:${IMAGE_FILENAME}"
-# Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
-sudo restorecon -R /var/lib/containers/storage/overlay/
 sudo podman images
 # Clear image file
 sudo rm -f "$IMAGE_FILENAME"
@@ -463,8 +461,6 @@ sudo podman rmi -f -a
 greenprint "🗜 Extracting and running the image"
 IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
 sudo podman pull "oci-archive:${IMAGE_FILENAME}"
-# Workaound for issue https://bugzilla.redhat.com/show_bug.cgi?id=1933774
-sudo restorecon -R /var/lib/containers/storage/overlay/
 sudo podman images
 # Clear image file
 sudo rm -f "$IMAGE_FILENAME"
