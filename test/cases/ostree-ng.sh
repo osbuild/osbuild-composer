@@ -118,22 +118,9 @@ build_image() {
     greenprint "🚀 Starting compose"
     if [ $# -eq 3 ]; then
         repo_url=$3
-        sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
-            \"blueprint_name\": \"$blueprint_name\",
-            \"compose_type\": \"$image_type\",
-            \"ostree\": {
-                \"url\": \"$repo_url\",
-                \"ref\": \"$OSTREE_REF\"
-            }
-        }" | tee "$COMPOSE_START"
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     else
-        sudo curl --silent --header "Content-Type: application/json" --unix-socket /run/weldr/api.socket http://localhost/api/v1/compose --data "{
-            \"blueprint_name\": \"$blueprint_name\",
-            \"compose_type\": \"$image_type\",
-            \"ostree\": {
-                \"ref\": \"$OSTREE_REF\"
-            }
-        }" | tee "$COMPOSE_START"
+        sudo composer-cli --json compose start-ostree "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
 
