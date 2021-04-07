@@ -152,7 +152,11 @@ def subprocess_check_output(argv, parse_fn=None):
 
 def read_image_format(device):
     qemu = subprocess_check_output(["qemu-img", "info", "--output=json", device], json.loads)
-    return qemu["format"]
+    format = qemu["format"]
+    result = {"type": format}
+    if format == "qcow2":
+        result["compat"] = qemu["format-specific"]["data"]["compat"]
+    return result
 
 
 def read_partition(device, partition):
