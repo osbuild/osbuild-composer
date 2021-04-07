@@ -408,6 +408,20 @@ func (t *imageType) ostreeCommitPipeline(options distro.ImageOptions) *osbuild.P
 	return p
 }
 
+func (t *imageType) tarPipeline(reference string) *osbuild.Pipeline {
+	options := osbuild.TarStageOptions{Filename: t.Filename()}
+	commitTree := new(osbuild.TarStageInput)
+	commitTree.Type = "org.osbuild.tree"
+	commitTree.Origin = "org.osbuild.pipeline"
+	commitTree.References = []string{fmt.Sprintf("name:$s", reference)}
+	tarStage := osbuild.NewTarStage(&options, &osbuild.TarStageInputs{Tree: commitTree})
+	p := new(osbuild.Pipeline)
+	p.Name = "archive"
+	p.Build = "name:build"
+	p.AddStage(tarStage)
+	return p
+}
+
 func (t *imageType) containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "container-tree"
