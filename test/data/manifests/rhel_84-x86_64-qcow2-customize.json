@@ -9706,7 +9706,10 @@
       "wheel:x:10:"
     ],
     "hostname": "my-host",
-    "image-format": "qcow2",
+    "image-format": {
+      "type": "qcow2",
+      "compat": "1.1"
+    },
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",

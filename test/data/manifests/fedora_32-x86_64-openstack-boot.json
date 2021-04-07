@@ -9561,7 +9561,10 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
-    "image-format": "qcow2",
+    "image-format": {
+      "type": "qcow2",
+      "compat": "1.1"
+    },
     "os-release": {
       "ANSI_COLOR": "0;34",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
