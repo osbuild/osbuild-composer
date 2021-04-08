@@ -335,6 +335,16 @@ function createReqFileGCP() {
 
   GCP_IMAGE_NAME="image-$GCP_TEST_ID_HASH"
 
+  case "$DISTRO" in
+    "rhel-8"*|"centos-8")
+      GCP_GUEST_TOOLS_REPO="rhel-8-gcp.json"
+      ;;
+    *)
+      echo "Error: building GCE Image is supported only on RHEL-8 or CentOS-8"
+      exit 1
+      ;;
+  esac
+
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -346,8 +356,8 @@ function createReqFileGCP() {
   "image_requests": [
     {
       "architecture": "$ARCH",
-      "image_type": "vhd",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "image_type": "gce-byos",
+      "repositories": $(jq -s ".[0].\"$ARCH\" + .[1].\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json /usr/share/tests/osbuild-composer/repositories/"$GCP_GUEST_TOOLS_REPO"),
       "upload_request": {
           "type": "gcp",
           "options": {
@@ -619,6 +629,9 @@ function verifyInGCP() {
 
   echo "⏱ Waiting for GCP instance to respond to ssh"
   _instanceWaitSSH "$HOST"
+
+  # GCP guest tools seem to be too slow with updating SSH keys, so the login may fail if done too quickly
+  sleep 5
 
   # Check if postgres is installed
   ssh -oStrictHostKeyChecking=no -i "$GCP_SSH_KEY" "$SSH_USER"@"$HOST" rpm -q postgresql

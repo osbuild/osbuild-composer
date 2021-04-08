@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 
@@ -648,6 +649,59 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 			}
 		}
 	}
+
+	return osbuild.NewQEMUAssembler(&options)
+}
+
+// gceQemuAssembler mimicks the defaultPartitionTable() for x86_64 from rhel84
+// to make the newly introduced image type consistent across minor RHEL versions.
+func gceQemuAssembler(format string, filename string, imageOptions distro.ImageOptions) *osbuild.Assembler {
+	options := disk.PartitionTable{
+		Size: imageOptions.Size,
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []disk.Partition{
+			{
+				Bootable: true,
+				Size:     2048,
+				Start:    2048,
+				Type:     "21686148-6449-6E6F-744E-656564454649",
+				UUID:     "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
+			},
+			{
+				Start: 4096,
+				Size:  204800,
+				Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+				UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+				Filesystem: &disk.Filesystem{
+					Type:         "vfat",
+					UUID:         "7B77-95E7",
+					Mountpoint:   "/boot/efi",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Start: 208896,
+				Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+				UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+				Filesystem: &disk.Filesystem{
+					Type:         "xfs",
+					UUID:         "0bd700f8-090f-4556-b797-b340297ea1bd",
+					Label:        "root",
+					Mountpoint:   "/",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+		},
+	}.QEMUAssemblerOptions()
+
+	options.Format = format
+	options.Filename = filename
+
 	return osbuild.NewQEMUAssembler(&options)
 }
 
@@ -1057,6 +1111,102 @@ func newDistro(name string) distro.Distro {
 		},
 	}
 
+	gceByosImgType := imageType{
+		name:     "gce-byos",
+		filename: "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packages: []string{
+			// Defaults included by Anaconda
+			"@core",
+			"langpacks-en",
+
+			// Packages from GCP kickstart
+			"acpid",
+			//"dhcp-client", // NM by default uses its internal DHCP client
+			//"dnf-automatic", // Automatic DNF updates can not be configured ATM
+			"net-tools",
+			"openssh-server",
+			"python3",
+			"rng-tools",
+			"tar",
+			"vim",
+			// GCE guest tools
+			"google-compute-engine",
+			"google-osconfig-agent",
+			"gce-disk-expand",
+			// GCP SDK
+			"google-cloud-sdk",
+
+			// Not explicitly included in GCP kickstart, but present on the image
+			// for time synchronization
+			"chrony",
+			"timedatex",
+			// Detected Platform requirements by Anaconda
+			"@platform-kvm",
+			// EFI
+			"efibootmgr",
+			"grub2-efi-x64",
+			"shim-x64",
+			"grub2-tools-efi",
+		},
+		excludedPackages: []string{
+			"alsa-utils",
+			"b43-fwcutter",
+			"dmraid",
+			"eject",
+			"gpm",
+			"irqbalance",
+			"microcode_ctl",
+			"smartmontools",
+			"aic94xx-firmware",
+			"atmel-firmware",
+			"b43-openfwwf",
+			"bfa-firmware",
+			"ipw2100-firmware",
+			"ipw2200-firmware",
+			"ivtv-firmware",
+			"iwl100-firmware",
+			"iwl1000-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6050-firmware",
+			"kernel-firmware",
+			"libertas-usb8388-firmware",
+			"ql2100-firmware",
+			"ql2200-firmware",
+			"ql23xx-firmware",
+			"ql2400-firmware",
+			"ql2500-firmware",
+			"rt61pci-firmware",
+			"rt73usb-firmware",
+			"xorg-x11-drv-ati-firmware",
+			"zd1211-firmware",
+		},
+		enabledServices: []string{
+			"firewalld.service",
+			"sshd.service",
+			"rngd.service",
+			// These should get enabled on installation, but it does not work for some reason
+			// https://github.com/GoogleCloudPlatform/guest-agent/blob/2e65c158280264b5f6b653e8b56f6edbf88add01/packaging/google-guest-agent.spec#L99-L101
+			"google-guest-agent.service",
+			"google-shutdown-scripts.service",
+			"google-startup-scripts.service",
+			// enabled on the Google RHEL Guest image
+			"nvmefc-boot-connections.service",
+		},
+		defaultTarget: "multi-user.target",
+		kernelOptions: "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return gceQemuAssembler("qcow2", "disk.qcow2", options)
+		},
+	}
+
 	r := distribution{
 		buildPackages: []string{
 			"dnf",
@@ -1095,6 +1245,7 @@ func newDistro(name string) distro.Distro {
 		tarImgType,
 		vhdImgType,
 		vmdkImgType,
+		gceByosImgType,
 	)
 
 	aarch64 := architecture{
