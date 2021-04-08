@@ -1,37 +1,8 @@
 {
-  "fedora-32": {
-    "dependants": {
-      "koji-osbuild": {
-        "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174"
-      }
-    }
-  },
-  "rhel-8.3": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "755c07a142ce2e8e88420590be553d8a255f3326"
-      }
-    },
-    "dependants": {
-      "koji-osbuild": {
-        "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174",
-        "pre_install_packages": [
-          "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-        ]
-      }
-    }
-  },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
         "commit": "5de2d3f96bd4841738846d5e4f1e0e4ed01e7a2a"
-      }
-    }
-  },
-  "centos-8": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "e4e527b5b7cdf8bb6e48a6ec3ace7d9d9b155bc0"
       }
     }
   }
