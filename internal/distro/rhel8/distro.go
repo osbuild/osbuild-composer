@@ -22,7 +22,6 @@ const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
 	arches        map[string]architecture
-	imageTypes    map[string]imageType
 	buildPackages []string
 }
 
@@ -1025,7 +1024,6 @@ func New() distro.Distro {
 	}
 
 	r := distribution{
-		imageTypes: map[string]imageType{},
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",
