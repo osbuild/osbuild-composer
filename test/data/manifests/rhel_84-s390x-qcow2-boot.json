@@ -3694,6 +3694,7 @@
             "type": "zipl"
           },
           "format": "qcow2",
+          "qcow2_compat": "0.10",
           "filename": "disk.qcow2",
           "size": 10737418240,
           "ptuuid": "0x14fc63d2",
@@ -10132,8 +10133,8 @@
       "zkeyadm:x:996:"
     ],
     "image-format": {
-      "type": "qcow2",
-      "compat": "1.1"
+      "compat": "0.10",
+      "type": "qcow2"
     },
     "os-release": {
       "ANSI_COLOR": "0;31",

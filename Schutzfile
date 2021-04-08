@@ -1,5 +1,17 @@
 {
+  "fedora-32": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
+      }
+    }
+  },
   "fedora-33": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
+      }
+    },
     "dependants": {
       "koji-osbuild": {
         "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174"
@@ -9,7 +21,7 @@
   "rhel-8.3": {
     "dependencies": {
       "osbuild": {
-        "commit": "e4e527b5b7cdf8bb6e48a6ec3ace7d9d9b155bc0"
+        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
       }
     },
     "dependants": {
@@ -21,10 +33,17 @@
       }
     }
   },
+  "rhel-8.4": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
+      }
+    }
+  },
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "e4e527b5b7cdf8bb6e48a6ec3ace7d9d9b155bc0"
+        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
       }
     }
   }
