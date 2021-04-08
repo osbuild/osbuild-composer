@@ -2,7 +2,7 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "5de2d3f96bd4841738846d5e4f1e0e4ed01e7a2a"
+        "commit": "f2370e1f6fa85a2f2d1025448a92a1a0bd55204f"
       }
     }
   }
