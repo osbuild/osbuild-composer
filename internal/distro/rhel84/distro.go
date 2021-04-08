@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
@@ -1209,6 +1210,103 @@ func newDistro(isCentos bool) distro.Distro {
 		},
 	}
 
+	gceByosImgType := imageType{
+		name:     gcp.GCEImageTypeNamePrefix + "-byos",
+		filename: "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packages: []string{
+			// Defaults included by Anaconda
+			"@core",
+			"langpacks-en",
+
+			// Packages from GCP kickstart
+			"acpid",
+			//"dhcp-client", // NM by default uses its internal DHCP client
+			//"dnf-automatic", // Automatic DNF updates can not be configured ATM
+			"net-tools",
+			"openssh-server",
+			"python3",
+			"rng-tools",
+			"tar",
+			"vim",
+			// GCE guest tools
+			"google-compute-engine",
+			"google-osconfig-agent",
+			"gce-disk-expand",
+			// GCP SDK
+			"google-cloud-sdk",
+
+			// Not explicitly included in GCP kickstart, but present on the image
+			// for time synchronization
+			"chrony",
+			"timedatex",
+			// Detected Platform requirements by Anaconda
+			"@platform-kvm",
+			// EFI
+			"efibootmgr",
+			"grub2-efi-x64",
+			"shim-x64",
+			"grub2-tools-efi",
+		},
+		excludedPackages: []string{
+			"alsa-utils",
+			"b43-fwcutter",
+			"dmraid",
+			"eject",
+			"gpm",
+			"irqbalance",
+			"microcode_ctl",
+			"smartmontools",
+			"aic94xx-firmware",
+			"atmel-firmware",
+			"b43-openfwwf",
+			"bfa-firmware",
+			"ipw2100-firmware",
+			"ipw2200-firmware",
+			"ivtv-firmware",
+			"iwl100-firmware",
+			"iwl1000-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6050-firmware",
+			"kernel-firmware",
+			"libertas-usb8388-firmware",
+			"ql2100-firmware",
+			"ql2200-firmware",
+			"ql23xx-firmware",
+			"ql2400-firmware",
+			"ql2500-firmware",
+			"rt61pci-firmware",
+			"rt73usb-firmware",
+			"xorg-x11-drv-ati-firmware",
+			"zd1211-firmware",
+		},
+		enabledServices: []string{
+			"firewalld.service",
+			"sshd.service",
+			"rngd.service",
+			// These should get enabled on installation, but it does not work for some reason
+			// https://github.com/GoogleCloudPlatform/guest-agent/blob/2e65c158280264b5f6b653e8b56f6edbf88add01/packaging/google-guest-agent.spec#L99-L101
+			"google-guest-agent.service",
+			"google-shutdown-scripts.service",
+			"google-startup-scripts.service",
+			// enabled on the Google RHEL Guest image
+			"nvmefc-boot-connections.service",
+		},
+		defaultTarget:           "multi-user.target",
+		kernelOptions:           "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8",
+		bootable:                true,
+		defaultSize:             4 * GigaByte,
+		partitionTableGenerator: defaultPartitionTable,
+		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch, "")
+		},
+	}
+
 	r := distribution{
 		buildPackages: []string{
 			"dnf",
@@ -1503,6 +1601,7 @@ func newDistro(isCentos bool) distro.Distro {
 		tarImgType,
 		vhdImgType,
 		vmdkImgType,
+		gceByosImgType,
 	)
 
 	if !isCentos {

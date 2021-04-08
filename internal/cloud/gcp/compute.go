@@ -16,6 +16,10 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+const (
+	GCEImageTypeNamePrefix string = "gce"
+)
+
 // ComputeImageImport imports a previously uploaded image by submitting a Cloud Build API
 // job. The job builds an image into Compute Engine from an image uploaded to the
 // storage.
