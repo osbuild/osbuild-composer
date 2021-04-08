@@ -3470,6 +3470,7 @@
         "name": "org.osbuild.qemu",
         "options": {
           "format": "qcow2",
+          "qcow2_compat": "0.10",
           "filename": "disk.qcow2",
           "size": 10737418240,
           "ptuuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
@@ -9473,8 +9474,8 @@
       "wheel:x:10:"
     ],
     "image-format": {
-      "type": "qcow2",
-      "compat": "1.1"
+      "compat": "0.10",
+      "type": "qcow2"
     },
     "os-release": {
       "ANSI_COLOR": "0;31",
