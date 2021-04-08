@@ -120,7 +120,7 @@ build_image() {
         repo_url=$3
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     else
-        sudo composer-cli --json compose start-ostree "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
 
