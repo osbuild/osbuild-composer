@@ -1,5 +1,16 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.4:
+
+* Previously, the guest image for RHEL 8.4 was only usable by QEMU 1.1 and
+  newer. However, this image should be usable on RHEL 6 that ships an older
+  version of QEMU. This is now fixed and the guest image can be now used by
+  QEMU 0.10 and newer.
+
+Contributions from: Aleksandar Todorov, Christian Kellner, Ondřej Budai
+
+— Liberec, 2021-04-08
+
 ## CHANGES WITH 28.3:
 
   * Version 28.1 introduced a regression causing logs from osbuild to be
