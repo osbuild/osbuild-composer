@@ -10,6 +10,45 @@
     },
     "overrides": {}
   },
+  "edge-commit": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
+  "edge-container": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-container",
+      "repositories": [],
+      "filename": "container.tar",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
+  "edge-commit-rt": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {
+        "customizations": {
+          "kernel": {
+            "name": "kernel-rt"
+          }
+        }
+      }
+    },
+    "overrides": {}
+  },
   "rhel-edge-commit": {
     "compose-request": {
       "distro": "",
