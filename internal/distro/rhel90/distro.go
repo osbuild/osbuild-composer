@@ -24,7 +24,6 @@ const modulePlatformID = "platform:el9"
 
 type distribution struct {
 	arches        map[string]architecture
-	imageTypes    map[string]distro.ImageType
 	buildPackages []string
 }
 
@@ -801,7 +800,6 @@ func New() distro.Distro {
 	}
 
 	r := distribution{
-		imageTypes: map[string]distro.ImageType{},
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",

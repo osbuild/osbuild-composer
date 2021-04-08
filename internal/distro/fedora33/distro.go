@@ -22,7 +22,6 @@ const ostreeRef = "fedora/33/%s/iot"
 
 type distribution struct {
 	arches        map[string]architecture
-	imageTypes    map[string]imageType
 	buildPackages []string
 }
 
@@ -800,7 +799,6 @@ func New() distro.Distro {
 	}
 
 	r := distribution{
-		imageTypes: map[string]imageType{},
 		buildPackages: []string{
 			"dnf",
 			"dosfstools",
