@@ -8696,7 +8696,9 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
-    "image-format": "vmdk",
+    "image-format": {
+      "type": "vmdk"
+    },
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",

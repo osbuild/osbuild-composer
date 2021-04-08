@@ -9054,7 +9054,9 @@
       "wheel:x:10:"
     ],
     "hostname": "localhost.localdomain",
-    "image-format": "raw",
+    "image-format": {
+      "type": "raw"
+    },
     "os-release": {
       "ANSI_COLOR": "0;38;2;60;110;180",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
