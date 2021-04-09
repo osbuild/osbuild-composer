@@ -217,7 +217,18 @@ func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 		packages = removePackage(packages, "insights-client")
 	}
 
-	return packages, t.excludedPackages
+	// copy the list of excluded packages from the image type
+	// and subtract any packages found in the blueprint (this
+	// will not handle the issue with dependencies present in
+	// the list of excluded packages, but it will create a
+	// possibility of a workaround at least)
+	excludedPackages := append([]string(nil), t.excludedPackages...)
+	for _, pkg := range bp.GetPackages() {
+		// removePackage is fine if the package doesn't exist
+		excludedPackages = removePackage(excludedPackages, pkg)
+	}
+
+	return packages, excludedPackages
 }
 
 func (t *imageType) BuildPackages() []string {
