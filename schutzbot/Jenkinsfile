@@ -639,6 +639,10 @@ pipeline {
                     }
                     steps {
                         run_tests('base')
+                        sh (
+                            label: "Regression tests",
+                            script: "/usr/libexec/tests/osbuild-composer/regression.sh"
+                        )
                     }
                     post {
                         always {
