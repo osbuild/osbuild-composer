@@ -139,7 +139,7 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 	}
 
 	var commits []ostreeCommit
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+	if t.bootISO && options.OSTree.Parent != "" && options.OSTree.URL != "" {
 		commit := ostreeCommit{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}
 		commits = []ostreeCommit{commit}
 	}
