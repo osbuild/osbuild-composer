@@ -35,7 +35,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
 
-	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs["packages"], customizations, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) ([]*osbuild.Stage, error) {
+func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) ([]*osbuild.Stage, error) {
 	stages := make([]*osbuild.Stage, 0)
 	stages = append(stages, osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	stages = append(stages, osbuild.NewFixBLSStage())
@@ -164,13 +164,28 @@ func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *bluep
 		},
 	}))
 
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+
+		stages = append(stages, osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		},
+		))
+	}
+
 	return stages, nil
 }
 
-func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
-	stages, err := coreStages(repos, packages, c, enabledServices, disabledServices, defaultTarget)
+	stages, err := coreStages(repos, packages, c, options, enabledServices, disabledServices, defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -179,12 +194,12 @@ func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *bluep
 	return p, nil
 }
 
-func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
 
-	stages, err := coreStages(repos, packages, c, enabledServices, disabledServices, defaultTarget)
+	stages, err := coreStages(repos, packages, c, options, enabledServices, disabledServices, defaultTarget)
 	if err != nil {
 		return nil, err
 	}
