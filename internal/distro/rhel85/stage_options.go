@@ -237,7 +237,7 @@ func tarKickstartStageOptions(tarURL string) *osbuild.KickstartStageOptions {
 func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
 		Path: "/usr/share/anaconda/interactive-defaults.ks",
-		OSTree: osbuild.OSTreeOptions{
+		OSTree: &osbuild.OSTreeOptions{
 			OSName: "rhel",
 			URL:    ostreeURL,
 			Ref:    ostreeRef,
@@ -271,7 +271,7 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 		},
 		Templates: "80-rhel",
 		RootFS: osbuild.RootFS{
-			Size: 4096,
+			Size: 9216,
 			Compression: osbuild.FSCompression{
 				Method:  "xz",
 				Options: comprOptions,

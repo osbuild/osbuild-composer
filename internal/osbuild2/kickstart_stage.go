@@ -4,7 +4,7 @@ type KickstartStageOptions struct {
 	// Where to place the kickstart file
 	Path string `json:"path"`
 
-	OSTree OSTreeOptions `json:"ostree,omitempty"`
+	OSTree *OSTreeOptions `json:"ostree,omitempty"`
 
 	LiveIMG *LiveIMG `json:"liveimg,omitempty"`
 }

@@ -34,6 +34,13 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 func tarInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, t.enabledServices, t.disabledServices, t.defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *treePipeline)
+
 	kernelPkg := new(rpmmd.PackageSpec)
 	installerPackages := packageSetSpecs["installer"]
 	for _, pkg := range installerPackages {
@@ -95,37 +102,36 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
-	p := new(osbuild.Pipeline)
-	p.Name = "ostree-tree"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+	stages = append(stages, osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	stages = append(stages, osbuild.NewFixBLSStage())
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+		stages = append(stages, osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		stages = append(stages, osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	}
 	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+		stages = append(stages, osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
 	}
 	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+		stages = append(stages, osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
 	}
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+		stages = append(stages, osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+		stages = append(stages, osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
 	}
 
 	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+		stages = append(stages, osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+		stages = append(stages, osbuild.NewGroupsStage(groupStageOptions(groups)))
 	}
 
 	if users := c.GetUsers(); len(users) > 0 {
@@ -133,21 +139,21 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 		if err != nil {
 			return nil, err
 		}
-		p.AddStage(osbuild.NewUsersStage(options))
-		p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(options)))
+		stages = append(stages, osbuild.NewUsersStage(options))
+		stages = append(stages, osbuild.NewFirstBootStage(usersFirstBootOptions(options)))
 	}
 
 	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+		stages = append(stages, osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+		stages = append(stages, osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	stages = append(stages, osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+	stages = append(stages, osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
 		Kernel: osbuild.SysconfigKernelOptions{
 			UpdateDefault: true,
 			DefaultKernel: "kernel",
@@ -157,6 +163,32 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 			NoZeroConf: true,
 		},
 	}))
+
+	return stages, nil
+}
+
+func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+	p := new(osbuild.Pipeline)
+	p.Name = "os"
+	stages, err := coreStages(repos, packages, c, enabledServices, disabledServices, defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	p.Stages = stages
+
+	return p, nil
+}
+
+func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+	p := new(osbuild.Pipeline)
+	p.Name = "ostree-tree"
+	p.Build = "name:build"
+
+	stages, err := coreStages(repos, packages, c, enabledServices, disabledServices, defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	p.Stages = stages
 
 	p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 		EtcGroupMembers: []string{
@@ -261,9 +293,14 @@ func anacondaOSTreePayloadStages(options distro.ImageOptions) []*osbuild.Stage {
 }
 
 func anacondaTarPayloadStages(options distro.ImageOptions) []*osbuild.Stage {
-	// TODO: assemble the tarball
-	tarPath := ""
+	tarPath := "/liveimg.tar"
 	stages := make([]*osbuild.Stage, 0)
+	tree := new(osbuild.TarStageInput)
+	tree.Type = "org.osbuild.tree"
+	tree.Origin = "org.osbuild.pipeline"
+	tree.References = []string{"name:os"}
+	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, &osbuild.TarStageInputs{Tree: tree})
+	stages = append(stages, tarStage)
 	stages = append(stages, osbuild.NewKickstartStage(tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
 	return stages
 }

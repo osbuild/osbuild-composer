@@ -472,6 +472,34 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		distro: rd,
 	}
 
+	baseBuildPkgSet := rpmmd.PackageSet{
+		Include: []string{
+			"dnf", "dosfstools", "e2fsprogs", "glibc",
+			"lorax-templates-generic", "lorax-templates-rhel",
+			"policycoreutils", "python36", "python3-iniparse", "qemu-img",
+			"selinux-policy-targeted", "systemd", "tar", "xfsprogs", "xz",
+		},
+	}
+	installerBuildPkgSet := rpmmd.PackageSet{
+		Include: append(baseBuildPkgSet.Include,
+			"efibootmgr", "genisoimage", "grub2-efi-ia32-cdboot",
+			"grub2-efi-x64", "grub2-efi-x64-cdboot", "grub2-pc",
+			"grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
+			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
+			"lorax-templates-generic", "lorax-templates-rhel", "rpm-ostree",
+			"shim-ia32", "shim-x64", "squashfs-tools", "syslinux",
+			"syslinux-nonlinux", "xorriso"),
+		Exclude: nil,
+	}
+	x86bootPkgSet := rpmmd.PackageSet{
+		Include: []string{
+			"dracut-config-generic",
+			"grub2-pc",
+			"grub2-efi-x64",
+			"shim-x64",
+		},
+		Exclude: nil,
+	}
 	installerPkgSet := rpmmd.PackageSet{
 		Include: []string{
 			"aajohan-comfortaa-fonts", "abattis-cantarell-fonts",
@@ -529,8 +557,11 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build":     {},
-			"packages":  {},
+			"build": installerBuildPkgSet,
+			"packages": {
+				Include: append(x86bootPkgSet.Include, "lvm2", "policycoreutils", "selinux-policy-targeted"),
+				Exclude: []string{"rng-tools"},
+			},
 			"installer": installerPkgSet,
 		},
 		rpmOstree: false,
