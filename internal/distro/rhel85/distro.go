@@ -265,7 +265,7 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
-	if t.bootISO {
+	if t.bootISO && t.rpmOstree {
 		if options.OSTree.Parent == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
@@ -471,7 +471,74 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:   "x86_64",
 		distro: rd,
 	}
-	x86_64.addImageTypes(edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
+
+	installerPkgSet := rpmmd.PackageSet{
+		Include: []string{
+			"aajohan-comfortaa-fonts", "abattis-cantarell-fonts",
+			"alsa-firmware", "alsa-tools-firmware", "anaconda",
+			"anaconda-dracut", "anaconda-install-env-deps", "anaconda-widgets",
+			"audit", "bind-utils", "biosdevname", "bitmap-fangsongti-fonts",
+			"bzip2", "cryptsetup", "curl", "dbus-x11", "dejavu-sans-fonts",
+			"dejavu-sans-mono-fonts", "device-mapper-persistent-data",
+			"dmidecode", "dnf", "dracut-config-generic", "dracut-network",
+			"dump", "efibootmgr", "ethtool", "ftp", "gdb-gdbserver", "gdisk",
+			"gfs2-utils", "glibc-all-langpacks",
+			"google-noto-sans-cjk-ttc-fonts", "grub2-efi-ia32-cdboot",
+			"grub2-efi-x64-cdboot", "grub2-tools", "grub2-tools-efi",
+			"grub2-tools-extra", "grub2-tools-minimal", "grubby",
+			"gsettings-desktop-schemas", "hdparm", "hexedit", "hostname",
+			"initscripts", "ipmitool", "iwl1000-firmware", "iwl100-firmware",
+			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
+			"iwl2030-firmware", "iwl3160-firmware", "iwl3945-firmware",
+			"iwl4965-firmware", "iwl5000-firmware", "iwl5150-firmware",
+			"iwl6000-firmware", "iwl6000g2a-firmware", "iwl6000g2b-firmware",
+			"iwl6050-firmware", "iwl7260-firmware", "jomolhari-fonts",
+			"kacst-farsi-fonts", "kacst-qurn-fonts", "kbd", "kbd-misc",
+			"kdump-anaconda-addon", "kernel", "khmeros-base-fonts", "less",
+			"libblockdev-lvm-dbus", "libertas-sd8686-firmware",
+			"libertas-sd8787-firmware", "libertas-usb8388-firmware",
+			"libertas-usb8388-olpc-firmware", "libibverbs",
+			"libreport-plugin-bugzilla", "libreport-plugin-reportuploader",
+			"libreport-rhel-anaconda-bugzilla", "librsvg2", "linux-firmware",
+			"lklug-fonts", "lohit-assamese-fonts", "lohit-bengali-fonts",
+			"lohit-devanagari-fonts", "lohit-gujarati-fonts",
+			"lohit-gurmukhi-fonts", "lohit-kannada-fonts", "lohit-odia-fonts",
+			"lohit-tamil-fonts", "lohit-telugu-fonts", "lsof", "madan-fonts",
+			"memtest86+", "metacity", "mtr", "mt-st", "net-tools", "nfs-utils",
+			"nmap-ncat", "nm-connection-editor", "nss-tools",
+			"openssh-clients", "openssh-server", "oscap-anaconda-addon",
+			"ostree", "pciutils", "perl-interpreter", "pigz", "plymouth",
+			"prefixdevname", "python3-pyatspi", "rdma-core",
+			"redhat-release-eula", "rng-tools", "rpcbind", "rpm-ostree",
+			"rsync", "rsyslog", "selinux-policy-targeted", "sg3_utils",
+			"shim-ia32", "shim-x64", "sil-abyssinica-fonts",
+			"sil-padauk-fonts", "sil-scheherazade-fonts", "smartmontools",
+			"smc-meera-fonts", "spice-vdagent", "strace", "syslinux",
+			"systemd", "system-storage-manager", "tar",
+			"thai-scalable-waree-fonts", "tigervnc-server-minimal",
+			"tigervnc-server-module", "udisks2", "udisks2-iscsi", "usbutils",
+			"vim-minimal", "volume_key", "wget", "xfsdump", "xfsprogs",
+			"xorg-x11-drivers", "xorg-x11-fonts-misc", "xorg-x11-server-utils",
+			"xorg-x11-server-Xorg", "xorg-x11-xauth", "xz",
+		},
+		Exclude: nil,
+	}
+
+	tarInstallerImgTypeX86_64 := imageType{
+		name:     "tar-installer",
+		filename: "installer.iso",
+		mimeType: "application/x-iso9660-image",
+		packageSets: map[string]rpmmd.PackageSet{
+			"build":     {},
+			"packages":  {},
+			"installer": installerPkgSet,
+		},
+		rpmOstree: false,
+		bootISO:   true,
+		pipelines: tarInstallerPipelines,
+		exports:   []string{"bootiso"},
+	}
+	x86_64.addImageTypes(tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
 
 	edgeCommitImgTypeAarch64 := imageType{
 		name:     "edge-commit",
