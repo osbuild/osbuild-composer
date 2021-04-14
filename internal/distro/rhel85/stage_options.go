@@ -225,7 +225,16 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 	}
 }
 
-func kickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
+func tarKickstartStageOptions(tarURL string) *osbuild.KickstartStageOptions {
+	return &osbuild.KickstartStageOptions{
+		Path: "/usr/share/anaconda/interactive-defaults.ks",
+		LiveIMG: &osbuild.LiveIMG{
+			URL: tarURL,
+		},
+	}
+}
+
+func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
 		Path: "/usr/share/anaconda/interactive-defaults.ks",
 		OSTree: osbuild.OSTreeOptions{

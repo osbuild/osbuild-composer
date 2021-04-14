@@ -25,7 +25,28 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 		return nil, fmt.Errorf("kernel package not found in installer package set")
 	}
 	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, options, kernelVer, t.Arch().Name()))
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), anacondaOSTreePayloadStages(options)))
+	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name()))
+	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
+	return pipelines, nil
+}
+
+func tarInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	kernelPkg := new(rpmmd.PackageSpec)
+	installerPackages := packageSetSpecs["installer"]
+	for _, pkg := range installerPackages {
+		if pkg.Name == "kernel" {
+			kernelPkg = &pkg
+			break
+		}
+	}
+	if kernelPkg == nil {
+		return nil, fmt.Errorf("kernel package not found in installer package set")
+	}
+	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), anacondaTarPayloadStages(options)))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name()))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
 	return pipelines, nil
@@ -222,17 +243,39 @@ func containerPipeline(t *imageType) *osbuild.Pipeline {
 	return p
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string, arch string) *osbuild.Pipeline {
+func anacondaOSTreePayloadStages(options distro.ImageOptions) []*osbuild.Stage {
 	ostreeRepoPath := "/ostree/repo"
+	stages := make([]*osbuild.Stage, 0)
+
+	// ostree commit payload
+	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
+	stages = append(stages, osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
+		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+	))
+
+	// kickstart stage
+	stages = append(stages, osbuild.NewKickstartStage(ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
+
+	return stages
+}
+
+func anacondaTarPayloadStages(options distro.ImageOptions) []*osbuild.Stage {
+	// TODO: assemble the tarball
+	tarPath := ""
+	stages := make([]*osbuild.Stage, 0)
+	stages = append(stages, osbuild.NewKickstartStage(tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
+	return stages
+}
+
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
-	))
+	for _, stage := range payloadStages {
+		p.AddStage(stage)
+	}
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
@@ -264,7 +307,6 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer)))
-	p.AddStage(osbuild.NewKickstartStage(kickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
 
 	return p
 }
