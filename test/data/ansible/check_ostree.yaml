@@ -73,18 +73,31 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
+    # bios or uefi
+    - name: bios or uefi
+      stat:
+        path: /sys/firmware/efi
+      register: result_uefi
+
+    - set_fact:
+        device_name: /dev/vda2
+
+    - set_fact:
+        device_name: /dev/vda3
+      when: result_uefi.stat.exists
+
     # case: check /sysroot moutn point
     - name: check /sysroot mount point
       command: findmnt -r -o SOURCE -n /sysroot
       register: result_sysroot_mount_point
 
-    - name: /sysroot should be mounted on /dev/vda2
+    - name: "/sysroot should be mounted on {{ device_name }}"
       block:
         - assert:
             that:
-              - result_sysroot_mount_point.stdout == "/dev/vda2"
-            fail_msg: "/var does not mount on /dev/vda2"
-            success_msg: "/var mounts on /dev/vda2"
+              - result_sysroot_mount_point.stdout == "{{ device_name }}"
+            fail_msg: "/var does not mount on {{ device_name }}"
+            success_msg: "/var mounts on {{ device_name }}"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -118,13 +131,13 @@
       command: findmnt -r -o SOURCE -n /var
       register: result_var_mount_point
 
-    - name: "/var should be mounted on /dev/vda2[/ostree/deploy/{{ image_type }}/var]"
+    - name: "/var should be mounted on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
       block:
         - assert:
             that:
-              - result_var_mount_point.stdout == "/dev/vda2[/ostree/deploy/{{ image_type }}/var]"
-            fail_msg: "/var does not mount on /dev/vda2[/ostree/deploy/{{ image_type }}/var]"
-            success_msg: "/var mounts on /dev/vda2[/ostree/deploy/{{ image_type }}/var]"
+              - result_var_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+            fail_msg: "/var does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+            success_msg: "/var mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -158,13 +171,13 @@
       command: findmnt -r -o SOURCE -n /usr
       register: result_usr_mount_point
 
-    - name: "/usr should be mounted on /dev/vda2[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+    - name: "/usr should be mounted on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
       block:
         - assert:
             that:
-              - result_usr_mount_point.stdout == "/dev/vda2[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
-            fail_msg: "/usr does not mount on /dev/vda2[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
-            success_msg: "/usr mounts on /dev/vda2[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+              - result_usr_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+            fail_msg: "/usr does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+            success_msg: "/usr mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"

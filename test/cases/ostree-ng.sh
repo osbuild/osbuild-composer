@@ -168,11 +168,7 @@ wait_for_ssh_up () {
 clean_up () {
     greenprint "🧼 Cleaning up"
     sudo virsh destroy "${IMAGE_KEY}"
-    if [[ $ARCH == aarch64 ]]; then
-        sudo virsh undefine "${IMAGE_KEY}" --nvram
-    else
-        sudo virsh undefine "${IMAGE_KEY}"
-    fi
+    sudo virsh undefine "${IMAGE_KEY}" --nvram
     # Remove qcow2 file.
     sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
@@ -389,6 +385,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
