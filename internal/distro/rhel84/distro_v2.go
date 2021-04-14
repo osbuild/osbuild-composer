@@ -699,7 +699,7 @@ func (t *imageTypeS2) dracutStageOptions(kernelVer string) *osbuild.DracutStageO
 func (t *imageTypeS2) kickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
 		Path: "/usr/share/anaconda/interactive-defaults.ks",
-		OSTree: osbuild.OSTreeOptions{
+		OSTree: &osbuild.OSTreeOptions{
 			OSName: "rhel",
 			URL:    ostreeURL,
 			Ref:    ostreeRef,
