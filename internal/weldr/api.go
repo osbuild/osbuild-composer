@@ -97,7 +97,9 @@ var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
-func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro,
+	repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store,
+	workers *worker.Server, compatOutputDir string) *API {
 
 	distroRepos := make(map[string]map[string][]rpmmd.RepoConfig, 1)
 	distroRepos[distro.Name()] = make(map[string][]rpmmd.RepoConfig, 1)
@@ -120,7 +122,26 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos [
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+// TODO this naming needs to be sorted out in the distro/repo code someplace
+func mangleName(name string, beta, stream bool) string {
+	if name == "rhel-84" {
+		name = "rhel-8"
+	}
+	if beta {
+		name += "-beta"
+	}
+
+	// override repository for centos stream, remove when CentOS 8 is EOL
+	if stream && name == "centos-8" {
+		name = "centos-stream-8"
+	}
+	return name
+}
+
+func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
+	distros *distroregistry.Registry, logger *log.Logger,
+	workers *worker.Server) (*API, error) {
+
 	hostDistro, beta, isStream, err := distros.FromHost()
 	if err != nil {
 		return nil, err
@@ -133,22 +154,13 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distrore
 	}
 
 	// TODO: refactor to be more generic
-	name := hostDistro.Name()
-	if name == "rhel-84" {
-		name = "rhel-8"
-	}
-	if beta {
-		name += "-beta"
-	}
-
-	// override repository for centos stream, remove when CentOS 8 is EOL
-	if isStream && name == "centos-8" {
-		name = "centos-stream-8"
-	}
+	name := mangleName(hostDistro.Name(), beta, isStream)
 
 	// Load the repositories for all the supported distros
 	distroRepos := make(map[string]map[string][]rpmmd.RepoConfig, len(distros.List()))
 	for _, distro := range distros.List() {
+		// TODO How to mangle this for non-host distro?
+		distro = mangleName(distro, false, false)
 		repo, err := rpmmd.LoadRepositories(repoPaths, distro)
 		if err != nil {
 			return nil, fmt.Errorf("Error loading repositories for %s: %v", distro, err)
