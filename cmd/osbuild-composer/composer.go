@@ -13,13 +13,10 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
-	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -73,35 +70,11 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
-	archName := common.CurrentArch()
-
-	hostDistro := c.distros.FromHost()
-	if hostDistro == nil {
-		return fmt.Errorf("host distro is not supported")
-	}
-
-	arch, err := hostDistro.GetArch(archName)
+func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) (err error) {
+	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.rpm, c.distros, c.logger, c.workers)
 	if err != nil {
-		return fmt.Errorf("Host distro does not support host architecture: %v", err)
+		return err
 	}
-
-	rr, err := reporegistry.New(repoPaths)
-	if err != nil {
-		return fmt.Errorf("error loading repository definitions: %v", err)
-	}
-
-	// Check if repositories for the host distro and arch were loaded
-	_, err = rr.ReposByArch(arch, false)
-	if err != nil {
-		return fmt.Errorf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
-	}
-
-	store := store.New(&c.stateDir, arch, c.logger)
-	compatOutputDir := path.Join(c.stateDir, "outputs")
-
-	c.weldr = weldr.New(c.rpm, arch, hostDistro, rr, c.logger, store, c.workers, compatOutputDir)
-
 	c.weldrListener = weldrListener
 
 	return nil
