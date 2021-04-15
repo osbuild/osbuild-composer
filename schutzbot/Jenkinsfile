@@ -286,6 +286,7 @@ pipeline {
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AZURE_CLIENT_ID = credentials('azure-client-id')
                         AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                        AZURE_CREDS = credentials('azure')
                     }
                     steps {
                         run_tests('integration')
@@ -293,6 +294,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora32-integration')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -350,6 +355,7 @@ pipeline {
                         AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                         AZURE_CLIENT_ID = credentials('azure-client-id')
                         AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                        AZURE_CREDS = credentials('azure')
                     }
                     steps {
                         run_tests('integration')
@@ -357,6 +363,10 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-integration')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -458,6 +468,7 @@ pipeline {
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                         AZURE_CLIENT_ID = credentials('azure-client-id')
                         AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                        AZURE_CREDS = credentials('azure')
                     }
                     steps {
                         run_tests('integration')
@@ -557,6 +568,7 @@ pipeline {
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                         AZURE_CLIENT_ID = credentials('azure-client-id')
                         AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                        AZURE_CREDS = credentials('azure')
                     }
                     steps {
                         run_tests('integration')
@@ -665,6 +677,7 @@ pipeline {
                         GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
                         AZURE_CLIENT_ID = credentials('azure-client-id')
                         AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                        AZURE_CREDS = credentials('azure')
                     }
                     steps {
                         run_tests('integration')
@@ -813,6 +826,12 @@ void run_tests(test_type) {
         sh (
             label: "Integration test: AWS",
             script: "/usr/libexec/tests/osbuild-composer/aws.sh"
+        )
+
+        // Run the Azure test.
+        sh (
+            label: "Integration test: AZURE",
+            script: "/usr/libexec/tests/osbuild-composer/azure.sh"
         )
 
         // Run the API test with AWS.

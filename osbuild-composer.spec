@@ -342,6 +342,7 @@ Requires:   python3-lxml
 Requires:   httpd
 Requires:   openssl
 Requires:   podman-plugins
+Requires:   dnf-plugins-core
 %if 0%{?fedora}
 # koji and ansible are not in RHEL repositories. Depending on them breaks RHEL
 # gating (see OSCI-1541). The test script must enable EPEL and install those
