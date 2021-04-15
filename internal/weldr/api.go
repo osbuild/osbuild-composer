@@ -30,6 +30,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -53,6 +54,9 @@ type API struct {
 	router *httprouter.Router
 
 	compatOutputDir string
+
+	hostDistroName string                   // Name of the host distro
+	distros        *distroregistry.Registry // Supported distros
 }
 
 type ComposeState int
@@ -94,18 +98,68 @@ func (api *API) systemRepoNames() (names []string) {
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repoRegistry *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+// NewTestAPI is used for the test framework, sets up a single distro
+func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, rr *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+	distros, _ := distroregistry.New(distro)
+
 	api := &API{
 		store:           store,
 		workers:         workers,
-		rpmmd:           rpmmd,
+		rpmmd:           rpm,
 		arch:            arch,
 		distro:          distro,
-		repoRegistry:    repoRegistry,
+		repoRegistry:    rr,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
+		hostDistroName:  distro.Name(),
+		distros:         distros,
+	}
+	return setupRouter(api)
+}
+
+func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+
+	hostDistro := distros.FromHost()
+	if hostDistro == nil {
+		return nil, fmt.Errorf("host distro is not supported")
+	}
+	archName := common.CurrentArch()
+
+	hostArch, err := hostDistro.GetArch(archName)
+	if err != nil {
+		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
 	}
 
+	rr, err := reporegistry.New(repoPaths)
+	if err != nil {
+		return nil, fmt.Errorf("error loading repository definitions: %v", err)
+	}
+
+	// Check if repositories for the host distro and arch were loaded
+	_, err = rr.ReposByArch(hostArch, false)
+	if err != nil {
+		return nil, fmt.Errorf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
+	}
+
+	store := store.New(&stateDir, hostArch, logger)
+	compatOutputDir := path.Join(stateDir, "outputs")
+
+	api := &API{
+		store:           store,
+		workers:         workers,
+		rpmmd:           rpm,
+		arch:            hostArch,
+		distro:          hostDistro,
+		repoRegistry:    rr,
+		logger:          logger,
+		compatOutputDir: compatOutputDir,
+		hostDistroName:  hostDistro.Name(),
+		distros:         distros,
+	}
+	return setupRouter(api), nil
+}
+
+func setupRouter(api *API) *API {
 	api.router = httprouter.New()
 	api.router.RedirectTrailingSlash = false
 	api.router.RedirectFixedPath = false

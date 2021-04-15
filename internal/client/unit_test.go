@@ -60,7 +60,7 @@ func executeTests(m *testing.M) int {
 	})
 
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.New(rpm, arch, distro, rr, logger, fixture.Store, fixture.Workers, "")
+	api := weldr.NewTestAPI(rpm, arch, distro, rr, logger, fixture.Store, fixture.Workers, "")
 	server := http.Server{Handler: api}
 	defer server.Close()
 
