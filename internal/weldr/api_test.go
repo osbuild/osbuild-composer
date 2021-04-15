@@ -41,7 +41,7 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 		panic(err)
 	}
 
-	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
+	return NewTestAPI(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
 }
 
 func TestBasic(t *testing.T) {

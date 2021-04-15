@@ -13,12 +13,10 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -72,43 +70,11 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
-	archName := common.CurrentArch()
-
-	hostDistro, beta, isStream, err := c.distros.FromHost()
+func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) (err error) {
+	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.rpm, c.distros, c.logger, c.workers)
 	if err != nil {
 		return err
 	}
-
-	arch, err := hostDistro.GetArch(archName)
-	if err != nil {
-		return fmt.Errorf("Host distro does not support host architecture: %v", err)
-	}
-
-	// TODO: refactor to be more generic
-	name := hostDistro.Name()
-	if name == "rhel-84" {
-		name = "rhel-8"
-	}
-	if beta {
-		name += "-beta"
-	}
-
-	// override repository for centos stream, remove when CentOS 8 is EOL
-	if isStream && name == "centos-8" {
-		name = "centos-stream-8"
-	}
-
-	repos, err := rpmmd.LoadRepositories(repoPaths, name)
-	if err != nil {
-		return fmt.Errorf("Error loading repositories for %s: %v", hostDistro.Name(), err)
-	}
-
-	store := store.New(&c.stateDir, arch, c.logger)
-	compatOutputDir := path.Join(c.stateDir, "outputs")
-
-	c.weldr = weldr.New(c.rpm, arch, hostDistro, repos[archName], c.logger, store, c.workers, compatOutputDir)
-
 	c.weldrListener = weldrListener
 
 	return nil

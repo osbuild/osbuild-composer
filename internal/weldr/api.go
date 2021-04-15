@@ -31,6 +31,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -52,6 +53,10 @@ type API struct {
 	router *httprouter.Router
 
 	compatOutputDir string
+
+	hostDistroName string                                   // Name of the host distro
+	distros        *distroregistry.Registry                 // Supported distros
+	distroRepos    map[string]map[string][]rpmmd.RepoConfig // Repos for each distro
 }
 
 type ComposeState int
@@ -91,18 +96,86 @@ func (api *API) systemRepoNames() (names []string) {
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+// NewTestAPI is used for the test framework, sets up a single distro
+func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+
+	distroRepos := make(map[string]map[string][]rpmmd.RepoConfig, 1)
+	distroRepos[distro.Name()] = make(map[string][]rpmmd.RepoConfig, 1)
+	distroRepos[distro.Name()][arch.Name()] = repos
+	distros, _ := distroregistry.New(distro)
+
 	api := &API{
 		store:           store,
 		workers:         workers,
-		rpmmd:           rpmmd,
 		arch:            arch,
 		distro:          distro,
+		rpmmd:           rpm,
 		repos:           repos,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
+		hostDistroName:  distro.Name(),
+		distros:         distros,
+		distroRepos:     distroRepos,
+	}
+	return setupRouter(api)
+}
+
+func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+	hostDistro, beta, isStream, err := distros.FromHost()
+	if err != nil {
+		return nil, err
+	}
+	archName := common.CurrentArch()
+
+	hostArch, err := hostDistro.GetArch(archName)
+	if err != nil {
+		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
 	}
 
+	// TODO: refactor to be more generic
+	name := hostDistro.Name()
+	if name == "rhel-84" {
+		name = "rhel-8"
+	}
+	if beta {
+		name += "-beta"
+	}
+
+	// override repository for centos stream, remove when CentOS 8 is EOL
+	if isStream && name == "centos-8" {
+		name = "centos-stream-8"
+	}
+
+	// Load the repositories for all the supported distros
+	distroRepos := make(map[string]map[string][]rpmmd.RepoConfig, len(distros.List()))
+	for _, distro := range distros.List() {
+		repo, err := rpmmd.LoadRepositories(repoPaths, distro)
+		if err != nil {
+			return nil, fmt.Errorf("Error loading repositories for %s: %v", distro, err)
+		}
+		distroRepos[distro] = repo
+	}
+
+	store := store.New(&stateDir, hostArch, logger)
+	compatOutputDir := path.Join(stateDir, "outputs")
+
+	api := &API{
+		store:           store,
+		workers:         workers,
+		arch:            hostArch,
+		distro:          hostDistro,
+		rpmmd:           rpm,
+		repos:           distroRepos[name][archName], // TODO update references to api.repos
+		logger:          logger,
+		compatOutputDir: compatOutputDir,
+		hostDistroName:  name,
+		distros:         distros,
+		distroRepos:     distroRepos,
+	}
+	return setupRouter(api), nil
+}
+
+func setupRouter(api *API) *API {
 	api.router = httprouter.New()
 	api.router.RedirectTrailingSlash = false
 	api.router.RedirectFixedPath = false
