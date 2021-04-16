@@ -1711,6 +1711,18 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
+	// Check the blueprint's distro to make sure it is valid
+	if len(blueprint.Distro) > 0 {
+		if !common.IsStringInSortedSlice(api.distros.List(), blueprint.Distro) {
+			errors := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("'%s' is not a valid distribution", blueprint.Distro),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+	}
+
 	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
 	err = api.store.PushBlueprint(blueprint, commitMsg)
 	if err != nil {
