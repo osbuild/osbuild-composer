@@ -160,10 +160,10 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 	distroRepos := make(map[string]map[string][]rpmmd.RepoConfig, len(distros.List()))
 	for _, distro := range distros.List() {
 		// TODO How to mangle this for non-host distro?
-		distro = mangleName(distro, false, false)
-		repo, err := rpmmd.LoadRepositories(repoPaths, distro)
+		repoName := mangleName(distro, false, false)
+		repo, err := rpmmd.LoadRepositories(repoPaths, repoName)
 		if err != nil {
-			return nil, fmt.Errorf("Error loading repositories for %s: %v", distro, err)
+			return nil, fmt.Errorf("Error loading repositories for %s/%s: %v", distro, repoName, err)
 		}
 		distroRepos[distro] = repo
 	}
