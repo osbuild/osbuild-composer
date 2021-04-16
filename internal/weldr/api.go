@@ -1742,6 +1742,22 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
+	// Check the blueprint's distro to make sure it is valid
+	// or if it doesn't have one set it to the host distro.
+	if len(blueprint.Distro) > 0 {
+		_, ok := api.distroRepos[blueprint.Distro]
+		if !ok {
+			errors := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("'%s' is not a valid distribution", blueprint.Distro),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+	} else {
+		blueprint.Distro = api.hostDistroName
+	}
+
 	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
 	err = api.store.PushBlueprint(blueprint, commitMsg)
 	if err != nil {
