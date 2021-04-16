@@ -226,6 +226,7 @@ func setupRouter(api *API) *API {
 	api.router.POST("/api/v:version/upload/providers/save", api.providersSaveHandler)
 	api.router.DELETE("/api/v:version/upload/providers/delete/:provider/:profile", api.providersDeleteHandler)
 
+	api.router.GET("/api/v:version/distros/list", api.distrosListHandler)
 	return api
 }
 
@@ -2954,4 +2955,19 @@ func (api *API) providersDeleteHandler(writer http.ResponseWriter, request *http
 
 	// TODO: implement this route (it is v1 only)
 	notImplementedHandler(writer, request, params)
+}
+
+func (api *API) distrosListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+
+	var reply struct {
+		Distros []string `json:"distros"`
+	}
+	reply.Distros = api.distros.List()
+	sort.Strings(reply.Distros)
+
+	err := json.NewEncoder(writer).Encode(reply)
+	common.PanicOnError(err)
 }
