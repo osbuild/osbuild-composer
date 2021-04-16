@@ -71,6 +71,7 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/blueprints/info/foo", http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"foo: "}]}`},
+		{"/api/v1/distros/list", http.StatusOK, `{"distros": ["test-distro"]}`},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
