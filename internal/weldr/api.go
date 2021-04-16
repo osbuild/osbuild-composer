@@ -1323,7 +1323,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, err := api.depsolveBlueprint(blueprint)
+		dependencies, err := api.depsolveBlueprint(*blueprint)
 
 		if err != nil {
 			blueprintsErrors = append(blueprintsErrors, responseError{
@@ -1412,7 +1412,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		}
 		// Make a copy of the blueprint since we will be replacing the version globs
 		blueprint := bp.DeepCopy()
-		dependencies, err := api.depsolveBlueprint(&blueprint)
+		dependencies, err := api.depsolveBlueprint(blueprint)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1889,8 +1889,13 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
-func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
-	packageSets := imageType.PackageSets(*bp)
+func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
+	// Depsolve using the host distro if none has been specified
+	if bp.Distro == "" {
+		bp.Distro = api.hostDistroName
+	}
+
+	packageSets := imageType.PackageSets(bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 
 	imageTypeRepos, err := api.allRepositoriesByImageType(imageType)
@@ -2039,7 +2044,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		cr.OSTree.Parent = parent
 	}
 
-	packageSets, err := api.depsolveBlueprintForImageType(bp, imageType)
+	packageSets, err := api.depsolveBlueprintForImageType(*bp, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2862,10 +2867,15 @@ func (api *API) allRepositories() ([]rpmmd.RepoConfig, error) {
 	return repos, nil
 }
 
-func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
 	repos, err := api.allRepositories()
 	if err != nil {
 		return nil, err
+	}
+
+	// Depsolve using the host distro if none has been specified
+	if bp.Distro == "" {
+		bp.Distro = api.hostDistroName
 	}
 
 	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, api.distro.ModulePlatformID(), api.arch.Name())
