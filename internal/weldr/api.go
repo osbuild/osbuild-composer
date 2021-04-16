@@ -383,6 +383,26 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 	return reader, size, nil
 }
 
+// getBlueprint grabs the blueprint from the store
+// and sets Distro to the host distro name if it is empty
+func (api *API) getBlueprint(name string) (*blueprint.Blueprint, bool) {
+	bp, changed := api.store.GetBlueprint(name)
+	if bp != nil && len(bp.Distro) == 0 {
+		bp.Distro = api.hostDistroName
+	}
+	return bp, changed
+}
+
+// getBlueprintCommitted grabs the blueprint from the store
+// and sets Distro to the host distro name if it is empty
+func (api *API) getBlueprintCommitted(name string) *blueprint.Blueprint {
+	bp := api.store.GetBlueprintCommitted(name)
+	if bp != nil && len(bp.Distro) == 0 {
+		bp.Distro = api.hostDistroName
+	}
+	return bp
+}
+
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
 	versionString := params.ByName("version")
 
@@ -1240,7 +1260,7 @@ func (api *API) blueprintsInfoHandler(writer http.ResponseWriter, request *http.
 	blueprintErrors := []responseError{}
 
 	for _, name := range names {
-		blueprint, changed := api.store.GetBlueprint(name)
+		blueprint, changed := api.getBlueprint(name)
 		if blueprint == nil {
 			blueprintErrors = append(blueprintErrors, responseError{
 				ID:  "UnknownBlueprint",
@@ -1325,7 +1345,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	blueprints := []entry{}
 	blueprintsErrors := []responseError{}
 	for _, name := range names {
-		blueprint, _ := api.store.GetBlueprint(name)
+		blueprint, _ := api.getBlueprint(name)
 		if blueprint == nil {
 			blueprintsErrors = append(blueprintsErrors, responseError{
 				ID:  "UnknownBlueprint",
@@ -1412,7 +1432,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 	blueprints := []blueprintFrozen{}
 	errors := []responseError{}
 	for _, name := range names {
-		bp, _ := api.store.GetBlueprint(name)
+		bp, _ := api.getBlueprint(name)
 		if bp == nil {
 			rerr := responseError{
 				ID:  "UnknownBlueprint",
@@ -1552,8 +1572,8 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 	}
 
 	// Fetch old and new blueprint details from store and return error if not found
-	oldBlueprint := api.store.GetBlueprintCommitted(name)
-	newBlueprint, _ := api.store.GetBlueprint(name)
+	oldBlueprint := api.getBlueprintCommitted(name)
+	newBlueprint, _ := api.getBlueprint(name)
 	if oldBlueprint == nil || newBlueprint == nil {
 		errors := responseError{
 			ID:  "UnknownBlueprint",
@@ -2017,7 +2037,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		targets = append(targets, t)
 	}
 
-	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
+	bp := api.getBlueprintCommitted(cr.BlueprintName)
 	if bp == nil {
 		errors := responseError{
 			ID:  "UnknownBlueprint",
