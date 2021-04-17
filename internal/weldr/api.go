@@ -922,7 +922,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	modulesParam := params.ByName("modules")
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -1008,7 +1008,7 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -1080,7 +1080,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	names := strings.Split(modules, ",")
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -1962,11 +1962,17 @@ func ostreeResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
+// depsolveBlueprintForImageType uses dnf-json to depsolve the blueprint including image type packages
+// It expexts bp.Distro to be set to a valid distribution
 func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
+	distro := api.distros.GetDistro(bp.Distro)
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
+			api.allRepositories(bp.Distro, api.arch.Name()),
+			distro.ModulePlatformID(),
+			api.arch.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -2134,7 +2140,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				URL:    cr.OSTree.URL,
 			},
 		},
-		api.allRepositories(),
+		api.allRepositories(bp.Distro, api.arch.Name()),
 		packageSets,
 		seed)
 	if err != nil {
@@ -2876,22 +2882,36 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 	common.PanicOnError(err)
 }
 
-func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	packages, _, err := api.rpmmd.FetchMetadata(api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+// fetchPackageList returns the available packages for the named distribution
+func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
+	distro := api.distros.GetDistro(distroName)
+	packages, _, err := api.rpmmd.FetchMetadata(
+		api.allRepositories(distroName, api.arch.Name()),
+		distro.ModulePlatformID(),
+		api.arch.Name())
 	return packages, err
 }
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
-func (api *API) allRepositories() []rpmmd.RepoConfig {
-	repos := append([]rpmmd.RepoConfig{}, api.repos...)
+// Use distro and arch to select the repos to use
+func (api *API) allRepositories(distro, arch string) []rpmmd.RepoConfig {
+	repos := append([]rpmmd.RepoConfig{}, api.distroRepos[distro][arch]...)
+	/* TODO: Only select sources for the selected distro
 	for id, source := range api.store.GetAllSourcesByID() {
 		repos = append(repos, source.RepoConfig(id))
 	}
+	*/
 	return repos
 }
 
+// depsolveBlueprint will use dnf-json to depsolve the blueprint
+// It expexts bp.Distro to be set to a valid distribution
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+	distro := api.distros.GetDistro(bp.Distro)
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()},
+		api.allRepositories(bp.Distro, api.arch.Name()),
+		distro.ModulePlatformID(),
+		api.arch.Name())
 	if err != nil {
 		return nil, err
 	}
