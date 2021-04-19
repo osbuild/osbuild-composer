@@ -45,3 +45,10 @@ func TestPanicOnError(t *testing.T) {
 	err := errors.New("Error message")
 	assert.PanicsWithValue(t, err, func() { PanicOnError(err) })
 }
+
+func TestIsStringInSortedSlice(t *testing.T) {
+	assert.True(t, IsStringInSortedSlice([]string{"bart", "homer", "lisa", "marge"}, "homer"))
+	assert.False(t, IsStringInSortedSlice([]string{"bart", "lisa", "marge"}, "homer"))
+	assert.False(t, IsStringInSortedSlice([]string{"bart", "lisa", "marge"}, ""))
+	assert.False(t, IsStringInSortedSlice([]string{}, "homer"))
+}

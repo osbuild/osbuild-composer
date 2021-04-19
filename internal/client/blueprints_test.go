@@ -16,6 +16,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
+
 	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -606,7 +608,7 @@ func TestBumpBlueprintVersionV0(t *testing.T) {
 
 	// If the blueprint already exists it needs to be deleted to start from a known state
 	sorted := sort.StringSlice(list)
-	if isStringInSlice(sorted, "test-bump-blueprint-1-v0") {
+	if common.IsStringInSortedSlice(sorted, "test-bump-blueprint-1-v0") {
 		// Delete this blueprint if it already exists
 		resp, err := DeleteBlueprintV0(testState.socket, "test-bump-blueprint-1-v0")
 		require.NoError(t, err, "DELETE blueprint failed with a client error")
