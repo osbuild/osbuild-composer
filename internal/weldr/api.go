@@ -1843,6 +1843,22 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 		return
 	}
 
+	// Check the blueprint's distro to make sure it is valid
+	// or if it doesn't have one set it to the host distro.
+	if len(blueprint.Distro) > 0 {
+		_, ok := api.distroRepos[blueprint.Distro]
+		if !ok {
+			errors := responseError{
+				ID:  "BlueprintsError",
+				Msg: fmt.Sprintf("'%s' is not a valid distribution", blueprint.Distro),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+	} else {
+		blueprint.Distro = api.hostDistroName
+	}
+
 	err = api.store.PushBlueprintToWorkspace(blueprint)
 	if err != nil {
 		errors := responseError{
