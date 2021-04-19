@@ -899,7 +899,18 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	modulesParam := params.ByName("modules")
 
-	availablePackages, err := api.fetchPackageList(api.hostDistroName)
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distroName, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	availablePackages, err := api.fetchPackageList(distroName)
 
 	if err != nil {
 		errors := responseError{
