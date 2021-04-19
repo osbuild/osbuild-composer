@@ -515,7 +515,6 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 					Filesystem: &osbuild.QEMUFilesystem{
 						Type:       "vfat",
 						UUID:       "46BB-8120",
-						Label:      "EFI System Partition",
 						Mountpoint: "/boot/efi",
 					},
 				},
