@@ -1079,7 +1079,18 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	names := strings.Split(modules, ",")
 
-	availablePackages, err := api.fetchPackageList(api.hostDistroName)
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distroName, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	availablePackages, err := api.fetchPackageList(distroName)
 
 	if err != nil {
 		errors := responseError{
@@ -1113,7 +1124,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	packageInfos := foundPackages.ToPackageInfos()
 
 	if modulesRequested {
-		repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+		repos, err := api.allRepositories(distroName)
 		if err != nil {
 			errors := responseError{
 				ID:  "InternalError",
@@ -1122,9 +1133,18 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
+		d := api.distros.GetDistro(distroName)
+		if d == nil {
+			errors := responseError{
+				ID:  "DistroError",
+				Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
 
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, repos, api.distro.ModulePlatformID(), api.arch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.arch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
