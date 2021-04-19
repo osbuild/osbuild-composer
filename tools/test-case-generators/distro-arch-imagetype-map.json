@@ -83,6 +83,18 @@
             "qcow2"
         ]
     },
+    "rhel-85": {
+        "x86_64": [
+            "edge-commit",
+            "edge-container",
+            "edge-installer"
+        ],
+        "aarch64": [
+            "edge-commit",
+            "edge-container",
+            "edge-installer"
+        ]
+    },
     "rhel-90": {
         "x86_64": [
             "qcow2"
