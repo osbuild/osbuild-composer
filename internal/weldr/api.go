@@ -403,6 +403,19 @@ func (api *API) getBlueprintCommitted(name string) *blueprint.Blueprint {
 	return bp
 }
 
+func (api *API) parseDistro(query url.Values) (string, error) {
+	distros := api.distros.List()
+	sort.Strings(distros)
+
+	if distro := query.Get("distro"); distro != "" {
+		if common.IsStringInSlice(distros, distro) {
+			return distro, nil
+		}
+		return "", errors_package.New("Invalid distro: " + distro)
+	}
+	return api.hostDistroName, nil
+}
+
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
 	versionString := params.ByName("version")
 
@@ -1008,7 +1021,18 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	availablePackages, err := api.fetchPackageList(api.hostDistroName)
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distro, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	availablePackages, err := api.fetchPackageList(distro)
 
 	if err != nil {
 		errors := responseError{
