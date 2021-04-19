@@ -403,6 +403,16 @@ func (api *API) getBlueprintCommitted(name string) *blueprint.Blueprint {
 	return bp
 }
 
+// getImageType returns the ImageType for the selected distro
+func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
+	distro := api.distros.GetDistro(distroName)
+	arch, err := distro.GetArch(common.CurrentArch())
+	if err != nil {
+		return nil, err
+	}
+	return arch.GetImageType(imageType)
+}
+
 func (api *API) parseDistro(query url.Values) (string, error) {
 	distros := api.distros.List()
 	sort.Strings(distros)
@@ -2092,7 +2102,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	imageType, err := api.arch.GetImageType(cr.ComposeType)
+	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
+		return
+	}
+
+	bp := api.getBlueprintCommitted(cr.BlueprintName)
+	if bp == nil {
+		errors := responseError{
+			ID:  "UnknownBlueprint",
+			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	imageType, err := api.getImageType(bp.Distro, cr.ComposeType)
 	if err != nil {
 		errors := responseError{
 			ID:  "UnknownComposeType",
@@ -2109,26 +2133,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
-		return
-	}
-
 	composeID := uuid.New()
 
 	var targets []*target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
 		t := uploadRequestToTarget(*cr.Upload, imageType)
 		targets = append(targets, t)
-	}
-
-	bp := api.getBlueprintCommitted(cr.BlueprintName)
-	if bp == nil {
-		errors := responseError{
-			ID:  "UnknownBlueprint",
-			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
 	}
 
 	// Check for test parameter
