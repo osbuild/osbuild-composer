@@ -179,7 +179,7 @@ function installClientGCP() {
     sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
 [google-cloud-sdk]
 name=Google Cloud SDK
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
