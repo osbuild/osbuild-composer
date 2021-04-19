@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sort"
 	"strconv"
 )
 
@@ -18,17 +17,6 @@ type TestState struct {
 	apiVersion int
 	repoDir    string
 	unitTest   bool
-}
-
-// isStringInSlice returns true if the string is present, false if not
-// slice must be sorted
-// TODO decide if this belongs in a more widely useful package location
-func isStringInSlice(slice []string, s string) bool {
-	i := sort.SearchStrings(slice, s)
-	if i < len(slice) && slice[i] == s {
-		return true
-	}
-	return false
 }
 
 func setUpTestState(socketPath string, unitTest bool) (*TestState, error) {
