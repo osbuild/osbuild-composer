@@ -29,6 +29,21 @@
             "ami"
         ]
     },
+    "centos-8": {
+        "x86_64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "tar",
+            "vhd",
+            "vmdk",
+            "gce-byos"
+        ],
+        "aarch64": [
+            "ami"
+        ]
+    },
     "rhel-8": {
         "x86_64": [
             "ami",
@@ -38,7 +53,8 @@
             "rhel-edge-commit",
             "tar",
             "vhd",
-            "vmdk"
+            "vmdk",
+            "gce-byos"
         ],
         "aarch64": [
             "ami",
@@ -63,7 +79,8 @@
             "qcow2",
             "qcow2-customize",
             "vhd",
-            "vmdk"
+            "vmdk",
+            "gce-byos"
         ],
         "aarch64": [
             "ami",
