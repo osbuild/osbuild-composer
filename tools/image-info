@@ -64,7 +64,7 @@ def loop_open(ctl, image, *, offset=None, size=None):
 @contextlib.contextmanager
 def open_image(ctl, image, fmt):
     with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-        if fmt != "raw":
+        if fmt["type"] != "raw":
             target = os.path.join(tmp, "image.raw")
             # A bug exists in qemu that causes the conversion to raw to fail
             # on aarch64 systems with a LOT of CPUs. A workaround is to use
