@@ -45,7 +45,6 @@ type API struct {
 	workers *worker.Server
 
 	rpmmd  rpmmd.RPMMD
-	arch   distro.Arch
 	distro distro.Distro
 	repos  []rpmmd.RepoConfig
 
@@ -109,7 +108,6 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro,
 	api := &API{
 		store:           store,
 		workers:         workers,
-		arch:            arch,
 		distro:          distro,
 		rpmmd:           rpm,
 		repos:           repos,
@@ -146,12 +144,6 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 	if err != nil {
 		return nil, err
 	}
-	archName := common.CurrentArch()
-
-	hostArch, err := hostDistro.GetArch(archName)
-	if err != nil {
-		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
-	}
 
 	// TODO: refactor to be more generic
 	name := mangleName(hostDistro.Name(), beta, isStream)
@@ -168,16 +160,19 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 		distroRepos[distro] = repo
 	}
 
+	hostArch, err := hostDistro.GetArch(common.CurrentArch())
+	if err != nil {
+		return nil, err
+	}
 	store := store.New(&stateDir, hostArch, logger)
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	api := &API{
 		store:           store,
 		workers:         workers,
-		arch:            hostArch,
 		distro:          hostDistro,
 		rpmmd:           rpm,
-		repos:           distroRepos[name][archName], // TODO update references to api.repos
+		repos:           distroRepos[name][common.CurrentArch()],
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 		hostDistroName:  name,
@@ -185,6 +180,17 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 		distroRepos:     distroRepos,
 	}
 	return setupRouter(api), nil
+}
+
+// arch returns the Arch struct for the selected distro
+func (api *API) arch(distro string) (distro.Arch, error) {
+	// Currently we only support the same arch as the host
+	archName := common.CurrentArch()
+	d := api.distros.GetDistro(distro)
+	if d == nil {
+		return nil, fmt.Errorf("Unsuppoered distro: %s", distro)
+	}
+	return d.GetArch(archName)
 }
 
 func setupRouter(api *API) *API {
@@ -1168,10 +1174,19 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	packageInfos := foundPackages.ToPackageInfos()
+	distroArch, err := api.arch(distro)
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("%s distro does not support host architecture: %v", distro, err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 
 	if modulesRequested {
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), distroArch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1223,15 +1238,25 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
+	distroArch, err := api.arch(distro)
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("%s distro does not support host architecture: %v", distro, err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	// remove leading /
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
 	packages, _, err := api.rpmmd.Depsolve(
 		rpmmd.PackageSet{Include: names},
-		api.allRepositories(distro, api.arch.Name()),
+		api.allRepositories(distro, distroArch.Name()),
 		api.distro.ModulePlatformID(),
-		api.arch.Name())
+		distroArch.Name())
 
 	if err != nil {
 		errors := responseError{
@@ -2054,13 +2079,18 @@ func ostreeResolveRef(location, ref string) (string, error) {
 // It expexts bp.Distro to be set to a valid distribution
 func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	distro := api.distros.GetDistro(bp.Distro)
+	distroArch, err := api.arch(distro.Name())
+	if err != nil {
+		return nil, err
+	}
+
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {
 		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
-			api.allRepositories(bp.Distro, api.arch.Name()),
+			api.allRepositories(bp.Distro, distroArch.Name()),
 			distro.ModulePlatformID(),
-			api.arch.Name())
+			distroArch.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -2219,6 +2249,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
+	distroArch, err := api.arch(bp.Distro)
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("%s distro does not support host architecture: %v", bp.Distro, err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
 			Size: size,
@@ -2228,7 +2268,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				URL:    cr.OSTree.URL,
 			},
 		},
-		api.allRepositories(bp.Distro, api.arch.Name()),
+		api.allRepositories(bp.Distro, distroArch.Name()),
 		packageSets,
 		seed)
 	if err != nil {
@@ -2249,7 +2289,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	} else {
 		var jobId uuid.UUID
 
-		jobId, err = api.workers.EnqueueOSBuild(api.arch.Name(), &worker.OSBuildJob{
+		jobId, err = api.workers.EnqueueOSBuild(distroArch.Name(), &worker.OSBuildJob{
 			Manifest:        manifest,
 			Targets:         targets,
 			ImageName:       imageType.Filename(),
@@ -2421,11 +2461,33 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	for _, format := range api.arch.ListImageTypes() {
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distro, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	distroArch, err := api.arch(distro)
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("%s distro does not support host architecture: %v", distro, err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	for _, format := range distroArch.ListImageTypes() {
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 
-	err := json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
 }
 
@@ -2973,10 +3035,15 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 // fetchPackageList returns the available packages for the named distribution
 func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 	distro := api.distros.GetDistro(distroName)
+	distroArch, err := api.arch(distro.Name())
+	if err != nil {
+		return nil, err
+	}
+
 	packages, _, err := api.rpmmd.FetchMetadata(
-		api.allRepositories(distroName, api.arch.Name()),
+		api.allRepositories(distroName, distroArch.Name()),
 		distro.ModulePlatformID(),
-		api.arch.Name())
+		distroArch.Name())
 	return packages, err
 }
 
@@ -2996,10 +3063,15 @@ func (api *API) allRepositories(distro, arch string) []rpmmd.RepoConfig {
 // It expexts bp.Distro to be set to a valid distribution
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
 	distro := api.distros.GetDistro(bp.Distro)
+	distroArch, err := api.arch(distro.Name())
+	if err != nil {
+		return nil, err
+	}
+
 	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()},
-		api.allRepositories(bp.Distro, api.arch.Name()),
+		api.allRepositories(bp.Distro, distroArch.Name()),
 		distro.ModulePlatformID(),
-		api.arch.Name())
+		distroArch.Name())
 	if err != nil {
 		return nil, err
 	}
