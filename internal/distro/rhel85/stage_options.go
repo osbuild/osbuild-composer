@@ -10,6 +10,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const (
+	kspath = "/osbuild.ks"
+)
+
 func rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {
 	var gpgKeys []string
 	for _, repo := range repos {
@@ -227,7 +231,7 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 
 func tarKickstartStageOptions(tarURL string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
-		Path: "/usr/share/anaconda/interactive-defaults.ks",
+		Path: kspath,
 		LiveIMG: &osbuild.LiveIMG{
 			URL: tarURL,
 		},
@@ -236,7 +240,7 @@ func tarKickstartStageOptions(tarURL string) *osbuild.KickstartStageOptions {
 
 func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
 	return &osbuild.KickstartStageOptions{
-		Path: "/usr/share/anaconda/interactive-defaults.ks",
+		Path: kspath,
 		OSTree: &osbuild.OSTreeOptions{
 			OSName: "rhel",
 			URL:    ostreeURL,
@@ -251,13 +255,15 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 	if bcj := osbuild.BCJOption(arch); bcj != "" {
 		comprOptions.BCJ = bcj
 	}
+	isolabel := fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch)
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
 			Name:    "Red Hat Enterprise Linux",
 			Version: osVersion,
 		},
-		ISOLabel: fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch),
-		Kernel:   kernelVer,
+		ISOLabel:   isolabel,
+		Kernel:     kernelVer,
+		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
 		EFI: osbuild.EFI{
 			Architectures: []string{
 				"IA32",
