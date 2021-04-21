@@ -1211,11 +1211,27 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distro, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	// remove leading /
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(
+		rpmmd.PackageSet{Include: names},
+		api.allRepositories(distro, api.arch.Name()),
+		api.distro.ModulePlatformID(),
+		api.arch.Name())
 
 	if err != nil {
 		errors := responseError{
