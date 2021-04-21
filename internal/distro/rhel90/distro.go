@@ -54,6 +54,19 @@ type imageType struct {
 	assembler               func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
+func removePackage(packages []string, packageToRemove string) []string {
+	for i, pkg := range packages {
+		if pkg == packageToRemove {
+			// override the package with the last one from the list
+			packages[i] = packages[len(packages)-1]
+
+			// drop the last package from the slice
+			return packages[:len(packages)-1]
+		}
+	}
+	return packages
+}
+
 func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
@@ -195,7 +208,18 @@ func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 		packages = append(packages, t.arch.bootloaderPackages...)
 	}
 
-	return packages, t.excludedPackages
+	// copy the list of excluded packages from the image type
+	// and subtract any packages found in the blueprint (this
+	// will not handle the issue with dependencies present in
+	// the list of excluded packages, but it will create a
+	// possibility of a workaround at least)
+	excludedPackages := append([]string(nil), t.excludedPackages...)
+	for _, pkg := range bp.GetPackages() {
+		// removePackage is fine if the package doesn't exist
+		excludedPackages = removePackage(excludedPackages, pkg)
+	}
+
+	return packages, excludedPackages
 }
 
 func (t *imageType) BuildPackages() []string {

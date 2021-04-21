@@ -71,7 +71,19 @@ func (t *imageTypeS2) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	if timezone != nil {
 		packages = append(packages, "chrony")
 	}
-	return packages, t.packageSets["packages"].Exclude
+
+	// copy the list of excluded packages from the image type
+	// and subtract any packages found in the blueprint (this
+	// will not handle the issue with dependencies present in
+	// the list of excluded packages, but it will create a
+	// possibility of a workaround at least)
+	excludedPackages := append([]string(nil), t.packageSets["packages"].Exclude...)
+	for _, pkg := range bp.GetPackages() {
+		// removePackage is fine if the package doesn't exist
+		excludedPackages = removePackage(excludedPackages, pkg)
+	}
+
+	return packages, excludedPackages
 }
 
 func (t *imageTypeS2) BuildPackages() []string {
