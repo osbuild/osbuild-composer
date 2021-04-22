@@ -452,6 +452,7 @@ func (t *imageType) systemdStageOptions(enabledServices, disabledServices []stri
 	return &osbuild.SystemdStageOptions{
 		EnabledServices:  enabledServices,
 		DisabledServices: disabledServices,
+		DefaultTarget:    "multi-user.target",
 	}
 }
 
