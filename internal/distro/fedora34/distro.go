@@ -300,7 +300,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
-		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi, packageSpecs)))
 	}
 	p.AddStage(osbuild.NewFixBLSStage())
 
@@ -465,7 +465,7 @@ func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
 	return &options
 }
 
-func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
+func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool, packages []rpmmd.PackageSpec) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
 	if kernel != nil && kernel.Append != "" {
@@ -484,11 +484,21 @@ func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.Ke
 		legacy = t.arch.legacy
 	}
 
+	var savedEntry string
+	if kernel != nil {
+		for _, pkg := range packages {
+			if pkg.Name == kernel.Name {
+				savedEntry = "ffffffffffffffffffffffffffffffff-" + pkg.Version + "-" + pkg.Release + "." + pkg.Arch
+			}
+		}
+	}
+
 	return &osbuild.GRUB2StageOptions{
 		RootFilesystemUUID: id,
 		KernelOptions:      kernelOptions,
 		Legacy:             legacy,
 		UEFI:               uefiOptions,
+		SavedEntry:         savedEntry,
 	}
 }
 
