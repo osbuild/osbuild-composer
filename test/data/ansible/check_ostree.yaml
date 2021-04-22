@@ -7,6 +7,9 @@
     failed_counter: "0"
 
   tasks:
+    # current target host's IP address
+    - debug: var=ansible_all_ipv4_addresses
+
     # default kernel or rt kernel
     - name: check installed kernel
       command: uname -r
@@ -28,6 +31,15 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: "'rt' in result_kernel.stdout"
+
+    # first installed or upgraded
+    # first installed has one commit, but upgraded has two
+    - name: determin which stage the checking is running on
+      shell: rpm-ostree status --json | jq '.deployments | length'
+      register: result_stage
+
+    - set_fact:
+        checking_stage: "{{ result_stage.stdout }}"
 
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
@@ -229,6 +241,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: checking_stage == "2"
 
     - name: save installed package to log file
       copy:
@@ -472,7 +485,7 @@
     - name: install sanely failing health check unit to test red boot status behavior
       block:
         - name: install sanely failing health check unit to test red boot status behavior
-          command: rpm-ostree install http://file-server-virt-qe-3rd.cloud.paas.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
+          command: rpm-ostree install http://file-server-virt-qe-3rd.apps.ocp4.prod.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
           become: yes
 
         - name: reboot to deploy new ostree commit
@@ -481,7 +494,7 @@
 
         - name: waits until instance is reachable
           wait_for:
-            host: "192.168.100.50"
+            host: "{{ ansible_all_ipv4_addresses[0] }}"
             port: 22
             search_regex: OpenSSH
             delay: 10
