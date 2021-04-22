@@ -2,7 +2,10 @@ package gcp
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
+	"strings"
 	"time"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
@@ -60,8 +63,43 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 		"-timeout=7000s",
 		"-client_id=api",
 	}
+
 	if region != "" {
 		buildStepArgs = append(buildStepArgs, fmt.Sprintf("-storage_location=%s", region))
+
+		// Set the region to be used by the daisy workflow when creating resources
+		// If not specified, the workflow seems to always default to us-central1.
+
+		// The Region passed as the argument is a Google Storage Region, which can be a multi or dual region.
+		// Multi and Dual regions don't work with GCE API, therefore we need to get the list of GCE regions
+		// that they map to. If the passed Region is not a multi or dual Region, then the returned slice contains
+		// only the Region passed as an argument.
+		gceRegions, err := g.storageRegionToComputeRegions(ctx, region)
+		if err != nil {
+			return nil, fmt.Errorf("failed to translate Google Storage Region to GCE Region: %v", err)
+		}
+		// Pick a random GCE Region to be used by the image import workflow
+		gceRegionIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(gceRegions))))
+		if err != nil {
+			return nil, fmt.Errorf("failed to pick random GCE Region: %v", err)
+		}
+		// The expecation is that Google won't have more regions listed for multi/dual
+		// regions than what can potentially fit into int32.
+		gceRegion := gceRegions[int(gceRegionIndex.Int64())]
+
+		availableZones, err := g.computeZonesInRegion(ctx, gceRegion)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get available GCE Zones within Region '%s': %v", region, err)
+		}
+		// Pick random zone from the list
+		gceZoneIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(availableZones))))
+		if err != nil {
+			return nil, fmt.Errorf("failed to pick random GCE Zone: %v", err)
+		}
+		// The expecation is that Google won't have more zones in a region than what can potentially fit into int32
+		zone := availableZones[int(gceZoneIndex.Int64())]
+
+		buildStepArgs = append(buildStepArgs, fmt.Sprintf("-zone=%s", zone))
 	}
 	if os != "" {
 		buildStepArgs = append(buildStepArgs, fmt.Sprintf("-os=%s", os))
@@ -287,4 +325,110 @@ func (g *GCP) ComputeDiskDelete(ctx context.Context, zone, disk string) error {
 	_, err = computeService.Disks.Delete(g.creds.ProjectID, zone, disk).Context(ctx).Do()
 
 	return err
+}
+
+// storageRegionToComputeRegion translates a Google Storage Region to GCE Region.
+// This is useful mainly for multi and dual Storage Regions. For each valid multi
+// or dual Region name, a slice with relevant GCE Regions is returned. If the
+// Region provided as an argument is not multi or dual Region, a slice with the
+// provided argument as the only item is returned.
+//
+// In general, Storage Regions correspond to the Compute Engine Regions. However,
+// Storage allows also Multi and Dual regions, which must be mapped to GCE Regions,
+// since these can not be used with GCE API calls.
+//
+// Uses:
+//  - Compute Engine API
+func (g *GCP) storageRegionToComputeRegions(ctx context.Context, region string) ([]string, error) {
+	regionLower := strings.ToLower(region)
+
+	// Handle Dual-Regions
+	// https://cloud.google.com/storage/docs/locations#location-dr
+	if regionLower == "asia1" {
+		return []string{"asia-northeast1", "asia-northeast2"}, nil
+	} else if regionLower == "eur4" {
+		return []string{"europe-north1", "europe-west4"}, nil
+	} else if regionLower == "nam4" {
+		return []string{"us-central1", "us-east1"}, nil
+	}
+
+	// Handle Regular Region
+	if regionLower != "asia" && regionLower != "eu" && regionLower != "us" {
+		// Just return a slice with the region, which we got as
+		return []string{regionLower}, nil
+	}
+
+	// Handle Multi-Regions
+	// https://cloud.google.com/storage/docs/locations#location-mr
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	regionObjList, err := computeService.Regions.List(g.creds.ProjectID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available Compute Engine Regions: %v", err)
+	}
+
+	regionsMap := make(map[string][]string)
+	for _, regionObj := range regionObjList.Items {
+		regionPrefix := strings.Split(regionObj.Name, "-")[0]
+		regionsMap[regionPrefix] = append(regionsMap[regionPrefix], regionObj.Name)
+	}
+
+	switch regionLower {
+	case "asia", "us":
+		return regionsMap[regionLower], nil
+	case "eu":
+		var euRegions []string
+		for _, euRegion := range regionsMap["europe"] {
+			// "europe-west2" (London) and "europe-west6" (Zurich) are excluded
+			// see https://cloud.google.com/storage/docs/locations#location-mr
+			if euRegion != "europe-west2" && euRegion != "europe-west6" {
+				euRegions = append(euRegions, euRegion)
+			}
+		}
+		return euRegions, nil
+	default:
+		// This case should never happen, since the "default" case is handled above by
+		// if regionLower != "asia" && regionLower != "eu" && regionLower != "us"
+		return nil, fmt.Errorf("failed to translate Google Storage Region '%s' to Compute Engine Region", regionLower)
+	}
+}
+
+// computeZonesInRegion returns list of zones within the given GCE Region, which are "UP".
+//
+// Uses:
+//  - Compute Engine API
+func (g *GCP) computeZonesInRegion(ctx context.Context, region string) ([]string, error) {
+	var zones []string
+
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	// Get available zones in the given region
+	regionObj, err := computeService.Regions.Get(g.creds.ProjectID, region).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get information about Compute Engine region '%s': %v", region, err)
+	}
+
+	for _, zoneURL := range regionObj.Zones {
+		// zone URL example - "https://www.googleapis.com/compute/v1/projects/<PROJECT_ID>/zones/us-central1-a"
+		zoneNameSs := strings.Split(zoneURL, "/")
+		zoneName := zoneNameSs[len(zoneNameSs)-1]
+
+		zoneObj, err := computeService.Zones.Get(g.creds.ProjectID, zoneName).Context(ctx).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get information about Compute Engine zone '%s': %v", zoneName, err)
+		}
+
+		// Make sure to return only Zones, which can be used
+		if zoneObj.Status == "UP" {
+			zones = append(zones, zoneName)
+		}
+	}
+
+	return zones, nil
 }
