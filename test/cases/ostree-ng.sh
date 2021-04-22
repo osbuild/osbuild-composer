@@ -34,13 +34,16 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
+      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
+      <host mac='34:49:22:B0:83:31' name='vm-uefi' ip='192.168.100.51'/>
     </dhcp>
   </ip>
 </network>
 EOF
 if ! sudo virsh net-info integration > /dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
+fi
+if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
     sudo virsh net-start integration
 fi
 
@@ -61,7 +64,8 @@ OSTREE_REF="test/rhel/8/${ARCH}/edge"
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
-GUEST_ADDRESS=192.168.100.50
+BIOS_GUEST_ADDRESS=192.168.100.50
+UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
@@ -167,10 +171,12 @@ wait_for_ssh_up () {
 # Clean up our mess.
 clean_up () {
     greenprint "🧼 Cleaning up"
-    sudo virsh destroy "${IMAGE_KEY}"
-    sudo virsh undefine "${IMAGE_KEY}" --nvram
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-uefi"
+    fi
+    sudo virsh undefine "${IMAGE_KEY}-uefi" --nvram
     # Remove qcow2 file.
-    sudo rm -f "$LIBVIRT_IMAGE_PATH"
+    sudo rm -f "$LIBVIRT_UEFI_IMAGE_PATH"
 
     # Remove any status containers if exist
     sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
@@ -347,8 +353,10 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 
 # Create qcow2 file for virt install.
 greenprint "🖥 Create qcow2 file for virt install"
-LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
-sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+LIBVIRT_BIOS_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-bios.qcow2
+LIBVIRT_UEFI_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_BIOS_IMAGE_PATH}" 20G
+sudo qemu-img create -f qcow2 "${LIBVIRT_UEFI_IMAGE_PATH}" 20G
 
 # Write kickstart file for ostree image installation.
 greenprint "📑 Generate kickstart file"
@@ -373,15 +381,90 @@ ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${PROD_REPO_URL}
 %end
 STOPHERE
 
+##################################################
+##
+## Install and test Edge image on BIOS VM
+##
+##################################################
 # Install ostree image via anaconda.
-greenprint "💿 Install ostree image via installer(ISO)"
+greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --name="${IMAGE_KEY}-bios" \
+                   --disk path="${LIBVIRT_BIOS_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=-1 \
+                   --noreboot
+
+# Start VM.
+greenprint "📟 Start BIOS VM"
+sudo virsh start "${IMAGE_KEY}-bios"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+# Get ostree commit value.
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Run Edge test on BIOS VM
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${BIOS_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+EOF
+
+# Test IoT/Edge OS
+greenprint "📼 Run Edge tests on BIOS VM"
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# Clean up BIOS VM
+greenprint "🧹 Clean up BIOS VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-bios"
+fi
+sudo virsh undefine "${IMAGE_KEY}-bios"
+sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
+
+##################################################
+##
+## Install, upgrade and test Edge image on UEFI VM
+##
+##################################################
+# Install ostree image via anaconda.
+greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+sudo virt-install  --initrd-inject="${KS_FILE}" \
+                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
+                   --name="${IMAGE_KEY}-uefi"\
+                   --disk path="${LIBVIRT_UEFI_IMAGE_PATH}",format=qcow2 \
+                   --ram 3072 \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
@@ -392,13 +475,13 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --noreboot
 
 # Start VM.
-greenprint "📟 Start VM"
-sudo virsh start "${IMAGE_KEY}"
+greenprint "💻 Start UEFI VM"
+sudo virsh start "${IMAGE_KEY}-uefi"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
 for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -500,8 +583,8 @@ sudo composer-cli blueprints delete upgrade > /dev/null
 
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -510,7 +593,7 @@ sleep 10
 greenprint "🛃 Checking for SSH is ready to go"
 # shellcheck disable=SC2034  # Unused variables left for readability
 for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -524,7 +607,7 @@ check_result
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${GUEST_ADDRESS}
+${UEFI_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
@@ -534,7 +617,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
