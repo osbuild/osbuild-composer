@@ -510,13 +510,20 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 
 func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
+
+	// use 0.10 qemu compat version
+	var qcow2Compat string
+	if format == "qcow2" {
+		qcow2Compat = "0.10"
+	}
 	if uefi {
 		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
-			PTType:   "gpt",
+			Format:      format,
+			Filename:    filename,
+			Size:        imageOptions.Size,
+			PTUUID:      "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
+			PTType:      "gpt",
+			Qcow2Compat: qcow2Compat,
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Start: 2048,
@@ -542,11 +549,12 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 		}
 	} else {
 		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageOptions.Size,
-			PTUUID:   "0x14fc63d2",
-			PTType:   "mbr",
+			Format:      format,
+			Filename:    filename,
+			Size:        imageOptions.Size,
+			PTUUID:      "0x14fc63d2",
+			PTType:      "mbr",
+			Qcow2Compat: qcow2Compat,
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Start:    2048,
