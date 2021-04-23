@@ -306,7 +306,11 @@ can be used to review the test automation state during a PR lifecycle.
 
 `qa_ack+` on RHBZ will be granted **after** a reproducer has been
 identified and with the mutual understanding that PRs related to
-that RHBZ must include an automated test reproducer.
+that RHBZ must include an automated test reproducer. A good example is
+[BZ #1951192](https://bugzilla.redhat.com/show_bug.cgi?id=1951192#c3) while
+a bad example is
+[BZ #1942029](https://bugzilla.redhat.com/show_bug.cgi?id=1942029#c0) b/c
+is is missing lots of details!
 
 
 ## Cron jobs for internal builds testing
