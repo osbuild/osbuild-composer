@@ -313,6 +313,20 @@ a bad example is
 is is missing lots of details!
 
 
+## QE associates/responsibilities matrix
+
+- [@atodorov](https://github.com/atodorov) - QE lead;
+  osbuild, osbuild-composer, weldr-client, composer-cli, image-builder, image-builder-frontend,
+  bug testing & verification, anything else
+- [@jrusz](https://github.com/jrusz) - testing across the board; backup for @atodorov;
+  osbuild, osbuild-composer, weldr-client, composer-cli, image-builder, image-builder-frontend,
+  bug testing & verification, anything else
+- [@henrywang](https://github.com/henrywang) - everything related to testing RHEL for Edge images
+- [@yih-redhat](https://github.com/yih-redhat) - everything related to testing RHEL for Edge images;
+  backup for @henrywang
+- [@yuxisun1217](https://github.com/yuxisun1217) - ...
+
+
 ## Cron jobs for internal builds testing
 
 The Schutzbot Pipeline contains conditional sections that facilitate test execution
