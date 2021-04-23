@@ -1,5 +1,16 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.5:
+
+* The parser for OSTree Repository URL would incorrectly append paths if the
+  user-supplied URL did not end in a `/`. The returned error message was also
+  not very useful. The parsing has been has been fixed and error messages for
+  various failure cases have been improved.
+
+Contributions from: Achilleas Koutsou, Xiaofeng Wang
+
+— Berlin, 2021-04-23
+
 ## CHANGES WITH 28.4:
 
 * Previously, the guest image for RHEL 8.4 was only usable by QEMU 1.1 and
