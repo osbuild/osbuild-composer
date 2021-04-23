@@ -10,6 +10,7 @@ import (
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	cloudbuildpb "google.golang.org/genproto/googleapis/devtools/cloudbuild/v1"
@@ -19,6 +20,14 @@ import (
 const (
 	GCEImageTypeNamePrefix string = "gce"
 )
+
+func IsGCEImageType(imageType distro.ImageType) bool {
+	return IsGCEImageTypeName(imageType.Name())
+}
+
+func IsGCEImageTypeName(imageTypeName string) bool {
+	return strings.HasPrefix(imageTypeName, GCEImageTypeNamePrefix)
+}
 
 // ComputeImageImport imports a previously uploaded image by submitting a Cloud Build API
 // job. The job builds an image into Compute Engine from an image uploaded to the

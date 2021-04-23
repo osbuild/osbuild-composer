@@ -35,13 +35,22 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 	fixture := fixtureGenerator(tempdir)
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 	repos := []rpmmd.RepoConfig{{Name: "test-id", BaseURL: "http://example.com/test/os/x86_64", CheckGPG: true}}
+	providerRepos := map[string][]rpmmd.RepoConfig{
+		GCPProviderReposStr: {
+			{
+				Name:     "google-compute-engine",
+				BaseURL:  "http://google.example.com/test/os/x86_64",
+				CheckGPG: true,
+			},
+		},
+	}
 	d := test_distro.New()
 	arch, err := d.GetArch("x86_64")
 	if err != nil {
 		panic(err)
 	}
 
-	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
+	return New(rpm, arch, d, repos, providerRepos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -52,13 +61,14 @@ func TestBasic(t *testing.T) {
 	}{
 		{"/api/status", http.StatusOK, `{"api":"1","db_supported":true,"db_version":"0","schema_version":"0","backend":"osbuild-composer","build":"devel","msgs":[]}`},
 
-		{"/api/v0/projects/source/list", http.StatusOK, `{"sources":["test-id"]}`},
+		{"/api/v0/projects/source/list", http.StatusOK, `{"sources":["test-id", "google-compute-engine"]}`},
 
 		{"/api/v0/projects/source/info", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/projects/source/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/projects/source/info/foo", http.StatusOK, `{"errors":[{"id":"UnknownSource","msg":"foo is not a valid source"}],"sources":{}}`},
 		{"/api/v0/projects/source/info/test-id", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
-		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/google-compute-engine", http.StatusOK, `{"sources":{"google-compute-engine":{"name":"google-compute-engine","type":"yum-baseurl","url":"http://google.example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
+		{"/api/v0/projects/source/info/*", http.StatusOK, `{"sources":{"test-id":{"name":"test-id","type":"yum-baseurl","url":"http://example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true},"google-compute-engine":{"name":"google-compute-engine","type":"yum-baseurl","url":"http://google.example.com/test/os/x86_64","check_gpg":true,"check_ssl":true,"system":true}},"errors":[]}`},
 
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
@@ -1007,6 +1017,7 @@ func TestSourcesNew(t *testing.T) {
 		{"POST", "/api/v0/projects/source/new", `{"name": "fish", "type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "ProjectsError","msg": "Problem parsing POST body: 'url' field is missing from request"}],"status":false}`},
 		{"POST", "/api/v0/projects/source/new", `{"name": "fish", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "ProjectsError","msg": "Problem parsing POST body: 'type' field is missing from request"}],"status":false}`},
 		{"POST", "/api/v0/projects/source/new", `{"name": "test-id", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "SystemSource","msg": "test-id is a system source, it cannot be changed."}],"status":false}`},
+		{"POST", "/api/v0/projects/source/new", `{"name": "google-compute-engine", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "SystemSource","msg": "google-compute-engine is a system source, it cannot be changed."}],"status":false}`},
 		{"POST", "/api/v1/projects/source/new", `{"id": "test-id", "name": "test system repo", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "SystemSource","msg": "test-id is a system source, it cannot be changed."}],"status":false}`},
 	}
 
@@ -1211,6 +1222,7 @@ func TestSourcesDelete(t *testing.T) {
 		ExpectedJSON   string
 	}{
 		{"DELETE", "/api/v0/projects/source/delete/", ``, http.StatusNotFound, `{"status":false,"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}]}`},
+		{"DELETE", "/api/v0/projects/source/delete/google-compute-engine", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"SystemSource","msg":"google-compute-engine is a system source, it cannot be deleted."}]}`},
 		{"DELETE", "/api/v0/projects/source/delete/fish", ``, http.StatusOK, `{"status":true}`},
 	}
 

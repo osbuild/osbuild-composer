@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -104,10 +105,31 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 		return fmt.Errorf("Error loading repositories for %s: %v", hostDistro.Name(), err)
 	}
 
+	// Load provider-specific repositories based on available image types
+	providerRepos := make(map[string][]rpmmd.RepoConfig)
+	for _, image_type := range arch.ListImageTypes() {
+		// Google Compute Engine Image types
+		if gcp.IsGCEImageTypeName(image_type) {
+			// There may be more image types for the same cloud provider.
+			// Prevent loading the provider repo multiple times.
+			_, ok := providerRepos[weldr.GCPProviderReposStr]
+			if ok {
+				continue
+			}
+
+			gcpProviderRepos, err := rpmmd.LoadRepositories(repoPaths, name+"-gcp")
+			if err != nil {
+				return fmt.Errorf("loading 'gcp' provider repositories for '%s' failed: %v", name, err)
+			}
+
+			providerRepos[weldr.GCPProviderReposStr] = gcpProviderRepos[archName]
+		}
+	}
+
 	store := store.New(&c.stateDir, arch, c.logger)
 	compatOutputDir := path.Join(c.stateDir, "outputs")
 
-	c.weldr = weldr.New(c.rpm, arch, hostDistro, repos[archName], c.logger, store, c.workers, compatOutputDir)
+	c.weldr = weldr.New(c.rpm, arch, hostDistro, repos[archName], providerRepos, c.logger, store, c.workers, compatOutputDir)
 
 	c.weldrListener = weldrListener
 
