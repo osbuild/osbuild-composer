@@ -3,6 +3,7 @@ package weldr
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -43,6 +44,13 @@ type azureUploadSettings struct {
 
 func (azureUploadSettings) isUploadSettings() {}
 
+type gcpUploadSettings struct {
+	Region string `json:"region"`
+	Bucket string `json:"bucket"`
+}
+
+func (gcpUploadSettings) isUploadSettings() {}
+
 type vmwareUploadSettings struct {
 	Host       string `json:"host"`
 	Username   string `json:"username"`
@@ -79,6 +87,8 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(azureUploadSettings)
 	case "aws":
 		settings = new(awsUploadSettings)
+	case "gcp":
+		settings = new(gcpUploadSettings)
 	case "vmware":
 		settings = new(vmwareUploadSettings)
 	default:
@@ -141,6 +151,12 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				// StorageAccount and StorageAccessKey are intentionally not included.
 			}
 			uploads = append(uploads, upload)
+		case *target.GCPTargetOptions:
+			upload.ProviderName = "gcp"
+			upload.Settings = &gcpUploadSettings{
+				Region: options.Region,
+				Bucket: options.Bucket,
+			}
 		case *target.VMWareTargetOptions:
 			upload.ProviderName = "vmware"
 			upload.Settings = &vmwareUploadSettings{
@@ -183,6 +199,16 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			StorageAccount:   options.StorageAccount,
 			StorageAccessKey: options.StorageAccessKey,
 			Container:        options.Container,
+		}
+	// TODO: it would be probably better to have a different GCP target
+	// with passing information such as credentials for local use case.
+	case *gcpUploadSettings:
+		t.Name = "org.osbuild.gcp"
+		t.Options = &target.GCPTargetOptions{
+			Filename: imageType.Filename(),
+			Region:   options.Region,
+			Bucket:   options.Bucket,
+			Object:   fmt.Sprintf("composer-api-%s", uuid.New().String()),
 		}
 	case *vmwareUploadSettings:
 		t.Name = "org.osbuild.vmware"
