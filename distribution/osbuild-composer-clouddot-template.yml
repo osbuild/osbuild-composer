@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Template
+labels:
+  app: osbuild-composer
+  template: osbuild-composer
+metadata:
+  annotations:
+    description: OCP template for osbuild-composer in cloud.redhat.com
+  name: osbuild-composer
+objects:
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      service: osbuild-composer
+    name: osbuild-composer
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: osbuild-composer
+    strategy:
+      # Update pods 1 at a time
+      type: RollingUpdate
+      rollingUpdate:
+        # Create at most 1 extra pod over .spec.replicas
+        maxSurge: 1
+        # At all times there should be .spec.replicas available
+        maxUnavailable: 0
+    template:
+      metadata:
+        labels:
+          name: osbuild-composer
+      spec:
+        containers:
+        - image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          name: osbuild-composer
+          ports:
+          - name: api
+            containerPort: 443
+            protocol: TCP
+          - name: workers
+            containerPort: 8700
+          volumeMounts:
+          - name: composer-config
+            mountPath: "/etc/osbuild-composer"
+            readOnly: true
+        volumes:
+        - name: composer-config
+          secret:
+            secretName: composer-config
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      service: osbuild-composer
+    name: osbuild-composer
+  spec:
+    ports:
+      - name: composer-api
+        protocol: TCP
+        port: ${{API_LISTENER_PORT}}
+        targetPort: 443
+    selector:
+      name: osbuild-composer
+
+parameters:
+  - description: osbuild-composer image name
+    name: IMAGE_NAME
+    value: quay.io/cloudservices/osbuild-composer
+    required: true
+  - description: image-builder image tag
+    name: IMAGE_TAG
+    required: true
+  - description: api listener port
+    name: API_LISTENER_PORT
+    value: "8080"
