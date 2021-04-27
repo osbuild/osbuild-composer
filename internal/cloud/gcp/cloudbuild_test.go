@@ -407,6 +407,63 @@ ERROR: build step 0 "gcr.io/compute-image-tools/gce_vm_image_import:release" fai
 				},
 			},
 		},
+		{
+			buildLog: `starting build "21eb22bb-b92e-41f7-972d-35e75dae2a2c"
+
+FETCHSOURCE
+BUILD
+Pulling image: gcr.io/compute-image-tools/gce_vm_image_import:release
+release: Pulling from compute-image-tools/gce_vm_image_import
+a352db2f02b6: Pulling fs layer
+8e0ed4351c49: Pulling fs layer
+7ef2d30124da: Pulling fs layer
+7558c9498dac: Pulling fs layer
+ac1adc2a272f: Pulling fs layer
+1bfe08dab915: Pulling fs layer
+d7a35a584f97: Pulling fs layer
+14ef19cde991: Pulling fs layer
+e3a2159de935: Pulling fs layer
+7558c9498dac: Waiting
+ac1adc2a272f: Waiting
+1bfe08dab915: Waiting
+d7a35a584f97: Waiting
+14ef19cde991: Waiting
+e3a2159de935: Waiting
+7ef2d30124da: Verifying Checksum
+7ef2d30124da: Download complete
+7558c9498dac: Verifying Checksum
+7558c9498dac: Download complete
+ac1adc2a272f: Verifying Checksum
+ac1adc2a272f: Download complete
+a352db2f02b6: Verifying Checksum
+a352db2f02b6: Download complete
+8e0ed4351c49: Verifying Checksum
+8e0ed4351c49: Download complete
+14ef19cde991: Verifying Checksum
+14ef19cde991: Download complete
+1bfe08dab915: Verifying Checksum
+1bfe08dab915: Download complete
+e3a2159de935: Verifying Checksum
+e3a2159de935: Download complete
+d7a35a584f97: Verifying Checksum
+d7a35a584f97: Download complete
+a352db2f02b6: Pull complete
+8e0ed4351c49: Pull complete
+7ef2d30124da: Pull complete
+7558c9498dac: Pull complete
+ac1adc2a272f: Pull complete
+1bfe08dab915: Pull complete
+d7a35a584f97: Pull complete
+14ef19cde991: Pull complete
+e3a2159de935: Pull complete
+Digest: sha256:63ab233c04139087154f27797efbebc9e55302f465ffb56e2dce34c2b5bf5d8a
+Status: Downloaded newer image for gcr.io/compute-image-tools/gce_vm_image_import:release
+gcr.io/compute-image-tools/gce_vm_image_import:release
+[import-image]: 2021-04-27T08:08:40Z The resource 'image-8c27cb332db33890146b290a3989198d829ae456dabf96e5a4461147' already exists. Please pick an image name that isn't already used.
+ERROR
+ERROR: build step 0 "gcr.io/compute-image-tools/gce_vm_image_import:release" failed: step exited with non-zero status: 1`,
+			resources: cloudbuildBuildResources{},
+		},
 	}
 
 	for i, tc := range testCases {

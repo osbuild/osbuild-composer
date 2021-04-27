@@ -148,7 +148,7 @@ func (g *GCP) CloudbuildBuildCleanup(ctx context.Context, buildID string) ([]str
 	objects := bucket.Objects(ctx, &storage.Query{Prefix: resources.storageCacheDir.dir})
 	for {
 		objAttrs, err := objects.Next()
-		if err == iterator.Done {
+		if err == iterator.Done || err == storage.ErrBucketNotExist {
 			break
 		}
 		if err != nil {
@@ -178,7 +178,9 @@ func cloudbuildResourcesFromBuildLog(buildLog string) (*cloudbuildBuildResources
 		return &resources, err
 	}
 	zoneMatch := zoneRe.FindStringSubmatch(buildLog)
-	resources.zone = zoneMatch[1]
+	if zoneMatch != nil {
+		resources.zone = zoneMatch[1]
+	}
 
 	// extract Storage cache directory
 	// [inflate]: 2021-03-12T13:13:10Z Workflow GCSPath: gs://ascendant-braid-303513-daisy-bkt-us-central1/gce-image-import-2021-03-12T13:13:08Z-btgtd
@@ -187,8 +189,10 @@ func cloudbuildResourcesFromBuildLog(buildLog string) (*cloudbuildBuildResources
 		return &resources, err
 	}
 	cacheDirMatch := cacheDirRe.FindStringSubmatch(buildLog)
-	resources.storageCacheDir.bucket = cacheDirMatch[1]
-	resources.storageCacheDir.dir = cacheDirMatch[2]
+	if cacheDirMatch != nil {
+		resources.storageCacheDir.bucket = cacheDirMatch[1]
+		resources.storageCacheDir.dir = cacheDirMatch[2]
+	}
 
 	// extract Compute disks
 	// [inflate.setup-disks]: 2021-03-12T13:13:11Z CreateDisks: Creating disk "disk-importer-inflate-7366y".
