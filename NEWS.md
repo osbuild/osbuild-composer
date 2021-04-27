@@ -1,5 +1,13 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.6:
+
+* OSBuild output from new (v2) manifest builds are now stable.
+
+Contributions from: Ondřej Budai
+
+— Berlin, 2021-04-27
+
 ## CHANGES WITH 28.5:
 
 * The parser for OSTree Repository URL would incorrectly append paths if the
