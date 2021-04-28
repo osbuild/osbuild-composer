@@ -44,9 +44,8 @@ type API struct {
 	store   *store.Store
 	workers *worker.Server
 
-	rpmmd  rpmmd.RPMMD
-	distro distro.Distro
-	repos  []rpmmd.RepoConfig
+	rpmmd rpmmd.RPMMD
+	repos []rpmmd.RepoConfig
 
 	logger *log.Logger
 	router *httprouter.Router
@@ -108,7 +107,6 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro,
 	api := &API{
 		store:           store,
 		workers:         workers,
-		distro:          distro,
 		rpmmd:           rpm,
 		repos:           repos,
 		logger:          logger,
@@ -170,7 +168,6 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 	api := &API{
 		store:           store,
 		workers:         workers,
-		distro:          hostDistro,
 		rpmmd:           rpm,
 		repos:           distroRepos[name][common.CurrentArch()],
 		logger:          logger,
@@ -191,6 +188,15 @@ func (api *API) arch(distro string) (distro.Arch, error) {
 		return nil, fmt.Errorf("Unsuppoered distro: %s", distro)
 	}
 	return d.GetArch(archName)
+}
+
+// platformID returns the module platform string for the selected distro
+func (api *API) platformID(distro string) (string, error) {
+	d := api.distros.GetDistro(distro)
+	if d == nil {
+		return "", fmt.Errorf("Unsupported distro: %s", distro)
+	}
+	return d.ModulePlatformID(), nil
 }
 
 func setupRouter(api *API) *API {
@@ -1185,8 +1191,18 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	if modulesRequested {
+		platformID, err := api.platformID(distro)
+		if err != nil {
+			errors := responseError{
+				ID:  "DistroError",
+				Msg: err.Error(),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), distroArch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, platformID, distroArch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1248,6 +1264,16 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
+	platformID, err := api.platformID(distro)
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	// remove leading /
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
@@ -1255,7 +1281,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	packages, _, err := api.rpmmd.Depsolve(
 		rpmmd.PackageSet{Include: names},
 		api.allRepositories(distro, distroArch.Name()),
-		api.distro.ModulePlatformID(),
+		platformID,
 		distroArch.Name())
 
 	if err != nil {
