@@ -45,7 +45,6 @@ type API struct {
 	workers *worker.Server
 
 	rpmmd rpmmd.RPMMD
-	repos []rpmmd.RepoConfig
 
 	logger *log.Logger
 	router *httprouter.Router
@@ -82,10 +81,10 @@ func (cs ComposeState) ToString() string {
 	}
 }
 
-// systemRepoIDs returns a list of the system repos
+// systemRepoNames returns a list of the system repos
 // NOTE: The system repos have no concept of id vs. name so the id is returned
 func (api *API) systemRepoNames() (names []string) {
-	for _, repo := range api.repos {
+	for _, repo := range api.hostRepos() {
 		names = append(names, repo.Name)
 	}
 	return names
@@ -108,7 +107,6 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro,
 		store:           store,
 		workers:         workers,
 		rpmmd:           rpm,
-		repos:           repos,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 		hostDistroName:  distro.Name(),
@@ -169,7 +167,6 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD,
 		store:           store,
 		workers:         workers,
 		rpmmd:           rpm,
-		repos:           distroRepos[name][common.CurrentArch()],
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 		hostDistroName:  name,
@@ -197,6 +194,10 @@ func (api *API) platformID(distro string) (string, error) {
 		return "", fmt.Errorf("Unsupported distro: %s", distro)
 	}
 	return d.ModulePlatformID(), nil
+}
+
+func (api *API) hostRepos() []rpmmd.RepoConfig {
+	return api.distroRepos[api.hostDistroName][common.CurrentArch()]
 }
 
 func setupRouter(api *API) *API {
@@ -598,7 +599,7 @@ func (api *API) sourceEmptyInfoHandler(writer http.ResponseWriter, request *http
 	statusResponseError(writer, http.StatusNotFound, errors)
 }
 
-// getSourceConfigs retrieves the list of sources from the system repos an store
+// getSourceConfigs retrieves the list of sources from the system repos and store
 // Returning a list of store.SourceConfig entries indexed by the id of the source
 func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.SourceConfig, []responseError) {
 	names := params.ByName("sources")
@@ -609,14 +610,14 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 	// if names is "*" we want all sources
 	if names == "*" {
 		sources = api.store.GetAllSourcesByID()
-		for _, repo := range api.repos {
+		for _, repo := range api.hostRepos() {
 			sources[repo.Name] = store.NewSourceConfig(repo, true)
 		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
 			found := false
-			for _, repo := range api.repos {
+			for _, repo := range api.hostRepos() {
 				if name == repo.Name {
 					sources[repo.Name] = store.NewSourceConfig(repo, true)
 					found = true
@@ -1202,7 +1203,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		}
 
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, platformID, distroArch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.hostRepos(), platformID, distroArch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
