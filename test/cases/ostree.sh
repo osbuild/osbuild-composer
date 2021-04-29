@@ -346,7 +346,7 @@ STOPHERE
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
+                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
