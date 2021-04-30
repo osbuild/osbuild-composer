@@ -306,5 +306,16 @@
         }
       }
     }
+  },
+  "gce-byos": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "gce-byos",
+      "repositories": [],
+      "filename": "disk.qcow2",
+      "blueprint": {}
+    },
+    "overrides": {}
   }
 }

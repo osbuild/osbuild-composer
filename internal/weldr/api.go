@@ -29,6 +29,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -43,10 +44,11 @@ type API struct {
 	store   *store.Store
 	workers *worker.Server
 
-	rpmmd  rpmmd.RPMMD
-	arch   distro.Arch
-	distro distro.Distro
-	repos  []rpmmd.RepoConfig
+	rpmmd         rpmmd.RPMMD
+	arch          distro.Arch
+	distro        distro.Distro
+	repos         []rpmmd.RepoConfig
+	providerRepos map[string][]rpmmd.RepoConfig // Repositories specific for a given cloud provider
 
 	logger *log.Logger
 	router *httprouter.Router
@@ -61,6 +63,10 @@ const (
 	ComposeRunning
 	ComposeFinished
 	ComposeFailed
+)
+
+const (
+	GCPProviderReposStr = "gcp"
 )
 
 // ToString converts ImageBuildState into a human readable string
@@ -85,13 +91,20 @@ func (api *API) systemRepoNames() (names []string) {
 	for _, repo := range api.repos {
 		names = append(names, repo.Name)
 	}
+	for _, providerRepos := range api.providerRepos {
+		for _, repo := range providerRepos {
+			names = append(names, repo.Name)
+		}
+	}
 	return names
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig,
+	providerRepos map[string][]rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server,
+	compatOutputDir string) *API {
 	api := &API{
 		store:           store,
 		workers:         workers,
@@ -99,6 +112,7 @@ func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmm
 		arch:            arch,
 		distro:          distro,
 		repos:           repos,
+		providerRepos:   providerRepos, // TODO: repos and providerRepos repository names should not be the same, check it.
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 	}
@@ -471,6 +485,11 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 		for _, repo := range api.repos {
 			sources[repo.Name] = store.NewSourceConfig(repo, true)
 		}
+		for _, providerRepos := range api.providerRepos {
+			for _, repo := range providerRepos {
+				sources[repo.Name] = store.NewSourceConfig(repo, true)
+			}
+		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
@@ -485,6 +504,24 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 			if found {
 				continue
 			}
+
+			// check if the source is one of the provider-specific repos
+			repo := func(name string) *store.SourceConfig {
+				for _, providerRepos := range api.providerRepos {
+					for _, repo := range providerRepos {
+						if name == repo.Name {
+							source := store.NewSourceConfig(repo, true)
+							return &source
+						}
+					}
+				}
+				return nil
+			}(name)
+			if repo != nil {
+				sources[repo.Name] = *repo
+				continue
+			}
+
 			// check if the source is in the store
 			if source := api.store.GetSource(name); source != nil {
 				sources[name] = *source
@@ -1840,11 +1877,34 @@ func ostreeResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
+// providerReposForImageType returns a list of rpmmd.RepoConfig that should be used for the given ImageType in addition
+// to the distribution repositories or any repositories added by the user. If there are no additional repositories
+// needed, nil is returned.
+func (api *API) providerReposForImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
+
+	// Google Compute Engine Image types
+	if gcp.IsGCEImageType(imageType) {
+		gcpProviderRepos, ok := api.providerRepos[GCPProviderReposStr]
+		if !ok {
+			return nil, fmt.Errorf("failed to get GCP provider repositories required for the image type %s", imageType.Name())
+		}
+		return gcpProviderRepos, nil
+	}
+
+	return nil, nil
+}
+
 func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+
+	providerRepos, err := api.providerReposForImageType(imageType)
+	if err != nil {
+		return nil, err
+	}
+
 	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, append(api.allRepositories(), providerRepos...), api.distro.ModulePlatformID(), api.arch.Name())
 		if err != nil {
 			return nil, err
 		}

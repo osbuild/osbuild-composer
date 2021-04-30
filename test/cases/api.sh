@@ -179,7 +179,7 @@ function installClientGCP() {
     sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
 [google-cloud-sdk]
 name=Google Cloud SDK
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
@@ -335,6 +335,16 @@ function createReqFileGCP() {
 
   GCP_IMAGE_NAME="image-$GCP_TEST_ID_HASH"
 
+  case "$DISTRO" in
+    "rhel-8"*|"centos-8")
+      GCP_GUEST_TOOLS_REPO="rhel-8-gcp.json"
+      ;;
+    *)
+      echo "Error: building GCE Image is supported only on RHEL-8 or CentOS-8"
+      exit 1
+      ;;
+  esac
+
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -346,8 +356,8 @@ function createReqFileGCP() {
   "image_requests": [
     {
       "architecture": "$ARCH",
-      "image_type": "vhd",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "image_type": "gce-byos",
+      "repositories": $(jq -s ".[0].\"$ARCH\" + .[1].\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json /usr/share/tests/osbuild-composer/repositories/"$GCP_GUEST_TOOLS_REPO"),
       "upload_request": {
           "type": "gcp",
           "options": {

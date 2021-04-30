@@ -815,6 +815,14 @@ void run_tests(test_type) {
             script: "/usr/libexec/tests/osbuild-composer/aws.sh"
         )
 
+        if (env.GOOGLE_APPLICATION_CREDENTIALS) {
+            // Run the Weldr API test with GCP.
+            sh (
+                label: "Integration test: Weldr (GCP)",
+                script: "/usr/libexec/tests/osbuild-composer/gcp.sh"
+            )
+        }
+
         // Run the API test with AWS.
         sh (
             label: "Integration test: API (AWS)",
