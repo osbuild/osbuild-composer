@@ -50,8 +50,8 @@ func (suite *storeTest) SetupSuite() {
 	}}
 	suite.myPackageSpec = []rpmmd.PackageSpec{rpmmd.PackageSpec{}}
 	suite.myDistro = test_distro.New()
-	suite.myArch, _ = suite.myDistro.GetArch("test_arch")
-	suite.myImageType, _ = suite.myArch.GetImageType("test_type")
+	suite.myArch, _ = suite.myDistro.GetArch(test_distro.TestArchName)
+	suite.myImageType, _ = suite.myArch.GetImageType(test_distro.TestImageTypeName)
 	suite.myManifest, _ = suite.myImageType.Manifest(&suite.myCustomizations, suite.myImageOptions, suite.myRepoConfig, nil, 0)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
@@ -115,7 +115,7 @@ func (suite *storeTest) SetupTest() {
 	tmpDir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
 	suite.NoError(err)
 	distro := test_distro.New()
-	arch, err := distro.GetArch("test_arch")
+	arch, err := distro.GetArch(test_distro.TestArchName)
 	suite.NoError(err)
 	suite.dir = tmpDir
 	suite.myStore = New(&suite.dir, arch, nil)
