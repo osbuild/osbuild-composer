@@ -34,6 +34,11 @@ func Test_imageTypeToCompatString(t *testing.T) {
 	type args struct {
 		input distro.ImageType
 	}
+
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name string
 		args args
@@ -42,9 +47,9 @@ func Test_imageTypeToCompatString(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
-				input: &test_distro.TestImageType{},
+				input: testImageType,
 			},
-			want: "test_type",
+			want: test_distro.TestImageTypeName,
 		},
 	}
 	for _, tt := range tests {
@@ -62,6 +67,11 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 		input string
 		arch  distro.Arch
 	}
+
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name string
 		args args
@@ -70,16 +80,16 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
-				input: "test_type",
-				arch:  &test_distro.TestArch{},
+				input: test_distro.TestImageTypeName,
+				arch:  testArch,
 			},
-			want: &test_distro.TestImageType{},
+			want: testImageType,
 		},
 		{
 			name: "invalid mapping",
 			args: args{
 				input: "foo",
-				arch:  &test_distro.TestArch{},
+				arch:  testArch,
 			},
 			want: nil,
 		},
@@ -87,7 +97,7 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 			name: "invalid distro name",
 			args: args{
 				input: "test_type_invalid",
-				arch:  &test_distro.TestArch{},
+				arch:  testArch,
 			},
 			want: nil,
 		},
@@ -179,6 +189,10 @@ func Test_newStoreFromV0(t *testing.T) {
 		storeStruct storeV0
 		arch        distro.Arch
 	}
+
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+
 	tests := []struct {
 		name string
 		args args
@@ -188,9 +202,9 @@ func Test_newStoreFromV0(t *testing.T) {
 			name: "empty",
 			args: args{
 				storeStruct: storeV0{},
-				arch:        &test_distro.TestArch{},
+				arch:        testArch,
 			},
-			want: New(nil, &test_distro.TestArch{}, nil),
+			want: New(nil, testArch, nil),
 		},
 	}
 	for _, tt := range tests {
@@ -981,6 +995,10 @@ func Test_newComposeV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name    string
 		compose Compose
@@ -992,7 +1010,7 @@ func Test_newComposeV0(t *testing.T) {
 				Blueprint: &bp,
 				ImageBuild: ImageBuild{
 					ID:        0,
-					ImageType: &test_distro.TestImageType{},
+					ImageType: testImageType,
 					Manifest:  []byte("JSON MANIFEST GOES HERE"),
 					Targets: []*target.Target{
 						{
@@ -1067,6 +1085,10 @@ func Test_newComposeFromV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name    string
 		compose composeV0
@@ -1077,20 +1099,20 @@ func Test_newComposeFromV0(t *testing.T) {
 		{
 			name:    "empty",
 			compose: composeV0{},
-			arch:    &test_distro.TestArch{},
+			arch:    testArch,
 			want:    Compose{},
 			errOk:   true,
 		},
 		{
 			name:  "qcow2 compose",
-			arch:  &test_distro.TestArch{},
+			arch:  testArch,
 			errOk: false,
 			compose: composeV0{
 				Blueprint: &bp,
 				ImageBuilds: []imageBuildV0{
 					{
 						ID:        0,
-						ImageType: "test_type",
+						ImageType: test_distro.TestImageTypeName,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
 						Targets: []*target.Target{
 							{
@@ -1119,7 +1141,7 @@ func Test_newComposeFromV0(t *testing.T) {
 				Blueprint: &bp,
 				ImageBuild: ImageBuild{
 					ID:        0,
-					ImageType: &test_distro.TestImageType{},
+					ImageType: testImageType,
 					Manifest:  []byte("JSON MANIFEST GOES HERE"),
 					Targets: []*target.Target{
 						{
@@ -1169,6 +1191,10 @@ func Test_newComposesV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name     string
 		composes map[uuid.UUID]Compose
@@ -1181,7 +1207,7 @@ func Test_newComposesV0(t *testing.T) {
 					Blueprint: &bp,
 					ImageBuild: ImageBuild{
 						ID:        0,
-						ImageType: &test_distro.TestImageType{},
+						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
 						Targets: []*target.Target{
 							{
@@ -1209,7 +1235,7 @@ func Test_newComposesV0(t *testing.T) {
 					Blueprint: &bp,
 					ImageBuild: ImageBuild{
 						ID:        0,
-						ImageType: &test_distro.TestImageType{},
+						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
 						Targets: []*target.Target{
 							{
@@ -1240,7 +1266,7 @@ func Test_newComposesV0(t *testing.T) {
 					ImageBuilds: []imageBuildV0{
 						imageBuildV0{
 							ID:        0,
-							ImageType: "test_type",
+							ImageType: test_distro.TestImageTypeName,
 							Manifest:  []byte("JSON MANIFEST GOES HERE"),
 							Targets: []*target.Target{
 								{
@@ -1271,7 +1297,7 @@ func Test_newComposesV0(t *testing.T) {
 					ImageBuilds: []imageBuildV0{
 						imageBuildV0{
 							ID:        0,
-							ImageType: "test_type",
+							ImageType: test_distro.TestImageTypeName,
 							Manifest:  []byte("JSON MANIFEST GOES HERE"),
 							Targets: []*target.Target{
 								{
@@ -1318,6 +1344,10 @@ func Test_newComposesFromV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name     string
 		arch     distro.Arch
@@ -1326,13 +1356,13 @@ func Test_newComposesFromV0(t *testing.T) {
 	}{
 		{
 			name:     "empty",
-			arch:     &test_distro.TestArch{},
+			arch:     testArch,
 			composes: composesV0{},
 			want:     make(map[uuid.UUID]Compose),
 		},
 		{
 			name: "two composes",
-			arch: &test_distro.TestArch{},
+			arch: testArch,
 			composes: composesV0{
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
@@ -1400,7 +1430,7 @@ func Test_newComposesFromV0(t *testing.T) {
 					Blueprint: &bp,
 					ImageBuild: ImageBuild{
 						ID:        0,
-						ImageType: &test_distro.TestImageType{},
+						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
 						Targets: []*target.Target{
 							{
@@ -1429,7 +1459,7 @@ func Test_newComposesFromV0(t *testing.T) {
 					Blueprint: &bp,
 					ImageBuild: ImageBuild{
 						ID:        0,
-						ImageType: &test_distro.TestImageType{},
+						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
 						Targets: []*target.Target{
 							{
@@ -1467,6 +1497,10 @@ func Test_newComposesFromV0(t *testing.T) {
 }
 
 func Test_newImageBuildFromV0(t *testing.T) {
+	testDistro := test_distro.New()
+	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+
 	tests := []struct {
 		name  string
 		arch  distro.Arch
@@ -1476,18 +1510,18 @@ func Test_newImageBuildFromV0(t *testing.T) {
 	}{
 		{
 			name:  "empty",
-			arch:  &test_distro.TestArch{},
+			arch:  testArch,
 			errOk: true,
 			ib:    imageBuildV0{},
 			want:  ImageBuild{},
 		},
 		{
 			name:  "qcow2 image build",
-			arch:  &test_distro.TestArch{},
+			arch:  testArch,
 			errOk: false,
 			ib: imageBuildV0{
 				ID:        0,
-				ImageType: "test_type",
+				ImageType: test_distro.TestImageTypeName,
 				Manifest:  []byte("JSON MANIFEST GOES HERE"),
 				Targets: []*target.Target{
 					{
@@ -1512,7 +1546,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 			},
 			want: ImageBuild{
 				ID:        0,
-				ImageType: &test_distro.TestImageType{},
+				ImageType: testImageType,
 				Manifest:  []byte("JSON MANIFEST GOES HERE"),
 				Targets: []*target.Target{
 					{

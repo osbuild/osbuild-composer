@@ -3,6 +3,7 @@ package test_distro
 import (
 	"encoding/json"
 	"errors"
+	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -10,49 +11,121 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-type TestDistro struct{}
-type TestArch struct{}
-type TestImageType struct{}
+type TestDistro struct {
+	name             string
+	modulePlatformID string
+	arches           map[string]distro.Arch
+}
 
-const name = "test-distro"
-const modulePlatformID = "platform:test"
+type TestArch struct {
+	distribution *TestDistro
+	name         string
+	imageTypes   map[string]distro.ImageType
+}
+
+type TestImageType struct {
+	architecture *TestArch
+	name         string
+}
+
+const (
+	TestDistroName              = "test-distro"
+	TestDistro2Name             = "test-distro-2"
+	TestDistroModulePlatformID  = "platform:test"
+	TestDistro2ModulePlatformID = "platform:test-2"
+
+	TestArchName  = "test_arch"
+	TestArch2Name = "test_arch2"
+
+	TestImageTypeName  = "test_type"
+	TestImageType2Name = "test_type2"
+)
+
+// TestDistro
+
+func (d *TestDistro) Name() string {
+	return d.name
+}
+
+func (d *TestDistro) ModulePlatformID() string {
+	return d.modulePlatformID
+}
 
 func (d *TestDistro) ListArches() []string {
-	return []string{"test_arch"}
-}
-
-func (a *TestArch) Distro() distro.Distro {
-	return &TestDistro{}
-}
-
-func (t *TestImageType) Arch() distro.Arch {
-	return &TestArch{}
+	archs := make([]string, 0, len(d.arches))
+	for name := range d.arches {
+		archs = append(archs, name)
+	}
+	sort.Strings(archs)
+	return archs
 }
 
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
-	if arch != "test_arch" {
+	a, exists := d.arches[arch]
+	if !exists {
 		return nil, errors.New("invalid arch: " + arch)
 	}
-	return &TestArch{}, nil
+	return a, nil
 }
 
+func (d *TestDistro) addArches(arches ...*TestArch) {
+	if d.arches == nil {
+		d.arches = map[string]distro.Arch{}
+	}
+
+	for _, a := range arches {
+		a.distribution = d
+		d.arches[a.Name()] = a
+	}
+}
+
+// TestArch
+
 func (a *TestArch) Name() string {
-	return "test_arch"
+	return a.name
+}
+
+func (a *TestArch) Distro() distro.Distro {
+	return a.distribution
 }
 
 func (a *TestArch) ListImageTypes() []string {
-	return []string{"test_type"}
+	formats := make([]string, 0, len(a.imageTypes))
+	for name := range a.imageTypes {
+		formats = append(formats, name)
+	}
+	sort.Strings(formats)
+	return formats
 }
 
 func (a *TestArch) GetImageType(imageType string) (distro.ImageType, error) {
-	if imageType != "test_type" {
+	t, exists := a.imageTypes[imageType]
+	if !exists {
 		return nil, errors.New("invalid image type: " + imageType)
 	}
-	return &TestImageType{}, nil
+
+	return t, nil
 }
 
+func (a *TestArch) addImageTypes(imageTypes ...TestImageType) {
+	if a.imageTypes == nil {
+		a.imageTypes = map[string]distro.ImageType{}
+	}
+	for idx := range imageTypes {
+		it := imageTypes[idx]
+		it.architecture = a
+		a.imageTypes[it.Name()] = &it
+	}
+}
+
+// TestImageType
+
 func (t *TestImageType) Name() string {
-	return "test_type"
+	return t.name
+}
+
+func (t *TestImageType) Arch() distro.Arch {
+	return t.architecture
 }
 
 func (t *TestImageType) Filename() string {
@@ -95,22 +168,48 @@ func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.Ima
 	)
 }
 
-func New() *TestDistro {
-	return &TestDistro{}
-}
-
-func (d *TestDistro) Name() string {
-	return name
-}
-
-func (d *TestDistro) ModulePlatformID() string {
-	return modulePlatformID
-}
-
-func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, error) {
-	if outputFormat == "test_format" {
-		return "test.img", "application/x-test", nil
+// newTestDistro returns a new instance of TestDistro with the
+// given name and modulePlatformID.
+//
+// It contains two architectures "test_arch" and "test_arch2".
+// "test_arch" contains one image type "test_type".
+// "test_arch2" contains two image types "test_type" and "test_type2".
+func newTestDistro(name, modulePlatformID string) *TestDistro {
+	td := TestDistro{
+		name:             name,
+		modulePlatformID: modulePlatformID,
 	}
 
-	return "", "", errors.New("invalid output format: " + outputFormat)
+	ta1 := TestArch{
+		name: TestArchName,
+	}
+
+	ta2 := TestArch{
+		name: TestArch2Name,
+	}
+
+	it1 := TestImageType{
+		name: TestImageTypeName,
+	}
+
+	it2 := TestImageType{
+		name: TestImageType2Name,
+	}
+
+	ta1.addImageTypes(it1)
+	ta2.addImageTypes(it1, it2)
+
+	td.addArches(&ta1, &ta2)
+
+	return &td
+}
+
+// New returns new instance of TestDistro named "test-distro".
+func New() *TestDistro {
+	return newTestDistro(TestDistroName, TestDistroModulePlatformID)
+}
+
+// New2 returns new instance of TestDistro named "test-distro-2".
+func New2() *TestDistro {
+	return newTestDistro(TestDistro2Name, TestDistro2ModulePlatformID)
 }
