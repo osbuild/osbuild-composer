@@ -53,7 +53,7 @@ func TestLoadRepositoriesExisting(t *testing.T) {
 			},
 			want: map[string][]string{
 				test_distro.TestArchName:  {"baseos-p2", "appstream-p2"},
-				test_distro.TestArch2Name: {"baseos-p2", "appstream-p2"},
+				test_distro.TestArch2Name: {"baseos-p2", "appstream-p2", "google-compute-engine", "google-cloud-sdk"},
 			},
 		},
 	}
@@ -85,4 +85,61 @@ func TestLoadRepositoriesNonExisting(t *testing.T) {
 	repos, err := rpmmd.LoadRepositories(confPaths, "my-imaginary-distro")
 	assert.Nil(t, repos)
 	assert.NotNil(t, err)
+}
+
+func Test_LoadAllRepositories(t *testing.T) {
+	confPaths := getConfPaths(t)
+
+	distroReposMap, err := rpmmd.LoadAllRepositories(confPaths)
+	assert.NotNil(t, distroReposMap)
+	assert.Nil(t, err)
+	assert.Equal(t, len(distroReposMap), 2)
+
+	// test-distro
+	testDistroRepos, exists := distroReposMap[test_distro.TestDistroName]
+	assert.True(t, exists)
+	assert.Equal(t, len(testDistroRepos), 2)
+
+	// test-distro - arches
+	for _, arch := range []string{test_distro.TestArchName, test_distro.TestArch2Name} {
+		testDistroArchRepos, exists := testDistroRepos[arch]
+		assert.True(t, exists)
+		assert.Equal(t, len(testDistroArchRepos), 4)
+
+		var repoNames []string
+		for _, r := range testDistroArchRepos {
+			repoNames = append(repoNames, r.Name)
+		}
+
+		wantRepos := []string{"fedora-p1", "updates-p1", "fedora-modular-p1", "updates-modular-p1"}
+
+		if !reflect.DeepEqual(repoNames, wantRepos) {
+			t.Errorf("LoadAllRepositories() for %s/%s =\n got: %#v\n want: %#v", test_distro.TestDistroName, arch, repoNames, wantRepos)
+		}
+	}
+
+	// test-distro-2
+	testDistro2Repos, exists := distroReposMap[test_distro.TestDistro2Name]
+	assert.True(t, exists)
+	assert.Equal(t, len(testDistro2Repos), 2)
+
+	// test-distro-2 - arches
+	wantRepos := map[string][]string{
+		test_distro.TestArchName:  {"baseos-p2", "appstream-p2"},
+		test_distro.TestArch2Name: {"baseos-p2", "appstream-p2", "google-compute-engine", "google-cloud-sdk"},
+	}
+	for _, arch := range []string{test_distro.TestArchName, test_distro.TestArch2Name} {
+		testDistro2ArchRepos, exists := testDistro2Repos[arch]
+		assert.True(t, exists)
+		assert.Equal(t, len(testDistro2ArchRepos), len(wantRepos[arch]))
+
+		var repoNames []string
+		for _, r := range testDistro2ArchRepos {
+			repoNames = append(repoNames, r.Name)
+		}
+
+		if !reflect.DeepEqual(repoNames, wantRepos[arch]) {
+			t.Errorf("LoadAllRepositories() for %s/%s =\n got: %#v\n want: %#v", test_distro.TestDistro2Name, arch, repoNames, wantRepos[arch])
+		}
+	}
 }
