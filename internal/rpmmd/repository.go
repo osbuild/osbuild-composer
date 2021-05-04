@@ -210,21 +210,10 @@ func getRHSMSecrets() *RHSMSecrets {
 	return nil
 }
 
-func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
-	var f *os.File
-	var err error
-	path := "/repositories/" + distro + ".json"
-
-	for _, confPath := range confPaths {
-		f, err = os.Open(confPath + path)
-		if err == nil {
-			break
-		} else if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
+func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
+	f, err := os.Open(filename)
 	if err != nil {
-		return nil, &RepositoryError{"LoadRepositories failed: none of the provided paths contain distro configuration"}
+		return nil, err
 	}
 	defer f.Close()
 
@@ -252,6 +241,37 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 			repoConfigs[arch] = append(repoConfigs[arch], config)
 		}
 	}
+
+	return repoConfigs, nil
+}
+
+// LoadRepositories loads distribution repositories from the given list of paths.
+// If there are duplicate distro repositories definitions found in multiple paths, the first
+// encounter is preferred. For this reason, the order of paths in the passed list should
+// reflect the desired preference.
+func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
+	var repoConfigs map[string][]RepoConfig
+	path := "/repositories/" + distro + ".json"
+
+	for _, confPath := range confPaths {
+		var err error
+		repoConfigs, err = loadRepositoriesFromFile(confPath + path)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+
+		// Found the distro repository configs in the current path
+		if repoConfigs != nil {
+			break
+		}
+	}
+
+	if repoConfigs == nil {
+		return nil, &RepositoryError{"LoadRepositories failed: none of the provided paths contain distro configuration"}
+	}
+
 	return repoConfigs, nil
 }
 
