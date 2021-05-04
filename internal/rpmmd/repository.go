@@ -16,14 +16,15 @@ import (
 )
 
 type repository struct {
-	Name           string `json:"name"`
-	BaseURL        string `json:"baseurl,omitempty"`
-	Metalink       string `json:"metalink,omitempty"`
-	MirrorList     string `json:"mirrorlist,omitempty"`
-	GPGKey         string `json:"gpgkey,omitempty"`
-	CheckGPG       bool   `json:"check_gpg,omitempty"`
-	RHSM           bool   `json:"rhsm,omitempty"`
-	MetadataExpire string `json:"metadata_expire,omitempty"`
+	Name           string   `json:"name"`
+	BaseURL        string   `json:"baseurl,omitempty"`
+	Metalink       string   `json:"metalink,omitempty"`
+	MirrorList     string   `json:"mirrorlist,omitempty"`
+	GPGKey         string   `json:"gpgkey,omitempty"`
+	CheckGPG       bool     `json:"check_gpg,omitempty"`
+	RHSM           bool     `json:"rhsm,omitempty"`
+	MetadataExpire string   `json:"metadata_expire,omitempty"`
+	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 }
 
 type dnfRepoConfig struct {
@@ -49,7 +50,10 @@ type RepoConfig struct {
 	IgnoreSSL      bool
 	MetadataExpire string
 	RHSM           bool
+	ImageTypeTags  []string
 }
+
+type DistrosRepoConfigs map[string]map[string][]RepoConfig
 
 type PackageList []Package
 
@@ -236,6 +240,7 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 				CheckGPG:       repo.CheckGPG,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,
+				ImageTypeTags:  repo.ImageTypeTags,
 			}
 
 			repoConfigs[arch] = append(repoConfigs[arch], config)
@@ -243,6 +248,50 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 	}
 
 	return repoConfigs, nil
+}
+
+// LoadAllRepositories loads all repositories for given distros from the given list of paths.
+// Behavior is the same as with the LoadRepositories() method.
+func LoadAllRepositories(confPaths []string) (DistrosRepoConfigs, error) {
+	distrosRepoConfigs := DistrosRepoConfigs{}
+
+	for _, confPath := range confPaths {
+		reposPath := filepath.Join(confPath, "repositories")
+
+		fileEntries, err := ioutil.ReadDir(reposPath)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+
+		for _, fileEntry := range fileEntries {
+			// Skip all directories
+			if fileEntry.IsDir() {
+				continue
+			}
+
+			// distro repositories definition is expected to be named "<distro_name>.json"
+			if strings.HasSuffix(fileEntry.Name(), ".json") {
+				distro := strings.TrimSuffix(fileEntry.Name(), ".json")
+
+				// skip the distro repos definition, if it has been already read
+				_, ok := distrosRepoConfigs[distro]
+				if ok {
+					continue
+				}
+
+				distroRepos, err := loadRepositoriesFromFile(filepath.Join(reposPath, fileEntry.Name()))
+				if err != nil {
+					return nil, err
+				}
+
+				distrosRepoConfigs[distro] = distroRepos
+			}
+		}
+	}
+
+	return distrosRepoConfigs, nil
 }
 
 // LoadRepositories loads distribution repositories from the given list of paths.
