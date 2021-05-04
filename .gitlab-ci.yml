@@ -8,6 +8,7 @@ stages:
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
+    - schutzbot/run_cloud_cleaner.sh
   tags:
     - terraform
   artifacts:
@@ -80,6 +81,34 @@ OSTree:
       - RUNNER:
           - openstack/fedora-33-x86_64
           - openstack/rhel-8-x86_64
+
+Integration:
+  stage: test
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/koji.sh
+    - /usr/libexec/tests/osbuild-composer/libvirt.sh
+    - /usr/libexec/tests/osbuild-composer/aws.sh
+    - /usr/libexec/tests/osbuild-composer/azure.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh azure
+    - /usr/libexec/tests/osbuild-composer/api.sh aws
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-32-x86_64
+          - aws/fedora-33-x86_64
+          - aws/centos-stream-8-x86_64
+      - RUNNER:
+          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - RUNNER:
+          - aws/rhel-8-x86_64
+        INTERNAL_NETWORK: ["true"]
+        DISTRO_CODE: ["rhel_90"]
 
 finish:
   stage: finish

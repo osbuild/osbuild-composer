@@ -815,34 +815,41 @@ void run_tests(test_type) {
 
     if (test_type == 'integration') {
         // Run Koji tests.
-        sh (
-            label: "Koji tests",
-            script: "/usr/libexec/tests/osbuild-composer/koji.sh"
-        )
+        if (env.BUILD_CAUSE == 'cron') {
+            sh (
+                label: "Koji tests",
+                script: "/usr/libexec/tests/osbuild-composer/koji.sh"
+            )
 
-        // Run the libvirt test.
-        sh (
-            label: "Integration test: libvirt",
-            script: "/usr/libexec/tests/osbuild-composer/libvirt.sh"
-        )
+            // Run the libvirt test.
+            sh (
+                label: "Integration test: libvirt",
+                script: "/usr/libexec/tests/osbuild-composer/libvirt.sh"
+            )
 
-        // Run the AWS test.
-        sh (
-            label: "Integration test: AWS",
-            script: "/usr/libexec/tests/osbuild-composer/aws.sh"
-        )
+            // Run the AWS test.
+            sh (
+                label: "Integration test: AWS",
+                script: "/usr/libexec/tests/osbuild-composer/aws.sh"
+            )
 
-        // Run the Azure test.
-        sh (
-            label: "Integration test: AZURE",
-            script: "/usr/libexec/tests/osbuild-composer/azure.sh"
-        )
+            // Run the Azure test.
+            sh (
+                label: "Integration test: AZURE",
+                script: "/usr/libexec/tests/osbuild-composer/azure.sh"
+            )
 
-        // Run the API test with AWS.
-        sh (
-            label: "Integration test: API (AWS)",
-            script: "/usr/libexec/tests/osbuild-composer/api.sh aws"
-        )
+            // Run the API test with AWS.
+            sh (
+                label: "Integration test: API (AWS)",
+                script: "/usr/libexec/tests/osbuild-composer/api.sh aws"
+            )
+
+            sh (
+                label: "Integration test: API (Azure)",
+                script: "/usr/libexec/tests/osbuild-composer/api.sh azure"
+            )
+        }
 
         if (env.GOOGLE_APPLICATION_CREDENTIALS) {
             // Run the API test with GCP.
@@ -851,11 +858,6 @@ void run_tests(test_type) {
                 script: "/usr/libexec/tests/osbuild-composer/api.sh gcp"
             )
         }
-
-        sh (
-            label: "Integration test: API (Azure)",
-            script: "/usr/libexec/tests/osbuild-composer/api.sh azure"
-        )
 
         if (env.VCENTER_CREDS) {
             // Run the VMWare test.
