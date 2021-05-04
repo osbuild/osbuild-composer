@@ -303,6 +303,7 @@ for LOOP_COUNTER in $(seq 0 ${MAX_LOOPS}); do
         echo "Smoke test passed! 🥳"
         break
     fi
+    echo "Machine is not ready yet, retrying connection."
     sleep 10
 done
 

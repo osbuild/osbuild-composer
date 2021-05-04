@@ -130,7 +130,7 @@ function cleanupAzure() {
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
     set +e
-    $AZURE_CMD image delete --resource-group sharing-research --name "$AZURE_IMAGE_NAME"
+    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
 
     # find a storage account by its tag
     AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)

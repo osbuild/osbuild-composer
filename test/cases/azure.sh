@@ -3,6 +3,8 @@ set -euo pipefail
 
 source /etc/os-release
 DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
+BUILD_ID="${BUILD_ID:-${CI_PIPELINE_ID}}"
 
 # Colorful output.
 function greenprint {
@@ -102,11 +104,16 @@ get_compose_metadata () {
     cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
-# Export Azure credentials
-exec 4<"$AZURE_CREDS"
-readarray -t -u 4 vars
-for line in "${vars[@]}"; do export "${line?}"; done
-exec 4<&-
+# Export Azure credentials if running on Jenkins
+set +u
+if [ -n "$AZURE_CREDS" ]
+then
+    exec 4<"$AZURE_CREDS"
+    readarray -t -u 4 vars
+    for line in "${vars[@]}"; do export "${line?}"; done
+    exec 4<&-
+fi
+set -u
 
 # Write an Azure TOML file
 tee "$AZURE_CONFIG" > /dev/null << EOF
