@@ -6,6 +6,7 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
+DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
 # Colorful output.
 function greenprint {

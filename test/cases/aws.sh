@@ -4,6 +4,7 @@ set -euo pipefail
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 source /etc/os-release
+DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
 # Colorful output.
 function greenprint {

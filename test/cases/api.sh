@@ -14,6 +14,9 @@
 
 set -euxo pipefail
 
+source /etc/os-release
+DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+
 #TODO: remove this once there is rhel9 support for necessary image types
 if [[ $DISTRO_CODE == rhel_90 ]]; then
     echo "Skipped"

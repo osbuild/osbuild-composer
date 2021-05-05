@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source /etc/os-release
+DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
 # Colorful output.
 function greenprint {

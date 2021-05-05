@@ -4,6 +4,7 @@ set -euo pipefail
 # Get OS and architecture details.
 source /etc/os-release
 ARCH=$(uname -m)
+DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 IMAGE_TEST_CASE_RUNNER=/usr/libexec/osbuild-composer-test/osbuild-image-tests
