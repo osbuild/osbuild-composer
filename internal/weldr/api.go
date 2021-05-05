@@ -33,6 +33,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -43,10 +44,10 @@ type API struct {
 	store   *store.Store
 	workers *worker.Server
 
-	rpmmd  rpmmd.RPMMD
-	arch   distro.Arch
-	distro distro.Distro
-	repos  []rpmmd.RepoConfig
+	rpmmd        rpmmd.RPMMD
+	arch         distro.Arch
+	distro       distro.Distro
+	repoRegistry *reporegistry.RepoRegistry
 
 	logger *log.Logger
 	router *httprouter.Router
@@ -82,8 +83,11 @@ func (cs ComposeState) ToString() string {
 // systemRepoIDs returns a list of the system repos
 // NOTE: The system repos have no concept of id vs. name so the id is returned
 func (api *API) systemRepoNames() (names []string) {
-	for _, repo := range api.repos {
-		names = append(names, repo.Name)
+	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	if err == nil {
+		for _, repo := range repos {
+			names = append(names, repo.Name)
+		}
 	}
 	return names
 }
@@ -91,14 +95,14 @@ func (api *API) systemRepoNames() (names []string) {
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repos []rpmmd.RepoConfig, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repoRegistry *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
 	api := &API{
 		store:           store,
 		workers:         workers,
 		rpmmd:           rpmmd,
 		arch:            arch,
 		distro:          distro,
-		repos:           repos,
+		repoRegistry:    repoRegistry,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 	}
@@ -465,17 +469,26 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 	sources := map[string]store.SourceConfig{}
 	errors := []responseError{}
 
+	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	if err != nil {
+		error := responseError{
+			ID:  "InternalError",
+			Msg: fmt.Sprintf("error while getting system repos: %v", err),
+		}
+		errors = append(errors, error)
+	}
+
 	// if names is "*" we want all sources
 	if names == "*" {
 		sources = api.store.GetAllSourcesByID()
-		for _, repo := range api.repos {
+		for _, repo := range repos {
 			sources[repo.Name] = store.NewSourceConfig(repo, true)
 		}
 	} else {
 		for _, name := range strings.Split(names, ",") {
 			// check if the source is one of the base repos
 			found := false
-			for _, repo := range api.repos {
+			for _, repo := range repos {
 				if name == repo.Name {
 					sources[repo.Name] = store.NewSourceConfig(repo, true)
 					found = true
@@ -1008,8 +1021,18 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	packageInfos := foundPackages.ToPackageInfos()
 
 	if modulesRequested {
+		repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+		if err != nil {
+			errors := responseError{
+				ID:  "InternalError",
+				Msg: fmt.Sprintf("error while getting system repos: %v", err),
+			}
+			statusResponseError(writer, http.StatusBadRequest, errors)
+			return
+		}
+
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, repos, api.distro.ModulePlatformID(), api.arch.Name())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1053,7 +1076,17 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	if err != nil {
+		errors := responseError{
+			ID:  "InternalError",
+			Msg: fmt.Sprintf("error while getting system repos: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, repos, api.distro.ModulePlatformID(), api.arch.Name())
 
 	if err != nil {
 		errors := responseError{
@@ -1843,8 +1876,14 @@ func ostreeResolveRef(location, ref string) (string, error) {
 func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+
+	imageTypeRepos, err := api.allRepositoriesByImageType(imageType)
+	if err != nil {
+		return nil, err
+	}
+
 	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, imageTypeRepos, api.distro.ModulePlatformID(), api.arch.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -2003,6 +2042,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
+	imageRepos, err := api.allRepositoriesByImageType(imageType)
+	// this shoudl not happen if the api.depsolveBlueprintForImageType() call above worked
+	if err != nil {
+		errors := responseError{
+			ID:  "InternalError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
 			Size: size,
@@ -2012,7 +2062,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				URL:    cr.OSTree.URL,
 			},
 		},
-		api.allRepositories(),
+		imageRepos,
 		packageSets,
 		seed)
 	if err != nil {
@@ -2755,21 +2805,55 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	packages, _, err := api.rpmmd.FetchMetadata(api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+	repos, err := api.allRepositories()
+	if err != nil {
+		return nil, err
+	}
+
+	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID(), api.arch.Name())
 	return packages, err
 }
 
-// Returns all configured repositories (base + sources) as rpmmd.RepoConfig
-func (api *API) allRepositories() []rpmmd.RepoConfig {
-	repos := append([]rpmmd.RepoConfig{}, api.repos...)
+// Returns all configured repositories (base, depending on the image type + sources) as rpmmd.RepoConfig
+// The difference from allRepositories() is that this method may return additional repositories,
+// which are needed to build the specific image type. The allRepositories() can't do this, because
+// it is used in paces where image types are not considered.
+func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
+	imageTypeRepos, err := api.repoRegistry.ReposByImageType(imageType)
+	if err != nil {
+		return nil, err
+	}
+
+	repos := append([]rpmmd.RepoConfig{}, imageTypeRepos...)
 	for id, source := range api.store.GetAllSourcesByID() {
 		repos = append(repos, source.RepoConfig(id))
 	}
-	return repos
+
+	return repos, nil
+}
+
+// Returns all configured repositories (base + sources) as rpmmd.RepoConfig
+func (api *API) allRepositories() ([]rpmmd.RepoConfig, error) {
+	archRepos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	if err != nil {
+		return nil, err
+	}
+
+	repos := append([]rpmmd.RepoConfig{}, archRepos...)
+	for id, source := range api.store.GetAllSourcesByID() {
+		repos = append(repos, source.RepoConfig(id))
+	}
+
+	return repos, nil
 }
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+	repos, err := api.allRepositories()
+	if err != nil {
+		return nil, err
+	}
+
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, api.distro.ModulePlatformID(), api.arch.Name())
 	if err != nil {
 		return nil, err
 	}
