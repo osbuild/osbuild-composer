@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Composer struct {
@@ -178,6 +179,7 @@ func (c *Composer) Start() error {
 			// handler functions don't.
 			mux.Handle(apiRoute+"/", c.api.Handler(apiRoute, c.config.ComposerAPI.IdentityFilter))
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
+			mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
 
 			s := &http.Server{
 				ErrorLog: c.logger,
