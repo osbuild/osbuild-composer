@@ -225,3 +225,180 @@ func TestInvalidReposByImageTypeName(t *testing.T) {
 		})
 	}
 }
+
+func TestReposByArch(t *testing.T) {
+	rr := getTestingRepoRegistry()
+	testDistro := test_distro.New()
+
+	ta, _ := testDistro.GetArch(test_distro.TestArchName)
+	ta2, _ := testDistro.GetArch(test_distro.TestArch2Name)
+
+	type args struct {
+		arch        distro.Arch
+		taggedRepos bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "Test Arch 1, without tagged repos",
+			args: args{
+				arch:        ta,
+				taggedRepos: false,
+			},
+			want: []string{"baseos", "appstream"},
+		},
+		{
+			name: "Test Arch 1, with tagged repos",
+			args: args{
+				arch:        ta,
+				taggedRepos: true,
+			},
+			want: []string{"baseos", "appstream"},
+		},
+		{
+			name: "Test Arch 2, without tagged repos",
+			args: args{
+				arch:        ta2,
+				taggedRepos: false,
+			},
+			want: []string{"baseos", "appstream"},
+		},
+		{
+			name: "Test Arch 2, with tagged repos",
+			args: args{
+				arch:        ta2,
+				taggedRepos: true,
+			},
+			want: []string{"baseos", "appstream", "google-compute-engine", "google-cloud-sdk"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := rr.ReposByArch(tt.args.arch, tt.args.taggedRepos)
+			assert.Nil(t, err)
+
+			var gotNames []string
+			for _, r := range got {
+				gotNames = append(gotNames, r.Name)
+			}
+
+			if !reflect.DeepEqual(gotNames, tt.want) {
+				t.Errorf("ReposByArch() =\n got: %#v\n want: %#v", gotNames, tt.want)
+			}
+
+			got, err = rr.reposByArchName(tt.args.arch.Distro().Name(), tt.args.arch.Name(), tt.args.taggedRepos)
+			assert.Nil(t, err)
+			gotNames = []string{}
+			for _, r := range got {
+				gotNames = append(gotNames, r.Name)
+			}
+
+			if !reflect.DeepEqual(gotNames, tt.want) {
+				t.Errorf("reposByArchName() =\n got: %#v\n want: %#v", gotNames, tt.want)
+			}
+		})
+	}
+}
+
+// TestInvalidReposByArch tests return values from ReposByArch
+// for invalid arch value
+func TestInvalidReposByArch(t *testing.T) {
+	rr := getTestingRepoRegistry()
+
+	ta := test_distro.TestArch{}
+
+	repos, err := rr.ReposByArch(&ta, false)
+	assert.Nil(t, repos)
+	assert.NotNil(t, err)
+
+	repos, err = rr.ReposByArch(&ta, true)
+	assert.Nil(t, repos)
+	assert.NotNil(t, err)
+}
+
+// TestInvalidReposByArchName tests return values from reposByArchName
+// for invalid distro name and arch
+func TestInvalidReposByArchName(t *testing.T) {
+	rr := getTestingRepoRegistry()
+
+	type args struct {
+		distro      string
+		arch        string
+		taggedRepos bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want func(repos []rpmmd.RepoConfig, err error) bool
+	}{
+		{
+			name: "invalid distro, valid arch, without tagged repos",
+			args: args{
+				distro:      test_distro.TestDistroName + "-invalid",
+				arch:        test_distro.TestArch2Name,
+				taggedRepos: false,
+			},
+			want: func(repos []rpmmd.RepoConfig, err error) bool {
+				// the list of repos should be nil and an error should be returned
+				if repos != nil || err == nil {
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name: "invalid distro, valid arch, with tagged repos",
+			args: args{
+				distro:      test_distro.TestDistroName + "-invalid",
+				arch:        test_distro.TestArch2Name,
+				taggedRepos: true,
+			},
+			want: func(repos []rpmmd.RepoConfig, err error) bool {
+				// the list of repos should be nil and an error should be returned
+				if repos != nil || err == nil {
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name: "invalid arch, valid distro, without tagged repos",
+			args: args{
+				distro:      test_distro.TestDistroName,
+				arch:        test_distro.TestArch2Name + "-invalid",
+				taggedRepos: false,
+			},
+			want: func(repos []rpmmd.RepoConfig, err error) bool {
+				// the list of repos should be nil and an error should be returned
+				if repos != nil || err == nil {
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name: "invalid arch, valid distro, with tagged repos",
+			args: args{
+				distro:      test_distro.TestDistroName,
+				arch:        test_distro.TestArch2Name + "-invalid",
+				taggedRepos: true,
+			},
+			want: func(repos []rpmmd.RepoConfig, err error) bool {
+				// the list of repos should be nil and an error should be returned
+				if repos != nil || err == nil {
+					return false
+				}
+				return true
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := rr.reposByArchName(tt.args.distro, tt.args.arch, tt.args.taggedRepos)
+			assert.True(t, tt.want(got, err))
+		})
+	}
+}

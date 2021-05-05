@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
+	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
@@ -85,15 +86,21 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 		return fmt.Errorf("Host distro does not support host architecture: %v", err)
 	}
 
-	repos, err := rpmmd.LoadRepositories(repoPaths, hostDistro.Name())
+	rr, err := reporegistry.New(repoPaths)
 	if err != nil {
-		return fmt.Errorf("Error loading repositories for %s: %v", hostDistro.Name(), err)
+		return fmt.Errorf("error loading repository definitions: %v", err)
+	}
+
+	// Check if repositories for the host distro and arch were loaded
+	_, err = rr.ReposByArch(arch, false)
+	if err != nil {
+		return fmt.Errorf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
 	}
 
 	store := store.New(&c.stateDir, arch, c.logger)
 	compatOutputDir := path.Join(c.stateDir, "outputs")
 
-	c.weldr = weldr.New(c.rpm, arch, hostDistro, repos[archName], c.logger, store, c.workers, compatOutputDir)
+	c.weldr = weldr.New(c.rpm, arch, hostDistro, rr, c.logger, store, c.workers, compatOutputDir)
 
 	c.weldrListener = weldrListener
 

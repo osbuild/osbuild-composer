@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -34,14 +35,22 @@ import (
 func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator) (*API, *store.Store) {
 	fixture := fixtureGenerator(tempdir)
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	repos := []rpmmd.RepoConfig{{Name: "test-id", BaseURL: "http://example.com/test/os/x86_64", CheckGPG: true}}
+
+	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
+		test_distro.TestDistroName: {
+			test_distro.TestArchName: {
+				{Name: "test-id", BaseURL: "http://example.com/test/os/x86_64", CheckGPG: true},
+			},
+		},
+	})
+
 	d := test_distro.New()
 	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(err)
 	}
 
-	return New(rpm, arch, d, repos, nil, fixture.Store, fixture.Workers, ""), fixture.Store
+	return New(rpm, arch, d, rr, nil, fixture.Store, fixture.Workers, ""), fixture.Store
 }
 
 func TestBasic(t *testing.T) {

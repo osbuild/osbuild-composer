@@ -16,6 +16,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
@@ -49,9 +50,17 @@ func executeTests(m *testing.M) int {
 	if err != nil {
 		panic(err)
 	}
-	repos := []rpmmd.RepoConfig{{Name: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"}}
+
+	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
+		test_distro.TestDistroName: {
+			test_distro.TestArchName: {
+				{Name: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"},
+			},
+		},
+	})
+
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.New(rpm, arch, distro, repos, logger, fixture.Store, fixture.Workers, "")
+	api := weldr.New(rpm, arch, distro, rr, logger, fixture.Store, fixture.Workers, "")
 	server := http.Server{Handler: api}
 	defer server.Close()
 

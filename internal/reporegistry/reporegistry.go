@@ -26,6 +26,10 @@ func New(repoConfigPaths []string) (*RepoRegistry, error) {
 	return &RepoRegistry{repositories}, nil
 }
 
+func NewFromDistrosRepoConfigs(distrosRepoConfigs rpmmd.DistrosRepoConfigs) *RepoRegistry {
+	return &RepoRegistry{distrosRepoConfigs}
+}
+
 // ReposByImageType returns a slice of rpmmd.RepoConfig instances, which should be used for building the specific
 // image type. All repositories for the associated distribution and architecture, without any ImageTypeTags set,
 // are always part of the returned slice. In addition, if there are repositories tagged with the specific image
@@ -48,13 +52,9 @@ func (r *RepoRegistry) ReposByImageType(imageType distro.ImageType) ([]rpmmd.Rep
 func (r *RepoRegistry) reposByImageTypeName(distro, arch, imageType string) ([]rpmmd.RepoConfig, error) {
 	repositories := []rpmmd.RepoConfig{}
 
-	distroRepos, found := r.repos[distro]
-	if !found {
-		return nil, fmt.Errorf("there are no repositories for distribution '%s'", distro)
-	}
-	archRepos, found := distroRepos[arch]
-	if !found {
-		return nil, fmt.Errorf("there are no repositories for distribution '%s' and architecture '%s'", distro, arch)
+	archRepos, err := r.reposByArchName(distro, arch, true)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, repo := range archRepos {
@@ -71,6 +71,47 @@ func (r *RepoRegistry) reposByImageTypeName(distro, arch, imageType string) ([]r
 				break
 			}
 		}
+	}
+
+	return repositories, nil
+}
+
+// ReposByArch returns a slice of rpmmd.RepoConfig instances, which should be used for building image types for the
+// specific architecture. This includes by default all repositories without any image type tags specified.
+// Depending on the `includeTagged` argument value, repositories with image type tags set will be added to the returned
+// slice or not.
+func (r *RepoRegistry) ReposByArch(arch distro.Arch, includeTagged bool) ([]rpmmd.RepoConfig, error) {
+	if arch.Distro() == nil || reflect.ValueOf(arch.Distro()).IsNil() {
+		return nil, fmt.Errorf("there is no distribution associated with the provided architecture")
+	}
+	return r.reposByArchName(arch.Distro().Name(), arch.Name(), includeTagged)
+}
+
+// reposByArchName returns a slice of rpmmd.RepoConfig instances, which should be used for building image types for the
+// specific architecture and distribution. This includes by default all repositories without any image type tags specified.
+// Depending on the `includeTagged` argument value, repositories with image type tags set will be added to the returned
+// slice or not.
+//
+// The method does not verify if the given architecture name is actually part of the specific distribution definition.
+func (r *RepoRegistry) reposByArchName(distro, arch string, includeTagged bool) ([]rpmmd.RepoConfig, error) {
+	repositories := []rpmmd.RepoConfig{}
+
+	distroRepos, found := r.repos[distro]
+	if !found {
+		return nil, fmt.Errorf("there are no repositories for distribution '%s'", distro)
+	}
+	archRepos, found := distroRepos[arch]
+	if !found {
+		return nil, fmt.Errorf("there are no repositories for distribution '%s' and architecture '%s'", distro, arch)
+	}
+
+	for _, repo := range archRepos {
+		// skip repos with image type tags if specified to do so
+		if !includeTagged && len(repo.ImageTypeTags) != 0 {
+			continue
+		}
+
+		repositories = append(repositories, repo)
 	}
 
 	return repositories, nil
