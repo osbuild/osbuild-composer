@@ -531,6 +531,16 @@ esac
 # the server's response in case of an error.
 #
 
+function collectMetrics(){
+    METRICS_OUTPUT=$(curl \
+                          --cacert /etc/osbuild-composer/ca-crt.pem \
+                          --key /etc/osbuild-composer/client-key.pem \
+                          --cert /etc/osbuild-composer/client-crt.pem \
+                          https://localhost/metrics)
+
+    echo "$METRICS_OUTPUT" | grep "^total_compose_requests" | cut -f2 -d' '
+}
+
 function sendCompose() {
     OUTPUT=$(curl \
                  --silent \
@@ -602,11 +612,14 @@ waitForState "failure"
 sudo systemctl start "osbuild-worker@1"
 
 # full integration case
+INIT_COMPOSES="$(collectMetrics)"
 sendCompose
 waitForState
+SUBS_COMPOSES="$(collectMetrics)"
+
 test "$UPLOAD_STATUS" = "success"
 test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
-
+test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
 #
 # Verify the Cloud-provider specific upload_status options
