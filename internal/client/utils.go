@@ -14,10 +14,11 @@ import (
 )
 
 type TestState struct {
-	socket     *http.Client
-	apiVersion int
-	repoDir    string
-	unitTest   bool
+	socket        *http.Client
+	apiVersion    int
+	repoDir       string
+	unitTest      bool
+	imageTypeName string
 }
 
 // isStringInSlice returns true if the string is present, false if not
@@ -31,8 +32,8 @@ func isStringInSlice(slice []string, s string) bool {
 	return false
 }
 
-func setUpTestState(socketPath string, unitTest bool) (*TestState, error) {
-	state := TestState{unitTest: unitTest}
+func setUpTestState(socketPath string, imageTypeName string, unitTest bool) (*TestState, error) {
+	state := TestState{imageTypeName: imageTypeName, unitTest: unitTest}
 
 	state.socket = &http.Client{
 		Transport: &http.Transport{

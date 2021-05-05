@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -74,18 +74,18 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	distroStruct := fedoratest.New()
-	arch, err := distroStruct.GetArch("x86_64")
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
-		t.Fatalf("error getting arch from distro")
+		t.Fatalf("error getting arch from distro: %v", err)
 	}
-	imageType, err := arch.GetImageType("qcow2")
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		t.Fatalf("error getting image type from arch")
+		t.Fatalf("error getting image type from arch: %v", err)
 	}
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
-		t.Fatalf("error creating osbuild manifest")
+		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 	server := newTestServer(t, tempdir)
 	handler := server.Handler()
@@ -93,7 +93,8 @@ func TestCreate(t *testing.T) {
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs", `{"types":["osbuild"],"arch":"x86_64"}`, http.StatusCreated,
+	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
+		fmt.Sprintf(`{"types":["osbuild"],"arch":"%s"}`, test_distro.TestArchName), http.StatusCreated,
 		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 
@@ -102,18 +103,18 @@ func TestCancel(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	distroStruct := fedoratest.New()
-	arch, err := distroStruct.GetArch("x86_64")
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
-		t.Fatalf("error getting arch from distro")
+		t.Fatalf("error getting arch from distro: %v", err)
 	}
-	imageType, err := arch.GetImageType("qcow2")
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		t.Fatalf("error getting image type from arch")
+		t.Fatalf("error getting image type from arch: %v", err)
 	}
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
-		t.Fatalf("error creating osbuild manifest")
+		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 	server := newTestServer(t, tempdir)
 	handler := server.Handler()
@@ -143,18 +144,18 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	distroStruct := fedoratest.New()
-	arch, err := distroStruct.GetArch("x86_64")
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
-		t.Fatalf("error getting arch from distro")
+		t.Fatalf("error getting arch from distro: %v", err)
 	}
-	imageType, err := arch.GetImageType("qcow2")
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		t.Fatalf("error getting image type from arch")
+		t.Fatalf("error getting image type from arch: %v", err)
 	}
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
-		t.Fatalf("error creating osbuild manifest")
+		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 	server := newTestServer(t, tempdir)
 	handler := server.Handler()
@@ -174,10 +175,10 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestArgs(t *testing.T) {
-	distroStruct := fedoratest.New()
-	arch, err := distroStruct.GetArch("x86_64")
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	require.NoError(t, err)
-	imageType, err := arch.GetImageType("qcow2")
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	require.NoError(t, err)
@@ -212,18 +213,18 @@ func TestUpload(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	distroStruct := fedoratest.New()
-	arch, err := distroStruct.GetArch("x86_64")
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
-		t.Fatalf("error getting arch from distro")
+		t.Fatalf("error getting arch from distro: %v", err)
 	}
-	imageType, err := arch.GetImageType("qcow2")
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		t.Fatalf("error getting image type from arch")
+		t.Fatalf("error getting image type from arch: %v", err)
 	}
 	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
 	if err != nil {
-		t.Fatalf("error creating osbuild manifest")
+		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 	server := newTestServer(t, tempdir)
 	handler := server.Handler()

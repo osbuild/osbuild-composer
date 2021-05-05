@@ -1,13 +1,14 @@
 package store
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -49,18 +50,18 @@ func FixtureBase() *Store {
 		},
 	}
 
-	d := fedoratest.New()
-	arch, err := d.GetArch("x86_64")
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
-		panic("invalid architecture x86_64 for fedoratest")
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
-	imgType, err := arch.GetImageType("qcow2")
+	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		panic("invalid image type qcow2 for x86_64 @ fedoratest")
+		panic(fmt.Sprintf("failed to get image type %s for a test distro architecture: %v", test_distro.TestImageTypeName, err))
 	}
 	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
 	if err != nil {
-		panic("could not create manifest")
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 	s := New(nil, arch, nil)
 
@@ -70,13 +71,13 @@ func FixtureBase() *Store {
 			Epoch:   0,
 			Version: "2.11.2",
 			Release: "1.fc35",
-			Arch:    "x86_64",
+			Arch:    test_distro.TestArchName,
 		}, {
 			Name:    "test2",
 			Epoch:   3,
 			Version: "4.2.2",
 			Release: "1.fc35",
-			Arch:    "x86_64",
+			Arch:    test_distro.TestArchName,
 		}}
 
 	s.blueprints[bName] = b
@@ -184,18 +185,18 @@ func FixtureFinished() *Store {
 		},
 	}
 
-	d := fedoratest.New()
-	arch, err := d.GetArch("x86_64")
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
-		panic("invalid architecture x86_64 for fedoratest")
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
-	imgType, err := arch.GetImageType("qcow2")
+	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
-		panic("invalid image type qcow2 for x86_64 @ fedoratest")
+		panic(fmt.Sprintf("failed to get image type %s for a test distro architecture: %v", test_distro.TestImageTypeName, err))
 	}
 	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
 	if err != nil {
-		panic("could not create manifest")
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 	s := New(nil, arch, nil)
 
@@ -205,13 +206,13 @@ func FixtureFinished() *Store {
 			Epoch:   0,
 			Version: "2.11.2",
 			Release: "1.fc35",
-			Arch:    "x86_64",
+			Arch:    test_distro.TestArchName,
 		}, {
 			Name:    "test2",
 			Epoch:   3,
 			Version: "4.2.2",
 			Release: "1.fc35",
-			Arch:    "x86_64",
+			Arch:    test_distro.TestArchName,
 		}}
 
 	s.blueprints[bName] = b
@@ -280,11 +281,12 @@ func FixtureEmpty() *Store {
 		Customizations: nil,
 	}
 
-	d := fedoratest.New()
-	arch, err := d.GetArch("x86_64")
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
-		panic("invalid architecture x86_64 for fedoratest")
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
+
 	s := New(nil, arch, nil)
 
 	s.blueprints[bName] = b
