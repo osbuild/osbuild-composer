@@ -14,7 +14,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
@@ -44,8 +44,8 @@ func executeTests(m *testing.M) int {
 	}
 	fixture := rpmmd_mock.BaseFixture(path.Join(tmpdir, "/jobs"))
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	distro := fedoratest.New()
-	arch, err := distro.GetArch("x86_64")
+	distro := test_distro.New()
+	arch, err := distro.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func executeTests(m *testing.M) int {
 		}
 	}()
 
-	testState, err = setUpTestState(socketPath, true)
+	testState, err = setUpTestState(socketPath, test_distro.TestImageTypeName, true)
 	if err != nil {
 		log.Fatalf("ERROR: Test setup failed: %s\n", err)
 	}

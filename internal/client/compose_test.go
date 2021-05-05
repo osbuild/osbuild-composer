@@ -21,6 +21,7 @@
 package client
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -40,12 +41,12 @@ func TestComposeTypesV0(t *testing.T) {
 	require.Greater(t, len(composeTypes), 0)
 	var found bool
 	for _, t := range composeTypes {
-		if t.Name == "qcow2" && t.Enabled == true {
+		if t.Name == testState.imageTypeName && t.Enabled == true {
 			found = true
 			break
 		}
 	}
-	require.True(t, found, "qcow2 not in list of compose types: %#v", composeTypes)
+	require.True(t, found, "%s not in list of compose types: %#v", testState.imageTypeName, composeTypes)
 }
 
 // Test compose with invalid type fails
@@ -76,11 +77,11 @@ func TestComposeInvalidTypeV0(t *testing.T) {
 
 // Test compose for unknown blueprint fails
 func TestComposeInvalidBlueprintV0(t *testing.T) {
-	compose := `{
+	compose := fmt.Sprintf(`{
 		"blueprint_name": "test-invalid-bp-compose-v0",
-		"compose_type": "qcow2",
+		"compose_type": "%s",
 		"branch": "master"
-	}`
+	}`, testState.imageTypeName)
 	resp, err := PostComposeV0(testState.socket, compose)
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
@@ -91,11 +92,11 @@ func TestComposeInvalidBlueprintV0(t *testing.T) {
 
 // Test compose for empty blueprint fails
 func TestComposeEmptyBlueprintV0(t *testing.T) {
-	compose := `{
+	compose := fmt.Sprintf(`{
 		"blueprint_name": "",
-		"compose_type": "qcow2",
+		"compose_type": "%s",
 		"branch": "master"
-	}`
+	}`, testState.imageTypeName)
 	resp, err := PostComposeV0(testState.socket, compose)
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
@@ -106,11 +107,11 @@ func TestComposeEmptyBlueprintV0(t *testing.T) {
 
 // Test compose for blueprint with invalid characters fails
 func TestComposeInvalidCharsBlueprintV0(t *testing.T) {
-	compose := `{
+	compose := fmt.Sprintf(`{
 		"blueprint_name": "I ｗ𝒊ll 𝟉ο𝘁 𝛠ａ𝔰ꜱ 𝘁𝒉𝝸𝚜",
-		"compose_type": "qcow2",
+		"compose_type": "%s",
 		"branch": "master"
-	}`
+	}`, testState.imageTypeName)
 	resp, err := PostComposeV0(testState.socket, compose)
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
@@ -283,11 +284,11 @@ func TestFailedComposeV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 
-	compose := `{
+	compose := fmt.Sprintf(`{
 		"blueprint_name": "test-failed-compose-v0",
-		"compose_type": "qcow2",
+		"compose_type": "%s",
 		"branch": "master"
-	}`
+	}`, testState.imageTypeName)
 	// Create a failed test compose
 	body, resp, err := PostJSON(testState.socket, "/api/v1/compose?test=1", compose)
 	require.NoError(t, err, "failed with a client error")
@@ -378,11 +379,11 @@ func TestFinishedComposeV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.True(t, resp.Status, "POST failed: %#v", resp)
 
-	compose := `{
+	compose := fmt.Sprintf(`{
 		"blueprint_name": "test-finished-compose-v0",
-		"compose_type": "qcow2",
+		"compose_type": "%s",
 		"branch": "master"
-	}`
+	}`, testState.imageTypeName)
 	// Create a finished test compose
 	body, resp, err := PostJSON(testState.socket, "/api/v1/compose?test=2", compose)
 	require.NoError(t, err, "failed with a client error")

@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
@@ -13,7 +14,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -113,10 +113,10 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 }
 
 func TestMarshalEmpty(t *testing.T) {
-	d := fedoratest.New()
-	arch, err := d.GetArch("x86_64")
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
-		panic("invalid architecture x86_64 for fedoratest")
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 	store1 := FixtureEmpty()
 	storeV0 := store1.toStoreV0()
@@ -127,10 +127,10 @@ func TestMarshalEmpty(t *testing.T) {
 }
 
 func TestMarshalFinished(t *testing.T) {
-	d := fedoratest.New()
-	arch, err := d.GetArch("x86_64")
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
-		panic("invalid architecture x86_64 for fedoratest")
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 	store1 := FixtureFinished()
 	storeV0 := store1.toStoreV0()

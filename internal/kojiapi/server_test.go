@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
@@ -82,8 +83,8 @@ func TestCompose(t *testing.T) {
 				Token:   `"foobar"`,
 			},
 			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      "x86_64",
-				HostOS:    "fedora-30",
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
 				ImageHash: "browns",
 				ImageSize: 42,
 				OSBuildOutput: &osbuild.Result{
@@ -111,8 +112,8 @@ func TestCompose(t *testing.T) {
 				KojiError: "failure",
 			},
 			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      "x86_64",
-				HostOS:    "fedora-30",
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
 				ImageHash: "browns",
 				ImageSize: 42,
 				OSBuildOutput: &osbuild.Result{
@@ -140,8 +141,8 @@ func TestCompose(t *testing.T) {
 				Token:   `"foobar"`,
 			},
 			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      "x86_64",
-				HostOS:    "fedora-30",
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
 				ImageHash: "browns",
 				ImageSize: 42,
 				OSBuildOutput: &osbuild.Result{
@@ -170,8 +171,8 @@ func TestCompose(t *testing.T) {
 				Token:   `"foobar"`,
 			},
 			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      "x86_64",
-				HostOS:    "fedora-30",
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
 				ImageHash: "browns",
 				ImageSize: 42,
 				OSBuildOutput: &osbuild.Result{
@@ -201,8 +202,8 @@ func TestCompose(t *testing.T) {
 				Token:   `"foobar"`,
 			},
 			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      "x86_64",
-				HostOS:    "fedora-30",
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
 				ImageHash: "browns",
 				ImageSize: 42,
 				OSBuildOutput: &osbuild.Result{
@@ -234,7 +235,7 @@ func TestCompose(t *testing.T) {
 		wg.Add(1)
 
 		go func(t *testing.T, result worker.KojiInitJobResult) {
-			token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"koji-init"})
+			token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-init"})
 			require.NoError(t, err)
 			require.Equal(t, "koji-init", jobType)
 
@@ -253,16 +254,16 @@ func TestCompose(t *testing.T) {
 			wg.Done()
 		}(t, c.initResult)
 
-		test.TestRoute(t, handler, false, "POST", "/api/composer-koji/v1/compose", `
+		test.TestRoute(t, handler, false, "POST", "/api/composer-koji/v1/compose", fmt.Sprintf(`
 		{
 			"name":"foo",
 			"version":"1",
 			"release":"2",
-			"distribution":"fedora-30",
+			"distribution":"%[1]s",
 			"image_requests": [
 				{
-					"architecture": "x86_64",
-					"image_type": "qcow2",
+					"architecture": "%[2]s",
+					"image_type": "%[3]s",
 					"repositories": [
 						{
 							"baseurl": "https://repo.example.com/"
@@ -270,8 +271,8 @@ func TestCompose(t *testing.T) {
 					]
 				},
 				{
-					"architecture": "x86_64",
-					"image_type": "qcow2",
+					"architecture": "%[2]s",
+					"image_type": "%[3]s",
 					"repositories": [
 						{
 							"baseurl": "https://repo.example.com/"
@@ -282,10 +283,11 @@ func TestCompose(t *testing.T) {
 			"koji": {
 				"server": "koji.example.com"
 			}
-		}`, c.composeReplyCode, c.composeReply, "id")
+		}`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName),
+			c.composeReplyCode, c.composeReply, "id")
 		wg.Wait()
 
-		token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"osbuild-koji"})
+		token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -300,7 +302,7 @@ func TestCompose(t *testing.T) {
 		require.NoError(t, err)
 		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
 
-		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), "x86_64", []string{"osbuild-koji"})
+		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -310,19 +312,19 @@ func TestCompose(t *testing.T) {
 		require.Equal(t, "test.img", osbuildJob.ImageName)
 		require.NotEmpty(t, osbuildJob.KojiDirectory)
 
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), `{
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), fmt.Sprintf(`{
 			"result": {
-				"arch": "x86_64",
-				"host_os": "fedora-30",
+				"arch": "%s",
+				"host_os": "%s",
 				"image_hash": "browns",
 				"image_size": 42,
 				"osbuild_output": {
 					"success": true
 				}
 			}
-		}`, http.StatusOK, `{}`)
+		}`, test_distro.TestArchName, test_distro.TestDistroName), http.StatusOK, `{}`)
 
-		token, finalizeID, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), "x86_64", []string{"koji-finalize"})
+		token, finalizeID, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-finalize"})
 		require.NoError(t, err)
 		require.Equal(t, "koji-finalize", jobType)
 
@@ -332,7 +334,10 @@ func TestCompose(t *testing.T) {
 		require.Equal(t, "koji.example.com", kojiFinalizeJob.Server)
 		require.Equal(t, "1", kojiFinalizeJob.Version)
 		require.Equal(t, "2", kojiFinalizeJob.Release)
-		require.ElementsMatch(t, []string{"foo-1-2.x86_64.img", "foo-1-2.x86_64.img"}, kojiFinalizeJob.KojiFilenames)
+		require.ElementsMatch(t, []string{
+			fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArchName),
+			fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArchName),
+		}, kojiFinalizeJob.KojiFilenames)
 		require.NotEmpty(t, kojiFinalizeJob.KojiDirectory)
 
 		finalizeResult, err := json.Marshal(&jobResult{Result: c.finalizeResult})

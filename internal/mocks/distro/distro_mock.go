@@ -1,14 +1,14 @@
 package distro_mock
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/distro/fedoratest"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 )
 
 func NewDefaultRegistry() (*distroregistry.Registry, error) {
-	ftest := fedoratest.New()
-	if ftest == nil {
-		panic("Attempt to register Fedora test failed")
+	testDistro := test_distro.New()
+	if testDistro == nil {
+		panic("Attempt to register test distro failed")
 	}
-	return distroregistry.New(ftest)
+	return distroregistry.New(testDistro)
 }
