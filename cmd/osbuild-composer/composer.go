@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -76,9 +75,9 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
 	archName := common.CurrentArch()
 
-	hostDistro, beta, isStream, err := c.distros.FromHost()
-	if err != nil {
-		return err
+	hostDistro := c.distros.FromHost()
+	if hostDistro == nil {
+		return fmt.Errorf("host distro is not supported")
 	}
 
 	arch, err := hostDistro.GetArch(archName)
@@ -86,21 +85,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 		return fmt.Errorf("Host distro does not support host architecture: %v", err)
 	}
 
-	// TODO: refactor to be more generic
-	name := hostDistro.Name()
-	if strings.HasPrefix(name, "rhel-8") {
-		name = "rhel-8"
-	}
-	if beta {
-		name += "-beta"
-	}
-
-	// override repository for centos stream, remove when CentOS 8 is EOL
-	if isStream && name == "centos-8" {
-		name = "centos-stream-8"
-	}
-
-	repos, err := rpmmd.LoadRepositories(repoPaths, name)
+	repos, err := rpmmd.LoadRepositories(repoPaths, hostDistro.Name())
 	if err != nil {
 		return fmt.Errorf("Error loading repositories for %s: %v", hostDistro.Name(), err)
 	}

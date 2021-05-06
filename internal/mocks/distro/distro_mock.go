@@ -10,5 +10,5 @@ func NewDefaultRegistry() (*distroregistry.Registry, error) {
 	if testDistro == nil {
 		panic("Attempt to register test distro failed")
 	}
-	return distroregistry.New(testDistro)
+	return distroregistry.New(nil, testDistro)
 }

@@ -16,11 +16,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "rhel-8"
+const defaultName = "rhel-8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
+	name          string
 	arches        map[string]architecture
 	buildPackages []string
 }
@@ -248,7 +249,7 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 }
 
 func (d *distribution) Name() string {
-	return name
+	return d.name
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -672,6 +673,14 @@ func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbui
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
+	return newDistro(defaultName)
+}
+
+func NewHostDistro(name string) distro.Distro {
+	return newDistro(name)
+}
+
+func newDistro(name string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	edgeImgTypeX86_64 := imageType{
@@ -1064,6 +1073,7 @@ func New() distro.Distro {
 			"xfsprogs",
 			"xz",
 		},
+		name: name,
 	}
 	x8664 := architecture{
 		distro: &r,

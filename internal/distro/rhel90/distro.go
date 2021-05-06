@@ -19,10 +19,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "rhel-90"
+const defaultName = "rhel-90"
 const modulePlatformID = "platform:el9"
 
 type distribution struct {
+	name          string
 	arches        map[string]architecture
 	buildPackages []string
 }
@@ -252,7 +253,7 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 }
 
 func (d *distribution) Name() string {
-	return name
+	return d.name
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -742,6 +743,14 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 }
 
 func New() distro.Distro {
+	return newDistro(defaultName)
+}
+
+func NewHostDistro(name string) distro.Distro {
+	return newDistro(name)
+}
+
+func newDistro(name string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	qcow2ImageType := imageType{
@@ -839,6 +848,7 @@ func New() distro.Distro {
 			"xfsprogs",
 			"xz",
 		},
+		name: name,
 	}
 	x8664 := architecture{
 		distro: &r,

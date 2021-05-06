@@ -16,11 +16,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "fedora-33"
+const defaultName = "fedora-33"
 const modulePlatformID = "platform:f33"
 const ostreeRef = "fedora/33/%s/iot"
 
 type distribution struct {
+	name          string
 	arches        map[string]architecture
 	buildPackages []string
 }
@@ -246,7 +247,7 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 }
 
 func (d *distribution) Name() string {
-	return name
+	return d.name
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -585,6 +586,14 @@ func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbui
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
+	return newDistro(defaultName)
+}
+
+func NewHostDistro(name string) distro.Distro {
+	return newDistro(name)
+}
+
+func newDistro(name string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	iotImgType := imageType{
@@ -834,6 +843,7 @@ func New() distro.Distro {
 			"tar",
 			"xz",
 		},
+		name: name,
 	}
 	x8664 := architecture{
 		distro: &r,

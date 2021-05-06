@@ -19,12 +19,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "rhel-84"
-const centosName = "centos-8"
+const defaultName = "rhel-84"
+const defaultCentosName = "centos-8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
+	name          string
 	arches        map[string]architecture
 	buildPackages []string
 	isCentos      bool
@@ -277,10 +278,7 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 }
 
 func (d *distribution) Name() string {
-	if d.isCentos {
-		return centosName
-	}
-	return name
+	return d.name
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -822,14 +820,22 @@ func removePackage(packages []string, packageToRemove string) []string {
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro(false)
+	return newDistro(defaultName, false)
 }
 
 func NewCentos() distro.Distro {
-	return newDistro(true)
+	return newDistro(defaultCentosName, true)
 }
 
-func newDistro(isCentos bool) distro.Distro {
+func NewHostDistro(name string) distro.Distro {
+	return newDistro(name, false)
+}
+
+func NewCentosHostDistro(name string) distro.Distro {
+	return newDistro(name, true)
+}
+
+func newDistro(name string, isCentos bool) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	edgeImgTypeX86_64 := imageType{
@@ -1237,6 +1243,7 @@ func newDistro(isCentos bool) distro.Distro {
 			"xz",
 		},
 		isCentos: isCentos,
+		name:     name,
 	}
 	x8664 := architecture{
 		distro: &r,
