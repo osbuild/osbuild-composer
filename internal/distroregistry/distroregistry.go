@@ -1,9 +1,9 @@
 package distroregistry
 
 import (
-	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
@@ -16,23 +16,30 @@ import (
 
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
-var supportedDistros = []func() distro.Distro{
-	fedora32.New,
-	fedora33.New,
-	rhel8.New,
-	rhel84.New,
-	rhel84.NewCentos,
-	rhel85.New,
-	rhel90.New,
+var supportedDistros = []supportedDistro{
+	{fedora32.New, fedora32.NewHostDistro},
+	{fedora33.New, fedora33.NewHostDistro},
+	{rhel8.New, rhel8.NewHostDistro},
+	{rhel84.New, rhel84.NewHostDistro},
+	{rhel84.NewCentos, rhel84.NewCentosHostDistro},
+	{rhel85.New, rhel85.NewHostDistro},
+	{rhel90.New, rhel90.NewHostDistro},
+}
+
+type supportedDistro struct {
+	defaultDistro func() distro.Distro
+	hostDistro    func(name string) distro.Distro
 }
 
 type Registry struct {
-	distros map[string]distro.Distro
+	distros    map[string]distro.Distro
+	hostDistro distro.Distro
 }
 
-func New(distros ...distro.Distro) (*Registry, error) {
+func New(hostDistro distro.Distro, distros ...distro.Distro) (*Registry, error) {
 	reg := &Registry{
-		distros: make(map[string]distro.Distro),
+		distros:    make(map[string]distro.Distro),
+		hostDistro: hostDistro,
 	}
 	for _, d := range distros {
 		name := d.Name()
@@ -49,11 +56,27 @@ func New(distros ...distro.Distro) (*Registry, error) {
 // supportedDistros variable.
 func NewDefault() *Registry {
 	var distros []distro.Distro
-	for _, distroInitializer := range supportedDistros {
-		distros = append(distros, distroInitializer())
+	var hostDistro distro.Distro
+
+	// First determine the name of the Host Distro
+	// If there was an error, then the hostDistroName will be an empty string
+	// and as a result, the hostDistro will have a nil value when calling New().
+	// Getting the host distro later using FromHost() will return nil as well.
+	hostDistroName, hostDistroIsBeta, hostDistroIsStream, _ := distro.GetHostDistroName()
+
+	for _, supportedDistro := range supportedDistros {
+		distro := supportedDistro.defaultDistro()
+
+		if distro.Name() == hostDistroName {
+			hostDistro = supportedDistro.hostDistro(
+				mangleHostDistroName(distro.Name(), hostDistroIsBeta, hostDistroIsStream),
+			)
+		}
+
+		distros = append(distros, distro)
 	}
 
-	registry, err := New(distros...)
+	registry, err := New(hostDistro, distros...)
 	if err != nil {
 		panic(fmt.Sprintf("two supported distros have the same name, this is a programming error: %v", err))
 	}
@@ -80,16 +103,26 @@ func (r *Registry) List() []string {
 	return list
 }
 
-func (r *Registry) FromHost() (distro.Distro, bool, bool, error) {
-	name, beta, isStream, err := distro.GetHostDistroName()
-	if err != nil {
-		return nil, false, false, err
+func mangleHostDistroName(name string, isBeta, isStream bool) string {
+	hostDistroName := name
+	if strings.HasPrefix(hostDistroName, "rhel-8") {
+		hostDistroName = "rhel-8"
+	}
+	if isBeta {
+		hostDistroName += "-beta"
 	}
 
-	d := r.GetDistro(name)
-	if d == nil {
-		return nil, false, false, errors.New("unknown distro: " + name)
+	// override repository for centos stream, remove when CentOS 8 is EOL
+	if isStream && hostDistroName == "centos-8" {
+		hostDistroName = "centos-stream-8"
 	}
 
-	return d, beta, isStream, nil
+	return hostDistroName
+}
+
+// FromHost returns a distro instance, that is specific to the host.
+// Its name may differ from other supported distros, if the host version
+// is e.g. a Beta or a Stream.
+func (r *Registry) FromHost() distro.Distro {
+	return r.hostDistro
 }

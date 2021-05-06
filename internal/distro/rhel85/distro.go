@@ -14,17 +14,18 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const name = "rhel-85"
+const defaultName = "rhel-85"
 const osVersion = "8.5"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
+	name   string
 	arches map[string]distro.Arch
 }
 
 func (d *distribution) Name() string {
-	return name
+	return d.name
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -277,7 +278,17 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	rd := new(distribution)
+	return newDistro(defaultName)
+}
+
+func NewHostDistro(name string) distro.Distro {
+	return newDistro(name)
+}
+
+func newDistro(name string) distro.Distro {
+	rd := &distribution{
+		name: name,
+	}
 
 	x86_64 := architecture{
 		name:   "x86_64",
