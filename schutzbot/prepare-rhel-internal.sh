@@ -86,29 +86,33 @@ wget --quiet --recursive --no-parent --no-directories --accept "osbuild-composer
 
 # Download osbuild-composer-tests from Brew b/c it is not available in the distro
 # version matches osbuild-composer from the internal tree
-greenprint "Downloading osbuild-composer-tests from Brew"
-TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-8/packages/osbuild-composer/%{version}/%{release}/%{arch}/osbuild-composer-tests-%{version}-%{release}.%{arch}.rpm")
-wget --directory-prefix "$REPO_DIR_LATEST" "$TESTS_RPM_URL"
+#greenprint "Downloading osbuild-composer-tests from Brew"
+#TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-8/packages/osbuild-composer/%{version}/%{release}/%{arch}/osbuild-composer-tests-%{version}-%{release}.%{arch}.rpm")
+#wget --directory-prefix "$REPO_DIR_LATEST" "$TESTS_RPM_URL"
 
-greenprint "⛓ Creating dnf repository"
-createrepo_c "${REPO_DIR_LATEST}"
+#greenprint "⛓ Creating dnf repository"
+#createrepo_c "${REPO_DIR_LATEST}"
 
 # Bucket in S3 where our artifacts are uploaded
-REPO_BUCKET=osbuild-composer-repos
+#REPO_BUCKET=osbuild-composer-repos
 
 # Remove the previous latest repo for this job.
 # Don't fail if the path is missing.
-s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
+#s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
 
 # Upload repository to S3.
-greenprint "☁ Uploading RPMs to S3"
-s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+#greenprint "☁ Uploading RPMs to S3"
+#s3cmd --acl-public sync . s3://${REPO_BUCKET}/
 
 # Public URL for the S3 bucket with our artifacts.
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
 # Full URL to the RPM repository after they are uploaded.
-REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_DIR_LATEST}
+# Use osbuild-composer-tests built with a patched version of ostree.sh
+# https://osbuildci.cloud.paas.psi.redhat.com/blue/organizations/jenkins/osbuild%2Fosbuild-composer/detail/PR-1390/2/pipeline/23
+# NVR should be osbuild-composer-tests-28.6-1.20210506git33136ae.el8.x86_64.rpm
+REPO_URL="${MOCK_REPO_BASE_URL}/osbuild-composer/rhel-8.4/x86_64/33136ae15cec2cc14dd3a972c867eff401210d09"
+
 
 # amend repository file.
 greenprint "📜 Amend dnf repository file"
