@@ -1,3 +1,4 @@
+// nolint: deadcode,unused // Helper functions for future implementations of pipelines
 package rhel85
 
 import (
