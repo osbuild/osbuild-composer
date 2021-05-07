@@ -191,6 +191,9 @@ install -m 0755 -vp tools/libvirt_test.sh                       %{buildroot}%{_l
 install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp test/cases/*                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
+install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer/regression-cases
+install -m 0755 -vp test/regression-cases/*                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/regression-cases/
+
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/ansible
 install -m 0644 -vp test/data/ansible/*                         %{buildroot}%{_datadir}/tests/osbuild-composer/ansible/
 

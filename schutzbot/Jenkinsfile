@@ -653,7 +653,7 @@ pipeline {
                         run_tests('base')
                         sh (
                             label: "Regression tests",
-                            script: "/usr/libexec/tests/osbuild-composer/regression.sh"
+                            script: "/usr/libexec/tests/osbuild-composer/regression-cases/blueprint-can-include-excluded-package.sh"
                         )
                     }
                     post {

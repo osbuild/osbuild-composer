@@ -1,4 +1,15 @@
 #!/bin/bash
+
+# This test case verifies that a blueprint can include a package which
+# is listed among "excluded" for a certain image type and osbuild-composer
+# doesn't fail to depsolve this blueprint.
+#
+# The script currently works only for RHEL and CentOS which provide
+# "redhat-lsb-core" package and exclude "nss" package in the image type
+# definition. The testing blueprint contains explicit "nss" requirement
+# to remove it from the list of excluded packages and thus enable the
+# installation of "redhat-lsb-core".
+
 set -xeuo pipefail
 
 # Provision the software under tet.

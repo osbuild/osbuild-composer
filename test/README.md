@@ -277,6 +277,11 @@ section and run `/usr/libexec/tests/osbuild-composer/api.sh gcp`.
 
 [gcp_creds]: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
 
+## Regression testing
+
+These tests make sure bugs that have been fixed do not appear again. They live in the
+`test/regression-cases` directory. Each test should contain an explanation of its purpose.
+
 ## Downstream testing notes
 
 To make it easier for us to test & verify downstream builds we are going to
