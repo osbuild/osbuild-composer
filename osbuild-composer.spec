@@ -110,6 +110,15 @@ sed -i "s$// +build !kolo_xmlrpc_oldapi$// +build kolo_xmlrpc_oldapi$" internal/
 sed -i "s$// +build !azblob_oldapi$// +build azblob_oldapi$" internal/upload/azure/page_blob_url.go
 %endif
 
+%if 0%{?fedora} >= 34
+# Fedora 34 and newer ships a newer version of github.com/getkin/kin-openapi
+# package which has a different API than the older ones. Let's make the auto-
+# generated code compatible by applying some sed magic.
+#
+# Remove when F33 is EOL
+sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/openapi.gen.go
+%endif
+
 %build
 %if 0%{?rhel}
 GO_BUILD_PATH=$PWD/_build
