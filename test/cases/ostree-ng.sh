@@ -13,6 +13,9 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Install skopeo 
+sudo dnf install -y skopeo
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -70,6 +73,8 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}/repo/"
+QUAY_REPO_URL="docker://quay.io/osbuild/testing-rhel-edge-push"
+QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -171,6 +176,10 @@ wait_for_ssh_up () {
 # Clean up our mess.
 clean_up () {
     greenprint "🧼 Cleaning up"
+    # Remove tag from quay.io repo
+    skopeo delete --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+
+    # Clear vm
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
         sudo virsh destroy "${IMAGE_KEY}-uefi"
     fi
@@ -277,18 +286,19 @@ sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm
 sudo podman rmi -f -a
 
 # Deal with stage repo image
-greenprint "🗜 Extracting image"
+greenprint "🗜 Pushing image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
-sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+greenprint "Downloading image from quay.io"
+sudo podman login quay.io --username ${QUAY_USERNAME} --password ${QUAY_PASSWORD}
+sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 sudo podman images
+greenprint "🗜 Running the image"
+sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+
 # Clear image file
 sudo rm -f "$IMAGE_FILENAME"
 
-# Run edge stage repo
-greenprint "🛰 Running edge stage repo"
-# Get image id to run image
-EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
-sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
 # Wait for container to be running
 until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
     sleep 1;
