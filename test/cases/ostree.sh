@@ -2,6 +2,7 @@
 set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
 # Get OS data.
 source /etc/os-release
@@ -31,7 +32,6 @@ case "${ID}-${VERSION_ID}" in
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
-        COMPOSE_URL="${COMPOSE_URL:-http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.4}"
         BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
