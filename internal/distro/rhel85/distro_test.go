@@ -227,6 +227,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"tar",
 				"tar-installer",
 			},
 		},
@@ -236,15 +237,16 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"tar",
 			},
 		},
 		{
 			arch:     "ppc64le",
-			imgNames: []string{},
+			imgNames: []string{"tar"},
 		},
 		{
 			arch:     "s390x",
-			imgNames: []string{},
+			imgNames: []string{"tar"},
 		},
 	}
 

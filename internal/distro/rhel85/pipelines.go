@@ -10,6 +10,24 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *treePipeline)
+	tarPipeline := osbuild.Pipeline{
+		Name:  "root-tar",
+		Build: "name:build",
+	}
+	tarPipeline.AddStage(tarStage("os", "root.tar.xz"))
+	pipelines = append(pipelines, tarPipeline)
+	return pipelines, nil
+}
+
 func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))

@@ -552,6 +552,20 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		Exclude: nil,
 	}
 
+	tarImgType := imageType{
+		name:     "tar",
+		filename: "root.tar.xz",
+		mimeType: "application/x-tar",
+		packageSets: map[string]rpmmd.PackageSet{
+			"build": baseBuildPkgSet,
+			"packages": {
+				Include: []string{"policycoreutils", "selinux-policy-targeted"},
+				Exclude: []string{"rng-tools"},
+			},
+		},
+		pipelines: tarPipelines,
+		exports:   []string{"root-tar"},
+	}
 	tarInstallerImgTypeX86_64 := imageType{
 		name:     "tar-installer",
 		filename: "installer.iso",
@@ -569,7 +583,6 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines: tarInstallerPipelines,
 		exports:   []string{"bootiso"},
 	}
-	x86_64.addImageTypes(tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
 
 	edgeCommitImgTypeAarch64 := imageType{
 		name:     "edge-commit",
@@ -613,19 +626,23 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeInstallerPipelines,
 		exports:         []string{"bootiso"},
 	}
+	x86_64.addImageTypes(tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
 	aarch64 := architecture{
 		name:   "aarch64",
 		distro: rd,
 	}
-	aarch64.addImageTypes(edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
+	aarch64.addImageTypes(tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
+
 	ppc64le := architecture{
 		distro: rd,
 		name:   "ppc64le",
 	}
+	ppc64le.addImageTypes(tarImgType)
 	s390x := architecture{
 		distro: rd,
 		name:   "s390x",
 	}
+	s390x.addImageTypes(tarImgType)
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return rd
 }
