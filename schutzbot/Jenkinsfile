@@ -596,6 +596,10 @@ pipeline {
                 }
                 stage('EL8.4 New OSTree') {
                     agent { label "rhel84cloudbase && psi && x86_64" }
+                    environment {
+                        QUAY_USERNAME = credentials('quay-username')
+                        QUAY_PASSWORD = credentials('quay-password')
+                    }
                     steps {
                         run_tests('ostree-ng')
                     }
@@ -807,10 +811,6 @@ void run_tests(test_type) {
     }
 
     if (test_type == 'ostree-ng') {
-        environment {
-            QUAY_USERNAME = credentials('quay-username')
-            QUAY_PASSWORD = credentials('quay-password')
-        }
         sh (
             label: "New OSTree tests",
             script: "/usr/libexec/tests/osbuild-composer/ostree-ng.sh"
