@@ -26,7 +26,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	}
 	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 	ostreeRepoPath := "/ostree/repo"
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), anacondaOSTreePayloadStages(options, ostreeRepoPath)))
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
 	return pipelines, nil
@@ -56,7 +56,8 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 
 	tarPath := "/liveimg.tar"
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), anacondaTarPayloadStages(options, tarPath)))
+	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
 	return pipelines, nil
@@ -82,7 +83,12 @@ func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations,
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *commitTarPipeline(t.Filename()))
+	tarPipeline := osbuild.Pipeline{
+		Name:  "commit-archive",
+		Build: "name:build",
+	}
+	tarPipeline.AddStage(tarStage("ostree-commit", t.Filename()))
+	pipelines = append(pipelines, tarPipeline)
 	return pipelines, nil
 }
 
@@ -238,18 +244,12 @@ func ostreeCommitPipeline(options distro.ImageOptions) *osbuild.Pipeline {
 	return p
 }
 
-func commitTarPipeline(filename string) *osbuild.Pipeline {
-	options := osbuild.TarStageOptions{Filename: filename}
-	commitTree := new(osbuild.TarStageInput)
-	commitTree.Type = "org.osbuild.tree"
-	commitTree.Origin = "org.osbuild.pipeline"
-	commitTree.References = []string{"name:ostree-commit"}
-	tarStage := osbuild.NewTarStage(&options, &osbuild.TarStageInputs{Tree: commitTree})
-	p := new(osbuild.Pipeline)
-	p.Name = "commit-archive"
-	p.Build = "name:build"
-	p.AddStage(tarStage)
-	return p
+func tarStage(source, filename string) *osbuild.Stage {
+	tree := new(osbuild.TarStageInput)
+	tree.Type = "org.osbuild.tree"
+	tree.Origin = "org.osbuild.pipeline"
+	tree.References = []string{fmt.Sprintf("name:%s", source)}
+	return osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: filename}, &osbuild.TarStageInputs{Tree: tree})
 }
 
 func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations) *osbuild.Pipeline {
@@ -293,7 +293,7 @@ func containerPipeline(t *imageType) *osbuild.Pipeline {
 	return p
 }
 
-func anacondaOSTreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*osbuild.Stage {
+func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*osbuild.Stage {
 	stages := make([]*osbuild.Stage, 0)
 
 	// ostree commit payload
@@ -303,17 +303,6 @@ func anacondaOSTreePayloadStages(options distro.ImageOptions, ostreeRepoPath str
 		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 
-	return stages
-}
-
-func anacondaTarPayloadStages(options distro.ImageOptions, tarPath string) []*osbuild.Stage {
-	stages := make([]*osbuild.Stage, 0)
-	tree := new(osbuild.TarStageInput)
-	tree.Type = "org.osbuild.tree"
-	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{"name:os"}
-	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, &osbuild.TarStageInputs{Tree: tree})
-	stages = append(stages, tarStage)
 	return stages
 }
 
