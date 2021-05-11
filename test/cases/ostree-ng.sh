@@ -13,9 +13,6 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Install skopeo 
-sudo dnf install -y skopeo
-
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -290,7 +287,7 @@ greenprint "🗜 Pushing image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-rhel84-container.tar"
 skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 greenprint "Downloading image from quay.io"
-sudo podman login quay.io --username ${QUAY_USERNAME} --password ${QUAY_PASSWORD}
+sudo podman login quay.io --username "${QUAY_USERNAME}" --password "${QUAY_PASSWORD}"
 sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 sudo podman images
 greenprint "🗜 Running the image"
