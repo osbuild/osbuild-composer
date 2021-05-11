@@ -651,10 +651,6 @@ pipeline {
                     }
                     steps {
                         run_tests('base')
-                        sh (
-                            label: "Regression tests",
-                            script: "/usr/libexec/tests/osbuild-composer/regression.sh"
-                        )
                     }
                     post {
                         always {
@@ -788,6 +784,11 @@ void run_tests(test_type) {
         sh (
             label: "Base tests",
             script: "/usr/libexec/tests/osbuild-composer/base_tests.sh"
+        )
+
+        sh (
+            label: "Regression tests",
+            script: "/usr/libexec/tests/osbuild-composer/regression.sh"
         )
     }
 

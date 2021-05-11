@@ -54,6 +54,7 @@ Base:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
+    - /usr/libexec/tests/osbuild-composer/regression.sh
   parallel:
     matrix:
       - RUNNER:
