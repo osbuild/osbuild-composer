@@ -1,6 +1,7 @@
 stages:
   - init
   - rpmbuild
+  - containerbuild
   - test
   - finish
 
@@ -46,6 +47,18 @@ RPM:
           - aws/rhel-8.4-x86_64
           - aws/rhel-8.4-aarch64
         INTERNAL_NETWORK: ["true"]
+
+Container:
+  stage: containerbuild
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - sh "schutzbot/containerbuild.sh"
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-33-x86_64
 
 Base:
   stage: test
