@@ -23,6 +23,7 @@ type distribution struct {
 	modulePlatformID string
 	ostreeRef        string
 	arches           map[string]distro.Arch
+	packageSets      map[string]rpmmd.PackageSet
 }
 
 func (d *distribution) Name() string {
@@ -69,9 +70,10 @@ func (d *distribution) addArches(arches ...architecture) {
 }
 
 type architecture struct {
-	distro     *distribution
-	name       string
-	imageTypes map[string]distro.ImageType
+	distro      *distribution
+	name        string
+	imageTypes  map[string]distro.ImageType
+	packageSets map[string]rpmmd.PackageSet
 }
 
 func (a *architecture) Name() string {
@@ -164,19 +166,40 @@ func (t *imageType) Size(size uint64) uint64 {
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	sets := make(map[string]rpmmd.PackageSet)
-	for name, pkgSet := range t.packageSets {
-		if name == "packages" {
-			// combine image packages with blueprint
-			pkgSet.Include = append(pkgSet.Include, bp.GetPackages()...)
-			timezone, _ := bp.Customizations.GetTimezoneSettings()
-			if timezone != nil {
-				pkgSet.Include = append(pkgSet.Include, "chrony")
-			}
-		}
-		sets[name] = pkgSet
+	// merge package sets that appear in the image type (or are enabled by
+	// flags) with the package sets of the same name from the distro and arch
+	mergedSets := make(map[string]rpmmd.PackageSet)
+
+	imageSets := t.packageSets
+	distroSets := t.arch.distro.packageSets
+	archSets := t.arch.packageSets
+	for name := range imageSets {
+		mergedSets[name] = imageSets[name].Append(archSets[name]).Append(distroSets[name])
 	}
-	return sets
+
+	if _, hasPackages := imageSets["packages"]; !hasPackages {
+		// should this be possible??
+		mergedSets["packages"] = rpmmd.PackageSet{}
+	}
+
+	// build is usually not defined on the image type
+	// so handle it explicitly
+	if _, hasBuild := imageSets["build"]; !hasBuild {
+		buildSet := archSets["build"].Append(distroSets["build"])
+		if t.rpmOstree {
+			buildSet.Include = append(buildSet.Include, "rpm-ostree")
+		}
+		mergedSets["build"] = buildSet
+	}
+
+	// blueprint packages
+	bpPackages := bp.GetPackages()
+	timezone, _ := bp.Customizations.GetTimezoneSettings()
+	if timezone != nil {
+		bpPackages = append(bpPackages, "chrony")
+	}
+	mergedSets["packages"] = mergedSets["packages"].Append(rpmmd.PackageSet{Include: bpPackages})
+	return mergedSets
 
 }
 
