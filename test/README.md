@@ -324,7 +324,7 @@ is is missing lots of details!
 - [@henrywang](https://github.com/henrywang) - everything related to testing RHEL for Edge images
 - [@yih-redhat](https://github.com/yih-redhat) - everything related to testing RHEL for Edge images;
   backup for @henrywang
-- [@yuxisun1217](https://github.com/yuxisun1217) - ...
+- [@yuxisun1217](https://github.com/yuxisun1217) - QE for testing image-builder and image-builder-frontend
 
 
 ## Cron jobs for internal builds testing
