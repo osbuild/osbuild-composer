@@ -107,6 +107,14 @@ type PackageSet struct {
 	Exclude []string
 }
 
+// Append the Include and Exclude package list from another PackageSet and
+// return the result.
+func (ps PackageSet) Append(other PackageSet) PackageSet {
+	ps.Include = append(ps.Include, other.Include...)
+	ps.Exclude = append(ps.Exclude, other.Exclude...)
+	return ps
+}
+
 // TODO: the public API of this package should not be reused for serialization.
 type PackageSpec struct {
 	Name           string `json:"name"`
