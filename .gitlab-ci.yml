@@ -118,6 +118,7 @@ Integration:
       - RUNNER:
           - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
+          - aws/fedora-34-x86_64
           - aws/centos-stream-8-x86_64
       - RUNNER:
           - aws/rhel-8-x86_64
