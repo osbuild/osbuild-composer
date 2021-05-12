@@ -318,6 +318,16 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:             name,
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
+		packageSets: map[string]rpmmd.PackageSet{
+			"build": {
+				Include: []string{
+					"dnf", "dosfstools", "e2fsprogs", "glibc",
+					"lorax-templates-generic", "lorax-templates-rhel",
+					"policycoreutils", "python36", "python3-iniparse", "qemu-img",
+					"selinux-policy-targeted", "systemd", "tar", "xfsprogs", "xz",
+				},
+			},
+		},
 	}
 
 	// Shared Package sets
@@ -495,24 +505,16 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		distro: rd,
 	}
 
-	baseBuildPkgSet := rpmmd.PackageSet{
-		Include: []string{
-			"dnf", "dosfstools", "e2fsprogs", "glibc",
-			"lorax-templates-generic", "lorax-templates-rhel",
-			"policycoreutils", "python36", "python3-iniparse", "qemu-img",
-			"selinux-policy-targeted", "systemd", "tar", "xfsprogs", "xz",
-		},
-	}
 	installerBuildPkgSet := rpmmd.PackageSet{
-		Include: append(baseBuildPkgSet.Include,
+		Include: []string{
 			"efibootmgr", "genisoimage", "grub2-efi-ia32-cdboot",
 			"grub2-efi-x64", "grub2-efi-x64-cdboot", "grub2-pc",
 			"grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
 			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
 			"lorax-templates-generic", "lorax-templates-rhel", "rpm-ostree",
 			"shim-ia32", "shim-x64", "squashfs-tools", "syslinux",
-			"syslinux-nonlinux", "xorriso"),
-		Exclude: nil,
+			"syslinux-nonlinux", "xorriso",
+		},
 	}
 	x86bootPkgSet := rpmmd.PackageSet{
 		Include: []string{
@@ -580,7 +582,6 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build": baseBuildPkgSet,
 			"packages": {
 				Include: []string{"policycoreutils", "selinux-policy-targeted"},
 				Exclude: []string{"rng-tools"},
