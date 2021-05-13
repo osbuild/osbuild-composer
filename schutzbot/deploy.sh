@@ -100,7 +100,8 @@ fi
 if [ -f "rhel8internal.repo" ]; then
     greenprint "Preparing repos for internal build testing"
     sudo mv rhel8internal.repo /etc/yum.repos.d/
-    sudo rm -f /etc/yum.repos.d/osbuild*.repo
+    # Change back to removing osbuild*.repo when we have rpms in 8.5
+    sudo rm -f /etc/yum.repos.d/osbuild-composer.repo
 fi
 
 greenprint "Installing test packages for ${PROJECT}"
