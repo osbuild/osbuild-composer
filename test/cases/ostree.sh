@@ -23,6 +23,11 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/33/${ARCH}/iot"
         OS_VARIANT="fedora33"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/";;
+    "fedora-34")
+        IMAGE_TYPE=fedora-iot-commit
+        OSTREE_REF="fedora/34/${ARCH}/iot"
+        OS_VARIANT="fedora34"
+        BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/34/Everything/x86_64/os/";;
     "rhel-8.3")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -433,6 +438,7 @@ UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
+sleep 10  # maybe fix a race 
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already

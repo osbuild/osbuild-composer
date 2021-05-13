@@ -29,6 +29,20 @@
             "ami"
         ]
     },
+    "fedora-34": {
+        "x86_64": [
+            "ami",
+            "fedora-iot-commit",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami"
+        ]
+    },
     "rhel-8": {
         "x86_64": [
             "ami",

@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora34"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel85"
@@ -19,6 +20,7 @@ import (
 var supportedDistros = []func() distro.Distro{
 	fedora32.New,
 	fedora33.New,
+	fedora34.New,
 	rhel8.New,
 	rhel84.New,
 	rhel84.NewCentos,

@@ -91,6 +91,13 @@ sudo systemctl start osbuild-composer-api.socket
 # currently not true on Schutzbot
 sudo systemctl try-restart osbuild-composer
 
+# Let's always use the old composer-cli on Fedora 34 for now because I
+# haven't been able to find a workaround for:
+# https://github.com/osbuild/weldr-client/issues/11
+if rpm --quiet -q weldr-client && [[ $ID == fedora && $VERSION_ID == 34 ]]; then
+  sudo dnf swap -y weldr-client composer-cli-34.9-5.fc34
+fi
+
 # Basic verification
 sudo composer-cli status show
 sudo composer-cli sources list
