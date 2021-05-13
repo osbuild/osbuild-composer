@@ -9438,6 +9438,56 @@
     ]
   },
   "image-info": {
+    "/etc/security/limits.d": {
+      "realtime.conf": [
+        {
+          "domain": "@realtime",
+          "item": "cpu",
+          "type": "soft",
+          "value": "unlimited"
+        },
+        {
+          "domain": "@realtime",
+          "item": "rtprio",
+          "type": "-",
+          "value": "99"
+        },
+        {
+          "domain": "@realtime",
+          "item": "nice",
+          "type": "-",
+          "value": "-20"
+        },
+        {
+          "domain": "@realtime",
+          "item": "memlock",
+          "type": "-",
+          "value": "unlimited"
+        }
+      ]
+    },
+    "/etc/sysctl.d": {
+      "99-sysctl.conf": [
+        "kernel.hung_task_panic = 0",
+        "kernel.hung_task_timeout_secs = 600"
+      ]
+    },
+    "/etc/udev/rules.d": {
+      "99-rhel-rt.rules": [
+        "KERNEL==\"rtc0\", PROGRAM+=\"/bin/ln -sf rtc0 /dev/rtc\"",
+        "KERNEL==\"cpu_dma_latency\", GROUP=\"realtime\"",
+        "SUBSYSTEM==\"msr\", GROUP=\"realtime\", MODE=\"0640\"",
+        "SUBSYSTEM==\"cpuid\", GROUP=\"realtime\", MODE=\"0640\""
+      ]
+    },
+    "chrony": {
+      "leapsectz": [
+        "right/UTC"
+      ],
+      "pool": [
+        "2.rhel.pool.ntp.org iburst"
+      ]
+    },
     "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
@@ -9491,6 +9541,14 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
+    "locale": {
+      "LANG": "en_US.UTF-8"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -9993,6 +10051,80 @@
         "subscription-manager": {
           "enabled": true
         }
+      },
+      "rhsm.conf": {
+        "logging": {
+          "default_log_level": "INFO"
+        },
+        "rhsm": {
+          "auto_enable_yum_plugins": "1",
+          "baseurl": "https://cdn.redhat.com",
+          "ca_cert_dir": "/etc/rhsm/ca/",
+          "consumercertdir": "/etc/pki/consumer",
+          "entitlementcertdir": "/etc/pki/entitlement",
+          "full_refresh_on_yum": "0",
+          "inotify": "1",
+          "manage_repos": "1",
+          "package_profile_on_trans": "0",
+          "pluginconfdir": "/etc/rhsm/pluginconf.d",
+          "plugindir": "/usr/share/rhsm-plugins",
+          "productcertdir": "/etc/pki/product",
+          "repo_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
+          "repomd_gpg_url": "",
+          "report_package_profile": "1"
+        },
+        "rhsmcertd": {
+          "autoattachinterval": "1440",
+          "certcheckinterval": "240",
+          "disable": "0",
+          "splay": "1"
+        },
+        "server": {
+          "hostname": "subscription.rhsm.redhat.com",
+          "insecure": "0",
+          "no_proxy": "",
+          "port": "443",
+          "prefix": "/subscription",
+          "proxy_hostname": "",
+          "proxy_password": "",
+          "proxy_port": "",
+          "proxy_scheme": "http",
+          "proxy_user": "",
+          "ssl_verify_depth": "3"
+        }
+      }
+    },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_unit_file_t:s0",
+          "filename": "/usr/lib/systemd/system/usbguard.service"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/runc"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/podman"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_exec_t:s0",
+          "filename": "/usr/sbin/usbguard-daemon"
+        },
+        {
+          "actual": "system_u:object_r:mnt_t:s0",
+          "expected": "system_u:object_r:default_t:s0",
+          "filename": "/proc"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
       }
     },
     "services-disabled": [
@@ -10082,6 +10214,23 @@
       "udisks2.service",
       "unbound-anchor.timer"
     ],
+    "sudoers": {
+      "/etc/sudoers": [
+        "Defaults   !visiblepw",
+        "Defaults    always_set_home",
+        "Defaults    match_group_by_gid",
+        "Defaults    always_query_group_plugin",
+        "Defaults    env_reset",
+        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
+        "Defaults    env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
+        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
+        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
+        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
+        "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin",
+        "root\tALL=(ALL) \tALL",
+        "%wheel\tALL=(ALL)\tALL"
+      ]
+    },
     "sysconfig": {
       "kernel": {
         "DEFAULTKERNEL": "kernel",

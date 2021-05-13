@@ -29,6 +29,20 @@
             "ami"
         ]
     },
+    "centos-8": {
+        "x86_64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "tar",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami"
+        ]
+    },
     "rhel-8": {
         "x86_64": [
             "ami",
@@ -52,16 +66,19 @@
             "tar"
         ],
         "s390x": [
-            "qcow2",
-            "tar"
+            "qcow2"
         ]
     },
     "rhel-84": {
         "x86_64": [
             "ami",
             "openstack",
+            "tar",
             "qcow2",
             "qcow2-customize",
+            "rhel-edge-commit",
+            "rhel-edge-commit-rt",
+            "rhel-edge-container",
             "vhd",
             "vmdk"
         ],
@@ -70,6 +87,7 @@
             "openstack",
             "qcow2",
             "rhel-edge-commit",
+            "rhel-edge-container",
             "tar"
         ],
         "ppc64le": [

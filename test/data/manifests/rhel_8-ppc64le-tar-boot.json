@@ -75,6 +75,9 @@
           "sha256:0cb4ea44c720913b084b0a5953c86e3f1ed56096ea2b408fd8be9aad0fcd2445": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/grub2-tools-minimal-2.02-90.el8.ppc64le.rpm"
           },
+          "sha256:0dc7b3a90e2e0806e398ccc929dfa873b951ae0eb770690d044a1e1529e335b9": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/linux-firmware-20200619-99.git3890db36.el8.noarch.rpm"
+          },
           "sha256:0e241b69a29968c3d11c2223b1a5e711cbe9015319b8c73bedf92513f282f9cd": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/librepo-1.12.0-2.el8.ppc64le.rpm"
           },
@@ -236,6 +239,9 @@
           },
           "sha256:4f2725db0dc03a8bb729ccf6ced8fc4e8eae995afa7029decb7a7aa81e6eb417": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/libgcrypt-1.8.5-4.el8.ppc64le.rpm"
+          },
+          "sha256:4f72a0902d4fa90820faa000c46562bd1db2da38b5a201b623ac1de657719441": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-4.18.0-240.el8.ppc64le.rpm"
           },
           "sha256:5009afc9241f592691ce9097fb74dabba84b1d2eaf267a7bea71b33bc7ac3795": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/gmp-6.1.2-10.el8.ppc64le.rpm"
@@ -443,6 +449,9 @@
           },
           "sha256:97ffad7f79927ee908510ae381ada704827d369b5a0b8715214f51270a0984d3": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/libtasn1-4.13-3.el8.ppc64le.rpm"
+          },
+          "sha256:986afe87b189246093a6c5e274ad7112295de4f8a5fb7fb3cfa01baeab2d5a1a": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-core-4.18.0-240.el8.ppc64le.rpm"
           },
           "sha256:9a1782b0ff33ad11979c039999990819c66145010e17c4af41550daf4d9d15ae": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/libcroco-0.6.12-4.el8_2.1.ppc64le.rpm"
@@ -695,6 +704,9 @@
           },
           "sha256:fd5c2530f60be39592a9b1b7a65569d44f5bbb826db5e721d17e3cb9d6ffe41d": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-appstream-8.3.0.r-20210120/Packages/python36-3.6.8-2.module+el8.1.0+3334+5cb623d7.ppc64le.rpm"
+          },
+          "sha256:fd7e2de42ebc5b333e7ee3250be4c1a6cc436c09d72be84ef27ddca8cdd6ff74": {
+            "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-modules-4.18.0-240.el8.ppc64le.rpm"
           },
           "sha256:fdc0417e40a22216c0ccc0bb766438871249dd09442703bf612aeff4446b78ba": {
             "url": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/grub2-ppc64le-modules-2.02-90.el8.noarch.rpm"
@@ -1580,6 +1592,15 @@
                 "checksum": "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73"
               },
               {
+                "checksum": "sha256:4f72a0902d4fa90820faa000c46562bd1db2da38b5a201b623ac1de657719441"
+              },
+              {
+                "checksum": "sha256:986afe87b189246093a6c5e274ad7112295de4f8a5fb7fb3cfa01baeab2d5a1a"
+              },
+              {
+                "checksum": "sha256:fd7e2de42ebc5b333e7ee3250be4c1a6cc436c09d72be84ef27ddca8cdd6ff74"
+              },
+              {
                 "checksum": "sha256:76ed4d1820916e1d4d5ba12a9200b790fc75f2801937d63753fca7e12b6c9d6e"
               },
               {
@@ -1734,6 +1755,9 @@
               },
               {
                 "checksum": "sha256:0143da5903a3053bbd62714904db5a7c1aba3b9ff77c97d9126a4479d3047c58"
+              },
+              {
+                "checksum": "sha256:0dc7b3a90e2e0806e398ccc929dfa873b951ae0eb770690d044a1e1529e335b9"
               },
               {
                 "checksum": "sha256:756fe3065871f2c7c1f9635ae75119d1755dbb6a5ea62fae7660b410d9392e34"
@@ -4464,6 +4488,33 @@
         "checksum": "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73"
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "240.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-4.18.0-240.el8.ppc64le.rpm",
+        "checksum": "sha256:4f72a0902d4fa90820faa000c46562bd1db2da38b5a201b623ac1de657719441"
+      },
+      {
+        "name": "kernel-core",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "240.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-core-4.18.0-240.el8.ppc64le.rpm",
+        "checksum": "sha256:986afe87b189246093a6c5e274ad7112295de4f8a5fb7fb3cfa01baeab2d5a1a"
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "240.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/kernel-modules-4.18.0-240.el8.ppc64le.rpm",
+        "checksum": "sha256:fd7e2de42ebc5b333e7ee3250be4c1a6cc436c09d72be84ef27ddca8cdd6ff74"
+      },
+      {
         "name": "keyutils-libs",
         "epoch": 0,
         "version": "1.5.10",
@@ -4930,6 +4981,15 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/libzstd-1.4.4-1.el8.ppc64le.rpm",
         "checksum": "sha256:0143da5903a3053bbd62714904db5a7c1aba3b9ff77c97d9126a4479d3047c58"
+      },
+      {
+        "name": "linux-firmware",
+        "epoch": 0,
+        "version": "20200619",
+        "release": "99.git3890db36.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v1/psi/el8/el8-ppc64le-baseos-8.3.0.r-20210120/Packages/linux-firmware-20200619-99.git3890db36.el8.noarch.rpm",
+        "checksum": "sha256:0dc7b3a90e2e0806e398ccc929dfa873b951ae0eb770690d044a1e1529e335b9"
       },
       {
         "name": "lua-libs",
@@ -5456,7 +5516,19 @@
     ]
   },
   "image-info": {
-    "bootmenu": [],
+    "bootmenu": [
+      {
+        "grub_arg": "--unrestricted",
+        "grub_class": "kernel",
+        "grub_users": "$grub_users",
+        "id": "rhel-20200923091536-4.18.0-240.el8.ppc64le",
+        "initrd": "/boot/initramfs-4.18.0-240.el8.ppc64le.img",
+        "linux": "/boot/vmlinuz-4.18.0-240.el8.ppc64le",
+        "options": "$kernelopts",
+        "title": "Red Hat Enterprise Linux (4.18.0-240.el8.ppc64le) 8.3 (Ootpa)",
+        "version": "4.18.0-240.el8.ppc64le"
+      }
+    ],
     "default-target": "graphical.target",
     "groups": [
       "adm:x:4:",
@@ -5497,6 +5569,14 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
+    "locale": {
+      "LANG": "en_US"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -5577,6 +5657,9 @@
       "kbd-2.0.4-10.el8.ppc64le",
       "kbd-legacy-2.0.4-10.el8.noarch",
       "kbd-misc-2.0.4-10.el8.noarch",
+      "kernel-4.18.0-240.el8.ppc64le",
+      "kernel-core-4.18.0-240.el8.ppc64le",
+      "kernel-modules-4.18.0-240.el8.ppc64le",
       "keyutils-libs-1.5.10-6.el8.ppc64le",
       "kmod-25-16.el8.ppc64le",
       "kmod-libs-25-16.el8.ppc64le",
@@ -5630,6 +5713,7 @@
       "libxkbcommon-0.9.1-1.el8.ppc64le",
       "libxml2-2.9.7-8.el8.ppc64le",
       "libzstd-1.4.4-1.el8.ppc64le",
+      "linux-firmware-20200619-99.git3890db36.el8.noarch",
       "lua-libs-5.3.4-11.el8.ppc64le",
       "lz4-libs-1.8.3-2.el8.ppc64le",
       "memstrack-0.1.11-1.el8.ppc64le",
@@ -5720,6 +5804,29 @@
         "/var/log/lastlog": ".M....G.."
       },
       "missing": []
+    },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.001"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.002"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.003"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
     },
     "services-disabled": [
       "console-getty.service",

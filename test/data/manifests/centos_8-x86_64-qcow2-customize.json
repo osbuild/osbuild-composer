@@ -1194,6 +1194,9 @@
           "sha256:c5359c27606e5e72856c40c3428e7de03d9cfd9dc4e67f2bb6889b2ccb0e1bea": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/libpwquality-1.4.4-1.el8.x86_64.rpm"
           },
+          "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm"
+          },
           "sha256:c5b5967a094ced90899052a82e2c245529b75ba3f46e0ce1a89cfc95edb935ea": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/python3-dateutil-2.6.1-6.el8.noarch.rpm"
           },
@@ -3387,6 +3390,10 @@
               },
               {
                 "checksum": "sha256:440ef0473d6f85c6f173020dab18d376d466b7b960876fba54772f88d4bfe050",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca",
                 "check_gpg": true
               },
               {
@@ -9134,6 +9141,16 @@
         "check_gpg": true
       },
       {
+        "name": "net-tools",
+        "epoch": 0,
+        "version": "2.0",
+        "release": "0.52.20160912git.el8",
+        "arch": "x86_64",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/net-tools-2.0-0.52.20160912git.el8.x86_64.rpm",
+        "checksum": "sha256:c56cde3b8bc11965fa73b9baf59ab5fa7f6a45a950d5b6b369cf4679c17295ca",
+        "check_gpg": true
+      },
+      {
         "name": "nettle",
         "epoch": 0,
         "version": "3.4.1",
@@ -11036,6 +11053,91 @@
     ]
   },
   "image-info": {
+    "/etc/cloud/cloud.conf": {
+      "cloud_config_modules": [
+        "mounts",
+        "locale",
+        "set-passwords",
+        "rh_subscription",
+        "yum-add-repo",
+        "package-update-upgrade-install",
+        "timezone",
+        "puppet",
+        "chef",
+        "salt-minion",
+        "mcollective",
+        "disable-ec2-metadata",
+        "runcmd"
+      ],
+      "cloud_final_modules": [
+        "rightscale_userdata",
+        "scripts-per-once",
+        "scripts-per-boot",
+        "scripts-per-instance",
+        "scripts-user",
+        "ssh-authkey-fingerprints",
+        "keys-to-console",
+        "phone-home",
+        "final-message",
+        "power-state-change"
+      ],
+      "cloud_init_modules": [
+        "disk_setup",
+        "migrator",
+        "bootcmd",
+        "write-files",
+        "growpart",
+        "resizefs",
+        "set_hostname",
+        "update_hostname",
+        "update_etc_hosts",
+        "rsyslog",
+        "users-groups",
+        "ssh"
+      ],
+      "disable_root": 1,
+      "disable_vmware_customization": false,
+      "mount_default_fields": [
+        null,
+        null,
+        "auto",
+        "defaults,nofail,x-systemd.requires=cloud-init.service",
+        "0",
+        "2"
+      ],
+      "resize_rootfs_tmp": "/dev",
+      "ssh_deletekeys": 1,
+      "ssh_genkeytypes": null,
+      "ssh_pwauth": 0,
+      "syslog_fix_perms": null,
+      "system_info": {
+        "default_user": {
+          "gecos": "Cloud User",
+          "groups": [
+            "adm",
+            "systemd-journal"
+          ],
+          "lock_passwd": true,
+          "name": "cloud-user",
+          "shell": "/bin/bash",
+          "sudo": [
+            "ALL=(ALL) NOPASSWD:ALL"
+          ]
+        },
+        "distro": "rhel",
+        "paths": {
+          "cloud_dir": "/var/lib/cloud",
+          "templates_dir": "/etc/cloud/templates"
+        },
+        "ssh_svcname": "sshd"
+      },
+      "users": [
+        "default"
+      ]
+    },
+    "/etc/udev/rules.d": {
+      "70-persistent-ipoib.rules": []
+    },
     "boot-environment": {
       "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto debug",
       "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-277.el8.x86_64"
@@ -11054,7 +11156,22 @@
         "version": "4.18.0-277.el8.x86_64"
       }
     ],
+    "chrony": {
+      "leapsectz": [
+        "right/UTC"
+      ],
+      "server": [
+        "time.example.com iburst"
+      ]
+    },
     "default-target": "multi-user.target",
+    "dnf": {
+      "vars": {
+        "contentdir": "centos",
+        "infra": "stock",
+        "stream": "8-stream"
+      }
+    },
     "fstab": [
       [
         "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -11125,10 +11242,23 @@
       "wheel:x:10:"
     ],
     "hostname": "my-host",
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
     "image-format": {
       "compat": "0.10",
       "type": "qcow2"
     },
+    "keyboard": {
+      "vconsole": {
+        "KEYMAP": "dvorak"
+      }
+    },
+    "locale": {
+      "LANG": "el_CY.UTF-8"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -11421,6 +11551,7 @@
       "ncurses-6.1-7.20180224.el8.x86_64",
       "ncurses-base-6.1-7.20180224.el8.noarch",
       "ncurses-libs-6.1-7.20180224.el8.x86_64",
+      "net-tools-2.0-0.52.20160912git.el8.x86_64",
       "nettle-3.4.1-2.el8.x86_64",
       "newt-0.52.20-11.el8.x86_64",
       "nfs-utils-2.3.3-41.el8.x86_64",
@@ -11665,6 +11796,49 @@
         "subscription-manager": {
           "enabled": false
         }
+      },
+      "rhsm.conf": {
+        "logging": {
+          "default_log_level": "INFO"
+        },
+        "rhsm": {
+          "auto_enable_yum_plugins": "1",
+          "baseurl": "https://cdn.redhat.com",
+          "ca_cert_dir": "/etc/rhsm/ca/",
+          "consumercertdir": "/etc/pki/consumer",
+          "entitlementcertdir": "/etc/pki/entitlement",
+          "full_refresh_on_yum": "0",
+          "inotify": "1",
+          "manage_repos": "1",
+          "package_profile_on_trans": "0",
+          "pluginconfdir": "/etc/rhsm/pluginconf.d",
+          "plugindir": "/usr/share/rhsm-plugins",
+          "productcertdir": "/etc/pki/product",
+          "repo_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
+          "repomd_gpg_url": "",
+          "report_package_profile": "1"
+        },
+        "rhsmcertd": {
+          "auto_registration": "0",
+          "auto_registration_interval": "60",
+          "autoattachinterval": "1440",
+          "certcheckinterval": "240",
+          "disable": "0",
+          "splay": "1"
+        },
+        "server": {
+          "hostname": "subscription.rhsm.redhat.com",
+          "insecure": "0",
+          "no_proxy": "",
+          "port": "443",
+          "prefix": "/subscription",
+          "proxy_hostname": "",
+          "proxy_password": "",
+          "proxy_port": "",
+          "proxy_scheme": "http",
+          "proxy_user": "",
+          "ssl_verify_depth": "3"
+        }
       }
     },
     "rpm-verify": {
@@ -11684,7 +11858,26 @@
       },
       "missing": []
     },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/kernel"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/network"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
+    },
     "services-disabled": [
+      "arp-ethers.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",
@@ -11762,6 +11955,23 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
+    "sudoers": {
+      "/etc/sudoers": [
+        "Defaults   !visiblepw",
+        "Defaults    always_set_home",
+        "Defaults    match_group_by_gid",
+        "Defaults    always_query_group_plugin",
+        "Defaults    env_reset",
+        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
+        "Defaults    env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
+        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
+        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
+        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
+        "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin",
+        "root\tALL=(ALL) \tALL",
+        "%wheel\tALL=(ALL)\tALL"
+      ]
+    },
     "sysconfig": {
       "kernel": {
         "DEFAULTKERNEL": "kernel",

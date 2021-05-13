@@ -9374,6 +9374,94 @@
     ]
   },
   "image-info": {
+    "/etc/cloud/cloud.conf": {
+      "cloud_config_modules": [
+        "ssh-import-id",
+        "locale",
+        "set-passwords",
+        "spacewalk",
+        "yum-add-repo",
+        "ntp",
+        "timezone",
+        "disable-ec2-metadata",
+        "runcmd"
+      ],
+      "cloud_final_modules": [
+        "package-update-upgrade-install",
+        "puppet",
+        "chef",
+        "mcollective",
+        "salt-minion",
+        "rightscale_userdata",
+        "scripts-vendor",
+        "scripts-per-once",
+        "scripts-per-boot",
+        "scripts-per-instance",
+        "scripts-user",
+        "ssh-authkey-fingerprints",
+        "keys-to-console",
+        "phone-home",
+        "final-message",
+        "power-state-change"
+      ],
+      "cloud_init_modules": [
+        "migrator",
+        "seed_random",
+        "bootcmd",
+        "write-files",
+        "growpart",
+        "resizefs",
+        "disk_setup",
+        "mounts",
+        "set_hostname",
+        "update_hostname",
+        "update_etc_hosts",
+        "ca-certs",
+        "rsyslog",
+        "users-groups",
+        "ssh"
+      ],
+      "disable_root": true,
+      "mount_default_fields": [
+        null,
+        null,
+        "auto",
+        "defaults,nofail",
+        "0",
+        "2"
+      ],
+      "preserve_hostname": false,
+      "resize_rootfs_tmp": "/dev",
+      "ssh_pwauth": 0,
+      "system_info": {
+        "default_user": {
+          "gecos": "fedora Cloud User",
+          "groups": [
+            "wheel",
+            "adm",
+            "systemd-journal"
+          ],
+          "lock_passwd": true,
+          "name": "fedora",
+          "shell": "/bin/bash",
+          "sudo": [
+            "ALL=(ALL) NOPASSWD:ALL"
+          ]
+        },
+        "distro": "fedora",
+        "paths": {
+          "cloud_dir": "/var/lib/cloud/",
+          "templates_dir": "/etc/cloud/templates/"
+        },
+        "ssh_svcname": "sshd"
+      },
+      "users": [
+        "default"
+      ]
+    },
+    "/etc/udev/rules.d": {
+      "70-persistent-ipoib.rules": []
+    },
     "boot-environment": {
       "kernelopts": "root=UUID=76a22bf4-f153-4541-b6c7-0332c0dfaeac ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200"
     },
@@ -9390,6 +9478,14 @@
         "version": "5.8.15-301.fc33.x86_64"
       }
     ],
+    "chrony": {
+      "leapsectz": [
+        "right/UTC"
+      ],
+      "pool": [
+        "2.fedora.pool.ntp.org iburst"
+      ]
+    },
     "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
@@ -9449,9 +9545,17 @@
       "wheel:x:10:"
     ],
     "hostname": "localhost.localdomain",
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
     "image-format": {
       "type": "raw"
     },
+    "locale": {
+      "LANG": "en_US"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;38;2;60;110;180",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -9879,6 +9983,19 @@
       },
       "missing": []
     },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:lost_found_t:s0",
+          "filename": "/lost+found"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
+    },
     "services-disabled": [
       "arp-ethers.service",
       "chrony-dnssrv@.timer",
@@ -9955,6 +10072,23 @@
       "systemd-userdbd.socket",
       "unbound-anchor.timer"
     ],
+    "sudoers": {
+      "/etc/sudoers": [
+        "Defaults   !visiblepw",
+        "Defaults    always_set_home",
+        "Defaults    match_group_by_gid",
+        "Defaults    always_query_group_plugin",
+        "Defaults    env_reset",
+        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
+        "Defaults    env_keep += \"MAIL QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
+        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
+        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
+        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
+        "Defaults    secure_path = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/var/lib/snapd/snap/bin",
+        "root\tALL=(ALL) \tALL",
+        "%wheel\tALL=(ALL)\tALL"
+      ]
+    },
     "timezone": "UTC"
   }
 }

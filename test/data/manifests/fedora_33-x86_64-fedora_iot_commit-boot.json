@@ -10574,6 +10574,17 @@
     ]
   },
   "image-info": {
+    "/etc/udev/rules.d": {
+      "70-persistent-ipoib.rules": []
+    },
+    "chrony": {
+      "leapsectz": [
+        "right/UTC"
+      ],
+      "pool": [
+        "2.fedora.pool.ntp.org iburst"
+      ]
+    },
     "default-target": "graphical.target",
     "firewall-enabled": [
       "ssh",
@@ -10632,6 +10643,14 @@
       "wheel:x:10:"
     ],
     "hostname": "localhost.localdomain",
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
+    "locale": {
+      "LANG": "en_US"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;38;2;60;110;180",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -11107,6 +11126,44 @@
       "systemd-timesync:x:998:996:systemd Time Synchronization:/:/sbin/nologin",
       "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin"
     ],
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_unit_file_t:s0",
+          "filename": "/usr/lib/systemd/system/usbguard.service"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/runc"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/podman"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/crun"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_exec_t:s0",
+          "filename": "/usr/sbin/usbguard-daemon"
+        },
+        {
+          "actual": "system_u:object_r:mnt_t:s0",
+          "expected": "system_u:object_r:default_t:s0",
+          "filename": "/proc"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
+    },
     "services-disabled": [
       "blk-availability.service",
       "bluetooth-mesh.service",
@@ -11203,6 +11260,23 @@
       "systemd-userdbd.socket",
       "zezere_ignition.timer"
     ],
+    "sudoers": {
+      "/etc/sudoers": [
+        "Defaults   !visiblepw",
+        "Defaults    always_set_home",
+        "Defaults    match_group_by_gid",
+        "Defaults    always_query_group_plugin",
+        "Defaults    env_reset",
+        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
+        "Defaults    env_keep += \"MAIL QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
+        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
+        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
+        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
+        "Defaults    secure_path = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/var/lib/snapd/snap/bin",
+        "root\tALL=(ALL) \tALL",
+        "%wheel\tALL=(ALL)\tALL"
+      ]
+    },
     "timezone": "UTC",
     "type": "ostree/commit"
   }
