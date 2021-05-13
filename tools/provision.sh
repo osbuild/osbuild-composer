@@ -63,11 +63,11 @@ esac
 
 # overrides for RHEL nightly builds testing
 if [ -f "rhel-8.json" ]; then
-    sudo mv rhel-8.json /etc/osbuild-composer/repositories/
+    sudo cp rhel-8.json /etc/osbuild-composer/repositories/
 fi
 
 if [ -f "rhel-8-beta.json" ]; then
-    sudo mv rhel-8-beta.json /etc/osbuild-composer/repositories/
+    sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
 fi
 
 # Generate all X.509 certificates for the tests

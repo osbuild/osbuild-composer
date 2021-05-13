@@ -1,6 +1,7 @@
 stages:
   - init
   - rpmbuild
+  - prepare-rhel-internal
   - test
   - finish
 
@@ -26,6 +27,8 @@ init:
 RPM:
   stage: rpmbuild
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
@@ -52,6 +55,8 @@ RPM:
 Container:
   stage: rpmbuild
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
@@ -61,9 +66,33 @@ Container:
       - RUNNER:
           - aws/fedora-33-x86_64
 
+Prepare-rhel-internal:
+  stage: prepare-rhel-internal
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - schutzbot/prepare-rhel-internal.sh
+  artifacts:
+    paths:
+      - rhel-8.json
+      - rhel8internal.repo
+      - rhel-8-beta.json
+      - COMPOSE_ID
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 Base:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
@@ -96,6 +125,9 @@ Base:
 OSTree:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
@@ -135,6 +167,9 @@ New OSTree:
 Integration:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
@@ -164,7 +199,6 @@ Integration:
         INTERNAL_NETWORK: ["true"]
         DISTRO_CODE: ["rhel_90"]
 
-
 .API_TESTS: &API_TESTS
   TARGET:
     - azure
@@ -175,6 +209,9 @@ Integration:
 API:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:

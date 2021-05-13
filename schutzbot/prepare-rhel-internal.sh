@@ -8,7 +8,12 @@ function greenprint {
 
 ARCH=$(uname -m)
 
-source ../tools/define-compose-url.sh
+if [ -e ../tools/define-compose-url.sh ]
+then
+    source ../tools/define-compose-url.sh
+else
+    source ./tools/define-compose-url.sh
+fi
 
 # Create a repository file for installing the osbuild-composer RPMs
 greenprint "📜 Generating dnf repository file"
@@ -67,6 +72,7 @@ if ! s3cmd --version > /dev/null 2>&1; then
     sudo pip3 -q install s3cmd
 fi
 
+JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 REPO_DIR_LATEST="repo/${JOB_NAME}/latest/internal"
 mkdir -p "$REPO_DIR_LATEST"
 
