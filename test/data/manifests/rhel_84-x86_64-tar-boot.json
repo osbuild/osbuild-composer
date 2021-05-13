@@ -5570,6 +5570,14 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
+    "locale": {
+      "LANG": "en_US.UTF-8"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -5797,6 +5805,39 @@
         "/var/log/lastlog": ".M....G.."
       },
       "missing": []
+    },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.002"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.001"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.003"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/network"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/kernel"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
     },
     "services-disabled": [
       "console-getty.service",

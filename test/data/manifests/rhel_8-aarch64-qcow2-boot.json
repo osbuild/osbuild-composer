@@ -9508,6 +9508,88 @@
     ]
   },
   "image-info": {
+    "/etc/cloud/cloud.conf": {
+      "cloud_config_modules": [
+        "mounts",
+        "locale",
+        "set-passwords",
+        "rh_subscription",
+        "yum-add-repo",
+        "package-update-upgrade-install",
+        "timezone",
+        "puppet",
+        "chef",
+        "salt-minion",
+        "mcollective",
+        "disable-ec2-metadata",
+        "runcmd"
+      ],
+      "cloud_final_modules": [
+        "rightscale_userdata",
+        "scripts-per-once",
+        "scripts-per-boot",
+        "scripts-per-instance",
+        "scripts-user",
+        "ssh-authkey-fingerprints",
+        "keys-to-console",
+        "phone-home",
+        "final-message",
+        "power-state-change"
+      ],
+      "cloud_init_modules": [
+        "disk_setup",
+        "migrator",
+        "bootcmd",
+        "write-files",
+        "growpart",
+        "resizefs",
+        "set_hostname",
+        "update_hostname",
+        "update_etc_hosts",
+        "rsyslog",
+        "users-groups",
+        "ssh"
+      ],
+      "disable_root": 1,
+      "disable_vmware_customization": false,
+      "mount_default_fields": [
+        null,
+        null,
+        "auto",
+        "defaults,nofail,x-systemd.requires=cloud-init.service",
+        "0",
+        "2"
+      ],
+      "resize_rootfs_tmp": "/dev",
+      "ssh_deletekeys": 1,
+      "ssh_genkeytypes": null,
+      "ssh_pwauth": 0,
+      "syslog_fix_perms": null,
+      "system_info": {
+        "default_user": {
+          "gecos": "Cloud User",
+          "groups": [
+            "adm",
+            "systemd-journal"
+          ],
+          "lock_passwd": true,
+          "name": "cloud-user",
+          "shell": "/bin/bash",
+          "sudo": [
+            "ALL=(ALL) NOPASSWD:ALL"
+          ]
+        },
+        "distro": "rhel",
+        "paths": {
+          "cloud_dir": "/var/lib/cloud",
+          "templates_dir": "/etc/cloud/templates"
+        },
+        "ssh_svcname": "sshd"
+      },
+      "users": [
+        "default"
+      ]
+    },
     "boot-environment": {
       "kernelopts": "root=UUID=0bd700f8-090f-4556-b797-b340297ea1bd console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0"
     },
@@ -9525,6 +9607,14 @@
         "version": "4.18.0-240.el8.aarch64"
       }
     ],
+    "chrony": {
+      "leapsectz": [
+        "right/UTC"
+      ],
+      "pool": [
+        "2.rhel.pool.ntp.org iburst"
+      ]
+    },
     "default-target": "graphical.target",
     "fstab": [
       [
@@ -9594,10 +9684,18 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
     "image-format": {
-      "type": "qcow2",
-      "compat": "1.1"
+      "compat": "1.1",
+      "type": "qcow2"
     },
+    "locale": {
+      "LANG": "en_US"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -10076,7 +10174,7 @@
         "bootable": false,
         "fstype": "vfat",
         "label": "EFI\\ System",
-        "partuuid": "848A0E81-8E27-3441-85F7-7E5FAF20422D",
+        "partuuid": "DFE3F6BA-B0BD-9A4B-80AD-A2E34C100427",
         "size": 498073600,
         "start": 1048576,
         "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
@@ -10086,7 +10184,7 @@
         "bootable": false,
         "fstype": "xfs",
         "label": null,
-        "partuuid": "81D03690-D42A-304B-B182-C6A325DDE031",
+        "partuuid": "87A2D6D1-31BB-6040-9CBA-A3278386C808",
         "size": 3794779648,
         "start": 500170752,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
@@ -10133,6 +10231,47 @@
         "subscription-manager": {
           "enabled": false
         }
+      },
+      "rhsm.conf": {
+        "logging": {
+          "default_log_level": "INFO"
+        },
+        "rhsm": {
+          "auto_enable_yum_plugins": "1",
+          "baseurl": "https://cdn.redhat.com",
+          "ca_cert_dir": "/etc/rhsm/ca/",
+          "consumercertdir": "/etc/pki/consumer",
+          "entitlementcertdir": "/etc/pki/entitlement",
+          "full_refresh_on_yum": "0",
+          "inotify": "1",
+          "manage_repos": "1",
+          "package_profile_on_trans": "0",
+          "pluginconfdir": "/etc/rhsm/pluginconf.d",
+          "plugindir": "/usr/share/rhsm-plugins",
+          "productcertdir": "/etc/pki/product",
+          "repo_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
+          "repomd_gpg_url": "",
+          "report_package_profile": "1"
+        },
+        "rhsmcertd": {
+          "autoattachinterval": "1440",
+          "certcheckinterval": "240",
+          "disable": "0",
+          "splay": "1"
+        },
+        "server": {
+          "hostname": "subscription.rhsm.redhat.com",
+          "insecure": "0",
+          "no_proxy": "",
+          "port": "443",
+          "prefix": "/subscription",
+          "proxy_hostname": "",
+          "proxy_password": "",
+          "proxy_port": "",
+          "proxy_scheme": "http",
+          "proxy_user": "",
+          "ssl_verify_depth": "3"
+        }
       }
     },
     "rpm-verify": {
@@ -10149,6 +10288,12 @@
         "/var/spool/anacron/cron.weekly": ".M......."
       },
       "missing": []
+    },
+    "selinux": {
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
     },
     "services-disabled": [
       "arp-ethers.service",
@@ -10230,6 +10375,23 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
+    "sudoers": {
+      "/etc/sudoers": [
+        "Defaults   !visiblepw",
+        "Defaults    always_set_home",
+        "Defaults    match_group_by_gid",
+        "Defaults    always_query_group_plugin",
+        "Defaults    env_reset",
+        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
+        "Defaults    env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
+        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
+        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
+        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
+        "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin",
+        "root\tALL=(ALL) \tALL",
+        "%wheel\tALL=(ALL)\tALL"
+      ]
+    },
     "timezone": "UTC"
   }
 }

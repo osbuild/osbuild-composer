@@ -520,6 +520,9 @@
           "sha256:a93e68a2ded611747737276e4ea3f2c204ffd6d81cce0461c5ebf908a41ad34b": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/dracut-049-133.git20210112.el8.x86_64.rpm"
           },
+          "sha256:aa938dc6f13d0d57ca811b8c299b1017723fa419997b87754f74db770430c2d9": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-core-4.18.0-277.el8.x86_64.rpm"
+          },
           "sha256:aad5ea67a31cba37797d348593068dd7b124cb79108b0a6ec9aa63b1f98e6c37": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/platform-python-3.6.8-36.el8.x86_64.rpm"
           },
@@ -595,6 +598,9 @@
           "sha256:c421b9c029abac796ade606f96d638e06a6d4ce5c2d499abd05812c306d25143": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/cyrus-sasl-lib-2.1.27-5.el8.x86_64.rpm"
           },
+          "sha256:c44dbbff4fe503f5f49b71ab17db7848c6c67fe19d9a4cc6cef59cc6dd15f1a6": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-4.18.0-277.el8.x86_64.rpm"
+          },
           "sha256:c515d78c64a93d8b469593bff5800eccd50f24b16697ab13bdce81238c38eb77": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/diffutils-3.6-6.el8.x86_64.rpm"
           },
@@ -609,6 +615,9 @@
           },
           "sha256:c904657e61ab3695f01846b89acd0164b03ba8a733ff2435ec1df41eefaa4d48": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/grub2-pc-modules-2.02-93.el8.noarch.rpm"
+          },
+          "sha256:cad76a2802c5f355b527df3cabde70bd58b31ec4b7de3b1ac15a429cda5b9b03": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/linux-firmware-20201218-102.git05789708.el8.noarch.rpm"
           },
           "sha256:cc2f054cf7ef006faf0b179701838ff8632c3ac5f45a0199a13f9c237f632b82": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/libpng-1.6.34-5.el8.x86_64.rpm"
@@ -627,6 +636,9 @@
           },
           "sha256:d90ed492d5e413f30e399cc03814db80e1caeae05d04fc73471cf0201a9b165c": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/libmount-2.32.1-27.el8.x86_64.rpm"
+          },
+          "sha256:da77940ecadc9edb5d14aad51e4bf06664e5763fe6e46b20364732ec3aa2e08a": {
+            "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-modules-4.18.0-277.el8.x86_64.rpm"
           },
           "sha256:dbbc9e20caabc30070354d91f61f383081f6d658e09d3c09e6df8764559e5aca": {
             "url": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/cracklib-2.9.6-15.el8.x86_64.rpm"
@@ -1914,6 +1926,18 @@
                 "check_gpg": true
               },
               {
+                "checksum": "sha256:c44dbbff4fe503f5f49b71ab17db7848c6c67fe19d9a4cc6cef59cc6dd15f1a6",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:aa938dc6f13d0d57ca811b8c299b1017723fa419997b87754f74db770430c2d9",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:da77940ecadc9edb5d14aad51e4bf06664e5763fe6e46b20364732ec3aa2e08a",
+                "check_gpg": true
+              },
+              {
                 "checksum": "sha256:ae82944445464108e4932d18d4f915cc5e0b4763feb7337b2db7a3fdb77839e3",
                 "check_gpg": true
               },
@@ -2123,6 +2147,10 @@
               },
               {
                 "checksum": "sha256:7c2dc6044f13fe4ae04a4c1620da822a6be591b5129bf68ba98a3d8e9092f83b",
+                "check_gpg": true
+              },
+              {
+                "checksum": "sha256:cad76a2802c5f355b527df3cabde70bd58b31ec4b7de3b1ac15a429cda5b9b03",
                 "check_gpg": true
               },
               {
@@ -5304,6 +5332,36 @@
         "check_gpg": true
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "277.el8",
+        "arch": "x86_64",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-4.18.0-277.el8.x86_64.rpm",
+        "checksum": "sha256:c44dbbff4fe503f5f49b71ab17db7848c6c67fe19d9a4cc6cef59cc6dd15f1a6",
+        "check_gpg": true
+      },
+      {
+        "name": "kernel-core",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "277.el8",
+        "arch": "x86_64",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-core-4.18.0-277.el8.x86_64.rpm",
+        "checksum": "sha256:aa938dc6f13d0d57ca811b8c299b1017723fa419997b87754f74db770430c2d9",
+        "check_gpg": true
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "277.el8",
+        "arch": "x86_64",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/kernel-modules-4.18.0-277.el8.x86_64.rpm",
+        "checksum": "sha256:da77940ecadc9edb5d14aad51e4bf06664e5763fe6e46b20364732ec3aa2e08a",
+        "check_gpg": true
+      },
+      {
         "name": "keyutils-libs",
         "epoch": 0,
         "version": "1.5.10",
@@ -5831,6 +5889,16 @@
         "arch": "x86_64",
         "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/libzstd-1.4.4-1.el8.x86_64.rpm",
         "checksum": "sha256:7c2dc6044f13fe4ae04a4c1620da822a6be591b5129bf68ba98a3d8e9092f83b",
+        "check_gpg": true
+      },
+      {
+        "name": "linux-firmware",
+        "epoch": 0,
+        "version": "20201218",
+        "release": "102.git05789708.el8",
+        "arch": "noarch",
+        "remote_location": "https://composes.centos.org/CentOS-Stream-8-20210209.n.0/compose/BaseOS/x86_64/os/Packages/linux-firmware-20201218-102.git05789708.el8.noarch.rpm",
+        "checksum": "sha256:cad76a2802c5f355b527df3cabde70bd58b31ec4b7de3b1ac15a429cda5b9b03",
         "check_gpg": true
       },
       {
@@ -6426,8 +6494,30 @@
     ]
   },
   "image-info": {
-    "bootmenu": [],
+    "/etc/udev/rules.d": {
+      "70-persistent-ipoib.rules": []
+    },
+    "bootmenu": [
+      {
+        "grub_arg": "--unrestricted",
+        "grub_class": "kernel",
+        "grub_users": "$grub_users",
+        "id": "centos-20210203204355-4.18.0-277.el8.x86_64",
+        "initrd": "/boot/initramfs-4.18.0-277.el8.x86_64.img",
+        "linux": "/boot/vmlinuz-4.18.0-277.el8.x86_64",
+        "options": "$kernelopts",
+        "title": "CentOS Stream (4.18.0-277.el8.x86_64) 8",
+        "version": "4.18.0-277.el8.x86_64"
+      }
+    ],
     "default-target": "graphical.target",
+    "dnf": {
+      "vars": {
+        "contentdir": "centos",
+        "infra": "stock",
+        "stream": "8-stream"
+      }
+    },
     "groups": [
       "adm:x:4:",
       "audio:x:63:",
@@ -6467,6 +6557,14 @@
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hosts": [
+      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
+      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    ],
+    "locale": {
+      "LANG": "en_US.UTF-8"
+    },
+    "machine-id": "",
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -6548,6 +6646,9 @@
       "kbd-2.0.4-10.el8.x86_64",
       "kbd-legacy-2.0.4-10.el8.noarch",
       "kbd-misc-2.0.4-10.el8.noarch",
+      "kernel-4.18.0-277.el8.x86_64",
+      "kernel-core-4.18.0-277.el8.x86_64",
+      "kernel-modules-4.18.0-277.el8.x86_64",
       "keyutils-libs-1.5.10-6.el8.x86_64",
       "kmod-25-17.el8.x86_64",
       "kmod-libs-25-17.el8.x86_64",
@@ -6602,6 +6703,7 @@
       "libxkbcommon-0.9.1-1.el8.x86_64",
       "libxml2-2.9.7-9.el8.x86_64",
       "libzstd-1.4.4-1.el8.x86_64",
+      "linux-firmware-20201218-102.git05789708.el8.noarch",
       "lua-libs-5.3.4-11.el8.x86_64",
       "lz4-libs-1.8.3-2.el8.x86_64",
       "memstrack-0.1.11-1.el8.x86_64",
@@ -6693,6 +6795,39 @@
         "/var/log/lastlog": ".M....G.."
       },
       "missing": []
+    },
+    "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.002"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.001"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.003"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/network"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/kernel"
+        }
+      ],
+      "policy": {
+        "SELINUX": "enforcing",
+        "SELINUXTYPE": "targeted"
+      }
     },
     "services-disabled": [
       "console-getty.service",
