@@ -99,8 +99,25 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
+          - openstack/fedora-32-x86_64
           - openstack/fedora-33-x86_64
+          # See COMPOSER-919
+          # - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
+          - openstack/rhel-8.4-x86_64
+          # do we want centos as well ?
+          # do we want secondary architectures here ??
+
+New OSTree:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-ng.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.4-x86_64
 
 Integration:
   stage: test
