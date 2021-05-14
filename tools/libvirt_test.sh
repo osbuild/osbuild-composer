@@ -20,12 +20,6 @@ if [[ $IMAGE_TYPE == 'openstack' ]]; then
     IMAGE_EXTENSION=qcow2
 fi
 
-# RHEL 8 cannot boot a VMDK using libvirt. See BZ 999789.
-if [[ $IMAGE_TYPE == vmdk ]]; then
-    echo "🤷 libvirt cannot boot stream-optimized VMDK."
-    exit 0
-fi
-
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
