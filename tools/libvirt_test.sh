@@ -129,32 +129,16 @@ get_compose_metadata () {
 }
 
 # Write a basic blueprint for our image.
-# NOTE(mhayden): The service customization will always be required for QCOW2
-# but it is needed for OpenStack due to issue #698 in osbuild-composer. 😭
-# NOTE(mhayden): The cloud-init package isn't included in VHD/Azure images
-# by default and it must be added here.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "bash"
-description = "A base system with bash"
+name = "bp"
+description = "A base system"
 version = "0.0.1"
-
-[[packages]]
-name = "bash"
-
-[[packages]]
-name = "cloud-init"
-
-[customizations.services]
-enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
-
-[customizations.kernel]
-append = "LANG=en_US.UTF-8 net.ifnames=0 biosdevname=0"
 EOF
 
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve bash
+sudo composer-cli blueprints depsolve bp
 
 # Get worker unit file so we can watch the journal.
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
@@ -163,7 +147,7 @@ WORKER_JOURNAL_PID=$!
 
 # Start the compose
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash "$IMAGE_TYPE" | tee "$COMPOSE_START"
+sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
 COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
 
 # Wait for the compose to finish.
