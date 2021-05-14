@@ -3499,6 +3499,12 @@
         {
           "name": "org.osbuild.systemd",
           "options": {
+            "enabled_services": [
+              "cloud-init.service",
+              "cloud-config.service",
+              "cloud-final.service",
+              "cloud-init-local.service"
+            ],
             "default_target": "multi-user.target"
           }
         },
@@ -9707,8 +9713,8 @@
     ],
     "hostname": "localhost.localdomain",
     "image-format": {
-      "type": "qcow2",
-      "compat": "1.1"
+      "compat": "1.1",
+      "type": "qcow2"
     },
     "os-release": {
       "ANSI_COLOR": "0;31",
@@ -10282,10 +10288,6 @@
     "services-disabled": [
       "arp-ethers.service",
       "chrony-wait.service",
-      "cloud-config.service",
-      "cloud-final.service",
-      "cloud-init-local.service",
-      "cloud-init.service",
       "cockpit.socket",
       "console-getty.service",
       "cpupower.service",
@@ -10335,6 +10337,10 @@
       "auditd.service",
       "autovt@.service",
       "chronyd.service",
+      "cloud-config.service",
+      "cloud-final.service",
+      "cloud-init-local.service",
+      "cloud-init.service",
       "crond.service",
       "ctrl-alt-del.target",
       "dbus-broker.service",

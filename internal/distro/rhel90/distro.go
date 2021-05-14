@@ -822,6 +822,12 @@ func newDistro(name string) distro.Distro {
 			"rng-tools",
 			"udisks2",
 		},
+		enabledServices: []string{
+			"cloud-init.service",
+			"cloud-config.service",
+			"cloud-final.service",
+			"cloud-init-local.service",
+		},
 		defaultTarget:           "multi-user.target",
 		kernelOptions:           "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		bootable:                true,
