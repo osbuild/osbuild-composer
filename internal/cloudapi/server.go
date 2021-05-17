@@ -201,7 +201,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 		packageSets := imageType.PackageSets(bp)
 		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 		for name, packages := range packageSets {
-			pkgs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
+			pkgs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name(), distribution.Releasever())
 			if err != nil {
 				var error_type int
 				switch err.(type) {
