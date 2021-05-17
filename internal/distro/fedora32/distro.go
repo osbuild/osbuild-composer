@@ -17,6 +17,7 @@ import (
 )
 
 const name = "fedora-32"
+const releaseVersion = "32"
 const modulePlatformID = "platform:f32"
 const ostreeRef = "fedora/32/%s/iot"
 
@@ -58,6 +59,10 @@ func (a *architecture) Distro() distro.Distro {
 
 func (t *imageType) Arch() distro.Arch {
 	return t.arch
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ListArches() []string {

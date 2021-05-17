@@ -39,7 +39,7 @@ func TestFetchChecksum(t *testing.T) {
 	// use a fullpath to dnf-json, this allows this test to have an arbitrary
 	// working directory
 	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
-	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64")
+	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64", "31")
 	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
 	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
 }
@@ -82,10 +82,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{})
 
-							_, _, err = rpm.Depsolve(packages["build-packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							_, _, err = rpm.Depsolve(packages["build-packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
 							assert.NoError(t, err)
 
-							_, _, err = rpm.Depsolve(packages["packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr)
+							_, _, err = rpm.Depsolve(packages["packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
 							assert.NoError(t, err)
 						})
 					}
