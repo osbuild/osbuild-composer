@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/osbuild/osbuild-composer/internal/rhsm"
 )
 
 type repository struct {
@@ -173,12 +175,12 @@ type PackageInfo struct {
 type RPMMD interface {
 	// FetchMetadata returns all metadata about the repositories we use in the code. Specifically it is a
 	// list of packages and dictionary of checksums of the repositories.
-	FetchMetadata(repos []RepoConfig, modulePlatformID string, arch string) (PackageList, map[string]string, error)
+	FetchMetadata(repos []RepoConfig, modulePlatformID, arch, releasever string) (PackageList, map[string]string, error)
 
 	// Depsolve takes a list of required content (specs), explicitly unwanted content (excludeSpecs), list
 	// or repositories, and platform ID for modularity. It returns a list of all packages (with solved
 	// dependencies) that will be installed into the system.
-	Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error)
+	Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error)
 }
 
 type DNFError struct {
@@ -196,30 +198,6 @@ type RepositoryError struct {
 
 func (re *RepositoryError) Error() string {
 	return re.msg
-}
-
-type RHSMSecrets struct {
-	SSLCACert     string `json:"sslcacert,omitempty"`
-	SSLClientKey  string `json:"sslclientkey,omitempty"`
-	SSLClientCert string `json:"sslclientcert,omitempty"`
-}
-
-func getRHSMSecrets() *RHSMSecrets {
-	keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
-	if err != nil {
-		return nil
-	}
-	for _, key := range keys {
-		cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
-		if _, err := os.Stat(cert); err == nil {
-			return &RHSMSecrets{
-				SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
-				SSLClientKey:  key,
-				SSLClientCert: cert,
-			}
-		}
-	}
-	return nil
 }
 
 func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
@@ -393,20 +371,28 @@ func runDNF(dnfJsonPath string, command string, arguments interface{}, result in
 }
 
 type rpmmdImpl struct {
-	CacheDir    string
-	RHSM        *RHSMSecrets
-	dnfJsonPath string
+	CacheDir      string
+	subscriptions *rhsm.Subscriptions
+	dnfJsonPath   string
 }
 
 func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
+	subscriptions, err := rhsm.LoadSystemSubscriptions()
+	if err != nil {
+		log.Println("Failed to load subscriptions. osbuild-composer will fail to build images if the "+
+			"configured repositories require them:", err)
+	} else if err == nil && subscriptions == nil {
+		log.Println("This host is not subscribed to any RPM repositories. This is fine as long as " +
+			"the configured sources don't enable \"rhsm\".")
+	}
 	return &rpmmdImpl{
-		CacheDir:    cacheDir,
-		RHSM:        getRHSMSecrets(),
-		dnfJsonPath: dnfJsonPath,
+		CacheDir:      cacheDir,
+		subscriptions: subscriptions,
+		dnfJsonPath:   dnfJsonPath,
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int) (dnfRepoConfig, error) {
+func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever string) (dnfRepoConfig, error) {
 	id := strconv.Itoa(i)
 	dnfRepo := dnfRepoConfig{
 		ID:             id,
@@ -418,20 +404,21 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int) (dnfRepoConfig, 
 		MetadataExpire: repo.MetadataExpire,
 	}
 	if repo.RHSM {
-		if rpmmd.RHSM == nil {
-			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on host")
+		secrets, err := rpmmd.subscriptions.GetSecretsForBaseurl(repo.BaseURL, arch, releasever)
+		if err != nil {
+			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on the host for this baseurl: %s", repo.BaseURL)
 		}
-		dnfRepo.SSLCACert = rpmmd.RHSM.SSLCACert
-		dnfRepo.SSLClientKey = rpmmd.RHSM.SSLClientKey
-		dnfRepo.SSLClientCert = rpmmd.RHSM.SSLClientCert
+		dnfRepo.SSLCACert = secrets.SSLCACert
+		dnfRepo.SSLClientKey = secrets.SSLClientKey
+		dnfRepo.SSLClientCert = secrets.SSLClientCert
 	}
 	return dnfRepo, nil
 }
 
-func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, arch string) (PackageList, map[string]string, error) {
+func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, releasever string) (PackageList, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i)
+		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -461,11 +448,11 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID string, a
 	return reply.Packages, checksums, err
 }
 
-func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch string) ([]PackageSpec, map[string]string, error) {
+func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
 
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i)
+		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -562,7 +549,7 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 	return results
 }
 
-func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID string, arch string) (err error) {
-	pkg.Dependencies, _, err = rpmmd.Depsolve(PackageSet{Include: []string{pkg.Name}}, repos, modulePlatformID, arch)
+func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID, arch, releasever string) (err error) {
+	pkg.Dependencies, _, err = rpmmd.Depsolve(PackageSet{Include: []string{pkg.Name}}, repos, modulePlatformID, arch, releasever)
 	return
 }

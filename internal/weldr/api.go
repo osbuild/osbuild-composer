@@ -1233,7 +1233,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		}
 
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.arch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1312,7 +1312,8 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names},
 		repos,
 		d.ModulePlatformID(),
-		api.arch.Name())
+		api.arch.Name(),
+		d.Releasever())
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -2104,11 +2105,13 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 		return nil, err
 	}
 	platformID := imageType.Arch().Distro().ModulePlatformID()
+	releasever := imageType.Arch().Distro().Releasever()
 	for name, packageSet := range packageSets {
 		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
 			imageTypeRepos,
 			platformID,
-			api.arch.Name())
+			api.arch.Name(),
+			releasever)
 		if err != nil {
 			return nil, err
 		}
@@ -3107,7 +3110,7 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
 	return packages, err
 }
 
@@ -3159,7 +3162,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
 	if err != nil {
 		return nil, err
 	}

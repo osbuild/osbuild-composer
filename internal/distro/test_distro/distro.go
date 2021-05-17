@@ -14,6 +14,7 @@ import (
 
 type TestDistro struct {
 	name             string
+	releasever       string
 	modulePlatformID string
 	ostreeRef        string
 	arches           map[string]distro.Arch
@@ -33,6 +34,8 @@ type TestImageType struct {
 const (
 	TestDistroName              = "test-distro"
 	TestDistro2Name             = "test-distro-2"
+	TestDistroReleasever        = "1"
+	TestDistro2Releasever       = "2"
 	TestDistroModulePlatformID  = "platform:test"
 	TestDistro2ModulePlatformID = "platform:test-2"
 
@@ -47,6 +50,10 @@ const (
 
 func (d *TestDistro) Name() string {
 	return d.name
+}
+
+func (d *TestDistro) Releasever() string {
+	return d.releasever
 }
 
 func (d *TestDistro) ModulePlatformID() string {
@@ -193,9 +200,10 @@ func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.Ima
 // It contains two architectures "test_arch" and "test_arch2".
 // "test_arch" contains one image type "test_type".
 // "test_arch2" contains two image types "test_type" and "test_type2".
-func newTestDistro(name, modulePlatformID string) *TestDistro {
+func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 	td := TestDistro{
 		name:             name,
+		releasever:       releasever,
 		modulePlatformID: modulePlatformID,
 	}
 
@@ -225,10 +233,10 @@ func newTestDistro(name, modulePlatformID string) *TestDistro {
 
 // New returns new instance of TestDistro named "test-distro".
 func New() *TestDistro {
-	return newTestDistro(TestDistroName, TestDistroModulePlatformID)
+	return newTestDistro(TestDistroName, TestDistroModulePlatformID, TestDistroReleasever)
 }
 
 // New2 returns new instance of TestDistro named "test-distro-2".
 func New2() *TestDistro {
-	return newTestDistro(TestDistro2Name, TestDistro2ModulePlatformID)
+	return newTestDistro(TestDistro2Name, TestDistro2ModulePlatformID, TestDistro2Releasever)
 }

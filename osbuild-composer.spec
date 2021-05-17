@@ -60,6 +60,7 @@ BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
 BuildRequires:  golang(cloud.google.com/go)
+BuildRequires:  golang(gopkg.in/ini.v1)
 %endif
 
 Requires: %{name}-core = %{version}-%{release}

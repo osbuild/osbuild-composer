@@ -38,4 +38,5 @@ require (
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/ini.v1 v1.62.0
 )

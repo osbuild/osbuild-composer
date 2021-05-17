@@ -21,6 +21,7 @@ import (
 
 const defaultName = "rhel-84"
 const defaultCentosName = "centos-8"
+const releaseVersion = "8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
@@ -281,6 +282,10 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 
 func (d *distribution) Name() string {
 	return d.name
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {
