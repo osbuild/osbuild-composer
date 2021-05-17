@@ -20,7 +20,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 	packageSets := t.PackageSets(bp)
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range packageSets {
-		pkgs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), a.Name())
+		pkgs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), a.Name(), d.Releasever())
 		if err != nil {
 			panic(err)
 		}

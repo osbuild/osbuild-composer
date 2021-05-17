@@ -11,6 +11,7 @@ import (
 )
 
 const name = "fedora-30"
+const releasever = "30"
 const modulePlatformID = "platform:f30"
 
 type FedoraTestDistro struct{}
@@ -123,6 +124,10 @@ func New() *FedoraTestDistro {
 
 func (d *FedoraTestDistro) Name() string {
 	return name
+}
+
+func (d *FedoraTestDistro) Releasever() string {
+	return releasever
 }
 
 func (d *FedoraTestDistro) ModulePlatformID() string {

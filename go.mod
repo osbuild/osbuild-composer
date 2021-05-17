@@ -17,15 +17,19 @@ require (
 	github.com/getkin/kin-openapi v0.13.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gobwas/glob v0.2.3
-	github.com/google/go-cmp v0.3.1
-	github.com/google/uuid v1.1.1
+	github.com/google/go-cmp v0.5.4
+	github.com/google/uuid v1.1.2
 	github.com/gophercloud/gophercloud v0.11.0
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.23.0
-	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
-	golang.org/x/sys v0.0.0-20200828194041-157a740278f4
+	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102 // indirect
+	golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3
+	golang.org/x/text v0.3.4 // indirect
+	golang.org/x/tools v0.0.0-20201201161351-ac6f37ff4c2a // indirect
+	gopkg.in/ini.v1 v1.62.0
 )

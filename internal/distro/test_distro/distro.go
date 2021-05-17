@@ -15,6 +15,7 @@ type TestArch struct{}
 type TestImageType struct{}
 
 const name = "test-distro"
+const releasever = "1"
 const modulePlatformID = "platform:test"
 
 func (d *TestDistro) ListArches() []string {
@@ -101,6 +102,10 @@ func New() *TestDistro {
 
 func (d *TestDistro) Name() string {
 	return name
+}
+
+func (d *TestDistro) Releasever() string {
+	return releasever
 }
 
 func (d *TestDistro) ModulePlatformID() string {

@@ -17,6 +17,7 @@ import (
 )
 
 const name = "fedora-32"
+const releaseVersion = "32"
 const modulePlatformID = "platform:f32"
 const ostreeRef = "fedora/32/%s/iot"
 
@@ -224,6 +225,10 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 
 func (d *distribution) Name() string {
 	return name
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {

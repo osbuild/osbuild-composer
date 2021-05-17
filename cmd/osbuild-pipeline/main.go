@@ -122,7 +122,7 @@ func main() {
 
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range packageSets {
-		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), arch.Name())
+		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), arch.Name(), d.Releasever())
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}

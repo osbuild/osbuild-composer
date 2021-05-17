@@ -135,7 +135,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		packageSets := imageType.PackageSets(bp)
 		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 		for name, packages := range packageSets {
-			pkgs, _, err := server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
+			pkgs, _, err := server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name(), distribution.Releasever())
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusInternalServerError)
 				return

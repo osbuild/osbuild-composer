@@ -21,6 +21,7 @@ import (
 
 const name = "rhel-84"
 const centosName = "centos-8"
+const releaseVersion = "8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
@@ -271,6 +272,10 @@ func (d *distribution) Name() string {
 		return centosName
 	}
 	return name
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {

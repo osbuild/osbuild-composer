@@ -1008,7 +1008,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	if modulesRequested {
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+			err := packageInfos[i].FillDependencies(api.rpmmd, api.repos, api.distro.ModulePlatformID(), api.arch.Name(), api.distro.Releasever())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1052,7 +1052,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, api.repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, api.repos, api.distro.ModulePlatformID(), api.arch.Name(), api.distro.Releasever())
 
 	if err != nil {
 		errors := responseError{
@@ -1843,7 +1843,7 @@ func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name(), api.distro.Releasever())
 		if err != nil {
 			return nil, err
 		}
@@ -2751,7 +2751,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	packages, _, err := api.rpmmd.FetchMetadata(api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.FetchMetadata(api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name(), api.distro.Releasever())
 	return packages, err
 }
 
@@ -2765,7 +2765,7 @@ func (api *API) allRepositories() []rpmmd.RepoConfig {
 }
 
 func (api *API) depsolveBlueprint(bp *blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, api.allRepositories(), api.distro.ModulePlatformID(), api.arch.Name(), api.distro.Releasever())
 	if err != nil {
 		return nil, err
 	}
