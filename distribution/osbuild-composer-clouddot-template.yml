@@ -46,10 +46,14 @@ objects:
           - name: composer-config
             mountPath: "/etc/osbuild-composer"
             readOnly: true
+          - name: state-directory
+            mountPath: "/var/lib/osbuild-composer"
         volumes:
         - name: composer-config
           secret:
             secretName: composer-config
+        - name: state-directory
+          emptyDir: {}
 
 - apiVersion: v1
   kind: Service
