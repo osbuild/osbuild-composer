@@ -20,6 +20,10 @@ type Distro interface {
 	// Returns the name of the distro.
 	Name() string
 
+	// Returns the release version of the distro. This is used in repo
+	// files on the host system and required for the subscription support.
+	Releasever() string
+
 	// Returns the module platform id of the distro. This is used by DNF
 	// for modularity support.
 	ModulePlatformID() string

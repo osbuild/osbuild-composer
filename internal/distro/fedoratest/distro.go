@@ -128,3 +128,7 @@ func (d *FedoraTestDistro) Name() string {
 func (d *FedoraTestDistro) ModulePlatformID() string {
 	return modulePlatformID
 }
+
+func (d *FedoraTestDistro) Releasever() string {
+	return "30"
+}
