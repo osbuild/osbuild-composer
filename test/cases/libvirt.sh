@@ -14,7 +14,6 @@ DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 #TODO: remove this condition once there is rhel9 support for openstack and vhd image types
 if [[ "$DISTRO_CODE" != rhel_90 ]]; then
   /usr/libexec/osbuild-composer-test/libvirt_test.sh openstack
-  /usr/libexec/osbuild-composer-test/libvirt_test.sh vhd
 fi
 
 # RHEL 8.4 and Centos Stream 8 images also supports uefi, check that
