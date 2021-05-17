@@ -197,6 +197,11 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 		mergedSets["build"] = buildSet
 	}
 
+	// package sets from flags
+	if t.bootable {
+		mergedSets["packages"] = mergedSets["packages"].Append(archSets["boot"]).Append(distroSets["boot"])
+	}
+
 	// blueprint packages
 	bpPackages := bp.GetPackages()
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
