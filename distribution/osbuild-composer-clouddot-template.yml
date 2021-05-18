@@ -59,14 +59,29 @@ objects:
   kind: Service
   metadata:
     labels:
-      service: osbuild-composer
-    name: osbuild-composer
+      service: composer
+    name: composer
   spec:
     ports:
       - name: composer-api
         protocol: TCP
         port: ${{API_LISTENER_PORT}}
         targetPort: 443
+    selector:
+      name: osbuild-composer
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      service: composer-worker
+    name: composer-worker
+  spec:
+    ports:
+      - name: composer-worker
+        protocol: TCP
+        port: ${{API_LISTENER_PORT}}
+        targetPort: 8700
     selector:
       name: osbuild-composer
 
