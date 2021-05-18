@@ -52,7 +52,7 @@ func (r *RepoRegistry) ReposByImageType(imageType distro.ImageType) ([]rpmmd.Rep
 func (r *RepoRegistry) reposByImageTypeName(distro, arch, imageType string) ([]rpmmd.RepoConfig, error) {
 	repositories := []rpmmd.RepoConfig{}
 
-	archRepos, err := r.reposByArchName(distro, arch, true)
+	archRepos, err := r.ReposByArchName(distro, arch, true)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *RepoRegistry) ReposByArch(arch distro.Arch, includeTagged bool) ([]rpmm
 	if arch.Distro() == nil || reflect.ValueOf(arch.Distro()).IsNil() {
 		return nil, fmt.Errorf("there is no distribution associated with the provided architecture")
 	}
-	return r.reposByArchName(arch.Distro().Name(), arch.Name(), includeTagged)
+	return r.ReposByArchName(arch.Distro().Name(), arch.Name(), includeTagged)
 }
 
 // reposByArchName returns a slice of rpmmd.RepoConfig instances, which should be used for building image types for the
@@ -93,7 +93,7 @@ func (r *RepoRegistry) ReposByArch(arch distro.Arch, includeTagged bool) ([]rpmm
 // slice or not.
 //
 // The method does not verify if the given architecture name is actually part of the specific distribution definition.
-func (r *RepoRegistry) reposByArchName(distro, arch string, includeTagged bool) ([]rpmmd.RepoConfig, error) {
+func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) ([]rpmmd.RepoConfig, error) {
 	repositories := []rpmmd.RepoConfig{}
 
 	distroRepos, found := r.repos[distro]

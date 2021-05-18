@@ -132,9 +132,9 @@ func TestInvalidReposByImageType(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-// TestInvalidReposByImageTypeName tests return values from reposByImageTypeName
+// TestInvalidreposByImageTypeName tests return values from reposByImageTypeName
 // for invalid distro name, arch and image type
-func TestInvalidReposByImageTypeName(t *testing.T) {
+func TestInvalidreposByImageTypeName(t *testing.T) {
 	rr := getTestingRepoRegistry()
 
 	type args struct {
@@ -289,7 +289,7 @@ func TestReposByArch(t *testing.T) {
 				t.Errorf("ReposByArch() =\n got: %#v\n want: %#v", gotNames, tt.want)
 			}
 
-			got, err = rr.reposByArchName(tt.args.arch.Distro().Name(), tt.args.arch.Name(), tt.args.taggedRepos)
+			got, err = rr.ReposByArchName(tt.args.arch.Distro().Name(), tt.args.arch.Name(), tt.args.taggedRepos)
 			assert.Nil(t, err)
 			gotNames = []string{}
 			for _, r := range got {
@@ -297,7 +297,7 @@ func TestReposByArch(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(gotNames, tt.want) {
-				t.Errorf("reposByArchName() =\n got: %#v\n want: %#v", gotNames, tt.want)
+				t.Errorf("ReposByArchName() =\n got: %#v\n want: %#v", gotNames, tt.want)
 			}
 		})
 	}
@@ -319,7 +319,7 @@ func TestInvalidReposByArch(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-// TestInvalidReposByArchName tests return values from reposByArchName
+// TestInvalidReposByArchName tests return values from ReposByArchName
 // for invalid distro name and arch
 func TestInvalidReposByArchName(t *testing.T) {
 	rr := getTestingRepoRegistry()
@@ -397,7 +397,7 @@ func TestInvalidReposByArchName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := rr.reposByArchName(tt.args.distro, tt.args.arch, tt.args.taggedRepos)
+			got, err := rr.ReposByArchName(tt.args.distro, tt.args.arch, tt.args.taggedRepos)
 			assert.True(t, tt.want(got, err))
 		})
 	}
