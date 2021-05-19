@@ -100,7 +100,7 @@ var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
 func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, rr *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
-	distros, _ := distroregistry.New(distro)
+	distros, _ := distroregistry.New(distro, distro)
 
 	api := &API{
 		store:           store,
