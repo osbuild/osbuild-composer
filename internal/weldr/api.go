@@ -355,6 +355,21 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 	return reader, size, nil
 }
 
+// getImageType returns the ImageType for the selected distro
+// This is necessary because different distros support different image types, and the image
+// type may have a different package set than other distros.
+func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
+	distro := api.distros.GetDistro(distroName)
+	if distro == nil {
+		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
+	}
+	arch, err := distro.GetArch(api.arch.Name())
+	if err != nil {
+		return nil, err
+	}
+	return arch.GetImageType(imageType)
+}
+
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
 	versionString := params.ByName("version")
 
@@ -1901,12 +1916,18 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
+// depsolveBlueprintForImageType handles depsolving the blueprint package list and
+// the packages required for the image type.
+// NOTE: The imageType *must* be from the same distribution as the blueprint.
 func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
 	}
 
+	if bp.Distro != imageType.Arch().Distro().Name() {
+		return nil, fmt.Errorf("Blueprint distro %s does not match imageType distro %s", bp.Distro, imageType.Arch().Distro().Name())
+	}
 	packageSets := imageType.PackageSets(bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 
@@ -1914,9 +1935,12 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 	if err != nil {
 		return nil, err
 	}
-
+	platformID := imageType.Arch().Distro().ModulePlatformID()
 	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet, imageTypeRepos, api.distro.ModulePlatformID(), api.arch.Name())
+		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
+			imageTypeRepos,
+			platformID,
+			api.arch.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -1968,7 +1992,35 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	imageType, err := api.arch.GetImageType(cr.ComposeType)
+	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
+		return
+	}
+
+	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
+	if bp == nil {
+		errors := responseError{
+			ID:  "UnknownBlueprint",
+			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	distroName := bp.Distro
+	if distroName == "" {
+		distroName = api.hostDistroName
+	}
+	if api.distros.GetDistro(distroName) == nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// Get the imageType that corresponds to the distribution selected by the blueprint
+	imageType, err := api.getImageType(distroName, cr.ComposeType)
 	if err != nil {
 		errors := responseError{
 			ID:  "UnknownComposeType",
@@ -1990,26 +2042,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	if !verifyStringsWithRegex(writer, []string{cr.BlueprintName}, ValidBlueprintName) {
-		return
-	}
-
 	composeID := uuid.New()
 
 	var targets []*target.Target
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
 		t := uploadRequestToTarget(*cr.Upload, imageType)
 		targets = append(targets, t)
-	}
-
-	bp := api.store.GetBlueprintCommitted(cr.BlueprintName)
-	if bp == nil {
-		errors := responseError{
-			ID:  "UnknownBlueprint",
-			Msg: fmt.Sprintf("Unknown blueprint name: %s", cr.BlueprintName),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
 	}
 
 	// Check for test parameter
@@ -2075,7 +2113,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	seed := bigSeed.Int64()
 
 	imageRepos, err := api.allRepositoriesByImageType(imageType)
-	// this shoudl not happen if the api.depsolveBlueprintForImageType() call above worked
+	// this should not happen if the api.depsolveBlueprintForImageType() call above worked
 	if err != nil {
 		errors := responseError{
 			ID:  "InternalError",
@@ -2854,7 +2892,7 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 // Returns all configured repositories (base, depending on the image type + sources) as rpmmd.RepoConfig
 // The difference from allRepositories() is that this method may return additional repositories,
 // which are needed to build the specific image type. The allRepositories() can't do this, because
-// it is used in paces where image types are not considered.
+// it is used in places where image types are not considered.
 func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
 	imageTypeRepos, err := api.repoRegistry.ReposByImageType(imageType)
 	if err != nil {
@@ -2890,12 +2928,16 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		bp.Distro = api.hostDistroName
 	}
 
+	d := api.distros.GetDistro(bp.Distro)
+	if d == nil {
+		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", bp.Distro)
+	}
 	repos, err := api.allRepositories(bp.Distro)
 	if err != nil {
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.arch.Name())
 	if err != nil {
 		return nil, err
 	}
