@@ -1226,7 +1226,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		api.arch.Name())
 	if err != nil {
 		errors := responseError{
-			ID:  "PROJECTS_ERROR",
+			ID:  "ProjectsError",
 			Msg: fmt.Sprintf("BadRequest: %s", err.Error()),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
