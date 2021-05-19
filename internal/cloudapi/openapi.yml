@@ -388,8 +388,8 @@ components:
         - insights
       properties:
         organization:
-          type: integer
-          example: 2040324
+          type: string
+          example: '2040324'
         activation-key:
           type: string
           format: password
