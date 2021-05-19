@@ -1188,18 +1188,42 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
-	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distroName, err := api.parseDistro(request.URL.Query())
 	if err != nil {
 		errors := responseError{
-			ID:  "InternalError",
-			Msg: fmt.Sprintf("error while getting system repos: %v", err),
+			ID:  "DistroError",
+			Msg: err.Error(),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names}, repos, api.distro.ModulePlatformID(), api.arch.Name())
+	d := api.distros.GetDistro(distroName)
+	if d == nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 
+	repos, err := api.allRepositories(distroName)
+	if err != nil {
+		errors := responseError{
+			ID:  "ProjectsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names},
+		repos,
+		d.ModulePlatformID(),
+		api.arch.Name())
 	if err != nil {
 		errors := responseError{
 			ID:  "PROJECTS_ERROR",
