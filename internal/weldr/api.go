@@ -871,7 +871,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	modulesParam := params.ByName("modules")
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -957,7 +957,7 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -1029,7 +1029,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	names := strings.Split(modules, ",")
 
-	availablePackages, err := api.fetchPackageList()
+	availablePackages, err := api.fetchPackageList(api.hostDistroName)
 
 	if err != nil {
 		errors := responseError{
@@ -2836,13 +2836,18 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 	common.PanicOnError(err)
 }
 
-func (api *API) fetchPackageList() (rpmmd.PackageList, error) {
-	repos, err := api.allRepositories()
+// fetchPackageList returns the package list or the selected distribution
+func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
+	d := api.distros.GetDistro(distroName)
+	if d == nil {
+		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
+	}
+	repos, err := api.allRepositories(distroName)
 	if err != nil {
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.FetchMetadata(repos, api.distro.ModulePlatformID(), api.arch.Name())
+	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.arch.Name())
 	return packages, err
 }
 
@@ -2865,8 +2870,8 @@ func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.
 }
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
-func (api *API) allRepositories() ([]rpmmd.RepoConfig, error) {
-	archRepos, err := api.repoRegistry.ReposByArch(api.arch, false)
+func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
+	archRepos, err := api.repoRegistry.ReposByArchName(distroName, api.arch.Name(), false)
 	if err != nil {
 		return nil, err
 	}
@@ -2880,14 +2885,14 @@ func (api *API) allRepositories() ([]rpmmd.RepoConfig, error) {
 }
 
 func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
-	repos, err := api.allRepositories()
-	if err != nil {
-		return nil, err
-	}
-
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
+	}
+
+	repos, err := api.allRepositories(bp.Distro)
+	if err != nil {
+		return nil, err
 	}
 
 	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, api.distro.ModulePlatformID(), api.arch.Name())
