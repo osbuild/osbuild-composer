@@ -2395,6 +2395,39 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
+	// Optional distro parameter
+	// If it is empty it will return api.hostDistroName
+	distroName, err := api.parseDistro(request.URL.Query())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	d := api.distros.GetDistro(distroName)
+	if d == nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// Get the distro specific arch so that we can return the correct list of image types
+	arch, err := d.GetArch(api.arch.Name())
+	if err != nil {
+		errors := responseError{
+			ID:  "DistroError",
+			Msg: fmt.Sprintf("Unknown arch: %s", api.arch.Name()),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	type composeType struct {
 		Name    string `json:"name"`
 		Enabled bool   `json:"enabled"`
@@ -2404,11 +2437,11 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		Types []composeType `json:"types"`
 	}
 
-	for _, format := range api.arch.ListImageTypes() {
+	for _, format := range arch.ListImageTypes() {
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 
-	err := json.NewEncoder(writer).Encode(reply)
+	err = json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
 }
 
