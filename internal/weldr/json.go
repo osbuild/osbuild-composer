@@ -186,6 +186,7 @@ func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	sc.CheckGPG = s.CheckGPG
 	sc.CheckSSL = s.CheckSSL
 	sc.System = s.System
+	sc.Distros = s.Distros
 
 	return sc
 }
@@ -201,6 +202,7 @@ type SourceConfigV1 struct {
 	System   bool     `json:"system" toml:"system"`
 	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
 	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
+	Distros  []string `json:"distros,omitempty" toml:"distros,omitempty"`
 }
 
 // Key returns the key, .ID in this case
@@ -226,6 +228,7 @@ func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.URL = s.URL
 	ssc.CheckGPG = s.CheckGPG
 	ssc.CheckSSL = s.CheckSSL
+	ssc.Distros = s.Distros
 
 	return ssc
 }
