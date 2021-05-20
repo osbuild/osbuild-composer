@@ -802,11 +802,26 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 			err = errors_package.New("'url' field is missing from request")
 		}
 	}
-
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
 			Msg: "Problem parsing POST body: " + err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	// If there is a list of distros, check to make sure they are valid
+	invalid := []string{}
+	for _, d := range source.SourceConfig().Distros {
+		if !common.IsStringInSortedSlice(api.distros.List(), d) {
+			invalid = append(invalid, d)
+		}
+	}
+	if len(invalid) > 0 {
+		errors := responseError{
+			ID:  "ProjectsError",
+			Msg: "Invalid distributions: " + strings.Join(invalid, ","),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
