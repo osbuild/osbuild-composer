@@ -269,6 +269,37 @@ pipeline {
                         }
                     }
                 }
+                stage('F32 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f32cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora_32"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
                 stage('F32 Integration') {
                     when {
                         beforeAgent true
@@ -335,6 +366,37 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora33-base')
+                        }
+                    }
+                }
+                stage('F33 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f33cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora_33"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -407,6 +469,36 @@ pipeline {
                         }
                     }
                 }
+                stage('F33 aarch64 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "f33cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "fedora_33"
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-aarch64-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
                 stage('F33: koji-osbuild') {
                     when {
                         beforeAgent true
@@ -444,6 +536,38 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-base')
+                        }
+                    }
+                }
+                stage('EL8 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "rhel8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "rhel_8"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel8-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -555,6 +679,30 @@ pipeline {
                         }
                     }
                 }
+                stage('EL8.4 Image') {
+                    agent { label "rhel84cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "rhel_84"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel84-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
                 stage('EL8.4 Integration') {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
@@ -602,6 +750,30 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel84-ostree-ng')
+                        }
+                    }
+                }
+                stage('EL9.0 Image') {
+                    agent { label "f33cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "rhel_90"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel90-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -658,6 +830,37 @@ pipeline {
                         }
                     }
                 }
+                stage('CS8 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && psi && x86_64" }
+                    environment {
+                        TEST_TYPE = "image"
+                        DISTRO_CODE = "centos_8"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
+                        }
+                    }
+                }
                 stage('CS8 Integration') {
                     when {
                         beforeAgent true
@@ -710,6 +913,37 @@ pipeline {
                     post {
                         always {
                             preserve_logs('cs8-aarch64-base')
+                        }
+                    }
+                }
+                stage('CS8 aarch64 Image') {
+                    when {
+                        beforeAgent true
+                        expression {
+                            return env.BUILD_CAUSE != 'cron';
+                        }
+                    }
+
+                    agent { label "cs8cloudbase && aarch64 && aws" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
+                        DISTRO_CODE = "centos_8"
+                    }
+                    steps {
+                        run_tests('image')
+                    }
+                    post {
+                        always {
+                            preserve_logs('cs8-aarch64-image')
+                            sh (
+                                label: "Run cloud cleaner just in case something failed",
+                                script: "schutzbot/run_cloud_cleaner.sh"
+                            )
                         }
                     }
                 }
@@ -792,13 +1026,12 @@ void run_tests(test_type) {
         )
     }
 
-    // Disabled. See commit log for details.
-    //if (test_type == 'image') {
-    //    sh (
-    //        label: "Image tests",
-    //        script: "/usr/libexec/tests/osbuild-composer/image_tests.sh"
-    //    )
-    //}
+    if (test_type == 'image') {
+        sh (
+            label: "Image tests",
+            script: "/usr/libexec/tests/osbuild-composer/image_tests.sh"
+        )
+    }
 
     if (test_type == 'ostree') {
         sh (
