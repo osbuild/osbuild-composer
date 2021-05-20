@@ -525,6 +525,29 @@ func (s *Store) GetAllSourcesByID() map[string]SourceConfig {
 	return sources
 }
 
+// GetAllDistroSources returns the sources using the repo id as the key
+// skipping sources that cannot be used with the selected distribution
+func (s *Store) GetAllDistroSources(distro string) map[string]SourceConfig {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sources := make(map[string]SourceConfig)
+
+	for k, v := range s.sources {
+		found := false
+		for _, d := range v.Distros {
+			if d == distro {
+				found = true
+			}
+		}
+		if len(v.Distros) == 0 || found {
+			sources[k] = v
+		}
+	}
+
+	return sources
+}
+
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
 		Name:     repo.Name,
