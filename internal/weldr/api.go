@@ -3027,7 +3027,7 @@ func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.
 	}
 
 	repos := append([]rpmmd.RepoConfig{}, imageTypeRepos...)
-	for id, source := range api.store.GetAllSourcesByID() {
+	for id, source := range api.store.GetAllDistroSources(imageType.Arch().Distro().Name()) {
 		repos = append(repos, source.RepoConfig(id))
 	}
 
@@ -3042,7 +3042,7 @@ func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
 	}
 
 	repos := append([]rpmmd.RepoConfig{}, archRepos...)
-	for id, source := range api.store.GetAllSourcesByID() {
+	for id, source := range api.store.GetAllDistroSources(distroName) {
 		repos = append(repos, source.RepoConfig(id))
 	}
 
