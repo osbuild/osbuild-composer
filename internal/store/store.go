@@ -43,12 +43,13 @@ type Store struct {
 }
 
 type SourceConfig struct {
-	Name     string `json:"name" toml:"name"`
-	Type     string `json:"type" toml:"type"`
-	URL      string `json:"url" toml:"url"`
-	CheckGPG bool   `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL bool   `json:"check_ssl" toml:"check_ssl"`
-	System   bool   `json:"system" toml:"system"`
+	Name     string   `json:"name" toml:"name"`
+	Type     string   `json:"type" toml:"type"`
+	URL      string   `json:"url" toml:"url"`
+	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
+	System   bool     `json:"system" toml:"system"`
+	Distros  []string `json:"distros" toml:"distros"`
 }
 
 type NotFoundError struct {
