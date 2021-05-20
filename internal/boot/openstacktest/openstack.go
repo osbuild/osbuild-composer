@@ -83,9 +83,9 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 
 	server, err := servers.Create(client, servers.CreateOpts{
 		Name:      "osbuild-composer-vm-for-" + imageID,
-		FlavorRef: "77b8cf27-be16-40d9-95b1-81db4522be1e", // ci.m1.medium.ephemeral
-		Networks: []servers.Network{ // provider_net_cci_2
-			servers.Network{UUID: "74e8faa7-87ba-41b2-a000-438013194814"},
+		FlavorRef: "ca2a6e9c-2236-4107-8905-7ae9427132ff", // v1-standard-2
+		Networks: []servers.Network{ // public
+			servers.Network{UUID: "6d6357ac-0f70-4afa-8bd7-c274cc4ea235"},
 		},
 		ImageRef: imageID,
 		UserData: []byte(userData),

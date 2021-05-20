@@ -264,7 +264,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        OPENSTACK_CREDS = credentials("vexxhost-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
@@ -295,7 +295,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        OPENSTACK_CREDS = credentials("vexxhost-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
@@ -326,7 +326,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        OPENSTACK_CREDS = credentials("vexxhost-openstack-creds")
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
@@ -351,7 +351,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        OPENSTACK_CREDS = credentials("vexxhost-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
@@ -382,7 +382,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
                         AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials("psi-openstack-creds")
+                        OPENSTACK_CREDS = credentials("vexxhost-openstack-creds")
                         VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
