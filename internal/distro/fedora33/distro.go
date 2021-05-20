@@ -281,6 +281,11 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 		fileSource := osbuild.FileSource{
 			URL: pkg.RemoteLocation,
 		}
+		if pkg.Secrets == "org.osbuild.rhsm" {
+			fileSource.Secrets = &osbuild.Secret{
+				Name: "org.osbuild.rhsm",
+			}
+		}
 		files.URLs[pkg.Checksum] = fileSource
 	}
 	return &osbuild.Sources{
