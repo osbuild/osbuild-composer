@@ -219,7 +219,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				key = uuid.New().String()
 			}
 
-			_, err = a.Upload(path.Join(outputDirectory, options.Filename), options.Bucket, key)
+			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), options.Bucket, key)
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
@@ -259,7 +259,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			const azureMaxUploadGoroutines = 4
 			err = azureStorageClient.UploadPageBlob(
 				metadata,
-				path.Join(outputDirectory, options.Filename),
+				path.Join(outputDirectory, exportPath, options.Filename),
 				azureMaxUploadGoroutines,
 			)
 
@@ -280,7 +280,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			log.Printf("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
-			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, options.Filename),
+			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, options.Filename),
 				options.Bucket, options.Object, map[string]string{gcp.MetadataKeyImageName: args.Targets[0].ImageName})
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
@@ -421,7 +421,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					ContainerName:  storageContainer,
 					BlobName:       blobName,
 				},
-				path.Join(outputDirectory, options.Filename),
+				path.Join(outputDirectory, exportPath, options.Filename),
 				azure.DefaultUploadThreads,
 			)
 			if err != nil {
