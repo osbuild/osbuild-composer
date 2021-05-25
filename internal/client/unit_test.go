@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -45,11 +46,13 @@ func executeTests(m *testing.M) int {
 	}
 	fixture := rpmmd_mock.BaseFixture(path.Join(tmpdir, "/jobs"))
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
-	distro := test_distro.New()
-	arch, err := distro.GetArch(test_distro.TestArchName)
+
+	distro1 := test_distro.New()
+	arch, err := distro1.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(err)
 	}
+	distro2 := test_distro.New2()
 
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {
@@ -59,8 +62,13 @@ func executeTests(m *testing.M) int {
 		},
 	})
 
+	dr, err := distroregistry.New(distro1, distro1, distro2)
+	if err != nil {
+		panic(err)
+	}
+
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.NewTestAPI(rpm, arch, distro, rr, logger, fixture.Store, fixture.Workers, "")
+	api := weldr.NewTestAPI(rpm, arch, dr, rr, logger, fixture.Store, fixture.Workers, "")
 	server := http.Server{Handler: api}
 	defer server.Close()
 

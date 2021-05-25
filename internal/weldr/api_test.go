@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -43,13 +44,19 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 		},
 	})
 
-	d := test_distro.New()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	distro1 := test_distro.New()
+	arch, err := distro1.GetArch(test_distro.TestArchName)
+	if err != nil {
+		panic(err)
+	}
+	distro2 := test_distro.New2()
+
+	dr, err := distroregistry.New(distro1, distro1, distro2)
 	if err != nil {
 		panic(err)
 	}
 
-	return NewTestAPI(rpm, arch, d, rr, nil, fixture.Store, fixture.Workers, ""), fixture.Store
+	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, ""), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -71,7 +78,7 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/blueprints/list", http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test"]}`},
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/blueprints/info/foo", http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"foo: "}]}`},
-		{"/api/v1/distros/list", http.StatusOK, `{"distros": ["test-distro"]}`},
+		{"/api/v1/distros/list", http.StatusOK, `{"distros": ["test-distro", "test-distro-2"]}`},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
@@ -98,6 +105,7 @@ func TestBlueprintsNew(t *testing.T) {
 		{"POST", "/api/v0/blueprints/new", `{"name":"","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"InvalidChars","msg":"Invalid characters in API path"}]}`},
 		{"POST", "/api/v0/blueprints/new", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Missing blueprint"}]}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"test-distro","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
+		{"POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test 2","distro":"test-distro-2","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"fedora-1","packages":[],"version":""}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"'fedora-1' is not a valid distribution"}]}`},
 	}
 

@@ -99,20 +99,23 @@ func (api *API) systemRepoNames() (names []string) {
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
-func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, rr *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
-	distros, _ := distroregistry.New(distro, distro)
+func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
+	rr *reporegistry.RepoRegistry, logger *log.Logger,
+	store *store.Store, workers *worker.Server, compatOutputDir string) *API {
 
+	// Use the first entry as the host distribution
+	hostDistro := dr.GetDistro(dr.List()[0])
 	api := &API{
 		store:           store,
 		workers:         workers,
 		rpmmd:           rpm,
 		arch:            arch,
-		distro:          distro,
+		distro:          hostDistro,
 		repoRegistry:    rr,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
-		hostDistroName:  distro.Name(),
-		distros:         distros,
+		hostDistroName:  hostDistro.Name(),
+		distros:         dr,
 	}
 	return setupRouter(api)
 }
