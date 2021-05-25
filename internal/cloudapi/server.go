@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -139,6 +140,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 	type imageRequest struct {
 		manifest distro.Manifest
 		arch     string
+		exports  []string
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 	var targets []*target.Target
@@ -199,6 +201,28 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// set default ostree ref, if one not provided
+		ostreeOptions := ir.Ostree
+		if ostreeOptions == nil || ostreeOptions.Ref == nil {
+			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
+		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
+			http.Error(w, fmt.Sprintf("Invalid OSTree ref: %s", *ostreeOptions.Ref), http.StatusBadRequest)
+			return
+		} else {
+			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
+		}
+
+		var parent string
+		if ostreeOptions != nil && ostreeOptions.Url != nil {
+			imageOptions.OSTree.URL = *ostreeOptions.Url
+			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err), http.StatusBadRequest)
+				return
+			}
+			imageOptions.OSTree.Parent = parent
+		}
+
 		manifest, err := imageType.Manifest(nil, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
@@ -207,6 +231,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 
 		imageRequests[i].manifest = manifest
 		imageRequests[i].arch = arch.Name()
+		imageRequests[i].exports = imageType.Exports()
 
 		uploadRequest := ir.UploadRequest
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
@@ -328,6 +353,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 	id, err := server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
 		Manifest: ir.manifest,
 		Targets:  targets,
+		Exports:  ir.exports,
 	})
 	if err != nil {
 		http.Error(w, "Failed to enqueue manifest", http.StatusInternalServerError)

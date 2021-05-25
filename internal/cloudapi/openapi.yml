@@ -187,6 +187,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
+        ostree:
+          $ref: '#/components/schemas/OSTree'
         upload_request:
           $ref: '#/components/schemas/UploadRequest'
     Repository:
@@ -378,6 +380,14 @@ components:
           example: ['postgres']
           items:
             type: string
+    OSTree:
+      type: object
+      properties:
+        url:
+          type: string
+        ref:
+          type: string
+          example: ['rhel/8/x86_64/edge']
     Subscription:
       type: object
       required:
