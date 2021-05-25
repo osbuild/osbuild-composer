@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	errors_package "errors"
 	"fmt"
@@ -33,6 +32,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -93,7 +93,6 @@ func (api *API) systemRepoNames() (names []string) {
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
-var ValidOSTreeRef = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
 func New(rpmmd rpmmd.RPMMD, arch distro.Arch, distro distro.Distro, repoRegistry *reporegistry.RepoRegistry, logger *log.Logger, store *store.Store, workers *worker.Server, compatOutputDir string) *API {
 	api := &API{
@@ -375,18 +374,6 @@ func verifyStringsWithRegex(writer http.ResponseWriter, strings []string, re *re
 		return false
 	}
 	return true
-}
-
-func verifyOSTreeRef(writer http.ResponseWriter, ref string, re *regexp.Regexp) bool {
-	if len(ref) > 0 && re.MatchString(ref) {
-		return true
-	}
-	errors := responseError{
-		ID:  "InvalidChars",
-		Msg: "Invalid ostree ref",
-	}
-	statusResponseError(writer, http.StatusBadRequest, errors)
-	return false
 }
 
 func statusResponseError(writer http.ResponseWriter, code int, errors ...responseError) {
@@ -1847,32 +1834,6 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
-func ostreeResolveRef(location, ref string) (string, error) {
-	u, err := url.Parse(location)
-	if err != nil {
-		return "", err
-	}
-	u.Path = path.Join(u.Path, "refs/heads/", ref)
-	resp, err := http.Get(u.String())
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ostree repository %q returned status: %s", u.String(), resp.Status)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	parent := strings.TrimSpace(string(body))
-	// Check that this is at least a hex string.
-	_, err = hex.DecodeString(parent)
-	if err != nil {
-		return "", fmt.Errorf("ostree repository %q returned invalid reference", u.String())
-	}
-	return parent, nil
-}
-
 func (api *API) depsolveBlueprintForImageType(bp *blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	packageSets := imageType.PackageSets(*bp)
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
@@ -1899,20 +1860,14 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	type OSTreeRequest struct {
-		URL    string `json:"url"`
-		Ref    string `json:"ref"`
-		Parent string `json:"parent"`
-	}
-
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
-		BlueprintName string         `json:"blueprint_name"`
-		ComposeType   string         `json:"compose_type"`
-		Size          uint64         `json:"size"`
-		OSTree        OSTreeRequest  `json:"ostree"`
-		Branch        string         `json:"branch"`
-		Upload        *uploadRequest `json:"upload"`
+		BlueprintName string               `json:"blueprint_name"`
+		ComposeType   string               `json:"compose_type"`
+		Size          uint64               `json:"size"`
+		OSTree        ostree.OSTreeRequest `json:"ostree"`
+		Branch        string               `json:"branch"`
+		Upload        *uploadRequest       `json:"upload"`
 	}
 	type ComposeReply struct {
 		BuildID uuid.UUID `json:"build_id"`
@@ -1954,7 +1909,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	// set default ostree ref, if one not provided
 	if cr.OSTree.Ref == "" {
 		cr.OSTree.Ref = imageType.OSTreeRef()
-	} else if !verifyOSTreeRef(writer, cr.OSTree.Ref, ValidOSTreeRef) {
+	} else if !ostree.VerifyRef(cr.OSTree.Ref) {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: "Invalid ostree ref",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
@@ -2011,7 +1971,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
 		} else {
 			// Resolve the URL and get the parent commit
-			parent, err = ostreeResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
+			parent, err = ostree.ResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
 			if err != nil {
 				errors := responseError{
 					ID:  "OSTreeCommitError",
