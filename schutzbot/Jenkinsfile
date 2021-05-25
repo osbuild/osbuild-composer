@@ -20,6 +20,8 @@ pipeline {
         AZURE_SUBSCRIPTION_ID = "8d026bb1-2a65-454d-a88f-c896db94c4f8"
         AZURE_RESOURCE_GROUP = "sharing-research"
         AZURE_LOCATION = "eastus"
+        API_TEST_SUBSCRIPTION_ORG_ID = credentials('api-test-subscription-org-id')
+        API_TEST_SUBSCRIPTION_KEY = credentials('api-test-subscription-activation-key')
     }
 
     options {
