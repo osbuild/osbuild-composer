@@ -55,17 +55,6 @@ jobs:
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
-      - name: Trigger Schutzbot
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          WEBHOOK_PAYLOAD: ${{ toJSON(github.event) }}
-          SQS_REGION: us-east-1
-          SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/933752197999/schutzbot_webhook_sqs-staging"
-        run: |
-          #!/bin/bash
-          pip3 install boto3 botocore
-          schutzbot/send_webhook.py
-
   shellcheck:
     name: "🐚 Shellcheck"
     runs-on: ubuntu-20.04
