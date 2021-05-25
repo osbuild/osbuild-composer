@@ -132,6 +132,7 @@ Integration:
     - /usr/libexec/tests/osbuild-composer/azure.sh
     - /usr/libexec/tests/osbuild-composer/api.sh azure
     - /usr/libexec/tests/osbuild-composer/api.sh aws
+    - /usr/libexec/tests/osbuild-composer/api.sh gcp
   parallel:
     matrix:
       - RUNNER:
