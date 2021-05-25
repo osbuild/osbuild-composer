@@ -45,6 +45,10 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_GCP")
     echo "Testing Google Cloud Platform"
+    if [[ $ID == fedora ]]; then
+        echo "Skipped, Fedora isn't supported by GCP"
+        exit 0
+    fi
     ;;
   "$CLOUD_PROVIDER_AZURE")
     echo "Testing Azure"
