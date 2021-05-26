@@ -691,6 +691,32 @@ func TestCompose(t *testing.T) {
 		Packages: []rpmmd.PackageSpec{},
 	}
 
+	// For 2nd distribution
+	arch2, err := test_distro.New2().GetArch(test_distro.TestArchName)
+	require.NoError(t, err)
+	imgType2, err := arch2.GetImageType(test_distro.TestImageTypeName)
+	require.NoError(t, err)
+	manifest2, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
+	require.NoError(t, err)
+
+	expectedComposeGoodDistro := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test-distro-2",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+			Distro:         "test-distro-2",
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType2,
+			Manifest:    manifest2,
+		},
+		Packages: []rpmmd.PackageSpec{},
+	}
+
 	var cases = []struct {
 		External        bool
 		Method          string
@@ -708,6 +734,8 @@ func TestCompose(t *testing.T) {
 		{false, "POST", "/api/v1/compose?test=2", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusOK, `{"status": true}`, expectedComposeOSTreeURL, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeCommitError","msg":"Get \"invalid-url/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"InvalidChars","msg":"Invalid ostree ref"}]}`, expectedComposeOSTreeURL, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test-distro-2","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName), http.StatusOK, `{"status": true}`, expectedComposeGoodDistro, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test-fedora-1","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1"}]}`, nil, []string{"build_id"}},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
