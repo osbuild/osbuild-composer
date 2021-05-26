@@ -291,5 +291,17 @@ func FixtureEmpty() *Store {
 
 	s.blueprints[bName] = b
 
+	// 2nd distro blueprint
+	b2 := b
+	b2.Name = "test-distro-2"
+	b2.Distro = "test-distro-2"
+	s.blueprints[b2.Name] = b2
+
+	// Unknown distro blueprint
+	b3 := b
+	b3.Name = "test-fedora-1"
+	b3.Distro = "fedora-1"
+	s.blueprints[b3.Name] = b3
+
 	return s
 }
