@@ -44,6 +44,10 @@ func (r *RepoRegistry) ReposByImageType(imageType distro.ImageType) ([]rpmmd.Rep
 	return r.reposByImageTypeName(imageType.Arch().Distro().Name(), imageType.Arch().Name(), imageType.Name())
 }
 
+func (r *RepoRegistry) AddRepos(distro string, repos map[string][]rpmmd.RepoConfig) {
+	r.repos[distro] = repos
+}
+
 // reposByImageTypeName returns a slice of rpmmd.RepoConfig instances, which should be used for building the specific
 // image type name (of a given distribution and architecture). The method does not verify
 // if the given image type name is actually part of the architecture definition of the provided name.

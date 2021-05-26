@@ -75,10 +75,17 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 
 func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) error {
 	archName := common.CurrentArch()
+	fallback := false
+	var fallback_name string
+	var fallback_repos map[string][]rpmmd.RepoConfig
 
 	hostDistro := c.distros.FromHost()
 	if hostDistro == nil {
-		return fmt.Errorf("host distro is not supported")
+		hostDistro, fallback_name, fallback_repos = c.distros.FallbackHost()
+		fallback = true
+		if hostDistro == nil {
+			return fmt.Errorf("host distro is not supported")
+		}
 	}
 
 	arch, err := hostDistro.GetArch(archName)
@@ -89,6 +96,9 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) err
 	rr, err := reporegistry.New(repoPaths)
 	if err != nil {
 		return fmt.Errorf("error loading repository definitions: %v", err)
+	}
+	if fallback {
+		rr.AddRepos(fallback_name, fallback_repos)
 	}
 
 	// Check if repositories for the host distro and arch were loaded

@@ -2,6 +2,7 @@ package distroregistry
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel85"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
+	"github.com/osbuild/osbuild-composer/internal/distro/unsupported"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // When adding support for a new distribution, add it here.
@@ -56,7 +59,7 @@ func New(hostDistro distro.Distro, distros ...distro.Distro) (*Registry, error) 
 // supportedDistros variable.
 func NewDefault() *Registry {
 	var distros []distro.Distro
-	var hostDistro distro.Distro
+	var hostDistro distro.Distro = nil
 
 	// First determine the name of the Host Distro
 	// If there was an error, then the hostDistroName will be an empty string
@@ -125,4 +128,24 @@ func mangleHostDistroName(name string, isBeta, isStream bool) string {
 // is e.g. a Beta or a Stream.
 func (r *Registry) FromHost() distro.Distro {
 	return r.hostDistro
+}
+
+// FromHost returns a distro instance, that is specific to the host.
+// Its name may differ from other supported distros, if the host version
+// is e.g. a Beta or a Stream.
+func (r *Registry) FallbackHost() (distro.Distro, string, map[string][]rpmmd.RepoConfig) {
+	hostDistroName, _, _, _ := distro.GetHostDistroName()
+
+	parts := strings.Split(hostDistroName, "-")
+	if len(parts) != 2 {
+		panic(hostDistroName + " is not valid distro name")
+	}
+	distroVersion := parts[1]
+
+	if strings.HasPrefix(hostDistroName, "fedora-") {
+		log.Println("Warning: " + hostDistroName + " is not supported Fedora version. " +
+			"osbuild-composer will start with Fedora 33 image definitions but this might not work!")
+		r.hostDistro = fedora33.NewUnreleasedDistro(hostDistroName, distroVersion)
+	}
+	return r.hostDistro, hostDistroName, unsupported.GenerateFedoraRepositories(distroVersion)
 }
