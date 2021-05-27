@@ -53,7 +53,8 @@ objects:
           secret:
             secretName: composer-config
         - name: state-directory
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: osbuild-composer-state-dir
 
 - apiVersion: v1
   kind: Service
@@ -85,6 +86,17 @@ objects:
     selector:
       name: osbuild-composer
 
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: osbuild-composer-state-dir
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STATE_VOLUME_CAPACITY}
+
 parameters:
   - description: osbuild-composer image name
     name: IMAGE_NAME
@@ -96,3 +108,6 @@ parameters:
   - description: api listener port
     name: API_LISTENER_PORT
     value: "8080"
+  - description: Size of composer state directory
+    name: STATE_VOLUME_CAPACITY
+    value: 2Gi
