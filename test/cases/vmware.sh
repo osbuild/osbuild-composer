@@ -10,13 +10,23 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+if [ "$ID" != "rhel" ]; then
+    greenprint "VMware test not supported on $ID"
+    exit 0
+fi
+
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 GOVC_CMD=/tmp/govc
 
+# Note: in GitLab CI the GOVMOMI_ variables are defined one-by-one
+# instead of sourcing them from a file!
+VCENTER_CREDS="${VCENTER_CREDS:-}"
+if [ -n "$VCENTER_CREDS" ]; then
 # shellcheck source=/dev/null
-source "$VCENTER_CREDS"
+    source "$VCENTER_CREDS"
+fi
 
 # We need govc to talk to vSphere
 if ! hash govc; then
