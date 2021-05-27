@@ -69,6 +69,8 @@ func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (Targ
 		options = new(AzureTargetOptions)
 	case "org.osbuild.aws":
 		options = new(AWSTargetOptions)
+	case "org.osbuild.aws.s3":
+		options = new(AWSS3TargetOptions)
 	case "org.osbuild.gcp":
 		options = new(GCPTargetOptions)
 	case "org.osbuild.azure.image":
