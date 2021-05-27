@@ -106,3 +106,7 @@ fi
 greenprint "Installing test packages for ${PROJECT}"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
+
+# update libvirt to resolve `internal error: unknown feature amd-sev-es`
+# See https://bugzilla.redhat.com/show_bug.cgi?id=1961562
+retry sudo dnf -y update "libvirt-*"
