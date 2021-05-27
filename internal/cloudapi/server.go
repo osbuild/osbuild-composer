@@ -269,6 +269,31 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			}
 
 			targets = append(targets, t)
+		} else if uploadRequest.Type == UploadTypes_aws_s3 {
+			var awsS3UploadOptions AWSS3UploadRequestOptions
+			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+			if err != nil {
+				http.Error(w, "Unable to marshal aws upload request", http.StatusInternalServerError)
+				return
+			}
+			err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
+			if err != nil {
+				http.Error(w, "Unable to unmarshal aws upload request", http.StatusInternalServerError)
+				return
+			}
+
+			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
+				Filename:        imageType.Filename(),
+				Region:          awsS3UploadOptions.Region,
+				AccessKeyID:     awsS3UploadOptions.S3.AccessKeyId,
+				SecretAccessKey: awsS3UploadOptions.S3.SecretAccessKey,
+				Bucket:          awsS3UploadOptions.S3.Bucket,
+				Key:             key,
+			})
+			t.ImageName = key
+
+			targets = append(targets, t)
 		} else if uploadRequest.Type == UploadTypes_gcp {
 			var gcpUploadOptions GCPUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
@@ -404,6 +429,12 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 			uploadOptions = AWSUploadStatus{
 				Ami:    awsOptions.Ami,
 				Region: awsOptions.Region,
+			}
+		case "org.osbuild.aws.s3":
+			uploadType = UploadTypes_aws_s3
+			awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
+			uploadOptions = AWSS3UploadStatus{
+				Url: awsOptions.URL,
 			}
 		case "org.osbuild.gcp":
 			uploadType = UploadTypes_gcp

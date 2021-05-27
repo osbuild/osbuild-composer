@@ -47,6 +47,8 @@ func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (Ta
 	switch trName {
 	case "org.osbuild.aws":
 		options = new(AWSTargetResultOptions)
+	case "org.osbuild.aws.s3":
+		options = new(AWSS3TargetResultOptions)
 	case "org.osbuild.gcp":
 		options = new(GCPTargetResultOptions)
 	case "org.osbuild.azure.image":

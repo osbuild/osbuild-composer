@@ -121,6 +121,7 @@ components:
         options:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
     AWSUploadStatus:
@@ -135,6 +136,13 @@ components:
         region:
           type: string
           example: 'eu-west-1'
+    AWSS3UploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     GCPUploadStatus:
       type: object
       required:
@@ -221,11 +229,12 @@ components:
         options:
           oneOf:
             -  $ref: '#/components/schemas/AWSUploadRequestOptions'
+            -  $ref: '#/components/schemas/AWSS3UploadRequestOptions'
             -  $ref: '#/components/schemas/GCPUploadRequestOptions'
             -  $ref: '#/components/schemas/AzureUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp', 'azure']
+      enum: ['aws', 'aws.s3', 'gcp', 'azure']
     AWSUploadRequestOptions:
       type: object
       required:
@@ -240,6 +249,17 @@ components:
           $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
         ec2:
           $ref: '#/components/schemas/AWSUploadRequestOptionsEc2'
+    AWSS3UploadRequestOptions:
+      type: object
+      required:
+        - region
+        - s3
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+        s3:
+          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
     AWSUploadRequestOptionsS3:
       type: object
       required:

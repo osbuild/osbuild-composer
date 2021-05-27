@@ -243,6 +243,33 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
+		case *target.AWSS3TargetOptions:
+			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
+			if err != nil {
+				appendTargetError(osbuildJobResult, err)
+				return nil
+			}
+
+			key := options.Key
+			if key == "" {
+				key = uuid.New().String()
+			}
+
+			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), options.Bucket, key)
+			if err != nil {
+				appendTargetError(osbuildJobResult, err)
+				return nil
+			}
+			url, err := a.S3ObjectPresignedURL(options.Bucket, key)
+			if err != nil {
+				appendTargetError(osbuildJobResult, err)
+				return nil
+			}
+
+			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url}))
+
+			osbuildJobResult.Success = true
+			osbuildJobResult.UploadStatus = "success"
 		case *target.AzureTargetOptions:
 			azureStorageClient, err := azure.NewStorageClient(options.StorageAccount, options.StorageAccessKey)
 			if err != nil {

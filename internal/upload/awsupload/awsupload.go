@@ -284,3 +284,17 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 
 	return registerOutput.ImageId, nil
 }
+
+func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {
+	log.Printf("[AWS] 📋 Generating Presigned URL for S3 object %s/%s", bucket, objectKey)
+	req, _ := a.s3.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(objectKey),
+	})
+	url, err := req.Presign(7 * 24 * time.Hour) // maximum allowed
+	if err != nil {
+		return "", err
+	}
+	log.Print("[AWS] 🎉 S3 Presigned URL ready")
+	return url, nil
+}
