@@ -133,6 +133,7 @@ Integration:
     - /usr/libexec/tests/osbuild-composer/api.sh azure
     - /usr/libexec/tests/osbuild-composer/api.sh aws
     - /usr/libexec/tests/osbuild-composer/api.sh gcp
+    - /usr/libexec/tests/osbuild-composer/vmware.sh
   parallel:
     matrix:
       - RUNNER:
