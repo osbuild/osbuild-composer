@@ -254,6 +254,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if key == "" {
 				key = uuid.New().String()
 			}
+			key += "-" + options.Filename
 
 			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), options.Bucket, key)
 			if err != nil {
