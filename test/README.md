@@ -341,41 +341,18 @@ is is missing lots of details!
 - [@yuxisun1217](https://github.com/yuxisun1217) - QE for testing image-builder and image-builder-frontend
 
 
-## Cron jobs for internal builds testing
+## Internal build testing in Gitlab CI
 
-The Schutzbot Pipeline contains conditional sections that facilitate test execution
-against internal builds. This is achieved by running different preparation steps while
-the testing stage remains the same. The main difference is that SUT is not compiled
-locally but installed directly from OS repositories!
+In Gitlab CI we're using rules to define which stages and jobs are ran when. For running the test
+suite on internal rhel builds we're using schedules that run the test suite on latest nightly using
+the rpms that are shipped with it.
 
-By default we test against latest nightly builds. If you wish to test against other
-flavors (e.g. rel-eng) specify the `COMPOSE_URL` environment variable to point to
-the respective URL (stopping before the `/compose/` path). See the image below or
-`schutzbot/prepare-rhel-internal.sh` for more details.
+We're using a link to latest nightly build. It's possible to manually override it with `COMPOSE_URL` 
+to use a different build instead.
+This variable can be changed in the pipeline schedule settings. It is advised to create
+a new schedule if you want to try something or change the value, set it as inactive and then
+just trigger it manually.
 
-!['Define COMPOSE_URL'](./define_compose_url.png)
+   !['Create pipeline schedule'](./gitlab_ci_scheduled_pipeline.png)
 
-### Replay internal Pipeline manually
-
-If you wish to execute the internal Pipeline by hand, often to verify changes made to it
-then do the following:
-
-1. Wait for `schutzbot-psi/pr-head` to report any status on the pull request.
-   This means a regular Pipeline has been started with changes coming from your PR; or
-1. In Jenkins Blue Ocean UI locate the latest Pipeline execution triggered by timer
-2. In Jenkins Blue Ocean UI, top-right corner, click ***Go to classic*** button:
-
-   !['Go to classic button'](./go_to_classic.png)
-
-3. In Jenkins Classic UI, left-hand sidebar click ***Replay*** button. This will allow you to
-   replay a Pipeline with a modified syntax
-4. Locate the  `detect_build_cause()` function near the bottom and modify it so that it
-   will `return "cron"`. This is required because when Pipelines are restarted manually
-   their build cause is **Replayed #xy**. See the images for reference:
-
-   !['Modify build cause'](./pipeline_replay_01.png)
-
-   !['Modify build cause'](./pipeline_replay_02.png)
-
-5. Click the ***Run*** button - the newly started Pipeline will be forced to take the
-   internal branches instead of the regular ones
+   !['Trigger scheduled pipeline'](./gitlab_ci_schedule_trigger.png)
