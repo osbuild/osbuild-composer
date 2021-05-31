@@ -119,6 +119,17 @@ New OSTree:
       - RUNNER:
           - openstack/rhel-8.4-x86_64
 
+.INTEGRATION_TESTS: &INTEGRATION_TESTS
+  SCRIPT:
+    - koji.sh
+    - libvirt.sh
+    - aws.sh
+    - azure.sh
+    - api.sh azure
+    - api.sh aws
+    - api.sh gcp
+    - vmware.sh
+
 Integration:
   stage: test
   extends: .terraform
@@ -126,27 +137,23 @@ Integration:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-    - /usr/libexec/tests/osbuild-composer/libvirt.sh
-    - /usr/libexec/tests/osbuild-composer/aws.sh
-    - /usr/libexec/tests/osbuild-composer/azure.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh azure
-    - /usr/libexec/tests/osbuild-composer/api.sh aws
-    - /usr/libexec/tests/osbuild-composer/api.sh gcp
-    - /usr/libexec/tests/osbuild-composer/vmware.sh
+    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
-      - RUNNER:
+      - <<: *INTEGRATION_TESTS
+        RUNNER:
           - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
           - aws/centos-stream-8-x86_64
-      - RUNNER:
+      - <<: *INTEGRATION_TESTS
+        RUNNER:
           - aws/rhel-8-x86_64
           - aws/rhel-8.4-x86_64
         INTERNAL_NETWORK: ["true"]
-      - RUNNER:
+      - <<: *INTEGRATION_TESTS
+        RUNNER:
           - aws/rhel-8-x86_64
         INTERNAL_NETWORK: ["true"]
         DISTRO_CODE: ["rhel_90"]
