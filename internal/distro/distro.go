@@ -23,6 +23,9 @@ type Distro interface {
 	// for modularity support.
 	ModulePlatformID() string
 
+	// Returns the ostree reference template
+	OSTreeRef() string
+
 	// Returns a sorted list of the names of the architectures this distro
 	// supports.
 	ListArches() []string

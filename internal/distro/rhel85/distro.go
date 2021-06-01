@@ -20,8 +20,10 @@ const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
-	name   string
-	arches map[string]distro.Arch
+	name             string
+	modulePlatformID string
+	ostreeRef        string
+	arches           map[string]distro.Arch
 }
 
 func (d *distribution) Name() string {
@@ -29,7 +31,11 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) ModulePlatformID() string {
-	return modulePlatformID
+	return d.modulePlatformID
+}
+
+func (d *distribution) OSTreeRef() string {
+	return d.ostreeRef
 }
 
 func (d *distribution) ListArches() []string {
@@ -278,16 +284,18 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro(defaultName)
+	return newDistro(defaultName, modulePlatformID, ostreeRef)
 }
 
-func NewHostDistro(name string) distro.Distro {
-	return newDistro(name)
+func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef)
 }
 
-func newDistro(name string) distro.Distro {
+func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	rd := &distribution{
-		name: name,
+		name:             name,
+		modulePlatformID: modulePlatformID,
+		ostreeRef:        ostreeRef,
 	}
 
 	x86_64 := architecture{

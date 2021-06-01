@@ -25,10 +25,12 @@ const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
 type distribution struct {
-	name          string
-	arches        map[string]architecture
-	buildPackages []string
-	isCentos      bool
+	name             string
+	modulePlatformID string
+	ostreeRef        string
+	arches           map[string]architecture
+	buildPackages    []string
+	isCentos         bool
 }
 
 type architecture struct {
@@ -282,7 +284,11 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) ModulePlatformID() string {
-	return modulePlatformID
+	return d.modulePlatformID
+}
+
+func (d *distribution) OSTreeRef() string {
+	return d.ostreeRef
 }
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
@@ -820,22 +826,22 @@ func removePackage(packages []string, packageToRemove string) []string {
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro(defaultName, false)
+	return newDistro(defaultName, modulePlatformID, ostreeRef, false)
 }
 
 func NewCentos() distro.Distro {
-	return newDistro(defaultCentosName, true)
+	return newDistro(defaultCentosName, modulePlatformID, ostreeRef, true)
 }
 
-func NewHostDistro(name string) distro.Distro {
-	return newDistro(name, false)
+func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef, false)
 }
 
-func NewCentosHostDistro(name string) distro.Distro {
-	return newDistro(name, true)
+func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef, true)
 }
 
-func newDistro(name string, isCentos bool) distro.Distro {
+func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	edgeImgTypeX86_64 := imageType{
@@ -1242,8 +1248,10 @@ func newDistro(name string, isCentos bool) distro.Distro {
 			"xfsprogs",
 			"xz",
 		},
-		isCentos: isCentos,
-		name:     name,
+		isCentos:         isCentos,
+		name:             name,
+		modulePlatformID: modulePlatformID,
+		ostreeRef:        ostreeRef,
 	}
 	x8664 := architecture{
 		distro: &r,

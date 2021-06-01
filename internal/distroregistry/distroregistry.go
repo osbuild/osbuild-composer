@@ -19,6 +19,8 @@ import (
 var supportedDistros = []supportedDistro{
 	{fedora32.New, fedora32.NewHostDistro},
 	{fedora33.New, fedora33.NewHostDistro},
+	{fedora33.NewF34, fedora33.NewHostDistro},
+	{fedora33.NewF35, fedora33.NewHostDistro},
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel84.New, rhel84.NewHostDistro},
 	{rhel84.NewCentos, rhel84.NewCentosHostDistro},
@@ -28,7 +30,7 @@ var supportedDistros = []supportedDistro{
 
 type supportedDistro struct {
 	defaultDistro func() distro.Distro
-	hostDistro    func(name string) distro.Distro
+	hostDistro    func(name, modulePlatformID, ostreeRef string) distro.Distro
 }
 
 type Registry struct {
@@ -70,6 +72,8 @@ func NewDefault() *Registry {
 		if distro.Name() == hostDistroName {
 			hostDistro = supportedDistro.hostDistro(
 				mangleHostDistroName(distro.Name(), hostDistroIsBeta, hostDistroIsStream),
+				distro.ModulePlatformID(),
+				distro.OSTreeRef(),
 			)
 		}
 

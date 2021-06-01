@@ -21,9 +21,11 @@ const modulePlatformID = "platform:f32"
 const ostreeRef = "fedora/32/%s/iot"
 
 type distribution struct {
-	name          string
-	arches        map[string]architecture
-	buildPackages []string
+	name             string
+	modulePlatformID string
+	ostreeRef        string
+	arches           map[string]architecture
+	buildPackages    []string
 }
 
 type architecture struct {
@@ -251,7 +253,11 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) ModulePlatformID() string {
-	return modulePlatformID
+	return d.modulePlatformID
+}
+
+func (d *distribution) OSTreeRef() string {
+	return d.ostreeRef
 }
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
@@ -574,14 +580,14 @@ func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbui
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro(defaultName)
+	return newDistro(defaultName, modulePlatformID, ostreeRef)
 }
 
-func NewHostDistro(name string) distro.Distro {
-	return newDistro(name)
+func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef)
 }
 
-func newDistro(name string) distro.Distro {
+func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	iotImgType := imageType{
@@ -808,7 +814,9 @@ func newDistro(name string) distro.Distro {
 			"tar",
 			"xz",
 		},
-		name: name,
+		name:             name,
+		modulePlatformID: modulePlatformID,
+		ostreeRef:        ostreeRef,
 	}
 	x8664 := architecture{
 		distro: &r,
