@@ -1,7 +1,6 @@
 stages:
   - init
   - rpmbuild
-  - containerbuild
   - test
   - finish
 
@@ -49,7 +48,7 @@ RPM:
         INTERNAL_NETWORK: ["true"]
 
 Container:
-  stage: containerbuild
+  stage: rpmbuild
   extends: .terraform
   variables:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
