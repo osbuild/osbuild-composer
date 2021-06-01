@@ -728,12 +728,12 @@ pipeline {
                     if (env.BUILD_CAUSE == 'cron') {
                         unstash 'compose_id'
                         def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
+                        def alexId = slackUserIdFromEmail('atodorov@redhat.com')
 
-                        telegramSend """💚 CI passed for osbuild-composer ${composeId} ${env.BUILD_URL},
-CC: [@atodorov_kiwi](tg://user?id=1047018883)
-"""
+                        slackSend color: "good", message: "💚 CI passed for osbuild-composer ${composeId} ${env.BUILD_URL}, CC: <@$alexId>"
+
                     } else if (env.BRANCH_NAME == 'main') {
-                        telegramSend "💚 CI passed for osbuild-composer main branch ${env.BUILD_URL}"
+                        slackSend color: "good", message: "💚 CI passed for osbuild-composer main branch ${env.BUILD_URL}"
                     }
                 }
             }
@@ -744,12 +744,11 @@ CC: [@atodorov_kiwi](tg://user?id=1047018883)
                     if (env.BUILD_CAUSE == 'cron') {
                         unstash 'compose_id'
                         def composeId = readFile "${env.WORKSPACE}/COMPOSE_ID"
+                        def alexId = slackUserIdFromEmail('atodorov@redhat.com')
 
-                        telegramSend """💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL},
-CC: [@atodorov_kiwi](tg://user?id=1047018883)
-"""
+                        slackSend color: "danger", message: "💣 CI failed for osbuild-composer ${composeId} ${env.BUILD_URL}, CC: <@$alexId>"
                     } else if (env.BRANCH_NAME == 'main') {
-                        telegramSend "💣 CI failed for osbuild-composer main branch ${env.BUILD_URL}"
+                        slackSend color: "danger", message: "💣 CI failed for osbuild-composer main branch ${env.BUILD_URL}"
                     }
                 }
             }
