@@ -21,11 +21,14 @@ import (
 
 const defaultName = "rhel-90"
 const modulePlatformID = "platform:el9"
+const ostreeRef = "rhel/9/%s/edge"
 
 type distribution struct {
-	name          string
-	arches        map[string]architecture
-	buildPackages []string
+	name             string
+	modulePlatformID string
+	ostreeRef        string
+	arches           map[string]architecture
+	buildPackages    []string
 }
 
 type architecture struct {
@@ -257,7 +260,11 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) ModulePlatformID() string {
-	return modulePlatformID
+	return d.modulePlatformID
+}
+
+func (d *distribution) OSTreeRef() string {
+	return d.ostreeRef
 }
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
@@ -743,14 +750,14 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 }
 
 func New() distro.Distro {
-	return newDistro(defaultName)
+	return newDistro(defaultName, modulePlatformID, ostreeRef)
 }
 
-func NewHostDistro(name string) distro.Distro {
-	return newDistro(name)
+func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef)
 }
 
-func newDistro(name string) distro.Distro {
+func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	qcow2ImageType := imageType{
@@ -854,7 +861,9 @@ func newDistro(name string) distro.Distro {
 			"xfsprogs",
 			"xz",
 		},
-		name: name,
+		name:             name,
+		modulePlatformID: modulePlatformID,
+		ostreeRef:        ostreeRef,
 	}
 	x8664 := architecture{
 		distro: &r,

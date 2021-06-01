@@ -14,6 +14,7 @@ import (
 type TestDistro struct {
 	name             string
 	modulePlatformID string
+	ostreeRef        string
 	arches           map[string]distro.Arch
 }
 
@@ -49,6 +50,10 @@ func (d *TestDistro) Name() string {
 
 func (d *TestDistro) ModulePlatformID() string {
 	return d.modulePlatformID
+}
+
+func (d *TestDistro) OSTreeRef() string {
+	return d.ostreeRef
 }
 
 func (d *TestDistro) ListArches() []string {

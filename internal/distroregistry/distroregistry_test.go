@@ -114,7 +114,7 @@ func TestRegistry_FromHost(t *testing.T) {
 
 	t.Run("host distro not nil", func(t *testing.T) {
 		mangledName := mangleHostDistroName("rhel-8", true, false)
-		hostDistro := rhel8.NewHostDistro(mangledName)
+		hostDistro := rhel8.NewHostDistro(mangledName, "", "")
 		registry, err := New(hostDistro, distros...)
 		require.Nil(t, err)
 		require.NotNil(t, registry)
