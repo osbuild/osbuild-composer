@@ -24,7 +24,7 @@ var supportedDistros = []supportedDistro{
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel84.New, rhel84.NewHostDistro},
 	{rhel84.NewCentos, rhel84.NewCentosHostDistro},
-	{rhel85.New, rhel85.NewHostDistro},
+	{rhel85.New, rhel84.NewRhel85HostDistro}, // Replace once RHEL8.5 package actually have any image types
 	{rhel90.New, rhel90.NewHostDistro},
 }
 

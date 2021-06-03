@@ -24,6 +24,8 @@ const defaultCentosName = "centos-8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
+const rhel85defaultName = "rhel-85"
+
 type distribution struct {
 	name             string
 	modulePlatformID string
@@ -829,11 +831,19 @@ func New() distro.Distro {
 	return newDistro(defaultName, modulePlatformID, ostreeRef, false)
 }
 
+func NewRhel85() distro.Distro {
+	return newDistro(rhel85defaultName, modulePlatformID, ostreeRef, false)
+}
+
 func NewCentos() distro.Distro {
 	return newDistro(defaultCentosName, modulePlatformID, ostreeRef, true)
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro(name, modulePlatformID, ostreeRef, false)
+}
+
+func NewRhel85HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro(name, modulePlatformID, ostreeRef, false)
 }
 
