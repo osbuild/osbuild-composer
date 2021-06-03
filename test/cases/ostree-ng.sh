@@ -119,6 +119,8 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
+    # Stop watching the worker journal when exiting.
+    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
@@ -155,9 +157,6 @@ build_image() {
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi
-
-    # Stop watching the worker journal.
-    sudo pkill -P ${WORKER_JOURNAL_PID}
 }
 
 # Wait for the ssh server up to be.
