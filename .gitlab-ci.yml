@@ -73,6 +73,7 @@ Image_test:
       - RUNNER:
           - aws/fedora-33-x86_64
           - aws/rhel-8-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 #New OSTree:
 #  stage: test
