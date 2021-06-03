@@ -47,7 +47,6 @@ type API struct {
 
 	rpmmd        rpmmd.RPMMD
 	arch         distro.Arch
-	distro       distro.Distro
 	repoRegistry *reporegistry.RepoRegistry
 
 	logger *log.Logger
@@ -110,7 +109,6 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 		workers:         workers,
 		rpmmd:           rpm,
 		arch:            arch,
-		distro:          hostDistro,
 		repoRegistry:    rr,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
@@ -122,12 +120,13 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 
 func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
 
-	hostDistro := distros.FromHost()
-	if hostDistro == nil {
+	hostDistroName, _, _, err := distro.GetHostDistroName()
+	if err != nil {
 		return nil, fmt.Errorf("host distro is not supported")
 	}
 	archName := common.CurrentArch()
 
+	hostDistro := distros.GetDistro(hostDistroName)
 	hostArch, err := hostDistro.GetArch(archName)
 	if err != nil {
 		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
@@ -152,7 +151,6 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distrore
 		workers:         workers,
 		rpmmd:           rpm,
 		arch:            hostArch,
-		distro:          hostDistro,
 		repoRegistry:    rr,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
