@@ -150,6 +150,8 @@ sudo composer-cli blueprints depsolve bash
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
+# Stop watching the worker journal when exiting.
+trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to Azure.
 greenprint "🚀 Starting compose"
@@ -181,9 +183,6 @@ if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi
-
-# Stop watching the worker journal.
-sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # Set up necessary variables for terraform
 export TF_VAR_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP"
