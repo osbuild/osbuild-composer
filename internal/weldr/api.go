@@ -55,7 +55,8 @@ type API struct {
 	compatOutputDir string
 
 	hostDistroName string                   // Name of the host distro
-	distros        *distroregistry.Registry // Supported distros
+	distroRegistry *distroregistry.Registry // Available distros
+	distros        []string                 // Supported distro names
 }
 
 type ComposeState int
@@ -95,6 +96,22 @@ func (api *API) systemRepoNames() (names []string) {
 	return names
 }
 
+// validDistros returns a list of distributions that also have repositories
+func validDistros(rr *reporegistry.RepoRegistry, dr *distroregistry.Registry, arch string, logger *log.Logger) []string {
+	distros := []string{}
+	for _, d := range dr.List() {
+		_, found := rr.DistroHasRepos(d, arch)
+		if found {
+			distros = append(distros, d)
+		} else {
+			logger.Printf("Distro %s has no repositories, skipping.", d)
+		}
+	}
+
+	// NOTE: distro list is already sorted, so result will be sorted
+	return distros
+}
+
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
@@ -113,12 +130,16 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 		hostDistroName:  hostDistro.Name(),
-		distros:         dr,
+		distroRegistry:  dr,
+		distros:         validDistros(rr, dr, arch.Name(), logger),
 	}
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+	if logger == nil {
+		logger = log.New(os.Stdout, "", 0)
+	}
 
 	hostDistroName, _, _, err := distro.GetHostDistroName()
 	if err != nil {
@@ -126,7 +147,7 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distrore
 	}
 	archName := common.CurrentArch()
 
-	hostDistro := distros.GetDistro(hostDistroName)
+	hostDistro := dr.GetDistro(hostDistroName)
 	hostArch, err := hostDistro.GetArch(archName)
 	if err != nil {
 		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
@@ -155,7 +176,8 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, distros *distrore
 		logger:          logger,
 		compatOutputDir: compatOutputDir,
 		hostDistroName:  hostDistro.Name(),
-		distros:         distros,
+		distroRegistry:  dr,
+		distros:         validDistros(rr, dr, hostArch.Name(), logger),
 	}
 	return setupRouter(api), nil
 }
@@ -360,7 +382,7 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 // This is necessary because different distros support different image types, and the image
 // type may have a different package set than other distros.
 func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
-	distro := api.distros.GetDistro(distroName)
+	distro := api.getDistro(distroName)
 	if distro == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
 	}
@@ -372,16 +394,22 @@ func (api *API) getImageType(distroName, imageType string) (distro.ImageType, er
 }
 
 func (api *API) parseDistro(query url.Values) (string, error) {
-	distros := api.distros.List()
-	sort.Strings(distros)
-
 	if distro := query.Get("distro"); distro != "" {
-		if common.IsStringInSortedSlice(distros, distro) {
+		if common.IsStringInSortedSlice(api.distros, distro) {
 			return distro, nil
 		}
 		return "", errors_package.New("Invalid distro: " + distro)
 	}
 	return api.hostDistroName, nil
+}
+
+// getDistro returns the named distro or nil
+// It excludes unsupported distros by first checking the api.distros list
+func (api *API) getDistro(name string) distro.Distro {
+	if !common.IsStringInSortedSlice(api.distros, name) {
+		return nil
+	}
+	return api.distroRegistry.GetDistro(name)
 }
 
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
@@ -815,7 +843,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 	// If there is a list of distros, check to make sure they are valid
 	invalid := []string{}
 	for _, d := range source.SourceConfig().Distros {
-		if !common.IsStringInSortedSlice(api.distros.List(), d) {
+		if !common.IsStringInSortedSlice(api.distros, d) {
 			invalid = append(invalid, d)
 		}
 	}
@@ -1149,7 +1177,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		d := api.distros.GetDistro(distroName)
+		d := api.getDistro(distroName)
 		if d == nil {
 			errors := responseError{
 				ID:  "DistroError",
@@ -1216,7 +1244,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	d := api.distros.GetDistro(distroName)
+	d := api.getDistro(distroName)
 	if d == nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1823,7 +1851,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 
 	// Check the blueprint's distro to make sure it is valid
 	if len(blueprint.Distro) > 0 {
-		if !common.IsStringInSortedSlice(api.distros.List(), blueprint.Distro) {
+		if !common.IsStringInSortedSlice(api.distros, blueprint.Distro) {
 			errors := responseError{
 				ID:  "BlueprintsError",
 				Msg: fmt.Sprintf("'%s' is not a valid distribution", blueprint.Distro),
@@ -2105,7 +2133,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	if distroName == "" {
 		distroName = api.hostDistroName
 	}
-	if api.distros.GetDistro(distroName) == nil {
+	if api.getDistro(distroName) == nil {
 		errors := responseError{
 			ID:  "DistroError",
 			Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
@@ -2423,7 +2451,7 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	d := api.distros.GetDistro(distroName)
+	d := api.getDistro(distroName)
 	if d == nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -3004,7 +3032,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 
 // fetchPackageList returns the package list or the selected distribution
 func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
-	d := api.distros.GetDistro(distroName)
+	d := api.getDistro(distroName)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
 	}
@@ -3056,7 +3084,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		bp.Distro = api.hostDistroName
 	}
 
-	d := api.distros.GetDistro(bp.Distro)
+	d := api.getDistro(bp.Distro)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", bp.Distro)
 	}
@@ -3162,8 +3190,7 @@ func (api *API) distrosListHandler(writer http.ResponseWriter, request *http.Req
 	var reply struct {
 		Distros []string `json:"distros"`
 	}
-	reply.Distros = api.distros.List()
-	sort.Strings(reply.Distros)
+	reply.Distros = api.distros
 
 	err := json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
