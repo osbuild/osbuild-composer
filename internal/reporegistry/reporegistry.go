@@ -96,11 +96,7 @@ func (r *RepoRegistry) ReposByArch(arch distro.Arch, includeTagged bool) ([]rpmm
 func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) ([]rpmmd.RepoConfig, error) {
 	repositories := []rpmmd.RepoConfig{}
 
-	distroRepos, found := r.repos[distro]
-	if !found {
-		return nil, fmt.Errorf("there are no repositories for distribution '%s'", distro)
-	}
-	archRepos, found := distroRepos[arch]
+	archRepos, found := r.DistroHasRepos(distro, arch)
 	if !found {
 		return nil, fmt.Errorf("there are no repositories for distribution '%s' and architecture '%s'", distro, arch)
 	}
@@ -115,4 +111,15 @@ func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) 
 	}
 
 	return repositories, nil
+}
+
+// DistroHasRepos returns the repositories for the distro+arch, and a found flag
+func (r *RepoRegistry) DistroHasRepos(distro, arch string) (repos []rpmmd.RepoConfig, found bool) {
+	distroRepos, found := r.repos[distro]
+	if !found {
+		return repos, false
+	}
+	repos, found = distroRepos[arch]
+
+	return repos, found
 }
