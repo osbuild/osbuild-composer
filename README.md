@@ -21,6 +21,7 @@ instance, includes a
 
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild-composer/issues>
+ * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
 
 ### About
 
