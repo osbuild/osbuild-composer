@@ -18,6 +18,9 @@ type ComposerConfigFile struct {
 	ComposerAPI struct {
 		IdentityFilter []string `toml:"identity_filter"`
 	} `toml:"composer_api"`
+	WorkerAPI struct {
+		IdentityFilter []string `toml:"identity_filter"`
+	} `toml:"worker_api"`
 }
 
 func LoadConfig(name string) (*ComposerConfigFile, error) {

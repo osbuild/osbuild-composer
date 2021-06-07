@@ -90,12 +90,16 @@ func main() {
 		Azure *struct {
 			Credentials string `toml:"credentials"`
 		} `toml:"azure"`
+		Authentication *struct {
+			OAuthURL         string `toml:"oauth_url"`
+			OfflineTokenPath string `toml:"offline_token"`
+		} `toml:"authentication"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-unix] address\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-unix] address basepath\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
@@ -142,6 +146,21 @@ func main() {
 	var client *worker.Client
 	if unix {
 		client = worker.NewClientUnix(address)
+	} else if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
+		t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+		if err != nil {
+			log.Fatalf("Could not read offline token: %v", err)
+		}
+		token := string(t)
+
+		if config.Authentication.OAuthURL == "" {
+			log.Fatal("OAuth URL should be specified together with the offline token")
+		}
+
+		client, err = worker.NewClient("https://"+address, nil, &token, &config.Authentication.OAuthURL)
+		if err != nil {
+			log.Fatalf("Error creating worker client: %v", err)
+		}
 	} else {
 		conf, err := createTLSConfig(&connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
@@ -152,7 +171,7 @@ func main() {
 			log.Fatalf("Error creating TLS config: %v", err)
 		}
 
-		client, err = worker.NewClient("https://"+address, conf)
+		client, err = worker.NewClient("https://"+address, conf, nil, nil)
 		if err != nil {
 			log.Fatalf("Error creating worker client: %v", err)
 		}
