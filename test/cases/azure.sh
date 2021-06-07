@@ -4,7 +4,7 @@ set -euo pipefail
 source /etc/os-release
 DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
-BUILD_ID="${BUILD_ID:-${CI_PIPELINE_ID}}"
+BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
 
 # Colorful output.
 function greenprint {
