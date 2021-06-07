@@ -3,3 +3,4 @@
 package api
 
 const BasePath = "/api/worker/v1"
+const CloudBasePath = "/api/composer-worker/v1"

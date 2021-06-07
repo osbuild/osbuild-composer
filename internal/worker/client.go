@@ -10,15 +10,29 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
+type bearerToken struct {
+	AccessToken     string `json:"access_token"`
+	ValidForSeconds int    `json:"expires_in"`
+}
+
 type Client struct {
-	server    *url.URL
-	requester *http.Client
+	server           *url.URL
+	requester        *http.Client
+	offlineToken     *string
+	oAuthURL         *string
+	lastTokenRefresh *time.Time
+	bearerToken      *bearerToken
+
+	tokenMu *sync.Mutex
 }
 
 type Job interface {
@@ -33,7 +47,7 @@ type Job interface {
 }
 
 type job struct {
-	requester        *http.Client
+	client           *Client
 	id               uuid.UUID
 	location         string
 	artifactLocation string
@@ -42,24 +56,33 @@ type job struct {
 	dynamicArgs      []json.RawMessage
 }
 
-func NewClient(baseURL string, conf *tls.Config) (*Client, error) {
+func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string) (*Client, error) {
 	server, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	server, err = server.Parse(api.BasePath + "/")
+	bp := api.BasePath
+	if offlineToken != nil {
+		bp = api.CloudBasePath
+	}
+	server, err = server.Parse(bp + "/")
 	if err != nil {
 		panic(err)
 	}
 
-	requester := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: conf,
-		},
+	if conf != nil && offlineToken != nil {
+		return nil, fmt.Errorf("error creating client, both tls and oauth are enabled")
 	}
 
-	return &Client{server, requester}, nil
+	requester := &http.Client{}
+	if conf != nil {
+		requester.Transport = &http.Transport{
+			TLSClientConfig: conf,
+		}
+	}
+
+	return &Client{server, requester, offlineToken, oAuthURL, nil, nil, &sync.Mutex{}}, nil
 }
 
 func NewClientUnix(path string) *Client {
@@ -81,7 +104,62 @@ func NewClientUnix(path string) *Client {
 		},
 	}
 
-	return &Client{server, requester}
+	return &Client{server, requester, nil, nil, nil, nil, nil}
+}
+
+// Note: Only call this function with Client.tokenMu locked!
+func (c *Client) refreshBearerToken() error {
+	if c.offlineToken == nil || c.oAuthURL == nil {
+		return fmt.Errorf("No offline token or oauth url available")
+	}
+
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("client_id", "rhsm-api")
+	data.Set("refresh_token", *c.offlineToken)
+
+	t := time.Now()
+	resp, err := http.Post(*c.oAuthURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
+	}
+
+	var bt bearerToken
+	err = json.NewDecoder(resp.Body).Decode(&bt)
+	if err != nil {
+		return err
+	}
+
+	c.bearerToken = &bt
+	c.lastTokenRefresh = &t
+	return nil
+}
+
+func (c *Client) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// If we're using OAUTH, add the Bearer token
+	if c.offlineToken != nil {
+		// make sure we have a valid token
+		var d time.Duration
+		c.tokenMu.Lock()
+		defer c.tokenMu.Unlock()
+		if c.lastTokenRefresh != nil {
+			d = time.Since(*c.lastTokenRefresh)
+		}
+		if c.bearerToken == nil || d.Seconds() >= (float64(c.bearerToken.ValidForSeconds)*0.8) {
+			err = c.refreshBearerToken()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.bearerToken.AccessToken))
+	}
+	return req, nil
 }
 
 func (c *Client) RequestJob(types []string) (Job, error) {
@@ -100,7 +178,13 @@ func (c *Client) RequestJob(types []string) (Job, error) {
 		panic(err)
 	}
 
-	response, err := c.requester.Post(url.String(), "application/json", &buf)
+	req, err := c.NewRequest("POST", url.String(), &buf)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	response, err := c.requester.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting job: %v", err)
 	}
@@ -127,7 +211,7 @@ func (c *Client) RequestJob(types []string) (Job, error) {
 	}
 
 	return &job{
-		requester:        c.requester,
+		client:           c,
 		id:               jr.Id,
 		jobType:          jr.Type,
 		args:             jr.Args,
@@ -174,14 +258,14 @@ func (j *job) Update(result interface{}) error {
 		panic(err)
 	}
 
-	req, err := http.NewRequest("PATCH", j.location, &buf)
+	req, err := j.client.NewRequest("PATCH", j.location, &buf)
 	if err != nil {
 		panic(err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 
-	response, err := j.requester.Do(req)
+	response, err := j.client.requester.Do(req)
 	if err != nil {
 		return fmt.Errorf("error fetching job info: %v", err)
 	}
@@ -195,7 +279,12 @@ func (j *job) Update(result interface{}) error {
 }
 
 func (j *job) Canceled() (bool, error) {
-	response, err := j.requester.Get(j.location)
+	req, err := j.client.NewRequest("GET", j.location, nil)
+	if err != nil {
+		return false, err
+	}
+
+	response, err := j.client.requester.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("error fetching job info: %v", err)
 	}
@@ -229,14 +318,14 @@ func (j *job) UploadArtifact(name string, reader io.Reader) error {
 		panic(err)
 	}
 
-	req, err := http.NewRequest("PUT", loc.String(), reader)
+	req, err := j.client.NewRequest("PUT", loc.String(), reader)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %v", err)
 	}
 
 	req.Header.Add("Content-Type", "application/octet-stream")
 
-	response, err := j.requester.Do(req)
+	response, err := j.client.requester.Do(req)
 	if err != nil {
 		return fmt.Errorf("error uploading artifact: %v", err)
 	}

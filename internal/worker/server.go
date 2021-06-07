@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,9 +24,11 @@ import (
 )
 
 type Server struct {
-	jobs         jobqueue.JobQueue
-	logger       *log.Logger
-	artifactsDir string
+	jobs           jobqueue.JobQueue
+	logger         *log.Logger
+	artifactsDir   string
+	identityFilter []string
+	basePath       string
 
 	// Currently running jobs. Workers are not handed job ids, but
 	// independent tokens which serve as an indirection. This enables
@@ -48,12 +52,14 @@ type JobStatus struct {
 
 var ErrTokenNotExist = errors.New("worker token does not exist")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, identityFilter []string) *Server {
+
 	return &Server{
-		jobs:         jobs,
-		logger:       logger,
-		artifactsDir: artifactsDir,
-		running:      make(map[uuid.UUID]uuid.UUID),
+		jobs:           jobs,
+		logger:         logger,
+		artifactsDir:   artifactsDir,
+		identityFilter: identityFilter,
+		running:        make(map[uuid.UUID]uuid.UUID),
 	}
 }
 
@@ -68,12 +74,55 @@ func (s *Server) Handler() http.Handler {
 		e.DefaultHTTPErrorHandler(err, c)
 	}
 
+	var mws []echo.MiddlewareFunc
+	if len(s.identityFilter) > 0 {
+		mws = append(mws, s.VerifyIdentityHeader)
+	}
+
 	handler := apiHandlers{
 		server: s,
 	}
-	api.RegisterHandlers(e.Group(api.BasePath), &handler)
+	api.RegisterHandlers(e.Group(api.BasePath, mws...), &handler)
+	api.RegisterHandlers(e.Group(api.CloudBasePath, mws...), &handler)
 
 	return e
+}
+
+func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		type identityHeader struct {
+			Identity struct {
+				AccountNumber string `json:"account_number"`
+			} `json:"identity"`
+		}
+
+		request := ctx.Request()
+
+		idHeaderB64 := request.Header["X-Rh-Identity"]
+		if len(idHeaderB64) != 1 {
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
+		}
+
+		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
+		}
+
+		var idHeader identityHeader
+		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
+		}
+
+		for _, i := range s.identityFilter {
+			if idHeader.Identity.AccountNumber == i {
+				ctx.Set("IdentityHeader", idHeader)
+				return nextHandler(ctx)
+
+			}
+		}
+		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
+	}
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
@@ -302,8 +351,8 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
-		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
+		Location:         fmt.Sprintf("%s/jobs/%v", h.server.basePath, token),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", h.server.basePath, token),
 		Type:             jobType,
 		Args:             jobArgs,
 		DynamicArgs:      dynamicJobArgs,

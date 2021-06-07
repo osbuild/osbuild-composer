@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -18,12 +19,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-func newTestServer(t *testing.T, tempdir string) *worker.Server {
+func newTestServer(t *testing.T, tempdir string, identities []string) *worker.Server {
 	q, err := fsjobqueue.New(tempdir)
 	if err != nil {
 		t.Fatalf("error creating fsjobqueue: %v", err)
 	}
-	return worker.NewServer(nil, q, "")
+	return worker.NewServer(nil, q, "", identities)
 }
 
 // Ensure that the status request returns OK.
@@ -32,7 +33,7 @@ func TestStatus(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 	handler := server.Handler()
 	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
@@ -63,7 +64,7 @@ func TestErrors(t *testing.T) {
 	defer os.RemoveAll(tempdir)
 
 	for _, c := range cases {
-		server := newTestServer(t, tempdir)
+		server := newTestServer(t, tempdir, []string{})
 		handler := server.Handler()
 		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
 	}
@@ -87,7 +88,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 	handler := server.Handler()
 
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -116,7 +117,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -157,7 +158,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -186,7 +187,7 @@ func TestArgs(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "worker-tests-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 
 	job := worker.OSBuildJob{
 		Manifest:  manifest,
@@ -226,7 +227,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, []string{})
 	handler := server.Handler()
 
 	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -240,4 +241,39 @@ func TestUpload(t *testing.T) {
 	require.Nil(t, dynamicArgs)
 
 	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
+}
+
+func TestIdentities(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	// distroStruct := test_distro.New()
+	// arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	// require.NoError(t, err)
+	// imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	// require.NoError(t, err)
+	// manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	// require.NoError(t, err)
+
+	server := newTestServer(t, tempdir, []string{"000000"})
+	handler := server.Handler()
+
+	// _, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	// require.NoError(t, err)
+
+	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusNotFound, `{"message":"Auth header is not present"}`, "message")
+
+	header := map[string]string{
+		"x-rh-identity": "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDMiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQo=",
+	}
+	response := test.SendHTTPWithHeader(handler, "GET", "/api/worker/v1/status", ``, header)
+	assert.Equal(t, 404, response.StatusCode, "status mismatch")
+
+	header = map[string]string{
+		"x-rh-identity": "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ==",
+	}
+
+	response = test.SendHTTPWithHeader(handler, "GET", "/api/worker/v1/status", ``, header)
+	assert.Equal(t, 200, response.StatusCode, "status mismatch")
 }
