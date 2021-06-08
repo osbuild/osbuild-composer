@@ -85,15 +85,27 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	exports := []string{"assembler"} // NOTE: Koji API doesn't support new image types yet
 	if initArgs.KojiError == "" {
+		exports := args.Exports
+		if len(exports) == 0 {
+			// job did not define exports, likely coming from an older version of composer
+			// fall back to default "assembler"
+			exports = []string{"assembler"}
+		} else if len(exports) > 1 {
+			// this worker only supports returning one (1) export
+			return fmt.Errorf("at most one build artifact can be exported")
+		}
 		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 		if err != nil {
 			return err
 		}
 
+		// NOTE: Currently OSBuild supports multiple exports, but this isn't used
+		// by any of the image types and it can't be specified during the request.
+		// Use the first (and presumably only) export for the imagePath.
+		exportPath := exports[0]
 		if result.OSBuildOutput.Success {
-			f, err := os.Open(path.Join(outputDirectory, args.ImageName))
+			f, err := os.Open(path.Join(outputDirectory, exportPath, args.ImageName))
 			if err != nil {
 				return err
 			}

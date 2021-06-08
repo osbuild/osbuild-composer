@@ -45,6 +45,7 @@ type KojiInitJobResult struct {
 type OSBuildKojiJob struct {
 	Manifest      distro.Manifest `json:"manifest"`
 	ImageName     string          `json:"image_name"`
+	Exports       []string        `json:"exports"`
 	KojiServer    string          `json:"koji_server"`
 	KojiDirectory string          `json:"koji_directory"`
 	KojiFilename  string          `json:"koji_filename"`
