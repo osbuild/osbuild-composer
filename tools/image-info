@@ -238,7 +238,9 @@ def read_partition_table(device):
     try:
         sfdisk = subprocess_check_output(["sfdisk", "--json", device], json.loads)
     except subprocess.CalledProcessError:
-        partitions.append(read_partition(device, False))
+        # This handles a case, when the device does contain a filesystem,
+        # but there is no partition table.
+        partitions.append(read_partition(device, {}))
         return info
 
     ptable = sfdisk["partitiontable"]
