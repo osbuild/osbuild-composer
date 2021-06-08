@@ -60,3 +60,25 @@ func TestOstreeResolveRef(t *testing.T) {
 		assert.EqualError(t, err, expMsg)
 	}
 }
+
+func TestVerifyRef(t *testing.T) {
+	cases := map[string]bool{
+		"a_perfectly_valid_ref": true,
+		"another/valid/ref":     true,
+		"this-one-has/all.the/_valid-/characters/even/_numbers_42": true,
+		"rhel/8/aarch64/edge": true,
+		"1337":                true,
+		"1337/but/also/more":  true,
+		"_good_start/ref":     true,
+		"/bad/ref":            false,
+		"invalid)characters":  false,
+		"this/was/doing/fine/until/the/very/end/": false,
+		"-bad_start/ref":     false,
+		".another/bad/start": false,
+		"how/about/now?":     false,
+	}
+
+	for in, expOut := range cases {
+		assert.Equal(t, expOut, VerifyRef(in), in)
+	}
+}
