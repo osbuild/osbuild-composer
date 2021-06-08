@@ -85,6 +85,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		manifest distro.Manifest
 		arch     string
 		filename string
+		exports  []string
 	}
 
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
@@ -138,6 +139,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		imageRequests[i].manifest = manifest
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].filename = imageType.Filename()
+		imageRequests[i].exports = imageType.Exports()
 
 		kojiFilenames[i] = fmt.Sprintf(
 			"%s-%s-%s.%s%s",
@@ -165,6 +167,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		id, err := h.server.workers.EnqueueOSBuildKoji(ir.arch, &worker.OSBuildKojiJob{
 			Manifest:      ir.manifest,
 			ImageName:     ir.filename,
+			Exports:       ir.exports,
 			KojiServer:    request.Koji.Server,
 			KojiDirectory: kojiDirectory,
 			KojiFilename:  kojiFilenames[i],
