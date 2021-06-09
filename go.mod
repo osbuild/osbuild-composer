@@ -18,7 +18,6 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.3.12
 	github.com/getkin/kin-openapi v0.13.0
-	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.4

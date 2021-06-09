@@ -1,9 +1,8 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,spec,chi-server,client -o openapi.gen.go openapi.yml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,spec,client,server -o openapi.gen.go openapi.yml
 
 package cloudapi
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -13,8 +12,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -37,6 +36,10 @@ type Server struct {
 
 type contextKey int
 
+type apiHandlers struct {
+	server *Server
+}
+
 // NewServer creates a new cloud server
 func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
 	server := &Server{
@@ -50,94 +53,87 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distror
 // Create an http.Handler() for this server, that provides the composer API at
 // the given path.
 func (server *Server) Handler(path string, identityFilter []string) http.Handler {
-	r := chi.NewRouter()
+	e := echo.New()
 
 	if len(identityFilter) > 0 {
 		server.identityFilter = identityFilter
-		r.Use(server.VerifyIdentityHeader)
+		e.Use(server.VerifyIdentityHeader)
 	}
-	r.Use(server.IncRequests)
-	r.Route(path, func(r chi.Router) {
-		HandlerFromMux(server, r)
-	})
+	handler := apiHandlers{
+		server: server,
+	}
+	RegisterHandlers(e.Group(path, server.IncRequests), &handler)
 
-	return r
+	return e
 }
 
-func (server *Server) VerifyIdentityHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (server *Server) VerifyIdentityHeader(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		const identityHeaderKey contextKey = iota
 		type identityHeader struct {
 			Identity struct {
 				AccountNumber string `json:"account_number"`
 			} `json:"identity"`
 		}
-
-		idHeaderB64 := r.Header["X-Rh-Identity"]
-		if len(idHeaderB64) != 1 {
-			http.Error(w, "Auth header is not present", http.StatusNotFound)
-			return
+		idHeaderB64 := c.Request().Header.Get("X-Rh-Identity")
+		if idHeaderB64 == "" {
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
 		}
 
-		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
+		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64)
 		if err != nil {
-			http.Error(w, "Auth header has incorrect format", http.StatusNotFound)
-			return
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
 		}
 
 		var idHeader identityHeader
 		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
 		if err != nil {
-			http.Error(w, "Auth header has incorrect format", http.StatusNotFound)
-			return
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
 		}
 
 		for _, i := range server.identityFilter {
 			if idHeader.Identity.AccountNumber == i {
-				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), identityHeaderKey, idHeader)))
-				return
+				c.Set("IdentityHeader", idHeader)
+				c.Set("IdentityHeaderKey", identityHeaderKey)
+				return next(c)
 			}
 		}
-		http.Error(w, "Account not allowed", http.StatusNotFound)
-	})
+		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
+	}
 }
 
-func (s *Server) IncRequests(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) IncRequests(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		prometheus.TotalRequests.Inc()
-		if strings.HasSuffix(r.URL.Path, "/compose") {
+		if strings.HasSuffix(c.Path(), "/compose") {
 			prometheus.ComposeRequests.Inc()
 		}
-		next.ServeHTTP(w, r)
-	})
+		return next(c)
+	}
 }
 
 // Compose handles a new /compose POST request
-func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header["Content-Type"]
+func (h *apiHandlers) Compose(ctx echo.Context) error {
+	contentType := ctx.Request().Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		http.Error(w, "Only 'application/json' content type is supported", http.StatusUnsupportedMediaType)
-		return
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "Only 'application/json' content type is supported")
 	}
 
 	var request ComposeRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
+	err := json.NewDecoder(ctx.Request().Body).Decode(&request)
 	if err != nil {
-		http.Error(w, "Could not parse JSON body", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Could not parse request body")
 	}
 
-	distribution := server.distros.GetDistro(request.Distribution)
+	distribution := h.server.distros.GetDistro(request.Distribution)
 	if distribution == nil {
-		http.Error(w, fmt.Sprintf("Unsupported distribution: %s", request.Distribution), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Unsupported distribution: %s", request.Distribution)
 	}
 
 	var bp = blueprint.Blueprint{}
 	err = bp.Initialize()
 	if err != nil {
-		http.Error(w, "Unable to initialize blueprint", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Unable to initialize blueprint")
 	}
 	if request.Customizations != nil && request.Customizations.Packages != nil {
 		for _, p := range *request.Customizations.Packages {
@@ -165,13 +161,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 	for i, ir := range request.ImageRequests {
 		arch, err := distribution.GetArch(ir.Architecture)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, "Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution)
 		}
 		imageType, err := arch.GetImageType(ir.ImageType)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, "Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution)
 		}
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
@@ -184,15 +178,14 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			} else if repo.Metalink != nil {
 				repositories[j].Metalink = *repo.Metalink
 			} else {
-				http.Error(w, "Must specify baseurl, mirrorlist, or metalink", http.StatusBadRequest)
-				return
+				return echo.NewHTTPError(http.StatusBadRequest, "Must specify baseurl, mirrorlist, or metalink")
 			}
 		}
 
 		packageSets := imageType.PackageSets(bp)
 		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 		for name, packages := range packageSets {
-			pkgs, _, err := server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
+			pkgs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
 			if err != nil {
 				var error_type int
 				switch err.(type) {
@@ -204,8 +197,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 				case error:
 					error_type = http.StatusInternalServerError
 				}
-				http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), error_type)
-				return
+				return echo.NewHTTPError(error_type, "Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err)
 			}
 			pkgSpecSets[name] = pkgs
 		}
@@ -226,8 +218,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		if ostreeOptions == nil || ostreeOptions.Ref == nil {
 			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
 		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
-			http.Error(w, fmt.Sprintf("Invalid OSTree ref: %s", *ostreeOptions.Ref), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid OSTree ref: %s", *ostreeOptions.Ref)
 		} else {
 			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
 		}
@@ -237,8 +228,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			imageOptions.OSTree.URL = *ostreeOptions.Url
 			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err), http.StatusBadRequest)
-				return
+				return echo.NewHTTPError(http.StatusBadRequest, "Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err)
 			}
 			imageOptions.OSTree.Parent = parent
 		}
@@ -269,8 +259,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 
 		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, "Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err)
 		}
 
 		imageRequests[i].manifest = manifest
@@ -283,13 +272,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			var awsUploadOptions AWSUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
-				http.Error(w, "Unable to marshal aws upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to marshal aws upload request")
 			}
 			err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
 			if err != nil {
-				http.Error(w, "Unable to unmarshal aws upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal aws upload request")
 			}
 
 			var share []string
@@ -317,13 +304,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			var awsS3UploadOptions AWSS3UploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
-				http.Error(w, "Unable to marshal aws upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal aws upload request")
 			}
 			err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
 			if err != nil {
-				http.Error(w, "Unable to unmarshal aws upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal aws upload request")
 			}
 
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
@@ -342,13 +327,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			var gcpUploadOptions GCPUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
-				http.Error(w, "Unable to marshal gcp upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to marshal gcp upload request")
 			}
 			err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
 			if err != nil {
-				http.Error(w, "Unable to unmarshal gcp upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal gcp upload request")
 			}
 
 			var share []string
@@ -380,13 +363,11 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			var azureUploadOptions AzureUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
-				http.Error(w, "Unable to marshal azure upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to marshal azure upload request")
 			}
 			err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
 			if err != nil {
-				http.Error(w, "Unable to unmarshal azure upload request", http.StatusInternalServerError)
-				return
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal azure upload request")
 			}
 			t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
 				Filename:       imageType.Filename(),
@@ -405,8 +386,7 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 
 			targets = append(targets, t)
 		} else {
-			http.Error(w, "Unknown upload request type, only 'aws', 'azure' and 'gcp' are supported", http.StatusBadRequest)
-			return
+			return echo.NewHTTPError(http.StatusBadRequest, "Unknown upload request type, only 'aws', 'azure' and 'gcp' are supported")
 		}
 	}
 
@@ -415,51 +395,42 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		// NOTE: the store currently does not support multi-image composes
 		ir = imageRequests[0]
 	} else {
-		http.Error(w, "Only single-image composes are currently supported", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Only single-image composes are currently supported")
 	}
 
-	id, err := server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
+	id, err := h.server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
 		Manifest: ir.manifest,
 		Targets:  targets,
 		Exports:  ir.exports,
 	})
 	if err != nil {
-		http.Error(w, "Failed to enqueue manifest", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enqueue manifest")
 	}
 
 	var response ComposeResult
 	response.Id = id.String()
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		panic("Failed to write response")
-	}
+
+	return ctx.JSON(http.StatusOK, response)
 }
 
 // ComposeStatus handles a /compose/{id} GET request
-func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id string) {
+func (h *apiHandlers) ComposeStatus(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err)
 	}
 
 	var result worker.OSBuildJobResult
-	status, _, err := server.workers.JobStatus(jobId, &result)
+	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
-		return
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
 	}
 
 	var us *UploadStatus
 	if result.TargetResults != nil {
 		// Only single upload target is allowed, therefore only a single upload target result is allowed as well
 		if len(result.TargetResults) != 1 {
-			http.Error(w, fmt.Sprintf("Job %s returned more upload target results than allowed", id), http.StatusInternalServerError)
-			return
+			return echo.NewHTTPError(http.StatusInternalServerError, "Job %s returned more upload target results than allowed", id)
 		}
 		tr := *result.TargetResults[0]
 
@@ -494,8 +465,7 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 				ImageName: gcpOptions.ImageName,
 			}
 		default:
-			http.Error(w, fmt.Sprintf("Job %s returned unknown upload target results %s", id, tr.Name), http.StatusInternalServerError)
-			return
+			return echo.NewHTTPError(http.StatusInternalServerError, "Job %s returned unknown upload target results %s", id, tr.Name)
 		}
 
 		us = &UploadStatus{
@@ -511,11 +481,7 @@ func (server *Server) ComposeStatus(w http.ResponseWriter, r *http.Request, id s
 			UploadStatus: us,
 		},
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		panic("Failed to write response")
-	}
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
@@ -541,61 +507,45 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 }
 
 // GetOpenapiJson handles a /openapi.json GET request
-func (server *Server) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
+func (h *apiHandlers) GetOpenapiJson(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
-		http.Error(w, "Could not load openapi spec", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Could not load openapi spec")
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(spec)
-	if err != nil {
-		panic("Failed to write response")
-	}
+	return ctx.JSON(http.StatusOK, spec)
 }
 
 // GetVersion handles a /version GET request
-func (server *Server) GetVersion(w http.ResponseWriter, r *http.Request) {
+func (h *apiHandlers) GetVersion(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
-		http.Error(w, "Could not load version", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Could not load version")
 	}
 	version := Version{spec.Info.Version}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(version)
-	if err != nil {
-		panic("Failed to write response")
-	}
+	return ctx.JSON(http.StatusOK, version)
 }
 
 // ComposeMetadata handles a /compose/{id}/metadata GET request
-func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id string) {
+func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err)
 	}
 
 	var result worker.OSBuildJobResult
-	status, _, err := server.workers.JobStatus(jobId, &result)
+	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
-		return
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
 	}
 
 	var job worker.OSBuildJob
-	if _, _, _, err = server.workers.Job(jobId, &job); err != nil {
-		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
-		return
+	if _, _, _, err = h.server.workers.Job(jobId, &job); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
 	}
 
 	if status.Finished.IsZero() {
 		// job still running: empty response
-		if err := json.NewEncoder(w).Encode(new(ComposeMetadata)); err != nil {
-			panic("Failed to write response: " + err.Error())
-		}
-		return
+		return ctx.JSON(200, ComposeMetadata{})
 	}
 
 	manifestVer, err := job.Manifest.Version()
@@ -663,7 +613,5 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
 	}
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		panic("Failed to write response: " + err.Error())
-	}
+	return ctx.JSON(200, resp)
 }
