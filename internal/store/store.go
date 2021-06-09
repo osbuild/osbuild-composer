@@ -50,6 +50,7 @@ type SourceConfig struct {
 	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
 	System   bool     `json:"system" toml:"system"`
 	Distros  []string `json:"distros" toml:"distros"`
+	RHSM     bool     `json:"rhsm" toml:"rhsm"`
 }
 
 type NotFoundError struct {
@@ -576,6 +577,7 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	repo.Name = name
 	repo.IgnoreSSL = !s.CheckSSL
 	repo.CheckGPG = s.CheckGPG
+	repo.RHSM = s.RHSM
 
 	if s.Type == "yum-baseurl" {
 		repo.BaseURL = s.URL

@@ -63,6 +63,7 @@ type sourceV0 struct {
 	CheckSSL bool     `json:"check_ssl"`
 	System   bool     `json:"system"`
 	Distros  []string `json:"distros"`
+	RHSM     bool     `json:"rhsm"`
 }
 
 type sourcesV0 map[string]sourceV0
