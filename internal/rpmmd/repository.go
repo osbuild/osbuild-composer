@@ -404,6 +404,9 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever
 		MetadataExpire: repo.MetadataExpire,
 	}
 	if repo.RHSM {
+		if rpmmd.subscriptions == nil {
+			return dnfRepoConfig{}, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
+		}
 		secrets, err := rpmmd.subscriptions.GetSecretsForBaseurl(repo.BaseURL, arch, releasever)
 		if err != nil {
 			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on the host for this baseurl: %s", repo.BaseURL)
