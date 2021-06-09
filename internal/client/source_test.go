@@ -490,6 +490,7 @@ func TestGetSourceInfoV1(t *testing.T) {
 		check_ssl = true
 		check_gpg = true
 		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		rhsm = false
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 
@@ -503,6 +504,7 @@ func TestGetSourceInfoV1(t *testing.T) {
 	require.Contains(t, info, "package-repo-info-v1", "No source info returned")
 	require.Equal(t, "repo for info test v1", info["package-repo-info-v1"].Name)
 	require.Equal(t, "file://"+testState.repoDir, info["package-repo-info-v1"].URL)
+	require.Equal(t, false, info["package-repo-info-v1"].RHSM)
 
 	resp, err = DeleteSourceV1(testState.socket, "package-repo-info-v1")
 	require.NoError(t, err, "DELETE source failed with a client error")

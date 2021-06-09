@@ -1179,6 +1179,34 @@ check_gpg = false
 	}
 }
 
+func TestSourcesInfoTomlV1(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	source := `
+id = "fish"
+name = "fish"
+url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
+type = "yum-baseurl"
+rhsm = true
+`
+
+	sourceStr := `{"check_gpg":false,"check_ssl":false,"id":"fish","name":"fish","rhsm":true,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`
+
+	req := httptest.NewRequest("POST", "/api/v1/projects/source/new", bytes.NewReader([]byte(source)))
+	req.Header.Set("Content-Type", "text/x-toml")
+	recorder := httptest.NewRecorder()
+
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api.ServeHTTP(recorder, req)
+
+	r := recorder.Result()
+	require.Equal(t, http.StatusOK, r.StatusCode)
+	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+}
+
 // TestSourcesNewWrongTomlV1 Tests that Empty TOML, and invalid TOML should return an error
 func TestSourcesNewWrongTomlV1(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
