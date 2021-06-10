@@ -89,6 +89,11 @@ Base:
           # see COMPOSER-918
           # - aws/rhel-8.4-aarch64
         INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log
+      - "*.repo"
+    when: always
 
 OSTree:
   stage: test
