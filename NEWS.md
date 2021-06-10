@@ -1,5 +1,42 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 30:
+
+  * Cloud API now has support for uploading images directly to Azure. Before,
+    composer only supported uploading to Azure using the Weldr API (used by
+    cockpit-composer and composer-cli).
+
+  * OSBuild Composer can now generate Manifests that conform to the new
+    OSBuild schema. Two new image types are added that take advantage
+    of the new schema: rhel-edge-container and rhel-edge-installer.
+
+  * OSBuild Composer can now build RHEL 9.0 guest images.
+
+  * OSBuild Composer can now build Fedora 34 and Fedora 35 images. Note that
+    the work on Fedora 34 hasn't finished yet, stay tuned for more updates
+    in the near future.
+
+  * Cloud API has now support for authorization using an Identity header.
+    This is useful for running composer in a Kubernetes cluster behind
+    a reverse proxy.
+
+  * Several fixes for RHEL 8.4 images are included in this release.
+
+  * Worker osbuild jobs with GCP upload target now set the chosen image name as
+    custom metadata on the uploaded object. This makes finding the uploaded
+    object using the image name possible. The behavior is useful mainly
+    for cleaning up cloud resources in case of unexpected failures.
+  
+  * Upload to GCP is now more reliable because composer now chooses a random
+    GCE region instead of fixed one which seems to be often exhausted.
+
+Contributions from: Achilleas Koutsou, Alexander Todorov, Brian C. Lane, Chloe
+                    Kaubisch, Christian Kellner, Jakub Rusz, Jozef Mikovic,
+                    Martin Sehnoutka, Ondřej Budai, Sanne Raymaekers, Tomas
+                    Hozza, Tom Gundersen, Xiaofeng Wang, He Yi, Yuxin Sun
+
+— Liberec, 2021-06-10
+
 ## CHANGES WITH 29:
 
   * Cloud API supports Google Cloud Platform as an upload target!
