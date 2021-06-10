@@ -106,3 +106,9 @@ fi
 greenprint "Installing test packages for ${PROJECT}"
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
+
+if [ -n "${CI}" ]; then
+    # copy repo files b/c GitLab can't upload artifacts
+    # which are outside the build directory
+    cp /etc/yum.repos.d/*.repo "$(pwd)"
+fi
