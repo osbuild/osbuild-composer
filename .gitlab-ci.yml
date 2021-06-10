@@ -30,6 +30,9 @@ RPM:
     EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - sh "schutzbot/mockbuild.sh"
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
   parallel:
     matrix:
       - RUNNER:
