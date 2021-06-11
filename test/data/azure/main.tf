@@ -34,6 +34,10 @@ variable "TEST_ID" {
     type = string
 }
 
+variable "HYPER_V_GEN" {
+    type = string
+}
+
 # Use existing resource group
 data "azurerm_resource_group" "testResourceGroup" {
   name = var.RESOURCE_GROUP
@@ -56,6 +60,7 @@ resource "azurerm_image" "testimage" {
   name                = join("-", ["image", var.TEST_ID])
   location            = data.azurerm_resource_group.testResourceGroup.location
   resource_group_name = data.azurerm_resource_group.testResourceGroup.name
+  hyper_v_generation = var.HYPER_V_GEN
 
   os_disk {
     os_type  = "Linux"

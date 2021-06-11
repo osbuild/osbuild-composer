@@ -5,6 +5,7 @@ source /etc/os-release
 DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
 BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
+HYPER_V_GEN="${HYPER_V_GEN:-V1}"
 
 # Colorful output.
 function greenprint {
@@ -194,6 +195,8 @@ export TF_VAR_STORAGE_ACCOUNT="$AZURE_STORAGE_ACCOUNT"
 export TF_VAR_CONTAINER_NAME="$AZURE_CONTAINER_NAME"
 export TF_VAR_BLOB_NAME="$IMAGE_KEY".vhd
 export TF_VAR_TEST_ID="$TEST_ID"
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/image#argument-reference
+export TF_VAR_HYPER_V_GEN="${HYPER_V_GEN}"
 export BLOB_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER_NAME/$IMAGE_KEY.vhd"
 export ARM_CLIENT_ID="$AZURE_CLIENT_ID" > /dev/null
 export ARM_CLIENT_SECRET="$AZURE_CLIENT_SECRET" > /dev/null
@@ -237,10 +240,10 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
-    greenprint "💚 Success"
+    greenprint "💚 Success with HyperV ${HYPER_V_GEN}"
     exit 0
 elif [[ $RESULTS != 1 ]]; then
-    greenprint "❌ Failed"
+    greenprint "❌ Failed ${HYPER_V_GEN}"
     exit 1
 fi
 
