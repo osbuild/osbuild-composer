@@ -6799,9 +6799,14 @@
     "selinux": {
       "context-mismatch": [
         {
-          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
-          "expected": "system_u:object_r:rpm_var_lib_t:s0",
-          "filename": "/var/lib/rpm/__db.002"
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/kernel"
+        },
+        {
+          "actual": "unconfined_u:object_r:etc_t:s0",
+          "expected": "system_u:object_r:etc_t:s0",
+          "filename": "/etc/sysconfig/network"
         },
         {
           "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
@@ -6811,17 +6816,12 @@
         {
           "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
           "expected": "system_u:object_r:rpm_var_lib_t:s0",
+          "filename": "/var/lib/rpm/__db.002"
+        },
+        {
+          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+          "expected": "system_u:object_r:rpm_var_lib_t:s0",
           "filename": "/var/lib/rpm/__db.003"
-        },
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/network"
-        },
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/kernel"
         }
       ],
       "policy": {

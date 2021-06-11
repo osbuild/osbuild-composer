@@ -10240,11 +10240,6 @@
           "actual": "unconfined_u:object_r:etc_t:s0",
           "expected": "system_u:object_r:etc_t:s0",
           "filename": "/etc/sysconfig/network"
-        },
-        {
-          "actual": "system_u:object_r:unlabeled_t:s0",
-          "expected": "system_u:object_r:systemd_sleep_exec_t:s0",
-          "filename": "/usr/lib/systemd/systemd-sleep"
         }
       ],
       "policy": {

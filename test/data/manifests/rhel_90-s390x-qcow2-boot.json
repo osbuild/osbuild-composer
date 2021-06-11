@@ -10497,6 +10497,11 @@
     "selinux": {
       "context-mismatch": [
         {
+          "actual": "unconfined_u:object_r:boot_t:s0",
+          "expected": "system_u:object_r:boot_t:s0",
+          "filename": "/boot/bootmap"
+        },
+        {
           "actual": "unconfined_u:object_r:etc_t:s0",
           "expected": "system_u:object_r:etc_t:s0",
           "filename": "/etc/sysconfig/kernel"
@@ -10505,11 +10510,6 @@
           "actual": "unconfined_u:object_r:etc_t:s0",
           "expected": "system_u:object_r:etc_t:s0",
           "filename": "/etc/sysconfig/network"
-        },
-        {
-          "actual": "unconfined_u:object_r:boot_t:s0",
-          "expected": "system_u:object_r:boot_t:s0",
-          "filename": "/boot/bootmap"
         }
       ],
       "policy": {

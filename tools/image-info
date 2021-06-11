@@ -835,7 +835,7 @@ def read_locale(tree):
             return parse_environment_vars(f.read())
 
 
-def read_selinux_info(tree):
+def read_selinux_info(tree, is_ostree):
     """
     Read information related to SELinux.
 
@@ -872,7 +872,7 @@ def read_selinux_info(tree):
         result["policy"] = policy
 
     with contextlib.suppress(subprocess.CalledProcessError):
-        ctx_mismatch = read_selinux_ctx_mismatch(tree)
+        ctx_mismatch = read_selinux_ctx_mismatch(tree, is_ostree)
         if ctx_mismatch:
             result["context-mismatch"] = ctx_mismatch
 
@@ -897,13 +897,18 @@ def read_selinux_conf(tree):
             return parse_environment_vars(f.read())
 
 
-def read_selinux_ctx_mismatch(tree):
+def read_selinux_ctx_mismatch(tree, is_ostree):
     """
     Read any mismatch in selinux context of files on the image.
 
     Returns: list of dictionaries as described below. If there
     are no mismatches between used and expected selinux context,
     then an empty list is returned.
+
+    If the checked 'tree' is ostree, then the path '/etc' is
+    excluded from the check. This is beause it is bind-mounted
+    from /usr/etc and therefore has incorrect selinux context
+    for its filesystem path.
 
     An example of returned value:
     [
@@ -937,6 +942,12 @@ def read_selinux_ctx_mismatch(tree):
             f"{tree}"
         ]
 
+        if is_ostree:
+            # exclude /etc from being checked when the tree is ostree, because
+            # it is just bind-mounted from /usr/etc and has incorrect selinux
+            # context for /etc path
+            CMD.extend(["-e", f"{tree}/etc"])
+
         output = subprocess.check_output(CMD).decode()
 
         # output are lines such as:
@@ -958,6 +969,9 @@ def read_selinux_ctx_mismatch(tree):
                 "expected": match.group("expected")
             }
             result.append(parsed_line)
+
+        # sort the list to make it consistent across runs
+        result.sort(key=lambda x: x.get("filename"))
 
     return result
 
@@ -1742,7 +1756,7 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if rhsm:
             report["rhsm"] = rhsm
 
-        selinux = read_selinux_info(tree)
+        selinux = read_selinux_info(tree, is_ostree)
         if selinux:
             report["selinux"] = selinux
 
