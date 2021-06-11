@@ -10949,6 +10949,7 @@
         "/proc": ".M.......",
         "/run/cockpit": ".M.......",
         "/sys": ".M.......",
+        "/var/lib/powerpc-utils/smt.state": "..5....T.",
         "/var/log/lastlog": ".M....G..",
         "/var/spool/anacron/cron.daily": ".M.......",
         "/var/spool/anacron/cron.monthly": ".M.......",
@@ -10967,11 +10968,6 @@
           "actual": "unconfined_u:object_r:etc_t:s0",
           "expected": "system_u:object_r:etc_t:s0",
           "filename": "/etc/sysconfig/network"
-        },
-        {
-          "actual": "system_u:object_r:unlabeled_t:s0",
-          "expected": "system_u:object_r:systemd_sleep_exec_t:s0",
-          "filename": "/usr/lib/systemd/systemd-sleep"
         }
       ],
       "policy": {

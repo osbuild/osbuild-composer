@@ -11083,6 +11083,7 @@
         "/proc": ".M.......",
         "/run/cockpit": ".M.......",
         "/sys": ".M.......",
+        "/var/lib/powerpc-utils/smt.state": "..5....T.",
         "/var/log/btmp": ".M.......",
         "/var/log/journal": ".M....G..",
         "/var/log/lastlog": ".M....G..",

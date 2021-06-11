@@ -74,6 +74,18 @@ the same architecture, as the one intended for the generated test
 cases. In other words, you need to generate e.g test cases for `aarch64`
 images on an `aarch64` host.
 
+**Important Note:** `image-info` by default won't be able to read SELinux
+labels used in the image, which are unknown to the host's policy. If you are
+generating the image test case using
+`tools/test-case-generators/generate-test-cases`, you'll have to relabel the
+`image-info` tool with `osbuild_exec_t` in order to get correct report.
+
+You can do this by running:
+```bash
+OSBUILD_LABEL=$(matchpathcon -n $(which osbuild))
+chcon $OSBUILD_LABEL tools/image-info
+```
+
 Alternatively to (re)generate test cases for all architectures, or just
 the ones different from your host's architecture, you can use the tool
 `tools/test-case-generators/generate-all-test-cases`. It creates
@@ -81,8 +93,10 @@ an ephemeral virtual machine for each necessary architecture using the
 `qemu-system-<arch>` command and generates test cases using the
 `generate-test-cases` tool inside the virtual machine. It is important
 to note that test case generation in virtual machines may take several
-hours. The `generate-all-test-cases` currently does not work with RHEL
-images because of missing "9p" filesystem support.
+hours. The script also handles the "unknown SELinux labels" issue automatically
+for you and produces correct reports. The `generate-all-test-cases` currently
+does not work with RHEL images because of missing "9p" filesystem support.
+It also does not work on MacOS due to missing support for virtfs in QEMU.
 
 ### Setting up Azure upload tests
 

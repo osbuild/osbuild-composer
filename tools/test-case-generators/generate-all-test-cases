@@ -102,9 +102,10 @@ class RunnerMountPoint:
     Data structure to represent basic data used by Runners to attach host
     directory as virtfs to the guest and then to mount it.
     """
-    def __init__(self, src_host, dst_guest, mount_tag, readonly):
+    def __init__(self, src_host, dst_guest, mount_tag, security_model, readonly):
         self.src_host = src_host
         self.dst_guest = dst_guest
+        self.security_model = security_model
         self.readonly = readonly
         self.mount_tag = mount_tag
 
@@ -115,9 +116,13 @@ class RunnerMountPoint:
         image test cases.
         """
         sources_dir = os.getcwd() if sources_dir is None else sources_dir
+        # Use 'passthrough' security policy for /mnt/sources. The reason is that
+        # we need it to be exported to the VM without attributes, like symlink
+        # target, being mapped in xattrs. Otherwise copying the directory
+        # elsewhere produces errors.
         mount_points = [
-            RunnerMountPoint(sources_dir, "/mnt/sources", "sources", True),
-            RunnerMountPoint(output_dir, "/mnt/output", "output", False)
+            RunnerMountPoint(sources_dir, "/mnt/sources", "sources", "passthrough", True),
+            RunnerMountPoint(output_dir, "/mnt/output", "output", "mapped-xattr", False)
         ]
         return mount_points
 
@@ -216,8 +221,9 @@ class BaseRunner(contextlib.AbstractContextManager):
         for mount_point in self.mount_points:
             src_host = mount_point.src_host
             tag = mount_point.mount_tag
+            security_model = mount_point.security_model
             readonly = ",readonly" if mount_point.readonly else ""
-            qemu_cmd.extend(["-virtfs", f"local,path={src_host},mount_tag={tag},security_model=mapped-xattr{readonly}"])
+            qemu_cmd.extend(["-virtfs", f"local,path={src_host},mount_tag={tag},security_model={security_model}{readonly}"])
 
         # handle boot image
         qemu_cmd.extend(self._get_qemu_boot_image_option())
@@ -673,12 +679,29 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
 
             # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
             # removing some of the downloaded RPMs due to "ageing"
-            guest_osbuild_store_dir = "/root/osbuild-store"
+            guest_osbuild_store_dir = "/home/admin/osbuild-store"
             runner.run_command_check_call(f"sudo mkdir {guest_osbuild_store_dir}")
 
             # Log installed versions of important RPMs
             rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
             log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
+
+            # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host.
+            # It is not possible to relabel the 'image-info' in the mounted path, because it is read-only.
+            # Also bind-mounting copy of image-info with proper SELinux labels to /mnt/sources didn't do the trick.
+            # For the reason above, make a full copy of sources in /home/admin and operate on it instead.
+            osbuild_label, stderr, retcode = runner.run_command("matchpathcon -n /usr/bin/osbuild")
+            if retcode:
+                raise RuntimeError(f"Running 'matchpathcon' on the guest failed. retcode: {retcode}\n\nstderr: {stderr}")
+            osbuild_label = osbuild_label.strip()
+            sources_path = "/home/admin/sources"
+            image_info_guest_path = f"{sources_path}/tools/image-info"
+            log.info(f"Making copy of sources in '{sources_path}'.")
+            # exclude test/data/manifests, because it is mounted from the host into /mnt/output and
+            # has UID and GID set, which does not allow us to access it. And it is not needed
+            # to generate a test case!
+            runner.run_command_check_call(f"rsync -a --exclude=test/data/manifests /mnt/sources/ {sources_path}")
+            runner.run_command_check_call(f"chcon {osbuild_label} {image_info_guest_path}")
 
             for distro, img_type_list in generation_matrix.items():
                 for image_type in img_type_list:
@@ -691,7 +714,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                     else:
                         with_customizations = False
 
-                    gen_test_cases_cmd = "cd /mnt/sources; sudo tools/test-case-generators/generate-test-cases" + \
+                    gen_test_cases_cmd = f"cd {sources_path}; sudo tools/test-case-generators/generate-test-cases" + \
                         f" --distro {distro} --arch {arch} --image-types {image_type}" + \
                         f" --store {guest_osbuild_store_dir} --output /mnt/output/"
                     if with_customizations:
