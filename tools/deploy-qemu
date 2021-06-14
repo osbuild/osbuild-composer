@@ -70,4 +70,4 @@ qemu-system-x86_64 \
   -net nic,model=virtio \
   -net user,hostfwd=tcp::2222-:22,hostfwd=tcp::4430-:443 \
   -cdrom "$workdir/cloudinit.iso" \
-  "${qemu_extra_args[@]}" "$image"
+  ${qemu_extra_args[0]+"${qemu_extra_args[@]}"} "$image"
