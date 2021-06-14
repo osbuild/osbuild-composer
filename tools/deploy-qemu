@@ -1,73 +1,73 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-#
-# deploy-qemu IMAGE USERDATA
-#
-# Starts an ephemeral virtual machine in qemu, injecting configuration via
-# cloud-init. Stopping this script stops the VM and discards all data.
-#
-# IMAGE    -- An os image that can be booted by qemu and has cloud-init
-#             installed and enabled. No changes are made to this file.
-#
-# USERDATA -- A cloud-init user-data config file, or a directory of
-#             configuration as accepted by the `gen-user-data` tool.
-#
-# In addition, if the QEMU_EXTRA_ARGS environment variable is defined, it adds
-# its content as additional arguments to qemu.
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
 
-set -euo pipefail
 
-if [[ "$#" != 2 ]]; then
-  echo "usage: $0 IMAGE USERDATA"
-  exit 1
-fi
+HELP_TEXT="""deploy-qemu IMAGE USERDATA
 
-scriptdir=$(dirname "$0")
-image=$1
-userdata=$2
-read -ra qemu_extra_args <<< "${QEMU_EXTRA_ARGS:-}"
-workdir=$(mktemp -d "$scriptdir/qemu-tmp-XXXXXX")
-function cleanup() {
-  rm -rf "$workdir"
-}
-trap cleanup EXIT
+Starts an ephemeral virtual machine in qemu, injecting configuration via
+cloud-init. Stopping this script stops the VM and discards all data.
 
-mkdir "$workdir/cidata"
+IMAGE    -- An os image that can be booted by qemu and has cloud-init
+            installed and enabled. No changes are made to this file.
 
-if [ -d "$userdata" ]; then
-  "$scriptdir/gen-user-data" "$userdata" > "$workdir/cidata/user-data"
-else
-  cp "$userdata" "$workdir/cidata/user-data"
-fi
+USERDATA -- A cloud-init user-data config file, or a directory of
+            configuration as accepted by the `gen-user-data` tool.
 
-echo -e "instance-id: nocloud\nlocal-hostname: vm\n" > "$workdir/cidata/meta-data"
+In addition, if the QEMU_EXTRA_ARGS environment variable is defined, it adds
+its content as additional arguments to qemu."""
 
-case $(uname -s) in
-  "Linux")
-    mkisofs \
-      -input-charset utf-8 \
-      -output "$workdir/cloudinit.iso" \
-      -volid cidata \
-      -joliet \
-      -rock \
-      -quiet \
-      -graft-points \
-      "$workdir/cidata/user-data" \
-      "$workdir/cidata/meta-data"
-    ;;
 
-  "Darwin")
-    # conviently uses the last component of source as volumeid, which has to be cidata
-    hdiutil makehybrid -iso -joliet -o "$workdir/cloudinit.iso" "$workdir/cidata"
-    ;;
-esac
+if len(sys.argv) != 3:
+    print(HELP_TEXT)
+    exit(1)
 
-qemu-system-x86_64 \
-  -M accel=kvm:hvf \
-  -m 1024 \
-  -snapshot \
-  -cpu host \
-  -net nic,model=virtio \
-  -net user,hostfwd=tcp::2222-:22,hostfwd=tcp::4430-:443 \
-  -cdrom "$workdir/cloudinit.iso" \
-  "${qemu_extra_args[@]}" "$image"
+script_dir = os.path.dirname(os.path.realpath(__file__))
+image = sys.argv[1]
+userdata = sys.argv[2]
+
+qemu_extra_args = os.getenv("QEMU_EXTRA_ARGS")
+qemu_extra_args = qemu_extra_args.split(' ') if qemu_extra_args is not None else []
+
+with tempfile.TemporaryDirectory(prefix="qemu-tmp-", dir=script_dir) as workdir:
+    os.mkdir(os.path.join(workdir, "cidata"))
+
+    if os.path.isdir(userdata):
+        gen_user_data = subprocess.run([os.path.join(script_dir, "gen-user-data"), userdata], check=True, capture_output=True, encoding="utf-8")
+        with open(os.path.join(workdir, "cidata", "user-data"), "w") as f:
+            f.write(gen_user_data.stdout)
+    else:
+        shutil.copyfile(userdata, os.path.join(workdir, "cidata", "user-data"))
+
+    with open(os.path.join(workdir, "cidata", "meta-data"), "w") as f:
+        f.writelines(["instance-id: nocloud\n", "local-hostname: vm\n"])
+
+    if sys.platform == "linux":
+        subprocess.run(["mkisofs", 
+                        "-input-charset", "utf-8", 
+                        "-output", f"{workdir}/cloudinit.iso",
+                        "-volid", "cidata",
+                        "-joliet",
+                        "-rock", 
+                        "-quiet",
+                        "-graft-points",
+                        f"{workdir}/cidata/user-data",
+                        f"{workdir}/cidata/meta-data"], check=True)
+    elif sys.platform == "darwin":
+        # conviently uses the last component of source as volumeid, which has to be cidata
+        subprocess.run(["hdiutil", "makehybrid", "-iso", "-joliet", "-o", f"{workdir}/cloudinit.iso", f"{workdir}/cidata"], check=True)
+
+    subprocess.run(["qemu-system-x86_64",
+        "-M", "accel=kvm:hvf",
+        "-m", "1024",
+        "-snapshot",
+        "-cpu", "host",
+        "-net", "nic,model=virtio",
+        "-net", "user,hostfwd=tcp::2222-:22,hostfwd=tcp::4430-:443",
+        "-cdrom", f"{workdir}/cloudinit.iso",
+        *qemu_extra_args,
+        image])
