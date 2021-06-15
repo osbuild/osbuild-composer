@@ -135,6 +135,7 @@ New OSTree:
     - api.sh azure
     - api.sh aws
     - api.sh gcp
+    - api.sh aws.s3
     - vmware.sh
 
 Integration:

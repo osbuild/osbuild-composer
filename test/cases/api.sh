@@ -36,6 +36,7 @@ fi
 CLOUD_PROVIDER_AWS="aws"
 CLOUD_PROVIDER_GCP="gcp"
 CLOUD_PROVIDER_AZURE="azure"
+CLOUD_PROVIDER_AWS_S3="aws.s3"
 
 CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
 
@@ -53,8 +54,15 @@ case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AZURE")
     echo "Testing Azure"
     ;;
+  "$CLOUD_PROVIDER_AWS_S3")
+    echo "Testing S3 bucket upload"
+    if [[ $ID != "rhel" ]]; then
+        echo "Skipped. S3 upload test is only tested on RHEL (testing only image type: rhel-edge-commit)."
+        exit 0
+    fi
+    ;;
   *)
-    echo "Unknown cloud provider '$CLOUD_PROVIDER'. Supported are '$CLOUD_PROVIDER_AWS', '$CLOUD_PROVIDER_GCP'"
+    echo "Unknown cloud provider '$CLOUD_PROVIDER'. Supported are '$CLOUD_PROVIDER_AWS', '$CLOUD_PROVIDER_AWS_S3', '$CLOUD_PROVIDER_GCP', '$CLOUD_PROVIDER_AZURE'"
     exit 1
     ;;
 esac
@@ -79,7 +87,7 @@ function checkEnvAzure() {
 }
 
 case $CLOUD_PROVIDER in
-  "$CLOUD_PROVIDER_AWS")
+  "$CLOUD_PROVIDER_AWS" | "$CLOUD_PROVIDER_AWS_S3")
     checkEnvAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
@@ -108,6 +116,28 @@ function cleanupAWS() {
     $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
     $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
+    set -e
+  fi
+}
+
+function cleanupAWSS3() {
+  local S3_URL
+  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+  # extract filename component from URL
+  local S3_FILENAME
+  S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+
+  # prepend bucket
+  local S3_URI
+  S3_URI="s3://${AWS_BUCKET}/${S3_FILENAME}"
+
+  # since this function can be called at any time, ensure that we don't expand unbound variables
+  AWS_CMD="${AWS_CMD:-}"
+
+  if [ -n "$AWS_CMD" ]; then
+    set +e
+    $AWS_CMD s3 rm "${S3_URI}"
     set -e
   fi
 }
@@ -148,6 +178,9 @@ function cleanup() {
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
       cleanupAWS
+      ;;
+    "$CLOUD_PROVIDER_AWS_S3")
+      cleanupAWSS3
       ;;
     "$CLOUD_PROVIDER_GCP")
       cleanupGCP
@@ -219,7 +252,7 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.re
 }
 
 case $CLOUD_PROVIDER in
-  "$CLOUD_PROVIDER_AWS")
+  "$CLOUD_PROVIDER_AWS" | "$CLOUD_PROVIDER_AWS_S3")
     installClientAWS
     ;;
   "$CLOUD_PROVIDER_GCP")
@@ -332,6 +365,40 @@ function createReqFileAWS() {
 EOF
 }
 
+function createReqFileAWSS3() {
+  cat > "$REQUEST_FILE" << EOF
+{
+  "distribution": "$DISTRO",
+  "customizations": {
+    "packages": [
+      "postgresql"
+    ]
+  },
+  "image_requests": [
+    {
+      "architecture": "$ARCH",
+      "image_type": "rhel-edge-commit",
+      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "ostree": {
+        "ref": "test/rhel/8/edge"
+      },
+      "upload_request": {
+          "type": "aws.s3",
+          "options": {
+            "region": "${AWS_REGION}",
+            "s3": {
+              "access_key_id": "${AWS_ACCESS_KEY_ID}",
+              "secret_access_key": "${AWS_SECRET_ACCESS_KEY}",
+              "bucket": "${AWS_BUCKET}"
+            }
+          }
+      }
+    }
+  ]
+}
+EOF
+}
+
 function createReqFileGCP() {
   # constrains for GCP resource IDs:
   # - max 62 characters
@@ -400,6 +467,9 @@ EOF
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     createReqFileAWS
+    ;;
+  "$CLOUD_PROVIDER_AWS_S3")
+    createReqFileAWSS3
     ;;
   "$CLOUD_PROVIDER_GCP")
     createReqFileGCP
@@ -481,6 +551,15 @@ function checkUploadStatusOptionsAWS() {
   test "$REGION" = "$AWS_REGION"
 }
 
+function checkUploadStatusOptionsAWSS3() {
+  local S3_URL
+  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+  # S3 URL contains region and bucket name
+  echo "$S3_URL" | grep -F "$AWS_BUCKET" -
+  echo "$S3_URL" | grep -F "$AWS_REGION" -
+}
+
 function checkUploadStatusOptionsGCP() {
   GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
 
@@ -503,6 +582,9 @@ function checkUploadStatusOptionsAzure() {
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     checkUploadStatusOptionsAWS
+    ;;
+  "$CLOUD_PROVIDER_AWS_S3")
+    checkUploadStatusOptionsAWSS3
     ;;
   "$CLOUD_PROVIDER_GCP")
     checkUploadStatusOptionsGCP
@@ -583,6 +665,19 @@ function verifyInAWS() {
   fi
 }
 
+
+# Verify tarball in AWS S3
+function verifyInAWSS3() {
+  local S3_URL
+  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+  # Download the commit using the Presigned URL
+  curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
+
+  # Verify that the commit contains the ref we defined in the request
+  tar tvf "${WORKDIR}/edge-commit.tar" "repo/refs/heads/test/rhel/8/edge"
+}
+
 # Verify image in Compute Engine on GCP
 function verifyInGCP() {
   # Authenticate
@@ -649,6 +744,9 @@ function verifyInAzure() {
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     verifyInAWS
+    ;;
+  "$CLOUD_PROVIDER_AWS_S3")
+    verifyInAWSS3
     ;;
   "$CLOUD_PROVIDER_GCP")
     verifyInGCP
