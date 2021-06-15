@@ -28,7 +28,6 @@ type Server struct {
 	logger         *log.Logger
 	artifactsDir   string
 	identityFilter []string
-	basePath       string
 
 	// Currently running jobs. Workers are not handed job ids, but
 	// independent tokens which serve as an indirection. This enables
@@ -349,10 +348,15 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
+	basePath := api.BasePath
+	if strings.HasPrefix(ctx.Path(), api.CloudBasePath) {
+		basePath = api.CloudBasePath
+	}
+
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
-		Location:         fmt.Sprintf("%s/jobs/%v", h.server.basePath, token),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", h.server.basePath, token),
+		Location:         fmt.Sprintf("%s/jobs/%v", basePath, token),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", basePath, token),
 		Type:             jobType,
 		Args:             jobArgs,
 		DynamicArgs:      dynamicJobArgs,
