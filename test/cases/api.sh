@@ -86,6 +86,11 @@ function checkEnvAzure() {
   printenv AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_LOCATION AZURE_CLIENT_ID AZURE_CLIENT_SECRET > /dev/null
 }
 
+# Check that needed variables are set to register to RHSM (RHEL only)
+function checkEnvSubscription() {
+  printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY > /dev/null
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS" | "$CLOUD_PROVIDER_AWS_S3")
     checkEnvAWS
@@ -97,6 +102,7 @@ case $CLOUD_PROVIDER in
     checkEnvAzure
     ;;
 esac
+[[ "$ID" == "rhel" ]] && checkEnvSubscription
 
 #
 # Create a temporary directory and ensure it gets deleted when this script
@@ -164,11 +170,31 @@ function cleanupAzure() {
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
     set +e
-    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
+    # Re-get the vm_details in case the VM creation is failed.
+    [ -f "$WORKDIR/vm_details.json" ] || "$AZURE_CMD" vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
+    # Get all the resources ids
+    VM_ID=$(jq -r '.id' "$WORKDIR"/vm_details.json)
+    OSDISK_ID=$(jq -r '.storageProfile.osDisk.managedDisk.id' "$WORKDIR"/vm_details.json)
+    NIC_ID=$(jq -r '.networkProfile.networkInterfaces[0].id' "$WORKDIR"/vm_details.json)
+    "$AZURE_CMD" network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
+    NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
+    PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIpAddress.id' "$WORKDIR"/nic_details.json)
 
+    # Delete resources. Some resources must be removed in order:
+    # - Delete VM prior to any other resources
+    # - Delete NIC prior to NSG, public-ip
+    # Left Virtual Network and Storage Account there because other tests in the same resource group will reuse them
+    for id in "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"; do
+      echo "Deleting $id..."
+      "$AZURE_CMD" resource delete --ids "$id"
+    done
+
+    # Delete image after VM deleting.
+    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
     # find a storage account by its tag
-    AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
-    $AZURE_CMD storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT"
+    AZURE_STORAGE_ACCOUNT=$("$AZURE_CMD" resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
+    AZURE_CONNECTION_STRING=$("$AZURE_CMD" storage account show-connection-string --name "$AZURE_STORAGE_ACCOUNT" | jq -r .connectionString)
+    "$AZURE_CMD" storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT" --connection-string "$AZURE_CONNECTION_STRING"
     set -e
   fi
 }
@@ -326,6 +352,23 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
     ;;
 esac
 
+# Only RHEL need subscription block.
+if [[ "$ID" == "rhel" ]]; then
+  SUBSCRIPTION_BLOCK=$(cat <<EndOfMessage
+,
+    "subscription": {
+      "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "base-url": "https://cdn.redhat.com/",
+      "server-url": "subscription.rhsm.redhat.com",
+      "insights": true
+    }
+EndOfMessage
+)
+else
+  SUBSCRIPTION_BLOCK=''
+fi
+
 function createReqFileAWS() {
   AWS_SNAPSHOT_NAME=$(uuidgen)
 
@@ -335,7 +378,7 @@ function createReqFileAWS() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ]${SUBSCRIPTION_BLOCK}
   },
   "image_requests": [
     {
@@ -415,7 +458,7 @@ function createReqFileGCP() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ]${SUBSCRIPTION_BLOCK}
   },
   "image_requests": [
     {
@@ -446,7 +489,7 @@ function createReqFileAzure() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ]${SUBSCRIPTION_BLOCK}
   },
   "image_requests": [
     {
@@ -501,6 +544,7 @@ OUTPUT=$(curl \
   --request POST \
   --data @"$REQUEST_FILE" \
   https://localhost/api/composer/v1/compose)
+
 
 COMPOSE_ID=$(echo "$OUTPUT" | jq -r '.id')
 
@@ -618,6 +662,36 @@ function _instanceWaitSSH() {
   done
 }
 
+function _instanceCheck() {
+  echo "✔️ Instance checking"
+  local _ssh="$1"
+
+  # Check if postgres is installed
+  $_ssh rpm -q postgresql
+
+  # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
+  if [[ "$ID" == "rhel" ]]; then
+    set +eu
+    for LOOP_COUNTER in {1..10}; do
+        subscribe_org_id=$($_ssh sudo subscription-manager identity | grep 'org ID')
+        if [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]; then
+            echo "System is subscribed."
+            break
+        else
+            echo "System is not subscribed. Retrying in 30 seconds...($LOOP_COUNTER/10)"
+            sleep 30
+        fi
+    done
+    set -eu
+    [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
+
+    # Unregister subscription
+    $_ssh sudo subscription-manager unregister
+  else
+    echo "Not RHEL OS. Skip subscription check."
+  fi
+}
+
 # Verify image in EC2 on AWS
 function verifyInAWS() {
   $AWS_CMD ec2 describe-images \
@@ -645,6 +719,11 @@ function verifyInAWS() {
     SHARE_OK=0
   fi
 
+  if [ "$SHARE_OK" != 1 ]; then
+    echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
+    exit 1
+  fi
+
   # Create key-pair
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
@@ -661,13 +740,9 @@ function verifyInAWS() {
   echo "⏱ Waiting for AWS instance to respond to ssh"
   _instanceWaitSSH "$HOST"
 
-  # Check if postgres is installed
-  ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
-
-  if [ "$SHARE_OK" != 1 ]; then
-    echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
-    exit 1
-  fi
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
+  _instanceCheck "$_ssh"
 }
 
 
@@ -745,8 +820,9 @@ function verifyInGCP() {
   echo "⏱ Waiting for GCP instance to respond to ssh"
   _instanceWaitSSH "$HOST"
 
-  # Check if postgres is installed
-  ssh -oStrictHostKeyChecking=no -i "$GCP_SSH_KEY" "$SSH_USER"@"$HOST" rpm -q postgresql
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+  _instanceCheck "$_ssh"
 }
 
 # Verify image in Azure
@@ -758,10 +834,30 @@ function verifyInAzure() {
   # verify that the image exists
   $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
 
-  # Boot testing is currently blocked due to
-  # https://github.com/Azure/azure-cli/issues/17123
-  # Without this issue fixed or worked around, I'm not able to delete the disk
-  # attached to the VM.
+  # Verify that the image boots and have customizations applied
+  # Create SSH keys to use
+  AZURE_SSH_KEY="$WORKDIR/id_azure"
+  ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
+
+  # create the instance
+  AZURE_INSTANCE_NAME="vm-$(uuidgen)"
+  $AZURE_CMD vm create --name "$AZURE_INSTANCE_NAME" \
+    --resource-group "$AZURE_RESOURCE_GROUP" \
+    --image "$AZURE_IMAGE_NAME" \
+    --size "Standard_B1s" \
+    --admin-username "$SSH_USER" \
+    --ssh-key-values "$AZURE_SSH_KEY.pub" \
+    --authentication-type "ssh" \
+    --location "$AZURE_LOCATION"
+  $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
+  HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
+
+  echo "⏱  Waiting for Azure instance to respond to ssh"
+  _instanceWaitSSH "$HOST"
+
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i $AZURE_SSH_KEY $SSH_USER@$HOST"
+  _instanceCheck "$_ssh"
 }
 
 case $CLOUD_PROVIDER in
