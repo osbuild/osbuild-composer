@@ -1,13 +1,14 @@
 package osbuild1
 
-// The RPM-OSTree stage describes how to transform the imgae into an OSTree.
+// RPMOSTreeStageOptions configures the invocation of the `rpm-ostree`
+// process for generating an ostree commit.
 type RPMOSTreeStageOptions struct {
 	EtcGroupMembers []string `json:"etc_group_members,omitempty"`
 }
 
 func (RPMOSTreeStageOptions) isStageOptions() {}
 
-// NewLocaleStage creates a new Locale Stage object.
+// NewRPMOSTreeStage creates a new rpm-ostree Stage object.
 func NewRPMOSTreeStage(options *RPMOSTreeStageOptions) *Stage {
 	return &Stage{
 		Name:    "org.osbuild.rpm-ostree",
