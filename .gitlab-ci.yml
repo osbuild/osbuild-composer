@@ -132,10 +132,6 @@ New OSTree:
     - libvirt.sh
     - aws.sh
     - azure.sh
-    - api.sh azure
-    - api.sh aws
-    - api.sh gcp
-    - api.sh aws.s3
     - vmware.sh
 
 Integration:
@@ -161,6 +157,42 @@ Integration:
           - aws/rhel-8.4-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *INTEGRATION_TESTS
+        RUNNER:
+          - aws/rhel-8-x86_64
+        INTERNAL_NETWORK: ["true"]
+        DISTRO_CODE: ["rhel_90"]
+
+
+.API_TESTS: &API_TESTS
+  TARGET:
+    - azure
+    - aws
+    - gcp
+    - aws.s3
+
+API:
+  stage: test
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
+  parallel:
+    matrix:
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/fedora-32-x86_64
+          - aws/fedora-33-x86_64
+          # See COMPOSER-919
+          # - aws/fedora-34-x86_64
+          - openstack/centos-stream-8-x86_64
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
         INTERNAL_NETWORK: ["true"]
