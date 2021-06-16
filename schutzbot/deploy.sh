@@ -100,8 +100,13 @@ fi
 if [ -f "rhel8internal.repo" ]; then
     greenprint "Preparing repos for internal build testing"
     sudo mv rhel8internal.repo /etc/yum.repos.d/
-    # Change back to removing osbuild*.repo when we have rpms in 8.5
-    sudo rm -f /etc/yum.repos.d/osbuild-composer.repo
+    # Use osbuild from schutzfile if desired for testing custom osbuild-composer packages
+    # specified by $REPO_URL in ENV and used in prepare-rhel-internal.sh
+    if [ "$SCHUTZ_OSBUILD" == 1 ]; then
+        sudo rm -f /etc/yum.repos.d/osbuild-composer.repo
+    else
+        sudo rm -f /etc/yum.repos.d/osbuild*.repo
+    fi
 fi
 
 greenprint "Installing test packages for ${PROJECT}"
