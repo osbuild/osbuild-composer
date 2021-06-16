@@ -54,6 +54,7 @@ BuildRequires:  golang(github.com/labstack/echo/v4)
 BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/gophercloud/gophercloud)
+BuildRequires:  golang(github.com/prometheus/client_golang/prometheus/promhttp)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
@@ -249,13 +250,13 @@ cd $PWD/_build/src/%{goipath}
 %endif
 
 %post
-%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket 
 
 %preun
-%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket 
 
 %postun
-%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket 
 
 %files
 %license LICENSE

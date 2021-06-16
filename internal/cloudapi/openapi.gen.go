@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
+	"github.com/labstack/echo/v4"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -782,87 +782,93 @@ func ParseGetVersionResponse(rsp *http.Response) (*GetVersionResponse, error) {
 type ServerInterface interface {
 	// Create compose
 	// (POST /compose)
-	Compose(w http.ResponseWriter, r *http.Request)
+	Compose(ctx echo.Context) error
 	// The status of a compose
 	// (GET /compose/{id})
-	ComposeStatus(w http.ResponseWriter, r *http.Request, id string)
+	ComposeStatus(ctx echo.Context, id string) error
 	// get the openapi json specification
 	// (GET /openapi.json)
-	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
+	GetOpenapiJson(ctx echo.Context) error
 	// get the service version
 	// (GET /version)
-	GetVersion(w http.ResponseWriter, r *http.Request)
+	GetVersion(ctx echo.Context) error
 }
 
-// ServerInterfaceWrapper converts contexts to parameters.
+// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// Compose operation middleware
-func (siw *ServerInterfaceWrapper) Compose(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	siw.Handler.Compose(w, r.WithContext(ctx))
-}
-
-// ComposeStatus operation middleware
-func (siw *ServerInterfaceWrapper) ComposeStatus(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
+// Compose converts echo context to params.
+func (w *ServerInterfaceWrapper) Compose(ctx echo.Context) error {
 	var err error
 
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Compose(ctx)
+	return err
+}
+
+// ComposeStatus converts echo context to params.
+func (w *ServerInterfaceWrapper) ComposeStatus(ctx echo.Context) error {
+	var err error
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	siw.Handler.ComposeStatus(w, r.WithContext(ctx), id)
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ComposeStatus(ctx, id)
+	return err
 }
 
-// GetOpenapiJson operation middleware
-func (siw *ServerInterfaceWrapper) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+// GetOpenapiJson converts echo context to params.
+func (w *ServerInterfaceWrapper) GetOpenapiJson(ctx echo.Context) error {
+	var err error
 
-	siw.Handler.GetOpenapiJson(w, r.WithContext(ctx))
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetOpenapiJson(ctx)
+	return err
 }
 
-// GetVersion operation middleware
-func (siw *ServerInterfaceWrapper) GetVersion(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+// GetVersion converts echo context to params.
+func (w *ServerInterfaceWrapper) GetVersion(ctx echo.Context) error {
+	var err error
 
-	siw.Handler.GetVersion(w, r.WithContext(ctx))
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetVersion(ctx)
+	return err
 }
 
-// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-	return HandlerFromMux(si, chi.NewRouter())
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Post("/compose", wrapper.Compose)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get("/compose/{id}", wrapper.ComposeStatus)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get("/openapi.json", wrapper.GetOpenapiJson)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get("/version", wrapper.GetVersion)
-	})
+	router.POST("/compose", wrapper.Compose)
+	router.GET("/compose/:id", wrapper.ComposeStatus)
+	router.GET("/openapi.json", wrapper.GetOpenapiJson)
+	router.GET("/version", wrapper.GetVersion)
 
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
