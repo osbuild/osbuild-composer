@@ -2,10 +2,13 @@ package worker_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -276,4 +279,78 @@ func TestIdentities(t *testing.T) {
 
 	response = test.SendHTTPWithHeader(handler, "GET", "/api/worker/v1/status", ``, header)
 	assert.Equal(t, 200, response.StatusCode, "status mismatch")
+}
+
+func TestOAuth(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	q, err := fsjobqueue.New(tempdir)
+	require.NoError(t, err)
+	workerServer := worker.NewServer(nil, q, tempdir, []string{"000000"})
+	handler := workerServer.Handler()
+
+	workSrv := httptest.NewServer(handler)
+	defer workSrv.Close()
+
+	/* Start a server which will act as a proxy, adding a valid identity header  */
+	proxySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "Bearer accessToken!", r.Header.Get("Authorization"))
+		r.Header.Set("x-rh-identity", "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ==")
+		handler.ServeHTTP(w, r)
+	}))
+	defer proxySrv.Close()
+
+	offlineToken := "someOfflineToken"
+	/* Start oauth srv supplying the bearer token */
+	oauthSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "POST", r.Method)
+		err = r.ParseForm()
+		require.NoError(t, err)
+
+		require.Equal(t, "refresh_token", r.FormValue("grant_type"))
+		require.Equal(t, "rhsm-api", r.FormValue("client_id"))
+		require.Equal(t, offlineToken, r.FormValue("refresh_token"))
+
+		bt := struct {
+			AccessToken     string `json:"access_token"`
+			ValidForSeconds int    `json:"expires_in"`
+		}{
+			"accessToken!",
+			900,
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(bt)
+		require.NoError(t, err)
+	}))
+	defer oauthSrv.Close()
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+
+	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	client, err := worker.NewClient(proxySrv.URL, nil, &offlineToken, &oauthSrv.URL)
+	require.NoError(t, err)
+	job, err := client.RequestJob([]string{"osbuild"}, arch.Name())
+	require.NoError(t, err)
+	r := strings.NewReader("artifact contents")
+	require.NoError(t, job.UploadArtifact("some-artifact", r))
+	c, err := job.Canceled()
+	require.False(t, c)
 }
