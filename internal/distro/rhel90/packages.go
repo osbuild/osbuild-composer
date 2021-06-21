@@ -86,6 +86,7 @@ var packages = struct {
 			"oddjob-mkhomedir",
 			"psmisc",
 			"python3-jsonschema",
+			"qemu-guest-agent",
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",

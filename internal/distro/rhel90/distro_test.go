@@ -180,6 +180,7 @@ func TestImageType_BasePackages(t *testing.T) {
 				"oddjob-mkhomedir",
 				"psmisc",
 				"python3-jsonschema",
+				"qemu-guest-agent",
 				"redhat-release",
 				"redhat-release-eula",
 				"rsync",
