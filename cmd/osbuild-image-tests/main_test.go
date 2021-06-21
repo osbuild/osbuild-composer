@@ -49,6 +49,7 @@ type testcaseStruct struct {
 
 var disableLocalBoot = flag.Bool("disable-local-boot", false, "when this flag is given, no images are booted locally using qemu (this does not affect testing in clouds)")
 var failLocalBoot = flag.Bool("fail-local-boot", true, "when this flag is on (default), local boot will fail. Usually indicates missing cloud credentials")
+var skipSELinuxCtxCheck = flag.Bool("skip-selinux-ctx-check", false, "when this flag is on, the 'selinux/context-mismatch' part is removed from the image-info report before it is checked.")
 
 // runOsbuild runs osbuild with the specified manifest and output-directory.
 func runOsbuild(manifest []byte, store, outputDirectory string, exports []string) error {
@@ -81,6 +82,17 @@ func runOsbuild(manifest []byte, store, outputDirectory string, exports []string
 	return nil
 }
 
+// Delete the 'selinux/context-mismatch' part of the image-info report to
+// workaround https://bugzilla.redhat.com/show_bug.cgi?id=1973754
+func deleteSELinuxCtxFromImageInfoReport(imageInfoReport interface{}) {
+	imageInfoMap := imageInfoReport.(map[string]interface{})
+	selinuxReport, exists := imageInfoMap["selinux"]
+	if exists {
+		selinuxReportMap := selinuxReport.(map[string]interface{})
+		delete(selinuxReportMap, "context-mismatch")
+	}
+}
+
 // testImageInfo runs image-info on image specified by imageImage and
 // compares the result with expected image info
 func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
@@ -102,6 +114,12 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 
 	err = cmd.Wait()
 	require.NoErrorf(t, err, "running image-info failed: %v", err)
+
+	if *skipSELinuxCtxCheck {
+		fmt.Println("ignoring 'selinux/context-mismatch' part of the image-info report")
+		deleteSELinuxCtxFromImageInfoReport(imageInfoExpected)
+		deleteSELinuxCtxFromImageInfoReport(imageInfoGot)
+	}
 
 	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
