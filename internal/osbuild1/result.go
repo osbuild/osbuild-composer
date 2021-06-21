@@ -9,13 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-type rawAssemblerResult struct {
-	Name    string          `json:"name"`
-	Options json.RawMessage `json:"options"`
-	Success bool            `json:"success"`
-	Output  string          `json:"output"`
-}
-
 type StageResult struct {
 	Name     string          `json:"name"`
 	Options  json.RawMessage `json:"options"`
@@ -28,6 +21,10 @@ type StageResult struct {
 type StageMetadata interface {
 	isStageMetadata()
 }
+
+type RawStageMetadata json.RawMessage
+
+func (RawStageMetadata) isStageMetadata() {}
 
 type rawStageResult struct {
 	Name     string          `json:"name"`
@@ -44,12 +41,12 @@ type buildResult struct {
 }
 
 type Result struct {
-	TreeID    string              `json:"tree_id"`
-	OutputID  string              `json:"output_id"`
-	Build     *buildResult        `json:"build"`
-	Stages    []StageResult       `json:"stages"`
-	Assembler *rawAssemblerResult `json:"assembler"`
-	Success   bool                `json:"success"`
+	TreeID    string        `json:"tree_id"`
+	OutputID  string        `json:"output_id"`
+	Build     *buildResult  `json:"build"`
+	Stages    []StageResult `json:"stages"`
+	Assembler *StageResult  `json:"assembler"`
+	Success   bool          `json:"success"`
 }
 
 func (result *StageResult) UnmarshalJSON(data []byte) error {
@@ -66,8 +63,14 @@ func (result *StageResult) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+	case "org.osbuild.ostree.commit":
+		metadata = new(OSTreeCommitStageMetadata)
+		err = json.Unmarshal(rawStageResult.Metadata, metadata)
+		if err != nil {
+			return err
+		}
 	default:
-		metadata = nil
+		metadata = RawStageMetadata(rawStageResult.Metadata)
 	}
 
 	result.Name = rawStageResult.Name
@@ -196,7 +199,7 @@ func (cr *Result) fromV2(crv2 osbuild2.Result) {
 	cr.Success = crv2.Success
 	// Empty build and assembler results for new types of jobs
 	cr.Build = new(buildResult)
-	cr.Assembler = new(rawAssemblerResult)
+	cr.Assembler = new(StageResult)
 
 	// crv2.Log contains a map of pipelines. Unfortunately, Go doesn't
 	// preserve the order of keys in a map. See:

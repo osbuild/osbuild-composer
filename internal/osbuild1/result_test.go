@@ -170,7 +170,7 @@ func TestWriteFull(t *testing.T) {
 		Success: true,
 	}
 
-	testAssembler := rawAssemblerResult{
+	testAssembler := StageResult{
 		Name:    "testAssembler",
 		Options: []byte(testOptions),
 		Success: true,
