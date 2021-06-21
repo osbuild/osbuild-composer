@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -146,7 +147,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				Arch: buildArgs.Arch,
 			},
 			Tools: []koji.Tool{},
-			RPMs:  osbuildStagesToRPMs(buildArgs.OSBuildOutput.Build.Stages),
+			RPMs:  rpmmd.OSBuildStagesToRPMs(buildArgs.OSBuildOutput.Build.Stages),
 		})
 		images = append(images, koji.Image{
 			BuildRootID:  uint64(i),
@@ -156,7 +157,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			ChecksumType: "md5",
 			MD5:          buildArgs.ImageHash,
 			Type:         "image",
-			RPMs:         osbuildStagesToRPMs(buildArgs.OSBuildOutput.Stages),
+			RPMs:         rpmmd.OSBuildStagesToRPMs(buildArgs.OSBuildOutput.Stages),
 			Extra: koji.ImageExtra{
 				Info: koji.ImageExtraInfo{
 					Arch: buildArgs.Arch,

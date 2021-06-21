@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 )
 
@@ -163,7 +164,7 @@ func TestKojiImport(t *testing.T) {
 				Arch: "noarch",
 			},
 			Tools: []koji.Tool{},
-			RPMs:  []koji.RPM{},
+			RPMs:  []rpmmd.RPM{},
 		},
 	}
 	output := []koji.Image{
@@ -175,7 +176,7 @@ func TestKojiImport(t *testing.T) {
 			ChecksumType: "md5",
 			MD5:          hash,
 			Type:         "image",
-			RPMs:         []koji.RPM{},
+			RPMs:         []rpmmd.RPM{},
 			Extra: koji.ImageExtra{
 				Info: koji.ImageExtraInfo{
 					Arch: "noarch",

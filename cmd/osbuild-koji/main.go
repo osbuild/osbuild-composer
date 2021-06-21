@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 )
 
@@ -83,7 +84,7 @@ func main() {
 				Arch: arch,
 			},
 			Tools: []koji.Tool{},
-			RPMs:  []koji.RPM{},
+			RPMs:  []rpmmd.RPM{},
 		},
 	}
 	output := []koji.Image{
@@ -95,7 +96,7 @@ func main() {
 			ChecksumType: "md5",
 			MD5:          hash,
 			Type:         "image",
-			RPMs:         []koji.RPM{},
+			RPMs:         []rpmmd.RPM{},
 			Extra: koji.ImageExtra{
 				Info: koji.ImageExtraInfo{
 					Arch: arch,
