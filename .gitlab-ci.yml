@@ -133,7 +133,7 @@ OSTree:
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
-          - openstack/rhel-8.4-x86_64
+          - openstack/rhel-8.5-x86_64
           # do we want centos as well ?
           # do we want secondary architectures here ??
 
@@ -146,7 +146,7 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.4-x86_64
+          - openstack/rhel-8.5-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
