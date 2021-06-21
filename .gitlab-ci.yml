@@ -36,7 +36,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
           - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
@@ -74,7 +73,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
           - aws/fedora-33-aarch64
           # See COMPOSER-919
@@ -106,7 +104,6 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/fedora-32-x86_64
           - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
@@ -146,7 +143,6 @@ Integration:
     matrix:
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
@@ -182,7 +178,6 @@ API:
     matrix:
       - <<: *API_TESTS
         RUNNER:
-          - aws/fedora-32-x86_64
           - aws/fedora-33-x86_64
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
