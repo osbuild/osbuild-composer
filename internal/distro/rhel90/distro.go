@@ -761,74 +761,11 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	qcow2ImageType := imageType{
-		name:     "qcow2",
-		filename: "disk.qcow2",
-		mimeType: "application/x-qemu-disk",
-		packages: []string{
-			"@Core",
-			"authselect-compat",
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"cockpit-system",
-			"cockpit-ws",
-			"dnf",
-			"dnf-utils",
-			"dosfstools",
-			"dracut-config-generic",
-			"hostname",
-			"NetworkManager",
-			"nfs-utils",
-			"oddjob",
-			"oddjob-mkhomedir",
-			"psmisc",
-			"python3-jsonschema",
-			"redhat-release",
-			"redhat-release-eula",
-			"rsync",
-			"subscription-manager-cockpit",
-			"tar",
-			"tcpdump",
-			"yum",
-		},
-		excludedPackages: []string{
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-lib",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"dnf-plugin-spacewalk",
-			"dracut-config-rescue",
-			"fedora-release",
-			"fedora-repos",
-			"firewalld",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl100-firmware",
-			"iwl1000-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"langpacks-en",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"nss",
-			"plymouth",
-			"rng-tools",
-			"udisks2",
-		},
+		name:             "qcow2",
+		filename:         "disk.qcow2",
+		mimeType:         "application/x-qemu-disk",
+		packages:         packages.Qcow2.Include,
+		excludedPackages: packages.Qcow2.Exclude,
 		enabledServices: []string{
 			"cloud-init.service",
 			"cloud-config.service",
@@ -846,88 +783,52 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	}
 
 	r := distribution{
-		buildPackages: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"glibc",
-			"policycoreutils",
-			"python39",
-			"python3-iniparse", // dependency of org.osbuild.rhsm stage
-			"qemu-img",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"xfsprogs",
-			"xz",
-		},
+		buildPackages:    packages.GenericBuild,
 		name:             name,
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
 	}
 	x8664 := architecture{
-		distro: &r,
-		name:   "x86_64",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"grub2-pc",
-			"grub2-efi-x64",
-			"shim-x64",
-		},
-		buildPackages: []string{
-			"grub2-pc",
-		},
-		legacy: "i386-pc",
-		uefi:   true,
+		distro:             &r,
+		name:               "x86_64",
+		bootloaderPackages: packages.Bootloader.x8664,
+		buildPackages:      packages.Build.x8664,
+		legacy:             "i386-pc",
+		uefi:               true,
 	}
 	x8664.addImageTypes(
 		qcow2ImageType,
 	)
 
 	aarch64 := architecture{
-		distro: &r,
-		name:   "aarch64",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"grub2-tools",
-			"shim-aa64",
-		},
-		uefi: true,
+		distro:             &r,
+		name:               "aarch64",
+		bootloaderPackages: packages.Bootloader.aarch64,
+		buildPackages:      packages.Build.aarch64,
+		uefi:               true,
 	}
 	aarch64.addImageTypes(
 		qcow2ImageType,
 	)
 
 	ppc64le := architecture{
-		distro: &r,
-		name:   "ppc64le",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"powerpc-utils",
-			"grub2-ppc64le",
-			"grub2-ppc64le-modules",
-		},
-		buildPackages: []string{
-			"grub2-ppc64le",
-			"grub2-ppc64le-modules",
-		},
-		legacy: "powerpc-ieee1275",
-		uefi:   false,
+		distro:             &r,
+		name:               "ppc64le",
+		bootloaderPackages: packages.Bootloader.ppc64le,
+		buildPackages:      packages.Build.ppc64le,
+		legacy:             "powerpc-ieee1275",
+		uefi:               false,
 	}
 	ppc64le.addImageTypes(
 		qcow2ImageType,
 	)
 
 	s390x := architecture{
-		distro: &r,
-		name:   "s390x",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"s390utils-base",
-		},
-		uefi: false,
+		distro:             &r,
+		name:               "s390x",
+		bootloaderPackages: packages.Bootloader.s390x,
+		buildPackages:      packages.Build.s390x,
+		uefi:               false,
 	}
 	s390x.addImageTypes(
 		qcow2ImageType,
