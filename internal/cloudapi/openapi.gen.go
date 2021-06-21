@@ -89,6 +89,16 @@ type AzureUploadStatus struct {
 	ImageName string `json:"image_name"`
 }
 
+// ComposeMetadata defines model for ComposeMetadata.
+type ComposeMetadata struct {
+
+	// ID (hash) of the built commit
+	OstreeCommit *string `json:"ostree_commit,omitempty"`
+
+	// Package list including NEVRA
+	Packages *[]PackageMetadata `json:"packages,omitempty"`
+}
+
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
@@ -183,6 +193,18 @@ const (
 type OSTree struct {
 	Ref *string `json:"ref,omitempty"`
 	Url *string `json:"url,omitempty"`
+}
+
+// PackageMetadata defines model for PackageMetadata.
+type PackageMetadata struct {
+	Arch      string  `json:"arch"`
+	Epoch     *string `json:"epoch,omitempty"`
+	Name      string  `json:"name"`
+	Release   string  `json:"release"`
+	Sigmd5    string  `json:"sigmd5"`
+	Signature *string `json:"signature,omitempty"`
+	Type      string  `json:"type"`
+	Version   string  `json:"version"`
 }
 
 // Repository defines model for Repository.
@@ -316,6 +338,9 @@ type ClientInterface interface {
 	// ComposeStatus request
 	ComposeStatus(ctx context.Context, id string) (*http.Response, error)
 
+	// ComposeMetadata request
+	ComposeMetadata(ctx context.Context, id string) (*http.Response, error)
+
 	// GetOpenapiJson request
 	GetOpenapiJson(ctx context.Context) (*http.Response, error)
 
@@ -355,6 +380,21 @@ func (c *Client) Compose(ctx context.Context, body ComposeJSONRequestBody) (*htt
 
 func (c *Client) ComposeStatus(ctx context.Context, id string) (*http.Response, error) {
 	req, err := NewComposeStatusRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ComposeMetadata(ctx context.Context, id string) (*http.Response, error) {
+	req, err := NewComposeMetadataRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -471,6 +511,40 @@ func NewComposeStatusRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewComposeMetadataRequest generates requests for ComposeMetadata
+func NewComposeMetadataRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/compose/%s/metadata", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetOpenapiJsonRequest generates requests for GetOpenapiJson
 func NewGetOpenapiJsonRequest(server string) (*http.Request, error) {
 	var err error
@@ -562,6 +636,9 @@ type ClientWithResponsesInterface interface {
 	// ComposeStatus request
 	ComposeStatusWithResponse(ctx context.Context, id string) (*ComposeStatusResponse, error)
 
+	// ComposeMetadata request
+	ComposeMetadataWithResponse(ctx context.Context, id string) (*ComposeMetadataResponse, error)
+
 	// GetOpenapiJson request
 	GetOpenapiJsonWithResponse(ctx context.Context) (*GetOpenapiJsonResponse, error)
 
@@ -607,6 +684,28 @@ func (r ComposeStatusResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ComposeStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ComposeMetadataResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ComposeMetadata
+}
+
+// Status returns HTTPResponse.Status
+func (r ComposeMetadataResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ComposeMetadataResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -682,6 +781,15 @@ func (c *ClientWithResponses) ComposeStatusWithResponse(ctx context.Context, id 
 	return ParseComposeStatusResponse(rsp)
 }
 
+// ComposeMetadataWithResponse request returning *ComposeMetadataResponse
+func (c *ClientWithResponses) ComposeMetadataWithResponse(ctx context.Context, id string) (*ComposeMetadataResponse, error) {
+	rsp, err := c.ComposeMetadata(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseComposeMetadataResponse(rsp)
+}
+
 // GetOpenapiJsonWithResponse request returning *GetOpenapiJsonResponse
 func (c *ClientWithResponses) GetOpenapiJsonWithResponse(ctx context.Context) (*GetOpenapiJsonResponse, error) {
 	rsp, err := c.GetOpenapiJson(ctx)
@@ -752,6 +860,32 @@ func ParseComposeStatusResponse(rsp *http.Response) (*ComposeStatusResponse, err
 	return response, nil
 }
 
+// ParseComposeMetadataResponse parses an HTTP response from a ComposeMetadataWithResponse call
+func ParseComposeMetadataResponse(rsp *http.Response) (*ComposeMetadataResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ComposeMetadataResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposeMetadata
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetOpenapiJsonResponse parses an HTTP response from a GetOpenapiJsonWithResponse call
 func ParseGetOpenapiJsonResponse(rsp *http.Response) (*GetOpenapiJsonResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -805,6 +939,9 @@ type ServerInterface interface {
 	// The status of a compose
 	// (GET /compose/{id})
 	ComposeStatus(w http.ResponseWriter, r *http.Request, id string)
+	// Get the metadata for a compose.
+	// (GET /compose/{id}/metadata)
+	ComposeMetadata(w http.ResponseWriter, r *http.Request, id string)
 	// get the openapi json specification
 	// (GET /openapi.json)
 	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
@@ -843,6 +980,24 @@ func (siw *ServerInterfaceWrapper) ComposeStatus(w http.ResponseWriter, r *http.
 	siw.Handler.ComposeStatus(w, r.WithContext(ctx), id)
 }
 
+// ComposeMetadata operation middleware
+func (siw *ServerInterfaceWrapper) ComposeMetadata(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	siw.Handler.ComposeMetadata(w, r.WithContext(ctx), id)
+}
+
 // GetOpenapiJson operation middleware
 func (siw *ServerInterfaceWrapper) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -875,6 +1030,9 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 		r.Get("/compose/{id}", wrapper.ComposeStatus)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get("/compose/{id}/metadata", wrapper.ComposeMetadata)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get("/openapi.json", wrapper.GetOpenapiJson)
 	})
 	r.Group(func(r chi.Router) {
@@ -887,54 +1045,57 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"FIgoAAA=",
+	"H4sIAAAAAAAC/+xa+28bt5P/V4jtAW4B7UqW5JeAonUdN3Db2EHkpC0iw6CWIy2bXXJLci27gf73A1+r",
+	"fcmScynucPj+ZEsk5/GZIefDoT4HMc9yzoApGUw+BzJOIMPm3/Pfp9PR+zzlmLyDvwuQ6iZXlDMzmAue",
+	"g1AUzCcBS8qZ/g8ecZanEEwCKMIVSBUeBr1APeX6K6kEZctg3QvkSE/+LwGLYBJ809/Y0HcG9M9/n3bp",
+	"no6C9boXCPi7oAJIMPnolRuhd6UuPv8LYqV1VfyYKqyKDvsLkeo/DTMbevSkLfL3Qwni4Rd6fRkPA2PN",
+	"/xGYe8aXF4BxaV2v44HjGKS8/wRP95TUvTr/9er86mb6882r6+uTyz/O37z97bLTQYgFqPuNpLqY1S84",
+	"FX+8V+znyzdX/V9P3ry6vH7dn799fLegF386ub9e/hn0ggUXGVbBJMixlCsuSKe6BAu4X1GVaJW8cJum",
+	"VPgxOByOxkfHJ6dng0MDEFWQyY7cKoVjIfCTkc1wLhOu7hnOoO5G9hT60bZVjTDVQe1C6AVhm47+lajN",
+	"i/gTqJaP7uv/7TC/GNDSoWeR3Xb24IzWvcEZDQfx6WhwcjY6OTk6Ojsi43kXKi88Dpp+ZTQoZXRa/k8h",
+	"YL+TjWZ4CWXiEpCxoGZuMAmucQaIL5BKABVGGhBkFkToSqGskArNARWM/l0AosxMXNIHYEiA5IWIAS0F",
+	"L/Joxq4WSCtBVCKeUaWAoIXgmVkirI09hJHAjPAMcQZojiUQxBnC6P37q1eIyhlbAgOBFZBops+zWg4a",
+	"w7rATnmMlYO77uBvbgStEhBgbDFSkEx4kRLjnPcbM4I05FKBABKh24RKlFL2CcFjnmLKZizhK6Q4SqlU",
+	"CKcp8orlZMYSpXI56fcJj2WU0VhwyRcqinnWBxYWsh+ntI913PrufPrhgcLqe/NVGKc0TLECqb7B//gD",
+	"7F4rui+VHDQg0ckEhQ52dwbaAN2bAD0f+3ow9wCrGZ1bXsSYvXNiXhuNXWdFMS9NcCdU3airV9qk6rQv",
+	"MGYMR+R0PoxDPB+Ow/H4cBSeDeKj8PhwOBocw+ngDIZd1ilgmKln7NJG2En7WNVOIIkSvpoxxdGCMoKo",
+	"8lvKbGf0lguF031SyaeRog8QEiogVlw89RcFIzgDpnAqW6Nhwleh4qFWHVovGrgdxSewOJofh4fxaBGO",
+	"CR6E+Hg4DAfzwfFgODojJ+Rk59G1AbEd7lZSVrbujlNu2wldP932OS4a9lYEdJlwoWmZhDegMMEKtw3g",
+	"UgmA+5hnGVWdifNtgmXync+feUFThdz0jiTMcfwJL63suqi3dsSePpTFaUEoW6Lryw/vzoMKm3mOUjoZ",
+	"pTstrrPejoErNG0I4kIqntF/cFmBnjPhoj573QsI1e7PC9WqmCKBNDztgsmGzdUVmwn7+H+ll3lHupyv",
+	"pkbNrpbKu+eQkkXaAVSTkx0OR6AZaQinZ/PwcEhGIR4fHYfj4fHx0dF4PBgMBlVeVBR0NyeiJLjbmPL8",
+	"vpHl6E7QnKDu7ePkGL2tZKgrruZ3hZvnXKqlAPlCXl45YHZ5Ma3O7czz1xdv96NUG47cXVIxQ/BIpdLb",
+	"c3p7fv3q/N0rNFVc6O0bp1hK9JMRETUpjvvwDN1+js7dJmA5mOKokIAWXLgSlXOhHMUx9ySCdH4UCtAl",
+	"W1Lmqlg0Y7dlRTOCGgxQ365cyXp98RblgmvsemiV0DjRzK+QQGbM672ZOlm2Jhr11pYIabrIFZI5xHRB",
+	"tW2OGs7YQWxzV4Q4p+GsGAxGsU598x8cIAuGV4ewrNRhbfVLqOOGp7eh1C7a8Uq5L31a0TTV0JTgKl7F",
+	"V3Nfh+cDTosNlFh/psRI99UvQlMA5Mt+nPKCREvOlymYoi9t6hg+0C/poOPcVRB7xsSsSBUNneV+OopT",
+	"LkEqbaaeZOvwjH3rmJ9PT5uY5bLvNMxxwiUwhAvFM6xojNP0qQkyFC+4lDdIui5ofOFxMX4jP13ba6TU",
+	"M7krfU16RjN2iePEJ4lBPeZMYarvGR4p4cuxU4O05RH6YCyw561EWMBkxhAK0UEhQUw+Q4ZpSsn6YILO",
+	"GTKfECZEgNQpiBUSkAuQ+tjZ6Iq1CNRwK0I/c4Ecej10gFMaw4/us475QeQ0SxAPNIZzu+6FNljVTsQ2",
+	"3dlTyFVidlv+I85zmXMVLd0iv6ZqkuFuL0XD+e9vi9quBgQko0x2YkB4himbfLZ/tUKzPdG0oAqQ/RZ9",
+	"mwuaYfH0XVt5mlqF5porQUgbfazc2iYim613gLhABw2bunfd86lJpV1jDwedqAizpxnz+NZ308fAJFwr",
+	"K0yLo5YP+wYv6AU2bG2Yg17gAK5++YI63KAEzzRcygr79eh8L3BVqNXxwjIGRjBT4VxgSsLRYHR0ONrJ",
+	"nyriertuBzU62e4eiTihCmJViIY7j6fH98fj7eXdft1oPHVNt7ePXdTnZnqrZxlHcy6p4sLjvQ9pfucX",
+	"PXVxMFvbPS/eJatGsNp9rypiNTAaprfU3vlobMusF1PdD7pqVxzcT0AtvZvuVWhyS5GONisyM60w/UvN",
+	"/DFNLRQ5MH3bM/1Mmrp/rWX2f9+50p/uOjLF5UDH89CiQcX1pat/2rc52geyhE6BW99lWrukeens3Cid",
+	"5wzkfMuIPyI6CF0KWHaPSbrMyNG2IYb9Rt1y3nUMPICQjj/uaIvYJDZmb5ZtzO1ZEEobdY5U9l37CoIl",
+	"uAhsDomSQBIWCSAJtj0jTX+Aqb6+z/Z1dE834dVyuOxz2a9dNEXaddpkoHBK2adurRkVggsZLYBwgd0x",
+	"GnGx7Pt1P+g9/L0dD0dDzeeHx9rv78sDcacJRklKpXqxEeXKuhmjLzFDJDKrBH3OeQqYtd/l9LSuwjFt",
+	"XFybzziKPhj6HbbeU7Kn0L5yhPZ5Y6+3MR3lsDNd2tmyh/eUSbpMGu9rShTQawHSC7hYYub6AbUFw8F4",
+	"MBqOyzWUKViCsG9K4gFE2+LqfT/S4FYM31nYa4b0miDXlFYQq3jbFch6PWt3BzctBM7gZhFMPn7Rm2+w",
+	"7u1ct+UHAbtWbut67NS49QlqfVc5MncXy9unHOS2A9MDuB37bQX/y6H31Xt/yPdc0aS/L4DYr9DQbpjI",
+	"foxBFIxtowX/0zA5W3qteJXxsesqxuKVno9XMjK/VljGuf6oXe208MOmxNYDvHft9RPv1mtzeC14uwcx",
+	"dXdkxU2H3vWqmFQ4Te0VTkZBL9AXMmbZhWUgwXmO4wTQMBoEjhOVtWi1WkXYDJsC5NbK/m9XF5fX08tw",
+	"GA2iRGWpiQNV5oS7mf5k1Lv2rUCmGYRwTiu0YRIcmpM1B6YHJsEoGkSHOuZYJQabvmuhGdS47OhVXgjA",
+	"ChBGDFbIze6hnGumQHGaPqGYM+mamHyBJDyAwB4LA4/r6gGOE9dVogIR0Etch8okBAjz6Yporc4sGyCQ",
+	"6idOTIFzHMVUvzxPqe0+9f+SNsA2FXc+LdQfKtb1RNAFyr6L5lzHQUsbDg6/vnbT/DfKG5DbCSjBEkmF",
+	"hQJiclUWWYY1yfNB8cHTgz6S/c+UrLUJy67O82tQtqtntqPpQSO37REXRmAKCogX7R4n7SsSSLRKQCUg",
+	"9FzGFaIKmSMFCJCeiTVOJUeaxyG9fzQ9oJwhPOeF8i/IRaq2Bnzqj4kcC5yBAiHNedz1yupM9L4ojpam",
+	"FU6ZYTkq8Tx6Erg3xWqEe5VoffWXlrtW+gy+dvqUV8dW+tRx0QfAuKVewaPqm7fmuuKmIy3hV8x2X70S",
+	"SqyC8ddS8J59YnzFagpquX/bSN+tm8BcJ/xF8tnd4CdagQvKqEzqewAQPOJY1ZJagCoEA4II6BoqEWfV",
+	"H7H4X8jYlvG2hC8vu/9J+Z0pv3mNbqfNbTWM/l3J/gLJh/H/3U5opa/2G1f81TvCFf/II+42Qj0ZX4O6",
+	"sfN+ka7d0A5l3Tqb/RIpXR8Ij4tM+1s3cOkMdDYgbUP53OHvVwovdcKbpoGmXr2gX2FsnfvWy/UPFps2",
+	"ScutD5UOyr+UnV5FRwhxy8RugNqz1uv/DgAA//8F5oyA1i0AAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

@@ -521,3 +521,56 @@ func (server *Server) GetVersion(w http.ResponseWriter, r *http.Request) {
 		panic("Failed to write response")
 	}
 }
+
+// ComposeMetadata handles a /compose/{id}/metadata GET request
+func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id string) {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var result worker.OSBuildJobResult
+	status, _, err := server.workers.JobStatus(jobId, &result)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
+		return
+	}
+
+	var job worker.OSBuildJob
+	if _, _, _, err = server.workers.Job(jobId, &job); err != nil {
+		http.Error(w, fmt.Sprintf("Job %s not found: %s", id, err), http.StatusNotFound)
+		return
+	}
+
+	var rpms []rpmmd.RPM
+	if status.Finished.IsZero() {
+		// job still running: empty response
+		if err := json.NewEncoder(w).Encode(new(ComposeMetadata)); err != nil {
+			panic("Failed to write response: " + err.Error())
+		}
+		return
+	}
+	rpms = rpmmd.OSBuildStagesToRPMs(result.OSBuildOutput.Build.Stages)
+
+	packages := make([]PackageMetadata, len(rpms))
+	for idx, rpm := range rpms {
+		packages[idx] = PackageMetadata{
+			Type:      rpm.Type,
+			Name:      rpm.Name,
+			Version:   rpm.Version,
+			Release:   rpm.Release,
+			Epoch:     rpm.Epoch,
+			Arch:      rpm.Arch,
+			Sigmd5:    rpm.Sigmd5,
+			Signature: rpm.Signature,
+		}
+	}
+	resp := new(ComposeMetadata)
+	resp.Packages = &packages
+	resp.OstreeCommit = nil
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		panic("Failed to write response: " + err.Error())
+	}
+}
