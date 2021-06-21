@@ -30,39 +30,6 @@ type OSBuildJobImpl struct {
 	AzureCreds  *azure.Credentials
 }
 
-func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
-	if pkg.SigGPG != "" {
-		return &pkg.SigGPG
-	} else if pkg.SigPGP != "" {
-		return &pkg.SigPGP
-	}
-	return nil
-}
-
-func osbuildStagesToRPMs(stages []osbuild.StageResult) []koji.RPM {
-	rpms := make([]koji.RPM, 0)
-	for _, stage := range stages {
-		switch metadata := stage.Metadata.(type) {
-		case *osbuild.RPMStageMetadata:
-			for _, pkg := range metadata.Packages {
-				rpms = append(rpms, koji.RPM{
-					Type:      "rpm",
-					Name:      pkg.Name,
-					Epoch:     pkg.Epoch,
-					Version:   pkg.Version,
-					Release:   pkg.Release,
-					Arch:      pkg.Arch,
-					Sigmd5:    pkg.SigMD5,
-					Signature: packageMetadataToSignature(pkg),
-				})
-			}
-		default:
-			continue
-		}
-	}
-	return rpms
-}
-
 func appendTargetError(res *worker.OSBuildJobResult, err error) {
 	errStr := err.Error()
 	log.Printf("target failed: %s", errStr)

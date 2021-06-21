@@ -14,6 +14,7 @@ import (
 	"os"
 
 	"github.com/kolo/xmlrpc"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/ubccr/kerby/khttp"
 )
 
@@ -63,24 +64,13 @@ type Tool struct {
 	Version string `json:"version"`
 }
 
-type RPM struct {
-	Type      string  `json:"type"` // must be 'rpm'
-	Name      string  `json:"name"`
-	Version   string  `json:"version"`
-	Release   string  `json:"release"`
-	Epoch     *string `json:"epoch,omitempty"`
-	Arch      string  `json:"arch"`
-	Sigmd5    string  `json:"sigmd5"`
-	Signature *string `json:"signature"`
-}
-
 type BuildRoot struct {
 	ID               uint64           `json:"id"`
 	Host             Host             `json:"host"`
 	ContentGenerator ContentGenerator `json:"content_generator"`
 	Container        Container        `json:"container"`
 	Tools            []Tool           `json:"tools"`
-	RPMs             []RPM            `json:"components"`
+	RPMs             []rpmmd.RPM      `json:"components"`
 }
 
 type ImageExtraInfo struct {
@@ -93,15 +83,15 @@ type ImageExtra struct {
 }
 
 type Image struct {
-	BuildRootID  uint64     `json:"buildroot_id"`
-	Filename     string     `json:"filename"`
-	FileSize     uint64     `json:"filesize"`
-	Arch         string     `json:"arch"`
-	ChecksumType string     `json:"checksum_type"` // must be 'md5'
-	MD5          string     `json:"checksum"`
-	Type         string     `json:"type"`
-	RPMs         []RPM      `json:"components"`
-	Extra        ImageExtra `json:"extra"`
+	BuildRootID  uint64      `json:"buildroot_id"`
+	Filename     string      `json:"filename"`
+	FileSize     uint64      `json:"filesize"`
+	Arch         string      `json:"arch"`
+	ChecksumType string      `json:"checksum_type"` // must be 'md5'
+	MD5          string      `json:"checksum"`
+	Type         string      `json:"type"`
+	RPMs         []rpmmd.RPM `json:"components"`
+	Extra        ImageExtra  `json:"extra"`
 }
 
 type Metadata struct {
