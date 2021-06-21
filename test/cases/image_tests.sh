@@ -16,6 +16,12 @@ if [[ "${ARCH}" == "aarch64" ]]; then
     IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} --disable-local-boot"
 fi
 
+# Skip 'selinux/contect-mismatch' part of the image-info report on RHEL-8.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1973754
+if [[ "${DISTRO_CODE}" =~ "rhel_8" ]]; then
+    IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} -skip-selinux-ctx-check"
+fi
+
 PASSED_TESTS=()
 FAILED_TESTS=()
 
