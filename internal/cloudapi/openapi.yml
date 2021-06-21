@@ -63,6 +63,39 @@ paths:
             text/plain:
               schema:
                 type: string
+  /compose/{id}/metadata:
+    get:
+      summary: Get the metadata for a compose.
+      operationId: compose_metadata
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the metadata of a finished compose. The exact information returned depends on the requested image type.'
+      responses:
+        '200':
+          description: The metadata for the given compose.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeMetadata'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
   /compose:
     post:
       summary: Create compose
@@ -163,6 +196,17 @@ components:
         image_name:
           type: string
           example: 'my-image'
+    ComposeMetadata:
+      type: object
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageMetadata'
+          description: 'Package list including NEVRA'
+        ostree_commit:
+          type: string
+          description: 'ID (hash) of the built commit'
     ComposeRequest:
       type: object
       required:
@@ -442,3 +486,28 @@ components:
           type: string
           format: uuid
           example: '123e4567-e89b-12d3-a456-426655440000'
+    PackageMetadata:
+      required:
+        - type
+        - name
+        - version
+        - release
+        - arch
+        - sigmd5
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        release:
+          type: string
+        epoch:
+          type: string
+        arch:
+          type: string
+        sigmd5:
+          type: string
+        signature:
+          type: string
