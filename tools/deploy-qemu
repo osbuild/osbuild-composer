@@ -24,7 +24,7 @@ its content as additional arguments to qemu."""
 
 if len(sys.argv) != 3:
     print(HELP_TEXT)
-    exit(1)
+    sys.exit(1)
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 image = sys.argv[1]
