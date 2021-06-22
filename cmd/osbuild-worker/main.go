@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -152,7 +153,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Could not read offline token: %v", err)
 		}
-		token := string(t)
+		token := strings.TrimSpace(string(t))
 
 		if config.Authentication.OAuthURL == "" {
 			log.Fatal("OAuth URL should be specified together with the offline token")
