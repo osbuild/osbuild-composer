@@ -676,6 +676,24 @@ function verifyInAWSS3() {
 
   # Verify that the commit contains the ref we defined in the request
   tar tvf "${WORKDIR}/edge-commit.tar" "repo/refs/heads/test/rhel/8/edge"
+
+  # verify that the commit hash matches the metadata
+  local API_COMMIT_ID
+  API_COMMIT_ID=$(curl \
+    --silent \
+    --show-error \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
+    https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
+
+  local TAR_COMMIT_ID
+  TAR_COMMIT_ID=$(tar xf "${WORKDIR}/edge-commit.tar" "repo/refs/heads/test/rhel/8/edge" -O)
+
+  if [[ "${API_COMMIT_ID}" != "${TAR_COMMIT_ID}" ]]; then
+      echo "Commit ID returned from API does not match Commit ID in archive 😠"
+      exit 1
+  fi
 }
 
 # Verify image in Compute Engine on GCP
