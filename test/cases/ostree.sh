@@ -435,7 +435,7 @@ UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade || { sudo rpm-ostree status; sudo journalctl -b -r -u rpm-ostreed; exit 1; }'
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
