@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -119,7 +118,7 @@ func (c *Client) refreshBearerToken() error {
 	data.Set("refresh_token", *c.offlineToken)
 
 	t := time.Now()
-	resp, err := http.Post(*c.oAuthURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	resp, err := http.PostForm(*c.oAuthURL, data)
 	if err != nil {
 		return err
 	}
