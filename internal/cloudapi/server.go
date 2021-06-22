@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -566,9 +567,40 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 			Signature: rpm.Signature,
 		}
 	}
+
+	manifestVer, err := job.Manifest.Version()
+	if err != nil {
+		panic("Failed to parse manifest version: " + err.Error())
+	}
+
+	ostreeCommitResult := new(osbuild1.StageResult)
+	switch manifestVer {
+	case "1":
+		if assemblerResult := result.OSBuildOutput.Assembler; assemblerResult.Name == "org.osbuild.ostree.commit" {
+			ostreeCommitResult = result.OSBuildOutput.Assembler
+		}
+	case "2":
+		// find the ostree.commit stage
+		for idx, stage := range result.OSBuildOutput.Stages {
+			if stage.Name == "org.osbuild.ostree.commit" {
+				ostreeCommitResult = &result.OSBuildOutput.Stages[idx]
+				break
+			}
+		}
+	default:
+		panic("Unknown manifest version: " + manifestVer)
+	}
+
 	resp := new(ComposeMetadata)
 	resp.Packages = &packages
-	resp.OstreeCommit = nil
+
+	if ostreeCommitResult != nil {
+		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
+		if !ok {
+			panic("Failed to parse ostree commit stage metadata")
+		}
+		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
+	}
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		panic("Failed to write response: " + err.Error())
