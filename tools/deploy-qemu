@@ -33,7 +33,7 @@ userdata = sys.argv[2]
 qemu_extra_args = os.getenv("QEMU_EXTRA_ARGS")
 qemu_extra_args = qemu_extra_args.split(' ') if qemu_extra_args is not None else []
 
-with tempfile.TemporaryDirectory(prefix="qemu-tmp-", dir=script_dir) as workdir:
+with tempfile.TemporaryDirectory(prefix="qemu-tmp-") as workdir:
     os.mkdir(os.path.join(workdir, "cidata"))
 
     if os.path.isdir(userdata):
