@@ -87,7 +87,7 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 		// regions than what can potentially fit into int32.
 		gceRegion := gceRegions[int(gceRegionIndex.Int64())]
 
-		availableZones, err := g.computeZonesInRegion(ctx, gceRegion)
+		availableZones, err := g.ComputeZonesInRegion(ctx, gceRegion)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get available GCE Zones within Region '%s': %v", region, err)
 		}
@@ -396,11 +396,11 @@ func (g *GCP) storageRegionToComputeRegions(ctx context.Context, region string) 
 	}
 }
 
-// computeZonesInRegion returns list of zones within the given GCE Region, which are "UP".
+// ComputeZonesInRegion returns list of zones within the given GCE Region, which are "UP".
 //
 // Uses:
 //  - Compute Engine API
-func (g *GCP) computeZonesInRegion(ctx context.Context, region string) ([]string, error) {
+func (g *GCP) ComputeZonesInRegion(ctx context.Context, region string) ([]string, error) {
 	var zones []string
 
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))

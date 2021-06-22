@@ -27,8 +27,6 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 		log.Println("[GCP] Error: 'GCP_REGION' is not set in the environment.")
 		return
 	}
-	// api.sh test uses '--zone="$GCP_REGION-a"'
-	GCPZone := fmt.Sprintf("%s-a", GCPRegion)
 	GCPBucket, ok := os.LookupEnv("GCP_BUCKET")
 	if !ok {
 		log.Println("[GCP] Error: 'GCP_BUCKET' is not set in the environment.")
@@ -63,16 +61,31 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	ctx := context.Background()
 
 	// Try to delete potentially running instance
-	log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
-		"This should fail if the test succedded.", GCPInstance, GCPZone)
-	err = g.ComputeInstanceDelete(ctx, GCPZone, GCPInstance)
+	// api.sh chooses a random GCP Zone from the set Region. Since we
+	// don't know which one it is, iterate over all Zones in the Region
+	// and try to delete the instance. Unless the instance has set
+	// "VmDnsSetting:ZonalOnly", which we don't do, this is safe and the
+	// instance name must be unique for the whole GCP project.
+	GCPZones, err := g.ComputeZonesInRegion(ctx, GCPRegion)
 	if err != nil {
-		log.Printf("[GCP] Error: %v", err)
+		log.Printf("[GCP] Error: Failed to get available Zones for the '%s' Region: %v", GCPRegion, err)
+		return
+	}
+	for _, GCPZone := range GCPZones {
+		log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
+			"This should fail if the test succeeded.", GCPInstance, GCPZone)
+		err = g.ComputeInstanceDelete(ctx, GCPZone, GCPInstance)
+		if err == nil {
+			// If an instance with the given name was successfully deleted in one of the Zones, we are done.
+			break
+		} else {
+			log.Printf("[GCP] Error: %v", err)
+		}
 	}
 
 	// Try to clean up storage of cache objects after image import job
 	log.Println("[GCP] 🧹 Cleaning up cache objects from storage after image " +
-		"import. This should fail if the test succedded.")
+		"import. This should fail if the test succeeded.")
 	cacheObjects, errs := g.StorageImageImportCleanup(ctx, GCPImage)
 	for _, err = range errs {
 		log.Printf("[GCP] Error: %v", err)
@@ -94,7 +107,7 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	}
 
 	// Try to delete the imported image
-	log.Printf("[GCP] 🧹 Deleting image %s. This should fail if the test succedded.", GCPImage)
+	log.Printf("[GCP] 🧹 Deleting image %s. This should fail if the test succeeded.", GCPImage)
 	err = g.ComputeImageDelete(ctx, GCPImage)
 	if err != nil {
 		log.Printf("[GCP] Error: %v", err)
@@ -119,14 +132,14 @@ func cleanupAzure(testID string, wg *sync.WaitGroup) {
 
 	// Delete the vhd image
 	imageName := "image-" + testID + ".vhd"
-	log.Println("[Azure] Deleting image. This should fail if the test succedded.")
+	log.Println("[Azure] Deleting image. This should fail if the test succeeded.")
 	err = azuretest.DeleteImageFromAzure(creds, imageName)
 	if err != nil {
 		log.Printf("[Azure] Error: %v", err)
 	}
 
 	// Delete all remaining resources (see the full list in the CleanUpBootedVM function)
-	log.Println("[Azure] Cleaning up booted VM. This should fail if the test succedded.")
+	log.Println("[Azure] Cleaning up booted VM. This should fail if the test succeeded.")
 	parameters := azuretest.NewDeploymentParameters(creds, imageName, testID, "")
 	clientCredentialsConfig := auth.NewClientCredentialsConfig(creds.ClientID, creds.ClientSecret, creds.TenantID)
 	authorizer, err := clientCredentialsConfig.Authorizer()
@@ -149,6 +162,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get testID: %v", err)
 	}
+	log.Printf("TEST_ID=%s", testID)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
