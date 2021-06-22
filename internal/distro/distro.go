@@ -131,6 +131,26 @@ func (m *Manifest) UnmarshalJSON(payload []byte) error {
 	return nil
 }
 
+type manifestVersion struct {
+	Version string `json:"version"`
+}
+
+func (m Manifest) Version() (string, error) {
+	mver := new(manifestVersion)
+	if err := json.Unmarshal(m, mver); err != nil {
+		return "", err
+	}
+
+	switch mver.Version {
+	case "":
+		return "1", nil
+	case "2":
+		return "2", nil
+	default:
+		return "", fmt.Errorf("Unsupported Manifest version %s", mver.Version)
+	}
+}
+
 func GetHostDistroName() (string, bool, bool, error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
