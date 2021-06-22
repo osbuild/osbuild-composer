@@ -48,6 +48,8 @@ objects:
             readOnly: true
           - name: state-directory
             mountPath: "/var/lib/osbuild-composer"
+          - name: cache-directory
+            mountPath: "/var/cache/osbuild-composer"
         volumes:
         - name: composer-config
           secret:
@@ -55,6 +57,8 @@ objects:
         - name: state-directory
           persistentVolumeClaim:
             claimName: osbuild-composer-state-dir
+        - name: cache-directory
+          emptyDir: {}
 
 - apiVersion: v1
   kind: Service
