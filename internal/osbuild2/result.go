@@ -14,6 +14,18 @@ type StageResult struct {
 	Error   string `json:"string,omitempty"`
 }
 
+type PipelineMetadata map[string]StageMetadata
+
+type StageMetadata interface {
+	isStageMetadata()
+}
+
+// RawStageMetadata is used to store the metadata from a stage that doesn't
+// define its own structure
+type RawStageMetadata json.RawMessage
+
+func (RawStageMetadata) isStageMetadata() {}
+
 // UnmarshalJSON decodes json-encoded StageResult.
 //
 // This method is here only as a workaround for the default value of the
@@ -40,9 +52,38 @@ func (sr *StageResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (md *PipelineMetadata) UnmarshalJSON(data []byte) error {
+	var rawPipelineMetadata map[string]json.RawMessage
+	if err := json.Unmarshal(data, &rawPipelineMetadata); err != nil {
+		return err
+	}
+	pmd := make(map[string]StageMetadata)
+	var metadata StageMetadata
+	for name, rawStageData := range rawPipelineMetadata {
+		switch name {
+		case "org.osbuild.rpm":
+			metadata = new(RPMStageMetadata)
+			if err := json.Unmarshal(rawStageData, metadata); err != nil {
+				return err
+			}
+		case "org.osbuild.ostree.commit":
+			metadata = new(OSTreeCommitStageMetadata)
+			if err := json.Unmarshal(rawStageData, metadata); err != nil {
+				return err
+			}
+		default:
+			metadata = RawStageMetadata(rawStageData)
+		}
+		pmd[name] = metadata
+	}
+	*md = pmd
+	return nil
+}
+
 type Result struct {
-	Type    string                    `json:"type"`
-	Success bool                      `json:"success"`
-	Error   json.RawMessage           `json:"error"`
-	Log     map[string]PipelineResult `json:"log"`
+	Type     string                      `json:"type"`
+	Success  bool                        `json:"success"`
+	Error    json.RawMessage             `json:"error"`
+	Log      map[string]PipelineResult   `json:"log"`
+	Metadata map[string]PipelineMetadata `json:"metadata"`
 }
