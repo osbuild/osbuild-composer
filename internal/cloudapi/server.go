@@ -609,7 +609,7 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 	resp := new(ComposeMetadata)
 	resp.Packages = &packages
 
-	if ostreeCommitResult != nil {
+	if ostreeCommitResult != nil && ostreeCommitResult.Metadata != nil {
 		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
 		if !ok {
 			panic("Failed to convert ostree commit stage metadata")
