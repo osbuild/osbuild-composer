@@ -1,0 +1,11 @@
+{
+  "name": "ComposerBuilder",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "extensions": [
+    "laurenttreguier.rpm-spec",
+    "golang.Go"
+  ]
+}
