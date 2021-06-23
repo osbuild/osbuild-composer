@@ -3,6 +3,7 @@ package osbuild1
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -119,6 +120,19 @@ func TestUnmarshalV2Success(t *testing.T) {
 	assert.Len(t, result.Stages, 16)
 	assert.True(t, result.Stages[15].Success)
 	assert.NotEmpty(t, result.Stages[0].Name)
+
+	// check metadata
+	for _, stage := range result.Stages {
+		if strings.HasSuffix(stage.Name, "org.osbuild.rpm") {
+			rpmMd, convOk := stage.Metadata.(RPMStageMetadata)
+			assert.True(t, convOk)
+			assert.Greater(t, len(rpmMd.Packages), 0)
+		} else if strings.HasSuffix(stage.Name, "org.osbuild.ostree.commit") {
+			commitMd, convOk := stage.Metadata.(OSTreeCommitStageMetadata)
+			assert.True(t, convOk)
+			assert.NotEmpty(t, commitMd.Compose.Ref)
+		}
+	}
 }
 
 func TestUnmarshalV2Failure(t *testing.T) {

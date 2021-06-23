@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
@@ -56,14 +57,14 @@ func (result *StageResult) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	var metadata StageMetadata
-	switch rawStageResult.Name {
-	case "org.osbuild.rpm":
+	switch {
+	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.rpm"):
 		metadata = new(RPMStageMetadata)
 		err = json.Unmarshal(rawStageResult.Metadata, metadata)
 		if err != nil {
 			return err
 		}
-	case "org.osbuild.ostree.commit":
+	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.ostree.commit"):
 		metadata = new(OSTreeCommitStageMetadata)
 		err = json.Unmarshal(rawStageResult.Metadata, metadata)
 		if err != nil {
@@ -230,17 +231,70 @@ func (cr *Result) fromV2(crv2 osbuild2.Result) {
 		return pipelineResults[i].pipelineName < pipelineResults[j].pipelineName
 	})
 
+	v2metadata := crv2.Metadata
 	// convert all stages logs from all pipelines into v1 StageResult objects
 	for _, pr := range pipelineResults {
+		pipelineMetadata := v2metadata[pr.pipelineName]
 		for idx, stage := range pr.stageResults {
+			stageMetadataV2 := pipelineMetadata[stage.Type]
+			stageMetadata, _ := convertStageMetadata(stageMetadataV2, stage.Type)
 			stageResult := StageResult{
 				// Create uniquely identifiable name for the stage:
 				// <pipeline name>:<stage index>-<stage type>
-				Name:    fmt.Sprintf("%s:%d-%s", pr.pipelineName, idx, stage.Type),
-				Success: stage.Success,
-				Output:  stage.Output,
+				Name:     fmt.Sprintf("%s:%d-%s", pr.pipelineName, idx, stage.Type),
+				Success:  stage.Success,
+				Output:   stage.Output,
+				Metadata: stageMetadata,
 			}
 			cr.Stages = append(cr.Stages, stageResult)
 		}
 	}
+}
+
+func convertStageMetadata(v2md osbuild2.StageMetadata, stageType string) (StageMetadata, error) {
+	if v2md == nil {
+		return nil, nil
+	}
+	switch metadata := v2md.(type) {
+	case *osbuild2.RPMStageMetadata:
+		packages := make([]RPMPackageMetadata, len(metadata.Packages))
+		for idx, pkg := range metadata.Packages {
+			packages[idx] = RPMPackageMetadata{
+				Name:    pkg.Name,
+				Version: pkg.Version,
+				Release: pkg.Release,
+				Epoch:   pkg.Epoch,
+				Arch:    pkg.Arch,
+				SigMD5:  pkg.SigMD5,
+				SigPGP:  pkg.SigPGP,
+				SigGPG:  pkg.SigGPG,
+			}
+		}
+		return RPMStageMetadata{Packages: packages}, nil
+	case *osbuild2.OSTreeCommitStageMetadata:
+		v2compose := metadata.Compose
+		commitMetadata := OSTreeCommitStageMetadata{
+			Compose: OSTreeCommitStageMetadataCompose{
+				Ref:                       v2compose.Ref,
+				OSTreeNMetadataTotal:      v2compose.OSTreeNMetadataTotal,
+				OSTreeNMetadataWritten:    v2compose.OSTreeNMetadataWritten,
+				OSTreeNContentTotal:       v2compose.OSTreeNContentTotal,
+				OSTreeNContentWritten:     v2compose.OSTreeNContentWritten,
+				OSTreeNCacheHits:          v2compose.OSTreeNCacheHits,
+				OSTreeContentBytesWritten: v2compose.OSTreeContentBytesWritten,
+				OSTreeCommit:              v2compose.OSTreeCommit,
+				OSTreeContentChecksum:     v2compose.OSTreeContentChecksum,
+				OSTreeTimestamp:           v2compose.OSTreeTimestamp,
+				RPMOSTreeInputHash:        v2compose.RPMOSTreeInputHash,
+			},
+		}
+		return commitMetadata, nil
+	}
+
+	// any other type, return raw
+	raw, err := json.Marshal(v2md)
+	if err != nil {
+		return nil, err
+	}
+	return RawStageMetadata(raw), nil
 }
