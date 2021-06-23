@@ -39,3 +39,23 @@ func NewOSTreeCommitStage(options *OSTreeCommitStageOptions, inputs *OSTreeCommi
 		Inputs:  inputs,
 	}
 }
+
+type OSTreeCommitStageMetadata struct {
+	Compose OSTreeCommitStageMetadataCompose `json:"compose"`
+}
+
+type OSTreeCommitStageMetadataCompose struct {
+	Ref                       string `json:"ref"`
+	OSTreeNMetadataTotal      int    `json:"ostree-n-metadata-total"`
+	OSTreeNMetadataWritten    int    `json:"ostree-n-metadata-written"`
+	OSTreeNContentTotal       int    `json:"ostree-n-content-total"`
+	OSTreeNContentWritten     int    `json:"ostree-n-content-written"`
+	OSTreeNCacheHits          int    `json:"ostree-n-cache-hits"`
+	OSTreeContentBytesWritten int    `json:"ostree-content-bytes-written"`
+	OSTreeCommit              string `json:"ostree-commit"`
+	OSTreeContentChecksum     string `json:"ostree-content-checksum"`
+	OSTreeTimestamp           string `json:"ostree-timestamp"`
+	RPMOSTreeInputHash        string `json:"rpm-ostree-inputhash"`
+}
+
+func (OSTreeCommitStageMetadata) isStageMetadata() {}
