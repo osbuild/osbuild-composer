@@ -443,6 +443,11 @@ function createReqFileAzure() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "customizations": {
+    "packages": [
+      "postgresql"
+    ]
+  },
   "image_requests": [
     {
       "architecture": "$ARCH",
@@ -774,7 +779,24 @@ case $CLOUD_PROVIDER in
     ;;
 esac
 
+# Verify selected package (postgresql) is included in package list
+function verifyPackageList() {
+  local PACKAGENAMES
+  PACKAGENAMES=$(curl \
+    --silent \
+    --show-error \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
+    https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata | jq -r '.packages[].name')
 
+  if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
+      echo "'postgresql' not found in compose package list 😠"
+      exit 1
+  fi
+}
+
+verifyPackageList
 
 # Verify the identityfilter
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
