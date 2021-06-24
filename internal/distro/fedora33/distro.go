@@ -17,6 +17,7 @@ import (
 )
 
 const name = "fedora-33"
+const releaseVersion = "33"
 const modulePlatformID = "platform:f33"
 const ostreeRef = "fedora/33/%s/iot"
 
@@ -226,6 +227,10 @@ func (d *distribution) Name() string {
 	return name
 }
 
+func (d *distribution) Releasever() string {
+	return releaseVersion
+}
+
 func (d *distribution) ModulePlatformID() string {
 	return modulePlatformID
 }
@@ -237,6 +242,11 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 	for _, pkg := range packages {
 		fileSource := osbuild.FileSource{
 			URL: pkg.RemoteLocation,
+		}
+		if pkg.Secrets == "org.osbuild.rhsm" {
+			fileSource.Secrets = &osbuild.Secret{
+				Name: "org.osbuild.rhsm",
+			}
 		}
 		files.URLs[pkg.Checksum] = fileSource
 	}
