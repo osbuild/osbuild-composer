@@ -544,7 +544,6 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 
-	var rpms []rpmmd.RPM
 	if status.Finished.IsZero() {
 		// job still running: empty response
 		if err := json.NewEncoder(w).Encode(new(ComposeMetadata)); err != nil {
@@ -552,7 +551,46 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 		}
 		return
 	}
-	rpms = rpmmd.OSBuildStagesToRPMs(result.OSBuildOutput.Build.Stages)
+
+	manifestVer, err := job.Manifest.Version()
+	if err != nil {
+		panic("Failed to parse manifest version: " + err.Error())
+	}
+
+	var rpms []rpmmd.RPM
+	var ostreeCommitResult *osbuild1.StageResult
+	var coreStages []osbuild1.StageResult
+	switch manifestVer {
+	case "1":
+		coreStages = result.OSBuildOutput.Stages
+		if assemblerResult := result.OSBuildOutput.Assembler; assemblerResult.Name == "org.osbuild.ostree.commit" {
+			ostreeCommitResult = result.OSBuildOutput.Assembler
+		}
+	case "2":
+		// v2 manifest results store all stage output in the main stages
+		// here we filter out the build stages to collect only the RPMs for the
+		// core stages
+		// the filtering relies on two assumptions:
+		// 1. the build pipeline is named "build"
+		// 2. the stage results from v2 manifests when converted to v1 are
+		// named by prefixing the pipeline name
+		for _, stage := range result.OSBuildOutput.Stages {
+			if !strings.HasPrefix(stage.Name, "build") {
+				coreStages = append(coreStages, stage)
+			}
+		}
+		// find the ostree.commit stage
+		for idx, stage := range result.OSBuildOutput.Stages {
+			if strings.HasSuffix(stage.Name, "org.osbuild.ostree.commit") {
+				ostreeCommitResult = &result.OSBuildOutput.Stages[idx]
+				break
+			}
+		}
+	default:
+		panic("Unknown manifest version: " + manifestVer)
+	}
+
+	rpms = rpmmd.OSBuildStagesToRPMs(coreStages)
 
 	packages := make([]PackageMetadata, len(rpms))
 	for idx, rpm := range rpms {
@@ -568,36 +606,13 @@ func (server *Server) ComposeMetadata(w http.ResponseWriter, r *http.Request, id
 		}
 	}
 
-	manifestVer, err := job.Manifest.Version()
-	if err != nil {
-		panic("Failed to parse manifest version: " + err.Error())
-	}
-
-	ostreeCommitResult := new(osbuild1.StageResult)
-	switch manifestVer {
-	case "1":
-		if assemblerResult := result.OSBuildOutput.Assembler; assemblerResult.Name == "org.osbuild.ostree.commit" {
-			ostreeCommitResult = result.OSBuildOutput.Assembler
-		}
-	case "2":
-		// find the ostree.commit stage
-		for idx, stage := range result.OSBuildOutput.Stages {
-			if stage.Name == "org.osbuild.ostree.commit" {
-				ostreeCommitResult = &result.OSBuildOutput.Stages[idx]
-				break
-			}
-		}
-	default:
-		panic("Unknown manifest version: " + manifestVer)
-	}
-
 	resp := new(ComposeMetadata)
 	resp.Packages = &packages
 
 	if ostreeCommitResult != nil {
 		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
 		if !ok {
-			panic("Failed to parse ostree commit stage metadata")
+			panic("Failed to convert ostree commit stage metadata")
 		}
 		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
 	}
