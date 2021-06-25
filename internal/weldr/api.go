@@ -358,7 +358,7 @@ type responseError struct {
 	Msg  string `json:"msg"`
 }
 
-// verifyStringsWithRegex checks a slive of strings against a regex of allowed characters
+// verifyStringsWithRegex checks a slice of strings against a regex of allowed characters
 // it writes the InvalidChars error to the writer and returns false if any of them fail the check
 // It will also return an error if the string is empty
 func verifyStringsWithRegex(writer http.ResponseWriter, strings []string, re *regexp.Regexp) bool {
