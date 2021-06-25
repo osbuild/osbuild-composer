@@ -21,9 +21,9 @@ type AWS struct {
 	s3       *s3.S3
 }
 
-func New(region, accessKeyID, accessKey string) (*AWS, error) {
+func New(region, accessKeyID, accessKey, sessionToken string) (*AWS, error) {
 	// Session credentials
-	creds := credentials.NewStaticCredentials(accessKeyID, accessKey, "")
+	creds := credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken)
 
 	// Create a Session with a custom region
 	sess, err := session.NewSession(&aws.Config{

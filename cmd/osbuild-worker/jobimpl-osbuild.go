@@ -208,7 +208,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSTargetOptions:
-			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
+			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey, "")
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
@@ -244,7 +244,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSS3TargetOptions:
-			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey)
+			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey, "")
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
