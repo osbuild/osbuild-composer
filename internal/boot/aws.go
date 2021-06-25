@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 )
@@ -89,7 +90,7 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 // The s3 key is never returned - the same thing is done in osbuild-composer,
 // the user has no way of getting the s3 key.
 func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
-	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey)
+	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey, "")
 	if err != nil {
 		return fmt.Errorf("cannot create aws uploader: %v", err)
 	}
