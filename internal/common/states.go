@@ -48,7 +48,7 @@ func unmarshalStateHelper(data []byte, mapping []string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	for n, str := range getStateMapping() {
+	for n, str := range mapping {
 		if str == stringInput {
 			return n, nil
 		}
