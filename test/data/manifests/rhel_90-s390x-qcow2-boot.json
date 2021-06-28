@@ -1194,6 +1194,9 @@
           "sha256:d6206498475120ae09bb06bdc1704b005e3e6fc12005ff10c7172d248e21192b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-202103231356/Packages/systemd-libs-247.3-2.el9.s390x.rpm"
           },
+          "sha256:d692f401df2a8a0ffa404c85554ab86f54c69d316e110eb3efd2596a192664b3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-appstream-n9.0-202103231349/Packages/qemu-guest-agent-5.2.0-7.el9.s390x.rpm"
+          },
           "sha256:d706664a593ab36be9501bf096911fa6cca2fd134b200490350a97160a0dcaf9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-202103231356/Packages/gpgme-1.15.1-2.el9.s390x.rpm"
           },
@@ -3468,6 +3471,9 @@
                 "checksum": "sha256:3ccb52ce04358bead66d283aefd3c059e06a15dac29f4147feba3c4aed749b2c"
               },
               {
+                "checksum": "sha256:d692f401df2a8a0ffa404c85554ab86f54c69d316e110eb3efd2596a192664b3"
+              },
+              {
                 "checksum": "sha256:c6daab25b95996ce22430f773ac974d4acf78a9d1af21c83834b9b491b89476e"
               },
               {
@@ -3581,12 +3587,6 @@
           "options": {}
         },
         {
-          "name": "org.osbuild.selinux",
-          "options": {
-            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-          }
-        },
-        {
           "name": "org.osbuild.sysconfig",
           "options": {
             "kernel": {
@@ -3610,6 +3610,12 @@
                 "enabled": false
               }
             }
+          }
+        },
+        {
+          "name": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
           }
         }
       ],
@@ -9566,6 +9572,15 @@
         "checksum": "sha256:3ccb52ce04358bead66d283aefd3c059e06a15dac29f4147feba3c4aed749b2c"
       },
       {
+        "name": "qemu-guest-agent",
+        "epoch": 15,
+        "version": "5.2.0",
+        "release": "7.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-appstream-n9.0-202103231349/Packages/qemu-guest-agent-5.2.0-7.el9.s390x.rpm",
+        "checksum": "sha256:d692f401df2a8a0ffa404c85554ab86f54c69d316e110eb3efd2596a192664b3"
+      },
+      {
         "name": "qrencode-libs",
         "epoch": 0,
         "version": "4.0.2",
@@ -10301,6 +10316,7 @@
       "python3-systemd-234-16.el9.s390x",
       "python3-unbound-1.13.1-1.el9.s390x",
       "python3-urllib3-1.25.10-4.el9.noarch",
+      "qemu-guest-agent-5.2.0-7.el9.s390x",
       "qrencode-libs-4.0.2-7.el9.s390x",
       "quota-4.06-3.el9.s390x",
       "quota-nls-4.06-3.el9.noarch",
@@ -10495,23 +10511,6 @@
       "missing": []
     },
     "selinux": {
-      "context-mismatch": [
-        {
-          "actual": "unconfined_u:object_r:boot_t:s0",
-          "expected": "system_u:object_r:boot_t:s0",
-          "filename": "/boot/bootmap"
-        },
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/kernel"
-        },
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/network"
-        }
-      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"
@@ -10589,6 +10588,7 @@
       "nfs-client.target",
       "nfs-convert.service",
       "nis-domainname.service",
+      "qemu-guest-agent.service",
       "reboot.target",
       "remote-fs.target",
       "rhsmcertd.service",
