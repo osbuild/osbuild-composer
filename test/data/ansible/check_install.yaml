@@ -1,0 +1,58 @@
+---
+- hosts: test_guest
+  become: no
+  vars:
+    workspace: "{{ lookup('env', 'WORKSPACE') }}"
+    total_counter: "0"
+    failed_counter: "0"
+
+  tasks:
+    # current target host's IP address
+    - debug: var=ansible_all_ipv4_addresses
+
+    # case: check if selected packages installed (vim & zsh)
+    - name: check installed package
+      shell: rpm -qa | sort
+      register: result_packages
+
+    - name: check vim installed
+      block:
+        - assert:
+            that:
+              - "'vim' in result_packages.stdout"
+            fail_msg: "vim not installed"
+            success_msg: "vim installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: check zsh installed
+      block:
+        - assert:
+            that:
+              - "'zsh' in result_packages.stdout"
+            fail_msg: "zsh not installed"
+            success_msg: "zsh installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: save installed package list to log file
+      copy:
+        content: "{{ result_packages.stdout }}"
+        dest: "{{ workspace }}/{{ commit_log }}.installed.log"
+      delegate_to: localhost
+
+    - assert:
+        that:
+          - failed_counter == "0"
+        fail_msg: "Ran {{ total_counter }} tests, but {{ failed_counter }} of them failed"
+        success_msg: "{{ total_counter }} test(s) passed"
