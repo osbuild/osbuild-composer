@@ -177,6 +177,9 @@
           "sha256:1c6433b7858dd5ae1fa3dd64a3531a5f38ae2e181034155561570610f26ec4a3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-202103231359/Packages/libstdc++-11.0.0-0.19.el9.x86_64.rpm"
           },
+          "sha256:1d0d5fbed86f4a49933dfbee15f1ab908a88e6da40365453f8f2c13abfc4f769": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-202103231357/Packages/qemu-guest-agent-5.2.0-7.el9.x86_64.rpm"
+          },
           "sha256:1d7153233c9313f9bbfe02e1f3aa50cbe88e09a36c755675d2653d955d290e6d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-202103231359/Packages/python3-idna-2.10-3.el9.noarch.rpm"
           },
@@ -3387,6 +3390,9 @@
                 "checksum": "sha256:d9bf50f93f01c1dc3e2444b7a540ee18f772e4df365c21f70a4c3dda21823140"
               },
               {
+                "checksum": "sha256:1d0d5fbed86f4a49933dfbee15f1ab908a88e6da40365453f8f2c13abfc4f769"
+              },
+              {
                 "checksum": "sha256:1dbd438ac58014d451c3b55a7ad057925fc5fc125f19c2ca008e9e0ee0af6998"
               },
               {
@@ -3509,12 +3515,6 @@
           }
         },
         {
-          "name": "org.osbuild.selinux",
-          "options": {
-            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-          }
-        },
-        {
           "name": "org.osbuild.sysconfig",
           "options": {
             "kernel": {
@@ -3538,6 +3538,12 @@
                 "enabled": false
               }
             }
+          }
+        },
+        {
+          "name": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
           }
         }
       ],
@@ -9505,6 +9511,15 @@
         "checksum": "sha256:d9bf50f93f01c1dc3e2444b7a540ee18f772e4df365c21f70a4c3dda21823140"
       },
       {
+        "name": "qemu-guest-agent",
+        "epoch": 15,
+        "version": "5.2.0",
+        "release": "7.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-202103231357/Packages/qemu-guest-agent-5.2.0-7.el9.x86_64.rpm",
+        "checksum": "sha256:1d0d5fbed86f4a49933dfbee15f1ab908a88e6da40365453f8f2c13abfc4f769"
+      },
+      {
         "name": "qrencode-libs",
         "epoch": 0,
         "version": "4.0.2",
@@ -10208,6 +10223,7 @@
       "python3-systemd-234-16.el9.x86_64",
       "python3-unbound-1.13.1-1.el9.x86_64",
       "python3-urllib3-1.25.10-4.el9.noarch",
+      "qemu-guest-agent-5.2.0-7.el9.x86_64",
       "qrencode-libs-4.0.2-7.el9.x86_64",
       "quota-4.06-3.el9.x86_64",
       "quota-nls-4.06-3.el9.noarch",
@@ -10427,18 +10443,6 @@
       "missing": []
     },
     "selinux": {
-      "context-mismatch": [
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/kernel"
-        },
-        {
-          "actual": "unconfined_u:object_r:etc_t:s0",
-          "expected": "system_u:object_r:etc_t:s0",
-          "filename": "/etc/sysconfig/network"
-        }
-      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"
@@ -10516,6 +10520,7 @@
       "nfs-client.target",
       "nfs-convert.service",
       "nis-domainname.service",
+      "qemu-guest-agent.service",
       "reboot.target",
       "remote-fs.target",
       "rhsmcertd.service",
