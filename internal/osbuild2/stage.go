@@ -89,6 +89,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(ChronyStageOptions)
 	case "org.osbuild.keymap":
 		options = new(KeymapStageOptions)
+	case "org.osbuild.modprobe":
+		options = new(ModprobeStageOptions)
 	case "org.osbuild.firewall":
 		options = new(FirewallStageOptions)
 	case "org.osbuild.rhsm":

@@ -163,6 +163,45 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "modprobe",
+			fields: fields{
+				Type:    "org.osbuild.modprobe",
+				Options: &ModprobeStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.modprobe","options":{}}`),
+			},
+		},
+		{
+			name: "modprobe-data",
+			fields: fields{
+				Type: "org.osbuild.modprobe",
+				Options: &ModprobeStageOptions{
+					ConfigFiles: map[string]ModprobeConfigCmdList{
+						"disallow-modules.conf": {
+							&ModprobeConfigCmdBlacklist{
+								Command:    "blacklist",
+								Modulename: "nouveau",
+							},
+							&ModprobeConfigCmdBlacklist{
+								Command:    "blacklist",
+								Modulename: "floppy",
+							},
+						},
+						"disallow-additional-modules.conf": {
+							&ModprobeConfigCmdBlacklist{
+								Command:    "blacklist",
+								Modulename: "my-module",
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.modprobe","options":{"configuration_files":{"disallow-additional-modules.conf":[{"command":"blacklist","modulename":"my-module"}],"disallow-modules.conf":[{"command":"blacklist","modulename":"nouveau"},{"command":"blacklist","modulename":"floppy"}]}}}`),
+			},
+		},
+		{
 			name: "locale",
 			fields: fields{
 				Type:    "org.osbuild.locale",
