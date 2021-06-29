@@ -73,7 +73,7 @@ greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
 # rhel 8.4 will run off of the internal repos and does not have a redhat subscription
-if [[ $VERSION_ID == 8.4 ]]; then
+if [[ $VERSION_ID == 8.4 || $VERSION_ID == 8.5 ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
     sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
     # remove the subscription check
