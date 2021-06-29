@@ -10,6 +10,47 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+
+		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		},
+		))
+	} else {
+		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
+		treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
+			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+			},
+		}))
+	}
+	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	pipelines = append(pipelines, *treePipeline)
+
+	return pipelines, nil
+}
+
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
@@ -162,12 +203,13 @@ func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *bluep
 	}
 
 	if users := c.GetUsers(); len(users) > 0 {
-		options, err := userStageOptions(users)
+		userOptions, err := userStageOptions(users)
 		if err != nil {
 			return nil, err
 		}
-		stages = append(stages, osbuild.NewUsersStage(options))
-		stages = append(stages, osbuild.NewFirstBootStage(usersFirstBootOptions(options)))
+		stages = append(stages, osbuild.NewUsersStage(userOptions))
+		// TODO: First boot stage for users should be OSTree only
+		stages = append(stages, osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
 	}
 
 	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
