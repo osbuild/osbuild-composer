@@ -29,8 +29,6 @@ RPM:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - sh "schutzbot/mockbuild.sh"
   after_script:
@@ -57,8 +55,6 @@ Container:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - sh "schutzbot/containerbuild.sh"
   parallel:
@@ -71,8 +67,6 @@ Prepare-rhel-internal:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/prepare-rhel-internal.sh
   artifacts:
@@ -93,8 +87,6 @@ Base:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -128,8 +120,6 @@ OSTree:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -170,8 +160,6 @@ Integration:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -212,8 +200,6 @@ API:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
