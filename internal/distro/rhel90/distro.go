@@ -381,8 +381,6 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewZiplStage(&osbuild.ZiplStageOptions{}))
 	}
 
-	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
-
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
 	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
 		Kernel: osbuild.SysconfigKernelOptions{
@@ -423,6 +421,9 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 			}))
 		}
 	}
+
+	// SELinux stage should be the last so everything has the right label.
+	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 
 	p.Assembler = t.assembler(pt, options, t.arch)
 
