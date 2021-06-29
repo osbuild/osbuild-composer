@@ -74,6 +74,8 @@ type architecture struct {
 	name        string
 	imageTypes  map[string]distro.ImageType
 	packageSets map[string]rpmmd.PackageSet
+	legacy      string
+	uefi        bool
 }
 
 func (a *architecture) Name() string {
@@ -123,6 +125,7 @@ type imageType struct {
 	enabledServices  []string
 	disabledServices []string
 	defaultTarget    string
+	kernelOptions    string
 	defaultSize      uint64
 	exports          []string
 	pipelines        pipelinesFunc
@@ -324,6 +327,8 @@ func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 }
 
 func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	const GigaByte = 1024 * 1024 * 1024
+
 	rd := &distribution{
 		name:             name,
 		modulePlatformID: modulePlatformID,
@@ -509,6 +514,24 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			"boot": x8664BootPackageSet(),
 		},
+		legacy: "i386-pc",
+		uefi:   true,
+	}
+
+	qcow2ImageType := imageType{
+		name:          "qcow2",
+		filename:      "disk.qcow2",
+		mimeType:      "application/x-qemu-disk",
+		defaultTarget: "multi-user.target",
+		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+		packageSets: map[string]rpmmd.PackageSet{
+			"build":    x8664BuildPackageSet(),
+			"packages": qcow2CommonPkgSet(),
+		},
+		bootable:    true,
+		defaultSize: 10 * GigaByte,
+		pipelines:   qcow2Pipelines,
+		exports:     []string{"qcow2"},
 	}
 
 	tarImgType := imageType{
@@ -584,7 +607,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeInstallerPipelines,
 		exports:         []string{"bootiso"},
 	}
-	x86_64.addImageTypes(tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
+	x86_64.addImageTypes(qcow2ImageType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
+
 	aarch64 := architecture{
 		name:   "aarch64",
 		distro: rd,
@@ -592,7 +616,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			"boot": aarch64BootPackageSet(),
 		},
 	}
-	aarch64.addImageTypes(tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
+	aarch64.addImageTypes(qcow2ImageType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
 
 	ppc64le := architecture{
 		distro: rd,
@@ -600,16 +624,21 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			"boot": ppc64leBootPackageSet(),
 		},
+		legacy: "powerpc-ieee1275",
+		uefi:   false,
 	}
-	ppc64le.addImageTypes(tarImgType)
+	ppc64le.addImageTypes(qcow2ImageType, tarImgType)
+
 	s390x := architecture{
 		distro: rd,
 		name:   "s390x",
 		packageSets: map[string]rpmmd.PackageSet{
 			"boot": s390xBootPackageSet(),
 		},
+		uefi: false,
 	}
-	s390x.addImageTypes(tarImgType)
+	s390x.addImageTypes(qcow2ImageType, tarImgType)
+
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return rd
 }
