@@ -35,19 +35,11 @@ function setup_repo {
   local project=$1
   local commit=$2
   local priority=${3:-10}
-
-  local extra_repo_path_segment=""
-  if [[ "$project" == "osbuild-composer" ]]; then
-    # Used in the gitlab CI proof of concept so it can upload its rpms to
-    # a different location.
-    extra_repo_path_segment="${EXTRA_REPO_PATH_SEGMENT:-}"
-  fi
-
   greenprint "Setting up dnf repository for ${project} ${commit}"
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${extra_repo_path_segment}${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
 enabled=1
 gpgcheck=0
 priority=${priority}
