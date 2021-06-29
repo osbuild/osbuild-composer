@@ -328,7 +328,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] != '8.4'
+      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] != '8.5'
 
     # case: check installed greenboot packages
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L634
