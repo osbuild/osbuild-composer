@@ -13,11 +13,6 @@ ARCH=$(uname -m)
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-32")
-        IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/32/${ARCH}/iot"
-        OS_VARIANT="fedora32"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "fedora-33")
         IMAGE_TYPE=fedora-iot-commit
         OSTREE_REF="fedora/33/${ARCH}/iot"
