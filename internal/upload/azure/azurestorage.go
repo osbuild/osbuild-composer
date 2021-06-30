@@ -98,8 +98,8 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	}
 
 	// Create page blob URL. Page blob is required for VM images
-	blobURL := newPageBlobURL(containerURL, metadata.BlobName)
-	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	blobURL := containerURL.NewPageBlobURL(metadata.BlobName)
+	_, err = blobURL.Create(ctx, stat.Size(), 0, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{}, azblob.PremiumPageBlobAccessTierNone, azblob.BlobTagsMap{}, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return fmt.Errorf("cannot create the blob URL: %v", err)
 	}
@@ -138,7 +138,7 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 		semaphore <- 1
 		go func(counter int64, buffer []byte, n int) {
 			defer wg.Done()
-			_, err = blobURL.UploadPages(ctx, counter*azblob.PageBlobMaxUploadPagesBytes, bytes.NewReader(buffer[:n]), azblob.PageBlobAccessConditions{}, nil)
+			_, err = blobURL.UploadPages(ctx, counter*azblob.PageBlobMaxUploadPagesBytes, bytes.NewReader(buffer[:n]), azblob.PageBlobAccessConditions{}, nil, azblob.ClientProvidedKeyOptions{})
 			if err != nil {
 				err = fmt.Errorf("uploading a page failed: %v", err)
 				// Send the error to the error channel in a non-blocking way. If there is already an error, just discard this one
@@ -160,7 +160,7 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	default:
 	}
 	// Check properties, specifically MD5 sum of the blob
-	props, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	props, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{}, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return fmt.Errorf("getting the properties of the new blob failed: %v", err)
 	}
