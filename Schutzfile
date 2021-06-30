@@ -28,6 +28,13 @@
       }
     }
   },
+  "rhel-8.5": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "ace07f2656485cb3b820857d0401b75499799262"
+      }
+    }
+  },
   "centos-8": {
     "dependencies": {
       "osbuild": {
