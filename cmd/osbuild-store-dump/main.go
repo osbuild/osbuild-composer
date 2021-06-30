@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -115,7 +116,7 @@ func main() {
 	awsTarget.ImageName = "My Image"
 	awsTarget.Created = time.Now()
 
-	d := fedora32.New()
+	d := fedora33.New()
 	a, err := d.GetArch("x86_64")
 	if err != nil {
 		panic(err)
@@ -128,7 +129,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-32")
+	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-33")
 	if err != nil {
 		panic(err)
 	}
