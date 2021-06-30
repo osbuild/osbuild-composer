@@ -87,6 +87,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(TimezoneStageOptions)
 	case "org.osbuild.chrony":
 		options = new(ChronyStageOptions)
+	case "org.osbuild.dracut.conf":
+		options = new(DracutConfStageOptions)
 	case "org.osbuild.keymap":
 		options = new(KeymapStageOptions)
 	case "org.osbuild.modprobe":
