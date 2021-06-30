@@ -85,6 +85,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(GroupsStageOptions)
 	case "org.osbuild.timezone":
 		options = new(TimezoneStageOptions)
+	case "org.osbuild.cloud-init":
+		options = new(CloudInitStageOptions)
 	case "org.osbuild.chrony":
 		options = new(ChronyStageOptions)
 	case "org.osbuild.dracut":
