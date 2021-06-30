@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
@@ -17,7 +16,6 @@ import (
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
 var supportedDistros = []supportedDistro{
-	{fedora32.New, fedora32.NewHostDistro},
 	{fedora33.New, fedora33.NewHostDistro},
 	{fedora33.NewF34, fedora33.NewHostDistro},
 	{fedora33.NewF35, fedora33.NewHostDistro},

@@ -49,11 +49,6 @@ func TestRegistry_mangleHostDistroName(t *testing.T) {
 		args args
 		want string
 	}{
-		{"fedora-32", args{"fedora-32", false, false}, "fedora-32"},
-		{"fedora-32 beta", args{"fedora-32", true, false}, "fedora-32-beta"},
-		{"fedora-32 stream", args{"fedora-32", false, true}, "fedora-32"},
-		{"fedora-32 beta stream", args{"fedora-32", true, true}, "fedora-32-beta"},
-
 		{"fedora-33", args{"fedora-33", false, false}, "fedora-33"},
 		{"fedora-33 beta", args{"fedora-33", true, false}, "fedora-33-beta"},
 		{"fedora-33 stream", args{"fedora-33", false, true}, "fedora-33"},

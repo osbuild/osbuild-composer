@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora32"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -303,7 +303,7 @@ func Test_upgrade(t *testing.T) {
 		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
 		err = json.Unmarshal([]byte(file), &storeStruct)
 		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
-		arch, err := fedora32.New().GetArch("x86_64")
+		arch, err := fedora33.New().GetArch("x86_64")
 		assert.NoError(err)
 		store := newStoreFromV0(storeStruct, arch, nil)
 		assert.Equal(1, len(store.blueprints))
