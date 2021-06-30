@@ -311,10 +311,18 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 							Enabled: false,
 						},
 					},
+					SubMan: &RHSMStageOptionsSubMan{
+						Rhsm: &SubManConfigRHSMSection{
+							ManageRepos: common.BoolToPtr(false),
+						},
+						Rhsmcertd: &SubManConfigRHSMCERTDSection{
+							AutoRegistration: common.BoolToPtr(true),
+						},
+					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.rhsm","options":{"dnf-plugins":{"product-id":{"enabled":false},"subscription-manager":{"enabled":false}}}}`),
+				data: []byte(`{"type":"org.osbuild.rhsm","options":{"dnf-plugins":{"product-id":{"enabled":false},"subscription-manager":{"enabled":false}},"subscription-manager":{"rhsm":{"manage_repos":false},"rhsmcertd":{"auto_registration":true}}}}`),
 			},
 		},
 		{
