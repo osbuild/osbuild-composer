@@ -63,6 +63,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "dracut",
+			fields: fields{
+				Type:    "org.osbuild.dracut",
+				Options: &DracutStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.dracut","options":{"kernel":null}}`),
+			},
+		},
+		{
 			name: "dracut.conf",
 			fields: fields{
 				Type:    "org.osbuild.dracut.conf",
