@@ -780,6 +780,10 @@
             }
           },
           {
+            "type": "org.osbuild.fix-bls",
+            "options": {}
+          },
+          {
             "type": "org.osbuild.locale",
             "options": {
               "language": "en_US.UTF-8"
