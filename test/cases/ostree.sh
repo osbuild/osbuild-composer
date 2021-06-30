@@ -157,13 +157,7 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     if [[ $blueprint_name == upgrade ]]; then
-        # composer-cli in Fedora 32 has a different start-ostree arguments
-        # see https://github.com/weldr/lorax/pull/1051
-        if [[ "${ID}-${VERSION_ID}" == fedora-32 ]]; then
-            sudo composer-cli --json compose start-ostree "$blueprint_name" $IMAGE_TYPE "$OSTREE_REF" "$COMMIT_HASH" | tee "$COMPOSE_START"
-        else
-            sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
-        fi
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     else
         sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     fi
