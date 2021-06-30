@@ -14,8 +14,9 @@ import (
 	"os"
 
 	"github.com/kolo/xmlrpc"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/ubccr/kerby/khttp"
+
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type Koji struct {
@@ -314,9 +315,15 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 		HexDigest string `xmlrpc:"hexdigest"`
 	}
 
-	err = processXMLRPCResponse(body, &reply)
+	resp := xmlrpc.Response(body)
+
+	if resp.Err() != nil {
+		return fmt.Errorf("xmlrpc server returned an error: %v", resp.Err())
+	}
+
+	err = resp.Unmarshal(&reply)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
 	}
 
 	if reply.Size != len(chunk) {
