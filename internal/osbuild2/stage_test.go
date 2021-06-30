@@ -308,6 +308,57 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "sysconfig",
+			fields: fields{
+				Type:    "org.osbuild.sysconfig",
+				Options: &SysconfigStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sysconfig","options":{"kernel":{},"network":{}}}`),
+			},
+		},
+		{
+			name: "sysconfig-data",
+			fields: fields{
+				Type: "org.osbuild.sysconfig",
+				Options: &SysconfigStageOptions{
+					Kernel: SysconfigKernelOptions{
+						UpdateDefault: true,
+						DefaultKernel: "kernel",
+					},
+					Network: SysconfigNetworkOptions{
+						Networking: true,
+						NoZeroConf: true,
+					},
+					NetworkScripts: &NetworkScriptsOptions{
+						IfcfgFiles: map[string]IfcfgFile{
+							"eth0": {
+								Device:    "eth0",
+								Bootproto: IfcfgBootprotoDHCP,
+								OnBoot:    common.BoolToPtr(true),
+								Type:      IfcfgTypeEthernet,
+								UserCtl:   common.BoolToPtr(true),
+								PeerDNS:   common.BoolToPtr(true),
+								IPv6Init:  common.BoolToPtr(false),
+							},
+							"eth1": {
+								Device:    "eth1",
+								Bootproto: IfcfgBootprotoDHCP,
+								OnBoot:    common.BoolToPtr(true),
+								Type:      IfcfgTypeEthernet,
+								UserCtl:   common.BoolToPtr(false),
+								PeerDNS:   common.BoolToPtr(true),
+								IPv6Init:  common.BoolToPtr(true),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sysconfig","options":{"kernel":{"update_default":true,"default_kernel":"kernel"},"network":{"networking":true,"no_zero_conf":true},"network-scripts":{"ifcfg":{"eth0":{"bootproto":"dhcp","device":"eth0","ipv6init":false,"onboot":true,"peerdns":true,"type":"Ethernet","userctl":true},"eth1":{"bootproto":"dhcp","device":"eth1","ipv6init":true,"onboot":true,"peerdns":true,"type":"Ethernet","userctl":false}}}}}`),
+			},
+		},
+		{
 			name: "systemd",
 			fields: fields{
 				Type:    "org.osbuild.systemd",

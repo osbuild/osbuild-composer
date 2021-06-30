@@ -1,8 +1,18 @@
 package osbuild2
 
 type SysconfigStageOptions struct {
-	Kernel  SysconfigKernelOptions  `json:"kernel,omitempty"`
-	Network SysconfigNetworkOptions `json:"network,omitempty"`
+	Kernel         SysconfigKernelOptions  `json:"kernel,omitempty"`
+	Network        SysconfigNetworkOptions `json:"network,omitempty"`
+	NetworkScripts *NetworkScriptsOptions  `json:"network-scripts,omitempty"`
+}
+
+func (SysconfigStageOptions) isStageOptions() {}
+
+func NewSysconfigStage(options *SysconfigStageOptions) *Stage {
+	return &Stage{
+		Type:    "org.osbuild.sysconfig",
+		Options: options,
+	}
 }
 
 type SysconfigNetworkOptions struct {
@@ -15,11 +25,55 @@ type SysconfigKernelOptions struct {
 	DefaultKernel string `json:"default_kernel,omitempty"`
 }
 
-func (SysconfigStageOptions) isStageOptions() {}
+type NetworkScriptsOptions struct {
+	// Keys are interface names, values are objects containing interface configuration
+	IfcfgFiles map[string]IfcfgFile `json:"ifcfg,omitempty"`
+}
 
-func NewSysconfigStage(options *SysconfigStageOptions) *Stage {
-	return &Stage{
-		Type:    "org.osbuild.sysconfig",
-		Options: options,
-	}
+type IfcfgBootprotoValue string
+
+// Valid values for the 'Bootproto' item of 'IfcfgFile' struct
+const (
+	IfcfgBootprotoNone   IfcfgBootprotoValue = "none"
+	IfcfgBootprotoBootp  IfcfgBootprotoValue = "bootp"
+	IfcfgBootprotoDHCP   IfcfgBootprotoValue = "dhcp"
+	IfcfgBootprotoStatic IfcfgBootprotoValue = "static"
+	IfcfgBootprotoIbft   IfcfgBootprotoValue = "ibft"
+	IfcfgBootprotoAutoIP IfcfgBootprotoValue = "autoip"
+	IfcfgBootprotoShared IfcfgBootprotoValue = "shared"
+)
+
+type IfcfgTypeValue string
+
+// Valid values for the 'Type' item of 'IfcfgFile' struct
+const (
+	IfcfgTypeEthernet   IfcfgTypeValue = "Ethernet"
+	IfcfgTypeWireless   IfcfgTypeValue = "Wireless"
+	IfcfgTypeInfiniBand IfcfgTypeValue = "InfiniBand"
+	IfcfgTypeBridge     IfcfgTypeValue = "Bridge"
+	IfcfgTypeBond       IfcfgTypeValue = "Bond"
+	IfcfgTypeVLAN       IfcfgTypeValue = "Vlan"
+)
+
+type IfcfgFile struct {
+	// Method used for IPv4 protocol configuration
+	Bootproto IfcfgBootprotoValue `json:"bootproto,omitempty"`
+
+	// Interface name of the device
+	Device string `json:"device,omitempty"`
+
+	// Whether to initialize this device for IPv6 addressing
+	IPv6Init *bool `json:"ipv6init,omitempty"`
+
+	// Whether the connection should be autoconnected
+	OnBoot *bool `json:"onboot,omitempty"`
+
+	// Whether to modify /etc/resolv.conf
+	PeerDNS *bool `json:"peerdns,omitempty"`
+
+	// Base type of the connection
+	Type IfcfgTypeValue `json:"type,omitempty"`
+
+	// Whether non-root users are allowed to control the device
+	UserCtl *bool `json:"userctl,omitempty"`
 }
