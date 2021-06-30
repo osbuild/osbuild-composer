@@ -64,7 +64,9 @@ var packages = struct {
 			"grub2-ppc64le",
 			"grub2-ppc64le-modules",
 		},
-		s390x: nil,
+		s390x: []string{
+			"s390utils-core",
+		},
 	},
 	Qcow2: rpmmd.PackageSet{
 		Include: []string{
