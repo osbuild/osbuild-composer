@@ -227,6 +227,11 @@ func (c *Composer) Start() error {
 		}()
 	}
 
+	// defer func () {
+	// 	if workerserver
+	// 	heartbeat. start()
+	// }
+
 	// wait indefinitely
 	select {}
 }

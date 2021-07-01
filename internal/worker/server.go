@@ -39,6 +39,7 @@ type Server struct {
 	// and renamed to `$STATE_DIRECTORY/artifacts/$JOB_ID` once the job is
 	// reported as done.
 	running      map[uuid.UUID]uuid.UUID
+	heartbeat    map[uuid.UUID]time.Time
 	runningMutex sync.Mutex
 }
 
@@ -52,14 +53,16 @@ type JobStatus struct {
 var ErrTokenNotExist = errors.New("worker token does not exist")
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, identityFilter []string) *Server {
-
-	return &Server{
+	s := &Server{
 		jobs:           jobs,
 		logger:         logger,
 		artifactsDir:   artifactsDir,
 		identityFilter: identityFilter,
 		running:        make(map[uuid.UUID]uuid.UUID),
+		heartbeat:      make(map[uuid.UUID]time.Time),
 	}
+	go s.WatchHeartbeats()
+	return s
 }
 
 func (s *Server) Handler() http.Handler {
@@ -121,6 +124,36 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 			}
 		}
 		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
+	}
+}
+
+// This function should be started as a goroutine
+// Every 30 seconds it goes through all running jobs, removing any unresponsive ones.
+// It fails jobs which fail to check if they cancelled for more than 2 minutes.
+func (s *Server) WatchHeartbeats() {
+	//nolint:staticcheck // avoid SA1015
+	for range time.Tick(time.Second * 30) {
+		s.runningMutex.Lock()
+		now := time.Now()
+		for token, lastTime := range s.heartbeat {
+			if now.Sub(lastTime).Seconds() > 120 {
+				go func() {
+					log.Printf("Removing unresponsive job: %s\n", token)
+					result, err := json.Marshal(OSBuildJobResult{
+						Success: false,
+					})
+					if err != nil {
+						log.Printf("Error finishing unresponsive job: %v", err)
+						return
+					}
+					err = s.FinishJob(token, result)
+					if err != nil {
+						log.Printf("Error finishing unresponsive job: %v", err)
+					}
+				}()
+			}
+		}
+		s.runningMutex.Unlock()
 	}
 }
 
@@ -270,6 +303,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 	s.runningMutex.Lock()
 	defer s.runningMutex.Unlock()
 	s.running[token] = jobId
+	s.heartbeat[token] = time.Now()
 
 	if jobType == "osbuild:"+arch {
 		jobType = "osbuild"
@@ -288,6 +322,8 @@ func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
 	if !ok {
 		return uuid.Nil, ErrTokenNotExist
 	}
+	/* todo update heartbeat */
+	s.heartbeat[token] = time.Now()
 
 	return jobId, nil
 }
@@ -304,6 +340,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	// Always delete the running job, even if there are errors finishing
 	// the job, because callers won't call this a second time on error.
 	delete(s.running, token)
+	delete(s.heartbeat, token)
 
 	err := s.jobs.FinishJob(jobId, result)
 	if err != nil {
@@ -362,6 +399,11 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		DynamicArgs:      dynamicJobArgs,
 	})
 }
+
+// Jobs should check in every 15 seconds, if nothing was heard
+// for 2 minutes, assume the worker crashed and mark the job as failed
+
+// func (s *Server) WatchJobs() {}
 
 func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	token, err := uuid.Parse(tokenstr)
