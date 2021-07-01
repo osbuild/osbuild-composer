@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -305,4 +307,44 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 		EFI:          "images/efiboot.img",
 		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
 	}
+}
+
+func grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *blueprint.KernelCustomization, packages []rpmmd.PackageSpec, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+	if pt == nil {
+		panic("partition table must be defined for grub2 stage, this is a programming error")
+	}
+	rootPartition := pt.RootPartition()
+	if rootPartition == nil {
+		panic("root partition must be defined for grub2 stage, this is a programming error")
+	}
+
+	stageOptions := osbuild.GRUB2StageOptions{
+		RootFilesystemUUID: uuid.MustParse(rootPartition.Filesystem.UUID),
+		KernelOptions:      kernelOptions,
+		Legacy:             legacy,
+	}
+
+	if uefi {
+		stageOptions.UEFI = &osbuild.GRUB2UEFI{
+			Vendor: "redhat",
+		}
+	}
+
+	if !uefi {
+		stageOptions.Legacy = legacy
+	}
+
+	if kernel != nil {
+		if kernel.Append != "" {
+			stageOptions.KernelOptions += " " + kernel.Append
+		}
+		for _, pkg := range packages {
+			if pkg.Name == kernel.Name {
+				stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + pkg.Version + "-" + pkg.Release + "." + pkg.Arch
+				break
+			}
+		}
+	}
+
+	return &stageOptions
 }
