@@ -67,6 +67,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	var options StageOptions
 	var inputs Inputs
 	switch rawStage.Type {
+	case "org.osbuild.authselect":
+		options = new(AuthselectStageOptions)
 	case "org.osbuild.fix-bls":
 		options = new(FixBLSStageOptions)
 	case "org.osbuild.fstab":

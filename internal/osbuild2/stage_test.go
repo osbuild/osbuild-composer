@@ -54,6 +54,31 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "authselect",
+			fields: fields{
+				Type: "org.osbuild.authselect",
+				Options: &AuthselectStageOptions{
+					Profile: "sssd",
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile_id":"sssd"}}`),
+			},
+		},
+		{
+			name: "authselect-features",
+			fields: fields{
+				Type: "org.osbuild.authselect",
+				Options: &AuthselectStageOptions{
+					Profile:  "nis",
+					Features: []string{"with-ecryptfs", "with-mkhomedir"},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile_id":"nis","features":["with-ecryptfs","with-mkhomedir"]}}`),
+			},
+		},
+		{
 			name: "cloud-init",
 			fields: fields{
 				Type:    "org.osbuild.cloud-init",
