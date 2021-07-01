@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestStage_UnmarshalJSON(t *testing.T) {
@@ -83,13 +84,41 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "chrony",
+			name: "chrony-timeservers",
 			fields: fields{
-				Type:    "org.osbuild.chrony",
-				Options: &ChronyStageOptions{},
+				Type: "org.osbuild.chrony",
+				Options: &ChronyStageOptions{
+					Timeservers: []string{
+						"ntp1.example.com",
+						"ntp2.example.com",
+					},
+				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.chrony","options":{"timeservers":null}}`),
+				data: []byte(`{"type":"org.osbuild.chrony","options":{"timeservers":["ntp1.example.com","ntp2.example.com"]}}`),
+			},
+		},
+		{
+			name: "chrony-servers",
+			fields: fields{
+				Type: "org.osbuild.chrony",
+				Options: &ChronyStageOptions{
+					Servers: []ChronyConfigServer{
+						{
+							Hostname: "127.0.0.1",
+							Minpoll:  common.IntToPtr(0),
+							Maxpoll:  common.IntToPtr(4),
+							Iburst:   common.BoolToPtr(true),
+							Prefer:   common.BoolToPtr(false),
+						},
+						{
+							Hostname: "ntp.example.com",
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.chrony","options":{"servers":[{"hostname":"127.0.0.1","minpoll":0,"maxpoll":4,"iburst":true,"prefer":false},{"hostname":"ntp.example.com"}]}}`),
 			},
 		},
 		{
