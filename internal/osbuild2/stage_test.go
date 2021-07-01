@@ -269,6 +269,21 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "keymap-x11-keymap",
+			fields: fields{
+				Type: "org.osbuild.keymap",
+				Options: &KeymapStageOptions{
+					Keymap: "us",
+					X11Keymap: &X11KeymapOptions{
+						Layouts: []string{"cz"},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.keymap","options":{"keymap":"us","x11-keymap":{"layouts":["cz"]}}}`),
+			},
+		},
+		{
 			name: "modprobe",
 			fields: fields{
 				Type:    "org.osbuild.modprobe",
