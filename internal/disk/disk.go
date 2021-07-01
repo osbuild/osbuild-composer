@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 type PartitionTable struct {
@@ -65,6 +66,26 @@ func (pt PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
 // Generates org.osbuild.fstab stage options from this partition table.
 func (pt PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 	var options osbuild.FSTabStageOptions
+	for _, p := range pt.Partitions {
+		fs := p.Filesystem
+		if fs == nil {
+			continue
+		}
+
+		options.AddFilesystem(fs.UUID, fs.Type, fs.Mountpoint, fs.FSTabOptions, fs.FSTabFreq, fs.FSTabPassNo)
+	}
+
+	// sort the entries by PassNo to maintain backward compatibility
+	sort.Slice(options.FileSystems, func(i, j int) bool {
+		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
+	})
+
+	return &options
+}
+
+// Generates org.osbuild.fstab stage options from this partition table.
+func (pt PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
+	var options osbuild2.FSTabStageOptions
 	for _, p := range pt.Partitions {
 		fs := p.Filesystem
 		if fs == nil {
