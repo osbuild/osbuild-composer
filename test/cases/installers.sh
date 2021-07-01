@@ -231,7 +231,6 @@ sudo composer-cli blueprints depsolve installer
 # Build installer image.
 build_image installer tar-installer
 
-COMPOSE_ID=7108ede0-b2e4-45ae-8f1b-c1681d4ba18c
 # Download the image
 greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
