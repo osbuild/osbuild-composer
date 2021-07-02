@@ -13,7 +13,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,18 +27,6 @@ type Server struct {
 	logger         *log.Logger
 	artifactsDir   string
 	identityFilter []string
-
-	// Currently running jobs. Workers are not handed job ids, but
-	// independent tokens which serve as an indirection. This enables
-	// race-free uploading of artifacts and makes restarting composer more
-	// robust (workers from an old run cannot report results for jobs
-	// composer thinks are not running).
-	// This map maps these tokens to job ids. Artifacts are stored in
-	// `$STATE_DIRECTORY/artifacts/tmp/$TOKEN` while the worker is running,
-	// and renamed to `$STATE_DIRECTORY/artifacts/$JOB_ID` once the job is
-	// reported as done.
-	running      map[uuid.UUID]uuid.UUID
-	runningMutex sync.Mutex
 }
 
 type JobStatus struct {
@@ -49,7 +36,8 @@ type JobStatus struct {
 	Canceled bool
 }
 
-var ErrTokenNotExist = errors.New("worker token does not exist")
+var ErrInvalidToken = errors.New("token does not exist")
+var ErrJobNotRunning = errors.New("job isn't running")
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, identityFilter []string) *Server {
 
@@ -58,7 +46,6 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, 
 		logger:         logger,
 		artifactsDir:   artifactsDir,
 		identityFilter: identityFilter,
-		running:        make(map[uuid.UUID]uuid.UUID),
 	}
 }
 
@@ -236,8 +223,6 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 }
 
 func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	token := uuid.New()
-
 	// treat osbuild jobs specially until we have found a generic way to
 	// specify dequeuing restrictions. For now, we only have one
 	// restriction: arch for osbuild jobs.
@@ -249,7 +234,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jts = append(jts, t)
 	}
 
-	jobId, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jts)
+	jobId, token, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jts)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
@@ -267,47 +252,34 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		}
 	}
 
-	s.runningMutex.Lock()
-	defer s.runningMutex.Unlock()
-	s.running[token] = jobId
-
 	if jobType == "osbuild:"+arch {
 		jobType = "osbuild"
 	} else if jobType == "osbuild-koji:"+arch {
 		jobType = "osbuild-koji"
 	}
 
-	return token, jobId, jobType, args, dynamicArgs, nil
-}
-
-func (s *Server) RunningJob(token uuid.UUID) (uuid.UUID, error) {
-	s.runningMutex.Lock()
-	defer s.runningMutex.Unlock()
-
-	jobId, ok := s.running[token]
-	if !ok {
-		return uuid.Nil, ErrTokenNotExist
-	}
-
-	return jobId, nil
+	return jobId, token, jobType, args, dynamicArgs, nil
 }
 
 func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
-	s.runningMutex.Lock()
-	defer s.runningMutex.Unlock()
-
-	jobId, ok := s.running[token]
-	if !ok {
-		return ErrTokenNotExist
+	jobId, err := s.jobs.IdFromToken(token)
+	if err != nil {
+		switch err {
+		case jobqueue.ErrNotExist:
+			return ErrInvalidToken
+		default:
+			return err
+		}
 	}
 
-	// Always delete the running job, even if there are errors finishing
-	// the job, because callers won't call this a second time on error.
-	delete(s.running, token)
-
-	err := s.jobs.FinishJob(jobId, result)
+	err = s.jobs.FinishJob(jobId, result)
 	if err != nil {
-		return fmt.Errorf("error finishing job: %v", err)
+		switch err {
+		case jobqueue.ErrNotRunning:
+			return ErrJobNotRunning
+		default:
+			return fmt.Errorf("error finishing job: %v", err)
+		}
 	}
 
 	// Move artifacts from the temporary location to the final job
@@ -343,7 +315,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	token, jobId, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
+	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
 	if err != nil {
 		return err
 	}
@@ -369,11 +341,11 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
 	}
 
-	jobId, err := h.server.RunningJob(token)
+	jobId, err := h.server.jobs.IdFromToken(token)
 	if err != nil {
 		switch err {
-		case ErrTokenNotExist:
-			return echo.NewHTTPError(http.StatusNotFound, "not found")
+		case jobqueue.ErrNotExist:
+			return ErrInvalidToken
 		default:
 			return err
 		}
@@ -408,7 +380,9 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	err = h.server.FinishJob(token, body.Result)
 	if err != nil {
 		switch err {
-		case ErrTokenNotExist:
+		case ErrInvalidToken:
+			fallthrough
+		case ErrJobNotRunning:
 			return echo.NewHTTPError(http.StatusNotFound, "not found")
 		default:
 			return err

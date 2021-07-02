@@ -41,7 +41,7 @@ type JobQueue interface {
 	//
 	// Returns the job's id, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
-	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Mark the job with `id` as finished. `result` must fit the associated
 	// job type and must be serializable to JSON.
@@ -62,6 +62,9 @@ type JobQueue interface {
 
 	// Job returns all the parameters that define a job (everything provided during Enqueue).
 	Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error)
+
+	// Find job by token, this will return an error if the job hasn't been dequeued
+	IdFromToken(token uuid.UUID) (id uuid.UUID, err error)
 }
 
 var (
