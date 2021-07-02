@@ -34,12 +34,5 @@
         "commit": "ace07f2656485cb3b820857d0401b75499799262"
       }
     }
-  },
-  "centos-8": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "eb74ddf2ef8c203b5d354dfb97adee65babdc147"
-      }
-    }
   }
 }
