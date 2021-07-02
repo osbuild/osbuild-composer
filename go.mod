@@ -1,6 +1,6 @@
 module github.com/osbuild/osbuild-composer
 
-go 1.14
+go 1.15
 
 require (
 	cloud.google.com/go v0.75.0
