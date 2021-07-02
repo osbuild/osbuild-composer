@@ -268,6 +268,7 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
+liveimg --url=file:///liveimg.tar
 poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
