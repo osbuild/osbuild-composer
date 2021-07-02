@@ -40,6 +40,17 @@ type fsJobQueue struct {
 	// Maps job ids to the jobs that depend on it, if any of those
 	// dependants have not yet finished.
 	dependants map[uuid.UUID][]uuid.UUID
+
+	// Currently running jobs. Workers are not handed job ids, but
+	// independent tokens which serve as an indirection. This enables
+	// race-free uploading of artifacts and makes restarting composer more
+	// robust (workers from an old run cannot report results for jobs
+	// composer thinks are not running).
+	// This map maps these tokens to job ids. Artifacts are stored in
+	// `$STATE_DIRECTORY/artifacts/tmp/$TOKEN` while the worker is running,
+	// and renamed to `$STATE_DIRECTORY/artifacts/$JOB_ID` once the job is
+	// reported as done.
+	jobIdByToken map[uuid.UUID]uuid.UUID
 }
 
 // On-disk job struct. Contains all necessary (but non-redundant) information
@@ -47,6 +58,7 @@ type fsJobQueue struct {
 // (de)serialized on each access.
 type job struct {
 	Id           uuid.UUID       `json:"id"`
+	Token        uuid.UUID       `json:"token"`
 	Type         string          `json:"type"`
 	Args         json.RawMessage `json:"args,omitempty"`
 	Dependencies []uuid.UUID     `json:"dependencies"`
@@ -68,9 +80,10 @@ const channelSize = 100
 // loaded and rescheduled to run if necessary.
 func New(dir string) (*fsJobQueue, error) {
 	q := &fsJobQueue{
-		db:         jsondb.New(dir, 0600),
-		pending:    make(map[string]chan uuid.UUID),
-		dependants: make(map[uuid.UUID][]uuid.UUID),
+		db:           jsondb.New(dir, 0600),
+		pending:      make(map[string]chan uuid.UUID),
+		dependants:   make(map[uuid.UUID][]uuid.UUID),
+		jobIdByToken: make(map[uuid.UUID]uuid.UUID),
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
@@ -78,15 +91,30 @@ func New(dir string) (*fsJobQueue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error listing jobs: %v", err)
 	}
+
 	for _, id := range ids {
-		uuid, err := uuid.Parse(id)
+		jobId, err := uuid.Parse(id)
 		if err != nil {
 			return nil, fmt.Errorf("invalid job '%s' in db: %v", id, err)
 		}
-		j, err := q.readJob(uuid)
+		j, err := q.readJob(jobId)
 		if err != nil {
 			return nil, err
 		}
+
+		// If a job is running, and not cancelled, track the token
+		if !j.StartedAt.IsZero() && j.FinishedAt.IsZero() && !j.Canceled {
+			// Fail older running jobs which don't have a token stored
+			if j.Token == uuid.Nil {
+				err = q.FinishJob(j.Id, nil)
+				if err != nil {
+					return nil, fmt.Errorf("Error finishing job '%s' without a token: %v", j.Id, err)
+				}
+			} else {
+				q.jobIdByToken[j.Token] = j.Id
+			}
+		}
+
 		err = q.maybeEnqueue(j, true)
 		if err != nil {
 			return nil, err
@@ -102,6 +130,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 
 	var j = job{
 		Id:           uuid.New(),
+		Token:        uuid.Nil,
 		Type:         jobType,
 		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
@@ -140,13 +169,13 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
-		return uuid.Nil, nil, "", nil, err
+		return uuid.Nil, uuid.Nil, nil, "", nil, err
 	}
 
 	// Filter q.pending by the `jobTypes`. Ignore those job types that this
@@ -180,12 +209,12 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		}
 
 		if err != nil {
-			return uuid.Nil, nil, "", nil, err
+			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
 
 		j, err = q.readJob(id)
 		if err != nil {
-			return uuid.Nil, nil, "", nil, err
+			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
 
 		if !j.Canceled {
@@ -195,12 +224,15 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 
 	j.StartedAt = time.Now()
 
+	j.Token = uuid.New()
+	q.jobIdByToken[j.Token] = j.Id
+
 	err := q.db.Write(j.Id.String(), j)
 	if err != nil {
-		return uuid.Nil, nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
+		return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
 	}
 
-	return j.Id, j.Dependencies, j.Type, j.Args, nil
+	return j.Id, j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
 func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
@@ -226,6 +258,9 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling result: %v", err)
 	}
+
+	delete(q.jobIdByToken, j.Token)
+	j.Token = uuid.Nil
 
 	// Write before notifying dependants, because it will be read again.
 	err = q.db.Write(id.String(), j)
@@ -298,6 +333,16 @@ func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, de
 	dependencies = j.Dependencies
 
 	return
+}
+
+func (q *fsJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	id, ok := q.jobIdByToken[token]
+	if !ok {
+		return uuid.Nil, jobqueue.ErrNotExist
+	}
+	return id, nil
 }
 
 // Reads job with `id`. This is a thin wrapper around `q.db.Read`, which

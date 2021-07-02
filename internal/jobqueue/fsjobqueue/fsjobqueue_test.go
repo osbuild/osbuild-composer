@@ -43,9 +43,10 @@ func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interfa
 }
 
 func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result interface{}, deps []uuid.UUID) uuid.UUID {
-	id, d, typ, args, err := q.Dequeue(context.Background(), []string{jobType})
+	id, tok, d, typ, args, err := q.Dequeue(context.Background(), []string{jobType})
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
+	require.NotEmpty(t, tok)
 	require.ElementsMatch(t, deps, d)
 	require.Equal(t, jobType, typ)
 	require.NotNil(t, args)
@@ -75,6 +76,24 @@ func TestErrors(t *testing.T) {
 	id, err = q.Enqueue("test", "arg0", []uuid.UUID{uuid.New()})
 	require.Error(t, err)
 	require.Equal(t, uuid.Nil, id)
+
+	// token gets removed
+	pushTestJob(t, q, "octopus", nil, nil)
+	id, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"})
+	require.NoError(t, err)
+	require.NotEmpty(t, tok)
+
+	idFromT, err := q.IdFromToken(tok)
+	require.NoError(t, err)
+	require.Equal(t, id, idFromT)
+
+	err = q.FinishJob(id, nil)
+	require.NoError(t, err)
+
+	// Make sure the token gets removed
+	id, err = q.IdFromToken(tok)
+	require.Equal(t, uuid.Nil, id)
+	require.Equal(t, jobqueue.ErrNotExist, err)
 }
 
 func TestArgs(t *testing.T) {
@@ -94,9 +113,10 @@ func TestArgs(t *testing.T) {
 
 	var parsedArgs argument
 
-	id, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"})
+	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"})
 	require.NoError(t, err)
 	require.Equal(t, two, id)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "octopus", typ)
 	err = json.Unmarshal(args, &parsedArgs)
@@ -110,9 +130,10 @@ func TestArgs(t *testing.T) {
 	require.Equal(t, deps, jdeps)
 	require.Equal(t, typ, jtype)
 
-	id, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
+	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"})
 	require.NoError(t, err)
 	require.Equal(t, one, id)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "fish", typ)
 	err = json.Unmarshal(args, &parsedArgs)
@@ -141,9 +162,10 @@ func TestJobTypes(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	id, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"})
+	id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"})
 	require.Equal(t, err, context.Canceled)
 	require.Equal(t, uuid.Nil, id)
+	require.Equal(t, uuid.Nil, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "", typ)
 	require.Nil(t, args)
@@ -229,9 +251,10 @@ func TestMultipleWorkers(t *testing.T) {
 		defer close(done)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		id, deps, typ, args, err := q.Dequeue(ctx, []string{"octopus"})
+		id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"octopus"})
 		require.NoError(t, err)
 		require.NotEmpty(t, id)
+		require.NotEmpty(t, tok)
 		require.Empty(t, deps)
 		require.Equal(t, "octopus", typ)
 		require.Equal(t, json.RawMessage("null"), args)
@@ -243,9 +266,10 @@ func TestMultipleWorkers(t *testing.T) {
 
 	// This call to Dequeue() should not block on the one in the goroutine.
 	id := pushTestJob(t, q, "clownfish", nil, nil)
-	r, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
@@ -278,9 +302,10 @@ func TestCancel(t *testing.T) {
 	// Cancel a running job, which should not dequeue the canceled job from above
 	id = pushTestJob(t, q, "clownfish", nil, nil)
 	require.NotEmpty(t, id)
-	r, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
@@ -296,9 +321,10 @@ func TestCancel(t *testing.T) {
 	// Cancel a finished job, which is a no-op
 	id = pushTestJob(t, q, "clownfish", nil, nil)
 	require.NotEmpty(t, id)
-	r, deps, typ, args, err = q.Dequeue(context.Background(), []string{"clownfish"})
+	r, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"clownfish"})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)

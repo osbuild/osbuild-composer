@@ -235,7 +235,7 @@ func TestCompose(t *testing.T) {
 		wg.Add(1)
 
 		go func(t *testing.T, result worker.KojiInitJobResult) {
-			token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-init"})
+			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-init"})
 			require.NoError(t, err)
 			require.Equal(t, "koji-init", jobType)
 
@@ -287,7 +287,7 @@ func TestCompose(t *testing.T) {
 			c.composeReplyCode, c.composeReply, "id")
 		wg.Wait()
 
-		token, _, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
+		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -302,7 +302,7 @@ func TestCompose(t *testing.T) {
 		require.NoError(t, err)
 		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
 
-		token, _, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
+		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -324,7 +324,7 @@ func TestCompose(t *testing.T) {
 			}
 		}`, test_distro.TestArchName, test_distro.TestDistroName), http.StatusOK, `{}`)
 
-		token, finalizeID, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-finalize"})
+		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-finalize"})
 		require.NoError(t, err)
 		require.Equal(t, "koji-finalize", jobType)
 
