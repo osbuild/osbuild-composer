@@ -338,3 +338,33 @@ func TestCancel(t *testing.T) {
 	err = json.Unmarshal(result, &testResult{})
 	require.NoError(t, err)
 }
+
+func TestHeartbeats(t *testing.T) {
+	q, dir := newTemporaryQueue(t)
+	defer cleanupTempDir(t, dir)
+
+	id := pushTestJob(t, q, "octopus", nil, nil)
+	// No heartbeats for queued job
+	require.Empty(t, q.Heartbeats(time.Second*0))
+
+	r, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+	require.NotEmpty(t, tok)
+
+	tokens := q.Heartbeats(time.Second * 0)
+	require.Contains(t, tokens, tok)
+	require.Empty(t, q.Heartbeats(time.Hour*24))
+
+	id2, err := q.IdFromToken(tok)
+	require.NoError(t, err)
+	require.Equal(t, id, id2)
+
+	err = q.FinishJob(id, &testResult{})
+	require.NoError(t, err)
+
+	// No heartbeats for finished job
+	require.Empty(t, q.Heartbeats(time.Second*0))
+	_, err = q.IdFromToken(tok)
+	require.Equal(t, jobqueue.ErrNotExist, err)
+}
