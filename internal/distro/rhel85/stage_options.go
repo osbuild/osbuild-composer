@@ -34,12 +34,14 @@ func rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {
 	}
 }
 
-func selinuxStageOptions(bootISO bool) *osbuild.SELinuxStageOptions {
-
+// selinuxStageOptions returns the options for the org.osbuild.selinux stage.
+// Setting the argument to 'true' relabels the '/usr/bin/cp' and '/usr/bin/tar'
+// binaries with 'install_exec_t'. This should be set in the build root.
+func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 	options := &osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 	}
-	if bootISO {
+	if labelcp {
 		options.Labels = map[string]string{
 			"/usr/bin/cp":  "system_u:object_r:install_exec_t:s0",
 			"/usr/bin/tar": "system_u:object_r:install_exec_t:s0",
