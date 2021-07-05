@@ -310,7 +310,7 @@
       block:
         - assert:
             that:
-              - result_dmesg_error.stdout == ""
+              - "'sha512_generic: module verification failed: signature and/or required key missing - tainting kernel' in result_dmesg_error.stdout or result_dmesg_error.stdout == ''"
             fail_msg: "found error or fail log in rt kernel test"
             success_msg: "no error or fail log found"
       always:
