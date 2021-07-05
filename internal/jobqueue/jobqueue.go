@@ -65,6 +65,12 @@ type JobQueue interface {
 
 	// Find job by token, this will return an error if the job hasn't been dequeued
 	IdFromToken(token uuid.UUID) (id uuid.UUID, err error)
+
+	// Get a list of tokens which haven't been updated in the specified time frame
+	Heartbeats(olderThan time.Duration) (tokens []uuid.UUID)
+
+	// Reset the last heartbeat time to time.Now()
+	RefreshHeartbeat(token uuid.UUID)
 }
 
 var (

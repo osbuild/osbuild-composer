@@ -40,13 +40,14 @@ var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, identityFilter []string) *Server {
-
-	return &Server{
+	s := &Server{
 		jobs:           jobs,
 		logger:         logger,
 		artifactsDir:   artifactsDir,
 		identityFilter: identityFilter,
 	}
+	go s.WatchHeartbeats()
+	return s
 }
 
 func (s *Server) Handler() http.Handler {
@@ -108,6 +109,23 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 			}
 		}
 		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
+	}
+}
+
+// This function should be started as a goroutine
+// Every 30 seconds it goes through all running jobs, removing any unresponsive ones.
+// It fails jobs which fail to check if they cancelled for more than 2 minutes.
+func (s *Server) WatchHeartbeats() {
+	//nolint:staticcheck // avoid SA1015, this is an endless function
+	for range time.Tick(time.Second * 30) {
+		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
+			id, _ := s.jobs.IdFromToken(token)
+			log.Printf("Removing unresponsive job: %s\n", id)
+			err := s.FinishJob(token, nil)
+			if err != nil {
+				log.Printf("Error finishing unresponsive job: %v", err)
+			}
+		}
 	}
 }
 
@@ -354,6 +372,8 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	if jobId == uuid.Nil {
 		return ctx.JSON(http.StatusOK, getJobResponse{})
 	}
+
+	h.server.jobs.RefreshHeartbeat(token)
 
 	status, _, err := h.server.JobStatus(jobId, &json.RawMessage{})
 	if err != nil {

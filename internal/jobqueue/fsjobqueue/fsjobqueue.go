@@ -51,6 +51,7 @@ type fsJobQueue struct {
 	// and renamed to `$STATE_DIRECTORY/artifacts/$JOB_ID` once the job is
 	// reported as done.
 	jobIdByToken map[uuid.UUID]uuid.UUID
+	heartbeats   map[uuid.UUID]time.Time // token -> heartbeat
 }
 
 // On-disk job struct. Contains all necessary (but non-redundant) information
@@ -84,6 +85,7 @@ func New(dir string) (*fsJobQueue, error) {
 		pending:      make(map[string]chan uuid.UUID),
 		dependants:   make(map[uuid.UUID][]uuid.UUID),
 		jobIdByToken: make(map[uuid.UUID]uuid.UUID),
+		heartbeats:   make(map[uuid.UUID]time.Time),
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
@@ -112,6 +114,7 @@ func New(dir string) (*fsJobQueue, error) {
 				}
 			} else {
 				q.jobIdByToken[j.Token] = j.Id
+				q.heartbeats[j.Token] = time.Now()
 			}
 		}
 
@@ -226,6 +229,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 
 	j.Token = uuid.New()
 	q.jobIdByToken[j.Token] = j.Id
+	q.heartbeats[j.Token] = time.Now()
 
 	err := q.db.Write(j.Id.String(), j)
 	if err != nil {
@@ -259,6 +263,7 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return fmt.Errorf("error marshaling result: %v", err)
 	}
 
+	delete(q.heartbeats, j.Token)
 	delete(q.jobIdByToken, j.Token)
 	j.Token = uuid.Nil
 
@@ -297,6 +302,8 @@ func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
 	}
 
 	j.Canceled = true
+
+	delete(q.heartbeats, j.Token)
 
 	err = q.db.Write(id.String(), j)
 	if err != nil {
@@ -343,6 +350,28 @@ func (q *fsJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {
 		return uuid.Nil, jobqueue.ErrNotExist
 	}
 	return id, nil
+}
+
+// Retrieve a list of tokens tied to jobs, which most recent action has been
+// olderThan time ago
+func (q *fsJobQueue) Heartbeats(olderThan time.Duration) (tokens []uuid.UUID) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	now := time.Now()
+	for token, hb := range q.heartbeats {
+		if now.Sub(hb) > olderThan {
+			tokens = append(tokens, token)
+		}
+	}
+	return
+}
+
+func (q *fsJobQueue) RefreshHeartbeat(token uuid.UUID) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if token != uuid.Nil {
+		q.heartbeats[token] = time.Now()
+	}
 }
 
 // Reads job with `id`. This is a thin wrapper around `q.db.Read`, which

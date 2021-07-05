@@ -530,56 +530,82 @@ esac
 # the server's response in case of an error.
 #
 
-OUTPUT=$(curl \
-  --silent \
-  --show-error \
-  --cacert /etc/osbuild-composer/ca-crt.pem \
-  --key /etc/osbuild-composer/client-key.pem \
-  --cert /etc/osbuild-composer/client-crt.pem \
-  --header 'Content-Type: application/json' \
-  --request POST \
-  --data @"$REQUEST_FILE" \
-  https://localhost/api/composer/v1/compose)
+function sendCompose() {
+    OUTPUT=$(curl \
+                 --silent \
+                 --show-error \
+                 --cacert /etc/osbuild-composer/ca-crt.pem \
+                 --key /etc/osbuild-composer/client-key.pem \
+                 --cert /etc/osbuild-composer/client-crt.pem \
+                 --header 'Content-Type: application/json' \
+                 --request POST \
+                 --data @"$REQUEST_FILE" \
+                 https://localhost/api/composer/v1/compose)
 
+    COMPOSE_ID=$(echo "$OUTPUT" | jq -r '.id')
+}
 
-COMPOSE_ID=$(echo "$OUTPUT" | jq -r '.id')
+function waitForState() {
+    local DESIRED_STATE="${1:-success}"
+    while true
+    do
+        OUTPUT=$(curl \
+                     --silent \
+                     --show-error \
+                     --cacert /etc/osbuild-composer/ca-crt.pem \
+                     --key /etc/osbuild-composer/client-key.pem \
+                     --cert /etc/osbuild-composer/client-crt.pem \
+                     https://localhost/api/composer/v1/compose/"$COMPOSE_ID")
 
-while true
-do
-  OUTPUT=$(curl \
-    --silent \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v1/compose/"$COMPOSE_ID")
+        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
+        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
+        UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
+        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
 
-  COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-  UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
-  UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
-  UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
+        case "$COMPOSE_STATUS" in
+            "$DESIRED_STATE")
+                break
+                ;;
+            # all valid status values for a compose which hasn't finished yet
+            "pending"|"building"|"uploading"|"registering")
+                ;;
+            # default undesired state
+            "failure")
+                echo "Image compose failed"
+                exit 1
+                ;;
+            *)
+                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+                exit 1
+                ;;
+        esac
 
-  case "$COMPOSE_STATUS" in
-    # valid status values for compose which is not yet finished
-    "pending"|"building"|"uploading"|"registering")
-      ;;
-    "success")
-      test "$UPLOAD_STATUS" = "success"
-      test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
-      break
-      ;;
-    "failure")
-      echo "Image compose failed"
-      exit 1
-      ;;
-    *)
-      echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-      exit 1
-      ;;
-  esac
+        sleep 30
+    done
+}
 
-  sleep 30
-done
+# a pending shouldn't state shouldn't trip up the heartbeats
+sudo systemctl stop "osbuild-worker@*"
+sendCompose
+waitForState "pending"
+# jobs time out after 2 minutes, so 180 seconds gives ample time to make sure it
+# doesn't time out for pending jobs
+sleep 180
+waitForState "pending"
+
+# crashed/stopped/killed worker should result in a failed state
+sudo systemctl start "osbuild-worker@1"
+waitForState "building"
+sudo systemctl stop "osbuild-worker@*"
+waitForState "failure"
+sudo systemctl start "osbuild-worker@1"
+
+# full integration case
+sendCompose
+waitForState
+test "$UPLOAD_STATUS" = "success"
+test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+
 
 #
 # Verify the Cloud-provider specific upload_status options
