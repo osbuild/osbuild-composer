@@ -166,7 +166,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	p.Name = "build"
 	p.Runner = "org.osbuild.rhel85"
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(buildPackageSpecs)))
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(true)))
 	return p
 }
 
