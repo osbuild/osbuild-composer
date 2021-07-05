@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+# Don't overwrite CI statuses on GitHub branches for nightly pipelines
+if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
+    exit 0
+fi
+
 if [[ $1 == "start" ]]; then
   GITHUB_NEW_STATE="pending"
   GITHUB_NEW_DESC="I'm currently testing this commit, be patient."
