@@ -170,36 +170,37 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) ([]*osbuild.Stage, error) {
-	stages := make([]*osbuild.Stage, 0)
-	stages = append(stages, osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	stages = append(stages, osbuild.NewFixBLSStage())
+func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+	p := new(osbuild.Pipeline)
+	p.Name = "os"
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewFixBLSStage())
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
-		stages = append(stages, osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		stages = append(stages, osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	}
 	if keyboard != nil {
-		stages = append(stages, osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
 	}
 	if hostname := c.GetHostname(); hostname != nil {
-		stages = append(stages, osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
 	}
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
-		stages = append(stages, osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		stages = append(stages, osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
 	}
 
 	if len(ntpServers) > 0 {
-		stages = append(stages, osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		stages = append(stages, osbuild.NewGroupsStage(groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
 	}
 
 	if users := c.GetUsers(); len(users) > 0 {
@@ -207,22 +208,19 @@ func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *bluep
 		if err != nil {
 			return nil, err
 		}
-		stages = append(stages, osbuild.NewUsersStage(userOptions))
-		// TODO: First boot stage for users should be OSTree only
-		stages = append(stages, osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+		p.AddStage(osbuild.NewUsersStage(userOptions))
 	}
 
 	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		stages = append(stages, osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
-		stages = append(stages, osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
-	stages = append(stages, osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	stages = append(stages, osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
 		Kernel: osbuild.SysconfigKernelOptions{
 			UpdateDefault: true,
 			DefaultKernel: "kernel",
@@ -241,25 +239,13 @@ func coreStages(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *bluep
 			commands = append(commands, "/usr/bin/insights-client --register")
 		}
 
-		stages = append(stages, osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
 			Commands:       commands,
 			WaitForNetwork: true,
 		},
 		))
 	}
-
-	return stages, nil
-}
-
-func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
-	p := new(osbuild.Pipeline)
-	p.Name = "os"
-	stages, err := coreStages(repos, packages, c, options, enabledServices, disabledServices, defaultTarget)
-	if err != nil {
-		return nil, err
-	}
-	p.Stages = stages
-
+	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	return p, nil
 }
 
@@ -268,12 +254,81 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
 
-	stages, err := coreStages(repos, packages, c, options, enabledServices, disabledServices, defaultTarget)
-	if err != nil {
-		return nil, err
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewFixBLSStage())
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+	} else {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	}
-	p.Stages = stages
+	if keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	}
+	if hostname := c.GetHostname(); hostname != nil {
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+	}
 
+	timezone, ntpServers := c.GetTimezoneSettings()
+	if timezone != nil {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+	} else {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+	}
+
+	if len(ntpServers) > 0 {
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	}
+
+	if groups := c.GetGroups(); len(groups) > 0 {
+		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+	}
+
+	if users := c.GetUsers(); len(users) > 0 {
+		userOptions, err := userStageOptions(users)
+		if err != nil {
+			return nil, err
+		}
+		p.AddStage(osbuild.NewUsersStage(userOptions))
+		p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+	}
+
+	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	}
+
+	if firewall := c.GetFirewall(); firewall != nil {
+		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+	}
+
+	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
+	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+		Kernel: osbuild.SysconfigKernelOptions{
+			UpdateDefault: true,
+			DefaultKernel: "kernel",
+		},
+		Network: osbuild.SysconfigNetworkOptions{
+			Networking: true,
+			NoZeroConf: true,
+		},
+	}))
+
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+
+		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		},
+		))
+	}
+
+	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 		EtcGroupMembers: []string{
 			// NOTE: We may want to make this configurable.
