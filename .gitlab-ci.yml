@@ -82,6 +82,7 @@ Prepare-rhel-internal:
     matrix:
       - RUNNER:
           - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -133,6 +134,7 @@ Regression:
           - aws/centos-stream-8-aarch64
       - RUNNER:
           - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -157,8 +159,6 @@ OSTree:
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
-          # do we want centos as well ?
-          # do we want secondary architectures here ??
 
 New OSTree:
   stage: test
