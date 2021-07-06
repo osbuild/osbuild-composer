@@ -3,9 +3,12 @@ package rhel85
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -47,6 +50,13 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
+
+	diskfile := "disk.img"
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch.legacy)
+	pipelines = append(pipelines, *imagePipeline)
+
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename)
+	pipelines = append(pipelines, *qemuPipeline)
 
 	return pipelines, nil
 }
@@ -363,7 +373,7 @@ func tarStage(source, filename string) *osbuild.Stage {
 	tree := new(osbuild.TarStageInput)
 	tree.Type = "org.osbuild.tree"
 	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{fmt.Sprintf("name:%s", source)}
+	tree.References = []string{"name:" + source}
 	return osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: filename}, &osbuild.TarStageInputs{Tree: tree})
 }
 
@@ -483,5 +493,100 @@ func bootISOPipeline(filename string, arch string) *osbuild.Pipeline {
 	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, arch), xorrisofsStageInputs()))
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: filename}))
 
+	return p
+}
+
+func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk.PartitionTable, platform string) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = "image"
+	p.Build = "name:build"
+
+	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: outputFilename})
+	p.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{Filename: outputFilename, Size: fmt.Sprintf("%d", pt.Size)}))
+	sfOptions, sfDevices := sfdiskStageOptions(pt, loopback)
+	p.AddStage(osbuild.NewSfdiskStage(sfOptions, sfDevices))
+
+	for _, stage := range mkfsStages(pt, loopback) {
+		p.AddStage(stage)
+	}
+
+	inputName := "root-tree"
+	copyOptions, copyDevices, copyMounts := copyFSTreeOptions(inputName, inputPipelineName, pt, loopback)
+	copyInputs := copyPipelineTreeInputs(inputName, inputPipelineName)
+	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+
+	p.AddStage(osbuild.NewGrub2InstStage(grub2InstStageOptions(outputFilename, pt, 2, platform)))
+
+	return p
+}
+
+// mkfsStages generates a list of org.osbuild.mkfs.* stages based on a
+// partition table description for a single device node
+func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild2.Stage {
+	stages := make([]*osbuild2.Stage, 0, len(pt.Partitions))
+
+	// assume loopback device for simplicity since it's the only one currently supported
+	// panic if the conversion fails
+	devOptions, ok := device.Options.(*osbuild.LoopbackDeviceOptions)
+	if !ok {
+		panic("mkfsStages: failed to convert device options to loopback options")
+	}
+
+	for _, p := range pt.Partitions {
+		if p.Filesystem == nil {
+			// no filesystem for partition (e.g., BIOS boot)
+			continue
+		}
+		var stage *osbuild.Stage
+		stageDevice := osbuild.NewLoopbackDevice(
+			&osbuild.LoopbackDeviceOptions{
+				Filename: devOptions.Filename,
+				Start:    p.Start,
+				Size:     p.Size,
+			},
+		)
+		switch p.Filesystem.Type {
+		case "xfs":
+			options := &osbuild.MkfsXfsStageOptions{
+				UUID:  p.Filesystem.UUID,
+				Label: p.Filesystem.Label,
+			}
+			devices := &osbuild.MkfsXfsStageDevices{Device: *stageDevice}
+			stage = osbuild.NewMkfsXfsStage(options, devices)
+		case "vfat":
+			options := &osbuild.MkfsFATStageOptions{
+				VolID: strings.Replace(p.Filesystem.UUID, "-", "", -1),
+			}
+			devices := &osbuild.MkfsFATStageDevices{Device: *stageDevice}
+			stage = osbuild.NewMkfsFATStage(options, devices)
+		case "btrfs":
+			options := &osbuild.MkfsBtrfsStageOptions{
+				UUID:  p.Filesystem.UUID,
+				Label: p.Filesystem.Label,
+			}
+			devices := &osbuild.MkfsBtrfsStageDevices{Device: *stageDevice}
+			stage = osbuild.NewMkfsBtrfsStage(options, devices)
+		case "ext4":
+			options := &osbuild.MkfsExt4StageOptions{
+				UUID:  p.Filesystem.UUID,
+				Label: p.Filesystem.Label,
+			}
+			devices := &osbuild.MkfsExt4StageDevices{Device: *stageDevice}
+			stage = osbuild.NewMkfsExt4Stage(options, devices)
+		default:
+			panic("unknown fs type " + p.Type)
+		}
+		stages = append(stages, stage)
+	}
+	return stages
+}
+
+func qemuPipeline(inputPipelineName string, inputFilename, outputFilename string) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = "qcow2"
+	p.Build = "name:build"
+
+	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename), qemuStageInputs(inputPipelineName, inputFilename))
+	p.AddStage(qemuStage)
 	return p
 }
