@@ -18,39 +18,9 @@ type Stage struct {
 	Mounts  Mounts       `json:"mounts,omitempty"`
 }
 
-// Collection of Inputs for a Stage
-type Inputs interface {
-	isStageInputs()
-}
-
-// Single Input for a Stage
-type Input interface {
-	isInput()
-}
-
-// Fields shared between all Input types (should be embedded in each instance)
-type inputCommon struct {
-	Type string `json:"type"`
-	// Origin should be either 'org.osbuild.source' or 'org.osbuild.pipeline'
-	Origin string `json:"origin"`
-
-	// References References `json:"references"`
-}
-
-type StageInput interface {
-	isStageInput()
-}
-
-type References interface {
-	isReferences()
-}
-
 // StageOptions specify the operations of a given stage-type.
 type StageOptions interface {
 	isStageOptions()
-}
-
-type InputOptions interface {
 }
 
 type rawStage struct {
