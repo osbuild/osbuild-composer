@@ -500,24 +500,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeContainerPipelines,
 		exports:         []string{"container"},
 	}
-	edgeInstallerImgTypeAarch64 := imageType{
-		name:     "edge-installer",
-		filename: "installer.iso",
-		mimeType: "application/x-iso9660-image",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPkgSet,
-			"packages":  edgeCommitX86PkgSet,
-			"installer": edgeInstallerPkgSet,
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		bootISO:         true,
-		pipelines:       edgeInstallerPipelines,
-		exports:         []string{"bootiso"},
-	}
 
 	x86_64.addImageTypes(qcow2ImageType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
-	aarch64.addImageTypes(qcow2ImageType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
+	aarch64.addImageTypes(qcow2ImageType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64)
 	ppc64le.addImageTypes(qcow2ImageType, tarImgType)
 	s390x.addImageTypes(qcow2ImageType, tarImgType)
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
