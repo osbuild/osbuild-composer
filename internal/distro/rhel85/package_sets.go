@@ -174,7 +174,7 @@ func openstackCommonPackageSet() rpmmd.PackageSet {
 func amiCommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core", "cloud-init", "cloud-utils-growpart", "clyum-utils",
+			"@core", "cloud-init", "cloud-utils-growpart", "yum-utils",
 			"dracut-config-generic", "dracut-norescue", "gdisk", "grub2",
 			"insights-client", "NetworkManager", "NetworkManager-cloud-setup",
 			"redhat-release", "redhat-release-eula", "rsync", "tar",
