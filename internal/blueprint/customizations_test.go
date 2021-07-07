@@ -267,3 +267,22 @@ func TestNilGetTimezoneSettings(t *testing.T) {
 	assert.Nil(t, retTimezone)
 	assert.Nil(t, retNTPServers)
 }
+
+func TestGetFilesystem(t *testing.T) {
+
+	expectedFilesystems := []FilesystemCustomization{
+		{
+			Name:       "root",
+			MinSize:    1024,
+			Mountpoint: "/",
+		},
+	}
+
+	TestCustomizations := Customizations{
+		Filesystem: expectedFilesystems,
+	}
+
+	retFilesystems := TestCustomizations.GetFilesystem()
+
+	assert.ElementsMatch(t, expectedFilesystems, retFilesystems)
+}
