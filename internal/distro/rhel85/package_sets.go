@@ -152,6 +152,22 @@ func qcow2CommonPackageSet() rpmmd.PackageSet {
 	}
 }
 
+func vhdCommonPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			// Defaults
+			"@Core", "langpacks-en",
+
+			// From the lorax kickstart
+			"selinux-policy-targeted", "chrony", "WALinuxAgent", "python3",
+			"net-tools", "cloud-init", "cloud-utils-growpart", "gdisk",
+		},
+		Exclude: []string{
+			"dracut-config-rescue", "rng-tools",
+		},
+	}
+}
+
 // edge commit OS package set
 func edgeCommitCommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{

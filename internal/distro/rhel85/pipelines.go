@@ -55,9 +55,46 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch.legacy)
 	pipelines = append(pipelines, *imagePipeline)
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename)
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "0.10")
 	pipelines = append(pipelines, *qemuPipeline)
 
+	return pipelines, nil
+}
+
+func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	if err != nil {
+		return nil, err
+	}
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		},
+		))
+	}
+	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	pipelines = append(pipelines, *treePipeline)
+
+	diskfile := "disk.img"
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch.legacy)
+	pipelines = append(pipelines, *imagePipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "vpc", "")
+	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }
 
@@ -581,12 +618,12 @@ func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild2.Sta
 	return stages
 }
 
-func qemuPipeline(inputPipelineName string, inputFilename, outputFilename string) *osbuild.Pipeline {
+func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow2Compat string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
-	p.Name = "qcow2"
+	p.Name = format
 	p.Build = "name:build"
 
-	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename), qemuStageInputs(inputPipelineName, inputFilename))
+	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), qemuStageInputs(inputPipelineName, inputFilename))
 	p.AddStage(qemuStage)
 	return p
 }
