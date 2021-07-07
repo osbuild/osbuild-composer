@@ -477,6 +477,10 @@ func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions
 		options = osbuild.VPCOptions{
 			Type: "vpc",
 		}
+	case "vmdk":
+		options = osbuild.VMDKOptions{
+			Type: "vmdk",
+		}
 	default:
 		panic("unknown format in qemu stage: " + format)
 	}

@@ -18,6 +18,8 @@ type QEMUStageOptions struct {
 	Format QEMUFormatOptions `json:"format"`
 }
 
+func (QEMUStageOptions) isStageOptions() {}
+
 type QEMUFormatOptions interface {
 	isQEMUFormatOptions()
 }
@@ -39,7 +41,12 @@ type VPCOptions struct {
 
 func (VPCOptions) isQEMUFormatOptions() {}
 
-func (QEMUStageOptions) isStageOptions() {}
+type VMDKOptions struct {
+	// The type of the format must be 'vpc'
+	Type string `json:"type"`
+}
+
+func (VMDKOptions) isQEMUFormatOptions() {}
 
 type QEMUStageInputs struct {
 	Image *QEMUStageInput `json:"image"`
@@ -87,6 +94,10 @@ func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
 	case VPCOptions:
 		if o.Type != "vpc" {
 			return nil, fmt.Errorf("invalid format type %q for vpc options", o.Type)
+		}
+	case VMDKOptions:
+		if o.Type != "vmdk" {
+			return nil, fmt.Errorf("invalid format type %q for vmdk options", o.Type)
 		}
 	default:
 		return nil, fmt.Errorf("unknown format options in QEMU stage: %#v", options.Format)

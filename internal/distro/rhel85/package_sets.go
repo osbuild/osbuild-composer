@@ -171,6 +171,19 @@ func vhdCommonPackageSet() rpmmd.PackageSet {
 	}
 }
 
+func vmdkCommonPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core", "chrony", "firewalld", "langpacks-en", "open-vm-tools",
+			"selinux-policy-targeted",
+		},
+		Exclude: []string{
+			"dracut-config-rescue", "rng-tools",
+		},
+	}
+
+}
+
 // edge commit OS package set
 func edgeCommitCommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
