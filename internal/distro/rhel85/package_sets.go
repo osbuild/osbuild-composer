@@ -184,6 +184,23 @@ func vmdkCommonPackageSet() rpmmd.PackageSet {
 
 }
 
+func openstackCommonPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			// Defaults
+			"@Core", "langpacks-en",
+
+			// From the lorax kickstart
+			"selinux-policy-targeted", "cloud-init", "qemu-guest-agent",
+			"spice-vdagent",
+		},
+		Exclude: []string{
+			"dracut-config-rescue", "rng-tools",
+		},
+	}
+
+}
+
 // edge commit OS package set
 func edgeCommitCommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
