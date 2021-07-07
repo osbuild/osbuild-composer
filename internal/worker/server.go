@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -308,6 +309,16 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	err := s.jobs.FinishJob(jobId, result)
 	if err != nil {
 		return fmt.Errorf("error finishing job: %v", err)
+	}
+
+	var jobResult OSBuildJobResult
+	_, _, err = s.JobStatus(jobId, &jobResult)
+	if err != nil {
+		return fmt.Errorf("error finding job status: %v", err)
+	}
+
+	if jobResult.Success {
+		prometheus.ComposeSuccesses.Inc()
 	}
 
 	// Move artifacts from the temporary location to the final job

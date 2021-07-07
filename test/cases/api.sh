@@ -544,6 +544,14 @@ OUTPUT=$(curl \
 
 COMPOSE_ID=$(echo "$OUTPUT" | jq -r '.id')
 
+METRICS_OUTPUT=$(curl \
+  --cacert /etc/osbuild-composer/ca-crt.pem \
+  --key /etc/osbuild-composer/client-key.pem \
+  --cert /etc/osbuild-composer/client-crt.pem \
+  https://localhost/metrics)
+
+PREV_COMPOSES=$(echo "$METRICS_OUTPUT" | grep "^total_compose_requests" | cut -f2 -d' ')
+
 while true
 do
   OUTPUT=$(curl \
@@ -564,6 +572,15 @@ do
     "pending"|"building"|"uploading"|"registering")
       ;;
     "success")
+      METRICS_OUTPUT=$(curl \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --key /etc/osbuild-composer/client-key.pem \
+        --cert /etc/osbuild-composer/client-crt.pem \
+        https://localhost/metrics)
+
+      SUBS_COMPOSES=$(echo "$METRICS_OUTPUT" | grep "^total_compose_requests" | cut -f2 -d' ')
+
+      test $((PREV_COMPOSES+1)) = "$SUBS_COMPOSES"
       test "$UPLOAD_STATUS" = "success"
       test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
       break
