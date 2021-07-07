@@ -161,6 +161,9 @@ func vhdCommonPackageSet() rpmmd.PackageSet {
 			// From the lorax kickstart
 			"selinux-policy-targeted", "chrony", "WALinuxAgent", "python3",
 			"net-tools", "cloud-init", "cloud-utils-growpart", "gdisk",
+
+			// removed from defaults but required to boot in azure
+			"dhcp-client",
 		},
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
