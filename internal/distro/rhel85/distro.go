@@ -461,6 +461,20 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:       []string{"vhd"},
 	}
 
+	vmdkImgType := imageType{
+		name:     "vmdk",
+		filename: "disk.vmdk",
+		mimeType: "application/x-vmdk",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": vmdkCommonPackageSet(),
+		},
+		kernelOptions: "ro net.ifnames=0",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		pipelines:     vmdkPipelines,
+		exports:       []string{"vmdk"},
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -520,7 +534,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"container"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
 	aarch64.addImageTypes(qcow2ImgType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
