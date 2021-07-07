@@ -427,7 +427,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"bootiso"},
 	}
 
-	qcow2ImageType := imageType{
+	qcow2ImgType := imageType{
 		name:          "qcow2",
 		filename:      "disk.qcow2",
 		mimeType:      "application/x-qemu-disk",
@@ -440,6 +440,25 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize: 10 * GigaByte,
 		pipelines:   qcow2Pipelines,
 		exports:     []string{"qcow2"},
+	}
+
+	vhdImgType := imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": vhdCommonPackageSet(),
+		},
+		enabledServices: []string{
+			"sshd",
+			"waagent",
+		},
+		defaultTarget: "multi-user.target",
+		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		pipelines:     vhdPipelines,
+		exports:       []string{"vhd"},
 	}
 
 	tarImgType := imageType{
@@ -501,10 +520,11 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"container"},
 	}
 
-	x86_64.addImageTypes(qcow2ImageType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
-	aarch64.addImageTypes(qcow2ImageType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64)
-	ppc64le.addImageTypes(qcow2ImageType, tarImgType)
-	s390x.addImageTypes(qcow2ImageType, tarImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
+	aarch64.addImageTypes(qcow2ImgType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64)
+	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
+	s390x.addImageTypes(qcow2ImgType, tarImgType)
+
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return rd
 }

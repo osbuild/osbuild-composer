@@ -32,6 +32,13 @@ type Qcow2Options struct {
 
 func (Qcow2Options) isQEMUFormatOptions() {}
 
+type VPCOptions struct {
+	// The type of the format must be 'vpc'
+	Type string `json:"type"`
+}
+
+func (VPCOptions) isQEMUFormatOptions() {}
+
 func (QEMUStageOptions) isStageOptions() {}
 
 type QEMUStageInputs struct {
@@ -76,6 +83,10 @@ func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
 	case Qcow2Options:
 		if o.Type != "qcow2" {
 			return nil, fmt.Errorf("invalid format type %q for qcow2 options", o.Type)
+		}
+	case VPCOptions:
+		if o.Type != "vpc" {
+			return nil, fmt.Errorf("invalid format type %q for vpc options", o.Type)
 		}
 	default:
 		return nil, fmt.Errorf("unknown format options in QEMU stage: %#v", options.Format)

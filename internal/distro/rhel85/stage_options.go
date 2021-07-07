@@ -465,12 +465,24 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	}
 }
 
-func qemuStageOptions(filename string) *osbuild.QEMUStageOptions {
+func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
+	var options osbuild.QEMUFormatOptions
+	switch format {
+	case "qcow2":
+		options = osbuild.Qcow2Options{
+			Type:   "qcow2",
+			Compat: compat,
+		}
+	case "vpc":
+		options = osbuild.VPCOptions{
+			Type: "vpc",
+		}
+	default:
+		panic("unknown format in qemu stage: " + format)
+	}
+
 	return &osbuild.QEMUStageOptions{
 		Filename: filename,
-		Format: osbuild.Qcow2Options{
-			Type:   "qcow2",
-			Compat: "0.10",
-		},
+		Format:   options,
 	}
 }
