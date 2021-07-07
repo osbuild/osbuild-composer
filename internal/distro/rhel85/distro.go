@@ -495,6 +495,21 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:       []string{"qcow2"},
 	}
 
+	amiImgType := imageType{
+		name:     "ami",
+		filename: "image.raw",
+		mimeType: "application/octet-stream",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": amiCommonPackageSet(),
+		},
+		defaultTarget: "multi-user.target",
+		kernelOptions: "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:      true,
+		defaultSize:   6 * GigaByte,
+		pipelines:     amiPipelines,
+		exports:       []string{"image"},
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -526,8 +541,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, tarImgType, edgeCommitImgType, edgeOCIImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgType, tarImgType, edgeCommitImgType, edgeOCIImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 

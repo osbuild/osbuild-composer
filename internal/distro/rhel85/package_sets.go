@@ -171,6 +171,33 @@ func openstackCommonPackageSet() rpmmd.PackageSet {
 
 }
 
+func amiCommonPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"checkpolicy", "chrony", "cloud-init", "cloud-init",
+			"cloud-utils-growpart", "@core", "dhcp-client", "gdisk",
+			"insights-client", "langpacks-en", "net-tools", "NetworkManager",
+			"redhat-release", "redhat-release-eula", "rsync",
+			"selinux-policy-targeted", "tar", "yum-utils",
+
+			// TODO this doesn't exist in BaseOS or AppStream
+			// "rh-amazon-rhui-client",
+		},
+		Exclude: []string{
+			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
+			"alsa-tools-firmware", "biosdevname", "dracut-config-rescue",
+			"firewalld", "iprutils", "ivtv-firmware", "iwl1000-firmware",
+			"iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware",
+			"iwl3945-firmware", "iwl4965-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000-firmware", "iwl6000g2a-firmware",
+			"iwl6000g2b-firmware", "iwl6050-firmware", "iwl7260-firmware",
+			"libertas-sd8686-firmware", "libertas-sd8787-firmware",
+			"libertas-usb8388-firmware", "plymouth", "rng-tools",
+		},
+	}
+}
+
 // edge commit OS package set
 func edgeCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
