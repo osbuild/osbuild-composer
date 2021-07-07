@@ -10,6 +10,7 @@ import (
 )
 
 func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
+	var sectorSize uint64 = 512
 	if arch.Name() == "x86_64" {
 		return disk.PartitionTable{
 			Size: imageOptions.Size,
@@ -39,6 +40,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 				},
 				{
 					Start: 208896,
+					Size:  imageOptions.Size/sectorSize - 208896 - 100,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
@@ -75,6 +77,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 				},
 				{
 					Start: 206848,
+					Size:  imageOptions.Size/sectorSize - 206848 - 100,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
 					Filesystem: &disk.Filesystem{
@@ -102,6 +105,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 				},
 				{
 					Start: 10240,
+					Size:  imageOptions.Size/sectorSize - 10240 - 100,
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
 						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
@@ -121,6 +125,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 			Partitions: []disk.Partition{
 				{
 					Start:    2048,
+					Size:     imageOptions.Size/sectorSize - 2048 - 100,
 					Bootable: true,
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",

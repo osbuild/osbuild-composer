@@ -465,6 +465,25 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	}
 }
 
+func findBootPartition(pt *disk.PartitionTable) uint {
+	// find partition with '/boot' mountpoint and fallback to '/'
+	rootIdx := -1
+	for idx, part := range pt.Partitions {
+		if part.Filesystem == nil {
+			continue
+		}
+		if part.Filesystem.Mountpoint == "/boot" {
+			return uint(idx)
+		} else if part.Filesystem.Mountpoint == "/" {
+			rootIdx = idx
+		}
+	}
+	if rootIdx == -1 {
+		panic("failed to find boot or root partition for grub2.inst stage")
+	}
+	return uint(rootIdx)
+}
+
 func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
 	var options osbuild.QEMUFormatOptions
 	switch format {

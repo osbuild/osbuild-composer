@@ -626,7 +626,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	copyInputs := copyPipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
-	p.AddStage(osbuild.NewGrub2InstStage(grub2InstStageOptions(outputFilename, pt, 2, platform)))
+	p.AddStage(osbuild.NewGrub2InstStage(grub2InstStageOptions(outputFilename, pt, platform)))
 
 	return p
 }
