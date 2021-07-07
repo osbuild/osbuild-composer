@@ -36,6 +36,42 @@ func TestFilenameFromType(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name:  "qcow2",
+			args:  args{"qcow2"},
+			want:  "disk.qcow2",
+			want1: "application/x-qemu-disk",
+		},
+		{
+			name:  "openstack",
+			args:  args{"openstack"},
+			want:  "disk.qcow2",
+			want1: "application/x-qemu-disk",
+		},
+		{
+			name:  "vhd",
+			args:  args{"vhd"},
+			want:  "disk.vhd",
+			want1: "application/x-vhd",
+		},
+		{
+			name:  "vmdk",
+			args:  args{"vmdk"},
+			want:  "disk.vmdk",
+			want1: "application/x-vmdk",
+		},
+		{
+			name:  "tar",
+			args:  args{"tar"},
+			want:  "root.tar.xz",
+			want1: "application/x-tar",
+		},
+		{
+			name:  "tar-installer",
+			args:  args{"tar-installer"},
+			want:  "installer.iso",
+			want1: "application/x-iso9660-image",
+		},
+		{
 			name:  "edge-container",
 			args:  args{"edge-container"},
 			want:  "container.tar",
@@ -139,17 +175,41 @@ func TestImageType_Name(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"vhd",
+				"vmdk",
+				"ami",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"tar",
+				"tar-installer",
 			},
 		},
 		{
 			arch: "aarch64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"ami",
 				"edge-commit",
 				"edge-container",
-				"edge-installer",
+				"tar",
+			},
+		},
+		{
+			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
+		},
+		{
+			arch: "s390x",
+			imgNames: []string{
+				"qcow2",
+				"tar",
 			},
 		},
 	}
@@ -224,6 +284,11 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"vhd",
+				"vmdk",
+				"ami",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
@@ -234,19 +299,27 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "aarch64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"ami",
 				"edge-commit",
 				"edge-container",
-				"edge-installer",
 				"tar",
 			},
 		},
 		{
-			arch:     "ppc64le",
-			imgNames: []string{"tar"},
+			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
 		},
 		{
-			arch:     "s390x",
-			imgNames: []string{"tar"},
+			arch: "s390x",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
 		},
 	}
 
