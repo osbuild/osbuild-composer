@@ -35,14 +35,7 @@ func ppc64leBuildPackageSet() rpmmd.PackageSet {
 // common edge image build package set
 func edgeBuildPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr", "genisoimage", "grub2-efi-ia32-cdboot",
-			"grub2-efi-x64", "grub2-efi-x64-cdboot", "grub2-pc",
-			"grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
-			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
-			"rpm-ostree", "shim-ia32", "shim-x64", "squashfs-tools",
-			"syslinux", "syslinux-nonlinux", "xorriso",
-		},
+		Include: []string{"rpm-ostree"},
 		Exclude: nil,
 	}
 }
@@ -99,29 +92,6 @@ func s390xBootPackageSet() rpmmd.PackageSet {
 }
 
 // OS package sets
-
-func x8664EdgeCommitPackageSet() rpmmd.PackageSet {
-	x8664set := rpmmd.PackageSet{
-		Include: []string{
-			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64",
-			"microcode_ctl", "iwl1000-firmware", "iwl100-firmware",
-			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
-			"iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
-			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware",
-			"iwl7260-firmware",
-		},
-		Exclude: nil,
-	}
-	return edgeCommitCommonPackageSet().Append(x8664set)
-}
-
-func aarch64EdgeCommitPackageSet() rpmmd.PackageSet {
-	aarch64set := rpmmd.PackageSet{
-		Include: []string{"grub2-efi-aa64", "efibootmgr", "shim-aa64", "iwl7260-firmware"},
-		Exclude: nil,
-	}
-	return edgeCommitCommonPackageSet().Append(aarch64set)
-}
 
 func qcow2CommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
@@ -202,7 +172,7 @@ func openstackCommonPackageSet() rpmmd.PackageSet {
 }
 
 // edge commit OS package set
-func edgeCommitCommonPackageSet() rpmmd.PackageSet {
+func edgeCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"redhat-release", "glibc", "glibc-minimal-langpack",
@@ -225,6 +195,27 @@ func edgeCommitCommonPackageSet() rpmmd.PackageSet {
 			"greenboot-reboot", "greenboot-status",
 		},
 		Exclude: []string{"rng-tools"},
+	}
+}
+
+func x8664EdgeCommitPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64",
+			"microcode_ctl", "iwl1000-firmware", "iwl100-firmware",
+			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
+			"iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware",
+			"iwl7260-firmware",
+		},
+		Exclude: nil,
+	}
+}
+
+func aarch64EdgeCommitPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{"grub2-efi-aa64", "efibootmgr", "shim-aa64", "iwl7260-firmware"},
+		Exclude: nil,
 	}
 }
 
