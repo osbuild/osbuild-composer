@@ -289,6 +289,23 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
+	mountpoints := c.GetFilesystems()
+
+	if mountpoints != nil && t.rpmOstree {
+		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	}
+
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.fedora33")
 
