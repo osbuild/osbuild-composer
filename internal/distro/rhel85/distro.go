@@ -368,6 +368,24 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
+	mountpoints := customizations.GetFilesystems()
+
+	if mountpoints != nil && t.rpmOstree {
+		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	}
+
+	// only allow root mountpoint for the time-being
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
 	return nil
 }
 

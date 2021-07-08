@@ -206,6 +206,23 @@ func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, option
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
+	mountpoints := customizations.GetFilesystems()
+
+	if mountpoints != nil && t.rpmOstree {
+		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	}
+
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
 	pipelines := make([]osbuild.Pipeline, 0)
 
 	pipelines = append(pipelines, *t.buildPipeline(repos, packageSetSpecs["build-packages"]))

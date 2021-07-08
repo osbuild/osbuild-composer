@@ -288,6 +288,21 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 }
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, rng *rand.Rand) (*osbuild.Pipeline, error) {
+
+	mountpoints := c.GetFilesystems()
+
+	// only allow root mountpoint for the time-being
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
 	var pt *disk.PartitionTable
 	if t.partitionTableGenerator != nil {
 		table := t.partitionTableGenerator(options, t.arch, rng)
