@@ -361,6 +361,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			"boot": aarch64BootPackageSet(),
 			"edge": aarch64EdgeCommitPackageSet(),
 		},
+		uefi: true,
 	}
 
 	ppc64le := architecture{
