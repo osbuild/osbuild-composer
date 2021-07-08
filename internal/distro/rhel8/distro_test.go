@@ -381,6 +381,57 @@ func TestDistro_ManifestError(t *testing.T) {
 		}
 	}
 }
+func TestDistro_CustomFileSystemManifestError(t *testing.T) {
+	r8distro := rhel8.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/boot",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "rhel-edge-commit" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else {
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/var\"]")
+			}
+		}
+	}
+}
+
+func TestDistro_TestRootMountPoint(t *testing.T) {
+	r8distro := rhel8.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "rhel-edge-commit" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}
 
 func TestRhel8_ListArches(t *testing.T) {
 	distro := rhel8.New()

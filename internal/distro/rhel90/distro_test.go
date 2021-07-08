@@ -378,3 +378,47 @@ func TestRhel84_ModulePlatformID(t *testing.T) {
 func TestRhel90_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel90.New())
 }
+
+func TestDistro_CustomFileSystemManifestError(t *testing.T) {
+	r9distro := rhel90.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/boot",
+				},
+			},
+		},
+	}
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+		}
+	}
+}
+
+func TestDistro_TestRootMountPoint(t *testing.T) {
+	r9distro := rhel90.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			assert.NoError(t, err)
+		}
+	}
+}

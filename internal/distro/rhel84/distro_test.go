@@ -590,3 +590,75 @@ func TestRhel84_ModulePlatformID(t *testing.T) {
 func TestRhel84_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel84.New())
 }
+
+func TestDistro_CustomFileSystemManifestError(t *testing.T) {
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/boot",
+				},
+			},
+		},
+	}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			d := dist.distro
+			for _, archName := range d.ListArches() {
+				arch, _ := d.GetArch(archName)
+				for _, imgTypeName := range arch.ListImageTypes() {
+					if (archName == "s390x" && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
+						continue
+					}
+					imgType, _ := arch.GetImageType(imgTypeName)
+					imgOpts := distro.ImageOptions{
+						Size: imgType.Size(0),
+					}
+					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
+					if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
+						assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+					} else {
+						assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestDistro_TestRootMountPoint(t *testing.T) {
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			d := dist.distro
+			for _, archName := range d.ListArches() {
+				arch, _ := d.GetArch(archName)
+				for _, imgTypeName := range arch.ListImageTypes() {
+					if (archName == "s390x" && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
+						continue
+					}
+					imgType, _ := arch.GetImageType(imgTypeName)
+					imgOpts := distro.ImageOptions{
+						Size: imgType.Size(0),
+					}
+					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
+					if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
+						assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+					} else {
+						assert.NoError(t, err)
+					}
+				}
+			}
+		})
+	}
+}
