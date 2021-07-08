@@ -174,13 +174,13 @@ func (t *imageType) Size(size uint64) uint64 {
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	// merge package sets that appear in the image type (or are enabled by
-	// flags) with the package sets of the same name from the distro and arch
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
 	mergedSets := make(map[string]rpmmd.PackageSet)
 
 	imageSets := t.packageSets
-	distroSets := t.arch.distro.packageSets
 	archSets := t.arch.packageSets
+	distroSets := t.arch.distro.packageSets
 	for name := range imageSets {
 		mergedSets[name] = imageSets[name].Append(archSets[name]).Append(distroSets[name])
 	}
@@ -191,18 +191,20 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	}
 
 	// build is usually not defined on the image type
-	// so handle it explicitly
+	// handle it explicitly when it's not
 	if _, hasBuild := imageSets["build"]; !hasBuild {
-		buildSet := archSets["build"].Append(distroSets["build"])
-		if t.rpmOstree {
-			buildSet.Include = append(buildSet.Include, "rpm-ostree")
-		}
-		mergedSets["build"] = buildSet
+		mergedSets["build"] = archSets["build"].Append(distroSets["build"])
 	}
 
 	// package sets from flags
 	if t.bootable {
+		// add boot sets
 		mergedSets["packages"] = mergedSets["packages"].Append(archSets["boot"]).Append(distroSets["boot"])
+	}
+	if t.rpmOstree {
+		// add ostree sets
+		mergedSets["build"] = mergedSets["build"].Append(archSets["build.edge"]).Append(distroSets["build.edge"])
+		mergedSets["packages"] = mergedSets["packages"].Append(archSets["edge"]).Append(distroSets["edge"])
 	}
 
 	// blueprint packages
@@ -334,7 +336,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
 		packageSets: map[string]rpmmd.PackageSet{
-			"build": distroBuildPackageSet(),
+			"build":      distroBuildPackageSet(),
+			"build.edge": edgeBuildPackageSet(),
 		},
 	}
 
@@ -345,6 +348,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			"build": x8664BuildPackageSet(),
 			"boot":  x8664BootPackageSet(),
+			"edge":  x8664EdgeCommitPackageSet(),
 		},
 		legacy: "i386-pc",
 		uefi:   true,
@@ -355,6 +359,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		distro: rd,
 		packageSets: map[string]rpmmd.PackageSet{
 			"boot": aarch64BootPackageSet(),
+			"edge": aarch64EdgeCommitPackageSet(),
 		},
 	}
 
@@ -383,26 +388,26 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	}
 
 	// Image Definitions
-	edgeCommitImgTypeX86_64 := imageType{
+	edgeCommitImgType := imageType{
 		name:     "edge-commit",
 		filename: "commit.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			"build":    edgeBuildPackageSet(),
-			"packages": x8664EdgeCommitPackageSet(),
+			"packages": edgeCommitPackageSet(),
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
 		pipelines:       edgeCommitPipelines,
 		exports:         []string{"commit-archive"},
 	}
-	edgeOCIImgTypeX86_64 := imageType{
+	edgeOCIImgType := imageType{
 		name:     "edge-container",
 		filename: "container.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			"build":     edgeBuildPackageSet(),
-			"packages":  x8664EdgeCommitPackageSet(),
+			"packages":  edgeCommitPackageSet(),
 			"container": {Include: []string{"httpd"}},
 		},
 		enabledServices: edgeServices,
@@ -411,13 +416,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeContainerPipelines,
 		exports:         []string{"container"},
 	}
-	edgeInstallerImgTypeX86_64 := imageType{
+	edgeInstallerImgType := imageType{
 		name:     "edge-installer",
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
 			"build":     edgeBuildPackageSet(),
-			"packages":  x8664EdgeCommitPackageSet(),
+			"packages":  edgeCommitPackageSet(),
 			"installer": edgeInstallerPackageSet(),
 		},
 		enabledServices: edgeServices,
@@ -520,36 +525,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	edgeCommitImgTypeAarch64 := imageType{
-		name:     "edge-commit",
-		filename: "commit.tar",
-		mimeType: "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":    edgeBuildPackageSet(),
-			"packages": aarch64EdgeCommitPackageSet(),
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		pipelines:       edgeCommitPipelines,
-		exports:         []string{"commit-archive"},
-	}
-	edgeOCIImgTypeAarch64 := imageType{
-		name:     "edge-container",
-		filename: "container.tar",
-		mimeType: "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPackageSet(),
-			"packages":  aarch64EdgeCommitPackageSet(),
-			"container": {Include: []string{"httpd"}},
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		pipelines:       edgeContainerPipelines,
-		exports:         []string{"container"},
-	}
-
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, tarImgType, edgeCommitImgType, edgeOCIImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
