@@ -379,3 +379,55 @@ func TestFedora33_ModulePlatformID(t *testing.T) {
 func TestFedora33_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, fedora33.New())
 }
+
+func TestDistro_CustomFileSystemManifestError(t *testing.T) {
+	f33distro := fedora33.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/boot",
+				},
+			},
+		},
+	}
+	for _, archName := range f33distro.ListArches() {
+		arch, _ := f33distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "fedora-iot-commit" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else {
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+			}
+		}
+	}
+}
+
+func TestDistro_TestRootMountPoint(t *testing.T) {
+	f33distro := fedora33.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+	for _, archName := range f33distro.ListArches() {
+		arch, _ := f33distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "fedora-iot-commit" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}

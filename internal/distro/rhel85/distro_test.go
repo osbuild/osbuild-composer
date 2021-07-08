@@ -524,3 +524,59 @@ func TestRhel85_ModulePlatformID(t *testing.T) {
 func TestRhel85_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel85.New())
 }
+
+func TestDistro_CustomFileSystemManifestError(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/boot",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else if imgTypeName == "edge-installer" {
+				continue
+			} else {
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+			}
+		}
+	}
+}
+
+func TestDistro_TestRootMountPoint(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else if imgTypeName == "edge-installer" {
+				continue
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}
