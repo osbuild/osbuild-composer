@@ -288,7 +288,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
-	mountpoints := c.GetFilesystem()
+	mountpoints := c.GetFilesystems()
 
 	if mountpoints != nil && t.rpmOstree {
 		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")

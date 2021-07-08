@@ -66,7 +66,6 @@ type ServicesCustomization struct {
 }
 
 type FilesystemCustomization struct {
-	Name       string `json:"name,omitempty" toml:"name,omitempty"`
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
 	MinSize    int    `json:"minsize,omitempty" toml:"size,omitempty"`
 }
@@ -195,7 +194,7 @@ func (c *Customizations) GetServices() *ServicesCustomization {
 	return c.Services
 }
 
-func (c *Customizations) GetFilesystem() []FilesystemCustomization {
+func (c *Customizations) GetFilesystems() []FilesystemCustomization {
 	if c == nil {
 		return nil
 	}

@@ -272,7 +272,6 @@ func TestGetFilesystem(t *testing.T) {
 
 	expectedFilesystems := []FilesystemCustomization{
 		{
-			Name:       "root",
 			MinSize:    1024,
 			Mountpoint: "/",
 		},
@@ -282,7 +281,7 @@ func TestGetFilesystem(t *testing.T) {
 		Filesystem: expectedFilesystems,
 	}
 
-	retFilesystems := TestCustomizations.GetFilesystem()
+	retFilesystems := TestCustomizations.GetFilesystems()
 
 	assert.ElementsMatch(t, expectedFilesystems, retFilesystems)
 }

@@ -387,7 +387,6 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					Name:       "test",
 					MinSize:    1024,
 					Mountpoint: "/var",
 				},
@@ -414,7 +413,6 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					Name:       "root",
 					MinSize:    1024,
 					Mountpoint: "/",
 				},
