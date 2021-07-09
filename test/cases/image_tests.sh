@@ -2,9 +2,7 @@
 set -euo pipefail
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 if [[ -n "$CI_BUILD_ID" ]]; then
     BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"

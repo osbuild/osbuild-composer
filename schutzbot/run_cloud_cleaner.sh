@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source tools/set-env-variables.sh
 BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
 BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
 
