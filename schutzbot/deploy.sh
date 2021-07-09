@@ -63,16 +63,6 @@ if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
   sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
 fi
 
-if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    greenprint "Registering RHEL"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    for _ in {0..4}
-    do
-        sudo "$RHN_REGISTRATION_SCRIPT" && break
-    sleep 5
-    done
-fi
-
 # Distro version that this script is running on.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
