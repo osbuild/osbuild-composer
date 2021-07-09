@@ -5,8 +5,7 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
 # Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh

@@ -7,8 +7,7 @@ function greenprint {
 }
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"

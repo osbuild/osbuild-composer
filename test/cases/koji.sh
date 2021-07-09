@@ -4,8 +4,7 @@ set -euo pipefail
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {

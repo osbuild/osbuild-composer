@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Get OS data.
-source /etc/os-release
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh

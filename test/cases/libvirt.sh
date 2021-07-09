@@ -2,8 +2,7 @@
 set -euo pipefail
 
 # Get OS data.
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh

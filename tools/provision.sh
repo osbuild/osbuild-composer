@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-source /etc/os-release
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # koji and ansible are not in RHEL repositories. Depending on them in the spec
 # file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel

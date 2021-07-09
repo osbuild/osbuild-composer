@@ -47,8 +47,7 @@ EOF
 }
 
 # Get OS details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
