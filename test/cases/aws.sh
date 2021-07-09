@@ -11,7 +11,7 @@ function greenprint {
 }
 
 #TODO: Remove this once there is rhel9 support for AMI image type
-if [[ $DISTRO_CODE == rhel_90 ]]; then
+if [[ $DISTRO_CODE == rhel-90 ]]; then
     greenprint "Skipped"
     exit 0
 fi

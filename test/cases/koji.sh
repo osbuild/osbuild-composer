@@ -14,9 +14,6 @@ function greenprint {
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-greenprint "Defining distro selector"
-DISTRO_SELECTOR="${DISTRO_CODE//_/-}"
-
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
 
@@ -48,7 +45,7 @@ greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
 greenprint "Pushing compose to Koji"
-sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_SELECTOR" "${ARCH}"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1

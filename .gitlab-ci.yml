@@ -184,7 +184,7 @@ Integration:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
-        DISTRO_CODE: ["rhel_90"]
+        DISTRO_CODE: ["rhel-90"]
       - SCRIPT:
           - libvirt.sh
         RUNNER:
@@ -230,7 +230,7 @@ API:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
-        DISTRO_CODE: ["rhel_90"]
+        DISTRO_CODE: ["rhel-90"]
 
 NIGHTLY_FAIL:
   stage: finish
