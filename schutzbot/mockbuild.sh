@@ -51,13 +51,6 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# Register RHEL if we are provided with a registration script.
-if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
-fi
-
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c mock s3cmd
