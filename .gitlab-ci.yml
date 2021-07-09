@@ -41,13 +41,13 @@ RPM:
           - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
+          - aws/rhel-8.5-devel-x86_64
+          - aws/rhel-8.5-devel-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Container:
@@ -78,7 +78,7 @@ Prepare-rhel-internal:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-devel-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -99,14 +99,14 @@ Base:
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
           # - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
 #      - RUNNER:
           # main image types not yet supported in 8.5
-          # - aws/rhel-8.5-x86_64
-          # - aws/rhel-8.5-aarch64
+          # - aws/rhel-8.5-devel-x86_64
+          # - aws/rhel-8.5-devel-aarch64
 #        INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -130,8 +130,8 @@ OSTree:
           # - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
-          - openstack/rhel-8-x86_64
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.4-ga-x86_64
+          - openstack/rhel-8.5-devel-x86_64
           # do we want centos as well ?
           # do we want secondary architectures here ??
 
@@ -144,7 +144,7 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.5-devel-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
@@ -172,17 +172,17 @@ Integration:
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
-#          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.4-ga-x86_64
+#          - aws/rhel-8.5-devel-x86_64
         INTERNAL_NETWORK: ["true"]
 #      - SCRIPT:
 #          - azure_hyperv_gen2.sh
 #        RUNNER:
-#          - aws/rhel-8.5-x86_64
+#          - aws/rhel-8.5-devel-x86_64
 #        INTERNAL_NETWORK: ["true"]
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         DISTRO_CODE: ["rhel_90"]
       - SCRIPT:
@@ -193,8 +193,8 @@ Integration:
       - SCRIPT:
           - libvirt.sh
         RUNNER:
-          - aws/rhel-8-x86_64
-#          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.4-ga-x86_64
+#          - aws/rhel-8.5-devel-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
@@ -223,12 +223,12 @@ API:
           - aws/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
-#          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.4-ga-x86_64
+#          - aws/rhel-8.5-devel-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         DISTRO_CODE: ["rhel_90"]
 
@@ -263,7 +263,7 @@ NIGHTLY_SUCCESS:
 #   parallel:
 #     matrix:
 #       - RUNNER:
-#           - openstack/rhel-8.5-x86_64
+#           - openstack/rhel-8.5-devel-x86_64
 
 finish:
   stage: finish
