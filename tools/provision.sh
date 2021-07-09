@@ -47,32 +47,38 @@ EOF
 fi
 
 # Copy rpmrepo snapshots for use in weldr tests
-sudo mkdir -p /etc/osbuild-composer/repositories
+REPODIR=/etc/osbuild-composer/repositories
+sudo mkdir -p $REPODIR
 # Copy all fedora repo overrides
-sudo cp -a /usr/share/tests/osbuild-composer/repositories/{fedora,centos}-*.json \
-    /etc/osbuild-composer/repositories/
+sudo cp -a /usr/share/tests/osbuild-composer/repositories/{fedora,centos}-*.json "$REPODIR"
+# Copy RHEL point relese repos
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-84.json "$REPODIR"
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR"
+
 # RHEL nightly repos need to be overridden in rhel-8.json and rhel-8-beta.json
 case "${ID}-${VERSION_ID}" in
     "rhel-8.4")
         # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.4 test needs nightly repos
-        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-84.json /etc/osbuild-composer/repositories/rhel-8.json
+        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-84.json "$REPODIR/rhel-8.json"
         # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
-        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json /etc/osbuild-composer/repositories/rhel-8-beta.json;;
+        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json "$REPODIR/rhel-8-beta.json"
+        ;;
     "rhel-8.5")
         # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.5 test needs nightly repos
-        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json /etc/osbuild-composer/repositories/rhel-8.json
+        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR/rhel-8.json"
         # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
-        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json /etc/osbuild-composer/repositories/rhel-8-beta.json;;
+        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json "$REPODIR/rhel-8-beta.json"
+        ;;
     *) ;;
 esac
 
 # overrides for RHEL nightly builds testing
 if [ -f "rhel-8.json" ]; then
-    sudo cp rhel-8.json /etc/osbuild-composer/repositories/
+    sudo cp rhel-8.json "$REPODIR"
 fi
 
 if [ -f "rhel-8-beta.json" ]; then
-    sudo cp rhel-8-beta.json /etc/osbuild-composer/repositories/
+    sudo cp rhel-8-beta.json "$REPODIR"
 fi
 
 # Generate all X.509 certificates for the tests
