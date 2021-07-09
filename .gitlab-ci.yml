@@ -54,13 +54,13 @@ RPM:
           - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
+          - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.5-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -95,7 +95,7 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -115,13 +115,13 @@ Base:
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
           # - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
+          - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.5-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -149,10 +149,10 @@ Regression:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
-          - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.5-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -177,8 +177,8 @@ OSTree:
           - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
-          - openstack/rhel-8-x86_64
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.4-ga-x86_64
+          - openstack/rhel-8.5-devel-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
 
 New OSTree:
@@ -223,7 +223,7 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.5-devel-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
@@ -259,13 +259,13 @@ Integration:
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
-          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
         RUNNER:
-          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - aws.sh
@@ -308,8 +308,8 @@ API:
           - aws/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8-x86_64
-          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.5-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -328,8 +328,8 @@ libvirt:
           - openstack/fedora-33-x86_64
           - openstack/centos-stream-8-x86_64
       - RUNNER:
-          - openstack/rhel-8-x86_64
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.4-ga-x86_64
+          - openstack/rhel-8.5-devel-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -342,7 +342,7 @@ RHEL 9 on 8:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-8-x86_64
+    RUNNER: aws/rhel-8.4-ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-90
 
@@ -377,7 +377,7 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.5-devel-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
