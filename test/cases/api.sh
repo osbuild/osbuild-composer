@@ -330,7 +330,7 @@ else
   TEST_ID=$(uuidgen);
 fi
 
-case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
+case "$ID-$VERSION_ID" in
   "rhel-8.4")
     DISTRO="rhel-84"
     SSH_USER="cloud-user"
