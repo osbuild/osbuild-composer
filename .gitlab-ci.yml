@@ -236,6 +236,25 @@ API:
         INTERNAL_NETWORK: ["true"]
         DISTRO_CODE: ["rhel_90"]
 
+NIGHTLY_FAIL:
+  stage: finish
+  tags:
+    - shell
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_failure
+  script:
+    - schutzbot/slack_notification.sh FAILED ":big-sad:"
+
+NIGHTLY_SUCCESS:
+  stage: finish
+  tags:
+    - shell
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
+
 # Installer:
 #   stage: test
 #   extends: .terraform
