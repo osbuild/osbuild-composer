@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source /etc/os-release
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 TESTS_PATH=/usr/libexec/tests/osbuild-composer/
 mkdir --parents /tmp/logs

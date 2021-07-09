@@ -234,6 +234,7 @@ install -m 0755 -vp tools/image-info                            %{buildroot}%{_l
 install -m 0755 -vp tools/run-koji-container.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/koji-compose.py                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/libvirt_test.sh                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp tools/set-env-variables.sh                  %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vd                                             %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp test/cases/*                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
