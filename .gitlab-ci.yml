@@ -208,11 +208,6 @@ Integration:
           - aws/rhel-8.4-x86_64
           - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
-      - <<: *INTEGRATION_TESTS
-        RUNNER:
-          - aws/rhel-8-x86_64
-        INTERNAL_NETWORK: ["true"]
-        DISTRO_CODE: ["rhel_90"]
       - SCRIPT:
           - libvirt.sh
         RUNNER:
@@ -254,11 +249,19 @@ API:
           - aws/rhel-8-x86_64
           - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8-x86_64
-        INTERNAL_NETWORK: ["true"]
-        DISTRO_CODE: ["rhel_90"]
+
+RHEL 9 on 8:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/koji.sh
+  variables:
+    RUNNER: aws/rhel-8-x86_64
+    INTERNAL_NETWORK: "true"
+    DISTRO_CODE: rhel-90
 
 NIGHTLY_FAIL:
   stage: finish
