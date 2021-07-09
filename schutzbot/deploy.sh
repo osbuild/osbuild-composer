@@ -51,8 +51,7 @@ EOF
 }
 
 # Get OS details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
   # There's a bug in RHEL 9 that causes /tmp to be mounted on tmpfs.

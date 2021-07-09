@@ -4,8 +4,7 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
 # Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh

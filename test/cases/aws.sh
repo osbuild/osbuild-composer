@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {

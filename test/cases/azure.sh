@@ -2,8 +2,7 @@
 shopt -s expand_aliases
 set -euo pipefail
 
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
 BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"

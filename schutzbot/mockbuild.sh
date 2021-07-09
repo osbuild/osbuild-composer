@@ -7,8 +7,7 @@ function greenprint {
 }
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 # Register RHEL if we are provided with a registration script.
 if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
