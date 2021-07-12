@@ -39,7 +39,7 @@ function setup_repo {
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${DISTRO_VERSION}/${ARCH}/${commit}
 enabled=1
 gpgcheck=0
 priority=${priority}
@@ -54,6 +54,15 @@ if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}"
     greenprint "Registering RHEL"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
+fi
+
+# Distro version that this script is running on.
+DISTRO_VERSION=${ID}-${VERSION_ID}
+
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+  # If this script runs on subscribed RHEL, install content built using CDN
+  # repositories.
+  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
 fi
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
