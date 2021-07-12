@@ -213,7 +213,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	if timezone != nil {
 		bpPackages = append(bpPackages, "chrony")
 	}
-	mergedSets["packages"] = mergedSets["packages"].Append(rpmmd.PackageSet{Include: bpPackages})
+
+	// depsolve bp packages separately
+	// bp packages aren't restricted by exclude lists
+	mergedSets["blueprint"] = rpmmd.PackageSet{Include: bpPackages}
 	return mergedSets
 
 }

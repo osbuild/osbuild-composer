@@ -125,7 +125,8 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType) int {
-	pkgs := imgType.PackageSets(blueprint.Blueprint{})["packages"].Include
+	sets := imgType.PackageSets(blueprint.Blueprint{})
+	pkgs := sets["packages"].Append(sets["blueprint"]).Include
 	n := 0
 	for _, pkg := range pkgs {
 		for _, kernel := range knownKernels {

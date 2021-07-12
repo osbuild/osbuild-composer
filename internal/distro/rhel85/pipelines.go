@@ -16,7 +16,7 @@ import (
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 func amiPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -325,9 +325,10 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
+	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage())
 	language, keyboard := c.GetPrimaryLocale()
