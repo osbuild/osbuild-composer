@@ -130,9 +130,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          # - aws/fedora-34-aarch64
+          - aws/fedora-34-x86_64
+          - aws/fedora-34-aarch64
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
@@ -262,8 +261,7 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          # See COMPOSER-919
-          # - rhos-01/fedora-34-x86_64
+          - rhos-01/fedora-34-x86_64
           - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
@@ -333,6 +331,7 @@ Integration:
           - koji.sh
           - aws.sh
         RUNNER:
+          - aws/fedora-34-x86_64
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
