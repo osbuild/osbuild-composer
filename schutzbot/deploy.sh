@@ -39,7 +39,7 @@ function setup_repo {
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${DISTRO_VERSION}/${ARCH}/${commit}
 enabled=1
 gpgcheck=0
 priority=${priority}
@@ -48,6 +48,15 @@ EOF
 
 # Get OS details.
 source tools/set-env-variables.sh
+
+# Distro version that this script is running on.
+DISTRO_VERSION=${ID}-${VERSION_ID}
+
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+  # If this script runs on subscribed RHEL, install content built using CDN
+  # repositories.
+  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+fi
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
