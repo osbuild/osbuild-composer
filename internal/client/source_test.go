@@ -509,6 +509,31 @@ func TestGetSourceInfoV1(t *testing.T) {
 	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }
 
+// Make sure RHSM parameter is understood by the v1 API
+func TestRHSMInSourceInfoV1(t *testing.T) {
+	source := `
+		id = "repo-with-rhsm"
+		name = "repo-with-rhsm"
+		url = "file://REPO-PATH"
+		type = "yum-baseurl"
+		rhsm = true
+	`
+	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
+
+	resp, err := PostTOMLSourceV1(testState.socket, source)
+	require.NoError(t, err, "POST source failed with a client error")
+	require.True(t, resp.Status, "POST source failed: %#v", resp)
+
+	info, resp, err := GetSourceInfoV1(testState.socket, "repo-with-rhsm")
+	require.NoError(t, err, "GET source failed with a client error")
+	require.Nil(t, resp, "GET source failed: %#v", resp)
+	require.Equal(t, true, info["repo-with-rhsm"].RHSM)
+
+	resp, err = DeleteSourceV1(testState.socket, "repo-with-rhsm")
+	require.NoError(t, err, "DELETE source failed with a client error")
+	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
+}
+
 func UploadUserDefinedSourcesV0(t *testing.T, sources []string) {
 	for i := range sources {
 		source := strings.Replace(sources[i], "REPO-PATH", testState.repoDir, 1)

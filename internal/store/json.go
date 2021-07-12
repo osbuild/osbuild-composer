@@ -62,6 +62,7 @@ type sourceV0 struct {
 	CheckGPG bool   `json:"check_gpg"`
 	CheckSSL bool   `json:"check_ssl"`
 	System   bool   `json:"system"`
+	RHSM     bool   `json:"rhsm"`
 }
 
 type sourcesV0 map[string]sourceV0
