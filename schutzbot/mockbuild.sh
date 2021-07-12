@@ -34,7 +34,7 @@ COMMIT=$(git rev-parse HEAD)
 REPO_BUCKET=osbuild-composer-repos
 
 # Public URL for the S3 bucket with our artifacts.
-MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
+MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3-website.us-east-2.amazonaws.com"
 
 # Distro version in whose buildroot was the RPM built.
 DISTRO_VERSION=${ID}-${VERSION_ID}
