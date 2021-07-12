@@ -1845,6 +1845,10 @@ def append_partitions(report, device, loctl):
                 if esp and os.path.exists(f"{tree}/boot/efi"):
                     with mount_at(devices[esp_id], f"{tree}/boot/efi", options=['umask=077']):
                         append_filesystem(report, tree)
+                # situation when /boot is on a separate partition
+                elif esp and os.path.exists(f"{tree}/efi"):
+                    with mount_at(devices[esp_id], f"{tree}/efi", options=['umask=077']):
+                        append_filesystem(report, tree)
                 else:
                     append_filesystem(report, tree)
 
