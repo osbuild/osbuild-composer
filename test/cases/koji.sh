@@ -44,6 +44,11 @@ koji --server=http://localhost:8080/kojihub --user=osbuild --password=osbuildpas
 greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
+# Always build the latest RHEL - that suits the koji API usecase the most.
+if [[ "$DISTRO_CODE" == rhel-8* ]]; then
+  DISTRO_CODE=rhel-85
+fi
+
 greenprint "Pushing compose to Koji"
 sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
 
