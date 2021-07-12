@@ -98,9 +98,8 @@ Base:
       - RUNNER:
           - aws/fedora-33-x86_64
           - aws/fedora-33-aarch64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          # - aws/fedora-34-aarch64
+          - aws/fedora-34-x86_64
+          - aws/fedora-34-aarch64
           - aws/rhel-8-x86_64
           - aws/rhel-8-aarch64
           - aws/centos-stream-8-x86_64
@@ -132,8 +131,7 @@ OSTree:
       - RUNNER:
           # See COMPOSER-1007
           # - openstack/fedora-33-x86_64
-          # See COMPOSER-919
-          # - openstack/fedora-34-x86_64
+          - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
           # do we want centos as well ?
@@ -171,8 +169,7 @@ Integration:
       - <<: *INTEGRATION_TESTS
         RUNNER:
           - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
+          - aws/fedora-34-x86_64
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
@@ -222,8 +219,7 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
+          - aws/fedora-34-x86_64
           - openstack/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
