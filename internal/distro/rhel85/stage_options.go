@@ -442,7 +442,10 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 }
 
 func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform string) *osbuild.Grub2InstStageOptions {
-	bootPartIndex := findBootPartition(pt)
+	bootPartIndex := pt.BootPartitionIndex()
+	if bootPartIndex == -1 {
+		panic("failed to find boot or root partition for grub2.inst stage")
+	}
 	core := osbuild.CoreMkImage{
 		Type:       "mkimage",
 		PartLabel:  pt.Type,
@@ -452,7 +455,7 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	prefix := osbuild.PrefixPartition{
 		Type:      "partition",
 		PartLabel: pt.Type,
-		Number:    bootPartIndex,
+		Number:    uint(bootPartIndex),
 		Path:      "/boot/grub2",
 	}
 
@@ -463,25 +466,6 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 		Core:     core,
 		Prefix:   prefix,
 	}
-}
-
-func findBootPartition(pt *disk.PartitionTable) uint {
-	// find partition with '/boot' mountpoint and fallback to '/'
-	rootIdx := -1
-	for idx, part := range pt.Partitions {
-		if part.Filesystem == nil {
-			continue
-		}
-		if part.Filesystem.Mountpoint == "/boot" {
-			return uint(idx)
-		} else if part.Filesystem.Mountpoint == "/" {
-			rootIdx = idx
-		}
-	}
-	if rootIdx == -1 {
-		panic("failed to find boot or root partition for grub2.inst stage")
-	}
-	return uint(rootIdx)
 }
 
 func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
