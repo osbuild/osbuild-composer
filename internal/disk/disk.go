@@ -120,6 +120,26 @@ func (pt PartitionTable) RootPartition() *Partition {
 	return nil
 }
 
+// Returns the index of the boot partition: the partition whose filesystem has
+// /boot as a mountpoint.  If there is no explicit boot partition, the root
+// partition is returned.
+// If neither boot nor root partitions are found, returns -1.
+func (pt PartitionTable) BootPartitionIndex() int {
+	// find partition with '/boot' mountpoint and fallback to '/'
+	rootIdx := -1
+	for idx, part := range pt.Partitions {
+		if part.Filesystem == nil {
+			continue
+		}
+		if part.Filesystem.Mountpoint == "/boot" {
+			return idx
+		} else if part.Filesystem.Mountpoint == "/" {
+			rootIdx = idx
+		}
+	}
+	return rootIdx
+}
+
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
