@@ -95,7 +95,6 @@ Base:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
-    - /usr/libexec/tests/osbuild-composer/regression.sh
   parallel:
     matrix:
       - RUNNER:
@@ -112,6 +111,31 @@ Base:
           - aws/rhel-8.5-x86_64
           # see COMPOSER-918
           # - aws/rhel-8.4-aarch64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log
+      - "*.repo"
+    when: always
+
+Regression:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/regression.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8-x86_64
+          - aws/rhel-8-aarch64
+          - aws/centos-stream-8-x86_64
+          - aws/centos-stream-8-aarch64
+      - RUNNER:
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
