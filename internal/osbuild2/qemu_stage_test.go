@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewQemukStage(t *testing.T) {
+func TestNewQemuStage(t *testing.T) {
 
 	formatOptionsList := []QEMUFormatOptions{
 		Qcow2Options{
