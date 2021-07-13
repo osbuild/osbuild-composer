@@ -69,6 +69,9 @@ if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
   # If this script runs on subscribed RHEL, install content built using CDN
   # repositories.
   DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+
+  # workaround for https://github.com/osbuild/osbuild/issues/717
+  sudo subscription-manager config --rhsm.manage_repos=1
 fi
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
