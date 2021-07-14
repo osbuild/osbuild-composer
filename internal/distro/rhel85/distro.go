@@ -495,7 +495,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
 		pipelines:     vhdPipelines,
-		exports:       []string{"vhd"},
+		exports:       []string{"vpc"},
 	}
 
 	vmdkImgType := imageType{
