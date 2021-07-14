@@ -52,8 +52,8 @@ objects:
             mountPath: "/var/cache/osbuild-composer"
         volumes:
         - name: composer-config
-          secret:
-            secretName: composer-config
+          configMap:
+            name: composer-config
         - name: state-directory
           persistentVolumeClaim:
             claimName: osbuild-composer-state-dir
@@ -101,6 +101,20 @@ objects:
       requests:
         storage: ${STATE_VOLUME_CAPACITY}
 
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: composer-config
+  data:
+    osubild-composer.toml: |
+      [koji]
+      [worker]
+      [composer_api]
+      identity_filter = [${COMPOSER_API_IDENTITY_FILTER}]
+      [worker_api]
+      identity_filter = [${WORKER_API_IDENTITY_FILTER}]
+
+
 parameters:
   - description: osbuild-composer image name
     name: IMAGE_NAME
@@ -115,3 +129,9 @@ parameters:
   - description: Size of composer state directory
     name: STATE_VOLUME_CAPACITY
     value: 2Gi
+  - description: Identity filter for the composer api
+    name: COMPOSER_API_IDENTITY_FILTER
+    value: "" # example: '"012345", "123456"'
+  - description: Identity filter for the composer api
+    name: WORKER_API_IDENTITY_FILTER
+    value: ""
