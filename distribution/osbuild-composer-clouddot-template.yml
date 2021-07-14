@@ -24,10 +24,10 @@ objects:
       # Update pods 1 at a time
       type: RollingUpdate
       rollingUpdate:
-        # Create at most 1 extra pod over .spec.replicas
-        maxSurge: 1
-        # At all times there should be .spec.replicas available
-        maxUnavailable: 0
+        # Create at most 0 extra pod over .spec.replicas
+        maxSurge: 0
+        # At all times there should be .spec.replicas - 1 available
+        maxUnavailable: 1
     template:
       metadata:
         labels:
