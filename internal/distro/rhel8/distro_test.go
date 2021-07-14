@@ -401,7 +401,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			if imgTypeName == "rhel-edge-commit" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else {
-				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/var\"]")
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
 			}
 		}
 	}
