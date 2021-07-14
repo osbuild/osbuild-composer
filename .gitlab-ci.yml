@@ -109,8 +109,7 @@ Base:
           - aws/centos-stream-8-aarch64
       - RUNNER:
           - aws/rhel-8.5-x86_64
-          # see COMPOSER-918
-          # - aws/rhel-8.4-aarch64
+          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -201,12 +200,13 @@ Integration:
       - <<: *INTEGRATION_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
         RUNNER:
           - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *INTEGRATION_TESTS
         RUNNER:
@@ -222,7 +222,7 @@ Integration:
           - libvirt.sh
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - openstack/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
@@ -252,7 +252,7 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *API_TESTS
         RUNNER:
