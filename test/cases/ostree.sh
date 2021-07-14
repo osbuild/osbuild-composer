@@ -8,7 +8,7 @@ source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Set os-variant and boot location used by virt-install.

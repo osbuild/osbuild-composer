@@ -40,7 +40,7 @@ run_test_case () {
 }
 
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Change to the working directory.

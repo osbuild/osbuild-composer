@@ -20,7 +20,7 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 greenprint "Defining distro selector"

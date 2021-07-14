@@ -24,7 +24,7 @@ if [[ $DISTRO_CODE == rhel_90 ]]; then
 fi
 
 #
-# Provision the software under tet.
+# Provision the software under test.
 #
 
 /usr/libexec/osbuild-composer-test/provision.sh
