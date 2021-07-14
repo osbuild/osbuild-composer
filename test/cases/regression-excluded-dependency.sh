@@ -15,7 +15,7 @@
 # Get OS data.
 source /etc/os-release
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" ]]; then
@@ -25,7 +25,7 @@ fi
 
 set -xeuo pipefail
 
-# Provision the software under tet.
+# Provision the software under test.
 BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json
