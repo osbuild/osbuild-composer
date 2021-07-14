@@ -3,6 +3,7 @@ package test_distro
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -165,6 +166,19 @@ func (t *TestImageType) Exports() []string {
 }
 
 func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, seed int64) (distro.Manifest, error) {
+	mountpoints := b.GetFilesystems()
+
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
 	return json.Marshal(
 		osbuild.Manifest{
 			Sources:  osbuild.Sources{},
