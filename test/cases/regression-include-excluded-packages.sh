@@ -14,7 +14,7 @@
 
 set -xeuo pipefail
 
-# Provision the software under tet.
+# Provision the software under test.
 BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json

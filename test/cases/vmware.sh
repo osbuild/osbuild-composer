@@ -15,7 +15,7 @@ if [ "$ID" != "rhel" ]; then
     exit 0
 fi
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 GOVC_CMD=/tmp/govc
