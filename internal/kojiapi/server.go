@@ -124,7 +124,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		packageSets := imageType.PackageSets(*bp)
 		packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 		for name, packages := range packageSets {
-			packageSpecs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, d.ModulePlatformID(), arch.Name())
+			packageSpecs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, d.ModulePlatformID(), arch.Name(), d.Releasever())
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 			}

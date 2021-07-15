@@ -58,6 +58,7 @@ BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
 BuildRequires:  golang(cloud.google.com/go)
+BuildRequires:  golang(gopkg.in/ini.v1)
 %endif
 
 Requires: %{name}-core = %{version}-%{release}
@@ -267,8 +268,8 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 28
-Requires:   osbuild-ostree >= 28
+Requires:   osbuild >= 29
+Requires:   osbuild-ostree >= 29
 
 # remove in F34
 Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
@@ -334,6 +335,7 @@ Requires:   virt-install
 Requires:   expect
 Requires:   python3-lxml
 Requires:   httpd
+Requires:   mod_ssl
 Requires:   openssl
 Requires:   podman-plugins
 Requires:   dnf-plugins-core

@@ -20,6 +20,7 @@ import (
 )
 
 const defaultName = "rhel-90"
+const releaseVersion = "9"
 const modulePlatformID = "platform:el9"
 const ostreeRef = "rhel/9/%s/edge"
 
@@ -257,6 +258,10 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 
 func (d *distribution) Name() string {
 	return d.name
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {

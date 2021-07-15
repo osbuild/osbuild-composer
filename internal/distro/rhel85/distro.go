@@ -15,6 +15,7 @@ import (
 
 const defaultName = "rhel-85"
 const osVersion = "8.5"
+const releaseVersion = "8"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
@@ -28,6 +29,10 @@ type distribution struct {
 
 func (d *distribution) Name() string {
 	return d.name
+}
+
+func (d *distribution) Releasever() string {
+	return releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {
