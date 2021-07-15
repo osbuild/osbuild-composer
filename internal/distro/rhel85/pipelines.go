@@ -20,20 +20,8 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	if err != nil {
 		return nil, err
 	}
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
 
-		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
-	} else {
+	if options.Subscription == nil {
 		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
 		treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
 			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
@@ -68,19 +56,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	if err != nil {
 		return nil, err
 	}
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
-		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
-	}
+
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
@@ -105,19 +81,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	if err != nil {
 		return nil, err
 	}
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
-		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
-	}
+
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
@@ -142,19 +106,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	if err != nil {
 		return nil, err
 	}
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
-		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
-	}
+
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
@@ -179,19 +131,7 @@ func amiPipelines(t *imageType, customizations *blueprint.Customizations, option
 	if err != nil {
 		return nil, err
 	}
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
-		treePipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
-	}
+
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
