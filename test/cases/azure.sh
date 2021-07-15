@@ -2,9 +2,9 @@
 set -euo pipefail
 
 source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
-BRANCH_NAME="${CI_COMMIT_BRANCH:-'local'}"
-BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
+export DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+export BRANCH_NAME="${CI_COMMIT_BRANCH:-'local'}"
+export BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"
 
 # Colorful output.
@@ -17,6 +17,9 @@ if [[ $DISTRO_CODE == rhel_90 ]]; then
     greenprint "Skipped"
     exit 0
 fi
+
+# try to trap cloud-cleaner
+trap 'schutzbot/run_cloud_cleaner.sh' INT ERR
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
