@@ -318,12 +318,12 @@ ARCH=$(uname -m)
 SSH_USER=
 
 # Generate a string, which can be used as a predictable resource name,
-# especially when running the test in Jenkins where we may need to clean up
+# especially when running the test in CI where we may need to clean up
 # resources in case the test unexpectedly fails or is canceled
-JENKINS_HOME="${JENKINS_HOME:-}"
-if [[ -n "$JENKINS_HOME" ]]; then
-  # in Jenkins, imitate GenerateCIArtifactName() from internal/test/helpers.go
-  TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
+CI="${CI:-false}"
+if [[ "$CI" == true ]]; then
+  # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
 else
   # if not running in Jenkins, generate ID not relying on specific env variables
   TEST_ID=$(uuidgen);
