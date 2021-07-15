@@ -106,13 +106,12 @@ objects:
   metadata:
     name: composer-config
   data:
-    osubild-composer.toml: |
+    osbuild-composer.toml: |
       [koji]
       [worker]
+      identity_filter = [${WORKER_API_IDENTITY_FILTER}]
       [composer_api]
       identity_filter = [${COMPOSER_API_IDENTITY_FILTER}]
-      [worker_api]
-      identity_filter = [${WORKER_API_IDENTITY_FILTER}]
 
 
 parameters:
