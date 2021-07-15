@@ -451,3 +451,98 @@ func TestFinishedComposeV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 }
+
+func TestComposeSupportedMountPointV0(t *testing.T) {
+
+	bp := `
+		name="test-compose-supported-mountpoint-v0"
+		description="TestComposeSupportedMountPointV0"
+		version="0.0.1"
+		[[customizations.filesystem]]
+		mountpoint = "/"
+		size = 4294967296
+		`
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.True(t, resp.Status, "POST failed: %#v", resp)
+
+	compose := fmt.Sprintf(`{
+		"blueprint_name": "test-compose-supported-mountpoint-v0",
+		"compose_type": "%s",
+		"branch": "master"
+	}`, testState.imageTypeName)
+
+	// Create a finished test compose
+	body, resp, err := PostJSON(testState.socket, "/api/v1/compose?test=2", compose)
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	response, err := NewComposeResponseV0(body)
+	require.NoError(t, err, "failed with a client error")
+	require.True(t, response.Status, "POST failed: %#v", response)
+	buildID := response.BuildID
+
+	// Wait until the build is not listed in the queue
+	resp, err = WaitForBuild(testState.socket, buildID)
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+
+	// Test failed after compose (should not have failed)
+	failed, resp, err := GetFailedComposesV0(testState.socket)
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.False(t, UUIDInComposeResults(buildID, failed))
+
+	// Test finished after compose (should have finished)
+	finished, resp, err := GetFinishedComposesV0(testState.socket)
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.True(t, UUIDInComposeResults(buildID, finished), "%s not found in finished list: %#v", buildID, finished)
+
+	// Test status filter on finished compose
+	status, resp, err := GetComposeStatusV0(testState.socket, "*", "", "FINISHED", "")
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.True(t, UUIDInComposeResults(buildID, status), "%s not found in status list: %#v", buildID, status)
+
+	// Test status of build id
+	status, resp, err = GetComposeStatusV0(testState.socket, buildID.String(), "", "", "")
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.True(t, UUIDInComposeResults(buildID, status), "%s not found in status list: %#v", buildID, status)
+
+	// Test status filter using FAILED, should not be listed
+	status, resp, err = GetComposeStatusV0(testState.socket, "*", "", "FAILED", "")
+	require.NoError(t, err, "failed with a client error")
+	require.Nil(t, resp)
+	require.False(t, UUIDInComposeResults(buildID, status))
+
+}
+
+func TestComposeUnsupportedMountPointV0(t *testing.T) {
+	bp := `
+		name="test-compose-unsupported-mountpoint-v0"
+		description="TestComposeUnsupportedMountPointV0"
+		version="0.0.1"
+		[[customizations.filesystem]]
+		mountpoint = "/boot"
+		size = 4294967296
+		`
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+
+	compose := fmt.Sprintf(`{
+		"blueprint_name": "test-compose-unsupported-mountpoint-v0",
+		"compose_type": "%s",
+		"branch": "master"
+	}`, testState.imageTypeName)
+
+	// Create a finished test compose
+	body, resp, err := PostJSON(testState.socket, "/api/v1/compose?test=2", compose)
+	require.NoError(t, err, "failed with a client error")
+	require.NotNil(t, resp)
+	require.Equal(t, "ManifestCreationFailed", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "The following custom mountpoints are not supported")
+	require.Equal(t, 0, len(body))
+}
