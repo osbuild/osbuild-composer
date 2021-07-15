@@ -97,12 +97,13 @@ func (d *distribution) addArches(arches ...architecture) {
 }
 
 type architecture struct {
-	distro      *distribution
-	name        string
-	imageTypes  map[string]distro.ImageType
-	packageSets map[string]rpmmd.PackageSet
-	legacy      string
-	uefi        bool
+	distro           *distribution
+	name             string
+	imageTypes       map[string]distro.ImageType
+	imageTypeAliases map[string]string
+	packageSets      map[string]rpmmd.PackageSet
+	legacy           string
+	uefi             bool
 }
 
 func (a *architecture) Name() string {
@@ -121,7 +122,14 @@ func (a *architecture) ListImageTypes() []string {
 func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
 	t, exists := a.imageTypes[name]
 	if !exists {
-		return nil, errors.New("invalid image type: " + name)
+		aliasForName, exists := a.imageTypeAliases[name]
+		if !exists {
+			return nil, errors.New("invalid image type: " + name)
+		}
+		t, exists = a.imageTypes[aliasForName]
+		if !exists {
+			panic(fmt.Sprintf("image type '%s' is an alias to a non-existing image type '%s'", name, aliasForName))
+		}
 	}
 	return t, nil
 }
@@ -134,6 +142,15 @@ func (a *architecture) addImageTypes(imageTypes ...imageType) {
 		it := imageTypes[idx]
 		it.arch = a
 		a.imageTypes[it.name] = &it
+		for _, alias := range it.nameAliases {
+			if a.imageTypeAliases == nil {
+				a.imageTypeAliases = map[string]string{}
+			}
+			if existingAliasFor, exists := a.imageTypeAliases[alias]; exists {
+				panic(fmt.Sprintf("image type alias '%s' for '%s' is already defined for another image type '%s'", alias, it.name, existingAliasFor))
+			}
+			a.imageTypeAliases[alias] = it.name
+		}
 	}
 }
 
@@ -146,6 +163,7 @@ type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, 
 type imageType struct {
 	arch             *architecture
 	name             string
+	nameAliases      []string
 	filename         string
 	mimeType         string
 	packageSets      map[string]rpmmd.PackageSet
@@ -420,9 +438,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 
 	// Image Definitions
 	edgeCommitImgType := imageType{
-		name:     "edge-commit",
-		filename: "commit.tar",
-		mimeType: "application/x-tar",
+		name:        "edge-commit",
+		nameAliases: []string{"rhel-edge-commit"},
+		filename:    "commit.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey: edgeBuildPackageSet(),
 			osPkgsKey:    edgeCommitPackageSet(),
@@ -433,9 +452,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"commit-archive"},
 	}
 	edgeOCIImgType := imageType{
-		name:     "edge-container",
-		filename: "container.tar",
-		mimeType: "application/x-tar",
+		name:        "edge-container",
+		nameAliases: []string{"rhel-edge-container"},
+		filename:    "container.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey:     edgeBuildPackageSet(),
 			osPkgsKey:        edgeCommitPackageSet(),
@@ -448,9 +468,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{containerPkgsKey},
 	}
 	edgeInstallerImgType := imageType{
-		name:     "edge-installer",
-		filename: "installer.iso",
-		mimeType: "application/x-iso9660-image",
+		name:        "edge-installer",
+		nameAliases: []string{"rhel-edge-installer"},
+		filename:    "installer.iso",
+		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey:     edgeBuildPackageSet(),
 			osPkgsKey:        edgeCommitPackageSet(),
