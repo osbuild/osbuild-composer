@@ -224,7 +224,7 @@ API:
           - aws/fedora-33-x86_64
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
-          - openstack/centos-stream-8-x86_64
+          - aws/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
