@@ -14,7 +14,9 @@ case "${ID}" in
     "rhel")
         /usr/libexec/tests/osbuild-composer/regression-include-excluded-packages.sh;;
     "centos")
-        /usr/libexec/tests/osbuild-composer/regression-include-excluded-packages.sh;;
+        /usr/libexec/tests/osbuild-composer/regression-include-excluded-packages.sh
+        /usr/libexec/tests/osbuild-composer/regression-start-on-rhel-like-systems.sh
+        ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
 esac
