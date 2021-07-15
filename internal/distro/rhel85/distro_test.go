@@ -1,6 +1,7 @@
 package rhel85_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,6 +95,15 @@ func TestFilenameFromType(t *testing.T) {
 				mimeType: "application/x-tar",
 			},
 		},
+		// Alias
+		{
+			name: "rhel-edge-commit",
+			args: args{"rhel-edge-commit"},
+			want: wantResult{
+				filename: "commit.tar",
+				mimeType: "application/x-tar",
+			},
+		},
 		{
 			name: "edge-container",
 			args: args{"edge-container"},
@@ -102,9 +112,27 @@ func TestFilenameFromType(t *testing.T) {
 				mimeType: "application/x-tar",
 			},
 		},
+		// Alias
+		{
+			name: "rhel-edge-container",
+			args: args{"rhel-edge-container"},
+			want: wantResult{
+				filename: "container.tar",
+				mimeType: "application/x-tar",
+			},
+		},
 		{
 			name: "edge-installer",
 			args: args{"edge-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		// Alias
+		{
+			name: "rhel-edge-installer",
+			args: args{"rhel-edge-installer"},
 			want: wantResult{
 				filename: "installer.iso",
 				mimeType: "application/x-iso9660-image",
@@ -258,6 +286,81 @@ func TestImageType_Name(t *testing.T) {
 						}
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestImageTypeAliases(t *testing.T) {
+	type args struct {
+		imageTypeAliases []string
+	}
+	type wantResult struct {
+		imageTypeName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want wantResult
+	}{
+		{
+			name: "edge-commit aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-commit"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-commit",
+			},
+		},
+		{
+			name: "edge-container aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-container"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-container",
+			},
+		},
+		{
+			name: "edge-installer aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-installer"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-installer",
+			},
+		},
+	}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					dist := dist.distro
+					for _, archName := range dist.ListArches() {
+						t.Run(archName, func(t *testing.T) {
+							arch, err := dist.GetArch(archName)
+							require.Nilf(t, err,
+								"failed to get architecture '%s', previously listed as supported for the distro '%s'",
+								archName, dist.Name())
+							// Test image type aliases only if the aliased image type is supported for the arch
+							if _, err = arch.GetImageType(tt.want.imageTypeName); err != nil {
+								t.Skipf("aliased image type '%s' is not supported for architecture '%s'",
+									tt.want.imageTypeName, archName)
+							}
+							for _, alias := range tt.args.imageTypeAliases {
+								t.Run(fmt.Sprintf("'%s' alias for image type '%s'", alias, tt.want.imageTypeName),
+									func(t *testing.T) {
+										gotImage, err := arch.GetImageType(alias)
+										require.Nilf(t, err, "arch.GetImageType() for image type alias '%s' failed: %v",
+											alias, err)
+										assert.Equalf(t, tt.want.imageTypeName, gotImage.Name(),
+											"got unexpected image type name for alias '%s'. got = %s, want = %s",
+											alias, tt.want.imageTypeName, gotImage.Name())
+									})
+							}
+						})
+					}
+				})
 			}
 		})
 	}
