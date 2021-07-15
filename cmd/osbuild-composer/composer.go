@@ -65,7 +65,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, fmt.Errorf("cannot create jobqueue: %v", err)
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, c.config.WorkerAPI.IdentityFilter)
+	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, c.config.Worker.IdentityFilter)
 
 	return &c, nil
 }
@@ -108,7 +108,7 @@ func (c *Composer) InitLocalWorker(l net.Listener) {
 }
 
 func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
-	if len(c.config.WorkerAPI.IdentityFilter) > 0 {
+	if len(c.config.Worker.IdentityFilter) > 0 {
 		c.workerListener = l
 	} else {
 		tlsConfig, err := createTLSConfig(&connectionConfig{
