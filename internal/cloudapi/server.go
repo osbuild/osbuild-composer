@@ -182,7 +182,17 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 		for name, packages := range packageSets {
 			pkgs, _, err := server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name())
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusInternalServerError)
+				var error_type int
+				switch err.(type) {
+				// Known DNF errors falls under BadRequest
+				case *rpmmd.DNFError:
+					error_type = http.StatusBadRequest
+				// All other kind of errors are internal server Errors.
+				// (json marshalling issues for instance)
+				case error:
+					error_type = http.StatusInternalServerError
+				}
+				http.Error(w, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), error_type)
 				return
 			}
 			pkgSpecSets[name] = pkgs
