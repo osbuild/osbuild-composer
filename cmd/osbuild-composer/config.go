@@ -15,6 +15,8 @@ type ComposerConfigFile struct {
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
 		IdentityFilter []string `toml:"identity_filter"`
+		DBConfigDir    string   `toml:"db_config_dir"`
+		DBSSLMode      string   `toml:"db_ssl_mode"`
 	} `toml:"worker"`
 	ComposerAPI struct {
 		IdentityFilter []string `toml:"identity_filter"`

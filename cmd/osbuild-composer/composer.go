@@ -11,9 +11,12 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -60,9 +63,47 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 
 	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
-	jobs, err := fsjobqueue.New(queueDir)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+	var jobs jobqueue.JobQueue
+	if config.Worker.DBConfigDir != "" {
+		// Construct dburl from secrets; this is a directory
+		host, err := ioutil.ReadFile(path.Join(config.Worker.DBConfigDir, "host"))
+		if err != nil {
+			return nil, err
+		}
+		port, err := ioutil.ReadFile(path.Join(config.Worker.DBConfigDir, "port"))
+		if err != nil {
+			return nil, err
+		}
+		name, err := ioutil.ReadFile(path.Join(config.Worker.DBConfigDir, "name"))
+		if err != nil {
+			return nil, err
+		}
+		user, err := ioutil.ReadFile(path.Join(config.Worker.DBConfigDir, "user"))
+		if err != nil {
+			return nil, err
+		}
+		password, err := ioutil.ReadFile(path.Join(config.Worker.DBConfigDir, "password"))
+		if err != nil {
+			return nil, err
+		}
+
+		dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+			strings.TrimSpace(string(user)),
+			strings.TrimSpace(string(password)),
+			strings.TrimSpace(string(host)),
+			strings.TrimSpace(string(port)),
+			strings.TrimSpace(string(name)),
+			config.Worker.DBSSLMode,
+		)
+		jobs, err = dbjobqueue.New(dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+		}
+	} else {
+		jobs, err = fsjobqueue.New(queueDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
+		}
 	}
 
 	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, c.config.Worker.IdentityFilter)
