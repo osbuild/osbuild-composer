@@ -24,7 +24,7 @@ if [[ $DISTRO_CODE == rhel_90 ]]; then
 fi
 
 #
-# Provision the software under tet.
+# Provision the software under test.
 #
 
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -331,6 +331,10 @@ else
 fi
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
+  "rhel-8.5")
+    DISTRO="rhel-85"
+    SSH_USER="cloud-user"
+    ;;
   "rhel-8.4")
     DISTRO="rhel-84"
     SSH_USER="cloud-user"

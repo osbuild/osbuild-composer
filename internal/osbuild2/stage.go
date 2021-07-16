@@ -14,33 +14,8 @@ type Stage struct {
 
 	Inputs  Inputs       `json:"inputs,omitempty"`
 	Options StageOptions `json:"options,omitempty"`
-}
-
-// Collection of Inputs for a Stage
-type Inputs interface {
-	isStageInputs()
-}
-
-// Single Input for a Stage
-type Input interface {
-	isInput()
-}
-
-// Fields shared between all Input types (should be embedded in each instance)
-type inputCommon struct {
-	Type string `json:"type"`
-	// Origin should be either 'org.osbuild.source' or 'org.osbuild.pipeline'
-	Origin string `json:"origin"`
-
-	// References References `json:"references"`
-}
-
-type StageInput interface {
-	isStageInput()
-}
-
-type References interface {
-	isReferences()
+	Devices Devices      `json:"devices,omitempty"`
+	Mounts  Mounts       `json:"mounts,omitempty"`
 }
 
 // StageOptions specify the operations of a given stage-type.
@@ -48,13 +23,12 @@ type StageOptions interface {
 	isStageOptions()
 }
 
-type InputOptions interface {
-}
-
 type rawStage struct {
 	Type    string          `json:"type"`
 	Options json.RawMessage `json:"options"`
 	Inputs  json.RawMessage `json:"inputs"`
+	Devices json.RawMessage `json:"devices"`
+	Mounts  json.RawMessage `json:"mounts"`
 }
 
 // UnmarshalJSON unmarshals JSON into a Stage object. Each type of stage has
@@ -66,6 +40,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	}
 	var options StageOptions
 	var inputs Inputs
+	var devices Devices
+	var mounts Mounts
 	switch rawStage.Type {
 	case "org.osbuild.authselect":
 		options = new(AuthselectStageOptions)
@@ -129,6 +105,31 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(OSTreeInitStageOptions)
 	case "org.osbuild.ostree.preptree":
 		options = new(OSTreePrepTreeStageOptions)
+	case "org.osbuild.truncate":
+		options = new(TruncateStageOptions)
+	case "org.osbuild.sfdisk":
+		options = new(SfdiskStageOptions)
+		devices = new(SfdiskStageDevices)
+	case "org.osbuild.copy":
+		options = new(CopyStageOptions)
+		inputs = new(CopyStageInputs)
+		devices = new(CopyStageDevices)
+		mounts = new(CopyStageMounts)
+	case "org.osbuild.mkfs.btrfs":
+		options = new(MkfsBtrfsStageOptions)
+		devices = new(MkfsBtrfsStageDevices)
+	case "org.osbuild.mkfs.ext4":
+		options = new(MkfsExt4StageOptions)
+		devices = new(MkfsExt4StageDevices)
+	case "org.osbuild.mkfs.fat":
+		options = new(MkfsFATStageOptions)
+		devices = new(MkfsFATStageDevices)
+	case "org.osbuild.mkfs.xfs":
+		options = new(MkfsXfsStageOptions)
+		devices = new(MkfsXfsStageDevices)
+	case "org.osbuild.qemu":
+		options = new(QEMUStageOptions)
+		inputs = new(QEMUStageInputs)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
@@ -144,6 +145,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	stage.Type = rawStage.Type
 	stage.Options = options
 	stage.Inputs = inputs
+	stage.Devices = devices
+	stage.Mounts = mounts
 
 	return nil
 }

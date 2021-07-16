@@ -85,14 +85,31 @@
     },
     "rhel-85": {
         "x86_64": [
+            "ami",
+            "openstack",
+            "tar",
+            "qcow2",
+            "qcow2-customize",
             "edge-commit",
+            "edge-commit-rt",
             "edge-container",
-            "edge-installer"
+            "vhd",
+            "vmdk"
         ],
         "aarch64": [
+            "ami",
+            "openstack",
+            "qcow2",
             "edge-commit",
             "edge-container",
-            "edge-installer"
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2"
         ]
     },
     "rhel-90": {

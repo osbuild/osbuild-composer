@@ -18,6 +18,34 @@ const osVersion = "8.5"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
 
+const (
+	// package set names
+
+	// build package set name
+	buildPkgsKey = "build"
+
+	// bootable image package set name
+	bootPkgsKey = "boot"
+
+	// main/common os image package set name
+	osPkgsKey = "packages"
+
+	// edge os image package set name
+	edgePkgsKey = "edge"
+
+	// edge build package set name
+	edgeBuildPkgsKey = "build.edge"
+
+	// container package set name
+	containerPkgsKey = "container"
+
+	// installer package set name
+	installerPkgsKey = "installer"
+
+	// blueprint package set name
+	blueprintPkgsKey = "blueprint"
+)
+
 type distribution struct {
 	name             string
 	modulePlatformID string
@@ -60,20 +88,22 @@ func (d *distribution) addArches(arches ...architecture) {
 		d.arches = map[string]distro.Arch{}
 	}
 
-	for _, a := range arches {
-		d.arches[a.name] = &architecture{
-			distro:     d,
-			name:       a.name,
-			imageTypes: a.imageTypes,
-		}
+	// Do not make copies of architectures, as opposed to image types,
+	// because architecture definitions are not used by more than a single
+	// distro definition.
+	for idx := range arches {
+		d.arches[arches[idx].name] = &arches[idx]
 	}
 }
 
 type architecture struct {
-	distro      *distribution
-	name        string
-	imageTypes  map[string]distro.ImageType
-	packageSets map[string]rpmmd.PackageSet
+	distro           *distribution
+	name             string
+	imageTypes       map[string]distro.ImageType
+	imageTypeAliases map[string]string
+	packageSets      map[string]rpmmd.PackageSet
+	legacy           string
+	uefi             bool
 }
 
 func (a *architecture) Name() string {
@@ -92,7 +122,14 @@ func (a *architecture) ListImageTypes() []string {
 func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
 	t, exists := a.imageTypes[name]
 	if !exists {
-		return nil, errors.New("invalid image type: " + name)
+		aliasForName, exists := a.imageTypeAliases[name]
+		if !exists {
+			return nil, errors.New("invalid image type: " + name)
+		}
+		t, exists = a.imageTypes[aliasForName]
+		if !exists {
+			panic(fmt.Sprintf("image type '%s' is an alias to a non-existing image type '%s'", name, aliasForName))
+		}
 	}
 	return t, nil
 }
@@ -105,6 +142,15 @@ func (a *architecture) addImageTypes(imageTypes ...imageType) {
 		it := imageTypes[idx]
 		it.arch = a
 		a.imageTypes[it.name] = &it
+		for _, alias := range it.nameAliases {
+			if a.imageTypeAliases == nil {
+				a.imageTypeAliases = map[string]string{}
+			}
+			if existingAliasFor, exists := a.imageTypeAliases[alias]; exists {
+				panic(fmt.Sprintf("image type alias '%s' for '%s' is already defined for another image type '%s'", alias, it.name, existingAliasFor))
+			}
+			a.imageTypeAliases[alias] = it.name
+		}
 	}
 }
 
@@ -117,12 +163,14 @@ type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, 
 type imageType struct {
 	arch             *architecture
 	name             string
+	nameAliases      []string
 	filename         string
 	mimeType         string
 	packageSets      map[string]rpmmd.PackageSet
 	enabledServices  []string
 	disabledServices []string
 	defaultTarget    string
+	kernelOptions    string
 	defaultSize      uint64
 	exports          []string
 	pipelines        pipelinesFunc
@@ -171,35 +219,37 @@ func (t *imageType) Size(size uint64) uint64 {
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	// merge package sets that appear in the image type (or are enabled by
-	// flags) with the package sets of the same name from the distro and arch
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
 	mergedSets := make(map[string]rpmmd.PackageSet)
 
 	imageSets := t.packageSets
-	distroSets := t.arch.distro.packageSets
 	archSets := t.arch.packageSets
+	distroSets := t.arch.distro.packageSets
 	for name := range imageSets {
 		mergedSets[name] = imageSets[name].Append(archSets[name]).Append(distroSets[name])
 	}
 
-	if _, hasPackages := imageSets["packages"]; !hasPackages {
+	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
 		// should this be possible??
-		mergedSets["packages"] = rpmmd.PackageSet{}
+		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
 	}
 
 	// build is usually not defined on the image type
-	// so handle it explicitly
-	if _, hasBuild := imageSets["build"]; !hasBuild {
-		buildSet := archSets["build"].Append(distroSets["build"])
-		if t.rpmOstree {
-			buildSet.Include = append(buildSet.Include, "rpm-ostree")
-		}
-		mergedSets["build"] = buildSet
+	// handle it explicitly when it's not
+	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
+		mergedSets[buildPkgsKey] = archSets[buildPkgsKey].Append(distroSets[buildPkgsKey])
 	}
 
 	// package sets from flags
 	if t.bootable {
-		mergedSets["packages"] = mergedSets["packages"].Append(archSets["boot"]).Append(distroSets["boot"])
+		// add boot sets
+		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootPkgsKey]).Append(distroSets[bootPkgsKey])
+	}
+	if t.rpmOstree {
+		// add ostree sets
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(archSets[edgeBuildPkgsKey]).Append(distroSets[edgeBuildPkgsKey])
+		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[edgePkgsKey]).Append(distroSets[edgePkgsKey])
 	}
 
 	// blueprint packages
@@ -208,7 +258,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	if timezone != nil {
 		bpPackages = append(bpPackages, "chrony")
 	}
-	mergedSets["packages"] = mergedSets["packages"].Append(rpmmd.PackageSet{Include: bpPackages})
+
+	// depsolve bp packages separately
+	// bp packages aren't restricted by exclude lists
+	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
 	return mergedSets
 
 }
@@ -324,133 +377,58 @@ func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 }
 
 func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	const GigaByte = 1024 * 1024 * 1024
+
 	rd := &distribution{
 		name:             name,
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
 		packageSets: map[string]rpmmd.PackageSet{
-			"build": buildPackageSet(),
+			buildPkgsKey:     distroBuildPackageSet(),
+			edgeBuildPkgsKey: edgeBuildPackageSet(),
 		},
 	}
 
-	// Shared Package sets
-	edgeCommitCommonPkgSet := rpmmd.PackageSet{
-		Include: []string{
-			"redhat-release",
-			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"dracut-config-generic", "dracut-network",
-			"basesystem", "bash", "platform-python",
-			"shadow-utils", "chrony", "setup", "shadow-utils",
-			"sudo", "systemd", "coreutils", "util-linux",
-			"curl", "vim-minimal",
-			"rpm", "rpm-ostree", "polkit",
-			"lvm2", "cryptsetup", "pinentry",
-			"e2fsprogs", "dosfstools",
-			"keyutils", "gnupg2",
-			"attr", "xz", "gzip",
-			"firewalld", "iptables",
-			"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
-			"wpa_supplicant",
-			"dnsmasq", "traceroute",
-			"hostname", "iproute", "iputils",
-			"openssh-clients", "procps-ng", "rootfiles",
-			"openssh-server", "passwd",
-			"policycoreutils", "policycoreutils-python-utils",
-			"selinux-policy-targeted", "setools-console",
-			"less", "tar", "rsync",
-			"fwupd", "usbguard",
-			"bash-completion", "tmux",
-			"ima-evm-utils",
-			"audit",
-			"podman", "container-selinux", "skopeo", "criu",
-			"slirp4netns", "fuse-overlayfs",
-			"clevis", "clevis-dracut", "clevis-luks",
-			"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
+	// Architecture definitions
+	x86_64 := architecture{
+		name:   "x86_64",
+		distro: rd,
+		packageSets: map[string]rpmmd.PackageSet{
+			buildPkgsKey: x8664BuildPackageSet(),
+			bootPkgsKey:  x8664BootPackageSet(),
+			edgePkgsKey:  x8664EdgeCommitPackageSet(),
 		},
-		Exclude: []string{"rng-tools"},
+		legacy: "i386-pc",
+		uefi:   true,
 	}
-	edgeBuildPkgSet := rpmmd.PackageSet{
-		Include: []string{
-			"dnf", "dosfstools", "e2fsprogs", "efibootmgr", "genisoimage",
-			"grub2-efi-ia32-cdboot", "grub2-efi-x64", "grub2-efi-x64-cdboot",
-			"grub2-pc", "grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
-			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
-			"lorax-templates-generic", "lorax-templates-rhel",
-			"policycoreutils", "python36", "python3-iniparse", "qemu-img",
-			"rpm-ostree", "selinux-policy-targeted", "shim-ia32", "shim-x64",
-			"squashfs-tools", "syslinux", "syslinux-nonlinux", "systemd",
-			"tar", "xfsprogs", "xorriso", "xz",
+
+	aarch64 := architecture{
+		name:   "aarch64",
+		distro: rd,
+		packageSets: map[string]rpmmd.PackageSet{
+			bootPkgsKey: aarch64BootPackageSet(),
+			edgePkgsKey: aarch64EdgeCommitPackageSet(),
 		},
-		Exclude: nil,
+		uefi: true,
 	}
-	edgeInstallerPkgSet := rpmmd.PackageSet{
-		Include: []string{
-			"aajohan-comfortaa-fonts", "abattis-cantarell-fonts",
-			"alsa-firmware", "alsa-tools-firmware", "anaconda",
-			"anaconda-dracut", "anaconda-install-env-deps", "anaconda-widgets",
-			"audit", "bind-utils", "biosdevname", "bitmap-fangsongti-fonts",
-			"bzip2", "cryptsetup", "curl", "dbus-x11", "dejavu-sans-fonts",
-			"dejavu-sans-mono-fonts", "device-mapper-persistent-data",
-			"dmidecode", "dnf", "dracut-config-generic", "dracut-network",
-			"dump", "efibootmgr", "ethtool", "ftp", "gdb-gdbserver", "gdisk",
-			"gfs2-utils", "glibc-all-langpacks",
-			"google-noto-sans-cjk-ttc-fonts", "grub2-efi-ia32-cdboot",
-			"grub2-efi-x64-cdboot", "grub2-tools", "grub2-tools-efi",
-			"grub2-tools-extra", "grub2-tools-minimal", "grubby",
-			"gsettings-desktop-schemas", "hdparm", "hexedit", "hostname",
-			"initscripts", "ipmitool", "iwl1000-firmware", "iwl100-firmware",
-			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
-			"iwl2030-firmware", "iwl3160-firmware", "iwl3945-firmware",
-			"iwl4965-firmware", "iwl5000-firmware", "iwl5150-firmware",
-			"iwl6000-firmware", "iwl6000g2a-firmware", "iwl6000g2b-firmware",
-			"iwl6050-firmware", "iwl7260-firmware", "jomolhari-fonts",
-			"kacst-farsi-fonts", "kacst-qurn-fonts", "kbd", "kbd-misc",
-			"kdump-anaconda-addon", "kernel", "khmeros-base-fonts", "less",
-			"libblockdev-lvm-dbus", "libertas-sd8686-firmware",
-			"libertas-sd8787-firmware", "libertas-usb8388-firmware",
-			"libertas-usb8388-olpc-firmware", "libibverbs",
-			"libreport-plugin-bugzilla", "libreport-plugin-reportuploader",
-			"libreport-rhel-anaconda-bugzilla", "librsvg2", "linux-firmware",
-			"lklug-fonts", "lohit-assamese-fonts", "lohit-bengali-fonts",
-			"lohit-devanagari-fonts", "lohit-gujarati-fonts",
-			"lohit-gurmukhi-fonts", "lohit-kannada-fonts", "lohit-odia-fonts",
-			"lohit-tamil-fonts", "lohit-telugu-fonts", "lsof", "madan-fonts",
-			"memtest86+", "metacity", "mtr", "mt-st", "net-tools", "nfs-utils",
-			"nmap-ncat", "nm-connection-editor", "nss-tools",
-			"openssh-clients", "openssh-server", "oscap-anaconda-addon",
-			"ostree", "pciutils", "perl-interpreter", "pigz", "plymouth",
-			"prefixdevname", "python3-pyatspi", "rdma-core",
-			"redhat-release-eula", "rng-tools", "rpcbind", "rpm-ostree",
-			"rsync", "rsyslog", "selinux-policy-targeted", "sg3_utils",
-			"shim-ia32", "shim-x64", "sil-abyssinica-fonts",
-			"sil-padauk-fonts", "sil-scheherazade-fonts", "smartmontools",
-			"smc-meera-fonts", "spice-vdagent", "strace", "syslinux",
-			"systemd", "system-storage-manager", "tar",
-			"thai-scalable-waree-fonts", "tigervnc-server-minimal",
-			"tigervnc-server-module", "udisks2", "udisks2-iscsi", "usbutils",
-			"vim-minimal", "volume_key", "wget", "xfsdump", "xfsprogs",
-			"xorg-x11-drivers", "xorg-x11-fonts-misc", "xorg-x11-server-utils",
-			"xorg-x11-server-Xorg", "xorg-x11-xauth", "xz",
+
+	ppc64le := architecture{
+		distro: rd,
+		name:   "ppc64le",
+		packageSets: map[string]rpmmd.PackageSet{
+			bootPkgsKey:  ppc64leBootPackageSet(),
+			buildPkgsKey: ppc64leBuildPackageSet(),
 		},
-		Exclude: nil,
+		legacy: "powerpc-ieee1275",
+		uefi:   false,
 	}
-	edgeCommitX86PkgSet := rpmmd.PackageSet{
-		Include: append(edgeCommitCommonPkgSet.Include,
-			// x86 specific
-			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64",
-			"microcode_ctl", "iwl1000-firmware", "iwl100-firmware",
-			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
-			"iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
-			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware",
-			"iwl7260-firmware"),
-		Exclude: edgeCommitCommonPkgSet.Exclude,
-	}
-	edgeCommitAarch64PkgSet := rpmmd.PackageSet{
-		Include: append(edgeCommitCommonPkgSet.Include,
-			// aarch64 specific
-			"grub2-efi-aa64", "efibootmgr", "shim-aa64",
-			"iwl7260-firmware"),
-		Exclude: edgeCommitCommonPkgSet.Exclude,
+	s390x := architecture{
+		distro: rd,
+		name:   "s390x",
+		packageSets: map[string]rpmmd.PackageSet{
+			bootPkgsKey: s390xBootPackageSet(),
+		},
+		uefi: false,
 	}
 
 	// Shared Services
@@ -459,42 +437,45 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	}
 
 	// Image Definitions
-	edgeCommitImgTypeX86_64 := imageType{
-		name:     "edge-commit",
-		filename: "commit.tar",
-		mimeType: "application/x-tar",
+	edgeCommitImgType := imageType{
+		name:        "edge-commit",
+		nameAliases: []string{"rhel-edge-commit"},
+		filename:    "commit.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build":    edgeBuildPkgSet,
-			"packages": edgeCommitX86PkgSet,
+			buildPkgsKey: edgeBuildPackageSet(),
+			osPkgsKey:    edgeCommitPackageSet(),
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
 		pipelines:       edgeCommitPipelines,
 		exports:         []string{"commit-archive"},
 	}
-	edgeOCIImgTypeX86_64 := imageType{
-		name:     "edge-container",
-		filename: "container.tar",
-		mimeType: "application/x-tar",
+	edgeOCIImgType := imageType{
+		name:        "edge-container",
+		nameAliases: []string{"rhel-edge-container"},
+		filename:    "container.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPkgSet,
-			"packages":  edgeCommitX86PkgSet,
-			"container": {Include: []string{"httpd"}},
+			buildPkgsKey:     edgeBuildPackageSet(),
+			osPkgsKey:        edgeCommitPackageSet(),
+			containerPkgsKey: {Include: []string{"httpd"}},
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
 		bootISO:         false,
 		pipelines:       edgeContainerPipelines,
-		exports:         []string{"container"},
+		exports:         []string{containerPkgsKey},
 	}
-	edgeInstallerImgTypeX86_64 := imageType{
-		name:     "edge-installer",
-		filename: "installer.iso",
-		mimeType: "application/x-iso9660-image",
+	edgeInstallerImgType := imageType{
+		name:        "edge-installer",
+		nameAliases: []string{"rhel-edge-installer"},
+		filename:    "installer.iso",
+		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPkgSet,
-			"packages":  edgeCommitX86PkgSet,
-			"installer": edgeInstallerPkgSet,
+			buildPkgsKey:     edgeBuildPackageSet(),
+			osPkgsKey:        edgeCommitPackageSet(),
+			installerPkgsKey: edgeInstallerPackageSet(),
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
@@ -503,12 +484,81 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"bootiso"},
 	}
 
-	x86_64 := architecture{
-		name:   "x86_64",
-		distro: rd,
+	qcow2ImgType := imageType{
+		name:          "qcow2",
+		filename:      "disk.qcow2",
+		mimeType:      "application/x-qemu-disk",
+		defaultTarget: "multi-user.target",
+		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		packageSets: map[string]rpmmd.PackageSet{
-			"boot": x8664BootPackageSet(),
+			osPkgsKey: qcow2CommonPackageSet(),
 		},
+		bootable:    true,
+		defaultSize: 10 * GigaByte,
+		pipelines:   qcow2Pipelines,
+		exports:     []string{"qcow2"},
+	}
+
+	vhdImgType := imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]rpmmd.PackageSet{
+			osPkgsKey: vhdCommonPackageSet(),
+		},
+		enabledServices: []string{
+			"sshd",
+			"waagent",
+		},
+		defaultTarget: "multi-user.target",
+		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		pipelines:     vhdPipelines,
+		exports:       []string{"vpc"},
+	}
+
+	vmdkImgType := imageType{
+		name:     "vmdk",
+		filename: "disk.vmdk",
+		mimeType: "application/x-vmdk",
+		packageSets: map[string]rpmmd.PackageSet{
+			osPkgsKey: vmdkCommonPackageSet(),
+		},
+		kernelOptions: "ro net.ifnames=0",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		pipelines:     vmdkPipelines,
+		exports:       []string{"vmdk"},
+	}
+
+	openstackImgType := imageType{
+		name:     "openstack",
+		filename: "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packageSets: map[string]rpmmd.PackageSet{
+			osPkgsKey: openstackCommonPackageSet(),
+		},
+		kernelOptions: "ro net.ifnames=0",
+		bootable:      true,
+		defaultSize:   4 * GigaByte,
+		pipelines:     openstackPipelines,
+		exports:       []string{"qcow2"},
+	}
+
+	amiImgType := imageType{
+		name:     "ami",
+		filename: "image.raw",
+		mimeType: "application/octet-stream",
+		packageSets: map[string]rpmmd.PackageSet{
+			osPkgsKey: amiCommonPackageSet(),
+		},
+		defaultTarget: "multi-user.target",
+		kernelOptions: "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:      true,
+		defaultSize:   6 * GigaByte,
+		pipelines:     amiPipelines,
+		exports:       []string{"image"},
 	}
 
 	tarImgType := imageType{
@@ -516,7 +566,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
-			"packages": {
+			osPkgsKey: {
 				Include: []string{"policycoreutils", "selinux-policy-targeted"},
 				Exclude: []string{"rng-tools"},
 			},
@@ -529,12 +579,12 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			"build": installerBuildPackageSet(),
-			"packages": {
+			buildPkgsKey: x8664InstallerBuildPackageSet(),
+			osPkgsKey: {
 				Include: []string{"lvm2", "policycoreutils", "selinux-policy-targeted"},
 				Exclude: []string{"rng-tools"},
 			},
-			"installer": installerPackageSet(),
+			installerPkgsKey: installerPackageSet(),
 		},
 		rpmOstree: false,
 		bootISO:   true,
@@ -542,74 +592,11 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	edgeCommitImgTypeAarch64 := imageType{
-		name:     "edge-commit",
-		filename: "commit.tar",
-		mimeType: "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":    edgeBuildPkgSet,
-			"packages": edgeCommitAarch64PkgSet,
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		pipelines:       edgeCommitPipelines,
-		exports:         []string{"commit-archive"},
-	}
-	edgeOCIImgTypeAarch64 := imageType{
-		name:     "edge-container",
-		filename: "container.tar",
-		mimeType: "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPkgSet,
-			"packages":  edgeCommitAarch64PkgSet,
-			"container": {Include: []string{"httpd"}},
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		pipelines:       edgeContainerPipelines,
-		exports:         []string{"container"},
-	}
-	edgeInstallerImgTypeAarch64 := imageType{
-		name:     "edge-installer",
-		filename: "installer.iso",
-		mimeType: "application/x-iso9660-image",
-		packageSets: map[string]rpmmd.PackageSet{
-			"build":     edgeBuildPkgSet,
-			"packages":  edgeCommitX86PkgSet,
-			"installer": edgeInstallerPkgSet,
-		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		bootISO:         true,
-		pipelines:       edgeInstallerPipelines,
-		exports:         []string{"bootiso"},
-	}
-	x86_64.addImageTypes(tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgTypeX86_64, edgeInstallerImgTypeX86_64, edgeOCIImgTypeX86_64)
-	aarch64 := architecture{
-		name:   "aarch64",
-		distro: rd,
-		packageSets: map[string]rpmmd.PackageSet{
-			"boot": aarch64BootPackageSet(),
-		},
-	}
-	aarch64.addImageTypes(tarImgType, edgeCommitImgTypeAarch64, edgeOCIImgTypeAarch64, edgeInstallerImgTypeAarch64)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgType, tarImgType, edgeCommitImgType, edgeOCIImgType)
+	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
+	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
-	ppc64le := architecture{
-		distro: rd,
-		name:   "ppc64le",
-		packageSets: map[string]rpmmd.PackageSet{
-			"boot": ppc64leBootPackageSet(),
-		},
-	}
-	ppc64le.addImageTypes(tarImgType)
-	s390x := architecture{
-		distro: rd,
-		name:   "s390x",
-		packageSets: map[string]rpmmd.PackageSet{
-			"boot": s390xBootPackageSet(),
-		},
-	}
-	s390x.addImageTypes(tarImgType)
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return rd
 }

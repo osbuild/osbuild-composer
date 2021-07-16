@@ -18,7 +18,7 @@ if [[ $DISTRO_CODE == rhel_90 ]]; then
     exit 0
 fi
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Terraform needs azure-cli to talk to Azure.

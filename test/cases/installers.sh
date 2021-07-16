@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Get OS data.

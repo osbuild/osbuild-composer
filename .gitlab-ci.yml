@@ -92,7 +92,6 @@ Base:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
-    - /usr/libexec/tests/osbuild-composer/regression.sh
   parallel:
     matrix:
       - RUNNER:
@@ -106,11 +105,33 @@ Base:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.4-x86_64
-          # main image types not yet supported in 8.5
-          # - aws/rhel-8.5-x86_64
-          # see COMPOSER-918
-          # - aws/rhel-8.4-aarch64
+          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-aarch64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log
+      - "*.repo"
+    when: always
+
+Regression:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/regression.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8-x86_64
+          - aws/rhel-8-aarch64
+          - aws/centos-stream-8-x86_64
+          - aws/centos-stream-8-aarch64
+      - RUNNER:
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -177,12 +198,13 @@ Integration:
       - <<: *INTEGRATION_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
         RUNNER:
           - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *INTEGRATION_TESTS
         RUNNER:
@@ -198,7 +220,7 @@ Integration:
           - libvirt.sh
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - openstack/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
@@ -228,7 +250,7 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8-x86_64
-          - aws/rhel-8.4-x86_64
+          - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - <<: *API_TESTS
         RUNNER:

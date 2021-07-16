@@ -1,6 +1,7 @@
 package rhel85_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,29 +29,119 @@ func TestFilenameFromType(t *testing.T) {
 	type args struct {
 		outputFormat string
 	}
+	type wantResult struct {
+		filename string
+		mimeType string
+		wantErr  bool
+	}
 	tests := []struct {
-		name    string
-		args    args
-		want    string
-		want1   string
-		wantErr bool
+		name string
+		args args
+		want wantResult
 	}{
 		{
-			name:  "edge-container",
-			args:  args{"edge-container"},
-			want:  "container.tar",
-			want1: "application/x-tar",
+			name: "qcow2",
+			args: args{"qcow2"},
+			want: wantResult{
+				filename: "disk.qcow2",
+				mimeType: "application/x-qemu-disk",
+			},
 		},
 		{
-			name:  "edge-installer",
-			args:  args{"edge-installer"},
-			want:  "installer.iso",
-			want1: "application/x-iso9660-image",
+			name: "openstack",
+			args: args{"openstack"},
+			want: wantResult{
+				filename: "disk.qcow2",
+				mimeType: "application/x-qemu-disk",
+			},
 		},
 		{
-			name:    "invalid-output-type",
-			args:    args{"foobar"},
-			wantErr: true,
+			name: "vhd",
+			args: args{"vhd"},
+			want: wantResult{
+				filename: "disk.vhd",
+				mimeType: "application/x-vhd",
+			},
+		},
+		{
+			name: "vmdk",
+			args: args{"vmdk"},
+			want: wantResult{
+				filename: "disk.vmdk",
+				mimeType: "application/x-vmdk",
+			},
+		},
+		{
+			name: "tar",
+			args: args{"tar"},
+			want: wantResult{
+				filename: "root.tar.xz",
+				mimeType: "application/x-tar",
+			},
+		},
+		{
+			name: "tar-installer",
+			args: args{"tar-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		{
+			name: "edge-commit",
+			args: args{"edge-commit"},
+			want: wantResult{
+				filename: "commit.tar",
+				mimeType: "application/x-tar",
+			},
+		},
+		// Alias
+		{
+			name: "rhel-edge-commit",
+			args: args{"rhel-edge-commit"},
+			want: wantResult{
+				filename: "commit.tar",
+				mimeType: "application/x-tar",
+			},
+		},
+		{
+			name: "edge-container",
+			args: args{"edge-container"},
+			want: wantResult{
+				filename: "container.tar",
+				mimeType: "application/x-tar",
+			},
+		},
+		// Alias
+		{
+			name: "rhel-edge-container",
+			args: args{"rhel-edge-container"},
+			want: wantResult{
+				filename: "container.tar",
+				mimeType: "application/x-tar",
+			},
+		},
+		{
+			name: "edge-installer",
+			args: args{"edge-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		// Alias
+		{
+			name: "rhel-edge-installer",
+			args: args{"rhel-edge-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		{
+			name: "invalid-output-type",
+			args: args{"foobar"},
+			want: wantResult{wantErr: true},
 		},
 	}
 	for _, dist := range rhelFamilyDistros {
@@ -60,22 +151,21 @@ func TestFilenameFromType(t *testing.T) {
 					dist := dist.distro
 					arch, _ := dist.GetArch("x86_64")
 					imgType, err := arch.GetImageType(tt.args.outputFormat)
-					if (err != nil) != tt.wantErr {
-						t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
+					if (err != nil) != tt.want.wantErr {
+						t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.want.wantErr)
 						return
 					}
-					if !tt.wantErr {
-						got := imgType.Filename()
-						got1 := imgType.MIMEType()
-						if got != tt.want {
-							t.Errorf("ImageType.Filename()  got = %v, want %v", got, tt.want)
+					if !tt.want.wantErr {
+						gotFilename := imgType.Filename()
+						gotMIMEType := imgType.MIMEType()
+						if gotFilename != tt.want.filename {
+							t.Errorf("ImageType.Filename()  got = %v, want %v", gotFilename, tt.want.filename)
 						}
-						if got1 != tt.want1 {
-							t.Errorf("ImageType.MIMEType() got1 = %v, want %v", got1, tt.want1)
+						if gotMIMEType != tt.want.mimeType {
+							t.Errorf("ImageType.MIMEType() got1 = %v, want %v", gotMIMEType, tt.want.mimeType)
 						}
 					}
 				})
-
 			}
 		})
 	}
@@ -139,17 +229,41 @@ func TestImageType_Name(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"vhd",
+				"vmdk",
+				"ami",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"tar",
+				"tar-installer",
 			},
 		},
 		{
 			arch: "aarch64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"ami",
 				"edge-commit",
 				"edge-container",
-				"edge-installer",
+				"tar",
+			},
+		},
+		{
+			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
+		},
+		{
+			arch: "s390x",
+			imgNames: []string{
+				"qcow2",
+				"tar",
 			},
 		},
 	}
@@ -172,6 +286,81 @@ func TestImageType_Name(t *testing.T) {
 						}
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestImageTypeAliases(t *testing.T) {
+	type args struct {
+		imageTypeAliases []string
+	}
+	type wantResult struct {
+		imageTypeName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want wantResult
+	}{
+		{
+			name: "edge-commit aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-commit"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-commit",
+			},
+		},
+		{
+			name: "edge-container aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-container"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-container",
+			},
+		},
+		{
+			name: "edge-installer aliases",
+			args: args{
+				imageTypeAliases: []string{"rhel-edge-installer"},
+			},
+			want: wantResult{
+				imageTypeName: "edge-installer",
+			},
+		},
+	}
+	for _, dist := range rhelFamilyDistros {
+		t.Run(dist.name, func(t *testing.T) {
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					dist := dist.distro
+					for _, archName := range dist.ListArches() {
+						t.Run(archName, func(t *testing.T) {
+							arch, err := dist.GetArch(archName)
+							require.Nilf(t, err,
+								"failed to get architecture '%s', previously listed as supported for the distro '%s'",
+								archName, dist.Name())
+							// Test image type aliases only if the aliased image type is supported for the arch
+							if _, err = arch.GetImageType(tt.want.imageTypeName); err != nil {
+								t.Skipf("aliased image type '%s' is not supported for architecture '%s'",
+									tt.want.imageTypeName, archName)
+							}
+							for _, alias := range tt.args.imageTypeAliases {
+								t.Run(fmt.Sprintf("'%s' alias for image type '%s'", alias, tt.want.imageTypeName),
+									func(t *testing.T) {
+										gotImage, err := arch.GetImageType(alias)
+										require.Nilf(t, err, "arch.GetImageType() for image type alias '%s' failed: %v",
+											alias, err)
+										assert.Equalf(t, tt.want.imageTypeName, gotImage.Name(),
+											"got unexpected image type name for alias '%s'. got = %s, want = %s",
+											alias, tt.want.imageTypeName, gotImage.Name())
+									})
+							}
+						})
+					}
+				})
 			}
 		})
 	}
@@ -224,6 +413,11 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"vhd",
+				"vmdk",
+				"ami",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
@@ -234,19 +428,27 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "aarch64",
 			imgNames: []string{
+				"qcow2",
+				"openstack",
+				"ami",
 				"edge-commit",
 				"edge-container",
-				"edge-installer",
 				"tar",
 			},
 		},
 		{
-			arch:     "ppc64le",
-			imgNames: []string{"tar"},
+			arch: "ppc64le",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
 		},
 		{
-			arch:     "s390x",
-			imgNames: []string{"tar"},
+			arch: "s390x",
+			imgNames: []string{
+				"qcow2",
+				"tar",
+			},
 		},
 	}
 
