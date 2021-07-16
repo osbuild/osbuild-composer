@@ -18,21 +18,6 @@
       }
     }
   },
-  "rhel-8.3": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "5d7316757b60645b5e0ee114614266fca297208e"
-      }
-    },
-    "dependants": {
-      "koji-osbuild": {
-        "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174",
-        "pre_install_packages": [
-          "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-        ]
-      }
-    }
-  },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
