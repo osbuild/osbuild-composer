@@ -3,7 +3,7 @@ set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer
 
-source /etc/os-release
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {

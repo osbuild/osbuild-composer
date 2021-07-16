@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
 BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"
@@ -13,7 +12,7 @@ function greenprint {
 }
 
 #TODO: Remove this once there is rhel9 support for Azure image type
-if [[ $DISTRO_CODE == rhel_90 ]]; then
+if [[ $DISTRO_CODE == rhel-90 ]]; then
     greenprint "Skipped"
     exit 0
 fi

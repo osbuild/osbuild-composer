@@ -4,16 +4,7 @@ set -euo pipefail
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
-# This should be revisited and solved in a more sustainable way
-if [[ "$ID" == 'rhel' ]] && [[ "$VERSION_ID" == 8.3 ]]
-then
-    DISTRO_CODE="${DISTRO_CODE:-rhel_8}"
-else
-    DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
-fi
-
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {
@@ -22,9 +13,6 @@ function greenprint {
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
-
-greenprint "Defining distro selector"
-DISTRO_SELECTOR="${DISTRO_CODE//_/-}"
 
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
@@ -56,8 +44,13 @@ koji --server=http://localhost:8080/kojihub --user=osbuild --password=osbuildpas
 greenprint "Creating Koji task"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
 
+# Always build the latest RHEL - that suits the koji API usecase the most.
+if [[ "$DISTRO_CODE" == rhel-8* ]]; then
+  DISTRO_CODE=rhel-85
+fi
+
 greenprint "Pushing compose to Koji"
-sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_SELECTOR" "${ARCH}"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1

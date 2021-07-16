@@ -7,8 +7,7 @@ function greenprint {
 }
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
@@ -24,11 +23,21 @@ COMMIT=$(git rev-parse HEAD)
 REPO_BUCKET=osbuild-composer-repos
 
 # Public URL for the S3 bucket with our artifacts.
-MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
+MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3-website.us-east-2.amazonaws.com"
+
+# Distro version in whose buildroot was the RPM built.
+DISTRO_VERSION=${ID}-${VERSION_ID}
+
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+  # If this script runs on a subscribed RHEL, the RPMs are actually built
+  # using the latest CDN content, therefore rhel-*-cdn is used as the distro
+  # version.
+  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+fi
 
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
-REPO_PATH=osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
+REPO_PATH=osbuild-composer/${DISTRO_VERSION}/${ARCH}/${COMMIT}
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
@@ -51,13 +60,6 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# Register RHEL if we are provided with a registration script.
-if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
-fi
-
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c mock s3cmd
@@ -68,21 +70,14 @@ greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# rhel 8.4 and 8.5 will run off of the internal repos and does not have a redhat subscription
-if [[ $VERSION_ID == 8.4 ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
+if [[ "$ID" == rhel ]] && ! sudo subscription-manager status; then
+    greenprint "📋 Updating RHEL 8 mock template with the latest nightly repositories"
+    # strip everything after line with # repos
     sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
     # remove the subscription check
     sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    cat "$RHEL84_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    # We need triple quotes at the end of the template to mark the end of the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-elif [[ $VERSION_ID == 8.5 ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-    # remove the subscription check
-    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    cat "$RHEL85_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    # reuse redhat.repo
+    cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
     # We need triple quotes at the end of the template to mark the end of the repo list.
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 fi

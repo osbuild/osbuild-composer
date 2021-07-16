@@ -2,9 +2,7 @@
 set -euo pipefail
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 if [[ -n "$CI_BUILD_ID" ]]; then
     BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
@@ -24,7 +22,7 @@ fi
 
 # Skip 'selinux/contect-mismatch' part of the image-info report on RHEL-8.
 # https://bugzilla.redhat.com/show_bug.cgi?id=1973754
-if [[ "${DISTRO_CODE}" =~ "rhel_8" ]]; then
+if [[ "${DISTRO_CODE}" =~ "rhel-8" ]]; then
     IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} -skip-selinux-ctx-check"
 fi
 

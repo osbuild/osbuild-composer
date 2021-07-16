@@ -3,8 +3,7 @@ set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
-source /etc/os-release
-DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {
@@ -12,7 +11,7 @@ function greenprint {
 }
 
 #TODO: Remove this once there is rhel9 support for AMI image type
-if [[ $DISTRO_CODE == rhel_90 ]]; then
+if [[ $DISTRO_CODE == rhel-90 ]]; then
     greenprint "Skipped"
     exit 0
 fi
