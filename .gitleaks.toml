@@ -1,3 +1,7 @@
+# Repo Specific Gitleaks Configuration
+# https://github.com/zricethezav/gitleaks/#configuration
+
+# Set to avoid false positives
 [allowlist]
   description = "Allowlist"
   paths = [
