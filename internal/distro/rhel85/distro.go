@@ -88,12 +88,11 @@ func (d *distribution) addArches(arches ...architecture) {
 		d.arches = map[string]distro.Arch{}
 	}
 
-	for _, a := range arches {
-		d.arches[a.name] = &architecture{
-			distro:     d,
-			name:       a.name,
-			imageTypes: a.imageTypes,
-		}
+	// Do not make copies of architectures, as opposed to image types,
+	// because architecture definitions are not used by more than a single
+	// distro definition.
+	for idx := range arches {
+		d.arches[arches[idx].name] = &arches[idx]
 	}
 }
 
