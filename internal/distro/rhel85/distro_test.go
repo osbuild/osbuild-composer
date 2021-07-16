@@ -28,65 +28,92 @@ func TestFilenameFromType(t *testing.T) {
 	type args struct {
 		outputFormat string
 	}
+	type wantResult struct {
+		filename string
+		mimeType string
+		wantErr  bool
+	}
 	tests := []struct {
-		name    string
-		args    args
-		want    string
-		want1   string
-		wantErr bool
+		name string
+		args args
+		want wantResult
 	}{
 		{
-			name:  "qcow2",
-			args:  args{"qcow2"},
-			want:  "disk.qcow2",
-			want1: "application/x-qemu-disk",
+			name: "qcow2",
+			args: args{"qcow2"},
+			want: wantResult{
+				filename: "disk.qcow2",
+				mimeType: "application/x-qemu-disk",
+			},
 		},
 		{
-			name:  "openstack",
-			args:  args{"openstack"},
-			want:  "disk.qcow2",
-			want1: "application/x-qemu-disk",
+			name: "openstack",
+			args: args{"openstack"},
+			want: wantResult{
+				filename: "disk.qcow2",
+				mimeType: "application/x-qemu-disk",
+			},
 		},
 		{
-			name:  "vhd",
-			args:  args{"vhd"},
-			want:  "disk.vhd",
-			want1: "application/x-vhd",
+			name: "vhd",
+			args: args{"vhd"},
+			want: wantResult{
+				filename: "disk.vhd",
+				mimeType: "application/x-vhd",
+			},
 		},
 		{
-			name:  "vmdk",
-			args:  args{"vmdk"},
-			want:  "disk.vmdk",
-			want1: "application/x-vmdk",
+			name: "vmdk",
+			args: args{"vmdk"},
+			want: wantResult{
+				filename: "disk.vmdk",
+				mimeType: "application/x-vmdk",
+			},
 		},
 		{
-			name:  "tar",
-			args:  args{"tar"},
-			want:  "root.tar.xz",
-			want1: "application/x-tar",
+			name: "tar",
+			args: args{"tar"},
+			want: wantResult{
+				filename: "root.tar.xz",
+				mimeType: "application/x-tar",
+			},
 		},
 		{
-			name:  "tar-installer",
-			args:  args{"tar-installer"},
-			want:  "installer.iso",
-			want1: "application/x-iso9660-image",
+			name: "tar-installer",
+			args: args{"tar-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
 		},
 		{
-			name:  "edge-container",
-			args:  args{"edge-container"},
-			want:  "container.tar",
-			want1: "application/x-tar",
+			name: "edge-commit",
+			args: args{"edge-commit"},
+			want: wantResult{
+				filename: "commit.tar",
+				mimeType: "application/x-tar",
+			},
 		},
 		{
-			name:  "edge-installer",
-			args:  args{"edge-installer"},
-			want:  "installer.iso",
-			want1: "application/x-iso9660-image",
+			name: "edge-container",
+			args: args{"edge-container"},
+			want: wantResult{
+				filename: "container.tar",
+				mimeType: "application/x-tar",
+			},
 		},
 		{
-			name:    "invalid-output-type",
-			args:    args{"foobar"},
-			wantErr: true,
+			name: "edge-installer",
+			args: args{"edge-installer"},
+			want: wantResult{
+				filename: "installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		{
+			name: "invalid-output-type",
+			args: args{"foobar"},
+			want: wantResult{wantErr: true},
 		},
 	}
 	for _, dist := range rhelFamilyDistros {
@@ -96,22 +123,21 @@ func TestFilenameFromType(t *testing.T) {
 					dist := dist.distro
 					arch, _ := dist.GetArch("x86_64")
 					imgType, err := arch.GetImageType(tt.args.outputFormat)
-					if (err != nil) != tt.wantErr {
-						t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
+					if (err != nil) != tt.want.wantErr {
+						t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.want.wantErr)
 						return
 					}
-					if !tt.wantErr {
-						got := imgType.Filename()
-						got1 := imgType.MIMEType()
-						if got != tt.want {
-							t.Errorf("ImageType.Filename()  got = %v, want %v", got, tt.want)
+					if !tt.want.wantErr {
+						gotFilename := imgType.Filename()
+						gotMIMEType := imgType.MIMEType()
+						if gotFilename != tt.want.filename {
+							t.Errorf("ImageType.Filename()  got = %v, want %v", gotFilename, tt.want.filename)
 						}
-						if got1 != tt.want1 {
-							t.Errorf("ImageType.MIMEType() got1 = %v, want %v", got1, tt.want1)
+						if gotMIMEType != tt.want.mimeType {
+							t.Errorf("ImageType.MIMEType() got1 = %v, want %v", gotMIMEType, tt.want.mimeType)
 						}
 					}
 				})
-
 			}
 		})
 	}
