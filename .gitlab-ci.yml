@@ -130,8 +130,7 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          # See COMPOSER-1007
-          # - openstack/fedora-33-x86_64
+          - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
