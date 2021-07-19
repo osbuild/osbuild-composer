@@ -62,7 +62,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile_id":"sssd"}}`),
+				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile":"sssd"}}`),
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile_id":"nis","features":["with-ecryptfs","with-mkhomedir"]}}`),
+				data: []byte(`{"type":"org.osbuild.authselect","options":{"profile":"nis","features":["with-ecryptfs","with-mkhomedir"]}}`),
 			},
 		},
 		{
