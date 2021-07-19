@@ -30,12 +30,8 @@ type SystemdLogindConfigLoginSection struct {
 	NAutoVT *int `json:"NAutoVT,omitempty"`
 }
 
-// Unexported struct for use in SystemdLogindConfigLoginSection's MarshalJSON() to prevent recursion
-type systemdLogindConfigLoginSection struct {
-	// Configures how many virtual terminals (VTs) to allocate by default
-	// The option is optional, but zero is a valid value
-	NAutoVT *int `json:"NAutoVT,omitempty"`
-}
+// Unexported alias for use in SystemdLogindConfigLoginSection's MarshalJSON() to prevent recursion
+type systemdLogindConfigLoginSection SystemdLogindConfigLoginSection
 
 func (s SystemdLogindConfigLoginSection) MarshalJSON() ([]byte, error) {
 	if s.NAutoVT == nil {

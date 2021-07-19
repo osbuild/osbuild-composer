@@ -23,10 +23,8 @@ type CloudInitConfigFile struct {
 	SystemInfo *CloudInitConfigSystemInfo `json:"system_info,omitempty"`
 }
 
-// Unexported struct for use in CloudInitConfigFile's MarshalJSON() to prevent recursion
-type cloudInitConfigFile struct {
-	SystemInfo *CloudInitConfigSystemInfo `json:"system_info,omitempty"`
-}
+// Unexported alias for use in CloudInitConfigFile's MarshalJSON() to prevent recursion
+type cloudInitConfigFile CloudInitConfigFile
 
 func (c CloudInitConfigFile) MarshalJSON() ([]byte, error) {
 	if c.SystemInfo == nil {
@@ -41,10 +39,8 @@ type CloudInitConfigSystemInfo struct {
 	DefaultUser *CloudInitConfigDefaultUser `json:"default_user,omitempty"`
 }
 
-// Unexported struct for use in CloudInitConfigSystemInfo's MarshalJSON() to prevent recursion
-type cloudInitConfigSystemInfo struct {
-	DefaultUser *CloudInitConfigDefaultUser `json:"default_user,omitempty"`
-}
+// Unexported alias for use in CloudInitConfigSystemInfo's MarshalJSON() to prevent recursion
+type cloudInitConfigSystemInfo CloudInitConfigSystemInfo
 
 func (si CloudInitConfigSystemInfo) MarshalJSON() ([]byte, error) {
 	if si.DefaultUser == nil {
@@ -59,10 +55,8 @@ type CloudInitConfigDefaultUser struct {
 	Name string `json:"name,omitempty"`
 }
 
-// Unexported struct for use in CloudInitConfigDefaultUser's MarshalJSON() to prevent recursion
-type cloudInitConfigDefaultUser struct {
-	Name string `json:"name,omitempty"`
-}
+// Unexported alias for use in CloudInitConfigDefaultUser's MarshalJSON() to prevent recursion
+type cloudInitConfigDefaultUser CloudInitConfigDefaultUser
 
 func (du CloudInitConfigDefaultUser) MarshalJSON() ([]byte, error) {
 	if du.Name == "" {
