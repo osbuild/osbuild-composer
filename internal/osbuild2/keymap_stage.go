@@ -23,10 +23,8 @@ type X11KeymapOptions struct {
 	Layouts []string `json:"layouts"`
 }
 
-// Unexported struct for use in X11KeymapOptions's MarshalJSON() to prevent recursion
-type x11KeymapOptions struct {
-	Layouts []string `json:"layouts"`
-}
+// Unexported alias for use in X11KeymapOptions's MarshalJSON() to prevent recursion
+type x11KeymapOptions X11KeymapOptions
 
 func (o X11KeymapOptions) MarshalJSON() ([]byte, error) {
 	if len(o.Layouts) == 0 {

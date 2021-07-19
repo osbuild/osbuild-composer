@@ -54,41 +54,8 @@ type DracutConfigFile struct {
 	Reproducible *bool `json:"reproducible,omitempty"`
 }
 
-// Unexported struct for use in DracutConfigFile MarshalJSON() to prevent recursion
-type dracutConfigFile struct {
-	// Compression method for the initramfs
-	Compress string `json:"compress,omitempty"`
-
-	// Exact list of dracut modules to use
-	Modules []string `json:"dracutmodules,omitempty"`
-
-	// Additional dracut modules to include
-	AddModules []string `json:"add_dracutmodules,omitempty"`
-
-	// Dracut modules to not include
-	OmitModules []string `json:"omit_dracutmodules,omitempty"`
-
-	// Kernel modules to exclusively include
-	Drivers []string `json:"drivers,omitempty"`
-
-	// Add a specific kernel module
-	AddDrivers []string `json:"add_drivers,omitempty"`
-
-	// Add driver and ensure that they are tried to be loaded
-	ForceDrivers []string `json:"force_drivers,omitempty"`
-
-	// Kernel filesystem modules to exclusively include
-	Filesystems []string `json:"filesystems,omitempty"`
-
-	// Install the specified files
-	Install []string `json:"install_items,omitempty"`
-
-	// Combine early microcode with the initramfs
-	EarlyMicrocode *bool `json:"early_microcode,omitempty"`
-
-	// Create reproducible images
-	Reproducible *bool `json:"reproducible,omitempty"`
-}
+// Unexported alias for use in DracutConfigFile MarshalJSON() to prevent recursion
+type dracutConfigFile DracutConfigFile
 
 func (c DracutConfigFile) MarshalJSON() ([]byte, error) {
 	if c.Compress == "" &&

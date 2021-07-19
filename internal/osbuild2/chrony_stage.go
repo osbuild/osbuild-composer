@@ -22,11 +22,8 @@ type ChronyConfigServer struct {
 	Prefer   *bool  `json:"prefer,omitempty"`
 }
 
-// Unexported struct for use in ChronyStageOptions's MarshalJSON() to prevent recursion
-type chronyStageOptions struct {
-	Timeservers []string             `json:"timeservers,omitempty"`
-	Servers     []ChronyConfigServer `json:"servers,omitempty"`
-}
+// Unexported alias for use in ChronyStageOptions's MarshalJSON() to prevent recursion
+type chronyStageOptions ChronyStageOptions
 
 func (o ChronyStageOptions) MarshalJSON() ([]byte, error) {
 	if (len(o.Timeservers) != 0 && len(o.Servers) != 0) || (len(o.Timeservers) == 0 && len(o.Servers) == 0) {
