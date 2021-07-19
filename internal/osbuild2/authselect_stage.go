@@ -1,7 +1,7 @@
 package osbuild2
 
 type AuthselectStageOptions struct {
-	Profile  string   `json:"profile_id"`
+	Profile  string   `json:"profile"`
 	Features []string `json:"features,omitempty"`
 }
 
