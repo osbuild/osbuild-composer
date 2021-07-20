@@ -15,8 +15,8 @@ import (
 
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	}
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -51,15 +51,15 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -76,15 +76,15 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -101,15 +101,15 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -126,15 +126,15 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 func amiPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs["packages"], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := t.Filename()
@@ -148,9 +148,9 @@ func amiPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -166,9 +166,9 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 	kernelPkg := new(rpmmd.PackageSpec)
-	installerPackages := packageSetSpecs["installer"]
+	installerPackages := packageSetSpecs[installerPkgsKey]
 	for _, pkg := range installerPackages {
 		if pkg.Name == "kernel" {
 			kernelPkg = &pkg
@@ -188,16 +188,16 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 
 func tarInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs["packages"], packageSetSpecs["blueprint"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, *treePipeline)
 
 	kernelPkg := new(rpmmd.PackageSpec)
-	installerPackages := packageSetSpecs["installer"]
+	installerPackages := packageSetSpecs[installerPkgsKey]
 	for _, pkg := range installerPackages {
 		if pkg.Name == "kernel" {
 			kernelPkg = &pkg
@@ -219,9 +219,9 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 
 func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs["build"]))
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs["packages"], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs[osPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs["container"], options, customizations))
+	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations))
 	pipelines = append(pipelines, *containerPipeline(t))
 	return pipelines, nil
 }
