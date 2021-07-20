@@ -6,7 +6,7 @@ type Devices interface {
 
 type Device struct {
 	Type    string        `json:"type"`
-	Options DeviceOptions `json:"options"`
+	Options DeviceOptions `json:"options,omitempty"`
 }
 
 type DeviceOptions interface {
