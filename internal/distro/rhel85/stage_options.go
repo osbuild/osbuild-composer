@@ -395,8 +395,8 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 	}
 
 	devices := make(map[string]osbuild.Device, len(pt.Partitions))
-	mounts := make([]osbuild.Mount, len(pt.Partitions))
-	for i, p := range pt.Partitions {
+	mounts := make([]osbuild.Mount, 0, len(pt.Partitions))
+	for _, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			// no filesystem for partition (e.g., BIOS boot)
 			continue
@@ -425,14 +425,13 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		default:
 			panic("unknown fs type " + p.Type)
 		}
-		mounts[i] = *mount
+		mounts = append(mounts, *mount)
 	}
 
 	// sort the mounts, using < should just work because:
 	// - a parent directory should be always before its children:
 	//   / < /boot
 	// - the order of siblings doesn't matter
-
 	sort.Slice(mounts, func(i, j int) bool {
 		return mounts[i].Target < mounts[j].Target
 	})
