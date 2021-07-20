@@ -13,7 +13,7 @@ type DracutConfStageOptions struct {
 func (DracutConfStageOptions) isStageOptions() {}
 
 // Dracut.conf stage creates dracut configuration files under /usr/lib/dracut/dracut.conf.d/
-func NewDracutConfStageOptions(options *DracutConfStageOptions) *Stage {
+func NewDracutConfStage(options *DracutConfStageOptions) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.dracut.conf",
 		Options: options,

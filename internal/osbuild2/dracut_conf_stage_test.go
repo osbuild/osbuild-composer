@@ -12,7 +12,7 @@ func TestNewDracutConfStage(t *testing.T) {
 		Type:    "org.osbuild.dracut.conf",
 		Options: &DracutConfStageOptions{},
 	}
-	actualStage := NewDracutConfStageOptions(&DracutConfStageOptions{})
+	actualStage := NewDracutConfStage(&DracutConfStageOptions{})
 	assert.Equal(t, expectedStage, actualStage)
 }
 
