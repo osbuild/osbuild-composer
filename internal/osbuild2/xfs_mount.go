@@ -1,8 +1,9 @@
 package osbuild2
 
-func NewXfsMount(source, target string) *Mount {
+func NewXfsMount(name, source, target string) *Mount {
 	return &Mount{
 		Type:   "org.osbuild.xfs",
+		Name:   name,
 		Source: source,
 		Target: target,
 	}

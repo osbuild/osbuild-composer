@@ -10,8 +10,9 @@ func TestNewMounts(t *testing.T) {
 	assert := assert.New(t)
 
 	{ // btrfs
-		actual := NewBtrfsMount("/dev/sda1", "/mnt/btrfs")
+		actual := NewBtrfsMount("btrfs", "/dev/sda1", "/mnt/btrfs")
 		expected := &Mount{
+			Name:   "btrfs",
 			Type:   "org.osbuild.btrfs",
 			Source: "/dev/sda1",
 			Target: "/mnt/btrfs",
@@ -20,8 +21,9 @@ func TestNewMounts(t *testing.T) {
 	}
 
 	{ // ext4
-		actual := NewExt4Mount("/dev/sda2", "/mnt/ext4")
+		actual := NewExt4Mount("ext4", "/dev/sda2", "/mnt/ext4")
 		expected := &Mount{
+			Name:   "ext4",
 			Type:   "org.osbuild.ext4",
 			Source: "/dev/sda2",
 			Target: "/mnt/ext4",
@@ -30,8 +32,9 @@ func TestNewMounts(t *testing.T) {
 	}
 
 	{ // fat
-		actual := NewFATMount("/dev/sda3", "/mnt/fat")
+		actual := NewFATMount("fat", "/dev/sda3", "/mnt/fat")
 		expected := &Mount{
+			Name:   "fat",
 			Type:   "org.osbuild.fat",
 			Source: "/dev/sda3",
 			Target: "/mnt/fat",
@@ -40,8 +43,9 @@ func TestNewMounts(t *testing.T) {
 	}
 
 	{ // xfs
-		actual := NewXfsMount("/dev/sda4", "/mnt/xfs")
+		actual := NewXfsMount("xfs", "/dev/sda4", "/mnt/xfs")
 		expected := &Mount{
+			Name:   "xfs",
 			Type:   "org.osbuild.xfs",
 			Source: "/dev/sda4",
 			Target: "/mnt/xfs",

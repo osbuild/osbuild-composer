@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -383,7 +384,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbui
 func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *osbuild.Device) (
 	*osbuild.CopyStageOptions,
 	*osbuild.CopyStageDevices,
-	*osbuild.CopyStageMounts,
+	osbuild.CopyStageMounts,
 ) {
 	// assume loopback device for simplicity since it's the only one currently supported
 	// panic if the conversion fails
@@ -393,8 +394,8 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 	}
 
 	devices := make(map[string]osbuild.Device, len(pt.Partitions))
-	mounts := make(map[string]osbuild.Mount, len(pt.Partitions))
-	for _, p := range pt.Partitions {
+	mounts := make([]osbuild.Mount, len(pt.Partitions))
+	for i, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			// no filesystem for partition (e.g., BIOS boot)
 			continue
@@ -413,17 +414,17 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		var mount *osbuild.Mount
 		switch p.Filesystem.Type {
 		case "xfs":
-			mount = osbuild.NewXfsMount(name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewXfsMount(name, name, p.Filesystem.Mountpoint)
 		case "vfat":
-			mount = osbuild.NewFATMount(name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewFATMount(name, name, p.Filesystem.Mountpoint)
 		case "ext4":
-			mount = osbuild.NewExt4Mount(name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewExt4Mount(name, name, p.Filesystem.Mountpoint)
 		case "btrfs":
-			mount = osbuild.NewBtrfsMount(name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewBtrfsMount(name, name, p.Filesystem.Mountpoint)
 		default:
 			panic("unknown fs type " + p.Type)
 		}
-		mounts[name] = *mount
+		mounts[i] = *mount
 	}
 
 	stageMounts := osbuild.CopyStageMounts(mounts)
@@ -438,7 +439,7 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		},
 	}
 
-	return &options, &stageDevices, &stageMounts
+	return &options, &stageDevices, stageMounts
 }
 
 func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform string) *osbuild.Grub2InstStageOptions {
