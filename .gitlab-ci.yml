@@ -15,6 +15,7 @@ stages:
   artifacts:
     paths:
       - journal-log
+      - ci-artifacts
     when: always
 
 init:
