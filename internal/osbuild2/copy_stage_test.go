@@ -15,7 +15,7 @@ func TestNewCopyStage(t *testing.T) {
 		},
 	}
 	devices := make(map[string]Device)
-	mounts := make(map[string]Mount)
+	var mounts []Mount
 	devices["root"] = Device{
 		Type: "org.osbuild.loopback",
 		Options: LoopbackDeviceOptions{
@@ -35,8 +35,8 @@ func TestNewCopyStage(t *testing.T) {
 		Options: &CopyStageOptions{paths},
 		Inputs:  &CopyStageInputs{"tree-input": treeInput},
 		Devices: &copyStageDevices,
-		Mounts:  &copyStageMounts,
+		Mounts:  copyStageMounts,
 	}
-	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &copyStageDevices, &copyStageMounts)
+	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &copyStageDevices, copyStageMounts)
 	assert.Equal(t, expectedStage, actualStage)
 }

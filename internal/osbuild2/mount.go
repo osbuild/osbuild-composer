@@ -5,6 +5,7 @@ type Mounts interface {
 }
 
 type Mount struct {
+	Name    string        `json:"name"`
 	Type    string        `json:"type"`
 	Source  string        `json:"source"`
 	Target  string        `json:"target"`
