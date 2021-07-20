@@ -3,6 +3,7 @@ package rhel85
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/google/uuid"
 
@@ -426,6 +427,15 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		}
 		mounts[i] = *mount
 	}
+
+	// sort the mounts, using < should just work because:
+	// - a parent directory should be always before its children:
+	//   / < /boot
+	// - the order of siblings doesn't matter
+
+	sort.Slice(mounts, func(i, j int) bool {
+		return mounts[i].Target < mounts[j].Target
+	})
 
 	stageMounts := osbuild.CopyStageMounts(mounts)
 	stageDevices := osbuild.CopyStageDevices(devices)
