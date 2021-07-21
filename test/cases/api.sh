@@ -14,6 +14,9 @@
 
 set -euxo pipefail
 
+ARTIFACTS=ci-artifacts
+mkdir -p "${ARTIFACTS}"
+
 source /etc/os-release
 DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
@@ -409,6 +412,11 @@ function createReqFileAWS() {
 EOF
 }
 
+#
+# Global var for ostree ref (only used in aws.s3 now)
+#
+OSTREE_REF="test/rhel/8/edge"
+
 function createReqFileAWSS3() {
   cat > "$REQUEST_FILE" << EOF
 {
@@ -424,7 +432,7 @@ function createReqFileAWSS3() {
       "image_type": "rhel-edge-commit",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
       "ostree": {
-        "ref": "test/rhel/8/edge"
+        "ref": "${OSTREE_REF}"
       },
       "upload_request": {
           "type": "aws.s3",
@@ -626,6 +634,12 @@ test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
 #
+# Save the Manifest from the osbuild-composer store
+# NOTE: The rest of the job data can contain sensitive information
+#
+sudo jq -rM .args.manifest /var/lib/osbuild-composer/jobs/"${COMPOSE_ID}".json > "${ARTIFACTS}/manifest.json"
+
+#
 # Verify the Cloud-provider specific upload_status options
 #
 
@@ -794,8 +808,20 @@ function verifyInAWSS3() {
   # Download the commit using the Presigned URL
   curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
 
+  # extract tarball and save file list to artifacts directroy
+  local COMMIT_DIR
+  COMMIT_DIR="${WORKDIR}/edge-commit"
+  mkdir -p "${COMMIT_DIR}"
+  tar xvf "${WORKDIR}/edge-commit.tar" -C "${COMMIT_DIR}" > "${ARTIFACTS}/edge-commit-filelist.txt"
+
   # Verify that the commit contains the ref we defined in the request
-  tar tvf "${WORKDIR}/edge-commit.tar" "repo/refs/heads/test/rhel/8/edge"
+  sudo dnf install -y ostree
+  local COMMIT_REF
+  COMMIT_REF=$(ostree refs --repo "${COMMIT_DIR}/repo")
+  if [[ "${COMMIT_REF}" !=  "${OSTREE_REF}" ]]; then
+      echo "Commit ref in archive does not match request 😠"
+      exit 1
+  fi
 
   # verify that the commit hash matches the metadata
   local API_COMMIT_ID
@@ -807,8 +833,9 @@ function verifyInAWSS3() {
     --cert /etc/osbuild-composer/client-crt.pem \
     https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
 
+
   local TAR_COMMIT_ID
-  TAR_COMMIT_ID=$(tar xf "${WORKDIR}/edge-commit.tar" "repo/refs/heads/test/rhel/8/edge" -O)
+  TAR_COMMIT_ID=$(ostree rev-parse --repo "${COMMIT_DIR}/repo" "${OSTREE_REF}")
 
   if [[ "${API_COMMIT_ID}" != "${TAR_COMMIT_ID}" ]]; then
       echo "Commit ID returned from API does not match Commit ID in archive 😠"
@@ -923,14 +950,15 @@ esac
 
 # Verify selected package (postgresql) is included in package list
 function verifyPackageList() {
+  # Save build metadata to artifacts directory for troubleshooting
+  curl --silent \
+      --show-error \
+      --cacert /etc/osbuild-composer/ca-crt.pem \
+      --key /etc/osbuild-composer/client-key.pem \
+      --cert /etc/osbuild-composer/client-crt.pem \
+      https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
   local PACKAGENAMES
-  PACKAGENAMES=$(curl \
-    --silent \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata | jq -r '.packages[].name')
+  PACKAGENAMES=$(jq -rM '.packages[].name' "${ARTIFACTS}/metadata.json")
 
   if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
       echo "'postgresql' not found in compose package list 😠"
