@@ -383,11 +383,6 @@ func TestDistro_ManifestError(t *testing.T) {
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
-			if archName == "s390x" && imgTypeName == "tar" {
-				// broken arch-imgType combination; see
-				// https://github.com/osbuild/osbuild-composer/issues/1220
-				continue
-			}
 			imgType, _ := arch.GetImageType(imgTypeName)
 			imgOpts := distro.ImageOptions{
 				Size: imgType.Size(0),
