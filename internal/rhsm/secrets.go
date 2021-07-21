@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -21,6 +22,7 @@ type subscription struct {
 // host system.
 type Subscriptions struct {
 	available []subscription
+	secrets   *RHSMSecrets // secrets are used in there is no matching subscription
 }
 
 // RHSMSecrets represents a set of CA certificate, client key, and
@@ -31,8 +33,25 @@ type RHSMSecrets struct {
 	SSLClientCert string
 }
 
-// LoadSystemSubscriptions loads all the available subscriptions.
-func LoadSystemSubscriptions() (*Subscriptions, error) {
+func getRHSMSecrets() (*RHSMSecrets, error) {
+	keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
+		if _, err := os.Stat(cert); err == nil {
+			return &RHSMSecrets{
+				SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
+				SSLClientKey:  key,
+				SSLClientCert: cert,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("no matching key and certificate pair")
+}
+
+func getListOfSubscriptions() ([]subscription, error) {
 	// This file has a standard syntax for yum repositories which is
 	// documented in `man yum.conf`. The same parsing mechanism could
 	// be used for any other repo file in /etc/yum.repos.d/.
@@ -45,15 +64,35 @@ func LoadSystemSubscriptions() (*Subscriptions, error) {
 				return nil, nil
 			}
 		}
-		return nil, fmt.Errorf("Failed to open the file with subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to open the file with subscriptions: %w", err)
 	}
 	subscriptions, err := parseRepoFile(content)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse the file with subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to parse the file with subscriptions: %w", err)
+	}
+
+	return subscriptions, nil
+}
+
+// LoadSystemSubscriptions loads all the available subscriptions.
+func LoadSystemSubscriptions() (*Subscriptions, error) {
+	subscriptions, err1 := getListOfSubscriptions()
+	secrets, err2 := getRHSMSecrets()
+
+	if subscriptions == nil && secrets == nil {
+		// Neither works, return an error because at least one has to be available
+		if err1 != nil {
+			return nil, err1
+		}
+		if err2 != nil {
+			return nil, err2
+		}
+		return nil, fmt.Errorf("failed to load subscriptions")
 	}
 
 	return &Subscriptions{
 		available: subscriptions,
+		secrets:   secrets,
 	}, nil
 }
 
@@ -111,6 +150,10 @@ func (s *Subscriptions) GetSecretsForBaseurl(baseurl string, arch, releasever st
 				SSLClientCert: subs.sslClientCert,
 			}, nil
 		}
+	}
+	// If there is no matching URL, fall back to the global secrets
+	if s.secrets != nil {
+		return s.secrets, nil
 	}
 	return nil, fmt.Errorf("no such baseurl in the available subscriptions")
 }
