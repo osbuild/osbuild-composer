@@ -2227,7 +2227,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	size := imageType.Size(cr.Size)
+	var size uint64
+
+	// check if filesytem customizations have been set.
+	// if compose size parameter is set, take the larger of
+	// the two values
+	if minSize := bp.Customizations.GetFilesystemsMinSize(); bp.Customizations != nil && minSize > 0 && minSize > cr.Size {
+		size = imageType.Size(minSize)
+	} else {
+		size = imageType.Size(cr.Size)
+	}
 
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
