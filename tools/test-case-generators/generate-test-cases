@@ -89,7 +89,7 @@ class TestCaseGenerator:
 
 
 def generate_test_case(test_type, distro, arch, output_format, test_case_request, keep_image_info, store, output):
-    print(f"generating test case for {output_format}")
+    print(f"generating test case for {output_format}", flush=True)
     generator = TestCaseGenerator(test_case_request)
     test_case = generator.get_test_case(keep_image_info, store)
     name = distro.replace("-", "_") + "-" + arch + "-" + output_format.replace("-", "_") + "-" + test_type + ".json"
