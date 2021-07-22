@@ -637,6 +637,8 @@ test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 # Save the Manifest from the osbuild-composer store
 # NOTE: The rest of the job data can contain sensitive information
 #
+# Suppressing shellcheck.  See https://github.com/koalaman/shellcheck/wiki/SC2024#exceptions
+# shellcheck disable=SC2024
 sudo jq -rM .args.manifest /var/lib/osbuild-composer/jobs/"${COMPOSE_ID}".json > "${ARTIFACTS}/manifest.json"
 
 #
