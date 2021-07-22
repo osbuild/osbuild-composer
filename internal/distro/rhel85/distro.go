@@ -262,6 +262,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
+	kernel := bp.Customizations.GetKernel().Name
+
+	// add bp kernel to main OS package set to avoid duplicate kernels
+	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
 	return mergedSets
 
 }
