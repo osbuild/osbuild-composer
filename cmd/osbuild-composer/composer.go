@@ -65,7 +65,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 		return nil, fmt.Errorf("cannot create jobqueue: %v", err)
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, c.config.Worker.IdentityFilter)
+	c.workers = worker.NewServer(c.logger, jobs, artifactsDir)
 
 	return &c, nil
 }
@@ -108,21 +108,17 @@ func (c *Composer) InitLocalWorker(l net.Listener) {
 }
 
 func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
-	if len(c.config.Worker.IdentityFilter) > 0 {
-		c.workerListener = l
-	} else {
-		tlsConfig, err := createTLSConfig(&connectionConfig{
-			CACertFile:     c.config.Worker.CA,
-			ServerKeyFile:  key,
-			ServerCertFile: cert,
-			AllowedDomains: c.config.Worker.AllowedDomains,
-		})
-		if err != nil {
-			return fmt.Errorf("Error creating TLS configuration for remote worker API: %v", err)
-		}
-
-		c.workerListener = tls.NewListener(l, tlsConfig)
+	tlsConfig, err := createTLSConfig(&connectionConfig{
+		CACertFile:     c.config.Worker.CA,
+		ServerKeyFile:  key,
+		ServerCertFile: cert,
+		AllowedDomains: c.config.Worker.AllowedDomains,
+	})
+	if err != nil {
+		return fmt.Errorf("Error creating TLS configuration for remote worker API: %v", err)
 	}
+
+	c.workerListener = tls.NewListener(l, tlsConfig)
 
 	return nil
 }

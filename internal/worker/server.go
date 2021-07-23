@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,10 +21,9 @@ import (
 )
 
 type Server struct {
-	jobs           jobqueue.JobQueue
-	logger         *log.Logger
-	artifactsDir   string
-	identityFilter []string
+	jobs         jobqueue.JobQueue
+	logger       *log.Logger
+	artifactsDir string
 }
 
 type JobStatus struct {
@@ -39,15 +36,12 @@ type JobStatus struct {
 var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, identityFilter []string) *Server {
-	s := &Server{
-		jobs:           jobs,
-		logger:         logger,
-		artifactsDir:   artifactsDir,
-		identityFilter: identityFilter,
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
+	return &Server{
+		jobs:         jobs,
+		logger:       logger,
+		artifactsDir: artifactsDir,
 	}
-	go s.WatchHeartbeats()
-	return s
 }
 
 func (s *Server) Handler() http.Handler {
@@ -61,72 +55,12 @@ func (s *Server) Handler() http.Handler {
 		e.DefaultHTTPErrorHandler(err, c)
 	}
 
-	var mws []echo.MiddlewareFunc
-	if len(s.identityFilter) > 0 {
-		mws = append(mws, s.VerifyIdentityHeader)
-	}
-
 	handler := apiHandlers{
 		server: s,
 	}
-	api.RegisterHandlers(e.Group(api.BasePath, mws...), &handler)
-	api.RegisterHandlers(e.Group(api.CloudBasePath, mws...), &handler)
+	api.RegisterHandlers(e.Group(api.BasePath), &handler)
 
 	return e
-}
-
-func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		type identityHeader struct {
-			Identity struct {
-				AccountNumber string `json:"account_number"`
-			} `json:"identity"`
-		}
-
-		request := ctx.Request()
-
-		idHeaderB64 := request.Header["X-Rh-Identity"]
-		if len(idHeaderB64) != 1 {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
-		}
-
-		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		var idHeader identityHeader
-		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		for _, i := range s.identityFilter {
-			if idHeader.Identity.AccountNumber == i {
-				ctx.Set("IdentityHeader", idHeader)
-				return nextHandler(ctx)
-
-			}
-		}
-		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
-	}
-}
-
-// This function should be started as a goroutine
-// Every 30 seconds it goes through all running jobs, removing any unresponsive ones.
-// It fails jobs which fail to check if they cancelled for more than 2 minutes.
-func (s *Server) WatchHeartbeats() {
-	//nolint:staticcheck // avoid SA1015, this is an endless function
-	for range time.Tick(time.Second * 30) {
-		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
-			id, _ := s.jobs.IdFromToken(token)
-			log.Printf("Removing unresponsive job: %s\n", id)
-			err := s.FinishJob(token, nil)
-			if err != nil {
-				log.Printf("Error finishing unresponsive job: %v", err)
-			}
-		}
-	}
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
@@ -338,15 +272,10 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	basePath := api.BasePath
-	if strings.HasPrefix(ctx.Path(), api.CloudBasePath) {
-		basePath = api.CloudBasePath
-	}
-
 	return ctx.JSON(http.StatusCreated, requestJobResponse{
 		Id:               jobId,
-		Location:         fmt.Sprintf("%s/jobs/%v", basePath, token),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", basePath, token),
+		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
 		Type:             jobType,
 		Args:             jobArgs,
 		DynamicArgs:      dynamicJobArgs,

@@ -14,7 +14,6 @@ type ComposerConfigFile struct {
 	Worker struct {
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
-		IdentityFilter []string `toml:"identity_filter"`
 	} `toml:"worker"`
 	ComposerAPI struct {
 		IdentityFilter []string `toml:"identity_filter"`

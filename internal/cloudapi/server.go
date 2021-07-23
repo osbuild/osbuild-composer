@@ -36,6 +36,16 @@ type Server struct {
 
 type contextKey int
 
+const (
+	identityHeaderKey contextKey = iota
+)
+
+type IdentityHeader struct {
+	Identity struct {
+		AccountNumber string `json:"account_number"`
+	} `json:"identity"`
+}
+
 // NewServer creates a new cloud server
 func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
 	server := &Server{
@@ -64,13 +74,6 @@ func (server *Server) Handler(path string, identityFilter []string) http.Handler
 
 func (server *Server) VerifyIdentityHeader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		const identityHeaderKey contextKey = iota
-		type identityHeader struct {
-			Identity struct {
-				AccountNumber string `json:"account_number"`
-			} `json:"identity"`
-		}
-
 		idHeaderB64 := r.Header["X-Rh-Identity"]
 		if len(idHeaderB64) != 1 {
 			http.Error(w, "Auth header is not present", http.StatusNotFound)
@@ -83,7 +86,7 @@ func (server *Server) VerifyIdentityHeader(next http.Handler) http.Handler {
 			return
 		}
 
-		var idHeader identityHeader
+		var idHeader IdentityHeader
 		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
 		if err != nil {
 			http.Error(w, "Auth header has incorrect format", http.StatusNotFound)
