@@ -1,5 +1,8 @@
 # Repo Specific Gitleaks Configuration
 # https://github.com/zricethezav/gitleaks/#configuration
+#
+# For info on how this is utilized
+# https://url.corp.redhat.com/2a2aaeb
 
 # Set to avoid false positives
 [allowlist]
