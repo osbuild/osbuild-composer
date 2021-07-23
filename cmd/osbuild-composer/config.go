@@ -15,9 +15,6 @@ type ComposerConfigFile struct {
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
 	} `toml:"worker"`
-	ComposerAPI struct {
-		IdentityFilter []string `toml:"identity_filter"`
-	} `toml:"composer_api"`
 }
 
 func LoadConfig(name string) (*ComposerConfigFile, error) {

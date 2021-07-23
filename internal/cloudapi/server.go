@@ -3,9 +3,7 @@
 package cloudapi
 
 import (
-	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -28,22 +26,9 @@ import (
 
 // Server represents the state of the cloud Server
 type Server struct {
-	workers        *worker.Server
-	rpmMetadata    rpmmd.RPMMD
-	distros        *distroregistry.Registry
-	identityFilter []string
-}
-
-type contextKey int
-
-const (
-	identityHeaderKey contextKey = iota
-)
-
-type IdentityHeader struct {
-	Identity struct {
-		AccountNumber string `json:"account_number"`
-	} `json:"identity"`
+	workers     *worker.Server
+	rpmMetadata rpmmd.RPMMD
+	distros     *distroregistry.Registry
 }
 
 // NewServer creates a new cloud server
@@ -58,49 +43,14 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distror
 
 // Create an http.Handler() for this server, that provides the composer API at
 // the given path.
-func (server *Server) Handler(path string, identityFilter []string) http.Handler {
+func (server *Server) Handler(path string) http.Handler {
 	r := chi.NewRouter()
 
-	if len(identityFilter) > 0 {
-		server.identityFilter = identityFilter
-		r.Use(server.VerifyIdentityHeader)
-	}
 	r.Route(path, func(r chi.Router) {
 		HandlerFromMux(server, r)
 	})
 
 	return r
-}
-
-func (server *Server) VerifyIdentityHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		idHeaderB64 := r.Header["X-Rh-Identity"]
-		if len(idHeaderB64) != 1 {
-			http.Error(w, "Auth header is not present", http.StatusNotFound)
-			return
-		}
-
-		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
-		if err != nil {
-			http.Error(w, "Auth header has incorrect format", http.StatusNotFound)
-			return
-		}
-
-		var idHeader IdentityHeader
-		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
-		if err != nil {
-			http.Error(w, "Auth header has incorrect format", http.StatusNotFound)
-			return
-		}
-
-		for _, i := range server.identityFilter {
-			if idHeader.Identity.AccountNumber == i {
-				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), identityHeaderKey, idHeader)))
-				return
-			}
-		}
-		http.Error(w, "Account not allowed", http.StatusNotFound)
-	})
 }
 
 // Compose handles a new /compose POST request
