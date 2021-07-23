@@ -96,6 +96,37 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		return err
 	}
+
+	log.Println("Build stages results:")
+
+	// Include the build stages output inside the worker's logs.
+	for _, stage := range osbuildJobResult.OSBuildOutput.Build.Stages {
+		if stage.Success {
+			log.Println(stage.Name, " success")
+		} else {
+			log.Printf("%s failure:\n", stage.Name)
+			stageOutput := strings.Split(stage.Output, "\n")
+			for _, line := range stageOutput {
+				log.Printf("	%s", line)
+			}
+		}
+	}
+
+	log.Println("Stages results:")
+
+	// Include the stages output inside the worker's logs.
+	for _, stage := range osbuildJobResult.OSBuildOutput.Stages {
+		if stage.Success {
+			log.Println(stage.Name, " success")
+		} else {
+			log.Printf("%s failure:\n", stage.Name)
+			stageOutput := strings.Split(stage.Output, "\n")
+			for _, line := range stageOutput {
+				log.Printf("	%s", line)
+			}
+		}
+	}
+
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
 		return nil
