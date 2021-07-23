@@ -251,6 +251,7 @@ function cleanupAzure() {
 }
 
 WORKDIR=$(mktemp -d)
+KILL_PIDS=()
 function cleanup() {
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
@@ -268,6 +269,10 @@ function cleanup() {
   esac
 
   rm -rf "$WORKDIR"
+
+  for P in "${KILL_PIDS[@]}"; do
+      sudo pkill -P "$P"
+  done
 }
 trap cleanup EXIT
 
@@ -1118,5 +1123,75 @@ EOF
     https://localhost/api/composer/v1/compose)" = "500" ]
 
 sudo mv -f /usr/libexec/osbuild-composer/dnf-json.bak /usr/libexec/osbuild-composer/dnf-json
+
+#
+# Verify oauth2
+#
+cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+[koji]
+allowed_domains = [ "localhost", "client.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+
+[worker]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+pg_host = "localhost"
+pg_port = "5432"
+pg_database = "osbuildcomposer"
+pg_user = "postgres"
+pg_password = "foobar"
+pg_ssl_mode = "disable"
+enable_jwt = true
+jwt_keys_url = "https://localhost:8080/certs"
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+[composer_api]
+enable_jwt = true
+jwt_keys_url = "https://localhost:8080/certs"
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_acl_file = ""
+EOF
+
+cat <<EOF | sudo tee "/etc/osbuild-worker/token"
+offlineToken
+EOF
+
+cat <<EOF | sudo tee "/etc/osbuild-worker/osbuild-worker.toml"
+[authentication]
+oauth_url = http://localhost:8081/token
+offline_token = "/etc/osbuild-worker/token"
+EOF
+
+# Spin up an https instance for the composer-api and worker-api; the auth handler needs to hit an ssl `/certs` endpoint
+sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -cert /etc/osbuild-composer/composer-crt.pem -key /etc/osbuild-composer/composer-key.pem &
+KILL_PIDS+=("$!")
+# Spin up an http instance for the worker client to bypass the need to specify an extra CA
+sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -a localhost:8081 &
+KILL_PIDS+=("$!")
+
+sudo systemctl restart osbuild-composer
+
+until curl --output /dev/null --silent --fail localhost:8081/token; do
+    sleep 0.5
+done
+TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
+
+[ "$(curl \
+        --silent \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        --header "Authorization: Bearer $TOKEN" \
+        https://localhost/api/composer/v1/version)" = "200" ]
+
+[ "$(curl \
+        --silent \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        --header "Authorization: Bearer badtoken" \
+        https://localhost/api/composer/v1/version)" = "401" ]
+
+sudo systemctl start osbuild-remote-worker@https:--localhost:8700.service
+sudo systemctl is-active --quiet osbuild-remote-worker@https:--localhost:8700.service
 
 exit 0

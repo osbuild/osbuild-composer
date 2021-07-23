@@ -14,6 +14,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -101,22 +102,28 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	return nil
 }
 
-func (c *Composer) InitAPI(cert, key string, l net.Listener) error {
+func (c *Composer) InitAPI(cert, key string, enableJWT bool, l net.Listener) error {
 	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
+
+	clientAuth := tls.RequireAndVerifyClientCert
+	if enableJWT {
+		// jwt enabled => tls listener without client auth
+		clientAuth = tls.NoClientCert
+	}
 
 	tlsConfig, err := createTLSConfig(&connectionConfig{
 		CACertFile:     c.config.Koji.CA,
 		ServerKeyFile:  key,
 		ServerCertFile: cert,
 		AllowedDomains: c.config.Koji.AllowedDomains,
+		ClientAuth:     clientAuth,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TLS configuration: %v", err)
 	}
 
 	c.apiListener = tls.NewListener(l, tlsConfig)
-
 	return nil
 }
 
@@ -124,17 +131,23 @@ func (c *Composer) InitLocalWorker(l net.Listener) {
 	c.localWorkerListener = l
 }
 
-func (c *Composer) InitRemoteWorkers(cert, key string, l net.Listener) error {
+func (c *Composer) InitRemoteWorkers(cert, key string, enableJWT bool, l net.Listener) error {
+	clientAuth := tls.RequireAndVerifyClientCert
+	if enableJWT {
+		// jwt enabled => tls listener without client auth
+		clientAuth = tls.NoClientCert
+	}
+
 	tlsConfig, err := createTLSConfig(&connectionConfig{
 		CACertFile:     c.config.Worker.CA,
 		ServerKeyFile:  key,
 		ServerCertFile: cert,
 		AllowedDomains: c.config.Worker.AllowedDomains,
+		ClientAuth:     clientAuth,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TLS configuration for remote worker API: %v", err)
 	}
-
 	c.workerListener = tls.NewListener(l, tlsConfig)
 
 	return nil
@@ -168,11 +181,26 @@ func (c *Composer) Start() error {
 
 	if c.workerListener != nil {
 		go func() {
+			handler := c.workers.Handler()
+			var err error
+			if c.config.Worker.EnableJWT {
+				handler, err = auth.BuildJWTAuthHandler(
+					c.config.Worker.JWTKeysURL,
+					c.config.Worker.JWTKeysCA,
+					c.config.Worker.JWTACLFile,
+					[]string{},
+					c.workers.Handler(),
+				)
+				if err != nil {
+					panic(err)
+				}
+			}
+
 			s := &http.Server{
 				ErrorLog: c.logger,
-				Handler:  c.workers.Handler(),
+				Handler:  handler,
 			}
-			err := s.Serve(c.workerListener)
+			err = s.Serve(c.workerListener)
 			if err != nil {
 				panic(err)
 			}
@@ -193,12 +221,26 @@ func (c *Composer) Start() error {
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
 			mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
 
-			s := &http.Server{
-				ErrorLog: c.logger,
-				Handler:  mux,
+			handler := http.Handler(mux)
+			var err error
+			if c.config.ComposerAPI.EnableJWT {
+				handler, err = auth.BuildJWTAuthHandler(
+					c.config.ComposerAPI.JWTKeysURL,
+					c.config.ComposerAPI.JWTKeysCA,
+					c.config.ComposerAPI.JWTACLFile,
+					[]string{
+						"/metrics/?$",
+					}, mux)
+				if err != nil {
+					panic(err)
+				}
 			}
 
-			err := s.Serve(c.apiListener)
+			s := &http.Server{
+				ErrorLog: c.logger,
+				Handler:  handler,
+			}
+			err = s.Serve(c.apiListener)
 			if err != nil {
 				panic(err)
 			}
@@ -237,6 +279,7 @@ type connectionConfig struct {
 	ServerKeyFile  string
 	ServerCertFile string
 	AllowedDomains []string
+	ClientAuth     tls.ClientAuthType
 }
 
 func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
@@ -261,7 +304,7 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 	}
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientAuth:   c.ClientAuth,
 		ClientCAs:    roots,
 		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 			for _, chain := range verifiedChains {
