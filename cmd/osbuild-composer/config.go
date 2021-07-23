@@ -28,6 +28,9 @@ type ComposerConfigFile struct {
 	ComposerAPI struct {
 		IdentityFilter []string `toml:"identity_filter"`
 	} `toml:"composer_api"`
+	WeldrAPI struct {
+		ImageTypeDenylist []string `toml:"image_type_denylist"`
+	} `toml:"weldr_api"`
 }
 
 func LoadConfig(name string) (*ComposerConfigFile, error) {

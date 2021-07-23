@@ -36,6 +36,8 @@ func TestConfig(t *testing.T) {
 	require.Equal(t, config.Worker.AllowedDomains, []string{"osbuild.org"})
 	require.Equal(t, config.Worker.CA, "/etc/osbuild-composer/ca-crt.pem")
 
+	require.Equal(t, config.WeldrAPI.ImageTypeDenylist, []string{"qcow2", "vmdk"})
+
 	require.Equal(t, "overwrite-me-db", config.Worker.PGDatabase)
 
 	require.NoError(t, os.Setenv("PGDATABASE", "composer-db"))

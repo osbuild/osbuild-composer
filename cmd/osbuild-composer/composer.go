@@ -89,8 +89,8 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener) (err error) {
-	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.rpm, c.distros, c.logger, c.workers)
+func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener, imageTypeDenylist []string) (err error) {
+	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.rpm, c.distros, c.logger, c.workers, imageTypeDenylist)
 	if err != nil {
 		return err
 	}
