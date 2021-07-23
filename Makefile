@@ -124,6 +124,7 @@ build:
 	go test -c -tags=integration -o bin/osbuild-koji-tests ./cmd/osbuild-koji-tests/
 	go test -c -tags=integration -o bin/osbuild-composer-dbjobqueue-tests ./cmd/osbuild-composer-dbjobqueue-tests/
 
+
 .PHONY: install
 install:
 	- mkdir -p /usr/libexec/osbuild-composer
