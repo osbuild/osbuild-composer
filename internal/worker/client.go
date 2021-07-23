@@ -61,11 +61,7 @@ func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string)
 		return nil, err
 	}
 
-	bp := api.BasePath
-	if offlineToken != nil {
-		bp = api.CloudBasePath
-	}
-	server, err = server.Parse(bp + "/")
+	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}

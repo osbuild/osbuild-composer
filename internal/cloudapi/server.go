@@ -101,7 +101,7 @@ func (server *Server) VerifyIdentityHeader(next echo.HandlerFunc) echo.HandlerFu
 			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
 		}
 
-		var idHeader identityHeader
+		var idHeader IdentityHeader
 		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
