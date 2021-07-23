@@ -111,6 +111,10 @@ if [ -f "rhel8internal.repo" ]; then
 fi
 
 greenprint "Installing test packages for ${PROJECT}"
+
+# NOTE: WORKAROUND FOR DEPENDENCY BUG
+retry sudo dnf -y upgrade selinux-policy
+
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
 
