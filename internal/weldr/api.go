@@ -57,6 +57,9 @@ type API struct {
 	hostDistroName string                   // Name of the host distro
 	distroRegistry *distroregistry.Registry // Available distros
 	distros        []string                 // Supported distro names
+
+	// List of ImageType names, which should not be exposed by the API
+	imageTypeDenylist []string
 }
 
 type ComposeState int
@@ -117,26 +120,29 @@ var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 // NewTestAPI is used for the test framework, sets up a single distro
 func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 	rr *reporegistry.RepoRegistry, logger *log.Logger,
-	store *store.Store, workers *worker.Server, compatOutputDir string) *API {
+	store *store.Store, workers *worker.Server, compatOutputDir string,
+	imageTypeDenylist []string) *API {
 
 	// Use the first entry as the host distribution
 	hostDistro := dr.GetDistro(dr.List()[0])
 	api := &API{
-		store:           store,
-		workers:         workers,
-		rpmmd:           rpm,
-		arch:            arch,
-		repoRegistry:    rr,
-		logger:          logger,
-		compatOutputDir: compatOutputDir,
-		hostDistroName:  hostDistro.Name(),
-		distroRegistry:  dr,
-		distros:         validDistros(rr, dr, arch.Name(), logger),
+		store:             store,
+		workers:           workers,
+		rpmmd:             rpm,
+		arch:              arch,
+		repoRegistry:      rr,
+		logger:            logger,
+		compatOutputDir:   compatOutputDir,
+		hostDistroName:    hostDistro.Name(),
+		distroRegistry:    dr,
+		distros:           validDistros(rr, dr, arch.Name(), logger),
+		imageTypeDenylist: imageTypeDenylist,
 	}
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistry.Registry, logger *log.Logger, workers *worker.Server) (*API, error) {
+func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistry.Registry,
+	logger *log.Logger, workers *worker.Server, imageTypeDenylist []string) (*API, error) {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
 	}
@@ -168,16 +174,17 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	api := &API{
-		store:           store,
-		workers:         workers,
-		rpmmd:           rpm,
-		arch:            hostArch,
-		repoRegistry:    rr,
-		logger:          logger,
-		compatOutputDir: compatOutputDir,
-		hostDistroName:  hostDistro.Name(),
-		distroRegistry:  dr,
-		distros:         validDistros(rr, dr, hostArch.Name(), logger),
+		store:             store,
+		workers:           workers,
+		rpmmd:             rpm,
+		arch:              hostArch,
+		repoRegistry:      rr,
+		logger:            logger,
+		compatOutputDir:   compatOutputDir,
+		hostDistroName:    hostDistro.Name(),
+		distroRegistry:    dr,
+		distros:           validDistros(rr, dr, hostArch.Name(), logger),
+		imageTypeDenylist: imageTypeDenylist,
 	}
 	return setupRouter(api), nil
 }
@@ -378,10 +385,26 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 	return reader, size, nil
 }
 
+// checkImageTypeDenylist checks the given ImageType name against the ImageType Denylist
+// provided to the API from configuration. If the given ImageType is not allowed the method
+// returns an `error`. Otherwise `nil` is returned.
+func (api *API) checkImageTypeDenylist(imageType string) error {
+	for _, deniedImgType := range api.imageTypeDenylist {
+		if imageType == deniedImgType {
+			return fmt.Errorf("image type denied by configuration: %q", imageType)
+		}
+	}
+	return nil
+}
+
 // getImageType returns the ImageType for the selected distro
 // This is necessary because different distros support different image types, and the image
 // type may have a different package set than other distros.
 func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
+	if err := api.checkImageTypeDenylist(imageType); err != nil {
+		return nil, err
+	}
+
 	distro := api.getDistro(distroName)
 	if distro == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
@@ -2491,6 +2514,9 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	for _, format := range arch.ListImageTypes() {
+		if err := api.checkImageTypeDenylist(format); err != nil {
+			continue
+		}
 		reply.Types = append(reply.Types, composeType{format, true})
 	}
 

@@ -6,3 +6,6 @@ ca = "/etc/osbuild-composer/ca-crt.pem"
 allowed_domains = [ "osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
 pg_database = "overwrite-me-db"
+
+[weldr_api]
+image_type_denylist = [ "qcow2", "vmdk" ]

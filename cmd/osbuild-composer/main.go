@@ -69,7 +69,7 @@ func main() {
 			log.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitWeldr(repositoryConfigs, l[0])
+		err = composer.InitWeldr(repositoryConfigs, l[0], config.WeldrAPI.ImageTypeDenylist)
 		if err != nil {
 			log.Fatalf("Error initializing weldr API: %v", err)
 		}

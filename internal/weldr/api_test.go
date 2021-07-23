@@ -61,7 +61,42 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 		panic(err)
 	}
 
-	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, ""), fixture.Store
+	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", nil), fixture.Store
+}
+
+// createWeldrAPI2 is an alternative function to createWeldrAPI, using different test architecture
+// with more than a single image type
+func createWeldrAPI2(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator,
+	imageTypeDenylist []string) (*API, *store.Store) {
+	fixture := fixtureGenerator(tempdir)
+	rpm := rpmmd_mock.NewRPMMDMock(fixture)
+
+	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
+		test_distro.TestDistroName: {
+			test_distro.TestArch2Name: {
+				{Name: "test-id", BaseURL: "http://example.com/test/os/x86_64", CheckGPG: true},
+			},
+		},
+		test_distro.TestDistro2Name: {
+			test_distro.TestArch2Name: {
+				{Name: "test-id-2", BaseURL: "http://example.com/test-2/os/x86_64", CheckGPG: true},
+			},
+		},
+	})
+
+	distro1 := test_distro.New()
+	arch, err := distro1.GetArch(test_distro.TestArch2Name)
+	if err != nil {
+		panic(err)
+	}
+	distro2 := test_distro.New2()
+
+	dr, err := distroregistry.New(distro1, distro2)
+	if err != nil {
+		panic(err)
+	}
+
+	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", imageTypeDenylist), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -736,6 +771,7 @@ func TestCompose(t *testing.T) {
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"InvalidChars","msg":"Invalid ostree ref"}]}`, expectedComposeOSTreeURL, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test-distro-2","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName), http.StatusOK, `{"status": true}`, expectedComposeGoodDistro, []string{"build_id"}},
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test-fedora-1","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1"}]}`, nil, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", `{"blueprint_name": "test-distro-2","compose_type": "imaginary_type","branch": "master"}`, http.StatusBadRequest, `{"status": false,"errors":[{"id":"UnknownComposeType", "msg":"Unknown compose type for architecture: imaginary_type"}]}`, nil, []string{"build_id"}},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
@@ -1442,5 +1478,198 @@ func TestModulesList(t *testing.T) {
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestComposeTypes_ImageTypeDenylist(t *testing.T) {
+	var cases = []struct {
+		Path              string
+		ImageTypeDenylist []string
+		ExpectedStatus    int
+		ExpectedJSON      string
+	}{
+		{
+			"/api/v1/compose/types",
+			[]string{},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q},{"enabled":true, "name":%q}]}`, test_distro.TestImageTypeName, test_distro.TestImageType2Name),
+		},
+		{
+			"/api/v1/compose/types?distro=test-distro-2",
+			[]string{},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q},{"enabled":true, "name":%q}]}`, test_distro.TestImageTypeName, test_distro.TestImageType2Name),
+		},
+		{
+			"/api/v1/compose/types",
+			[]string{test_distro.TestImageTypeName},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}]}`, test_distro.TestImageType2Name),
+		},
+		{
+			"/api/v1/compose/types?distro=test-distro-2",
+			[]string{test_distro.TestImageTypeName},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}]}`, test_distro.TestImageType2Name),
+		},
+		{
+			"/api/v1/compose/types",
+			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			http.StatusOK,
+			`{"types": null}`,
+		},
+		{
+			"/api/v1/compose/types?distro=test-distro-2",
+			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			http.StatusOK,
+			`{"types": null}`,
+		},
+	}
+
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	for _, c := range cases {
+		api, _ := createWeldrAPI2(tempdir, rpmmd_mock.BaseFixture, c.ImageTypeDenylist)
+		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
+	}
+}
+
+func TestComposePOST_ImageTypeDenylist(t *testing.T) {
+	arch, err := test_distro.New2().GetArch(test_distro.TestArch2Name)
+	require.NoError(t, err)
+	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	require.NoError(t, err)
+	imgType2, err := arch.GetImageType(test_distro.TestImageType2Name)
+	require.NoError(t, err)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
+	require.NoError(t, err)
+
+	expectedComposeLocal := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType,
+			Manifest:    manifest,
+		},
+		Packages: []rpmmd.PackageSpec{},
+	}
+
+	expectedComposeLocal2 := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   imgType2,
+			Manifest:    manifest,
+		},
+		Packages: []rpmmd.PackageSpec{},
+	}
+
+	var cases = []struct {
+		Path              string
+		Body              string
+		imageTypeDenylist []string
+		ExpectedStatus    int
+		ExpectedJSON      string
+		ExpectedCompose   *store.Compose
+		IgnoreFields      []string
+	}{
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			[]string{},
+			http.StatusOK,
+			`{"status":true}`,
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
+			[]string{},
+			http.StatusOK,
+			`{"status": true}`,
+			expectedComposeLocal2,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			[]string{test_distro.TestImageTypeName},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
+			[]string{test_distro.TestImageTypeName},
+			http.StatusOK,
+			`{"status": true}`,
+			expectedComposeLocal2,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
+			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageType2Name),
+			expectedComposeLocal2,
+			[]string{"build_id"},
+		},
+	}
+
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	for _, c := range cases {
+		api, s := createWeldrAPI2(tempdir, rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
+		test.TestRoute(t, api, true, "POST", c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
+
+		if c.ExpectedStatus != http.StatusOK {
+			continue
+		}
+
+		composes := s.GetAllComposes()
+		require.Equalf(t, 1, len(composes), "%s: bad compose count in store", c.Path)
+
+		var composeStruct store.Compose
+		for _, c := range composes {
+			composeStruct = c
+			break
+		}
+
+		require.NotNilf(t, composeStruct.ImageBuild.Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
+
+		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location"), test.CompareImageTypes()); diff != "" {
+			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
+		}
 	}
 }
