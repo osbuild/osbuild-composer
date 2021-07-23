@@ -1082,45 +1082,6 @@ function verifyPackageList() {
 verifyPackageList
 
 #
-# Verify the identityfilter
-#
-cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
-[koji]
-allowed_domains = [ "localhost", "client.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-
-[worker]
-allowed_domains = [ "localhost", "worker.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-
-[composer_api]
-identity_filter = ["000000"]
-EOF
-
-sudo systemctl restart osbuild-composer
-
-# account number 000000
-VALIDAUTHSTRING="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ=="
-# account number 000001
-INVALIDAUTHSTRING="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDMiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQo="
-
-curl \
-    --silent \
-    --show-error \
-    --header "x-rh-identity: $VALIDAUTHSTRING" \
-    http://localhost:443/api/composer/v1/version | jq .
-
-#
-# Make sure the invalid auth string returns a 404
-#
-[ "$(curl \
-        --silent \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        --header "x-rh-identity: $INVALIDAUTHSTRING" \
-        http://localhost:443/api/composer/v1/version)" = "404" ]
-
-#
 # Make sure that requesting a non existing paquet returns a 400 error
 #
 REQUEST_FILE2="${WORKDIR}/request2.json"
@@ -1128,12 +1089,14 @@ jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE
 
 [ "$(curl \
     --silent \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
     --output /dev/null \
     --write-out '%{http_code}' \
-    --header "x-rh-identity: $VALIDAUTHSTRING" \
     -H "Content-Type: application/json" \
     --data @"$REQUEST_FILE2" \
-    http://localhost:443/api/composer/v1/compose)" = "400" ]
+    https://localhost/api/composer/v1/compose)" = "400" ]
 
 #
 # Make sure that a request that makes the dnf-json crash returns a 500 error
@@ -1145,12 +1108,14 @@ raise Exception()
 EOF
 [ "$(curl \
     --silent \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
     --output /dev/null \
     --write-out '%{http_code}' \
-    --header "x-rh-identity: $VALIDAUTHSTRING" \
     -H "Content-Type: application/json" \
     --data @"$REQUEST_FILE2" \
-    http://localhost:443/api/composer/v1/compose)" = "500" ]
+    https://localhost/api/composer/v1/compose)" = "500" ]
 
 sudo mv -f /usr/libexec/osbuild-composer/dnf-json.bak /usr/libexec/osbuild-composer/dnf-json
 
