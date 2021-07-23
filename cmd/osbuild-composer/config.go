@@ -24,9 +24,6 @@ type ComposerConfigFile struct {
 		PGPassword     string   `toml:"pg_password" env:"PGPASSWORD"`
 		PGSSLMode      string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
 	} `toml:"worker"`
-	ComposerAPI struct {
-		IdentityFilter []string `toml:"identity_filter"`
-	} `toml:"composer_api"`
 	WeldrAPI WeldrAPIConfig `toml:"weldr_api"`
 }
 
