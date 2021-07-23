@@ -4,7 +4,6 @@ package cloudapi
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -28,13 +27,10 @@ import (
 
 // Server represents the state of the cloud Server
 type Server struct {
-	workers        *worker.Server
-	rpmMetadata    rpmmd.RPMMD
-	distros        *distroregistry.Registry
-	identityFilter []string
+	workers     *worker.Server
+	rpmMetadata rpmmd.RPMMD
+	distros     *distroregistry.Registry
 }
-
-type contextKey int
 
 type apiHandlers struct {
 	server *Server
@@ -54,14 +50,10 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distror
 
 // Create an http.Handler() for this server, that provides the composer API at
 // the given path.
-func (server *Server) Handler(path string, identityFilter []string) http.Handler {
+func (server *Server) Handler(path string) http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
 
-	if len(identityFilter) > 0 {
-		server.identityFilter = identityFilter
-		e.Use(server.VerifyIdentityHeader)
-	}
 	handler := apiHandlers{
 		server: server,
 	}
@@ -81,41 +73,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Cannot parse request body: %s", err.Error()))
 	}
 	return nil
-}
-
-func (server *Server) VerifyIdentityHeader(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		const identityHeaderKey contextKey = iota
-		type identityHeader struct {
-			Identity struct {
-				AccountNumber string `json:"account_number"`
-			} `json:"identity"`
-		}
-		idHeaderB64 := c.Request().Header.Get("X-Rh-Identity")
-		if idHeaderB64 == "" {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
-		}
-
-		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		var idHeader IdentityHeader
-		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		for _, i := range server.identityFilter {
-			if idHeader.Identity.AccountNumber == i {
-				c.Set("IdentityHeader", idHeader)
-				c.Set("IdentityHeaderKey", identityHeaderKey)
-				return next(c)
-			}
-		}
-		return echo.NewHTTPError(http.StatusNotFound, "Account not allowed")
-	}
 }
 
 func (s *Server) IncRequests(next echo.HandlerFunc) echo.HandlerFunc {

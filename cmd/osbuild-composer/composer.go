@@ -104,21 +104,17 @@ func (c *Composer) InitAPI(cert, key string, l net.Listener) error {
 	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 
-	if len(c.config.ComposerAPI.IdentityFilter) > 0 {
-		c.apiListener = l
-	} else {
-		tlsConfig, err := createTLSConfig(&connectionConfig{
-			CACertFile:     c.config.Koji.CA,
-			ServerKeyFile:  key,
-			ServerCertFile: cert,
-			AllowedDomains: c.config.Koji.AllowedDomains,
-		})
-		if err != nil {
-			return fmt.Errorf("Error creating TLS configuration: %v", err)
-		}
-
-		c.apiListener = tls.NewListener(l, tlsConfig)
+	tlsConfig, err := createTLSConfig(&connectionConfig{
+		CACertFile:     c.config.Koji.CA,
+		ServerKeyFile:  key,
+		ServerCertFile: cert,
+		AllowedDomains: c.config.Koji.AllowedDomains,
+	})
+	if err != nil {
+		return fmt.Errorf("Error creating TLS configuration: %v", err)
 	}
+
+	c.apiListener = tls.NewListener(l, tlsConfig)
 
 	return nil
 }
@@ -192,7 +188,7 @@ func (c *Composer) Start() error {
 			// Add a "/" here, because http.ServeMux expects the
 			// trailing slash for rooted subtrees, whereas the
 			// handler functions don't.
-			mux.Handle(apiRoute+"/", c.api.Handler(apiRoute, c.config.ComposerAPI.IdentityFilter))
+			mux.Handle(apiRoute+"/", c.api.Handler(apiRoute))
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
 			mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
 
