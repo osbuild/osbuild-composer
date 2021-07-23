@@ -50,14 +50,9 @@ func externalRequest(method, path, body string) *http.Response {
 	return resp
 }
 
-func internalRequest(api http.Handler, method, path, body string, header map[string]string) *http.Response {
+func internalRequest(api http.Handler, method, path, body string) *http.Response {
 	req := httptest.NewRequest(method, path, bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
-
-	for k, h := range header {
-		req.Header.Set(k, h)
-	}
-
 	resp := httptest.NewRecorder()
 	api.ServeHTTP(resp, req)
 
@@ -71,12 +66,8 @@ func SendHTTP(api http.Handler, external bool, method, path, body string) *http.
 		}
 		return externalRequest(method, path, body)
 	} else {
-		return internalRequest(api, method, path, body, map[string]string{})
+		return internalRequest(api, method, path, body)
 	}
-}
-
-func SendHTTPWithHeader(api http.Handler, method, path, body string, header map[string]string) *http.Response {
-	return internalRequest(api, method, path, body, header)
 }
 
 // this function serves to drop fields that shouldn't be tested from the unmarshalled json objects
