@@ -15,6 +15,7 @@ func TestEmpty(t *testing.T) {
 	require.Empty(t, config.Koji.CA)
 	require.Empty(t, config.Worker.AllowedDomains)
 	require.Empty(t, config.Worker.CA)
+	require.False(t, config.EnableJWT)
 }
 
 func TestNonExisting(t *testing.T) {
@@ -34,4 +35,6 @@ func TestConfig(t *testing.T) {
 
 	require.Equal(t, config.Worker.AllowedDomains, []string{"osbuild.org"})
 	require.Equal(t, config.Worker.CA, "/etc/osbuild-composer/ca-crt.pem")
+
+	require.True(t, config.EnableJWT)
 }

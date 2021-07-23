@@ -1,3 +1,5 @@
+enable_jwt = true
+
 [koji]
 allowed_domains = [ "osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"

@@ -7,7 +7,8 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji struct {
+	EnableJWT bool `toml:"enable_jwt"`
+	Koji      struct {
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
 	} `toml:"koji"`
