@@ -477,7 +477,14 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:     edgeBuildPackageSet(),
+			// TODO: non-arch-specific package set handling for installers
+			// This image type requires build packages for installers and
+			// ostree/edge.  For now we only have x86-64 installer build
+			// package sets defined.  When we add installer build package sets
+			// for other architectures, this will need to be moved to the
+			// architecture and the merging will happen in the PackageSets()
+			// method like the other sets.
+			buildPkgsKey:     x8664InstallerBuildPackageSet().Append(edgeBuildPackageSet()),
 			osPkgsKey:        edgeCommitPackageSet(),
 			installerPkgsKey: edgeInstallerPackageSet(),
 		},
