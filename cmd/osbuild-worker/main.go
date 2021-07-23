@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -148,32 +149,47 @@ func main() {
 	var client *worker.Client
 	if unix {
 		client = worker.NewClientUnix(address)
-	} else if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
-		t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
-		if err != nil {
-			log.Fatalf("Could not read offline token: %v", err)
-		}
-		token := strings.TrimSpace(string(t))
-
-		if config.Authentication.OAuthURL == "" {
-			log.Fatal("OAuth URL should be specified together with the offline token")
-		}
-
-		client, err = worker.NewClient("https://"+address, nil, &token, &config.Authentication.OAuthURL)
-		if err != nil {
-			log.Fatalf("Error creating worker client: %v", err)
-		}
 	} else {
-		conf, err := createTLSConfig(&connectionConfig{
+		var token *string
+		var oAuthURL *string
+		if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
+			t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+			if err != nil {
+				log.Fatalf("Could not read offline token: %v", err)
+			}
+			t2 := strings.TrimSpace(string(t))
+			token = &t2
+
+			if config.Authentication.OAuthURL == "" {
+				log.Fatal("OAuth URL should be specified together with the offline token")
+			}
+			oAuthURL = &config.Authentication.OAuthURL
+
+			if strings.HasPrefix(address, "http") {
+				out, err := exec.Command("systemd-escape", "-u", address).Output()
+				if err != nil {
+					log.Fatalf("Could not escape remote worker address: %v", err)
+				}
+				address = strings.TrimSpace(string(out))
+			} else {
+				address = fmt.Sprintf("https://%s", address)
+			}
+		}
+
+		var conf *tls.Config
+		conConf := &connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
 			ClientKeyFile:  "/etc/osbuild-composer/worker-key.pem",
 			ClientCertFile: "/etc/osbuild-composer/worker-crt.pem",
-		})
-		if err != nil {
-			log.Fatalf("Error creating TLS config: %v", err)
+		}
+		if _, err = os.Stat(conConf.CACertFile); err == nil {
+			conf, err = createTLSConfig(conConf)
+			if err != nil {
+				log.Fatalf("Error creating TLS config: %v", err)
+			}
 		}
 
-		client, err = worker.NewClient("https://"+address, conf, nil, nil)
+		client, err = worker.NewClient(address, conf, token, oAuthURL)
 		if err != nil {
 			log.Fatalf("Error creating worker client: %v", err)
 		}

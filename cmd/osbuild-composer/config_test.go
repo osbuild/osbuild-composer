@@ -25,7 +25,10 @@ func TestDefaultConfig(t *testing.T) {
 	defaultConfig := GetDefaultConfig()
 	require.Empty(t, defaultConfig.Koji)
 	require.Empty(t, defaultConfig.Worker)
-	require.Empty(t, defaultConfig.ComposerAPI)
+	require.False(t, defaultConfig.ComposerAPI.EnableJWT)
+	require.Equal(t, "", defaultConfig.ComposerAPI.JWTKeysCA)
+	require.False(t, defaultConfig.Worker.EnableJWT)
+	require.Equal(t, "", defaultConfig.Worker.JWTKeysCA)
 
 	expectedWeldrAPIConfig := WeldrAPIConfig{
 		DistroConfigs: map[string]WeldrDistroConfig{
@@ -62,6 +65,11 @@ func TestConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 	require.Equal(t, "composer-db", config.Worker.PGDatabase)
+
+	require.True(t, config.ComposerAPI.EnableJWT)
+	require.Equal(t, "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs", config.ComposerAPI.JWTKeysURL)
+	require.Equal(t, "", config.ComposerAPI.JWTKeysCA)
+	require.Equal(t, "/var/lib/osbuild-composer/acl", config.ComposerAPI.JWTACLFile)
 }
 
 func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
