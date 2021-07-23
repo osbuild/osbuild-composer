@@ -57,7 +57,7 @@ func createBaseWorkersFixture(tmpdir string) *worker.Server {
 	if err != nil {
 		panic(err)
 	}
-	return worker.NewServer(nil, q, "", []string{})
+	return worker.NewServer(nil, q, "")
 }
 
 func createBaseDepsolveFixture() []rpmmd.PackageSpec {

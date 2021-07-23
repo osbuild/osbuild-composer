@@ -17,7 +17,6 @@ type ComposerConfigFile struct {
 	Worker struct {
 		AllowedDomains []string `toml:"allowed_domains"`
 		CA             string   `toml:"ca"`
-		IdentityFilter []string `toml:"identity_filter"`
 		PGHost         string   `toml:"pg_host" env:"PGHOST"`
 		PGPort         string   `toml:"pg_port" env:"PGPORT"`
 		PGDatabase     string   `toml:"pg_database" env:"PGDATABASE"`
