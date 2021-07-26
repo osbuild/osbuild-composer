@@ -6,7 +6,8 @@ import (
 )
 
 type CloudInitStageOptions struct {
-	ConfigFiles map[string]CloudInitConfigFile `json:"configuration_files,omitempty"`
+	Filename string              `json:"filename"`
+	Config   CloudInitConfigFile `json:"config"`
 }
 
 func (CloudInitStageOptions) isStageOptions() {}
