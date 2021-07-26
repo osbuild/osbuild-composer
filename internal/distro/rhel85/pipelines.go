@@ -36,7 +36,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	}
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -59,7 +59,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -84,7 +84,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -109,7 +109,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
@@ -134,7 +134,7 @@ func amiPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[osPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := t.Filename()
