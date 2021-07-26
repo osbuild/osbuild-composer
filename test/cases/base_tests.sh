@@ -14,6 +14,7 @@ TEST_CASES=(
   "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
+  "regression-composer-works-behind-satellite.sh"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -50,20 +51,6 @@ cd $WORKING_DIRECTORY
 for TEST_CASE in "${TEST_CASES[@]}"; do
     run_test_case ${TESTS_PATH}/"$TEST_CASE"
 done
-
-case "${ID}" in
-    "fedora")
-        if [ "${VERSION_ID}" -eq "33" ];
-        then
-            # TODO: make this work for all fedora versions once we can drop the override from
-            # the Schutzfile. (osbuild CI doesn't build any Fedora except 33)
-            run_test_case ${TESTS_PATH}/regression-composer-works-behind-satellite.sh
-        else
-            echo "No regression test cases specific to this Fedora version"
-        fi;;
-    *)
-        echo "no test cases specific to: ${ID}-${VERSION_ID}"
-esac
 
 # Print a report of the test results.
 test_divider

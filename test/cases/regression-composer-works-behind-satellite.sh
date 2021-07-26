@@ -24,22 +24,106 @@ function generate_certificates {
     sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
 }
 
-ARCH=$(uname -m)
-if [ "${ARCH}" = "x86_64" ];
-then
-    SNAPSHOT="20210326"
-elif [ "${ARCH}" = "aarch64" ];
-then
-    SNAPSHOT="20210414"
-else
-    echo "${ARCH} architecture is not supported in rpmrepo tool. Skipping this test."
-    exit 0
-fi
+function cleanup {
+    # Make the cleanup function best effort
+    set +eu
+    greenprint "Putting things back to their previous configuration"
+    if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ];
+    then
+        lsattr "${REDHAT_REPO}"
+        chattr -i "${REDHAT_REPO}"
+        sudo rm -f "${REDHAT_REPO}"
+        sudo mv "${REDHAT_REPO_BACKUP}" "${REDHAT_REPO}" || echo "no redhat.repo backup"
+        sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
+    fi
+    if [[ -d /etc/httpd/conf.d.backup ]];
+    then
+        sudo rm -rf /etc/httpd/conf.d
+        sudo mv /etc/httpd/conf.d.backup /etc/httpd/conf.d
+    fi
+    sudo rm -f /etc/httpd/conf.d/repo1.conf
+    sudo rm -f /etc/httpd/conf.d/repo2.conf
+    sudo systemctl stop httpd || echo "failed to stop httpd"
+}
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-greenprint "Installing dependencies"
+source /etc/os-release
+ARCH=$(uname -m)
+
+# Discover what system is installed on the runner
+case "${ID}" in
+    "fedora")
+        echo "Running on Fedora"
+        DISTRO_NAME="${ID}-${VERSION_ID}"
+        REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/${ID}-${VERSION_ID}.json"
+        REPO1_NAME="fedora"
+        REPO2_NAME="updates"
+        ;;
+    "rhel")
+        echo "Running on RHEL"
+        case "${VERSION_ID%.*}" in
+            "8" )
+                echo "Running on RHEL 8"
+                if grep beta /etc/os-release;
+                then
+                    DISTRO_NAME="rhel-8-beta"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-8-beta.json"
+                else
+                    DISTRO_NAME="rhel-8"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-8.json"
+                fi
+                REPO1_NAME="baseos"
+                REPO2_NAME="appstream"
+                ;;
+            "9" )
+                echo "Running on RHEL 9 is not yet supported"
+                exit 0
+                ;;
+            *)
+                echo "Unknown RHEL: ${VERSION_ID}"
+                exit 0
+        esac
+        ;;
+    *)
+        echo "unsupported distro: ${ID}-${VERSION_ID}"
+        exit 0
+esac
+
+trap cleanup EXIT
+
+# If the runner doesn't use overrides, start using it.
+if [ ! -f "${REPOSITORY_OVERRIDE}" ];
+then
+    REPODIR=/etc/osbuild-composer/repositories/
+    sudo mkdir -p "${REPODIR}"
+    sudo cp "/usr/share/tests/osbuild-composer/repositories/${DISTRO_NAME}.json" "${REPOSITORY_OVERRIDE}"
+fi
+
+# Configuration of the testing environment
+REPO1_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
+# Don't use raw-output, instead cut the surrounding quotes to preserve \n inside the string so that it can be
+# easily written to files using "tee" later in the script.
+REPO1_GPGKEY=$(jq ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .gpgkey" "${REPOSITORY_OVERRIDE}" | cut -d'"' -f2)
+
+REPO2_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
+REPO2_GPGKEY=$(jq ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .gpgkey" "${REPOSITORY_OVERRIDE}" | cut -d'"' -f2)
+
+# RPMrepo tool uses redirects to different AWS S3 buckets, VPCs or in case of PSI a completely different redirect.
+# Dynamically discover the URL that the repos redirect to.
+PROXY1_REDIRECT_URL=$(curl -s -o /dev/null -w '%{redirect_url}' "${REPO1_BASEURL}"repodata/repomd.xml | cut -f1,2,3 -d'/')/
+PROXY2_REDIRECT_URL=$(curl -s -o /dev/null -w '%{redirect_url}' "${REPO2_BASEURL}"repodata/repomd.xml | cut -f1,2,3 -d'/')/
+
+# Some repos, e.g. the internal mirrors don't have any redirections, if that happens, just put a placeholder into the variable.
+if [[ "${PROXY1_REDIRECT_URL}" == "/" ]];
+then
+    PROXY1_REDIRECT_URL="http://example.com/"
+fi
+if [[ "${PROXY2_REDIRECT_URL}" == "/" ]];
+then
+    PROXY2_REDIRECT_URL="http://example.com/"
+fi
 
 PKI_DIR=/etc/pki/httpd
 
@@ -69,12 +153,12 @@ Listen 8008
 
 <VirtualHost *:8008>
    # Just pass all the requests to the real mirror
-   ProxyPass /repo/ https://rpmrepo.osbuild.org/v2/mirror/public/f33/f33-${ARCH}-fedora-${SNAPSHOT}/
-   ProxyPassReverse /repo/ https://rpmrepo.osbuild.org/v2/mirror/public/f33/f33-${ARCH}-fedora-${SNAPSHOT}/
+   ProxyPass /repo/ ${REPO1_BASEURL}
+   ProxyPassReverse /repo/ ${REPO1_BASEURL}
    # The real mirror redirects to this URL, so proxy this one as well, otherwise
    # it won't work with the self-signed client certificates
-   ProxyPass /aws/ https://rpmrepo-storage.s3.amazonaws.com/
-   ProxyPassReverse /aws/ https://rpmrepo-storage.s3.amazonaws.com/
+   ProxyPass /aws/ ${PROXY1_REDIRECT_URL}
+   ProxyPassReverse /aws/ ${PROXY1_REDIRECT_URL}
    # But turn on SSL
    SSLEngine on
    SSLProxyEngine on
@@ -93,12 +177,12 @@ Listen 8009
 
 <VirtualHost *:8009>
    # Just pass all the requests to the real mirror
-   ProxyPass /repo/ https://rpmrepo.osbuild.org/v2/mirror/public/f33/f33-${ARCH}-fedora-modular-${SNAPSHOT}/
-   ProxyPassReverse /repo/ https://rpmrepo.osbuild.org/v2/mirror/public/f33/f33-${ARCH}-fedora-modular-${SNAPSHOT}/
+   ProxyPass /repo/ ${REPO2_BASEURL}
+   ProxyPassReverse /repo/ ${REPO2_BASEURL}
    # The real mirror redirects to this URL, so proxy this one as well, otherwise
    # it won't work with the self-signed client certificates
-   ProxyPass /aws/ https://rpmrepo-storage.s3.amazonaws.com/
-   ProxyPassReverse /aws/ https://rpmrepo-storage.s3.amazonaws.com/
+   ProxyPass /aws/ ${PROXY2_REDIRECT_URL}
+   ProxyPassReverse /aws/ ${PROXY2_REDIRECT_URL}
    # But turn on SSL
    SSLEngine on
    SSLProxyEngine on
@@ -111,10 +195,12 @@ Listen 8009
 </VirtualHost>
 STOPHERE
 
-sudo mv /etc/yum.repos.d/redhat.repo /etc/yum.repos.d/redhat.repo.backup || echo "no redhat.repo"
-sudo tee /etc/yum.repos.d/redhat.repo << STOPHERE
-[f33]
-name = Fedora 33 - Local proxy
+REDHAT_REPO=/etc/yum.repos.d/redhat.repo
+REDHAT_REPO_BACKUP=/etc/yum.repos.d/redhat.repo.backup
+sudo mv ${REDHAT_REPO} ${REDHAT_REPO_BACKUP} || echo "no redhat.repo"
+sudo tee ${REDHAT_REPO} << STOPHERE
+[repo1]
+name = Repo 1 - local proxy
 baseurl = https://localhost:8008/repo
 enabled = 1
 gpgcheck = 0
@@ -125,8 +211,8 @@ sslclientcert = ${PKI_DIR}/ca1/client.crt
 metadata_expire = 86400
 enabled_metadata = 0
 
-[f33-modular]
-name = Fedora 33 Modular - Local proxy
+[repo2]
+name = Repo 2 - local proxy
 baseurl = https://localhost:8009/repo
 enabled = 1
 gpgcheck = 0
@@ -138,6 +224,10 @@ metadata_expire = 86400
 enabled_metadata = 0
 STOPHERE
 
+chattr +i ${REDHAT_REPO}
+lsattr ${REDHAT_REPO}
+cat ${REDHAT_REPO}
+
 # Allow httpd process to create network connections
 sudo setsebool httpd_can_network_connect on
 # Start httpd
@@ -145,37 +235,23 @@ sudo systemctl start httpd || echo "Starting httpd failed"
 sudo systemctl status httpd
 
 greenprint "Verify dnf can use this configuration"
-sudo dnf install --repo=f33 --repo=f33-modular fish -y
+sudo dnf install --repo=repo1 --repo=repo2 zsh -y
 
 greenprint "Rewrite osbuild-composer repository configuration"
 # In case this test case runs as part of multiple different test, try not to ruit the environment
-sudo mv /etc/osbuild-composer/repositories/fedora-33.json /etc/osbuild-composer/repositories/fedora-33.json.backup
-sudo tee /etc/osbuild-composer/repositories/fedora-33.json << STOPHERE
+sudo mv "${REPOSITORY_OVERRIDE}" "${REPOSITORY_OVERRIDE}.backup"
+sudo tee "${REPOSITORY_OVERRIDE}" << STOPHERE
 {
-  "x86_64": [
+  "${ARCH}": [
     {
       "baseurl": "https://localhost:8008/repo",
-      "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF4wBvsBEADQmcGbVUbDRUoXADReRmOOEMeydHghtKC9uRs9YNpGYZIB+bie\nbGYZmflQayfh/wEpO2W/IZfGpHPL42V7SbyvqMjwNls/fnXsCtf4LRofNK8Qd9fN\nkYargc9R7BEz/mwXKMiRQVx+DzkmqGWy2gq4iD0/mCyf5FdJCE40fOWoIGJXaOI1\nTz1vWqKwLS5T0dfmi9U4Tp/XsKOZGvN8oi5h0KmqFk7LEZr1MXarhi2Va86sgxsF\nQcZEKfu5tgD0r00vXzikoSjn3qA5JW5FW07F1pGP4bF5f9J3CZbQyOjTSWMmmfTm\n2d2BURWzaDiJN9twY2yjzkoOMuPdXXvovg7KxLcQerKT+FbKbq8DySJX2rnOA77k\nUG4c9BGf/L1uBkAT8dpHLk6Uf5BfmypxUkydSWT1xfTDnw1MqxO0MsLlAHOR3J7c\noW9kLcOLuCQn1hBEwfZv7VSWBkGXSmKfp0LLIxAFgRtv+Dh+rcMMRdJgKr1V3FU+\nrZ1+ZAfYiBpQJFPjv70vx+rGEgS801D3PJxBZUEy4Ic4ZYaKNhK9x9PRQuWcIBuW\n6eTe/6lKWZeyxCumLLdiS75mF2oTcBaWeoc3QxrPRV15eDKeYJMbhnUai/7lSrhs\nEWCkKR1RivgF4slYmtNE5ZPGZ/d61zjwn2xi4xNJVs8q9WRPMpHp0vCyMwARAQAB\ntDFGZWRvcmEgKDMzKSA8ZmVkb3JhLTMzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJeMAb7AhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBJ/XdJlXD/MZm2D/9kriL43vd3+0DNMeA82n2v9mSR2PQqKny39xNlYPyy/1yZ\nP/KXoa4NYSCA971LSd7lv4n/h5bEKgGHxZfttfOzOnWMVSSTfjRyM/df/NNzTUEV\n7ORA5GW18g8PEtS7uRxVBf3cLvWu5q+8jmqES5HqTAdGVcuIFQeBXFN8Gy1Jinuz\nAH8rJSdkUeZ0cehWbERq80BWM9dhad5dW+/+Gv0foFBvP15viwhWqajr8V0B8es+\n2/tHI0k86FAujV5i0rrXl5UOoLilO57QQNDZH/qW9GsHwVI+2yecLstpUNLq+EZC\nGqTZCYoxYRpl0gAMbDLztSL/8Bc0tJrCRG3tavJotFYlgUK60XnXlQzRkh9rgsfT\nEXbQifWdQMMogzjCJr0hzJ+V1d0iozdUxB2ZEgTjukOvatkB77DY1FPZRkSFIQs+\nfdcjazDIBLIxwJu5QwvTNW8lOLnJ46g4sf1WJoUdNTbR0BaC7HHj1inVWi0p7IuN\n66EPGzJOSjLK+vW+J0ncPDEgLCV74RF/0nR5fVTdrmiopPrzFuguHf9S9gYI3Zun\nYl8FJUu4kRO6JPPTicUXWX+8XZmE94aK14RCJL23nOSi8T1eW8JLW43dCBRO8QUE\nAso1t2pypm/1zZexJdOV8yGME3g5l2W6PLgpz58DBECgqc/kda+VWgEAp7rO2A==\n=EPL3\n-----END PGP PUBLIC KEY BLOCK-----\n",
+      "gpgkey": "${REPO1_GPGKEY}",
       "check_gpg": false,
       "rhsm": true
     },
     {
       "baseurl": "https://localhost:8009/repo",
-      "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF4wBvsBEADQmcGbVUbDRUoXADReRmOOEMeydHghtKC9uRs9YNpGYZIB+bie\nbGYZmflQayfh/wEpO2W/IZfGpHPL42V7SbyvqMjwNls/fnXsCtf4LRofNK8Qd9fN\nkYargc9R7BEz/mwXKMiRQVx+DzkmqGWy2gq4iD0/mCyf5FdJCE40fOWoIGJXaOI1\nTz1vWqKwLS5T0dfmi9U4Tp/XsKOZGvN8oi5h0KmqFk7LEZr1MXarhi2Va86sgxsF\nQcZEKfu5tgD0r00vXzikoSjn3qA5JW5FW07F1pGP4bF5f9J3CZbQyOjTSWMmmfTm\n2d2BURWzaDiJN9twY2yjzkoOMuPdXXvovg7KxLcQerKT+FbKbq8DySJX2rnOA77k\nUG4c9BGf/L1uBkAT8dpHLk6Uf5BfmypxUkydSWT1xfTDnw1MqxO0MsLlAHOR3J7c\noW9kLcOLuCQn1hBEwfZv7VSWBkGXSmKfp0LLIxAFgRtv+Dh+rcMMRdJgKr1V3FU+\nrZ1+ZAfYiBpQJFPjv70vx+rGEgS801D3PJxBZUEy4Ic4ZYaKNhK9x9PRQuWcIBuW\n6eTe/6lKWZeyxCumLLdiS75mF2oTcBaWeoc3QxrPRV15eDKeYJMbhnUai/7lSrhs\nEWCkKR1RivgF4slYmtNE5ZPGZ/d61zjwn2xi4xNJVs8q9WRPMpHp0vCyMwARAQAB\ntDFGZWRvcmEgKDMzKSA8ZmVkb3JhLTMzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJeMAb7AhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBJ/XdJlXD/MZm2D/9kriL43vd3+0DNMeA82n2v9mSR2PQqKny39xNlYPyy/1yZ\nP/KXoa4NYSCA971LSd7lv4n/h5bEKgGHxZfttfOzOnWMVSSTfjRyM/df/NNzTUEV\n7ORA5GW18g8PEtS7uRxVBf3cLvWu5q+8jmqES5HqTAdGVcuIFQeBXFN8Gy1Jinuz\nAH8rJSdkUeZ0cehWbERq80BWM9dhad5dW+/+Gv0foFBvP15viwhWqajr8V0B8es+\n2/tHI0k86FAujV5i0rrXl5UOoLilO57QQNDZH/qW9GsHwVI+2yecLstpUNLq+EZC\nGqTZCYoxYRpl0gAMbDLztSL/8Bc0tJrCRG3tavJotFYlgUK60XnXlQzRkh9rgsfT\nEXbQifWdQMMogzjCJr0hzJ+V1d0iozdUxB2ZEgTjukOvatkB77DY1FPZRkSFIQs+\nfdcjazDIBLIxwJu5QwvTNW8lOLnJ46g4sf1WJoUdNTbR0BaC7HHj1inVWi0p7IuN\n66EPGzJOSjLK+vW+J0ncPDEgLCV74RF/0nR5fVTdrmiopPrzFuguHf9S9gYI3Zun\nYl8FJUu4kRO6JPPTicUXWX+8XZmE94aK14RCJL23nOSi8T1eW8JLW43dCBRO8QUE\nAso1t2pypm/1zZexJdOV8yGME3g5l2W6PLgpz58DBECgqc/kda+VWgEAp7rO2A==\n=EPL3\n-----END PGP PUBLIC KEY BLOCK-----\n",
-      "check_gpg": false,
-      "rhsm": true
-    }
-  ],
-  "aarch64": [
-    {
-      "baseurl": "https://localhost:8008/repo",
-      "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF4wBvsBEADQmcGbVUbDRUoXADReRmOOEMeydHghtKC9uRs9YNpGYZIB+bie\nbGYZmflQayfh/wEpO2W/IZfGpHPL42V7SbyvqMjwNls/fnXsCtf4LRofNK8Qd9fN\nkYargc9R7BEz/mwXKMiRQVx+DzkmqGWy2gq4iD0/mCyf5FdJCE40fOWoIGJXaOI1\nTz1vWqKwLS5T0dfmi9U4Tp/XsKOZGvN8oi5h0KmqFk7LEZr1MXarhi2Va86sgxsF\nQcZEKfu5tgD0r00vXzikoSjn3qA5JW5FW07F1pGP4bF5f9J3CZbQyOjTSWMmmfTm\n2d2BURWzaDiJN9twY2yjzkoOMuPdXXvovg7KxLcQerKT+FbKbq8DySJX2rnOA77k\nUG4c9BGf/L1uBkAT8dpHLk6Uf5BfmypxUkydSWT1xfTDnw1MqxO0MsLlAHOR3J7c\noW9kLcOLuCQn1hBEwfZv7VSWBkGXSmKfp0LLIxAFgRtv+Dh+rcMMRdJgKr1V3FU+\nrZ1+ZAfYiBpQJFPjv70vx+rGEgS801D3PJxBZUEy4Ic4ZYaKNhK9x9PRQuWcIBuW\n6eTe/6lKWZeyxCumLLdiS75mF2oTcBaWeoc3QxrPRV15eDKeYJMbhnUai/7lSrhs\nEWCkKR1RivgF4slYmtNE5ZPGZ/d61zjwn2xi4xNJVs8q9WRPMpHp0vCyMwARAQAB\ntDFGZWRvcmEgKDMzKSA8ZmVkb3JhLTMzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJeMAb7AhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBJ/XdJlXD/MZm2D/9kriL43vd3+0DNMeA82n2v9mSR2PQqKny39xNlYPyy/1yZ\nP/KXoa4NYSCA971LSd7lv4n/h5bEKgGHxZfttfOzOnWMVSSTfjRyM/df/NNzTUEV\n7ORA5GW18g8PEtS7uRxVBf3cLvWu5q+8jmqES5HqTAdGVcuIFQeBXFN8Gy1Jinuz\nAH8rJSdkUeZ0cehWbERq80BWM9dhad5dW+/+Gv0foFBvP15viwhWqajr8V0B8es+\n2/tHI0k86FAujV5i0rrXl5UOoLilO57QQNDZH/qW9GsHwVI+2yecLstpUNLq+EZC\nGqTZCYoxYRpl0gAMbDLztSL/8Bc0tJrCRG3tavJotFYlgUK60XnXlQzRkh9rgsfT\nEXbQifWdQMMogzjCJr0hzJ+V1d0iozdUxB2ZEgTjukOvatkB77DY1FPZRkSFIQs+\nfdcjazDIBLIxwJu5QwvTNW8lOLnJ46g4sf1WJoUdNTbR0BaC7HHj1inVWi0p7IuN\n66EPGzJOSjLK+vW+J0ncPDEgLCV74RF/0nR5fVTdrmiopPrzFuguHf9S9gYI3Zun\nYl8FJUu4kRO6JPPTicUXWX+8XZmE94aK14RCJL23nOSi8T1eW8JLW43dCBRO8QUE\nAso1t2pypm/1zZexJdOV8yGME3g5l2W6PLgpz58DBECgqc/kda+VWgEAp7rO2A==\n=EPL3\n-----END PGP PUBLIC KEY BLOCK-----\n",
-      "check_gpg": false,
-      "rhsm": true
-    },
-    {
-      "baseurl": "https://localhost:8009/repo",
-      "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF4wBvsBEADQmcGbVUbDRUoXADReRmOOEMeydHghtKC9uRs9YNpGYZIB+bie\nbGYZmflQayfh/wEpO2W/IZfGpHPL42V7SbyvqMjwNls/fnXsCtf4LRofNK8Qd9fN\nkYargc9R7BEz/mwXKMiRQVx+DzkmqGWy2gq4iD0/mCyf5FdJCE40fOWoIGJXaOI1\nTz1vWqKwLS5T0dfmi9U4Tp/XsKOZGvN8oi5h0KmqFk7LEZr1MXarhi2Va86sgxsF\nQcZEKfu5tgD0r00vXzikoSjn3qA5JW5FW07F1pGP4bF5f9J3CZbQyOjTSWMmmfTm\n2d2BURWzaDiJN9twY2yjzkoOMuPdXXvovg7KxLcQerKT+FbKbq8DySJX2rnOA77k\nUG4c9BGf/L1uBkAT8dpHLk6Uf5BfmypxUkydSWT1xfTDnw1MqxO0MsLlAHOR3J7c\noW9kLcOLuCQn1hBEwfZv7VSWBkGXSmKfp0LLIxAFgRtv+Dh+rcMMRdJgKr1V3FU+\nrZ1+ZAfYiBpQJFPjv70vx+rGEgS801D3PJxBZUEy4Ic4ZYaKNhK9x9PRQuWcIBuW\n6eTe/6lKWZeyxCumLLdiS75mF2oTcBaWeoc3QxrPRV15eDKeYJMbhnUai/7lSrhs\nEWCkKR1RivgF4slYmtNE5ZPGZ/d61zjwn2xi4xNJVs8q9WRPMpHp0vCyMwARAQAB\ntDFGZWRvcmEgKDMzKSA8ZmVkb3JhLTMzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJeMAb7AhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBJ/XdJlXD/MZm2D/9kriL43vd3+0DNMeA82n2v9mSR2PQqKny39xNlYPyy/1yZ\nP/KXoa4NYSCA971LSd7lv4n/h5bEKgGHxZfttfOzOnWMVSSTfjRyM/df/NNzTUEV\n7ORA5GW18g8PEtS7uRxVBf3cLvWu5q+8jmqES5HqTAdGVcuIFQeBXFN8Gy1Jinuz\nAH8rJSdkUeZ0cehWbERq80BWM9dhad5dW+/+Gv0foFBvP15viwhWqajr8V0B8es+\n2/tHI0k86FAujV5i0rrXl5UOoLilO57QQNDZH/qW9GsHwVI+2yecLstpUNLq+EZC\nGqTZCYoxYRpl0gAMbDLztSL/8Bc0tJrCRG3tavJotFYlgUK60XnXlQzRkh9rgsfT\nEXbQifWdQMMogzjCJr0hzJ+V1d0iozdUxB2ZEgTjukOvatkB77DY1FPZRkSFIQs+\nfdcjazDIBLIxwJu5QwvTNW8lOLnJ46g4sf1WJoUdNTbR0BaC7HHj1inVWi0p7IuN\n66EPGzJOSjLK+vW+J0ncPDEgLCV74RF/0nR5fVTdrmiopPrzFuguHf9S9gYI3Zun\nYl8FJUu4kRO6JPPTicUXWX+8XZmE94aK14RCJL23nOSi8T1eW8JLW43dCBRO8QUE\nAso1t2pypm/1zZexJdOV8yGME3g5l2W6PLgpz58DBECgqc/kda+VWgEAp7rO2A==\n=EPL3\n-----END PGP PUBLIC KEY BLOCK-----\n",
+      "gpgkey": "${REPO2_GPGKEY}",
       "check_gpg": false,
       "rhsm": true
     }
@@ -187,15 +263,15 @@ sudo systemctl restart osbuild-composer
 sudo composer-cli status show
 
 BLUEPRINT_FILE=/tmp/bp.toml
-BLUEPRINT_NAME=fishy
+BLUEPRINT_NAME=zishy
 
 cat > "$BLUEPRINT_FILE" << STOPHERE
 name = "${BLUEPRINT_NAME}"
-description = "A base system with fish"
+description = "A base system with zsh"
 version = "0.0.1"
 
 [[packages]]
-name = "fish"
+name = "zsh"
 STOPHERE
 
 COMPOSE_START=/tmp/compose-start.json
@@ -239,11 +315,3 @@ if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi
-
-greenprint "Putting things back to their previous configuration"
-sudo rm -f /etc/yum.repos.d/osbuild-override.repo
-sudo rm -f /etc/yum.repos.d/redhat.repo
-sudo mv /etc/yum.repos.d/redhat.repo.backup /etc/yum.repos.d/redhat.repo || echo "no redhat.repo"
-sudo mv /etc/osbuild-composer/repositories/fedora-33.json.backup /etc/osbuild-composer/repositories/fedora-33.json
-sudo rm -rf /etc/httpd/conf.d
-sudo mv /etc/httpd/conf.d.backup /etc/httpd/conf.d
