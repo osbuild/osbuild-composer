@@ -467,6 +467,9 @@
                   "sha256:25b96d1432d32197ea5d769948649c431d7e289b18d779994d3d75d6f8d8c2a5",
                   "sha256:f0cb56a04fa3b27c1a3bb8896372077234123b36fe3461aca8ddc7b912030ce8",
                   "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73",
+                  "sha256:db7f1994b69ce440f735d4b0f27559ec7d24c3854430fa421d16d8c4923f9030",
+                  "sha256:c041e58f61d656217780ecbe249c50b1ab49ad05360b13ad385b78d728b38919",
+                  "sha256:fa67e890954229371abd6fe8b59dd888fc36c93fe6c4613e6bdb300376d5bd09",
                   "sha256:ef5ec76f3187746a32331222ffa93d4afc4b9a47b90a3a777281d102aa7800ac",
                   "sha256:b695f9f1ef86f64fe792dd834f28c8d6f41e3729cc7575cdbaba6c3785b0e3c7",
                   "sha256:fbfd40e61b1951c777727c2cee2e8d3ef2ba336eeff549059d93aa26e940950b",
@@ -1061,7 +1064,8 @@
               "legacy": "i386-pc",
               "uefi": {
                 "vendor": "redhat"
-              }
+              },
+              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-299.1.el8.x86_64"
             }
           }
         ]
@@ -7624,6 +7628,33 @@
         "checksum": "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73"
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "299.1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-4.18.0-299.1.el8.x86_64.rpm",
+        "checksum": "sha256:db7f1994b69ce440f735d4b0f27559ec7d24c3854430fa421d16d8c4923f9030"
+      },
+      {
+        "name": "kernel-core",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "299.1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-core-4.18.0-299.1.el8.x86_64.rpm",
+        "checksum": "sha256:c041e58f61d656217780ecbe249c50b1ab49ad05360b13ad385b78d728b38919"
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "299.1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-modules-4.18.0-299.1.el8.x86_64.rpm",
+        "checksum": "sha256:fa67e890954229371abd6fe8b59dd888fc36c93fe6c4613e6bdb300376d5bd09"
+      },
+      {
         "name": "kernel-tools",
         "epoch": 0,
         "version": "4.18.0",
@@ -10556,7 +10587,8 @@
       "70-persistent-ipoib.rules": []
     },
     "boot-environment": {
-      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto"
+      "kernelopts": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+      "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-299.1.el8.x86_64"
     },
     "bootloader": "grub",
     "bootmenu": [

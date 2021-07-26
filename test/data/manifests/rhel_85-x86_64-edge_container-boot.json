@@ -467,7 +467,9 @@
                   "sha256:25b96d1432d32197ea5d769948649c431d7e289b18d779994d3d75d6f8d8c2a5",
                   "sha256:f0cb56a04fa3b27c1a3bb8896372077234123b36fe3461aca8ddc7b912030ce8",
                   "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73",
+                  "sha256:db7f1994b69ce440f735d4b0f27559ec7d24c3854430fa421d16d8c4923f9030",
                   "sha256:c041e58f61d656217780ecbe249c50b1ab49ad05360b13ad385b78d728b38919",
+                  "sha256:fa67e890954229371abd6fe8b59dd888fc36c93fe6c4613e6bdb300376d5bd09",
                   "sha256:761ff1ccc95562a4512c4bea1d4c2b507c42e3805c9e1e0093c80539a954047b",
                   "sha256:4da971c6e5a8a759c919dc9cde21324ee2b309c96b46eb000b4f251a287b08b1",
                   "sha256:482e8619051fd7c027e06c206a016fa53c9b7d49afdc725fd38ff0375ab89318",
@@ -9301,6 +9303,15 @@
         "checksum": "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73"
       },
       {
+        "name": "kernel",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "299.1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-4.18.0-299.1.el8.x86_64.rpm",
+        "checksum": "sha256:db7f1994b69ce440f735d4b0f27559ec7d24c3854430fa421d16d8c4923f9030"
+      },
+      {
         "name": "kernel-core",
         "epoch": 0,
         "version": "4.18.0",
@@ -9308,6 +9319,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-core-4.18.0-299.1.el8.x86_64.rpm",
         "checksum": "sha256:c041e58f61d656217780ecbe249c50b1ab49ad05360b13ad385b78d728b38919"
+      },
+      {
+        "name": "kernel-modules",
+        "epoch": 0,
+        "version": "4.18.0",
+        "release": "299.1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210326/Packages/kernel-modules-4.18.0-299.1.el8.x86_64.rpm",
+        "checksum": "sha256:fa67e890954229371abd6fe8b59dd888fc36c93fe6c4613e6bdb300376d5bd09"
       },
       {
         "name": "keyutils",
