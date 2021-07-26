@@ -148,38 +148,24 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 		{
 			name: "dracut.conf",
 			fields: fields{
-				Type:    "org.osbuild.dracut.conf",
-				Options: &DracutConfStageOptions{},
-			},
-			args: args{
-				data: []byte(`{"type":"org.osbuild.dracut.conf","options":{}}`),
-			},
-		},
-		{
-			name: "dracut.conf-data",
-			fields: fields{
 				Type: "org.osbuild.dracut.conf",
 				Options: &DracutConfStageOptions{
-					ConfigFiles: map[string]DracutConfigFile{
-						"sgdisk.conf": {
-							Install: []string{"sgdisk"},
-						},
-						"testing.conf": {
-							Compress:       "xz",
-							AddModules:     []string{"floppy"},
-							OmitModules:    []string{"nouveau"},
-							AddDrivers:     []string{"driver1"},
-							ForceDrivers:   []string{"driver2"},
-							Filesystems:    []string{"ext4"},
-							Install:        []string{"file1"},
-							EarlyMicrocode: common.BoolToPtr(false),
-							Reproducible:   common.BoolToPtr(false),
-						},
+					Filename: "testing.conf",
+					Config: DracutConfigFile{
+						Compress:       "xz",
+						AddModules:     []string{"floppy"},
+						OmitModules:    []string{"nouveau"},
+						AddDrivers:     []string{"driver1"},
+						ForceDrivers:   []string{"driver2"},
+						Filesystems:    []string{"ext4"},
+						Install:        []string{"file1"},
+						EarlyMicrocode: common.BoolToPtr(false),
+						Reproducible:   common.BoolToPtr(false),
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.dracut.conf","options":{"configuration_files":{"sgdisk.conf":{"install_items":["sgdisk"]},"testing.conf":{"compress":"xz","add_dracutmodules":["floppy"],"omit_dracutmodules":["nouveau"],"add_drivers":["driver1"],"force_drivers":["driver2"],"filesystems":["ext4"],"install_items":["file1"],"early_microcode":false,"reproducible":false}}}}`),
+				data: []byte(`{"type":"org.osbuild.dracut.conf","options":{"filename":"testing.conf","config":{"compress":"xz","add_dracutmodules":["floppy"],"omit_dracutmodules":["nouveau"],"add_drivers":["driver1"],"force_drivers":["driver2"],"filesystems":["ext4"],"install_items":["file1"],"early_microcode":false,"reproducible":false}}}`),
 			},
 		},
 		{
