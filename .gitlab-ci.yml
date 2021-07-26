@@ -3,6 +3,7 @@ stages:
   - rpmbuild
   - prepare-rhel-internal
   - test
+  - cleanup
   - finish
 
 .terraform:
@@ -69,7 +70,7 @@ Prepare-rhel-internal:
   stage: prepare-rhel-internal
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
     - schutzbot/prepare-rhel-internal.sh
   artifacts:
@@ -90,7 +91,7 @@ Base:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -150,7 +151,7 @@ OSTree:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -186,7 +187,7 @@ Integration:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -232,7 +233,7 @@ API:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
@@ -268,7 +269,7 @@ NIGHTLY_FAIL:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
       when: on_failure
   script:
     - schutzbot/slack_notification.sh FAILED ":big-sad:"
@@ -278,7 +279,7 @@ NIGHTLY_SUCCESS:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
 
@@ -295,6 +296,18 @@ Installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64
+
+SCHEDULED_CLOUD_CLEANER:
+  stage: cleanup
+  tags:
+    - terraform
+  variables:
+    RUNNER: aws/fedora-33-x86_64
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
+  script:
+    - schutzbot/deploy.sh
+    - schutzbot/scheduled_cloud_cleaner.sh
 
 finish:
   stage: finish
