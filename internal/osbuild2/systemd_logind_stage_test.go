@@ -22,12 +22,15 @@ func TestSystemdLogindStage_MarshalJSON_Invalid(t *testing.T) {
 		options SystemdLogindStageOptions
 	}{
 		{
+			name:    "empty-options",
+			options: SystemdLogindStageOptions{},
+		},
+		{
 			name: "no-section-options",
 			options: SystemdLogindStageOptions{
-				ConfigDropins: map[string]SystemdLogindConfigDropin{
-					"10-ec2-getty-fix.conf": {
-						Login: SystemdLogindConfigLoginSection{},
-					},
+				Filename: "10-ec2-getty-fix.conf",
+				Config: SystemdLogindConfigDropin{
+					Login: SystemdLogindConfigLoginSection{},
 				},
 			},
 		},
