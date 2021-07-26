@@ -156,17 +156,26 @@ func cleanupAzure(testID string, wg *sync.WaitGroup) {
 
 func main() {
 	log.Println("Running a cloud cleanup")
-
-	// Get test ID
-	testID, err := test.GenerateCIArtifactName("")
-	if err != nil {
-		log.Fatalf("Failed to get testID: %v", err)
-	}
-	log.Printf("TEST_ID=%s", testID)
-
 	var wg sync.WaitGroup
-	wg.Add(2)
-	go cleanupAzure(testID, &wg)
-	go cleanupGCP(testID, &wg)
-	wg.Wait()
+
+	// Currently scheduled cloud-cleaner supports Azure only.
+	// In case of scheduled cleanup get testID from env and run Azure cleanup.
+	// If it's empty generate it and cleanup both GCP and Azure.
+	testID := os.Getenv("TEST_ID")
+	if testID == "" {
+		testID, err := test.GenerateCIArtifactName("")
+		if err != nil {
+			log.Fatalf("Failed to get testID: %v", err)
+		}
+		log.Printf("TEST_ID=%s", testID)
+		wg.Add(2)
+		go cleanupAzure(testID, &wg)
+		go cleanupGCP(testID, &wg)
+		wg.Wait()
+	} else {
+		wg.Add(1)
+		go cleanupAzure(testID, &wg)
+		wg.Wait()
+	}
+
 }
