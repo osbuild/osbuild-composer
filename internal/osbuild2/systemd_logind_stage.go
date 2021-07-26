@@ -6,7 +6,8 @@ import (
 )
 
 type SystemdLogindStageOptions struct {
-	ConfigDropins map[string]SystemdLogindConfigDropin `json:"configuration_dropins,omitempty"`
+	Filename string                    `json:"filename"`
+	Config   SystemdLogindConfigDropin `json:"config"`
 }
 
 func (SystemdLogindStageOptions) isStageOptions() {}

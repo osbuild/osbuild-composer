@@ -468,29 +468,18 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 		{
 			name: "systemd-logind",
 			fields: fields{
-				Type:    "org.osbuild.systemd-logind",
-				Options: &SystemdLogindStageOptions{},
-			},
-			args: args{
-				data: []byte(`{"type":"org.osbuild.systemd-logind","options":{}}`),
-			},
-		},
-		{
-			name: "systemd-logind-data",
-			fields: fields{
 				Type: "org.osbuild.systemd-logind",
 				Options: &SystemdLogindStageOptions{
-					ConfigDropins: map[string]SystemdLogindConfigDropin{
-						"10-ec2-getty-fix.conf": {
-							Login: SystemdLogindConfigLoginSection{
-								NAutoVT: common.IntToPtr(0),
-							},
+					Filename: "10-ec2-getty-fix.conf",
+					Config: SystemdLogindConfigDropin{
+						Login: SystemdLogindConfigLoginSection{
+							NAutoVT: common.IntToPtr(0),
 						},
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.systemd-logind","options":{"configuration_dropins":{"10-ec2-getty-fix.conf":{"Login":{"NAutoVT":0}}}}}`),
+				data: []byte(`{"type":"org.osbuild.systemd-logind","options":{"filename":"10-ec2-getty-fix.conf","config":{"Login":{"NAutoVT":0}}}}`),
 			},
 		},
 		{
