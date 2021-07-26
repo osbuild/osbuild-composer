@@ -6,7 +6,8 @@ import (
 )
 
 type DracutConfStageOptions struct {
-	ConfigFiles map[string]DracutConfigFile `json:"configuration_files,omitempty"`
+	Filename string           `json:"filename"`
+	Config   DracutConfigFile `json:"config"`
 }
 
 func (DracutConfStageOptions) isStageOptions() {}

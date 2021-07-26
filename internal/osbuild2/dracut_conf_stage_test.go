@@ -22,11 +22,14 @@ func TestDracutConfStage_MarshalJSON_Invalid(t *testing.T) {
 		options DracutConfStageOptions
 	}{
 		{
+			name:    "empty-options",
+			options: DracutConfStageOptions{},
+		},
+		{
 			name: "no-options-in-config",
 			options: DracutConfStageOptions{
-				ConfigFiles: map[string]DracutConfigFile{
-					"testing.conf": {},
-				},
+				Filename: "testing.conf",
+				Config:   DracutConfigFile{},
 			},
 		},
 	}
