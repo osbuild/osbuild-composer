@@ -22,31 +22,32 @@ func TestCloudInitStage_MarshalJSON_Invalid(t *testing.T) {
 		options CloudInitStageOptions
 	}{
 		{
+			name:    "empty-options",
+			options: CloudInitStageOptions{},
+		},
+		{
 			name: "no-config-file-section",
 			options: CloudInitStageOptions{
-				ConfigFiles: map[string]CloudInitConfigFile{
-					"00-default_user.cfg": {},
-				},
+				Filename: "00-default_user.cfg",
+				Config:   CloudInitConfigFile{},
 			},
 		},
 		{
 			name: "no-system-info-section-option",
 			options: CloudInitStageOptions{
-				ConfigFiles: map[string]CloudInitConfigFile{
-					"00-default_user.cfg": {
-						SystemInfo: &CloudInitConfigSystemInfo{},
-					},
+				Filename: "00-default_user.cfg",
+				Config: CloudInitConfigFile{
+					SystemInfo: &CloudInitConfigSystemInfo{},
 				},
 			},
 		},
 		{
 			name: "no-default-user-section-option",
 			options: CloudInitStageOptions{
-				ConfigFiles: map[string]CloudInitConfigFile{
-					"00-default_user.cfg": {
-						SystemInfo: &CloudInitConfigSystemInfo{
-							DefaultUser: &CloudInitConfigDefaultUser{},
-						},
+				Filename: "00-default_user.cfg",
+				Config: CloudInitConfigFile{
+					SystemInfo: &CloudInitConfigSystemInfo{
+						DefaultUser: &CloudInitConfigDefaultUser{},
 					},
 				},
 			},

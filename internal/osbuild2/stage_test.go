@@ -81,31 +81,20 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 		{
 			name: "cloud-init",
 			fields: fields{
-				Type:    "org.osbuild.cloud-init",
-				Options: &CloudInitStageOptions{},
-			},
-			args: args{
-				data: []byte(`{"type":"org.osbuild.cloud-init","options":{}}`),
-			},
-		},
-		{
-			name: "cloud-init-data",
-			fields: fields{
 				Type: "org.osbuild.cloud-init",
 				Options: &CloudInitStageOptions{
-					ConfigFiles: map[string]CloudInitConfigFile{
-						"00-default_user.cfg": {
-							SystemInfo: &CloudInitConfigSystemInfo{
-								DefaultUser: &CloudInitConfigDefaultUser{
-									Name: "ec2-user",
-								},
+					Filename: "00-default_user.cfg",
+					Config: CloudInitConfigFile{
+						SystemInfo: &CloudInitConfigSystemInfo{
+							DefaultUser: &CloudInitConfigDefaultUser{
+								Name: "ec2-user",
 							},
 						},
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.cloud-init","options":{"configuration_files":{"00-default_user.cfg":{"system_info":{"default_user":{"name":"ec2-user"}}}}}}`),
+				data: []byte(`{"type":"org.osbuild.cloud-init","options":{"filename":"00-default_user.cfg","config":{"system_info":{"default_user":{"name":"ec2-user"}}}}}`),
 			},
 		},
 		{
