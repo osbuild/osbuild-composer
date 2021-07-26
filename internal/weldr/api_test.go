@@ -67,7 +67,7 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 // createWeldrAPI2 is an alternative function to createWeldrAPI, using different test architecture
 // with more than a single image type
 func createWeldrAPI2(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator,
-	imageTypeDenylist []string) (*API, *store.Store) {
+	distroImageTypeDenylist map[string][]string) (*API, *store.Store) {
 	fixture := fixtureGenerator(tempdir)
 	rpm := rpmmd_mock.NewRPMMDMock(fixture)
 
@@ -96,7 +96,7 @@ func createWeldrAPI2(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerato
 		panic(err)
 	}
 
-	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", imageTypeDenylist), fixture.Store
+	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", distroImageTypeDenylist), fixture.Store
 }
 
 func TestBasic(t *testing.T) {
@@ -1484,45 +1484,70 @@ func TestModulesList(t *testing.T) {
 func TestComposeTypes_ImageTypeDenylist(t *testing.T) {
 	var cases = []struct {
 		Path              string
-		ImageTypeDenylist []string
+		ImageTypeDenylist map[string][]string
 		ExpectedStatus    int
 		ExpectedJSON      string
 	}{
 		{
 			"/api/v1/compose/types",
-			[]string{},
+			map[string][]string{},
 			http.StatusOK,
 			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q},{"enabled":true, "name":%q}]}`, test_distro.TestImageTypeName, test_distro.TestImageType2Name),
 		},
 		{
 			"/api/v1/compose/types?distro=test-distro-2",
-			[]string{},
+			map[string][]string{},
 			http.StatusOK,
 			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q},{"enabled":true, "name":%q}]}`, test_distro.TestImageTypeName, test_distro.TestImageType2Name),
 		},
 		{
 			"/api/v1/compose/types",
-			[]string{test_distro.TestImageTypeName},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName}},
 			http.StatusOK,
 			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}]}`, test_distro.TestImageType2Name),
 		},
 		{
 			"/api/v1/compose/types?distro=test-distro-2",
-			[]string{test_distro.TestImageTypeName},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName}},
 			http.StatusOK,
 			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}]}`, test_distro.TestImageType2Name),
 		},
 		{
 			"/api/v1/compose/types",
-			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName, test_distro.TestImageType2Name}},
 			http.StatusOK,
 			`{"types": null}`,
 		},
 		{
 			"/api/v1/compose/types?distro=test-distro-2",
-			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName, test_distro.TestImageType2Name}},
 			http.StatusOK,
 			`{"types": null}`,
+		},
+		{
+			"/api/v1/compose/types",
+			map[string][]string{"*": {test_distro.TestImageTypeName}},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}]}`, test_distro.TestImageType2Name),
+		},
+		{
+			"/api/v1/compose/types",
+			map[string][]string{"*": {test_distro.TestImageTypeName, test_distro.TestImageType2Name}},
+			http.StatusOK,
+			`{"types": null}`,
+		},
+		{
+			"/api/v1/compose/types",
+			map[string][]string{test_distro.TestDistro2Name: {"*"}},
+			http.StatusOK,
+			`{"types": null}`,
+		},
+		{
+			"/api/v1/compose/types?distro=test-distro-2",
+			map[string][]string{test_distro.TestDistroName: {"*"}},
+			http.StatusOK,
+			fmt.Sprintf(`{"types": [{"enabled":true, "name":%q}, {"enabled":true, "name":%q}]}`,
+				test_distro.TestImageTypeName, test_distro.TestImageType2Name),
 		},
 	}
 
@@ -1583,7 +1608,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	var cases = []struct {
 		Path              string
 		Body              string
-		imageTypeDenylist []string
+		imageTypeDenylist map[string][]string
 		ExpectedStatus    int
 		ExpectedJSON      string
 		ExpectedCompose   *store.Compose
@@ -1592,7 +1617,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
-			[]string{},
+			map[string][]string{},
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeLocal,
@@ -1601,7 +1626,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
-			[]string{},
+			map[string][]string{},
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocal2,
@@ -1610,7 +1635,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
-			[]string{test_distro.TestImageTypeName},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName}},
 			http.StatusBadRequest,
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
 			expectedComposeLocal,
@@ -1619,7 +1644,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
-			[]string{test_distro.TestImageTypeName},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName}},
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocal2,
@@ -1628,7 +1653,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
-			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName, test_distro.TestImageType2Name}},
 			http.StatusBadRequest,
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
 			expectedComposeLocal,
@@ -1637,10 +1662,28 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		{
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
-			[]string{test_distro.TestImageTypeName, test_distro.TestImageType2Name},
+			map[string][]string{test_distro.TestDistro2Name: {test_distro.TestImageTypeName, test_distro.TestImageType2Name}},
 			http.StatusBadRequest,
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageType2Name),
 			expectedComposeLocal2,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			map[string][]string{"*": {test_distro.TestImageTypeName}},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			map[string][]string{test_distro.TestDistro2Name: {"*"}},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"UnknownComposeType","msg":"Unknown compose type for architecture: %s"}]}`, test_distro.TestImageTypeName),
+			expectedComposeLocal,
 			[]string{"build_id"},
 		},
 	}

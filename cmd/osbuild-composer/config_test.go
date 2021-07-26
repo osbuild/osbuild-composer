@@ -36,7 +36,8 @@ func TestConfig(t *testing.T) {
 	require.Equal(t, config.Worker.AllowedDomains, []string{"osbuild.org"})
 	require.Equal(t, config.Worker.CA, "/etc/osbuild-composer/ca-crt.pem")
 
-	require.Equal(t, config.WeldrAPI.ImageTypeDenylist, []string{"qcow2", "vmdk"})
+	require.Equal(t, []string{"qcow2", "vmdk"}, config.WeldrAPI.DistroConfigs["*"].ImageTypeDenyList)
+	require.Equal(t, []string{"qcow2"}, config.WeldrAPI.DistroConfigs["rhel-84"].ImageTypeDenyList)
 
 	require.Equal(t, "overwrite-me-db", config.Worker.PGDatabase)
 
@@ -45,4 +46,17 @@ func TestConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 	require.Equal(t, "composer-db", config.Worker.PGDatabase)
+}
+
+func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
+	config, err := LoadConfig("testdata/test.toml")
+	require.NoError(t, err)
+	require.NotNil(t, config)
+
+	expectedWeldrDistrosImageTypeDenyList := map[string][]string{
+		"*":       {"qcow2", "vmdk"},
+		"rhel-84": {"qcow2"},
+	}
+
+	require.Equal(t, expectedWeldrDistrosImageTypeDenyList, config.weldrDistrosImageTypeDenyList())
 }
