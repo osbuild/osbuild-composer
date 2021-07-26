@@ -29,8 +29,26 @@ type ComposerConfigFile struct {
 		IdentityFilter []string `toml:"identity_filter"`
 	} `toml:"composer_api"`
 	WeldrAPI struct {
-		ImageTypeDenylist []string `toml:"image_type_denylist"`
+		DistroConfigs map[string]WeldrDistroConfig `toml:"distros"`
 	} `toml:"weldr_api"`
+}
+
+type WeldrDistroConfig struct {
+	ImageTypeDenyList []string `toml:"image_type_denylist"`
+}
+
+// weldrDistrosImageTypeDenyList returns a map of distro-specific Image Type
+// deny lists for Weldr API.
+func (c *ComposerConfigFile) weldrDistrosImageTypeDenyList() map[string][]string {
+	distrosImageTypeDenyList := map[string][]string{}
+
+	for distro, distroConfig := range c.WeldrAPI.DistroConfigs {
+		if distroConfig.ImageTypeDenyList != nil {
+			distrosImageTypeDenyList[distro] = append([]string{}, distroConfig.ImageTypeDenyList...)
+		}
+	}
+
+	return distrosImageTypeDenyList
 }
 
 func LoadConfig(name string) (*ComposerConfigFile, error) {
@@ -67,6 +85,9 @@ func loadConfigFromEnv(intf interface{}) error {
 			}
 			fieldV.SetString(confV)
 		case reflect.Slice:
+			// no-op
+			continue
+		case reflect.Map:
 			// no-op
 			continue
 		case reflect.Struct:
