@@ -6,7 +6,8 @@ import (
 )
 
 type ModprobeStageOptions struct {
-	ConfigFiles map[string]ModprobeConfigCmdList `json:"configuration_files,omitempty"`
+	Filename string                `json:"filename"`
+	Commands ModprobeConfigCmdList `json:"commands"`
 }
 
 func (ModprobeStageOptions) isStageOptions() {}

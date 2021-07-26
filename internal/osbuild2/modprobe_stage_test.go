@@ -22,11 +22,14 @@ func TestModprobeStage_MarshalJSON_Invalid(t *testing.T) {
 		options ModprobeStageOptions
 	}{
 		{
+			name:    "empty-options",
+			options: ModprobeStageOptions{},
+		},
+		{
 			name: "no-commands",
 			options: ModprobeStageOptions{
-				ConfigFiles: map[string]ModprobeConfigCmdList{
-					"disallow-modules.conf": {},
-				},
+				Filename: "disallow-modules.conf",
+				Commands: ModprobeConfigCmdList{},
 			},
 		},
 	}
