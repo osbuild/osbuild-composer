@@ -448,21 +448,19 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 		{
 			name: "systemd-unit-dropins",
 			fields: fields{
-				Type: "org.osbuild.systemd",
-				Options: &SystemdStageOptions{
-					UnitDropins: map[string]SystemdServiceUnitDropins{
-						"nm-cloud-setup.service": {
-							"10-rh-enable-for-ec2.conf": {
-								Service: &SystemdUnitServiceSection{
-									Environment: "NM_CLOUD_SETUP_EC2=yes",
-								},
-							},
+				Type: "org.osbuild.systemd.unit",
+				Options: &SystemdUnitStageOptions{
+					Unit:   "nm-cloud-setup.service",
+					Dropin: "10-rh-enable-for-ec2.conf",
+					Config: SystemdServiceUnitDropin{
+						Service: &SystemdUnitServiceSection{
+							Environment: "NM_CLOUD_SETUP_EC2=yes",
 						},
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.systemd","options":{"unit_dropins":{"nm-cloud-setup.service":{"10-rh-enable-for-ec2.conf":{"Service":{"Environment":"NM_CLOUD_SETUP_EC2=yes"}}}}}}`),
+				data: []byte(`{"type":"org.osbuild.systemd.unit","options":{"unit":"nm-cloud-setup.service","dropin":"10-rh-enable-for-ec2.conf","config":{"Service":{"Environment":"NM_CLOUD_SETUP_EC2=yes"}}}}`),
 			},
 		},
 		{

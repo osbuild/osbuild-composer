@@ -81,6 +81,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(RHSMStageOptions)
 	case "org.osbuild.systemd":
 		options = new(SystemdStageOptions)
+	case "org.osbuild.systemd.unit":
+		options = new(SystemdUnitStageOptions)
 	case "org.osbuild.systemd-logind":
 		options = new(SystemdLogindStageOptions)
 	case "org.osbuild.script":
