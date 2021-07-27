@@ -345,7 +345,10 @@ Requires:   python3-lxml
 Requires:   httpd
 Requires:   mod_ssl
 Requires:   openssl
+# see https://bugzilla.redhat.com/show_bug.cgi?id=1986333
+%if 0%{?rhel} && 0%{?rhel} != 9
 Requires:   podman-plugins
+%endif
 Requires:   dnf-plugins-core
 Requires:   skopeo
 %if 0%{?fedora}
