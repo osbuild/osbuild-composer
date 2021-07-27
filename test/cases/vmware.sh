@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer
-
 source /etc/os-release
 
 # Colorful output.
@@ -56,9 +54,13 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB=$(cat "$SSH_KEY".pub)
+
 # Check that the system started and is running correctly
 running_test_check () {
-    STATUS=$(sudo ssh -i $OSBUILD_COMPOSER_TEST_DATA/keyring/id_rsa redhat@"${1}" 'systemctl --wait is-system-running')
+    STATUS=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'systemctl --wait is-system-running')
     if [[ $STATUS == running || $STATUS == degraded ]]; then
         echo 0
     else
@@ -119,7 +121,7 @@ enabled = ["sshd"]
 
 [[customizations.user]]
 name = "redhat"
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+key = "${SSH_KEY_PUB}"
 EOF
 
 # Prepare the blueprint for the compose.

@@ -203,9 +203,11 @@ export ARM_CLIENT_SECRET="$AZURE_CLIENT_SECRET" > /dev/null
 export ARM_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" > /dev/null
 export ARM_TENANT_ID="$AZURE_TENANT_ID" > /dev/null
 
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+
 # Copy terraform main file and cloud-init to current working directory
 cp /usr/share/tests/osbuild-composer/azure/main.tf .
-cp /usr/share/tests/osbuild-composer/cloud-init/user-data .
+cp "${SSH_DATA_DIR}"/user-data .
 
 # Initialize terraform
 terraform init

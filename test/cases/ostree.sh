@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
 # Get OS data.
@@ -111,7 +110,9 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB="$(cat "${SSH_KEY}".pub)"
 
 # Get the compose log.
 get_compose_log () {
@@ -265,7 +266,7 @@ if [[ "${USER_IN_COMMIT}" == "true" ]]; then
 name = "${SSH_USER}"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+key = "${SSH_KEY_PUB}"
 home = "/home/${SSH_USER}/"
 groups = ["wheel"]
 EOF
@@ -315,7 +316,7 @@ timezone --utc Etc/UTC
 selinux --enforcing
 rootpw --lock --iscrypted locked
 user --name=${SSH_USER} --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
-sshkey --username=${SSH_USER} "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+sshkey --username=${SSH_USER} "${SSH_KEY_PUB}"
 
 bootloader --timeout=1 --append="net.ifnames=0 modprobe.blacklist=vc4"
 
@@ -429,7 +430,7 @@ if [[ "${USER_IN_COMMIT}" == "true" ]]; then
 name = "${SSH_USER}"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+key = "${SSH_KEY_PUB}"
 home = "/home/${SSH_USER}/"
 groups = ["wheel"]
 EOF

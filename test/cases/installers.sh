@@ -58,7 +58,6 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Set up variables.
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-installer-test-${TEST_UUID}"
@@ -74,7 +73,8 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
 # Get the compose log.
 get_compose_log () {
