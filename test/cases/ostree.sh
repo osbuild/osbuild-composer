@@ -36,6 +36,12 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
+    "rhel-9.0")
+        IMAGE_TYPE=edge-commit
+        OSTREE_REF="rhel/9/${ARCH}/edge"
+        OS_VARIANT="rhel9.0"
+        USER_IN_COMMIT="true"
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
