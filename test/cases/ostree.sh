@@ -277,6 +277,11 @@ build_image "$BLUEPRINT_FILE" ostree
 
 # Start httpd to serve ostree repo.
 greenprint "🚀 Starting httpd daemon"
+# osbuild-composer-tests have mod_ssl as a dependency. The package installs
+# an example configuration which automatically enabled httpd on port 443, but
+# that one is already in use. Remove the default configuration as it is useless
+# anyway.
+sudo rm -f /etc/httpd/conf.d/ssl.conf
 sudo systemctl start httpd
 
 # Download the image and extract tar into web server root folder.
