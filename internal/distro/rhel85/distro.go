@@ -574,13 +574,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey:     edgeBuildPackageSet(),
 			osPkgsKey:        edgeCommitPackageSet(),
-			containerPkgsKey: {Include: []string{"httpd"}},
+			containerPkgsKey: {Include: []string{"nginx"}},
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
 		bootISO:         false,
 		pipelines:       edgeContainerPipelines,
-		exports:         []string{containerPkgsKey},
+		exports:         []string{"container"},
 	}
 	edgeInstallerImgType := imageType{
 		name:        "edge-installer",

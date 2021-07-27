@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -513,5 +514,27 @@ func kernelCmdlineStageOptions(rootUUID string, kernelOptions string) *osbuild.K
 	return &osbuild.KernelCmdlineStageOptions{
 		RootFsUUID: rootUUID,
 		KernelOpts: kernelOptions,
+	}
+}
+
+func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {
+	// configure nginx to work in an unprivileged container
+	cfg := &osbuild.NginxConfig{
+		Listen: listen,
+		Root:   htmlRoot,
+		Daemon: common.BoolToPtr(false),
+		PID:    "/tmp/nginx.pid",
+	}
+	return &osbuild.NginxConfigStageOptions{
+		Path:   path,
+		Config: cfg,
+	}
+}
+
+func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOptions {
+	return &osbuild.ChmodStageOptions{
+		Items: map[string]osbuild.ChmodStagePathOptions{
+			path: {Mode: mode, Recursive: recursive},
+		},
 	}
 }
