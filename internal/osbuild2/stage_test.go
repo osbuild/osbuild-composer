@@ -471,13 +471,13 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 					Filename: "10-ec2-getty-fix.conf",
 					Config: SystemdLogindConfigDropin{
 						Login: SystemdLogindConfigLoginSection{
-							NAutoVT: common.IntToPtr(0),
+							NAutoVTs: common.IntToPtr(0),
 						},
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.systemd-logind","options":{"filename":"10-ec2-getty-fix.conf","config":{"Login":{"NAutoVT":0}}}}`),
+				data: []byte(`{"type":"org.osbuild.systemd-logind","options":{"filename":"10-ec2-getty-fix.conf","config":{"Login":{"NAutoVTs":0}}}}`),
 			},
 		},
 		{
