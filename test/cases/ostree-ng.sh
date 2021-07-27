@@ -100,6 +100,12 @@ case "${ID}-${VERSION_ID}" in
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
         ;;
+    "rhel-9.0")
+        CONTAINER_TYPE=edge-container
+        CONTAINER_FILENAME=container.tar
+        INSTALLER_TYPE=edge-installer
+        INSTALLER_FILENAME=installer.iso
+        ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
