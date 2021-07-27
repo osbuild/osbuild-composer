@@ -387,6 +387,10 @@ else
 fi
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
+  "rhel-9.0")
+    DISTRO="rhel-90"
+    SSH_USER="cloud-user"
+    ;;
   "rhel-8.5")
     DISTRO="rhel-85"
     if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
