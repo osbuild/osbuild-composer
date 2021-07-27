@@ -11,7 +11,7 @@ func distroBuildPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dnf", "dosfstools", "e2fsprogs", "glibc", "lorax-templates-generic",
-			"lorax-templates-rhel", "policycoreutils", "python36",
+			"lorax-templates-rhel", "policycoreutils",
 			"python3-iniparse", "qemu-img", "selinux-policy-targeted", "systemd",
 			"tar", "xfsprogs", "xz",
 		},
