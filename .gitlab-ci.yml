@@ -128,6 +128,9 @@ Regression:
   parallel:
     matrix:
       - RUNNER:
+          - aws/fedora-33-x86_64
+          - aws/fedora-33-aarch64
+          # Enable f34 once we have rpmrepo snapshots for it
           - aws/rhel-8-x86_64
           - aws/rhel-8-aarch64
           - aws/centos-stream-8-x86_64
