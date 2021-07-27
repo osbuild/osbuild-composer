@@ -243,6 +243,11 @@ check_result () {
 ###########################################################
 greenprint "🔧 Prepare edge prod repo"
 # Start prod repo web service
+# osbuild-composer-tests have mod_ssl as a dependency. The package installs
+# an example configuration which automatically enabled httpd on port 443, but
+# that one is already in use. Remove the default configuration as it is useless
+# anyway.
+sudo rm -f /etc/httpd/conf.d/ssl.conf
 sudo systemctl enable --now httpd.service
 
 # Have a clean prod repo
