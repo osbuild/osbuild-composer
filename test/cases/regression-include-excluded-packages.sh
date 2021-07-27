@@ -19,6 +19,12 @@ BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json
 
+source /etc/os-release
+if [[ "${ID}" == "fedora" ]]; then
+    echo "$0 is only enabled for rhel like systems; skipping..."
+    exit 0
+fi
+
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "redhat-lsb-core"
