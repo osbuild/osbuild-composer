@@ -171,7 +171,7 @@ func GetHostDistroName() (string, bool, bool, error) {
 	// NOTE: We only consider major releases up until rhel 8.4
 	version := strings.Split(osrelease["VERSION_ID"], ".")
 	name := osrelease["ID"] + "-" + version[0]
-	if osrelease["ID"] == "rhel" && version[0] == "8" && version[1] >= "4" {
+	if osrelease["ID"] == "rhel" && ((version[0] == "8" && version[1] >= "4") || version[0] == "9") {
 		name = name + version[1]
 	}
 
