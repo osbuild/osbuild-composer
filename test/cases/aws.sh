@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
-
 source /etc/os-release
 DISTRO_CODE="${DISTRO_CODE:-${ID}_${VERSION_ID//./}}"
 
@@ -48,11 +46,12 @@ AMI_DATA=${TEMPDIR}/ami-data-${IMAGE_KEY}.json
 INSTANCE_DATA=${TEMPDIR}/instance-data-${IMAGE_KEY}.json
 INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${IMAGE_KEY}.json
 
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
     # Ensure the ssh key has restricted permissions.
-    SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
-
     SMOKE_TEST=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
@@ -204,7 +203,7 @@ $AWS_CMD ec2 run-instances \
     --key-name personal_servers \
     --image-id "${AMI_IMAGE_ID}" \
     --instance-type t3a.micro \
-    --user-data file://"${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/user-data \
+    --user-data file://"${SSH_DATA_DIR}"/user-data \
     --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
 
 # Wait for the instance to finish building.

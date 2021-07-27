@@ -82,11 +82,16 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
+if [[ ${WORKSPACE:-empty} == empty ]]; then
+    WORKSPACE=$(mktemp -d)
+fi
+
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
     # Ensure the ssh key has restricted permissions.
-    SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
-
     SSH_OPTIONS=(-o StrictHostKeyChecking=no -o ConnectTimeout=5)
     SMOKE_TEST=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
@@ -193,7 +198,8 @@ popd
 
 # Prepare cloud-init data.
 CLOUD_INIT_DIR=$(mktemp -d)
-cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/{meta,user}-data "${CLOUD_INIT_DIR}"/
+cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/meta-data "${CLOUD_INIT_DIR}"/
+cp "${SSH_DATA_DIR}"/user-data "${CLOUD_INIT_DIR}"/
 cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/network-config "${CLOUD_INIT_DIR}"/
 
 # Set up a cloud-init ISO.
