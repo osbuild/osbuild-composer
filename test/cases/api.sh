@@ -500,7 +500,20 @@ function createReqFileGCP() {
           }
       }
     }
-  ]
+  ],
+    "customizations": {
+        "users":[
+            {
+                "name": "user1",
+                "groups": ["wheel"],
+                "key": "$(cat /tmp/usertest.pub)"
+            },
+            {
+                "name": "user2",
+                "key": "$(cat /tmp/usertest.pub)"
+            }
+        ]
+    }
 }
 EOF
 }
@@ -532,7 +545,20 @@ function createReqFileAzure() {
           }
       }
     }
-  ]
+  ],
+    "customizations": {
+        "users":[
+            {
+                "name": "user1",
+                "groups": ["wheel"],
+                "key": "$(cat /tmp/usertest.pub)"
+            },
+            {
+                "name": "user2",
+                "key": "$(cat /tmp/usertest.pub)"
+            }
+        ]
+    }
 }
 EOF
 }
@@ -736,7 +762,10 @@ function _instanceWaitSSH() {
 
 function _instanceCheck() {
   echo "✔️ Instance checking"
-  local _ssh="$1"
+  local _ssh="ssh -oStrictHostKeyChecking=no -i /tmp/usertest user1@$HOST"
+
+  # set password for user1
+  $_ssh "echo -e '\nfoobar\nfoobar\n' | passwd"
 
   # Check if postgres is installed
   $_ssh rpm -q postgresql
@@ -745,7 +774,7 @@ function _instanceCheck() {
   if [[ "$ID" == "rhel" ]]; then
     set +eu
     for LOOP_COUNTER in {1..10}; do
-        subscribe_org_id=$($_ssh sudo subscription-manager identity | grep 'org ID')
+        subscribe_org_id=$($_ssh echo foobar | sudo -S subscription-manager identity | grep 'org ID')
         if [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]; then
             echo "System is subscribed."
             break
@@ -764,8 +793,26 @@ function _instanceCheck() {
   fi
 }
 
-# Verify image in EC2 on AWS
-function verifyInAWS() {
+function _userAndGroupCheck() {
+  # Check access to user1 and user2
+  check_groups=$(ssh -i /tmp/usertest "user1@$HOST" -t 'groups')
+  if [[ $check_groups =~ "wheel" ]]; then
+   echo "✔️  user1 has the group wheel"
+  else
+    echo 'user1 should have the group wheel 😢'
+    exit 1
+  fi
+  check_groups=$(ssh -i /tmp/usertest "user2@$HOST" -t 'groups')
+  if [[ $check_groups =~ "wheel" ]]; then
+    echo 'user2 should not have group wheel 😢'
+    exit 1
+  else
+   echo "✔️  user2 does not have the group wheel"
+  fi
+}
+
+# deploy image in EC2 on AWS
+function deployInAWS() {
   $AWS_CMD ec2 describe-images \
     --owners self \
     --filters Name=name,Values="$AWS_SNAPSHOT_NAME" \
@@ -796,12 +843,8 @@ function verifyInAWS() {
     exit 1
   fi
 
-  # Create key-pair
-  $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
-  chmod 400 ./keypair.pem
-
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"
@@ -809,28 +852,7 @@ function verifyInAWS() {
   $AWS_CMD ec2 describe-instances --instance-ids "$AWS_INSTANCE_ID" > "$WORKDIR/instances.json"
   HOST=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$WORKDIR/instances.json")
 
-  echo "⏱ Waiting for AWS instance to respond to ssh"
-  _instanceWaitSSH "$HOST"
 
-  # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
-  _instanceCheck "$_ssh"
-
-  # Check access to user1 and user2
-  check_groups=$(ssh -i /tmp/usertest "user1@$HOST" -t 'groups')
-  if [[ $check_groups =~ "wheel" ]]; then
-   echo "✔️  user1 has the group wheel"
-  else
-    echo 'user1 should have the group wheel 😢'
-    exit 1
-  fi
-  check_groups=$(ssh -i /tmp/usertest "user2@$HOST" -t 'groups')
-  if [[ $check_groups =~ "wheel" ]]; then
-    echo 'user2 should not have group wheel 😢'
-    exit 1
-  else
-   echo "✔️  user2 does not have the group wheel"
-  fi
 }
 
 
@@ -877,8 +899,8 @@ function verifyInAWSS3() {
   fi
 }
 
-# Verify image in Compute Engine on GCP
-function verifyInGCP() {
+# deploy image in Compute Engine on GCP
+function deployInGCP() {
   # Authenticate
   $GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
   # Extract and set the default project to be used for commands
@@ -899,13 +921,6 @@ function verifyInGCP() {
     exit 1
   fi
 
-  # Verify that the image boots and have customizations applied
-  # Create SSH keys to use
-  GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
-  ssh-keygen -t rsa -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
-  GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
-
-  echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
 
   # create the instance
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
@@ -920,20 +935,12 @@ function verifyInGCP() {
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_ZONE" \
     --image-project="$GCP_PROJECT" \
-    --image="$GCP_IMAGE_NAME" \
-    --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
+    --image="$GCP_IMAGE_NAME"
   HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-
-  echo "⏱ Waiting for GCP instance to respond to ssh"
-  _instanceWaitSSH "$HOST"
-
-  # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
-  _instanceCheck "$_ssh"
 }
 
-# Verify image in Azure
-function verifyInAzure() {
+# deploy image in Azure
+function deployInAzure() {
   set +x
   $AZURE_CMD login --service-principal --username "${AZURE_CLIENT_ID}" --password "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
   set -x
@@ -941,10 +948,6 @@ function verifyInAzure() {
   # verify that the image exists
   $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
 
-  # Verify that the image boots and have customizations applied
-  # Create SSH keys to use
-  AZURE_SSH_KEY="$WORKDIR/id_azure"
-  ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
 
   # create the instance
   AZURE_INSTANCE_NAME="vm-$(uuidgen)"
@@ -953,34 +956,33 @@ function verifyInAzure() {
     --image "$AZURE_IMAGE_NAME" \
     --size "Standard_B1s" \
     --admin-username "$SSH_USER" \
-    --ssh-key-values "$AZURE_SSH_KEY.pub" \
-    --authentication-type "ssh" \
     --location "$AZURE_LOCATION"
   $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
   HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
-
-  echo "⏱  Waiting for Azure instance to respond to ssh"
-  _instanceWaitSSH "$HOST"
-
-  # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i $AZURE_SSH_KEY $SSH_USER@$HOST"
-  _instanceCheck "$_ssh"
 }
 
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
-    verifyInAWS
+    deployInAWS
     ;;
   "$CLOUD_PROVIDER_AWS_S3")
     verifyInAWSS3
     ;;
   "$CLOUD_PROVIDER_GCP")
-    verifyInGCP
+    deployInGCP
     ;;
   "$CLOUD_PROVIDER_AZURE")
-    verifyInAzure
+    deployInAzure
     ;;
 esac
+
+# Verify image (unless already done for S3)
+if [[ $CLOUD_PROVIDER != "$CLOUD_PROVIDER_AWS_S3" ]]; then
+  echo "⏱ Waiting for $CLOUD_PROVIDER instance to respond to ssh"
+  _instanceWaitSSH "$HOST"
+  _instanceCheck
+  _userAndGroupCheck
+fi
 
 # Verify selected package (postgresql) is included in package list
 function verifyPackageList() {
