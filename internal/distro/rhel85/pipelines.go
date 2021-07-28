@@ -268,6 +268,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
+	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage())
