@@ -243,7 +243,31 @@ func (server *Server) Compose(w http.ResponseWriter, r *http.Request) {
 			imageOptions.OSTree.Parent = parent
 		}
 
-		manifest, err := imageType.Manifest(nil, imageOptions, repositories, pkgSpecSets, manifestSeed)
+		// Set the blueprint customisation to take care of the user
+		var blueprintCustoms *blueprint.Customizations
+		if request.Customizations != nil && request.Customizations.Users != nil {
+			var userCustomizations []blueprint.UserCustomization
+			for _, user := range *request.Customizations.Users {
+				var groups []string
+				if user.Groups != nil {
+					groups = *user.Groups
+				} else {
+					groups = nil
+				}
+				userCustomizations = append(userCustomizations,
+					blueprint.UserCustomization{
+						Name:   user.Name,
+						Key:    user.Key,
+						Groups: groups,
+					},
+				)
+			}
+			blueprintCustoms = &blueprint.Customizations{
+				User: userCustomizations,
+			}
+		}
+
+		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err), http.StatusBadRequest)
 			return

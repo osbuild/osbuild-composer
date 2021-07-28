@@ -444,6 +444,10 @@ components:
           example: ['postgres']
           items:
             type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
     OSTree:
       type: object
       properties:
@@ -511,3 +515,19 @@ components:
           type: string
         signature:
           type: string
+    User:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "user1"
+        groups:
+          type: array
+          items:
+            type: string
+            example: "group1"
+        key:
+          type: string
+          example: "public ssh key"

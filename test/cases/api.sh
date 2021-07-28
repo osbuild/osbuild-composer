@@ -373,6 +373,9 @@ else
   SUBSCRIPTION_BLOCK=''
 fi
 
+# generate a temp key for user tests
+ssh-keygen -t rsa -f /tmp/usertest -C "usertest" -N ""
+
 function createReqFileAWS() {
   AWS_SNAPSHOT_NAME=$(uuidgen)
 
@@ -407,7 +410,20 @@ function createReqFileAWS() {
           }
       }
     }
-  ]
+  ],
+    "customizations": {
+        "users":[
+            {
+                "name": "user1",
+                "groups": ["wheel"],
+                "key": "$(cat /tmp/usertest.pub)"
+            },
+            {
+                "name": "user2",
+                "key": "$(cat /tmp/usertest.pub)"
+            }
+        ]
+    }
 }
 EOF
 }
@@ -799,6 +815,22 @@ function verifyInAWS() {
   # Verify image
   _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
   _instanceCheck "$_ssh"
+
+  # Check access to user1 and user2
+  check_groups=$(ssh -i /tmp/usertest "user1@$HOST" -t 'groups')
+  if [[ $check_groups =~ "wheel" ]]; then
+   echo "✔️  user1 has the group wheel"
+  else
+    echo 'user1 should have the group wheel 😢'
+    exit 1
+  fi
+  check_groups=$(ssh -i /tmp/usertest "user2@$HOST" -t 'groups')
+  if [[ $check_groups =~ "wheel" ]]; then
+    echo 'user2 should not have group wheel 😢'
+    exit 1
+  else
+   echo "✔️  user2 does not have the group wheel"
+  fi
 }
 
 
