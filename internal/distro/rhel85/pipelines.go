@@ -23,7 +23,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable := createPartitionTable(customizations.GetFilesystems(), options, t.arch, rng)
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 
 	if options.Subscription == nil {
@@ -39,6 +39,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 			},
 		}))
 	}
+
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -75,7 +76,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable := createPartitionTable(customizations.GetFilesystems(), options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -102,7 +103,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable := createPartitionTable(customizations.GetFilesystems(), options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -129,7 +130,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable := createPartitionTable(customizations.GetFilesystems(), options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
