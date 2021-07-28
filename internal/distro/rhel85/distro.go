@@ -69,6 +69,8 @@ const (
 	HybridBootType BootType = "hybrid"
 )
 
+var mountpointAllowList = []string{"/", "/var", "/home"}
+
 type distribution struct {
 	name             string
 	modulePlatformID string
@@ -419,6 +421,15 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 	return sources
 }
 
+func checkMountpoint(mountpoint string) bool {
+	for _, m := range mountpointAllowList {
+		if mountpoint == m {
+			return true
+		}
+	}
+	return false
+}
+
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
 	if t.bootISO && t.rpmOstree {
@@ -440,10 +451,9 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	// only allow root mountpoint for the time-being
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if m.Mountpoint != "/" {
+		if !checkMountpoint(m.Mountpoint) {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}
