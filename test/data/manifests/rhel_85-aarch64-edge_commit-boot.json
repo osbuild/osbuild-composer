@@ -9962,6 +9962,33 @@
       "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin"
     ],
     "selinux": {
+      "context-mismatch": [
+        {
+          "actual": "system_u:object_r:mnt_t:s0",
+          "expected": "system_u:object_r:default_t:s0",
+          "filename": "/proc"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/podman"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:container_runtime_exec_t:s0",
+          "filename": "/usr/bin/runc"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_unit_file_t:s0",
+          "filename": "/usr/lib/systemd/system/usbguard.service"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_exec_t:s0",
+          "filename": "/usr/sbin/usbguard-daemon"
+        }
+      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"

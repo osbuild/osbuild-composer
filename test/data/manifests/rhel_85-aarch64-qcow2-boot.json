@@ -317,6 +317,7 @@
       },
       {
         "name": "os",
+        "build": "name:build",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -999,12 +1000,6 @@
             }
           },
           {
-            "type": "org.osbuild.selinux",
-            "options": {
-              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-            }
-          },
-          {
             "type": "org.osbuild.rhsm",
             "options": {
               "dnf-plugins": {
@@ -1046,6 +1041,12 @@
                 "vendor": "redhat"
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-299.1.el8.aarch64"
+            }
+          },
+          {
+            "type": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
             }
           }
         ]
