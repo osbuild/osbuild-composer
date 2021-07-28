@@ -5,14 +5,21 @@ import (
 	"math/rand"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
-func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
-	var sectorSize uint64 = 512
+const sectorSize = 512
+
+func createPartitionTable(
+	mountpoints []blueprint.FilesystemCustomization,
+	imageOptions distro.ImageOptions,
+	arch distro.Arch,
+	rng *rand.Rand,
+) disk.PartitionTable {
 	if arch.Name() == "x86_64" {
-		return disk.PartitionTable{
+		partitionTable := disk.PartitionTable{
 			Size: imageOptions.Size,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
@@ -38,25 +45,40 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 						FSTabPassNo:  2,
 					},
 				},
-				{
-					Start: 208896,
-					Size:  imageOptions.Size/sectorSize - 208896 - 100,
-					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &disk.Filesystem{
-						Type:         "xfs",
-						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
 			},
 		}
+		start := uint64(4096 + 204800)
+		partitions := []disk.Partition{}
+		for _, m := range mountpoints {
+			if m.Mountpoint != "/" {
+				partition := createPartition(m, start, arch.Name(), rng)
+				partitions = append(partitions, partition)
+				start += uint64(m.MinSize / sectorSize)
+			}
+		}
+		// treat the root partition as a special case
+		// by setting it last and setting the size
+		// dynamically
+		rootPartition := disk.Partition{
+			Start: start,
+			Size:  imageOptions.Size/sectorSize - start - 100,
+			Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+			UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+				Label:        "root",
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		}
+		partitions = append(partitions, rootPartition)
+		partitionTable.Partitions = append(partitionTable.Partitions, partitions...)
+		return partitionTable
 	} else if arch.Name() == "aarch64" {
-		return disk.PartitionTable{
+		partitionTable := disk.PartitionTable{
 			Size: imageOptions.Size,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
@@ -75,25 +97,37 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 						FSTabPassNo:  2,
 					},
 				},
-				{
-					Start: 206848,
-					Size:  imageOptions.Size/sectorSize - 206848 - 100,
-					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &disk.Filesystem{
-						Type:         "xfs",
-						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
 			},
 		}
+		start := uint64(2048 + 204800)
+		partitions := []disk.Partition{}
+		for _, m := range mountpoints {
+			if m.Mountpoint != "/" {
+				partition := createPartition(m, start, arch.Name(), rng)
+				partitions = append(partitions, partition)
+				start += uint64(m.MinSize / sectorSize)
+			}
+		}
+		rootPartition := disk.Partition{
+			Start: start,
+			Size:  imageOptions.Size/sectorSize - start - 100,
+			Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+			UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+				Label:        "root",
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		}
+		partitions = append(partitions, rootPartition)
+		partitionTable.Partitions = append(partitionTable.Partitions, partitions...)
+		return partitionTable
 	} else if arch.Name() == "ppc64le" {
-		return disk.PartitionTable{
+		partitionTable := disk.PartitionTable{
 			Size: imageOptions.Size,
 			UUID: "0x14fc63d2",
 			Type: "dos",
@@ -104,41 +138,64 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 					Type:     "41",
 					Bootable: true,
 				},
-				{
-					Start: 10240,
-					Size:  imageOptions.Size/sectorSize - 10240 - 100,
-					Filesystem: &disk.Filesystem{
-						Type:         "xfs",
-						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
 			},
 		}
+		start := uint64(8192)
+		partitions := []disk.Partition{}
+		for _, m := range mountpoints {
+			if m.Mountpoint != "/" {
+				partition := createPartition(m, start, arch.Name(), rng)
+				partitions = append(partitions, partition)
+				start += uint64(m.MinSize / sectorSize)
+			}
+		}
+		rootPartition := disk.Partition{
+			Start: start,
+			Size:  imageOptions.Size/sectorSize - start - 100,
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		}
+		partitions = append(partitions, rootPartition)
+		partitionTable.Partitions = append(partitionTable.Partitions, partitions...)
+		return partitionTable
 	} else if arch.Name() == "s390x" {
-		return disk.PartitionTable{
-			Size: imageOptions.Size,
-			UUID: "0x14fc63d2",
-			Type: "dos",
-			Partitions: []disk.Partition{
-				{
-					Start:    2048,
-					Size:     imageOptions.Size/sectorSize - 2048 - 100,
-					Bootable: true,
-					Filesystem: &disk.Filesystem{
-						Type:         "xfs",
-						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
+		partitionTable := disk.PartitionTable{
+			Size:       imageOptions.Size,
+			UUID:       "0x14fc63d2",
+			Type:       "dos",
+			Partitions: []disk.Partition{},
+		}
+		start := uint64(2048)
+		partitions := []disk.Partition{}
+		for _, m := range mountpoints {
+			if m.Mountpoint != "/" {
+				partition := createPartition(m, start, arch.Name(), rng)
+				partitions = append(partitions, partition)
+				start += uint64(m.MinSize / sectorSize)
+			}
+		}
+		rootPartition := disk.Partition{
+			Start:    start,
+			Size:     imageOptions.Size/sectorSize - start - 100,
+			Bootable: true,
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
 			},
 		}
+		partitions = append(partitions, rootPartition)
+		partitionTable.Partitions = append(partitionTable.Partitions, partitions...)
+		return partitionTable
 	}
 
 	panic("unknown arch: " + arch.Name())
@@ -230,6 +287,42 @@ func ec2PartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *
 	}
 
 	panic("unsupported EC2 arch: " + arch.Name())
+}
+
+func createPartition(
+	m blueprint.FilesystemCustomization,
+	start uint64,
+	archName string,
+	rng *rand.Rand,
+) disk.Partition {
+	if archName == "x86_64" || archName == "aarch64" {
+		return disk.Partition{
+			Start: start,
+			Size:  uint64(m.MinSize) / sectorSize,
+			Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+			UUID:  uuid.Must(newRandomUUIDFromReader(rng)).String(),
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+				Mountpoint:   m.Mountpoint,
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		}
+	}
+	return disk.Partition{
+		Start: start,
+		Size:  uint64(m.MinSize),
+		Filesystem: &disk.Filesystem{
+			Type:         "xfs",
+			UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+			Mountpoint:   m.Mountpoint,
+			FSTabOptions: "defaults",
+			FSTabFreq:    0,
+			FSTabPassNo:  0,
+		},
+	}
 }
 
 func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
