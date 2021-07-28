@@ -1,15 +1,16 @@
 package blueprint
 
 type Customizations struct {
-	Hostname *string                `json:"hostname,omitempty" toml:"hostname,omitempty"`
-	Kernel   *KernelCustomization   `json:"kernel,omitempty" toml:"kernel,omitempty"`
-	SSHKey   []SSHKeyCustomization  `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
-	User     []UserCustomization    `json:"user,omitempty" toml:"user,omitempty"`
-	Group    []GroupCustomization   `json:"group,omitempty" toml:"group,omitempty"`
-	Timezone *TimezoneCustomization `json:"timezone,omitempty" toml:"timezone,omitempty"`
-	Locale   *LocaleCustomization   `json:"locale,omitempty" toml:"locale,omitempty"`
-	Firewall *FirewallCustomization `json:"firewall,omitempty" toml:"firewall,omitempty"`
-	Services *ServicesCustomization `json:"services,omitempty" toml:"services,omitempty"`
+	Hostname   *string                   `json:"hostname,omitempty" toml:"hostname,omitempty"`
+	Kernel     *KernelCustomization      `json:"kernel,omitempty" toml:"kernel,omitempty"`
+	SSHKey     []SSHKeyCustomization     `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
+	User       []UserCustomization       `json:"user,omitempty" toml:"user,omitempty"`
+	Group      []GroupCustomization      `json:"group,omitempty" toml:"group,omitempty"`
+	Timezone   *TimezoneCustomization    `json:"timezone,omitempty" toml:"timezone,omitempty"`
+	Locale     *LocaleCustomization      `json:"locale,omitempty" toml:"locale,omitempty"`
+	Firewall   *FirewallCustomization    `json:"firewall,omitempty" toml:"firewall,omitempty"`
+	Services   *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
+	Filesystem []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
 }
 
 type KernelCustomization struct {
@@ -62,6 +63,11 @@ type FirewallServicesCustomization struct {
 type ServicesCustomization struct {
 	Enabled  []string `json:"enabled,omitempty" toml:"enabled,omitempty"`
 	Disabled []string `json:"disabled,omitempty" toml:"disabled,omitempty"`
+}
+
+type FilesystemCustomization struct {
+	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
+	MinSize    int    `json:"minsize,omitempty" toml:"size,omitempty"`
 }
 
 type CustomizationError struct {
@@ -186,4 +192,11 @@ func (c *Customizations) GetServices() *ServicesCustomization {
 	}
 
 	return c.Services
+}
+
+func (c *Customizations) GetFilesystems() []FilesystemCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Filesystem
 }
