@@ -181,6 +181,7 @@ New OSTree:
     - aws.sh
     - azure.sh
     - vmware.sh
+    - filesystem.sh
 
 Integration:
   stage: test
