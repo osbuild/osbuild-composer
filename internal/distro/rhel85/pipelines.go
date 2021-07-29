@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -128,27 +129,276 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
-func amiPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+// ec2BaseTreePipeline returns the base OS pipeline common for all EC2 image types.
+//
+// The expectation is that specific EC2 image types can extend the returned pipeline
+// by appending additional stages.
+//
+// The argument `withRHUI` should be set to `true` only if the image package set includes RHUI client packages.
+//
+// Note: the caller of this function has to append the `osbuild.NewSELinuxStage(selinuxStageOptions(false))` stage
+// as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
+// any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
+func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
+	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
+	defaultTarget string, withRHUI bool) (*osbuild.Pipeline, error) {
+	p := new(osbuild.Pipeline)
+	p.Name = "os"
+	p.Build = "name:build"
+	packages = append(packages, bpPackages...)
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewFixBLSStage())
+
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+	} else {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+	}
+	if keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	} else {
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{
+			Keymap: "us",
+			X11Keymap: &osbuild.X11KeymapOptions{
+				Layouts: []string{"us"},
+			},
+		}))
+	}
+
+	if hostname := c.GetHostname(); hostname != nil {
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+	}
+
+	timezone, ntpServers := c.GetTimezoneSettings()
+	if timezone != nil {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+	} else {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "UTC"}))
+	}
+
+	if len(ntpServers) > 0 {
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	} else {
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{
+			Servers: []osbuild.ChronyConfigServer{
+				{
+					Hostname: "169.254.169.123",
+					Prefer:   common.BoolToPtr(true),
+					Iburst:   common.BoolToPtr(true),
+					Minpoll:  common.IntToPtr(4),
+					Maxpoll:  common.IntToPtr(4),
+				},
+			},
+			// empty string will remove any occurrences of the option from the configuration
+			LeapsecTz: common.StringToPtr(""),
+		}))
+	}
+
+	if groups := c.GetGroups(); len(groups) > 0 {
+		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+	}
+
+	if users := c.GetUsers(); len(users) > 0 {
+		userOptions, err := userStageOptions(users)
+		if err != nil {
+			return nil, err
+		}
+		p.AddStage(osbuild.NewUsersStage(userOptions))
+	}
+
+	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	}
+
+	if firewall := c.GetFirewall(); firewall != nil {
+		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+	}
+
+	p.AddStage(osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
+		Filename: "00-getty-fixes.conf",
+		Config: osbuild.SystemdLogindConfigDropin{
+
+			Login: osbuild.SystemdLogindConfigLoginSection{
+				NAutoVTs: common.IntToPtr(0),
+			},
+		},
+	}))
+
+	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
+		Kernel: osbuild.SysconfigKernelOptions{
+			UpdateDefault: true,
+			DefaultKernel: "kernel",
+		},
+		Network: osbuild.SysconfigNetworkOptions{
+			Networking: true,
+			NoZeroConf: true,
+		},
+		NetworkScripts: &osbuild.NetworkScriptsOptions{
+			IfcfgFiles: map[string]osbuild.IfcfgFile{
+				"eth0": {
+					Device:    "eth0",
+					Bootproto: osbuild.IfcfgBootprotoDHCP,
+					OnBoot:    common.BoolToPtr(true),
+					Type:      osbuild.IfcfgTypeEthernet,
+					UserCtl:   common.BoolToPtr(true),
+					PeerDNS:   common.BoolToPtr(true),
+					IPv6Init:  common.BoolToPtr(false),
+				},
+			},
+		},
+	}))
+
+	p.AddStage(osbuild.NewCloudInitStage(&osbuild.CloudInitStageOptions{
+		Filename: "00-rhel-default-user.cfg",
+		Config: osbuild.CloudInitConfigFile{
+			SystemInfo: &osbuild.CloudInitConfigSystemInfo{
+				DefaultUser: &osbuild.CloudInitConfigDefaultUser{
+					Name: "ec2-user",
+				},
+			},
+		},
+	}))
+
+	p.AddStage(osbuild.NewModprobeStage(&osbuild.ModprobeStageOptions{
+		Filename: "blacklist-nouveau.conf",
+		Commands: osbuild.ModprobeConfigCmdList{
+			osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+		},
+	}))
+
+	p.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
+		Filename: "sgdisk.conf",
+		Config: osbuild.DracutConfigFile{
+			Install: []string{"sgdisk"},
+		},
+	}))
+
+	// RHBZ#1822853
+	p.AddStage(osbuild.NewSystemdUnitStage(&osbuild.SystemdUnitStageOptions{
+		Unit:   "nm-cloud-setup.service",
+		Dropin: "10-rh-enable-for-ec2.conf",
+		Config: osbuild.SystemdServiceUnitDropin{
+			Service: &osbuild.SystemdUnitServiceSection{
+				Environment: "NM_CLOUD_SETUP_EC2=yes",
+			},
+		},
+	}))
+
+	p.AddStage(osbuild.NewAuthselectStage(&osbuild.AuthselectStageOptions{
+		Profile: "sssd",
+	}))
+
+	if options.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%d --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+		}
+		if options.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+
+		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		}))
+	} else {
+		rhsmStageOptions := &osbuild.RHSMStageOptions{
+			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+			},
+			// RHBZ#1932802
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+			},
+		}
+
+		// Disable RHSM redhat.repo management only if the image uses RHUI
+		// for content. Otherwise subscribing the system manually after booting
+		// it would result in empty redhat.repo. Without RHUI, such system
+		// would have no way to get Red Hat content, but enable the repo
+		// management manually, which would be very confusing.
+		// RHBZ#1932802
+		if withRHUI {
+			rhsmStageOptions.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{
+				ManageRepos: common.BoolToPtr(false),
+			}
+		}
+
+		p.AddStage(osbuild.NewRHSMStage(rhsmStageOptions))
+	}
+
+	return p, nil
+}
+
+func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
+	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
+	defaultTarget string, withRHUI bool) (*osbuild.Pipeline, error) {
+
+	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI)
 	if err != nil {
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	// EC2 x86_64-specific stages
+	treePipeline.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
+		Filename: "xen.conf",
+		Config: osbuild.DracutConfigFile{
+			AddDrivers: []string{
+				"xen-netfront",
+				"xen-blkfront",
+			},
+		},
+	}))
+
+	return treePipeline, nil
+}
+
+func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+
+	var treePipeline *osbuild.Pipeline
+	var err error
+	var useUEFI bool
+	switch arch := t.arch.Name(); arch {
+	// rhel-ec2-x86_64, rhel-ha-ec2
+	case x86_64ArchName:
+		useUEFI = false
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
+	// rhel-ec2-aarch64
+	case aarch64ArchName:
+		useUEFI = true
+		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
+	default:
+		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
+	}
+	if err != nil {
+		return nil, err
+	}
+	partitionTable := ec2PartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], useUEFI, t.arch.legacy)))
+	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
-	diskfile := t.Filename()
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch.legacy)
 	pipelines = append(pipelines, *imagePipeline)
-	if err != nil {
-		return nil, err
-	}
 	return pipelines, nil
+}
+
+// ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
+func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, false, t.Filename())
 }
 
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
