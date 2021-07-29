@@ -132,6 +132,12 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	case "org.osbuild.qemu":
 		options = new(QEMUStageOptions)
 		inputs = new(QEMUStageInputs)
+	case "org.osbuild.xz":
+		options = new(XzStageOptions)
+		// TODO: Unmarshalling inputs should be moved to a separate method and struct should be determined by its Type
+		// The stage accepts also source input, but we need to rework all inputs first to handle this nicely here.
+		// Only files input is used by the XZ stage at this moment.
+		inputs = new(FilesInputs)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
