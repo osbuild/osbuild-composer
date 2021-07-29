@@ -143,6 +143,94 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 	panic("unknown arch: " + arch.Name())
 }
 
+func ec2PartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
+	var sectorSize uint64 = 512
+	if arch.Name() == "x86_64" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Bootable: true,
+					Size:     2048,
+					Start:    2048,
+					Type:     "21686148-6449-6E6F-744E-656564454649",
+					UUID:     "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
+				},
+				{
+					Start: 4096,
+					Size:  imageOptions.Size/sectorSize - 4096 - 100,
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	} else if arch.Name() == "aarch64" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Start: 2048,
+					Size:  409600,
+					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+					Filesystem: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         "7B77-95E7",
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Start: 411648,
+					Size:  1048576,
+					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         "2AE383D1-F57C-4F04-A1BD-32FC12A578EA",
+						Mountpoint:   "/boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Start: 1460224,
+					Size:  imageOptions.Size/sectorSize - 1460224 - 100,
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	}
+
+	panic("unsupported EC2 arch: " + arch.Name())
+}
+
 func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 	var id uuid.UUID
 	_, err := io.ReadFull(r, id[:])

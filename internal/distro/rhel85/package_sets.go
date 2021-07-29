@@ -32,6 +32,13 @@ func ppc64leBuildPackageSet() rpmmd.PackageSet {
 	}
 }
 
+// common ec2 image build package set
+func ec2BuildPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{"python3-pyyaml"},
+	}
+}
+
 // common edge image build package set
 func edgeBuildPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
@@ -171,21 +178,18 @@ func openstackCommonPackageSet() rpmmd.PackageSet {
 
 }
 
-func amiCommonPackageSet() rpmmd.PackageSet {
+func ec2CommonPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core", "cloud-init", "cloud-utils-growpart", "yum-utils",
-			"dracut-config-generic", "dracut-norescue", "gdisk", "grub2",
-			"insights-client", "NetworkManager", "NetworkManager-cloud-setup",
-			"redhat-release", "redhat-release-eula", "rsync", "tar",
-
-			// TODO this doesn't exist in BaseOS or AppStream
-			// "rh-amazon-rhui-client",
-
+			"@core", "authselect-compat", "chrony", "cloud-init", "cloud-utils-growpart",
+			"dhcp-client", "yum-utils", "dracut-config-generic", "dracut-norescue", "gdisk",
+			"grub2", "insights-client", "langpacks-en", "NetworkManager",
+			"NetworkManager-cloud-setup", "redhat-release",
+			"redhat-release-eula", "rsync", "tar", "qemu-guest-agent",
 		},
 		Exclude: []string{
 			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
-			"alsa-tools-firmware", "biosdevname", "iprutils", "ivtv-firmware",
+			"alsa-tools-firmware", "biosdevname", "firewalld", "iprutils", "ivtv-firmware",
 			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware",
 			"iwl135-firmware", "iwl2000-firmware", "iwl2030-firmware",
 			"iwl3160-firmware", "iwl3945-firmware", "iwl4965-firmware",

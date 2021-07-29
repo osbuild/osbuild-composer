@@ -40,6 +40,14 @@ func TestFilenameFromType(t *testing.T) {
 		want wantResult
 	}{
 		{
+			name: "ami",
+			args: args{"ami"},
+			want: wantResult{
+				filename: "image.raw",
+				mimeType: "application/octet-stream",
+			},
+		},
+		{
 			name: "qcow2",
 			args: args{"qcow2"},
 			want: wantResult{
