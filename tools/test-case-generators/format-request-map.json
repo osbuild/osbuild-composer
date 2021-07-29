@@ -10,6 +10,28 @@
     },
     "overrides": {}
   },
+  "ec2": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "ec2",
+      "repositories": [],
+      "filename": "image.raw.xz",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
+  "ec2-ha": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "ec2-ha",
+      "repositories": [],
+      "filename": "image.raw.xz",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "edge-commit": {
     "compose-request": {
       "distro": "",
