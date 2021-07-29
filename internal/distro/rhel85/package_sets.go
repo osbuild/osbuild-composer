@@ -209,6 +209,25 @@ func ec2CommonPackageSet() rpmmd.PackageSet {
 	}
 }
 
+// rhel-ec2 image package set
+func rhelEc2PackageSet() rpmmd.PackageSet {
+	ec2PackageSet := ec2CommonPackageSet()
+	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
+	return ec2PackageSet
+}
+
+// rhel-ha-ec2 image package set
+func rhelEc2HaPackageSet() rpmmd.PackageSet {
+	ec2HaPackageSet := ec2CommonPackageSet()
+	ec2HaPackageSet.Include = append(ec2HaPackageSet.Include,
+		"fence-agents-all",
+		"pacemaker",
+		"pcs",
+		"rh-amazon-rhui-client-ha",
+	)
+	return ec2HaPackageSet
+}
+
 // edge commit OS package set
 func edgeCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{

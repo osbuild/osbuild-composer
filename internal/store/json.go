@@ -359,6 +359,8 @@ var imageTypeCompatMapping = map[string]string{
 	"tar-installer":       "tar-installer",
 	"test_type":           "test_type",         // used only in json_test.go
 	"test_type_invalid":   "test_type_invalid", // used only in json_test.go
+	"ec2":                 "ec2",
+	"ec2-ha":              "ec2-ha",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {

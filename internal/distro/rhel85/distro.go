@@ -684,6 +684,59 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:         []string{"image"},
 	}
 
+	ec2ImgTypeX86_64 := imageType{
+		name:     "ec2",
+		filename: "image.raw.xz",
+		mimeType: "application/xz",
+		packageSets: map[string]rpmmd.PackageSet{
+			buildPkgsKey: ec2BuildPackageSet(),
+			osPkgsKey:    rhelEc2PackageSet(),
+		},
+		defaultTarget:   "multi-user.target",
+		enabledServices: ec2EnabledServices,
+		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:        true,
+		bootType:        LegacyBootType,
+		defaultSize:     10 * GigaByte,
+		pipelines:       rhelEc2Pipelines,
+		exports:         []string{"archive"},
+	}
+
+	ec2ImgTypeAarch64 := imageType{
+		name:     "ec2",
+		filename: "image.raw.xz",
+		mimeType: "application/xz",
+		packageSets: map[string]rpmmd.PackageSet{
+			buildPkgsKey: ec2BuildPackageSet(),
+			osPkgsKey:    rhelEc2PackageSet(),
+		},
+		defaultTarget:   "multi-user.target",
+		enabledServices: ec2EnabledServices,
+		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
+		bootable:        true,
+		defaultSize:     10 * GigaByte,
+		pipelines:       rhelEc2Pipelines,
+		exports:         []string{"archive"},
+	}
+
+	ec2HaImgTypeX86_64 := imageType{
+		name:     "ec2-ha",
+		filename: "image.raw.xz",
+		mimeType: "application/xz",
+		packageSets: map[string]rpmmd.PackageSet{
+			buildPkgsKey: ec2BuildPackageSet(),
+			osPkgsKey:    rhelEc2HaPackageSet(),
+		},
+		defaultTarget:   "multi-user.target",
+		enabledServices: ec2EnabledServices,
+		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:        true,
+		bootType:        LegacyBootType,
+		defaultSize:     10 * GigaByte,
+		pipelines:       rhelEc2Pipelines,
+		exports:         []string{"archive"},
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -715,8 +768,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, edgeCommitImgType, edgeOCIImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeOCIImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 

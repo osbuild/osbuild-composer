@@ -398,6 +398,21 @@ func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, option
 	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, false, t.Filename())
 }
 
+// rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
+func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	rawImageFilename := "image.raw"
+
+	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	lastPipeline := pipelines[len(pipelines)-1]
+	pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, rawImageFilename, t.Filename()))
+
+	return pipelines, nil
+}
+
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
@@ -859,6 +874,19 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	if platform != "" {
 		p.AddStage(osbuild.NewGrub2InstStage(grub2InstStageOptions(outputFilename, pt, platform)))
 	}
+
+	return p
+}
+
+func xzArchivePipeline(inputPipelineName, inputFilename, outputFilename string) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = "archive"
+	p.Build = "name:build"
+
+	p.AddStage(osbuild.NewXzStage(
+		osbuild.NewXzStageOptions(outputFilename),
+		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(inputPipelineName, inputFilename)),
+	))
 
 	return p
 }
