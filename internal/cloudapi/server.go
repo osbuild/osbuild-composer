@@ -40,6 +40,8 @@ type apiHandlers struct {
 	server *Server
 }
 
+type binder struct{}
+
 // NewServer creates a new cloud server
 func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
 	server := &Server{
@@ -54,6 +56,7 @@ func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distror
 // the given path.
 func (server *Server) Handler(path string, identityFilter []string) http.Handler {
 	e := echo.New()
+	e.Binder = binder{}
 
 	if len(identityFilter) > 0 {
 		server.identityFilter = identityFilter
@@ -65,6 +68,19 @@ func (server *Server) Handler(path string, identityFilter []string) http.Handler
 	RegisterHandlers(e.Group(path, server.IncRequests), &handler)
 
 	return e
+}
+
+func (b binder) Bind(i interface{}, ctx echo.Context) error {
+	contentType := ctx.Request().Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "Only 'application/json' content type is supported")
+	}
+
+	err := json.NewDecoder(ctx.Request().Body).Decode(i)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Cannot parse request body: %v", err))
+	}
+	return nil
 }
 
 func (server *Server) VerifyIdentityHeader(next echo.HandlerFunc) echo.HandlerFunc {
@@ -120,9 +136,9 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 	}
 
 	var request ComposeRequest
-	err := json.NewDecoder(ctx.Request().Body).Decode(&request)
+	err := ctx.Bind(&request)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Could not parse request body")
+		return err
 	}
 
 	distribution := h.server.distros.GetDistro(request.Distribution)
