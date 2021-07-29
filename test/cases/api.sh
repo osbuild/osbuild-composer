@@ -1099,13 +1099,16 @@ curl \
 #
 # Make sure that requesting a non existing paquet returns a 400 error
 #
+REQUEST_FILE2="${WORKDIR}/request2.json"
+jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
+
 [ "$(curl \
     --silent \
     --output /dev/null \
     --write-out '%{http_code}' \
     --header "x-rh-identity: $VALIDAUTHSTRING" \
     -H "Content-Type: application/json" \
-    -d '{ "distribution": "centos-8", "image_requests": [ { "architecture": "x86_64", "image_type": "ami", "repositories": [ { "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/", "rhsm": false }, { "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/", "rhsm": false }, { "baseurl": "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/", "rhsm": false } ], "upload_request": { "type": "aws.s3", "options": { "region": "somewhere", "s3": { "access_key_id": "thingy", "secret_access_key": "thing", "bucket": "thingything" } } } } ], "customizations": { "packages": [ "jesuisunpaquetquinexistepas_idonotexist" ] } }' \
+    --data @"$REQUEST_FILE2" \
     http://localhost:443/api/composer/v1/compose)" = "400" ]
 
 #
@@ -1122,7 +1125,7 @@ EOF
     --write-out '%{http_code}' \
     --header "x-rh-identity: $VALIDAUTHSTRING" \
     -H "Content-Type: application/json" \
-    -d '{ "distribution": "centos-8", "image_requests": [ { "architecture": "x86_64", "image_type": "ami", "repositories": [ { "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/", "rhsm": false }, { "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/", "rhsm": false }, { "baseurl": "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/", "rhsm": false } ], "upload_request": { "type": "aws.s3", "options": { "region": "somewhere", "s3": { "access_key_id": "thingy", "secret_access_key": "thing", "bucket": "thingything" } } } } ], "customizations": { "packages": [ "jesuisunpaquetquinexistepas_idonotexist" ] } }' \
+    --data @"$REQUEST_FILE2" \
     http://localhost:443/api/composer/v1/compose)" = "500" ]
 
 sudo mv -f /usr/libexec/osbuild-composer/dnf-json.bak /usr/libexec/osbuild-composer/dnf-json
