@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"path"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -69,7 +70,7 @@ const (
 	HybridBootType BootType = "hybrid"
 )
 
-var mountpointAllowList = []string{"/", "/var", "/home"}
+var mountpointAllowList = []string{"/", "/var", "/var/*", "/home", "/opt", "/srv", "/usr"}
 
 type distribution struct {
 	name             string
@@ -422,8 +423,11 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 }
 
 func checkMountpoint(mountpoint string) bool {
-	for _, m := range mountpointAllowList {
-		if mountpoint == m {
+	for _, allowed := range mountpointAllowList {
+		// check if the path and its subdirectories
+		// is in the allow list
+		match, _ := path.Match(allowed, mountpoint)
+		if mountpoint == "/" || match {
 			return true
 		}
 	}

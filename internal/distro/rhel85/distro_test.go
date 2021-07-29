@@ -610,3 +610,59 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		}
 	}
 }
+
+func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/log",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else if imgTypeName == "edge-installer" {
+				continue
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}
+
+func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/variable",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else if imgTypeName == "edge-installer" {
+				continue
+			} else {
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\"]")
+			}
+		}
+	}
+}
