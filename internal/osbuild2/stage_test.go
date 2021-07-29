@@ -589,6 +589,19 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"type":"org.osbuild.ostree.preptree","options":{"etc_group_members":["wheel"]}}`),
 			},
 		},
+		{
+			name: "xz",
+			fields: fields{
+				Type: "org.osbuild.xz",
+				Options: &XzStageOptions{
+					Filename: "image.raw.xz",
+				},
+				Inputs: NewFilesInputs(NewFilesInputReferencesPipeline("os", "image.raw")),
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.xz","inputs":{"file":{"type":"org.osbuild.files","origin":"org.osbuild.pipeline","references":{"name:os":{"file":"image.raw"}}}},"options":{"filename":"image.raw.xz"}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
