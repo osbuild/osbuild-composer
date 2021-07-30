@@ -221,8 +221,12 @@ func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string,
 // hard-coded SSH keys b/c we're having troubles uploading publicKey
 // to the VM, see https://github.com/vmware/govmomi/issues/2054
 func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
-	public := "/usr/share/tests/osbuild-composer/keyring/id_rsa.pub"
-	private := "/usr/share/tests/osbuild-composer/keyring/id_rsa"
+	cmd := exec.Command("sh", "/usr/libexec/osbuild-composer-test/gen-ssh.sh")
+	aux := cmd.Output()
+	ssh_data_dir := strings.ReplaceAll(string(b), "\n", "")
+
+	public := ssh_data_dir + "/id_rsa.pub"
+	private := sh_data_dir + "/id_rsa"
 
 	return f(private, public)
 }
