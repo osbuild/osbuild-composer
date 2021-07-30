@@ -1,0 +1,304 @@
+diff --git a/internal/distro/distro.go b/internal/distro/distro.go
+index 1b6630f1..9a701218 100644
+--- a/internal/distro/distro.go
++++ b/internal/distro/distro.go
+@@ -91,9 +91,10 @@ type ImageType interface {
+ 
+ // The ImageOptions specify options for a specific image build
+ type ImageOptions struct {
+-	OSTree       OSTreeImageOptions
+-	Size         uint64
+-	Subscription *SubscriptionImageOptions
++	OSTree             OSTreeImageOptions
++	Size               uint64
++	Subscription       *SubscriptionImageOptions
++	InstallationDevice string
+ }
+ 
+ // The OSTreeImageOptions specify ostree-specific image options
+diff --git a/internal/distro/rhel85/distro.go b/internal/distro/rhel85/distro.go
+index c7f56ab8..30b41166 100644
+--- a/internal/distro/rhel85/distro.go
++++ b/internal/distro/rhel85/distro.go
+@@ -512,6 +512,29 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+ 		pipelines:       edgeInstallerPipelines,
+ 		exports:         []string{"bootiso"},
+ 	}
++	edgeSimplifiedInstallerImgType := imageType{
++		name: "edge-simplified-installer",
++		nameAliases: []string{"rhel-edge-simplified-installer"},
++		filename: "simplified-installer.iso",
++		mimeType: "application/x-iso9660-image",
++		packageSets: map[string]rpmmd.PackageSet{
++			// TODO: non-arch-specific package set handling for installers
++			// This image type requires build packages for installers and
++			// ostree/edge.  For now we only have x86-64 installer build
++			// package sets defined.  When we add installer build package sets
++			// for other architectures, this will need to be moved to the
++			// architecture and the merging will happen in the PackageSets()
++			// method like the other sets.
++			buildPkgsKey:     x8664InstallerBuildPackageSet().Append(edgeBuildPackageSet()),
++			osPkgsKey:        edgeCommitPackageSet(),
++			installerPkgsKey: edgeSimplifiedInstallerPackageSet(),
++		},
++		enabledServices: edgeServices,
++		rpmOstree:       true,
++		bootISO:         true,
++		pipelines:       edgeSimplifiedInstallerPipelines,
++		exports:         []string{"bootiso"},	
++	}
+ 
+ 	qcow2ImgType := imageType{
+ 		name:          "qcow2",
+@@ -621,7 +644,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+ 		exports:   []string{"bootiso"},
+ 	}
+ 
+-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
++	x86_64.addImageTypes(edgeSimplifiedInstallerImgType, qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgType, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+ 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgType, tarImgType, edgeCommitImgType, edgeOCIImgType)
+ 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
+ 	s390x.addImageTypes(qcow2ImgType, tarImgType)
+diff --git a/internal/distro/rhel85/package_sets.go b/internal/distro/rhel85/package_sets.go
+index 27100747..1941ab1a 100644
+--- a/internal/distro/rhel85/package_sets.go
++++ b/internal/distro/rhel85/package_sets.go
+@@ -301,6 +301,75 @@ func installerPackageSet() rpmmd.PackageSet {
+ 	}
+ }
+ 
++func rawImagePackagesSet() rpmmd.PackageSet {
++	return rpmmd.PackageSet{
++		Include: []string{
++		},
++		Exclude: nil,
++	}
++}
++
++func edgeSimplifiedInstallerPackageSet() rpmmd.PackageSet {
++	return rpmmd.PackageSet{
++		Include: []string{
++			"cloud-utils-growpart",
++			"dracut-live",
++			"xfsprogs",
++			"bsdtar",
++			"coreos-installer",
++			"coreos-installer-bootinfra",
++			"dracut-config-generic",
++			"dracut-network",
++			"kernel",
++			"binutils",
++			"basesystem",
++			"sudo",
++			"systemd",
++			"coreutils",
++			"util-linux",
++			"curl",
++			"e2fsprogs",
++			"dosfstools",
++			"attr",
++			"xz",
++			"gzip",
++			"iptables",
++			"dnsmasq",
++			"traceroute",
++			"hostname",
++			"iproute",
++			"iputils",
++			"openssh-clients",
++			"procps-ng",
++			"rootfiles",
++			"passwd",
++			"policycoreutils",
++			"policycoreutils-python-utils",
++			"selinux-policy-targeted",
++			"setools-console",
++			"less",
++			"tar",
++			"ima-evm-utils",
++			"shim-x64",
++			"ostree",
++			"microcode_ctl",
++			"iwl1000-firmware",
++			"iwl100-firmware",
++			"iwl105-firmware",
++			"iwl135-firmware",
++			"iwl2000-firmware",
++			"iwl2030-firmware",
++			"iwl3160-firmware",
++			"iwl5000-firmware",
++			"iwl5150-firmware",
++			"iwl6000-firmware",
++			"iwl6050-firmware",
++			"iwl7260-firmware",
++		},
++		Exclude: nil,
++	}
++}
++
+ func edgeInstallerPackageSet() rpmmd.PackageSet {
+ 	return rpmmd.PackageSet{
+ 		Include: []string{
+diff --git a/internal/distro/rhel85/pipelines.go b/internal/distro/rhel85/pipelines.go
+index e5dfda61..7249ca82 100644
+--- a/internal/distro/rhel85/pipelines.go
++++ b/internal/distro/rhel85/pipelines.go
+@@ -3,6 +3,7 @@ package rhel85
+ import (
+ 	"fmt"
+ 	"math/rand"
++	"os"
+ 	"strings"
+ 
+ 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+@@ -36,7 +37,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
+ 	}
+ 	partitionTable := defaultPartitionTable(options, t.arch, rng)
+ 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
++	treePipeline.AddStage(osbuild.New(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+ 	pipelines = append(pipelines, *treePipeline)
+ 
+ 	diskfile := "disk.img"
+@@ -164,6 +165,32 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
+ 	return pipelines, nil
+ }
+ 
++func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
++	pipelines := make([]osbuild.Pipeline, 0)
++	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
++	kernelPkg := new(rpmmd.PackageSpec)
++	installerPackages := packageSetSpecs[installerPkgsKey]
++	for _, pkg := range installerPackages {
++		if pkg.Name == "kernel" {
++			kernelPkg = &pkg
++			break
++		}
++	}
++	if kernelPkg == nil {
++		return nil, fmt.Errorf("kernel package not found in installer package set")
++	}
++	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
++	pipelines = append(pipelines, *simplifiedInstallerImageTreePipeline(repos, installerPackages, kernelVer, customizations.GetKernel(), t.arch, t.kernelOptions, rng, options))
++	// pipelines = append(pipelines, *simplifiedInstallerImagePipeline())
++	// pipelines = append(pipelines, *simplifiedInstallerImageXZPipeline())
++	// pipelines = append(pipelines, *simplifiedInstallerTreePipeline())
++	// pipelines = append(pipelines, *simplifiedInstallerEFIBootTreePipeline())
++	// pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
++	// pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
++
++	return pipelines, nil
++}
++
+ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+ 	pipelines := make([]osbuild.Pipeline, 0)
+ 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+@@ -518,6 +545,87 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
+ 	return stages
+ }
+ 
++func simplifiedInstallerImageTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, kernel *blueprint.KernelCustomization, arch *architecture, kernelOptions string, rng *rand.Rand, options distro.ImageOptions) *osbuild.Pipeline {
++	p := new(osbuild.Pipeline)
++	p.Name = "image-tree"
++	p.Build = "name:build"
++	repo := "/ostree/repo"
++	osname := "redhat"
++	p.AddStage(osbuild.OSTreeInitFsStage())
++	p.AddStage(osbuild.NewOSTreePullStage(
++		&osbuild.OSTreePullStageOptions{Repo: repo},
++		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
++	))
++	p.AddStage(osbuild.NewOSTreeOsInitStage(
++		&osbuild.OSTreeOsInitStageOptions{
++			OsName: osname,
++		},
++	))
++	p.AddStage(osbuild.NewOSTreeConfigStage(
++		&osbuild.OSTreeConfigStageOptions{
++			Repo: repo,
++			Config: osbuild.OstreeConfigOptions{
++				Sysroot: osbuild.SysrootOptions{
++					ReadOnly: true,
++				},
++			},
++		},
++	))
++	p.AddStage(osbuild.NewMkdirStage(
++		&osbuild.MkdirStageOptions{
++			[]osbuild.Path{
++				osbuild.Path{
++					Path: "/boot/efi",
++					Mode: os.FileMode(448),
++				},
++			},
++		},
++	))
++	p.AddStage(osbuild.NewOSTreeDeployStage(
++		&osbuild.OSTreeDeployStageOptions{
++			OsName: osname,
++			Ref:    options.OSTree.Ref,
++			Mounts: []string{"/boot", "/boot/efi"},
++			Rootfs: osbuild.Rootfs{
++				Label: "root",
++			},
++			KernelOpts: []string{
++				"console=tty0",
++				"console=ttyS0",
++				"systemd.log_target=console",
++				"systemd.journald.forward_to_console=1",
++			},
++		},
++	))
++	p.AddStage(osbuild.NewOSTreeFillvarStage(
++		&osbuild.OSTreeFillvarStageOptions{
++			Deployment: osbuild.Deployment{
++				OsName: osname,
++				Ref: options.OSTree.Ref,
++			},
++		},
++	))
++	partitionTable := defaultPartitionTable(options, arch, rng)
++	p.AddStage(osbuild2.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
++	p.AddStage(osbuild.NewOSTreeSelinuxStage(
++		&osbuild.OSTreeSelinuxStageOptions{
++			Deployment: osbuild.Deployment{
++				OsName: osname,
++				Ref: options.OSTree.Ref,
++			},
++		},
++	))
++	p.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(
++		&partitionTable,
++		kernelOptions,
++		nil,
++		nil,
++		arch.uefi,
++		arch.legacy,
++	)))
++	return p
++}
++
+ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
+ 	p := new(osbuild.Pipeline)
+ 	p.Name = "anaconda-tree"
+diff --git a/internal/osbuild2/ostree_config_stage.go b/internal/osbuild2/ostree_config_stage.go
+index c6f91a44..71986ec1 100644
+--- a/internal/osbuild2/ostree_config_stage.go
++++ b/internal/osbuild2/ostree_config_stage.go
+@@ -1,6 +1,6 @@
+ package osbuild2
+ 
+-type ConfigOptions struct {
++type OstreeConfigOptions struct {
+ 	Sysroot SysrootOptions `json:"sysroot"`
+ }
+ 
+@@ -13,7 +13,7 @@ type OSTreeConfigStageOptions struct {
+ 	// Location of the ostree repo
+ 	Repo string `json:"repo"`
+ 
+-	Config ConfigOptions `json:"config"`
++	Config OstreeConfigOptions `json:"config"`
+ }
+ 
+ func (OSTreeConfigStageOptions) isStageOptions() {}
