@@ -129,10 +129,11 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 							Hostname: "ntp.example.com",
 						},
 					},
+					LeapsecTz: common.StringToPtr(""),
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.chrony","options":{"servers":[{"hostname":"127.0.0.1","minpoll":0,"maxpoll":4,"iburst":true,"prefer":false},{"hostname":"ntp.example.com"}]}}`),
+				data: []byte(`{"type":"org.osbuild.chrony","options":{"servers":[{"hostname":"127.0.0.1","minpoll":0,"maxpoll":4,"iburst":true,"prefer":false},{"hostname":"ntp.example.com"}],"leapsectz":""}}`),
 			},
 		},
 		{

@@ -9,6 +9,7 @@ import (
 type ChronyStageOptions struct {
 	Timeservers []string             `json:"timeservers,omitempty"`
 	Servers     []ChronyConfigServer `json:"servers,omitempty"`
+	LeapsecTz   *string              `json:"leapsectz,omitempty"`
 }
 
 func (ChronyStageOptions) isStageOptions() {}
