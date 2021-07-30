@@ -64,15 +64,22 @@ func x8664InstallerBuildPackageSet() rpmmd.PackageSet {
 
 // BOOT PACKAGE SETS
 
-// x86_64 arch-specific boot package set
-func x8664BootPackageSet() rpmmd.PackageSet {
+// x86_64 Legacy arch-specific boot package set
+func x8664LegacyBootPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
-		Include: []string{"dracut-config-generic", "grub2-pc", "grub2-efi-x64", "shim-x64"},
+		Include: []string{"dracut-config-generic", "grub2-pc"},
 	}
 }
 
-// aarch64 arch-specific boot package set
-func aarch64BootPackageSet() rpmmd.PackageSet {
+// x86_64 UEFI arch-specific boot package set
+func x8664UEFIBootPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{"grub2-efi-x64", "shim-x64"},
+	}
+}
+
+// aarch64 UEFI arch-specific boot package set
+func aarch64UEFIBootPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dracut-config-generic", "efibootmgr", "grub2-efi-aa64",
@@ -81,8 +88,8 @@ func aarch64BootPackageSet() rpmmd.PackageSet {
 	}
 }
 
-// ppc64le arch-specific boot package set
-func ppc64leBootPackageSet() rpmmd.PackageSet {
+// ppc64le Legacy arch-specific boot package set
+func ppc64leLegacyBootPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dracut-config-generic", "powerpc-utils", "grub2-ppc64le",
@@ -91,8 +98,8 @@ func ppc64leBootPackageSet() rpmmd.PackageSet {
 	}
 }
 
-// s390x arch-specific boot package set
-func s390xBootPackageSet() rpmmd.PackageSet {
+// s390x Legacy arch-specific boot package set
+func s390xLegacyBootPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"dracut-config-generic", "s390utils-base"},
 	}

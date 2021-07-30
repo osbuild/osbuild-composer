@@ -24,8 +24,11 @@ const (
 	// build package set name
 	buildPkgsKey = "build"
 
-	// bootable image package set name
-	bootPkgsKey = "boot"
+	// Legacy bootable image package set name
+	bootLegacyPkgsKey = "boot.legacy"
+
+	// UEFI bootable image package set name
+	bootUEFIPkgsKey = "boot.uefi"
 
 	// main/common os image package set name
 	osPkgsKey = "packages"
@@ -53,6 +56,15 @@ const (
 	aarch64ArchName = "aarch64"
 	ppc64leArchName = "ppc64le"
 	s390xArchName   = "s390x"
+)
+
+type BootType string
+
+const (
+	UnsetBootType  BootType = ""
+	LegacyBootType BootType = "legacy"
+	UEFIBootType   BootType = "uefi"
+	HybridBootType BootType = "hybrid"
 )
 
 type distribution struct {
@@ -112,7 +124,7 @@ type architecture struct {
 	imageTypeAliases map[string]string
 	packageSets      map[string]rpmmd.PackageSet
 	legacy           string
-	uefi             bool
+	bootType         BootType
 }
 
 func (a *architecture) Name() string {
@@ -190,6 +202,8 @@ type imageType struct {
 	rpmOstree bool
 	// bootable image
 	bootable bool
+	// If set to a value, it is preferred over the architecture value
+	bootType BootType
 }
 
 func (t *imageType) Name() string {
@@ -252,8 +266,27 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 
 	// package sets from flags
 	if t.bootable {
-		// add boot sets
-		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootPkgsKey]).Append(distroSets[bootPkgsKey])
+		var addLegacyBootPkg bool
+		var addUEFIBootPkg bool
+
+		switch bt := t.getBootType(); bt {
+		case LegacyBootType:
+			addLegacyBootPkg = true
+		case UEFIBootType:
+			addUEFIBootPkg = true
+		case HybridBootType:
+			addLegacyBootPkg = true
+			addUEFIBootPkg = true
+		default:
+			panic(fmt.Sprintf("unsupported boot type: %q", bt))
+		}
+
+		if addLegacyBootPkg {
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootLegacyPkgsKey]).Append(distroSets[bootLegacyPkgsKey])
+		}
+		if addUEFIBootPkg {
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootUEFIPkgsKey]).Append(distroSets[bootUEFIPkgsKey])
+		}
 	}
 	if t.rpmOstree {
 		// add ostree sets
@@ -284,6 +317,24 @@ func (t *imageType) Exports() []string {
 		return t.exports
 	}
 	return []string{"assembler"}
+}
+
+// getBootType returns the BootType which should be used for this particular
+// combination of architecture and image type.
+func (t *imageType) getBootType() BootType {
+	bootType := t.arch.bootType
+	if t.bootType != UnsetBootType {
+		bootType = t.bootType
+	}
+	return bootType
+}
+
+func (t *imageType) supportsUEFI() bool {
+	bootType := t.getBootType()
+	if bootType == HybridBootType || bootType == UEFIBootType {
+		return true
+	}
+	return false
 }
 
 // local type for ostree commit metadata used to define commit sources
@@ -425,41 +476,42 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:   x86_64ArchName,
 		distro: rd,
 		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: x8664BuildPackageSet(),
-			bootPkgsKey:  x8664BootPackageSet(),
-			edgePkgsKey:  x8664EdgeCommitPackageSet(),
+			buildPkgsKey:      x8664BuildPackageSet(),
+			bootLegacyPkgsKey: x8664LegacyBootPackageSet(),
+			bootUEFIPkgsKey:   x8664UEFIBootPackageSet(),
+			edgePkgsKey:       x8664EdgeCommitPackageSet(),
 		},
-		legacy: "i386-pc",
-		uefi:   true,
+		legacy:   "i386-pc",
+		bootType: HybridBootType,
 	}
 
 	aarch64 := architecture{
 		name:   aarch64ArchName,
 		distro: rd,
 		packageSets: map[string]rpmmd.PackageSet{
-			bootPkgsKey: aarch64BootPackageSet(),
-			edgePkgsKey: aarch64EdgeCommitPackageSet(),
+			bootUEFIPkgsKey: aarch64UEFIBootPackageSet(),
+			edgePkgsKey:     aarch64EdgeCommitPackageSet(),
 		},
-		uefi: true,
+		bootType: UEFIBootType,
 	}
 
 	ppc64le := architecture{
 		distro: rd,
 		name:   ppc64leArchName,
 		packageSets: map[string]rpmmd.PackageSet{
-			bootPkgsKey:  ppc64leBootPackageSet(),
-			buildPkgsKey: ppc64leBuildPackageSet(),
+			bootLegacyPkgsKey: ppc64leLegacyBootPackageSet(),
+			buildPkgsKey:      ppc64leBuildPackageSet(),
 		},
-		legacy: "powerpc-ieee1275",
-		uefi:   false,
+		legacy:   "powerpc-ieee1275",
+		bootType: LegacyBootType,
 	}
 	s390x := architecture{
 		distro: rd,
 		name:   s390xArchName,
 		packageSets: map[string]rpmmd.PackageSet{
-			bootPkgsKey: s390xBootPackageSet(),
+			bootLegacyPkgsKey: s390xLegacyBootPackageSet(),
 		},
-		uefi: false,
+		bootType: LegacyBootType,
 	}
 
 	// Shared Services
@@ -609,6 +661,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		enabledServices: ec2EnabledServices,
 		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:        true,
+		bootType:        LegacyBootType,
 		defaultSize:     10 * GigaByte,
 		pipelines:       ec2Pipelines,
 		exports:         []string{"image"},

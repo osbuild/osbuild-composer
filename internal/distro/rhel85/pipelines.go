@@ -37,7 +37,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	}
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -61,7 +61,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -87,7 +87,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -113,7 +113,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.arch.uefi, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -368,15 +368,12 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	var treePipeline *osbuild.Pipeline
 	var err error
-	var useUEFI bool
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case x86_64ArchName:
-		useUEFI = false
 		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
 	// rhel-ec2-aarch64
 	case aarch64ArchName:
-		useUEFI = true
 		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
@@ -386,7 +383,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 	partitionTable := ec2PartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], useUEFI, t.arch.legacy)))
+	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
 	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
