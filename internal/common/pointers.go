@@ -11,3 +11,7 @@ func Uint64ToPtr(x uint64) *uint64 {
 func BoolToPtr(x bool) *bool {
 	return &x
 }
+
+func StringToPtr(x string) *string {
+	return &x
+}
