@@ -12,6 +12,58 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# modify existing kickstart by prepending and appending commands
+function modksiso {
+    sudo dnf install -y lorax  # for mkksiso
+    isomount=$(mktemp -d)
+    kspath=$(mktemp -d)
+
+    iso="$1"
+    newiso="$2"
+
+    echo "Mounting ${iso} -> ${isomount}"
+    sudo mount -v -o ro "${iso}" "${isomount}"
+
+    cleanup() {
+        sudo umount -v "${isomount}"
+        rmdir -v "${isomount}"
+        rm -rv "${kspath}"
+    }
+
+    trap cleanup RETURN
+
+    ksfiles=("${isomount}"/*.ks)
+    ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
+    echo "Found kickstart file ${ksfile}"
+
+    ksbase=$(basename "${ksfile}")
+    newksfile="${kspath}/${ksbase}"
+    oldks=$(cat "${ksfile}")
+    echo "Preparing modified kickstart file"
+    cat > "${newksfile}" << EOFKS
+text --non-interactive
+zerombr
+clearpart --all --initlabel --disklabel=gpt
+autopart --noswap --type=plain
+network --bootproto=dhcp --device=link --activate --onboot=on
+${oldks}
+poweroff
+
+%post --log=/var/log/anaconda/post-install.log --erroronfail
+
+# no sudo password for user admin
+echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+%end
+EOFKS
+
+    echo "Writing new ISO"
+    sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+
+    echo "==== NEW KICKSTART FILE ===="
+    cat "${newksfile}"
+    echo "============================"
+}
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -33,8 +85,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
-      <host mac='34:49:22:B0:83:31' name='vm-uefi' ip='192.168.100.51'/>
+      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
     </dhcp>
   </ip>
 </network>
@@ -60,14 +111,13 @@ EOF
 # Set up variables.
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
+SSH_USER="admin"
 IMAGE_KEY="osbuild-composer-installer-test-${TEST_UUID}"
-BIOS_GUEST_ADDRESS=192.168.100.50
-UEFI_GUEST_ADDRESS=192.168.100.51
+GUEST_ADDRESS=192.168.100.50
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-KS_FILE=${TEMPDIR}/ks.cfg
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
@@ -75,6 +125,7 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 # Get the compose log.
 get_compose_log () {
@@ -160,21 +211,15 @@ wait_for_ssh_up () {
 # Clean up our mess.
 clean_up () {
     greenprint "🧼 Cleaning up"
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-uefi"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}"
     fi
-    sudo virsh undefine "${IMAGE_KEY}-uefi" --nvram
+    sudo virsh undefine "${IMAGE_KEY}" --nvram
     # Remove qcow2 file.
-    sudo rm -f "$LIBVIRT_UEFI_IMAGE_PATH"
-
-    # Remove prod repo
-    sudo rm -rf "$PROD_REPO"
+    sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
-
-    # Stop prod repo http service
-    sudo systemctl disable --now httpd
 }
 
 # Test result checking
@@ -196,6 +241,8 @@ check_result () {
 ############################
 
 # Write a blueprint for installer image.
+# The tar base image is very lean, so let's add a bunch of packages to make it
+# usable (adding most of the packages from the qcow2 image plus some for fun)
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "installer"
 description = "An installer image"
@@ -204,19 +251,79 @@ modules = []
 groups = []
 
 [[packages]]
-name = "vim"
+name = "@core"
 version = "*"
 
 [[packages]]
-name = "zsh"
+name = "vim-enhanced"
+version = "*"
+
+[[packages]]
+name = "tmux"
+version = "*"
+
+[[packages]]
+name = "sudo"
+version = "*"
+
+[[packages]]
+name = "openssh-server"
+version = "*"
+
+[[packages]]
+name = "dhcp-client"
+version = "*"
+
+[[packages]]
+name = "dnf"
+version = "*"
+
+[[packages]]
+name = "dnf-utils"
+version = "*"
+
+[[packages]]
+name = "dosfstools"
+version = "*"
+
+[[packages]]
+name = "dracut-norescue"
+version = "*"
+
+[[packages]]
+name = "NetworkManager"
+version = "*"
+
+[[packages]]
+name = "net-tools"
+version = "*"
+
+[[packages]]
+name = "nfs-utils"
+version = "*"
+
+[[packages]]
+name = "python3-jsonschema"
+version = "*"
+
+[[packages]]
+name = "qemu-guest-agent"
+version = "*"
+
+[[packages]]
+name = "tar"
+version = "*"
+
+[[packages]]
+name = "yum"
 version = "*"
 
 [[customizations.user]]
-name = "admin"
+name = "${SSH_USER}"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-home = "/home/admin/"
+key = "${SSH_KEY_PUB}"
+home = "/home/${SSH_USER}/"
 groups = ["wheel"]
 EOF
 
@@ -235,7 +342,9 @@ build_image installer tar-installer
 greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-installer.iso"
-sudo mv "${ISO_FILENAME}" /var/lib/libvirt/images
+greenprint "🖥 Modify kickstart file and create new ISO"
+modksiso "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
+sudo rm "${ISO_FILENAME}"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
@@ -252,131 +361,41 @@ sudo composer-cli blueprints delete installer > /dev/null
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
-# Create qcow2 file for virt install.
-greenprint "🖥 Create qcow2 file for virt install"
-LIBVIRT_BIOS_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-bios.qcow2
-LIBVIRT_UEFI_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
-sudo qemu-img create -f qcow2 "${LIBVIRT_BIOS_IMAGE_PATH}" 20G
-sudo qemu-img create -f qcow2 "${LIBVIRT_UEFI_IMAGE_PATH}" 20G
+# Create qcow2 files for virt install.
+greenprint "🖥 Create qcow2 files for virt install"
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
-# Write kickstart file for image installation.
-greenprint "📑 Generate kickstart file"
-tee "$KS_FILE" > /dev/null << STOPHERE
-text
-network --bootproto=dhcp --device=link --activate --onboot=on
-
-zerombr
-clearpart --all --initlabel --disklabel=msdos
-autopart --nohome --noswap --type=plain
-poweroff
-
-%post --log=/var/log/anaconda/post-install.log --erroronfail
-
-# no sudo password for user admin
-echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
-
-%end
-STOPHERE
-
-##################################################
+#########################
 ##
-## Install and test image on BIOS VM
+## Install and test image
 ##
-##################################################
+#########################
 # Install image via anaconda.
-greenprint "💿 Install image via installer(ISO) on BIOS VM"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}-bios" \
-                   --disk path="${LIBVIRT_BIOS_IMAGE_PATH}",format=qcow2 \
+
+greenprint "💿 Install image via installer(ISO) on VM"
+sudo virt-install  --name="${IMAGE_KEY}"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --debug \
-                   --noreboot
-
-# Start VM.
-greenprint "📟 Start BIOS VM"
-sudo virsh start "${IMAGE_KEY}-bios"
-
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# Check image installation result
-check_result
-
-# Run test on BIOS VM
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[guest]
-${BIOS_GUEST_ADDRESS}
-
-[guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-EOF
-
-# Test OS
-greenprint "📼 Run tests on BIOS VM"
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory /usr/share/tests/osbuild-composer/ansible/check_install.yaml || RESULTS=0
-check_result
-
-# Clean up BIOS VM
-greenprint "🧹 Clean up BIOS VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-bios"
-fi
-sudo virsh undefine "${IMAGE_KEY}-bios"
-sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
-
-######################################
-##
-## Install and test image on UEFI VM
-##
-#####################################
-# Install image via anaconda.
-
-greenprint "💿 Install image via installer(ISO) on UEFI VM"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}-uefi"\
-                   --disk path="${LIBVIRT_UEFI_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
                    --noreboot
 
-# Start VM.
-greenprint "💻 Start UEFI VM"
-sudo virsh start "${IMAGE_KEY}-uefi"
 
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
+# Start VM.
+greenprint "💻 Start VM"
+sudo virsh start "${IMAGE_KEY}"
+
+# Waiting for SSH
+greenprint "🛃 Checking if SSH is ready to go"
 for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -390,7 +409,7 @@ check_result
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [guest]
-${UEFI_GUEST_ADDRESS}
+${GUEST_ADDRESS}
 
 [guest:vars]
 ansible_python_interpreter=/usr/bin/python3
