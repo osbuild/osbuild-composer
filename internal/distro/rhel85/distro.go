@@ -764,6 +764,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 		rpmOstree: false,
 		bootISO:   true,
+		bootable:  true,
 		pipelines: tarInstallerPipelines,
 		exports:   []string{"bootiso"},
 	}
