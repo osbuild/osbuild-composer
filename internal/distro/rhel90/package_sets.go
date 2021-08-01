@@ -122,7 +122,7 @@ func qcow2CommonPackageSet() rpmmd.PackageSet {
 			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
 			"alsa-tools-firmware", "biosdevname", "dnf-plugin-spacewalk",
 			"dracut-config-rescue", "fedora-release", "fedora-repos",
-			"firewalld", "fwupd", "iprutils", "ivtv-firmware",
+			"firewalld", "iprutils", "ivtv-firmware",
 			"iwl100-firmware", "iwl1000-firmware", "iwl105-firmware",
 			"iwl135-firmware", "iwl2000-firmware", "iwl2030-firmware",
 			"iwl3160-firmware", "iwl3945-firmware", "iwl4965-firmware",
