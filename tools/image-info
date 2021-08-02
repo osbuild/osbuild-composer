@@ -555,7 +555,6 @@ def read_fstab(tree):
 
     An example return value:
     [
-        [],
         [
             "UUID=6d066eb4-e4c1-4472-91f9-d167097f48d1",
             "/",
@@ -569,7 +568,7 @@ def read_fstab(tree):
     result = []
     with contextlib.suppress(FileNotFoundError):
         with open(f"{tree}/etc/fstab") as f:
-            result = sorted([line.split() for line in f if line and not line.startswith("#")])
+            result = sorted([line.split() for line in f if line.strip() and not line.startswith("#")])
     return result
 
 
