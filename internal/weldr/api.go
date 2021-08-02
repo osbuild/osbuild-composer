@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/gobwas/glob"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
@@ -389,27 +390,40 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 // the distro-specific ImageType Denylist provided to the API from configuration.
 // If the given ImageType is not allowed the method returns an `false`.
 // Otherwise `true` is returned.
-func (api *API) isImageTypeAllowed(distroName, imageType string) bool {
-	anyImageType := "*"
-	anyDistro := "*"
-
+func (api *API) isImageTypeAllowed(distroName, imageType string) (bool, error) {
 	for deniedDistro, deniedImgTypes := range api.distrosImageTypeDenylist {
-		if distroName == deniedDistro || deniedDistro == anyDistro {
+		deniedDistroPattern, err := glob.Compile(deniedDistro)
+		if err != nil {
+			// the bool return value here does not have any real meaning
+			return true, err
+		}
+		if deniedDistroPattern.Match(distroName) {
 			for _, deniedImgType := range deniedImgTypes {
-				if imageType == deniedImgType || deniedImgType == anyImageType {
-					return false
+				deniedImageTypePattern, err := glob.Compile(deniedImgType)
+				if err != nil {
+					// the bool return value here does not have any real meaning
+					return true, err
+				}
+
+				if deniedImageTypePattern.Match(imageType) {
+					return false, nil
 				}
 			}
 		}
 	}
-	return true
+
+	return true, nil
 }
 
 // getImageType returns the ImageType for the selected distro
 // This is necessary because different distros support different image types, and the image
 // type may have a different package set than other distros.
 func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
-	if !api.isImageTypeAllowed(distroName, imageType) {
+	imgAllowed, err := api.isImageTypeAllowed(distroName, imageType)
+	if err != nil {
+		return nil, fmt.Errorf("error while checking if image type is allowed: %v", err)
+	}
+	if !imgAllowed {
 		return nil, fmt.Errorf("image type %q for distro %q is denied by configuration", imageType, distroName)
 	}
 
@@ -2522,7 +2536,16 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	for _, format := range arch.ListImageTypes() {
-		if !api.isImageTypeAllowed(distroName, format) {
+		imgAllowed, err := api.isImageTypeAllowed(distroName, format)
+		if err != nil {
+			errors := responseError{
+				ID:  "InternalError",
+				Msg: fmt.Sprintf("Error while checking if image type is allowed: %v", err),
+			}
+			statusResponseError(writer, http.StatusInternalServerError, errors)
+			return
+		}
+		if !imgAllowed {
 			continue
 		}
 		reply.Types = append(reply.Types, composeType{format, true})

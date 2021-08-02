@@ -1691,6 +1691,26 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			expectedComposeLocal,
 			[]string{"build_id"},
 		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			map[string][]string{fmt.Sprintf("%s*", test_distro.TestDistroName): {fmt.Sprintf("%s*", test_distro.TestImageTypeName)}},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
+				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
+		{
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type": "%s","branch": "master"}`, test_distro.TestImageType2Name),
+			map[string][]string{fmt.Sprintf("%s*", test_distro.TestDistroName): {fmt.Sprintf("%s*", test_distro.TestImageTypeName)}},
+			http.StatusBadRequest,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
+				test_distro.TestImageType2Name, test_distro.TestDistro2Name),
+			expectedComposeLocal,
+			[]string{"build_id"},
+		},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")

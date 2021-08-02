@@ -1,9 +1,9 @@
 # Weldr API: introduce the ablility to limit exposed Image Types by configuration
 
 Extend Weldr API to accept a map of distribution-specific lists of denied
-image types, which should not be exposed via API. A special name `*` can be
-used to match any Distribution or any Image Type. This functionality is needed
-to not expose image types which can't be successfully built outside
+image types, which should not be exposed via API. It is allowed to use
+globing patterns as Distribution and Image Type names. This functionality
+is needed to not expose image types which can't be successfully built outside
 of Red Hat VPN.
 
 The list of denied Image Types is defined in `osbuild-composer` configuration,
