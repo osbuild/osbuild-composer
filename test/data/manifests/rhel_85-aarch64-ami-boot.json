@@ -10795,7 +10795,6 @@
     },
     "rpm-verify": {
       "changed": {
-        "/boot": ".M.......",
         "/etc/chrony.conf": "S.5....T.",
         "/etc/dnf/plugins/product-id.conf": "..5....T.",
         "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
@@ -10814,34 +10813,9 @@
         "/var/spool/anacron/cron.monthly": ".M.......",
         "/var/spool/anacron/cron.weekly": ".M......."
       },
-      "missing": [
-        "/boot/efi",
-        "/boot/efi/EFI",
-        "/boot/efi/EFI/BOOT",
-        "/boot/efi/EFI/BOOT/BOOTAA64.EFI",
-        "/boot/efi/EFI/BOOT/fbaa64.efi",
-        "/boot/efi/EFI/redhat",
-        "/boot/efi/EFI/redhat",
-        "/boot/efi/EFI/redhat/BOOTAA64.CSV",
-        "/boot/efi/EFI/redhat/fonts",
-        "/boot/efi/EFI/redhat/grubaa64.efi",
-        "/boot/efi/EFI/redhat/mmaa64.efi",
-        "/boot/efi/EFI/redhat/shim.efi",
-        "/boot/efi/EFI/redhat/shimaa64-redhat.efi",
-        "/boot/efi/EFI/redhat/shimaa64.efi",
-        "/boot/grub2",
-        "/boot/grub2/grubenv",
-        "/boot/loader/entries"
-      ]
+      "missing": []
     },
     "selinux": {
-      "context-mismatch": [
-        {
-          "actual": "unconfined_u:object_r:unlabeled_t:s0",
-          "expected": "system_u:object_r:boot_t:s0",
-          "filename": "/boot"
-        }
-      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"
