@@ -385,11 +385,11 @@ func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Re
 	return reader, size, nil
 }
 
-// checkImageTypeDenylist checks the given ImageType and Distro names against
-//the distro-specific ImageType Denylist provided to the API from configuration.
-// If the given ImageType is not allowed the method returns an `error`.
-// Otherwise `nil` is returned.
-func (api *API) checkImageTypeDenylist(distroName, imageType string) error {
+// isImageTypeAllowed checks the given ImageType and Distro names against
+// the distro-specific ImageType Denylist provided to the API from configuration.
+// If the given ImageType is not allowed the method returns an `false`.
+// Otherwise `true` is returned.
+func (api *API) isImageTypeAllowed(distroName, imageType string) bool {
 	anyImageType := "*"
 	anyDistro := "*"
 
@@ -397,20 +397,20 @@ func (api *API) checkImageTypeDenylist(distroName, imageType string) error {
 		if distroName == deniedDistro || deniedDistro == anyDistro {
 			for _, deniedImgType := range deniedImgTypes {
 				if imageType == deniedImgType || deniedImgType == anyImageType {
-					return fmt.Errorf("image type denied by configuration: %q", imageType)
+					return false
 				}
 			}
 		}
 	}
-	return nil
+	return true
 }
 
 // getImageType returns the ImageType for the selected distro
 // This is necessary because different distros support different image types, and the image
 // type may have a different package set than other distros.
 func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
-	if err := api.checkImageTypeDenylist(distroName, imageType); err != nil {
-		return nil, err
+	if !api.isImageTypeAllowed(distroName, imageType) {
+		return nil, fmt.Errorf("image type %q for distro %q is denied by configuration", imageType, distroName)
 	}
 
 	distro := api.getDistro(distroName)
@@ -2522,7 +2522,7 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	for _, format := range arch.ListImageTypes() {
-		if err := api.checkImageTypeDenylist(distroName, format); err != nil {
+		if !api.isImageTypeAllowed(distroName, format) {
 			continue
 		}
 		reply.Types = append(reply.Types, composeType{format, true})
