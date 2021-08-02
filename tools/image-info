@@ -7,6 +7,7 @@ import errno
 import functools
 import glob
 import mimetypes
+import operator
 import json
 import os
 import platform
@@ -1812,44 +1813,55 @@ def append_filesystem(report, tree, *, is_ostree=False):
         print("EFI partition", file=sys.stderr)
 
 
-def partition_is_esp(partition):
-    return partition["type"] == "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-
-
-def find_esp(partitions):
-    for i, p in enumerate(partitions):
-        if partition_is_esp(p):
-            return p, i
-    return None, 0
-
-
 def append_partitions(report, device, loctl):
     partitions = report["partitions"]
-    esp, esp_id = find_esp(partitions)
 
     with contextlib.ExitStack() as cm:
-
+        # open each partition as a loop device
         devices = {}
+        device_idx_by_part_uuid = {}
         for n, part in enumerate(partitions):
             start, size = part["start"], part["size"]
             dev = cm.enter_context(loop_open(loctl, device, offset=start, size=size))
             devices[n] = dev
             read_partition(dev, part)
+            if part["uuid"]:
+                device_idx_by_part_uuid[part["uuid"].upper()] = n
 
+        # find partition with fstab and read it
+        fstab = []
         for n, part in enumerate(partitions):
             if not part["fstype"]:
                 continue
-
             with mount(devices[n]) as tree:
-                if esp and os.path.exists(f"{tree}/boot/efi"):
-                    with mount_at(devices[esp_id], f"{tree}/boot/efi", options=['umask=077']):
-                        append_filesystem(report, tree)
-                # situation when /boot is on a separate partition
-                elif esp and os.path.exists(f"{tree}/efi"):
-                    with mount_at(devices[esp_id], f"{tree}/efi", options=['umask=077']):
-                        append_filesystem(report, tree)
-                else:
-                    append_filesystem(report, tree)
+                if os.path.exists(f"{tree}/etc/fstab"):
+                    fstab.extend(read_fstab(tree))
+                    break
+        # sort the fstab entries by the mountpoint
+        fstab = sorted(fstab, key=operator.itemgetter(1))
+
+        # mount all partitions to ther respective mount points
+        root_tree = ""
+        for n, fstab_entry in enumerate(fstab):
+            part_uuid = fstab_entry[0].split("=")[1].upper()
+            part_device = devices[device_idx_by_part_uuid[part_uuid]]
+            part_mountpoint = fstab_entry[1]
+            part_fstype = fstab_entry[2]
+            part_options = fstab_entry[3].split(",")
+
+            # the first mount point should be root
+            if n == 0:
+                if part_mountpoint != "/":
+                    raise RuntimeError("The first mountpoint in sorted fstab entries is not '/'")
+                root_tree = cm.enter_context(mount(part_device))
+                continue
+
+            cm.enter_context(mount_at(part_device, f"{root_tree}{part_mountpoint}", options=part_options, extra=["-t", part_fstype]))
+
+        if not root_tree:
+            raise RuntimeError("The root filesystem tree is not mounted")
+
+        append_filesystem(report, root_tree)
 
 
 def analyse_image(image):
