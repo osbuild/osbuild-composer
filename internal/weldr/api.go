@@ -2177,8 +2177,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	imageType, err := api.getImageType(distroName, cr.ComposeType)
 	if err != nil {
 		errors := responseError{
-			ID:  "UnknownComposeType",
-			Msg: fmt.Sprintf("Unknown compose type for architecture: %s", cr.ComposeType),
+			ID:  "ComposeError",
+			Msg: fmt.Sprintf("Failed to get compose type %q: %v", cr.ComposeType, err),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
