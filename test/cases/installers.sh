@@ -75,6 +75,7 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB="$(cat "${SSH_KEY}".pub)"
 
 # Get the compose log.
 get_compose_log () {
@@ -215,7 +216,7 @@ version = "*"
 name = "admin"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
