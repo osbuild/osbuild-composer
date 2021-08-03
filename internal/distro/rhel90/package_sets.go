@@ -113,7 +113,7 @@ func qcow2CommonPackageSet() rpmmd.PackageSet {
 			"@core", "authselect-compat", "chrony", "cloud-init",
 			"cloud-utils-growpart", "cockpit-system", "cockpit-ws",
 			"dhcp-client", "dnf", "dnf-utils", "dosfstools",
-			"insights-client", "NetworkManager", "net-tools", "nfs-utils",
+			"insights-client", "NetworkManager", "nfs-utils",
 			"oddjob", "oddjob-mkhomedir", "psmisc", "python3-jsonschema",
 			"qemu-guest-agent", "redhat-release", "redhat-release-eula",
 			"rsync", "subscription-manager-cockpit", "tar", "tcpdump", "yum",
