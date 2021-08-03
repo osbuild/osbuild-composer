@@ -1,6 +1,6 @@
 package osbuild2
 
-type ConfigOptions struct {
+type OstreeConfigOptions struct {
 	Sysroot SysrootOptions `json:"sysroot"`
 }
 
@@ -13,7 +13,7 @@ type OSTreeConfigStageOptions struct {
 	// Location of the ostree repo
 	Repo string `json:"repo"`
 
-	Config ConfigOptions `json:"config"`
+	Config OstreeConfigOptions `json:"config"`
 }
 
 func (OSTreeConfigStageOptions) isStageOptions() {}

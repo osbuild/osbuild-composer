@@ -573,6 +573,29 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeInstallerPipelines,
 		exports:         []string{"bootiso"},
 	}
+	edgeSimplifiedInstallerImgType := imageType{
+		name:        "edge-simplified-installer",
+		nameAliases: []string{"rhel-edge-simplified-installer"},
+		filename:    "simplified-installer.iso",
+		mimeType:    "application/x-iso9660-image",
+		packageSets: map[string]rpmmd.PackageSet{
+			// TODO: non-arch-specific package set handling for installers
+			// This image type requires build packages for installers and
+			// ostree/edge.  For now we only have x86-64 installer build
+			// package sets defined.  When we add installer build package sets
+			// for other architectures, this will need to be moved to the
+			// architecture and the merging will happen in the PackageSets()
+			// method like the other sets.
+			buildPkgsKey:     x8664InstallerBuildPackageSet().Append(edgeBuildPackageSet()),
+			osPkgsKey:        edgeCommitPackageSet(),
+			installerPkgsKey: edgeSimplifiedInstallerPackageSet(),
+		},
+		enabledServices: edgeServices,
+		rpmOstree:       true,
+		bootISO:         true,
+		pipelines:       edgeSimplifiedInstallerPipelines,
+		exports:         []string{"bootiso"},
+	}
 
 	qcow2ImgType := imageType{
 		name:          "qcow2",
@@ -768,7 +791,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeSimplifiedInstallerImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeOCIImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)

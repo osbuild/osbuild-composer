@@ -120,6 +120,20 @@ func (pt PartitionTable) RootPartition() *Partition {
 	return nil
 }
 
+func (pt PartitionTable) BootPartition() *Partition {
+	for _, p := range pt.Partitions {
+		if p.Filesystem == nil {
+			continue
+		}
+
+		if p.Filesystem.Mountpoint == "/boot" {
+			return &p
+		}
+	}
+
+	return nil
+}
+
 // Returns the index of the boot partition: the partition whose filesystem has
 // /boot as a mountpoint.  If there is no explicit boot partition, the root
 // partition is returned.

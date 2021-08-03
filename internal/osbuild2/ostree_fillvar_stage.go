@@ -2,15 +2,13 @@ package osbuild2
 
 // Options for the org.osbuild.ostree.fillvar stage.
 type OSTreeFillvarStageOptions struct {
-
 	Deployment Deployment `json:"deployment"`
 }
 
 type Deployment struct {
+	OsName string `json:"osname,omitempty"`
 
-	OsName string `json:"osname"`
-
-	Ref string `json:"ref"`
+	Ref string `json:"ref,omitempty"`
 }
 
 func (OSTreeFillvarStageOptions) isStageOptions() {}

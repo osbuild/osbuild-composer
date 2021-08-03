@@ -417,8 +417,8 @@ func TestDistro_ManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
-				assert.EqualError(t, err, "boot ISO image type \"edge-installer\" requires specifying a URL from which to retrieve the OSTree commit")
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
+				assert.EqualError(t, err, fmt.Sprintf("boot ISO image type \"%s\" requires specifying a URL from which to retrieve the OSTree commit", imgTypeName))
 			} else {
 				assert.NoError(t, err)
 			}
@@ -445,6 +445,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"edge-simplified-installer",
 				"tar",
 				"tar-installer",
 			},
@@ -574,7 +575,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
@@ -602,7 +603,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
 				continue
 			} else {
 				assert.NoError(t, err)

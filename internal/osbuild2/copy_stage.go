@@ -25,6 +25,10 @@ func (CopyStageInputs) isStageInputs() {}
 
 type CopyStageReferences []string
 
+type CopyStageInputsNew interface {
+	isCopyStageInputs()
+}
+
 func (CopyStageReferences) isReferences() {}
 
 type CopyStageDevices map[string]Device
@@ -42,5 +46,17 @@ func NewCopyStage(options *CopyStageOptions, inputs *CopyStageInputs, devices *C
 		Inputs:  inputs,
 		Devices: devices,
 		Mounts:  mounts,
+	}
+}
+
+func NewCopyStageFiles(options *CopyStageOptions, inputs CopyStageInputsNew) *Stage {
+	var stageInputs Inputs
+	if inputs != nil {
+		stageInputs = inputs.(Inputs)
+	}
+	return &Stage{
+		Type:    "org.osbuild.copy",
+		Options: options,
+		Inputs:  stageInputs,
 	}
 }

@@ -91,9 +91,10 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	OSTree       OSTreeImageOptions
-	Size         uint64
-	Subscription *SubscriptionImageOptions
+	OSTree             OSTreeImageOptions
+	Size               uint64
+	Subscription       *SubscriptionImageOptions
+	InstallationDevice string
 }
 
 // The OSTreeImageOptions specify ostree-specific image options

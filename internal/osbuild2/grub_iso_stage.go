@@ -17,7 +17,7 @@ type GrubISOStageOptions struct {
 func (GrubISOStageOptions) isStageOptions() {}
 
 // Assemble a file system tree for a bootable ISO
-func NewGrubISOStage(options *BootISOMonoStageOptions) *Stage {
+func NewGrubISOStage(options *GrubISOStageOptions) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.grub.iso",
 		Options: options,

@@ -9,6 +9,149 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
+func defaultPartitionTableEdge(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
+	var sectorSize uint64 = 512
+	if arch.Name() == "x86_64" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Bootable: true,
+					Size:     2048,
+					Start:    2048,
+					Type:     "21686148-6449-6E6F-744E-656564454649",
+					UUID:     "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
+					Filesystem: &disk.Filesystem{
+						Type:         "ext4",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabFreq:    1,
+						FSTabPassNo:  1,
+					},
+				},
+				{
+					Start: 4096,
+					Size:  204800,
+					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+					Filesystem: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         "7B77-95E7",
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Start: 208896,
+					Size:  imageOptions.Size/sectorSize - 208896 - 100,
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	} else if arch.Name() == "aarch64" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Start: 2048,
+					Size:  204800,
+					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
+					Filesystem: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         "7B77-95E7",
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Start: 206848,
+					Size:  imageOptions.Size/sectorSize - 206848 - 100,
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	} else if arch.Name() == "ppc64le" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "0x14fc63d2",
+			Type: "dos",
+			Partitions: []disk.Partition{
+				{
+					Size:     8192,
+					Type:     "41",
+					Bootable: true,
+				},
+				{
+					Start: 10240,
+					Size:  imageOptions.Size/sectorSize - 10240 - 100,
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	} else if arch.Name() == "s390x" {
+		return disk.PartitionTable{
+			Size: imageOptions.Size,
+			UUID: "0x14fc63d2",
+			Type: "dos",
+			Partitions: []disk.Partition{
+				{
+					Start:    2048,
+					Size:     imageOptions.Size/sectorSize - 2048 - 100,
+					Bootable: true,
+					Filesystem: &disk.Filesystem{
+						Type:         "xfs",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}
+	}
+
+	panic("unknown arch: " + arch.Name())
+}
+
 func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
 	var sectorSize uint64 = 512
 	if arch.Name() == "x86_64" {

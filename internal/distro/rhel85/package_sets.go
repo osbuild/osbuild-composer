@@ -331,6 +331,67 @@ func installerPackageSet() rpmmd.PackageSet {
 	}
 }
 
+func edgeSimplifiedInstallerPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"cloud-utils-growpart",
+			"dracut-live",
+			"xfsprogs",
+			"bsdtar",
+			"coreos-installer",
+			"coreos-installer-bootinfra",
+			"dracut-config-generic",
+			"dracut-network",
+			"kernel",
+			"binutils",
+			"basesystem",
+			"sudo",
+			"systemd",
+			"coreutils",
+			"util-linux",
+			"curl",
+			"e2fsprogs",
+			"dosfstools",
+			"attr",
+			"xz",
+			"gzip",
+			"iptables",
+			"dnsmasq",
+			"traceroute",
+			"hostname",
+			"iproute",
+			"iputils",
+			"openssh-clients",
+			"procps-ng",
+			"rootfiles",
+			"passwd",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"selinux-policy-targeted",
+			"setools-console",
+			"less",
+			"tar",
+			"ima-evm-utils",
+			"shim-x64",
+			"ostree",
+			"microcode_ctl",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
+		},
+		Exclude: nil,
+	}
+}
+
 func edgeInstallerPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{

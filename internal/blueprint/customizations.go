@@ -1,16 +1,17 @@
 package blueprint
 
 type Customizations struct {
-	Hostname   *string                   `json:"hostname,omitempty" toml:"hostname,omitempty"`
-	Kernel     *KernelCustomization      `json:"kernel,omitempty" toml:"kernel,omitempty"`
-	SSHKey     []SSHKeyCustomization     `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
-	User       []UserCustomization       `json:"user,omitempty" toml:"user,omitempty"`
-	Group      []GroupCustomization      `json:"group,omitempty" toml:"group,omitempty"`
-	Timezone   *TimezoneCustomization    `json:"timezone,omitempty" toml:"timezone,omitempty"`
-	Locale     *LocaleCustomization      `json:"locale,omitempty" toml:"locale,omitempty"`
-	Firewall   *FirewallCustomization    `json:"firewall,omitempty" toml:"firewall,omitempty"`
-	Services   *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
-	Filesystem []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
+	Hostname           *string                   `json:"hostname,omitempty" toml:"hostname,omitempty"`
+	Kernel             *KernelCustomization      `json:"kernel,omitempty" toml:"kernel,omitempty"`
+	SSHKey             []SSHKeyCustomization     `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
+	User               []UserCustomization       `json:"user,omitempty" toml:"user,omitempty"`
+	Group              []GroupCustomization      `json:"group,omitempty" toml:"group,omitempty"`
+	Timezone           *TimezoneCustomization    `json:"timezone,omitempty" toml:"timezone,omitempty"`
+	Locale             *LocaleCustomization      `json:"locale,omitempty" toml:"locale,omitempty"`
+	Firewall           *FirewallCustomization    `json:"firewall,omitempty" toml:"firewall,omitempty"`
+	Services           *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
+	Filesystem         []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
+	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 }
 
 type KernelCustomization struct {

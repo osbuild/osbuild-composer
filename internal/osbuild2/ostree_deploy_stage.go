@@ -2,7 +2,6 @@ package osbuild2
 
 // Options for the org.osbuild.ostree.deploy stage.
 type OSTreeDeployStageOptions struct {
-
 	OsName string `json:"osname"`
 
 	Ref string `json:"ref"`
