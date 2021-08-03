@@ -442,7 +442,18 @@ function createReqFileAWS() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]${SUBSCRIPTION_BLOCK}
+    ]${SUBSCRIPTION_BLOCK},
+    "users":[
+      {
+        "name": "user1",
+        "groups": ["wheel"],
+        "key": "$(cat /tmp/usertest.pub)"
+      },
+      {
+        "name": "user2",
+        "key": "$(cat /tmp/usertest.pub)"
+      }
+    ]
   },
   "image_requests": [
     {
@@ -467,20 +478,7 @@ function createReqFileAWS() {
           }
       }
     }
-  ],
-    "customizations": {
-        "users":[
-            {
-                "name": "user1",
-                "groups": ["wheel"],
-                "key": "$(cat /tmp/usertest.pub)"
-            },
-            {
-                "name": "user2",
-                "key": "$(cat /tmp/usertest.pub)"
-            }
-        ]
-    }
+  ]
 }
 EOF
 }
