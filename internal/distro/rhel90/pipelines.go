@@ -56,14 +56,9 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 }
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
-	if t.arch.name == s390xArchName {
-		rootPartition := pt.RootPartition()
-		if rootPartition == nil {
-			panic("s390x image must have a root partition, this is a programming error")
-		}
-		kernelStage := osbuild.NewKernelCmdlineStage(kernelCmdlineStageOptions(rootPartition.Filesystem.UUID, t.kernelOptions))
-		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
-	}
+	rootFsUUID := pt.RootPartition().Filesystem.UUID
+	kernelStage := osbuild.NewKernelCmdlineStage(kernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
+	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
 }
 
@@ -76,6 +71,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -103,6 +99,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -130,6 +127,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -401,6 +399,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 	partitionTable := ec2PartitionTable(options, t.arch, rng)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
