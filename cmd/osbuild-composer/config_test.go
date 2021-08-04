@@ -11,11 +11,7 @@ func TestEmpty(t *testing.T) {
 	config, err := LoadConfig("testdata/empty-config.toml")
 	require.NoError(t, err)
 	require.NotNil(t, config)
-	require.Empty(t, config.Koji.AllowedDomains)
-	require.Empty(t, config.Koji.CA)
-	require.Empty(t, config.Worker.AllowedDomains)
-	require.Empty(t, config.Worker.CA)
-	require.Empty(t, config.Worker.PGDatabase)
+	require.Equal(t, GetDefaultConfig(), config)
 }
 
 func TestNonExisting(t *testing.T) {
@@ -23,6 +19,26 @@ func TestNonExisting(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, os.IsNotExist(err))
 	require.Nil(t, config)
+}
+
+func TestDefaultConfig(t *testing.T) {
+	defaultConfig := GetDefaultConfig()
+	require.Empty(t, defaultConfig.Koji)
+	require.Empty(t, defaultConfig.Worker)
+	require.Empty(t, defaultConfig.ComposerAPI)
+
+	expectedWeldrAPIConfig := WeldrAPIConfig{
+		DistroConfigs: map[string]WeldrDistroConfig{
+			"rhel-*": {
+				[]string{
+					"ec2",
+					"ec2-ha",
+				},
+			},
+		},
+	}
+
+	require.Equal(t, expectedWeldrAPIConfig, defaultConfig.WeldrAPI)
 }
 
 func TestConfig(t *testing.T) {

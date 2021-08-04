@@ -28,9 +28,11 @@ type ComposerConfigFile struct {
 	ComposerAPI struct {
 		IdentityFilter []string `toml:"identity_filter"`
 	} `toml:"composer_api"`
-	WeldrAPI struct {
-		DistroConfigs map[string]WeldrDistroConfig `toml:"distros"`
-	} `toml:"weldr_api"`
+	WeldrAPI WeldrAPIConfig `toml:"weldr_api"`
+}
+
+type WeldrAPIConfig struct {
+	DistroConfigs map[string]WeldrDistroConfig `toml:"distros"`
 }
 
 type WeldrDistroConfig struct {
@@ -51,17 +53,35 @@ func (c *ComposerConfigFile) weldrDistrosImageTypeDenyList() map[string][]string
 	return distrosImageTypeDenyList
 }
 
+// GetDefaultConfig returns the default configuration of osbuild-composer
+// Defaults:
+// - 'ec2' and 'ec2-ha' image types on 'rhel-85' are not exposed via Weldr API
+func GetDefaultConfig() *ComposerConfigFile {
+	return &ComposerConfigFile{
+		WeldrAPI: WeldrAPIConfig{
+			map[string]WeldrDistroConfig{
+				"rhel-*": {
+					ImageTypeDenyList: []string{
+						"ec2",
+						"ec2-ha",
+					},
+				},
+			},
+		},
+	}
+}
+
 func LoadConfig(name string) (*ComposerConfigFile, error) {
-	var c ComposerConfigFile
-	_, err := toml.DecodeFile(name, &c)
+	c := GetDefaultConfig()
+	_, err := toml.DecodeFile(name, c)
 	if err != nil {
 		return nil, err
 	}
-	err = loadConfigFromEnv(&c)
+	err = loadConfigFromEnv(c)
 	if err != nil {
 		return nil, err
 	}
-	return &c, nil
+	return c, nil
 }
 
 func loadConfigFromEnv(intf interface{}) error {

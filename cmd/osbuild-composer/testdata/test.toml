@@ -12,3 +12,6 @@ image_type_denylist = [ "qcow2", "vmdk" ]
 
 [weldr_api.distros.rhel-84]
 image_type_denylist = [ "qcow2" ]
+
+# overrides the default rhel-* configuration
+[weldr_api.distros."rhel-*"]
