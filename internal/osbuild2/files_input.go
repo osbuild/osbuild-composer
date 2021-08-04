@@ -95,9 +95,9 @@ type FileReference struct {
 	File string `json:"file"`
 }
 
-func NewFilesInputReferencesPipeline(pieline, filename string) FilesInputReferences {
+func NewFilesInputReferencesPipeline(pipeline, filename string) FilesInputReferences {
 	ref := &FilesInputReferencesPipeline{
-		fmt.Sprintf("name:%s", pieline): {File: filename},
+		fmt.Sprintf("name:%s", pipeline): {File: filename},
 	}
 	return ref
 }
