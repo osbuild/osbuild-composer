@@ -32,6 +32,20 @@ def compose_request(distro, koji, arch):
             "repositories": repositories
         }]
 
+    if distro == "rhel-85":
+        image_requests.append({
+            "architecture": arch,
+            "image_type": "ec2",
+            "repositories": repositories
+        })
+        # ec2-ha is supported only on x86_64
+        if arch == "x86_64":
+            image_requests.append({
+                "architecture": arch,
+                "image_type": "ec2-ha",
+                "repositories": repositories
+            })
+
     #TODO: Remove this condition once there is rhel9 support for AMI image type
     if distro != "rhel-90":
         image_requests.append({
