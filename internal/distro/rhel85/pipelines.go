@@ -435,18 +435,8 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	kernelPkg := new(rpmmd.PackageSpec)
 	installerPackages := packageSetSpecs[installerPkgsKey]
-	for _, pkg := range installerPackages {
-		if pkg.Name == "kernel" {
-			kernelPkg = &pkg
-			break
-		}
-	}
-	if kernelPkg == nil {
-		return nil, fmt.Errorf("kernel package not found in installer package set")
-	}
-	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
+	kernelVer := kernelVerStr(installerPackages, "kernel", t.Arch().Name())
 	ostreeRepoPath := "/ostree/repo"
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
@@ -960,4 +950,18 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), qemuStageInputs(inputPipelineName, inputFilename))
 	p.AddStage(qemuStage)
 	return p
+}
+
+func kernelVerStr(pkgs []rpmmd.PackageSpec, kernelName, arch string) string {
+	kernelPkg := new(rpmmd.PackageSpec)
+	for _, pkg := range pkgs {
+		if pkg.Name == kernelName {
+			kernelPkg = &pkg
+			break
+		}
+	}
+	if kernelPkg == nil {
+		panic(fmt.Sprintf("kernel package %q not found", kernelName))
+	}
+	return fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 }
