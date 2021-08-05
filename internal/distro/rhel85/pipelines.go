@@ -1006,7 +1006,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), partitionTable.BootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
 }
 
-func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.CopyStageDevices, mounts *osbuild.CopyStageMounts, disk *osbuild.Device) *osbuild.Stage {
+func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.CopyStageDevices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
 	platform := arch.legacy
 	if platform != "" {
 		return osbuild.NewGrub2InstStage(grub2InstStageOptions(filename, pt, platform))

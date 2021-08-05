@@ -14,8 +14,8 @@ func TestNewCopyStage(t *testing.T) {
 			To:   "mount://root/",
 		},
 	}
+
 	devices := make(map[string]Device)
-	var mounts []Mount
 	devices["root"] = Device{
 		Type: "org.osbuild.loopback",
 		Options: LoopbackDeviceOptions{
@@ -24,19 +24,24 @@ func TestNewCopyStage(t *testing.T) {
 			Size:     1073741824,
 		},
 	}
+
+	mounts := []Mount{
+		*NewBtrfsMount("root", "root", "/"),
+	}
+
 	treeInput := CopyStageInput{}
 	treeInput.Type = "org.osbuild.tree"
 	treeInput.Origin = "org.osbuild.pipeline"
 	treeInput.References = []string{"name:input-pipeline"}
-	copyStageMounts := CopyStageMounts(mounts)
 	copyStageDevices := CopyStageDevices(devices)
 	expectedStage := &Stage{
 		Type:    "org.osbuild.copy",
 		Options: &CopyStageOptions{paths},
 		Inputs:  &CopyStageInputs{"tree-input": treeInput},
 		Devices: &copyStageDevices,
-		Mounts:  &copyStageMounts,
+		Mounts:  mounts,
 	}
-	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &copyStageDevices, &copyStageMounts)
+	stageMounts := Mounts(mounts)
+	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &copyStageDevices, &stageMounts)
 	assert.Equal(t, expectedStage, actualStage)
 }

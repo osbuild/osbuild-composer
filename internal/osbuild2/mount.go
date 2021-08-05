@@ -1,8 +1,6 @@
 package osbuild2
 
-type Mounts interface {
-	isStageMounts()
-}
+type Mounts []Mount
 
 type Mount struct {
 	Name    string        `json:"name"`
