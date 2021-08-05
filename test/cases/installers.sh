@@ -318,6 +318,10 @@ version = "*"
 name = "yum"
 version = "*"
 
+[[packages]]
+name = "python36"
+version = "*"
+
 [[customizations.user]]
 name = "${SSH_USER}"
 description = "Administrator account"
