@@ -14,6 +14,7 @@ import (
 )
 
 const defaultName = "rhel-85"
+const rhel86Name = "rhel-86"
 const osVersion = "8.5"
 const modulePlatformID = "platform:el8"
 const ostreeRef = "rhel/8/%s/edge"
@@ -452,6 +453,10 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	return newDistro(defaultName, modulePlatformID, ostreeRef)
+}
+
+func NewRHEL86() distro.Distro {
+	return newDistro(rhel86Name, modulePlatformID, ostreeRef)
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
