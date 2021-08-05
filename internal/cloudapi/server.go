@@ -78,7 +78,7 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	err := json.NewDecoder(ctx.Request().Body).Decode(i)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Cannot parse request body: %v", err))
+		return echo.NewHTTPError(http.StatusBadRequest, "Cannot parse request body: %s", err.Error())
 	}
 	return nil
 }
@@ -170,7 +170,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
-		panic("cannot generate a manifest seed: " + err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Cannot generate a manifest seed: %s", err.Error())
 	}
 	manifestSeed := bigSeed.Int64()
 
@@ -213,7 +213,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 				case error:
 					error_type = http.StatusInternalServerError
 				}
-				return echo.NewHTTPError(error_type, "Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err)
+				return echo.NewHTTPError(error_type, "Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error())
 			}
 			pkgSpecSets[name] = pkgs
 		}
@@ -244,7 +244,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 			imageOptions.OSTree.URL = *ostreeOptions.Url
 			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, "Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err)
+				return echo.NewHTTPError(http.StatusBadRequest, "Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err.Error())
 			}
 			imageOptions.OSTree.Parent = parent
 		}
@@ -275,7 +275,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 
 		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err)
+			return echo.NewHTTPError(http.StatusBadRequest, "Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error())
 		}
 
 		imageRequests[i].manifest = manifest
@@ -433,13 +433,13 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 func (h *apiHandlers) ComposeStatus(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err.Error())
 	}
 
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
 	}
 
 	var us *UploadStatus
@@ -545,18 +545,18 @@ func (h *apiHandlers) GetVersion(ctx echo.Context) error {
 func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err.Error())
 	}
 
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
 	}
 
 	var job worker.OSBuildJob
 	if _, _, _, err = h.server.workers.Job(jobId, &job); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
+		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
 	}
 
 	if status.Finished.IsZero() {
@@ -566,7 +566,7 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 
 	manifestVer, err := job.Manifest.Version()
 	if err != nil {
-		panic("Failed to parse manifest version: " + err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to parse manifest version: %s", err.Error())
 	}
 
 	var rpms []rpmmd.RPM
@@ -599,7 +599,7 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 			}
 		}
 	default:
-		panic("Unknown manifest version: " + manifestVer)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Unknown manifest version: %s", manifestVer)
 	}
 
 	rpms = rpmmd.OSBuildStagesToRPMs(coreStages)
@@ -624,10 +624,10 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 	if ostreeCommitResult != nil && ostreeCommitResult.Metadata != nil {
 		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
 		if !ok {
-			panic("Failed to convert ostree commit stage metadata")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to convert ostree commit stage metadata")
 		}
 		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
 	}
 
-	return ctx.JSON(200, resp)
+	return ctx.JSON(http.StatusOK, resp)
 }
