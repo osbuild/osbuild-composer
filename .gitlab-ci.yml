@@ -279,19 +279,19 @@ NIGHTLY_SUCCESS:
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
 
-# Installer:
-#   stage: test
-#   extends: .terraform
-#   rules:
-#     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-#     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
-#   script:
-#     - schutzbot/deploy.sh
-#     - /usr/libexec/tests/osbuild-composer/installers.sh
-#   parallel:
-#     matrix:
-#       - RUNNER:
-#           - openstack/rhel-8.5-x86_64
+Installer:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/installers.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.5-x86_64
 
 finish:
   stage: finish
