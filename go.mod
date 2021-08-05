@@ -19,6 +19,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.3.12
 	github.com/getkin/kin-openapi v0.13.0
 	github.com/gobwas/glob v0.2.3
+	github.com/golang-jwt/jwt v3.2.0+incompatible
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.3.0
@@ -28,6 +29,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
+	github.com/openshift-online/ocm-sdk-go v0.1.198
 	github.com/prometheus/client_golang v1.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453

@@ -23,7 +23,17 @@ type ComposerConfigFile struct {
 		PGUser         string   `toml:"pg_user" env:"PGUSER"`
 		PGPassword     string   `toml:"pg_password" env:"PGPASSWORD"`
 		PGSSLMode      string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
+		EnableJWT      bool     `toml:"enable_jwt"`
+		JWTKeysURL     string   `toml:"jwt_keys_url"`
+		JWTKeysCA      string   `toml:"jwt_ca_file"`
+		JWTACLFile     string   `toml:"jwt_acl_file"`
 	} `toml:"worker"`
+	ComposerAPI struct {
+		EnableJWT  bool   `toml:"enable_jwt"`
+		JWTKeysURL string `toml:"jwt_keys_url"`
+		JWTKeysCA  string `toml:"jwt_ca_file"`
+		JWTACLFile string `toml:"jwt_acl_file"`
+	} `toml:"composer_api"`
 	WeldrAPI WeldrAPIConfig `toml:"weldr_api"`
 }
 
@@ -100,6 +110,9 @@ func loadConfigFromEnv(intf interface{}) error {
 				continue
 			}
 			fieldV.SetString(confV)
+		case reflect.Bool:
+			// no-op
+			continue
 		case reflect.Slice:
 			// no-op
 			continue

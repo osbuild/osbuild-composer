@@ -21,7 +21,7 @@ var repositoryConfigs = []string{
 
 func main() {
 	var verbose bool
-	flag.BoolVar(&verbose, "v", false, "Print access log")
+	flag.BoolVar(&verbose, "verbose", false, "Print access log")
 	flag.Parse()
 
 	var logger *log.Logger
@@ -88,7 +88,7 @@ func main() {
 			log.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitAPI(ServerCertFile, ServerKeyFile, l[0])
+		err = composer.InitAPI(ServerCertFile, ServerKeyFile, config.ComposerAPI.EnableJWT, l[0])
 		if err != nil {
 			log.Fatalf("Error initializing koji API: %v", err)
 		}
@@ -99,7 +99,7 @@ func main() {
 			log.Fatal("The osbuild-remote-worker.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitRemoteWorkers(ServerCertFile, ServerKeyFile, l[0])
+		err = composer.InitRemoteWorkers(ServerCertFile, ServerKeyFile, config.Worker.EnableJWT, l[0])
 		if err != nil {
 			log.Fatalf("Error initializing worker API: %v", err)
 		}
