@@ -14,7 +14,7 @@ type Grub2InstStageOptions struct {
 	// Platform of the target system
 	Platform string `json:"platform"`
 
-	Location uint64 `json:"location,omitempty"`
+	Location uint64 `json:"location"`
 
 	// How to obtain the GRUB core image
 	Core CoreMkImage `json:"core"`
