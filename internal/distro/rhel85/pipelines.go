@@ -37,7 +37,8 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	}
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -61,7 +62,8 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -87,7 +89,8 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -113,7 +116,8 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
@@ -383,7 +387,8 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 	partitionTable := ec2PartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	treePipeline.AddStage(osbuild.NewGRUB2Stage(grub2StageOptions(&partitionTable, t.kernelOptions, customizations.GetKernel(), packageSetSpecs[blueprintPkgsKey], t.supportsUEFI(), t.arch.legacy)))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
@@ -950,6 +955,17 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), qemuStageInputs(inputPipelineName, inputFilename))
 	p.AddStage(qemuStage)
 	return p
+}
+
+func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string) *osbuild.Stage {
+	if t.arch.name == s390xArchName {
+		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
+	}
+
+	kernelOptions := t.kernelOptions
+	uefi := t.supportsUEFI()
+	legacy := t.arch.legacy
+	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
 }
 
 func kernelVerStr(pkgs []rpmmd.PackageSpec, kernelName, arch string) string {

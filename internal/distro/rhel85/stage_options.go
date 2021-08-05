@@ -313,11 +313,7 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 	}
 }
 
-func grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *blueprint.KernelCustomization, packages []rpmmd.PackageSpec, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
-	if pt == nil {
-		panic("partition table must be defined for grub2 stage, this is a programming error")
-	}
-	rootPartition := pt.RootPartition()
+func grub2StageOptions(rootPartition *disk.Partition, kernelOptions string, kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
 	if rootPartition == nil {
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
@@ -342,12 +338,7 @@ func grub2StageOptions(pt *disk.PartitionTable, kernelOptions string, kernel *bl
 		if kernel.Append != "" {
 			stageOptions.KernelOptions += " " + kernel.Append
 		}
-		for _, pkg := range packages {
-			if pkg.Name == kernel.Name {
-				stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + pkg.Version + "-" + pkg.Release + "." + pkg.Arch
-				break
-			}
-		}
+		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
 	}
 
 	return &stageOptions
