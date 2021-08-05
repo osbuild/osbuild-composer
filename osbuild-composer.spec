@@ -46,6 +46,7 @@ BuildRequires:  golang(github.com/coreos/go-semver/semver)
 BuildRequires:  golang(github.com/coreos/go-systemd/activation)
 BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
 BuildRequires:  golang(github.com/go-chi/chi)
+BuildRequires:  golang(github.com/golang-jwt/jwt)
 BuildRequires:  golang(github.com/google/uuid)
 BuildRequires:  golang(github.com/jackc/pgx/v4)
 BuildRequires:  golang(github.com/julienschmidt/httprouter)
@@ -56,6 +57,7 @@ BuildRequires:  golang(github.com/gobwas/glob)
 BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/prometheus/client_golang/prometheus/promhttp)
+BuildRequires:  golang(github.com/openshift-online/ocm-sdk-go)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
@@ -146,6 +148,7 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tes
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-koji-tests %{goipath}/cmd/osbuild-koji-tests
 go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-dbjobqueue-tests %{goipath}/cmd/osbuild-composer-dbjobqueue-tests
 go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/cloud-cleaner %{goipath}/cmd/cloud-cleaner
+go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-mock-openid-provider %{goipath}/cmd/osbuild-mock-openid-provider
 
 %endif
 
@@ -180,6 +183,7 @@ install -m 0755 -vp _bin/osbuild-auth-tests                     %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-koji-tests                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/osbuild-composer-dbjobqueue-tests      %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp _bin/cloud-cleaner                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp _bin/osbuild-mock-openid-provider           %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/define-compose-url.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/provision.sh                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/gen-certs.sh                          %{buildroot}%{_libexecdir}/osbuild-composer-test/

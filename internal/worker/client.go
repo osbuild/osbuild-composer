@@ -66,10 +66,6 @@ func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string)
 		panic(err)
 	}
 
-	if conf != nil && offlineToken != nil {
-		return nil, fmt.Errorf("error creating client, both tls and oauth are enabled")
-	}
-
 	requester := &http.Client{}
 	if conf != nil {
 		requester.Transport = &http.Transport{
