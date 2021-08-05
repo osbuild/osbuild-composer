@@ -240,6 +240,17 @@
       }
     }
   },
+  "tar-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "tar-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "qcow2": {
     "compose-request": {
       "distro": "",
