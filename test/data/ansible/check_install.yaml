@@ -1,5 +1,5 @@
 ---
-- hosts: test_guest
+- hosts: guest
   become: no
   vars:
     workspace: "{{ lookup('env', 'WORKSPACE') }}"
@@ -10,7 +10,7 @@
     # current target host's IP address
     - debug: var=ansible_all_ipv4_addresses
 
-    # case: check if selected packages installed (vim & zsh)
+    # case: check if selected packages installed (vim and tmux)
     - name: check installed package
       shell: rpm -qa | sort
       register: result_packages
@@ -30,13 +30,13 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
-    - name: check zsh installed
+    - name: check tmux installed
       block:
         - assert:
             that:
-              - "'zsh' in result_packages.stdout"
-            fail_msg: "zsh not installed"
-            success_msg: "zsh installed"
+              - "'tmux' in result_packages.stdout"
+            fail_msg: "tmux not installed"
+            success_msg: "tmux installed"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -48,7 +48,7 @@
     - name: save installed package list to log file
       copy:
         content: "{{ result_packages.stdout }}"
-        dest: "{{ workspace }}/{{ commit_log }}.installed.log"
+        dest: "{{ workspace }}/installed.log"
       delegate_to: localhost
 
     - assert:
