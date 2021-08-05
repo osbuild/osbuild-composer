@@ -30,6 +30,9 @@ func (p *Pipeline) SetBuild(build string) {
 
 // AddStage appends a stage to the list of stages of a pipeline. The stages
 // will be executed in the order they are appended.
+// If the argument is nil, it is not added.
 func (p *Pipeline) AddStage(stage *Stage) {
-	p.Stages = append(p.Stages, stage)
+	if stage != nil {
+		p.Stages = append(p.Stages, stage)
+	}
 }
