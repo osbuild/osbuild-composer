@@ -1,8 +1,6 @@
 package osbuild2
 
-type Devices interface {
-	isStageDevices()
-}
+type Devices map[string]Device
 
 type Device struct {
 	Type    string        `json:"type"`

@@ -21,12 +21,11 @@ func TestNewMkfsStage(t *testing.T) {
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	btrfsDevices := &MkfsBtrfsStageDevices{Device: *device}
-	mkbtrfs := NewMkfsBtrfsStage(btrfsOptions, btrfsDevices)
+	mkbtrfs := NewMkfsBtrfsStage(btrfsOptions, device)
 	mkbtrfsExpected := &Stage{
 		Type:    "org.osbuild.mkfs.btrfs",
 		Options: btrfsOptions,
-		Devices: btrfsDevices,
+		Devices: Devices{"device": *device},
 	}
 	assert.Equal(t, mkbtrfsExpected, mkbtrfs)
 
@@ -34,12 +33,11 @@ func TestNewMkfsStage(t *testing.T) {
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	ext4Devices := &MkfsExt4StageDevices{Device: *device}
-	mkext4 := NewMkfsExt4Stage(ext4Options, ext4Devices)
+	mkext4 := NewMkfsExt4Stage(ext4Options, device)
 	mkext4Expected := &Stage{
 		Type:    "org.osbuild.mkfs.ext4",
 		Options: ext4Options,
-		Devices: ext4Devices,
+		Devices: Devices{"device": *device},
 	}
 	assert.Equal(t, mkext4Expected, mkext4)
 
@@ -48,12 +46,11 @@ func TestNewMkfsStage(t *testing.T) {
 		Label:   "test",
 		FATSize: common.IntToPtr(12),
 	}
-	fatDevices := &MkfsFATStageDevices{Device: *device}
-	mkfat := NewMkfsFATStage(fatOptions, fatDevices)
+	mkfat := NewMkfsFATStage(fatOptions, device)
 	mkfatExpected := &Stage{
 		Type:    "org.osbuild.mkfs.fat",
 		Options: fatOptions,
-		Devices: fatDevices,
+		Devices: Devices{"device": *device},
 	}
 	assert.Equal(t, mkfatExpected, mkfat)
 
@@ -61,12 +58,11 @@ func TestNewMkfsStage(t *testing.T) {
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	xfsDevices := &MkfsXfsStageDevices{Device: *device}
-	mkxfs := NewMkfsXfsStage(xfsOptions, xfsDevices)
+	mkxfs := NewMkfsXfsStage(xfsOptions, device)
 	mkxfsExpected := &Stage{
 		Type:    "org.osbuild.mkfs.xfs",
 		Options: xfsOptions,
-		Devices: xfsDevices,
+		Devices: Devices{"device": *device},
 	}
 	assert.Equal(t, mkxfsExpected, mkxfs)
 }

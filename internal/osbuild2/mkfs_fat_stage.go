@@ -8,16 +8,10 @@ type MkfsFATStageOptions struct {
 
 func (MkfsFATStageOptions) isStageOptions() {}
 
-type MkfsFATStageDevices struct {
-	Device Device `json:"device"`
-}
-
-func (MkfsFATStageDevices) isStageDevices() {}
-
-func NewMkfsFATStage(options *MkfsFATStageOptions, devices *MkfsFATStageDevices) *Stage {
+func NewMkfsFATStage(options *MkfsFATStageOptions, device *Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkfs.fat",
 		Options: options,
-		Devices: devices,
+		Devices: Devices{"device": *device},
 	}
 }

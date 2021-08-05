@@ -352,11 +352,7 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 
 // sfdiskStageOptions creates the options and devices properties for an
 // org.osbuild.sfdisk stage based on a partition table description
-func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbuild.SfdiskStageOptions, *osbuild.SfdiskStageDevices) {
-	stageDevices := &osbuild.SfdiskStageDevices{
-		Device: *device,
-	}
-
+func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
 	partitions := make([]osbuild.Partition, len(pt.Partitions))
 	for idx, p := range pt.Partitions {
 		partitions[idx] = osbuild.Partition{
@@ -373,7 +369,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbui
 		Partitions: partitions,
 	}
 
-	return stageOptions, stageDevices
+	return stageOptions
 }
 
 // copyFSTreeOptions creates the options, inputs, devices, and mounts properties
@@ -381,7 +377,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbui
 // table description to define the mounts
 func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *osbuild.Device) (
 	*osbuild.CopyStageOptions,
-	*osbuild.CopyStageDevices,
+	*osbuild.Devices,
 	*osbuild.Mounts,
 ) {
 	// assume loopback device for simplicity since it's the only one currently supported
@@ -434,7 +430,7 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 	})
 
 	stageMounts := osbuild.Mounts(mounts)
-	stageDevices := osbuild.CopyStageDevices(devices)
+	stageDevices := osbuild.Devices(devices)
 
 	options := osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{

@@ -33,15 +33,16 @@ func TestNewCopyStage(t *testing.T) {
 	treeInput.Type = "org.osbuild.tree"
 	treeInput.Origin = "org.osbuild.pipeline"
 	treeInput.References = []string{"name:input-pipeline"}
-	copyStageDevices := CopyStageDevices(devices)
 	expectedStage := &Stage{
 		Type:    "org.osbuild.copy",
 		Options: &CopyStageOptions{paths},
 		Inputs:  &CopyStageInputs{"tree-input": treeInput},
-		Devices: &copyStageDevices,
+		Devices: devices,
 		Mounts:  mounts,
 	}
+	// convert to alias types
 	stageMounts := Mounts(mounts)
-	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &copyStageDevices, &stageMounts)
+	stageDevices := Devices(devices)
+	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &stageDevices, &stageMounts)
 	assert.Equal(t, expectedStage, actualStage)
 }

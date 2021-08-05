@@ -36,16 +36,10 @@ type Partition struct {
 	UUID string `json:"uuid,omitempty"`
 }
 
-type SfdiskStageDevices struct {
-	Device Device `json:"device"`
-}
-
-func (SfdiskStageDevices) isStageDevices() {}
-
-func NewSfdiskStage(options *SfdiskStageOptions, devices *SfdiskStageDevices) *Stage {
+func NewSfdiskStage(options *SfdiskStageOptions, device *Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.sfdisk",
 		Options: options,
-		Devices: devices,
+		Devices: Devices{"device": *device},
 	}
 }
