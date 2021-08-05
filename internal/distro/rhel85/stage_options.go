@@ -382,7 +382,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbui
 func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *osbuild.Device) (
 	*osbuild.CopyStageOptions,
 	*osbuild.CopyStageDevices,
-	*osbuild.CopyStageMounts,
+	*osbuild.Mounts,
 ) {
 	// assume loopback device for simplicity since it's the only one currently supported
 	// panic if the conversion fails
@@ -433,7 +433,7 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		return mounts[i].Target < mounts[j].Target
 	})
 
-	stageMounts := osbuild.CopyStageMounts(mounts)
+	stageMounts := osbuild.Mounts(mounts)
 	stageDevices := osbuild.CopyStageDevices(devices)
 
 	options := osbuild.CopyStageOptions{

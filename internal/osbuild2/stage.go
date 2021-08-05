@@ -116,7 +116,6 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(CopyStageOptions)
 		inputs = new(CopyStageInputs)
 		devices = new(CopyStageDevices)
-		mounts = new(CopyStageMounts)
 	case "org.osbuild.mkfs.btrfs":
 		options = new(MkfsBtrfsStageOptions)
 		devices = new(MkfsBtrfsStageDevices)

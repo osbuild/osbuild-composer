@@ -17,16 +17,12 @@ type ZiplInstStageDevices map[string]Device
 
 func (ZiplInstStageDevices) isStageDevices() {}
 
-type ZiplInstStageMounts []Mount
-
-func (ZiplInstStageMounts) isStageMounts() {}
-
 // Return a new zipl.inst stage. A device needs to be specified as 'disk' and root mountpoint must be provided
-func NewZiplInstStage(options *ZiplInstStageOptions, devices *CopyStageDevices, mounts *CopyStageMounts) *Stage {
+func NewZiplInstStage(options *ZiplInstStageOptions, devices *CopyStageDevices, mounts *Mounts) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.zipl.inst",
 		Options: options,
 		Devices: devices,
-		Mounts:  mounts,
+		Mounts:  *mounts,
 	}
 }
