@@ -7,16 +7,10 @@ type MkfsXfsStageOptions struct {
 
 func (MkfsXfsStageOptions) isStageOptions() {}
 
-type MkfsXfsStageDevices struct {
-	Device Device `json:"device"`
-}
-
-func (MkfsXfsStageDevices) isStageDevices() {}
-
-func NewMkfsXfsStage(options *MkfsXfsStageOptions, devices *MkfsXfsStageDevices) *Stage {
+func NewMkfsXfsStage(options *MkfsXfsStageOptions, device *Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkfs.xfs",
 		Options: options,
-		Devices: devices,
+		Devices: Devices{"device": *device},
 	}
 }

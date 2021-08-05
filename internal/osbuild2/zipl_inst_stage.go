@@ -13,16 +13,17 @@ type ZiplInstStageOptions struct {
 
 func (ZiplInstStageOptions) isStageOptions() {}
 
-type ZiplInstStageDevices map[string]Device
-
-func (ZiplInstStageDevices) isStageDevices() {}
-
-// Return a new zipl.inst stage. A device needs to be specified as 'disk' and root mountpoint must be provided
-func NewZiplInstStage(options *ZiplInstStageOptions, devices *CopyStageDevices, mounts *Mounts) *Stage {
+// Return a new zipl.inst stage. The 'disk' parameter must represent the
+// (entire) device that contains the /boot partition.
+func NewZiplInstStage(options *ZiplInstStageOptions, disk *Device, devices *Devices, mounts *Mounts) *Stage {
+	// create a new devices map and add the disk to it
+	devmap := map[string]Device(*devices)
+	devmap["disk"] = *disk
+	ziplDevices := Devices(devmap)
 	return &Stage{
 		Type:    "org.osbuild.zipl.inst",
 		Options: options,
-		Devices: devices,
+		Devices: ziplDevices,
 		Mounts:  *mounts,
 	}
 }

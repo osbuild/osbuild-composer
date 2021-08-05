@@ -27,16 +27,12 @@ type CopyStageReferences []string
 
 func (CopyStageReferences) isReferences() {}
 
-type CopyStageDevices map[string]Device
-
-func (CopyStageDevices) isStageDevices() {}
-
-func NewCopyStage(options *CopyStageOptions, inputs *CopyStageInputs, devices *CopyStageDevices, mounts *Mounts) *Stage {
+func NewCopyStage(options *CopyStageOptions, inputs *CopyStageInputs, devices *Devices, mounts *Mounts) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.copy",
 		Options: options,
 		Inputs:  inputs,
-		Devices: devices,
+		Devices: *devices,
 		Mounts:  *mounts,
 	}
 }

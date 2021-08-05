@@ -111,23 +111,17 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(TruncateStageOptions)
 	case "org.osbuild.sfdisk":
 		options = new(SfdiskStageOptions)
-		devices = new(SfdiskStageDevices)
 	case "org.osbuild.copy":
 		options = new(CopyStageOptions)
 		inputs = new(CopyStageInputs)
-		devices = new(CopyStageDevices)
 	case "org.osbuild.mkfs.btrfs":
 		options = new(MkfsBtrfsStageOptions)
-		devices = new(MkfsBtrfsStageDevices)
 	case "org.osbuild.mkfs.ext4":
 		options = new(MkfsExt4StageOptions)
-		devices = new(MkfsExt4StageDevices)
 	case "org.osbuild.mkfs.fat":
 		options = new(MkfsFATStageOptions)
-		devices = new(MkfsFATStageDevices)
 	case "org.osbuild.mkfs.xfs":
 		options = new(MkfsXfsStageOptions)
-		devices = new(MkfsXfsStageDevices)
 	case "org.osbuild.qemu":
 		options = new(QEMUStageOptions)
 		inputs = new(QEMUStageInputs)
