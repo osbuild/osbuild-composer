@@ -43,7 +43,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "0.10")
@@ -68,7 +68,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -393,7 +393,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
 }
@@ -847,7 +847,7 @@ func bootISOPipeline(filename string, arch string) *osbuild.Pipeline {
 	return p
 }
 
-func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk.PartitionTable, arch *architecture) *osbuild.Pipeline {
+func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk.PartitionTable, arch *architecture, kernelVer string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "image"
 	p.Build = "name:build"
@@ -865,7 +865,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	copyOptions, copyDevices, copyMounts := copyFSTreeOptions(inputName, inputPipelineName, pt, loopback)
 	copyInputs := copyPipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
-	p.AddStage(bootloaderInstStage(outputFilename, pt, arch))
+	p.AddStage(bootloaderInstStage(outputFilename, pt, arch, kernelVer, copyDevices, copyMounts, loopback))
 	return p
 }
 
@@ -964,10 +964,17 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
 }
 
-func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture) *osbuild.Stage {
+func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.CopyStageDevices, mounts *osbuild.CopyStageMounts, disk *osbuild.Device) *osbuild.Stage {
 	platform := arch.legacy
 	if platform != "" {
 		return osbuild.NewGrub2InstStage(grub2InstStageOptions(filename, pt, platform))
+	}
+
+	if arch.name == s390xArchName {
+		devmap := map[string]osbuild.Device(*devices)
+		devmap["disk"] = *disk
+		ziplDevices := osbuild.CopyStageDevices(devmap)
+		return osbuild.NewZiplInstStage(ziplInstStageOptions(kernelVer, pt), &ziplDevices, mounts)
 	}
 
 	return nil
