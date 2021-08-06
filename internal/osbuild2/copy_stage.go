@@ -35,7 +35,7 @@ type CopyStageMounts []Mount
 
 func (CopyStageMounts) isStageMounts() {}
 
-func NewCopyStage(options *CopyStageOptions, inputs *CopyStageInputs, devices *CopyStageDevices, mounts CopyStageMounts) *Stage {
+func NewCopyStage(options *CopyStageOptions, inputs *CopyStageInputs, devices *CopyStageDevices, mounts *CopyStageMounts) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.copy",
 		Options: options,

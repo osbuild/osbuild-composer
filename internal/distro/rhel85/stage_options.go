@@ -376,7 +376,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable, device *osbuild.Device) (*osbui
 func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *osbuild.Device) (
 	*osbuild.CopyStageOptions,
 	*osbuild.CopyStageDevices,
-	osbuild.CopyStageMounts,
+	*osbuild.CopyStageMounts,
 ) {
 	// assume loopback device for simplicity since it's the only one currently supported
 	// panic if the conversion fails
@@ -439,7 +439,7 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		},
 	}
 
-	return &options, &stageDevices, stageMounts
+	return &options, &stageDevices, &stageMounts
 }
 
 func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform string) *osbuild.Grub2InstStageOptions {
@@ -466,6 +466,18 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 		Location: pt.Partitions[0].Start,
 		Core:     core,
 		Prefix:   prefix,
+	}
+}
+
+func ziplInstStageOptions(kernel string, pt *disk.PartitionTable) *osbuild.ZiplInstStageOptions {
+	bootPartIndex := pt.BootPartitionIndex()
+	if bootPartIndex == -1 {
+		panic("failed to find boot or root partition for zipl.inst stage")
+	}
+
+	return &osbuild.ZiplInstStageOptions{
+		Kernel:   kernel,
+		Location: pt.Partitions[bootPartIndex].Start,
 	}
 }
 
