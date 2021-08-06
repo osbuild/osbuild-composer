@@ -1,4 +1,4 @@
-package rhel85_test
+package rhel90_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel85"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
 )
 
 type rhelFamilyDistro struct {
@@ -21,7 +21,7 @@ type rhelFamilyDistro struct {
 var rhelFamilyDistros = []rhelFamilyDistro{
 	{
 		name:   "rhel",
-		distro: rhel85.New(),
+		distro: rhel90.New(),
 	},
 }
 
@@ -398,7 +398,7 @@ func TestImageTypeAliases(t *testing.T) {
 func TestDistro_ManifestError(t *testing.T) {
 	// Currently, the only unsupported configuration is OSTree commit types
 	// with Kernel boot options
-	r8distro := rhel85.New()
+	r9distro := rhel90.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Kernel: &blueprint.KernelCustomization{
@@ -407,8 +407,8 @@ func TestDistro_ManifestError(t *testing.T) {
 		},
 	}
 
-	for _, archName := range r8distro.ListArches() {
-		arch, _ := r8distro.GetArch(archName)
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			imgOpts := distro.ImageOptions{
@@ -496,12 +496,12 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 	}
 }
 
-func TestRhel85_ListArches(t *testing.T) {
-	arches := rhel85.New().ListArches()
+func TestRhel90_ListArches(t *testing.T) {
+	arches := rhel90.New().ListArches()
 	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
 }
 
-func TestRhel85_GetArch(t *testing.T) {
+func TestRhel90_GetArch(t *testing.T) {
 	arches := []struct {
 		name                  string
 		errorExpected         bool
@@ -541,22 +541,22 @@ func TestRhel85_GetArch(t *testing.T) {
 	}
 }
 
-func TestRhel85_Name(t *testing.T) {
-	distro := rhel85.New()
-	assert.Equal(t, "rhel-85", distro.Name())
+func TestRhel90_Name(t *testing.T) {
+	distro := rhel90.New()
+	assert.Equal(t, "rhel-90", distro.Name())
 }
 
-func TestRhel85_ModulePlatformID(t *testing.T) {
-	distro := rhel85.New()
-	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
+func TestRhel90_ModulePlatformID(t *testing.T) {
+	distro := rhel90.New()
+	assert.Equal(t, "platform:el9", distro.ModulePlatformID())
 }
 
-func TestRhel85_KernelOption(t *testing.T) {
-	distro_test_common.TestDistro_KernelOption(t, rhel85.New())
+func TestRhel90_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, rhel90.New())
 }
 
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
-	r8distro := rhel85.New()
+	r9distro := rhel90.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -567,8 +567,8 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			},
 		},
 	}
-	for _, archName := range r8distro.ListArches() {
-		arch, _ := r8distro.GetArch(archName)
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
@@ -584,7 +584,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 }
 
 func TestDistro_TestRootMountPoint(t *testing.T) {
-	r8distro := rhel85.New()
+	r9distro := rhel90.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -595,8 +595,8 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			},
 		},
 	}
-	for _, archName := range r8distro.ListArches() {
-		arch, _ := r8distro.GetArch(archName)
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)

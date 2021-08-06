@@ -1,4 +1,4 @@
-package rhel85
+package rhel90
 
 import (
 	"encoding/json"
@@ -13,12 +13,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const defaultName = "rhel-85"
+const defaultName = "rhel-90"
 const rhel86Name = "rhel-86"
-const osVersion = "8.5"
-const releaseVersion = "8"
-const modulePlatformID = "platform:el8"
-const ostreeRef = "rhel/8/%s/edge"
+const osVersion = "9.0"
+const releaseVersion = "9"
+const modulePlatformID = "platform:el9"
+const ostreeRef = "rhel/9/%s/edge"
 
 const (
 	// package set names
