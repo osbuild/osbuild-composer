@@ -17,10 +17,14 @@ import (
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+
 	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
+
+	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 
 	if options.Subscription == nil {
 		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
@@ -35,7 +39,6 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 			},
 		}))
 	}
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
@@ -50,6 +53,18 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, *qemuPipeline)
 
 	return pipelines, nil
+}
+
+func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
+	if t.arch.name == s390xArchName {
+		rootPartition := pt.RootPartition()
+		if rootPartition == nil {
+			panic("s390x image must have a root partition, this is a programming error")
+		}
+		kernelStage := osbuild.NewKernelCmdlineStage(kernelCmdlineStageOptions(rootPartition.Filesystem.UUID, t.kernelOptions))
+		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
+	}
+	return pipeline
 }
 
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
