@@ -559,7 +559,7 @@ EOF
 }
 
 function createReqFileAzure() {
-  AZURE_IMAGE_NAME="osbuild-composer-api-test-$(uuidgen)"
+  AZURE_IMAGE_NAME="image-$TEST_ID"
 
   cat > "$REQUEST_FILE" << EOF
 {
@@ -1001,8 +1001,30 @@ function verifyInAzure() {
   AZURE_SSH_KEY="$WORKDIR/id_azure"
   ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
 
+  # Create network resources with predictable names
+  $AZURE_CMD network nsg create --resource-group "$AZURE_RESOURCE_GROUP" --name "nsg-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network nsg rule create --resource-group "$AZURE_RESOURCE_GROUP" \
+      --nsg-name "nsg-$TEST_ID" \
+      --name SSH \
+      --priority 1001 \
+      --access Allow \
+      --protocol Tcp \
+      --destination-address-prefixes '*' \
+      --destination-port-ranges 22 \
+      --source-port-ranges '*' \
+      --source-address-prefixes '*'
+  $AZURE_CMD network vnet create --resource-group "$AZURE_RESOURCE_GROUP" --name "vnet-$TEST_ID" --subnet-name "snet-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network public-ip create --resource-group "$AZURE_RESOURCE_GROUP" --name "ip-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network nic create --resource-group "$AZURE_RESOURCE_GROUP" \
+      --name "iface-$TEST_ID" \
+      --subnet "snet-$TEST_ID" \
+      --vnet-name "vnet-$TEST_ID" \
+      --network-security-group "nsg-$TEST_ID" \
+      --public-ip-address "ip-$TEST_ID" \
+      --location "$AZURE_LOCATION" 
+
   # create the instance
-  AZURE_INSTANCE_NAME="vm-$(uuidgen)"
+  AZURE_INSTANCE_NAME="vm-$TEST_ID"
   $AZURE_CMD vm create --name "$AZURE_INSTANCE_NAME" \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --image "$AZURE_IMAGE_NAME" \
@@ -1010,7 +1032,9 @@ function verifyInAzure() {
     --admin-username "$SSH_USER" \
     --ssh-key-values "$AZURE_SSH_KEY.pub" \
     --authentication-type "ssh" \
-    --location "$AZURE_LOCATION"
+    --location "$AZURE_LOCATION" \
+    --nics "iface-$TEST_ID" \
+    --os-disk-name "disk-$TEST_ID"
   $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
   HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
 
