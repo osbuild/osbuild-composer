@@ -1,4 +1,4 @@
-package rhel85
+package rhel90
 
 import (
 	"fmt"
@@ -293,7 +293,7 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 		},
 	}))
 
-	// RHBZ#1822853
+	// RHBZ#1822903
 	p.AddStage(osbuild.NewSystemdUnitStage(&osbuild.SystemdUnitStageOptions{
 		Unit:   "nm-cloud-setup.service",
 		Dropin: "10-rh-enable-for-ec2.conf",
@@ -538,7 +538,7 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
-	p.Runner = "org.osbuild.rhel85"
+	p.Runner = "org.osbuild.rhel90"
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(buildPackageSpecs)))
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(true)))
 	return p

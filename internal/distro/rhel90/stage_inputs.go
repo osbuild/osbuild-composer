@@ -1,4 +1,4 @@
-package rhel85
+package rhel90
 
 import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"

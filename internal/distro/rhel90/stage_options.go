@@ -1,4 +1,4 @@
-package rhel85
+package rhel90
 
 import (
 	"fmt"
@@ -261,7 +261,7 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 	if bcj := osbuild.BCJOption(arch); bcj != "" {
 		comprOptions.BCJ = bcj
 	}
-	isolabel := fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch)
+	isolabel := fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch)
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
 			Name:    "Red Hat Enterprise Linux",
@@ -302,7 +302,7 @@ func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStageOptions {
 	return &osbuild.XorrisofsStageOptions{
 		Filename: filename,
-		VolID:    fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch),
+		VolID:    fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch),
 		SysID:    "LINUX",
 		Boot: osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
