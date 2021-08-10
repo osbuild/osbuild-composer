@@ -251,10 +251,6 @@ modules = []
 groups = []
 
 [[packages]]
-name = "@core"
-version = "*"
-
-[[packages]]
 name = "vim-enhanced"
 version = "*"
 
@@ -268,54 +264,6 @@ version = "*"
 
 [[packages]]
 name = "openssh-server"
-version = "*"
-
-[[packages]]
-name = "dhcp-client"
-version = "*"
-
-[[packages]]
-name = "dnf"
-version = "*"
-
-[[packages]]
-name = "dnf-utils"
-version = "*"
-
-[[packages]]
-name = "dosfstools"
-version = "*"
-
-[[packages]]
-name = "dracut-norescue"
-version = "*"
-
-[[packages]]
-name = "NetworkManager"
-version = "*"
-
-[[packages]]
-name = "net-tools"
-version = "*"
-
-[[packages]]
-name = "nfs-utils"
-version = "*"
-
-[[packages]]
-name = "python3-jsonschema"
-version = "*"
-
-[[packages]]
-name = "qemu-guest-agent"
-version = "*"
-
-[[packages]]
-name = "tar"
-version = "*"
-
-[[packages]]
-name = "yum"
 version = "*"
 
 [[packages]]
