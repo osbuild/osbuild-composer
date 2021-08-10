@@ -240,11 +240,11 @@
       }
     }
   },
-  "tar-installer": {
+  "image-installer": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "tar-installer",
+      "image-type": "image-installer",
       "repositories": [],
       "filename": "installer.iso",
       "blueprint": {}

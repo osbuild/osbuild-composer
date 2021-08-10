@@ -356,7 +356,7 @@ var imageTypeCompatMapping = map[string]string{
 	"edge-commit":         "edge-commit",
 	"edge-container":      "edge-container",
 	"edge-installer":      "edge-installer",
-	"tar-installer":       "tar-installer",
+	"image-installer":     "image-installer",
 	"test_type":           "test_type",         // used only in json_test.go
 	"test_type_invalid":   "test_type_invalid", // used only in json_test.go
 	"ec2":                 "ec2",

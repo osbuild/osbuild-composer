@@ -2,7 +2,7 @@
   "compose-request": {
     "distro": "rhel-85",
     "arch": "x86_64",
-    "image-type": "tar-installer",
+    "image-type": "image-installer",
     "repositories": [
       {
         "name": "baseos",

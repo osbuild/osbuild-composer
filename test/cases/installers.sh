@@ -340,7 +340,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve installer
 
 # Build installer image.
-build_image installer tar-installer
+build_image installer image-installer
 
 # Download the image
 greenprint "📥 Downloading the installer image"

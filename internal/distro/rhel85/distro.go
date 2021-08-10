@@ -761,7 +761,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"root-tar"},
 	}
 	tarInstallerImgTypeX86_64 := imageType{
-		name:     "tar-installer",
+		name:     "image-installer",
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
