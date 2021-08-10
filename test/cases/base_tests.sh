@@ -14,7 +14,6 @@ TEST_CASES=(
   "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
-  "regression-composer-works-behind-satellite.sh"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -51,6 +50,9 @@ cd $WORKING_DIRECTORY
 for TEST_CASE in "${TEST_CASES[@]}"; do
     run_test_case ${TESTS_PATH}/"$TEST_CASE"
 done
+
+# Run the regression test case which is not a standalone go binary, but a bash script
+run_test_case "/usr/libexec/tests/osbuild-composer/regression-composer-works-behind-satellite.sh"
 
 # Print a report of the test results.
 test_divider
