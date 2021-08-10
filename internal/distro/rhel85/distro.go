@@ -422,7 +422,7 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 	return sources
 }
 
-func checkMountpoint(mountpoint string) bool {
+func isMountpointAllowed(mountpoint string) bool {
 	for _, allowed := range mountpointAllowList {
 		// check if the path and its subdirectories
 		// is in the allow list
@@ -457,7 +457,10 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if !checkMountpoint(m.Mountpoint) {
+		if m.Mountpoint == "/usr" && m.MinSize < 2147483648 {
+			m.MinSize = 2147483648
+		}
+		if !isMountpointAllowed(m.Mountpoint) {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}
