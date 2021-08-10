@@ -765,11 +765,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: x8664InstallerBuildPackageSet(),
-			osPkgsKey: {
-				Include: []string{"lvm2", "policycoreutils", "selinux-policy-targeted"},
-				Exclude: []string{"rng-tools"},
-			},
+			buildPkgsKey:     x8664InstallerBuildPackageSet(),
+			osPkgsKey:        bareMetalPackageSet(),
 			installerPkgsKey: installerPackageSet(),
 		},
 		rpmOstree: false,
