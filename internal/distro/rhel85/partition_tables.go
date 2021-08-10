@@ -99,6 +99,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 			Type: "dos",
 			Partitions: []disk.Partition{
 				{
+					Start:    2048,
 					Size:     8192,
 					Type:     "41",
 					Bootable: true,
