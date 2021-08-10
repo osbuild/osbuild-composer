@@ -107,6 +107,10 @@ func (d *TestDistro) ModulePlatformID() string {
 	return modulePlatformID
 }
 
+func (d *TestDistro) Releasever() string {
+	return "1"
+}
+
 func (d *TestDistro) FilenameFromType(outputFormat string) (string, string, error) {
 	if outputFormat == "test_format" {
 		return "test.img", "application/x-test", nil
