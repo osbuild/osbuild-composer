@@ -297,7 +297,7 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 		},
 	}))
 
-	// RHBZ#1822903
+	// RHBZ#1822853
 	p.AddStage(osbuild.NewSystemdUnitStage(&osbuild.SystemdUnitStageOptions{
 		Unit:   "nm-cloud-setup.service",
 		Dropin: "10-rh-enable-for-ec2.conf",
