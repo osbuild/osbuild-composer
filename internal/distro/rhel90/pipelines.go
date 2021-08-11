@@ -158,13 +158,19 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 // any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
 func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
-	defaultTarget string, withRHUI bool) (*osbuild.Pipeline, error) {
+	defaultTarget string, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage())
+
+	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
+	if pt.BootPartition() == nil {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+	} else {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
 
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
@@ -356,9 +362,9 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 
 func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
-	defaultTarget string, withRHUI bool) (*osbuild.Pipeline, error) {
+	defaultTarget string, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
-	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI)
+	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI, pt)
 	if err != nil {
 		return nil, err
 	}
@@ -383,22 +389,23 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
+	partitionTable := ec2PartitionTable(options, t.arch, rng)
 	var treePipeline *osbuild.Pipeline
 	var err error
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case x86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
 	// rhel-ec2-aarch64
 	case aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI)
+		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
 	if err != nil {
 		return nil, err
 	}
-	partitionTable := ec2PartitionTable(options, t.arch, rng)
+
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
@@ -549,7 +556,7 @@ func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackag
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage())
+	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
@@ -630,7 +637,7 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 
 	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage())
+	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))

@@ -11,6 +11,6 @@ func TestNewFixBLSStage(t *testing.T) {
 		Type:    "org.osbuild.fix-bls",
 		Options: &FixBLSStageOptions{},
 	}
-	actualStage := NewFixBLSStage()
+	actualStage := NewFixBLSStage(&FixBLSStageOptions{})
 	assert.Equal(t, expectedStage, actualStage)
 }
