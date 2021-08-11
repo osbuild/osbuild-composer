@@ -190,6 +190,18 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "fix-bls-empty-prefix",
+			fields: fields{
+				Type: "org.osbuild.fix-bls",
+				Options: &FixBLSStageOptions{
+					Prefix: common.StringToPtr(""),
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.fix-bls","options":{"prefix":""}}`),
+			},
+		},
+		{
 			name: "fstab",
 			fields: fields{
 				Type:    "org.osbuild.fstab",

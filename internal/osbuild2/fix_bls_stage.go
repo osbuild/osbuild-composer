@@ -1,21 +1,23 @@
 package osbuild2
 
-// A FixBLSStageOptions struct is empty, as the stage takes no options.
+// A FixBLSStageOptions struct
 //
-// The FixBLSStage fixes the paths in the Boot Loader Specification
-// snippets installed into /boot. grub2's kernel install script will
-// try to guess the correct path to the kernel and bootloader, and adjust
-// the boot loader scripts accordingly. When run under OSBuild this does
-// not work correctly, so this stage essentially reverts the "fixup".
+// The paths in the Bootloader Specification are relative to the partition
+// they are located on, i.e. `/boot/loader/...` if `/boot` is on the root
+// file-system partition. If `/boot` is on a separate partition, the correct
+// path would be `/loader/.../` The `prefix` can be used to adjust for that.
+// By default it is `/boot`, i.e. assumes `/boot` is on the root file-system.
 type FixBLSStageOptions struct {
+	// Prefix defaults to "/boot" if not provided
+	Prefix *string `json:"prefix,omitempty"`
 }
 
 func (FixBLSStageOptions) isStageOptions() {}
 
 // NewFixBLSStage creates a new FixBLSStage.
-func NewFixBLSStage() *Stage {
+func NewFixBLSStage(options *FixBLSStageOptions) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.fix-bls",
-		Options: &FixBLSStageOptions{},
+		Options: options,
 	}
 }
