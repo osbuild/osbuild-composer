@@ -230,6 +230,15 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--with tests \
 		$(RPM_SPECFILE)
 
+.PHONY: scratch
+scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		--define "commit $(COMMIT)" \
+		--without tests \
+		--nocheck \
+		$(RPM_SPECFILE)
+
 #
 # Releasing
 #
