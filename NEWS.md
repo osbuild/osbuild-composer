@@ -1,5 +1,27 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 31:
+
+  * Retrieve metadata about a compose through the Cloud API
+  * Support multiple repository subscriptions
+  * Support for building artifacts for Fedora 32 is now dropped
+  * Add support for new / extended osbuild stages
+  * Building images for other distributions
+  * Add support for RHEL 8.5 Edge images
+  * Add support for RHEL 8.5 main image types
+  * Add support for RHEL 9.0 Beta
+  * Weldr API: introduce the ability to limit exposed Image Types by configuration
+  * Add a heartbeat between composer and the worker every 15 seconds.
+  * Add oauth2 support to get composer into `cloud.redhat.com`.
+
+Contributions from: Achilleas Koutsou, Alexander Todorov, Brian C. Lane,
+                    Chloe Kaubisch, Colin Walters, Gianluca Zuccarelli,
+                    Jakub Rusz, Juan Abia, Lars Karlitski, Martin Sehnoutka,
+                    Ondřej Budai, Sanne Raymaekers, Thomas Lavocat, Tomas Hozza,
+                    Xiaofeng Wang, Yuxin Sun
+
+— Grenoble, 2021-08-11
+
 ## CHANGES WITH 30:
 
   * Cloud API now has support for uploading images directly to Azure. Before,
