@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -128,6 +129,9 @@ type PackageSpec struct {
 	Checksum       string `json:"checksum,omitempty"`
 	Secrets        string `json:"secrets,omitempty"`
 	CheckGPG       bool   `json:"check_gpg,omitempty"`
+	Proxy          string `json:"proxy,omitempty"`
+	ProxyUsername  string `json:"proxy_username,omitempty"`
+	ProxyPassword  string `json:"proxy_password,omitempty"`
 }
 
 type dnfPackageSpec struct {
@@ -555,4 +559,23 @@ func (packages PackageList) ToPackageInfos() []PackageInfo {
 func (pkg *PackageInfo) FillDependencies(rpmmd RPMMD, repos []RepoConfig, modulePlatformID, arch, releasever string) (err error) {
 	pkg.Dependencies, _, err = rpmmd.Depsolve(PackageSet{Include: []string{pkg.Name}}, repos, modulePlatformID, arch, releasever)
 	return
+}
+
+// CurlProxyString returns a proxy string suitable for use in the curl environment
+// This only supports unauthenticated proxies and username:password, not certificates.
+// username and password are URL escaped so that @ and : are allowed.
+func (pkg PackageSpec) CurlProxyString() string {
+	// If there is a un/pw it needs split off protocol if there is one
+	// URL encode the un and pw so that : and @ can be passed
+	// Add them to the url and recombine with protocol if there was one
+	if pkg.ProxyUsername == "" && pkg.ProxyPassword == "" {
+		return pkg.Proxy
+	}
+
+	u, err := url.Parse(pkg.Proxy)
+	if err != nil {
+		return pkg.Proxy
+	}
+	u.User = url.UserPassword(pkg.ProxyUsername, pkg.ProxyPassword)
+	return u.String()
 }
