@@ -975,7 +975,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	kernelOptions := t.kernelOptions
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
-	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
+	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), partitionTable.BootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
 }
 
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.CopyStageDevices, mounts *osbuild.CopyStageMounts, disk *osbuild.Device) *osbuild.Stage {
