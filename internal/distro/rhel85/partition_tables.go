@@ -199,7 +199,7 @@ func ec2PartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *
 				{
 					Start: 411648,
 					Size:  1048576,
-					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
