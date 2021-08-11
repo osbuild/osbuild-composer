@@ -204,7 +204,7 @@ func ec2PartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *
 					UUID:  "CB07C243-BC44-4717-853E-28852021225B",
 					Filesystem: &disk.Filesystem{
 						Type:         "xfs",
-						UUID:         "2AE383D1-F57C-4F04-A1BD-32FC12A578EA",
+						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Mountpoint:   "/boot",
 						FSTabOptions: "defaults",
 						FSTabFreq:    0,
