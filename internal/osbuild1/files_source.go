@@ -6,6 +6,7 @@ type Secret struct {
 type FileSource struct {
 	URL     string  `json:"url"`
 	Secrets *Secret `json:"secrets,omitempty"`
+	Proxy   string  `json:"proxy,omitempty"`
 }
 
 // The FilesSourceOptions specifies a custom script to run in the image

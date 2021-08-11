@@ -24,6 +24,7 @@ func (URL) isCurlSourceItem() {}
 type URLWithSecrets struct {
 	URL     string      `json:"url"`
 	Secrets *URLSecrets `json:"secrets,omitempty"`
+	Proxy   string      `json:"proxy,omitempty"`
 }
 
 func (URLWithSecrets) isCurlSourceItem() {}
