@@ -180,7 +180,7 @@ type SourceInfoResponseV0 struct {
 }
 
 // NewSourceConfigV1 converts a store.SourceConfig to a SourceConfigV1
-// The store does not support proxy and gpgkey_urls
+// The store does not support gpgkey_urls
 func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	var sc SourceConfigV1
 
@@ -194,22 +194,28 @@ func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	sc.Distros = s.Distros
 	sc.RHSM = s.RHSM
 
+	sc.Proxy = s.Proxy
+	sc.ProxyUsername = s.ProxyUsername
+	sc.ProxyPassword = s.ProxyPassword
+
 	return sc
 }
 
 // SourceConfigV1 holds the source repository information
 type SourceConfigV1 struct {
-	ID       string   `json:"id" toml:"id"`
-	Name     string   `json:"name" toml:"name"`
-	Type     string   `json:"type" toml:"type"`
-	URL      string   `json:"url" toml:"url"`
-	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
-	System   bool     `json:"system" toml:"system"`
-	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
-	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
-	Distros  []string `json:"distros,omitempty" toml:"distros,omitempty"`
-	RHSM     bool     `json:"rhsm" toml:"rhsm"`
+	ID            string   `json:"id" toml:"id"`
+	Name          string   `json:"name" toml:"name"`
+	Type          string   `json:"type" toml:"type"`
+	URL           string   `json:"url" toml:"url"`
+	CheckGPG      bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL      bool     `json:"check_ssl" toml:"check_ssl"`
+	System        bool     `json:"system" toml:"system"`
+	Proxy         string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
+	ProxyUsername string   `json:"proxy_username,omitempty" toml:"proxy_username,omitempty"`
+	ProxyPassword string   `json:"proxy_password,omitempty" toml:"proxy_password,omitempty"`
+	GPGUrls       []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
+	Distros       []string `json:"distros,omitempty" toml:"distros,omitempty"`
+	RHSM          bool     `json:"rhsm" toml:"rhsm"`
 }
 
 // Key returns the key, .ID in this case
@@ -237,6 +243,10 @@ func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.CheckSSL = s.CheckSSL
 	ssc.Distros = s.Distros
 	ssc.RHSM = s.RHSM
+
+	ssc.Proxy = s.Proxy
+	ssc.ProxyUsername = s.ProxyUsername
+	ssc.ProxyPassword = s.ProxyPassword
 
 	return ssc
 }
