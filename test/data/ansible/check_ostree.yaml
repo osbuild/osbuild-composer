@@ -459,7 +459,7 @@
     - name: install sanely failing health check unit to test red boot status behavior
       block:
         - name: install sanely failing health check unit to test red boot status behavior
-          command: rpm-ostree install http://file-server-virt-qe-3rd.cloud.paas.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
+          command: rpm-ostree install http://file-server-virt-qe-3rd.apps.ocp4.prod.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
           become: yes
 
         - name: reboot to deploy new ostree commit

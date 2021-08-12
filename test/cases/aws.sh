@@ -163,6 +163,10 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
+# Kill the journal monitor immediately and remove the trap
+sudo pkill -P ${WORKER_JOURNAL_PID}
+trap - EXIT
+
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
@@ -177,9 +181,6 @@ $AWS_CMD ec2 describe-images \
     | tee "$AMI_DATA" > /dev/null
 
 AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$AMI_DATA")
-
-# Stop watching the worker journal.
-sudo kill ${WORKER_JOURNAL_PID}
 
 # NOTE(mhayden): Getting TagSpecifications to play along with bash's
 # parsing of curly braces and square brackets is nuts, so we just write some

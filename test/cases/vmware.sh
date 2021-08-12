@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer
-
 source /etc/os-release
 
 # Colorful output.
@@ -10,7 +8,12 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Provision the software under tet.
+if [ "$ID" != "rhel" ]; then
+    greenprint "VMware test not supported on $ID"
+    exit 0
+fi
+
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Apply lorax patch to work around pytoml issues in RHEL 8.x.
@@ -23,8 +26,13 @@ fi
 
 GOVC_CMD=/tmp/govc
 
+# Note: in GitLab CI the GOVMOMI_ variables are defined one-by-one
+# instead of sourcing them from a file!
+VCENTER_CREDS="${VCENTER_CREDS:-}"
+if [ -n "$VCENTER_CREDS" ]; then
 # shellcheck source=/dev/null
-source "$VCENTER_CREDS"
+    source "$VCENTER_CREDS"
+fi
 
 # We need govc to talk to vSphere
 if ! hash govc; then
@@ -54,9 +62,13 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB=$(cat "$SSH_KEY".pub)
+
 # Check that the system started and is running correctly
 running_test_check () {
-    STATUS=$(sudo ssh -i $OSBUILD_COMPOSER_TEST_DATA/keyring/id_rsa redhat@"${1}" 'systemctl --wait is-system-running')
+    STATUS=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'systemctl --wait is-system-running')
     if [[ $STATUS == running || $STATUS == degraded ]]; then
         echo 0
     else
@@ -117,7 +129,7 @@ enabled = ["sshd"]
 
 [[customizations.user]]
 name = "redhat"
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+key = "${SSH_KEY_PUB}"
 EOF
 
 # Prepare the blueprint for the compose.
@@ -129,6 +141,8 @@ sudo composer-cli blueprints depsolve bash
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
+# Stop watching the worker journal when exiting.
+trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to VMWare.
 greenprint "🚀 Starting compose"
@@ -156,14 +170,15 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
+# Kill the journal monitor immediately and remove the trap
+sudo pkill -P ${WORKER_JOURNAL_PID}
+trap - EXIT
+
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi
-
-# Stop watching the worker journal.
-sudo kill ${WORKER_JOURNAL_PID}
 
 greenprint "👷🏻 Building VM in vSphere"
 $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \

@@ -194,14 +194,15 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
+# Kill the journal monitor immediately and remove the trap
+sudo pkill -P ${WORKER_JOURNAL_PID}
+trap - EXIT
+
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi
-
-# Stop watching the worker journal.
-sudo kill ${WORKER_JOURNAL_PID}
 
 # Download the image.
 greenprint "📥 Downloading the image"
