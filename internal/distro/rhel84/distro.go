@@ -309,6 +309,9 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 				Name: "org.osbuild.rhsm",
 			}
 		}
+		if pkg.Proxy != "" {
+			fileSource.Proxy = pkg.CurlProxyString()
+		}
 		files.URLs[pkg.Checksum] = fileSource
 	}
 	return &osbuild.Sources{

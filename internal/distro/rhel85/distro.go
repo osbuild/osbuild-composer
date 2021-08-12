@@ -372,6 +372,9 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 				Name: "org.osbuild.rhsm",
 			}
 		}
+		if pkg.Proxy != "" {
+			item.Proxy = pkg.CurlProxyString()
+		}
 		curl.Items[pkg.Checksum] = item
 	}
 	if len(curl.Items) > 0 {
