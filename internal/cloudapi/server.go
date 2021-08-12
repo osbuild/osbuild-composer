@@ -178,7 +178,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 		if request.Customizations != nil && request.Customizations.Subscription != nil {
 			imageOptions.Subscription = &distro.SubscriptionImageOptions{
-				Organization:  request.Customizations.Subscription.Organization,
+				Organization:  fmt.Sprintf("%d", request.Customizations.Subscription.Organization),
 				ActivationKey: request.Customizations.Subscription.ActivationKey,
 				ServerUrl:     request.Customizations.Subscription.ServerUrl,
 				BaseUrl:       request.Customizations.Subscription.BaseUrl,
