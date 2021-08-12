@@ -46,6 +46,11 @@ def dnfrepo(desc, parent_conf=None):
     # some arbitrary does not seem very helpful.
     repo.metadata_expire = desc.get("metadata_expire", "-1")
 
+    # Proxy support maps the dnf variables to the json directly
+    for p in ["proxy", "proxy_username", "proxy_password"]:
+        if p in desc:
+            setattr(repo, p, desc[p])
+
     return repo
 
 
