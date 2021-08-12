@@ -41,6 +41,9 @@ type dnfRepoConfig struct {
 	SSLClientKey   string `json:"sslclientkey,omitempty"`
 	SSLClientCert  string `json:"sslclientcert,omitempty"`
 	MetadataExpire string `json:"metadata_expire,omitempty"`
+	Proxy          string `json:"proxy,omitempty"`
+	ProxyUsername  string `json:"proxy_username,omitempty"`
+	ProxyPassword  string `json:"proxy_password,omitempty"`
 }
 
 type RepoConfig struct {
@@ -54,6 +57,9 @@ type RepoConfig struct {
 	MetadataExpire string
 	RHSM           bool
 	ImageTypeTags  []string
+	Proxy          string
+	ProxyUsername  string
+	ProxyPassword  string
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
@@ -406,6 +412,9 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever
 		GPGKey:         repo.GPGKey,
 		IgnoreSSL:      repo.IgnoreSSL,
 		MetadataExpire: repo.MetadataExpire,
+		Proxy:          repo.Proxy,
+		ProxyUsername:  repo.ProxyUsername,
+		ProxyPassword:  repo.ProxyPassword,
 	}
 	if repo.RHSM {
 		if rpmmd.subscriptions == nil {
@@ -499,6 +508,9 @@ func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePl
 		if repo.RHSM {
 			dependencies[i].Secrets = "org.osbuild.rhsm"
 		}
+		dependencies[i].Proxy = repo.Proxy
+		dependencies[i].ProxyUsername = repo.ProxyUsername
+		dependencies[i].ProxyPassword = repo.ProxyPassword
 	}
 
 	return dependencies, reply.Checksums, err
