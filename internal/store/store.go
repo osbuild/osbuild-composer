@@ -43,14 +43,17 @@ type Store struct {
 }
 
 type SourceConfig struct {
-	Name     string   `json:"name" toml:"name"`
-	Type     string   `json:"type" toml:"type"`
-	URL      string   `json:"url" toml:"url"`
-	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
-	System   bool     `json:"system" toml:"system"`
-	Distros  []string `json:"distros" toml:"distros"`
-	RHSM     bool     `json:"rhsm" toml:"rhsm"`
+	Name          string   `json:"name" toml:"name"`
+	Type          string   `json:"type" toml:"type"`
+	URL           string   `json:"url" toml:"url"`
+	CheckGPG      bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL      bool     `json:"check_ssl" toml:"check_ssl"`
+	System        bool     `json:"system" toml:"system"`
+	Distros       []string `json:"distros" toml:"distros"`
+	RHSM          bool     `json:"rhsm" toml:"rhsm"`
+	Proxy         string   `json:"proxy,omitempty"`
+	ProxyUsername string   `json:"proxy_username,omitempty"`
+	ProxyPassword string   `json:"proxy_password,omitempty"`
 }
 
 type NotFoundError struct {
@@ -551,10 +554,13 @@ func (s *Store) GetAllDistroSources(distro string) map[string]SourceConfig {
 
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
-		Name:     repo.Name,
-		CheckGPG: repo.CheckGPG,
-		CheckSSL: !repo.IgnoreSSL,
-		System:   system,
+		Name:          repo.Name,
+		CheckGPG:      repo.CheckGPG,
+		CheckSSL:      !repo.IgnoreSSL,
+		System:        system,
+		Proxy:         repo.Proxy,
+		ProxyUsername: repo.ProxyUsername,
+		ProxyPassword: repo.ProxyPassword,
 	}
 
 	if repo.BaseURL != "" {
@@ -572,12 +578,15 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 }
 
 func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
-	var repo rpmmd.RepoConfig
-
-	repo.Name = name
-	repo.IgnoreSSL = !s.CheckSSL
-	repo.CheckGPG = s.CheckGPG
-	repo.RHSM = s.RHSM
+	repo := rpmmd.RepoConfig{
+		Name:          name,
+		IgnoreSSL:     !s.CheckSSL,
+		CheckGPG:      s.CheckGPG,
+		RHSM:          s.RHSM,
+		Proxy:         s.Proxy,
+		ProxyUsername: s.ProxyUsername,
+		ProxyPassword: s.ProxyPassword,
+	}
 
 	if s.Type == "yum-baseurl" {
 		repo.BaseURL = s.URL
