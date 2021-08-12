@@ -34,12 +34,13 @@ function retry {
 function setup_repo {
   local project=$1
   local commit=$2
-  local priority=${3:-10}
+  local distro_version=$3
+  local priority=${4:-10}
   greenprint "Setting up dnf repository for ${project} ${commit}"
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${ID}-${VERSION_ID}/${ARCH}/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${distro_version}/${ARCH}/${commit}
 enabled=1
 gpgcheck=0
 priority=${priority}
@@ -50,10 +51,19 @@ EOF
 source /etc/os-release
 ARCH=$(uname -m)
 
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "Registering RHEL"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
+fi
+
+# Distro version that this script is running on.
+DISTRO_VERSION=${ID}-${VERSION_ID}
+
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+  # If this script runs on subscribed RHEL, install content built using CDN
+  # repositories.
+  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
 fi
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
@@ -65,16 +75,19 @@ cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
 
-setup_repo osbuild-composer "${GIT_COMMIT}" 5
+# fallback for gitlab
+GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
+
+setup_repo osbuild-composer "${GIT_COMMIT}" "${DISTRO_VERSION}" 5
 
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
-  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
+  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" "${ID}-${VERSION_ID}" 10
 fi
 
 if [[ "$PROJECT" != "osbuild-composer" ]]; then
   PROJECT_COMMIT=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].commit" Schutzfile)
-  setup_repo "${PROJECT}" "${PROJECT_COMMIT}" 10
+  setup_repo "${PROJECT}" "${PROJECT_COMMIT}" "${DISTRO_VERSION}" 10
 
   # Get a list of packages needed to be preinstalled before "${PROJECT}-tests".
   # Useful mainly for EPEL.
@@ -89,9 +102,25 @@ fi
 if [ -f "rhel8internal.repo" ]; then
     greenprint "Preparing repos for internal build testing"
     sudo mv rhel8internal.repo /etc/yum.repos.d/
-    sudo rm -f /etc/yum.repos.d/osbuild*.repo
+    # Use osbuild from schutzfile if desired for testing custom osbuild-composer packages
+    # specified by $REPO_URL in ENV and used in prepare-rhel-internal.sh
+    if [ "$SCHUTZ_OSBUILD" == 1 ]; then
+        sudo rm -f /etc/yum.repos.d/osbuild-composer.repo
+    else
+        sudo rm -f /etc/yum.repos.d/osbuild*.repo
+    fi
 fi
 
 greenprint "Installing test packages for ${PROJECT}"
+
+# NOTE: WORKAROUND FOR DEPENDENCY BUG
+retry sudo dnf -y upgrade selinux-policy
+
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
+
+if [ -n "${CI}" ]; then
+    # copy repo files b/c GitLab can't upload artifacts
+    # which are outside the build directory
+    cp /etc/yum.repos.d/*.repo "$(pwd)"
+fi

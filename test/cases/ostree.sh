@@ -1,39 +1,41 @@
 #!/bin/bash
 set -euo pipefail
 
-OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
+source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Provision the software under tet.
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-32")
-        IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/32/${ARCH}/iot"
-        OS_VARIANT="fedora32"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/32/Everything/x86_64/os/";;
     "fedora-33")
         IMAGE_TYPE=fedora-iot-commit
         OSTREE_REF="fedora/33/${ARCH}/iot"
         OS_VARIANT="fedora33"
+        USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/";;
     "rhel-8.3")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8.3"
-        # When 8.3 was released, it wasn't available on all RH internal
-        # mirrors, therefore the Boston mirror is hardcoded.
-        BOOT_LOCATION="http://download.eng.bos.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
+        USER_IN_COMMIT="false"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
     "rhel-8.4")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
-        BOOT_LOCATION="http://download.devel.redhat.com/nightly/rhel-8/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/";;
+        USER_IN_COMMIT="false"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/";;
+    "rhel-8.5")
+        IMAGE_TYPE=edge-commit
+        OSTREE_REF="rhel/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
+        USER_IN_COMMIT="true"
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
@@ -95,6 +97,9 @@ EOF
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
 GUEST_ADDRESS=192.168.100.50
+SSH_USER="admin"
+ARTIFACTS="ci-artifacts"
+mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -105,12 +110,14 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_KEY=${OSBUILD_COMPOSER_TEST_DATA}keyring/id_rsa
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB="$(cat "${SSH_KEY}".pub)"
 
 # Get the compose log.
 get_compose_log () {
     COMPOSE_ID=$1
-    LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
+    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
 
     # Download the logs.
     sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
@@ -119,7 +126,7 @@ get_compose_log () {
 # Get the compose metadata.
 get_compose_metadata () {
     COMPOSE_ID=$1
-    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
+    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
 
     # Download the metadata.
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
@@ -147,17 +154,13 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
+    # Stop watching the worker journal when exiting.
+    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
     if [[ $blueprint_name == upgrade ]]; then
-        # composer-cli in Fedora 32 has a different start-ostree arguments
-        # see https://github.com/weldr/lorax/pull/1051
-        if [[ "${ID}-${VERSION_ID}" == fedora-32 ]]; then
-            sudo composer-cli --json compose start-ostree "$blueprint_name" $IMAGE_TYPE "$OSTREE_REF" "$COMMIT_HASH" | tee "$COMPOSE_START"
-        else
-            sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
-        fi
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     else
         sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     fi
@@ -183,19 +186,20 @@ build_image() {
     get_compose_log "$COMPOSE_ID"
     get_compose_metadata "$COMPOSE_ID"
 
+    # Kill the journal monitor immediately and remove the trap
+    sudo pkill -P ${WORKER_JOURNAL_PID}
+    trap - EXIT
+
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi
-
-    # Stop watching the worker journal.
-    sudo kill ${WORKER_JOURNAL_PID}
 }
 
 # Wait for the ssh server up to be.
 wait_for_ssh_up () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -255,11 +259,29 @@ name = "python36"
 version = "*"
 EOF
 
+# RHEL 8.5 and later support user configuration in blueprint for edge-commit image
+if [[ "${USER_IN_COMMIT}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "${SSH_USER}"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/${SSH_USER}/"
+groups = ["wheel"]
+EOF
+fi
+
 # Build installation image.
 build_image "$BLUEPRINT_FILE" ostree
 
 # Start httpd to serve ostree repo.
 greenprint "🚀 Starting httpd daemon"
+# osbuild-composer-tests have mod_ssl as a dependency. The package installs
+# an example configuration which automatically enabled httpd on port 443, but
+# that one is already in use. Remove the default configuration as it is useless
+# anyway.
+sudo rm -f /etc/httpd/conf.d/ssl.conf
 sudo systemctl start httpd
 
 # Download the image and extract tar into web server root folder.
@@ -298,8 +320,8 @@ timezone --utc Etc/UTC
 
 selinux --enforcing
 rootpw --lock --iscrypted locked
-user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
-sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+user --name=${SSH_USER} --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
+sshkey --username=${SSH_USER} "${SSH_KEY_PUB}"
 
 bootloader --timeout=1 --append="net.ifnames=0 modprobe.blacklist=vc4"
 
@@ -313,8 +335,8 @@ poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
 
-# no sudo password for user admin
-echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+# no sudo password for SSH user
+echo -e '${SSH_USER}\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 
 # Remove any persistent NIC rules generated by udev
 rm -vf /etc/udev/rules.d/*persistent-net*.rules
@@ -343,10 +365,15 @@ echo "(Don't worry -- that out-of-space error was expected.)"
 %end
 STOPHERE
 
+# RHEL 8.5 and later configures user in blueprint for edge-commit image
+if [[ "${USER_IN_COMMIT}" == "true" ]]; then
+    sudo sed -i '/^user\|^sshkey/d' "${KS_FILE}"
+fi
+
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
+                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
@@ -354,7 +381,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location ${BOOT_LOCATION} \
+                   --location "${BOOT_LOCATION}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
@@ -401,6 +428,19 @@ name = "wget"
 version = "*"
 EOF
 
+# RHEL 8.5 and later support user configuration in blueprint for edge-commit image
+if [[ "${USER_IN_COMMIT}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "${SSH_USER}"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/${SSH_USER}/"
+groups = ["wheel"]
+EOF
+fi
+
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
 
@@ -433,8 +473,8 @@ UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'sudo rpm-ostree upgrade || { sudo rpm-ostree status; sudo journalctl -b -r -u rpm-ostreed; exit 1; }'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -461,7 +501,7 @@ ${GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=${SSH_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF

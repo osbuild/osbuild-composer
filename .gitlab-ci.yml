@@ -1,0 +1,139 @@
+stages:
+  - init
+  - rpmbuild
+  - test
+  - finish
+
+.terraform:
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
+    - schutzbot/run_cloud_cleaner.sh
+  tags:
+    - terraform
+  artifacts:
+    paths:
+      - journal-log
+      - ci-artifacts
+    when: always
+
+init:
+  stage: init
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh start
+
+RPM:
+  stage: rpmbuild
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - sh "schutzbot/mockbuild.sh"
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+
+Base:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/base_tests.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log
+      - "*.repo"
+    when: always
+
+OSTree:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.4-ga-x86_64
+
+New OSTree:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-ng.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.4-ga-x86_64
+
+.INTEGRATION_TESTS: &INTEGRATION_TESTS
+  SCRIPT:
+    - koji.sh
+    - aws.sh
+    - vmware.sh
+
+Integration:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
+  parallel:
+    matrix:
+      - <<: *INTEGRATION_TESTS
+        RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - SCRIPT:
+          - libvirt.sh
+        RUNNER:
+          - openstack/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+
+.API_TESTS: &API_TESTS
+  TARGET:
+    - azure
+    - aws
+    - gcp
+    - aws.s3
+
+API:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
+  parallel:
+    matrix:
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+
+finish:
+  stage: finish
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh finish
