@@ -482,6 +482,34 @@ func testImage(t *testing.T, testcase testcaseStruct, imagePath string) {
 	}
 }
 
+// guessPipelineToExport return a best-effort guess about which
+// pipeline should be exported when running osbuild for the testcase
+//
+// If this function detects that this is a version 1 manifest, it
+// always returns "assembler"
+//
+// For manifests version 2, the name of the last pipeline is returned.
+func guessPipelineToExport(rawManifest json.RawMessage) string {
+	const v1ManifestExportName = "assembler"
+	var v2Manifest struct {
+		Version   string `json:"version"`
+		Pipelines []struct {
+			Name string `json:"name,omitempty"`
+		} `json:"pipelines"`
+	}
+	err := json.Unmarshal(rawManifest, &v2Manifest)
+	if err != nil {
+		// if we cannot unmarshal, let's just assume that it's a version 1 manifest
+		return v1ManifestExportName
+	}
+
+	if v2Manifest.Version == "2" {
+		return v2Manifest.Pipelines[len(v2Manifest.Pipelines)-1].Name
+	}
+
+	return v1ManifestExportName
+}
+
 // runTestcase builds the pipeline specified in the testcase and then it
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
@@ -494,9 +522,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 		require.NoError(t, err, "error removing temporary output directory")
 	}()
 
-	// NOTE(akoutsou) 1to2t: new v2 manifests name their last pipeline
-	// "assembler" for compatibility with v1
-	exports := []string{"assembler"}
+	exports := []string{guessPipelineToExport(testcase.Manifest)}
 	err = runOsbuild(testcase.Manifest, store, outputDirectory, exports)
 	require.NoError(t, err)
 
