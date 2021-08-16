@@ -67,7 +67,7 @@ func (ac Client) CreateStorageAccount(ctx context.Context, subscriptionID, resou
 
 	result, err := c.Create(ctx, resourceGroup, name, storage.AccountCreateParameters{
 		Sku: &storage.Sku{
-			Name: storage.StandardRAGRS, // TODO: investigate the default value
+			Name: storage.StandardLRS,
 			Tier: storage.Standard,
 		},
 		Location: &location,
