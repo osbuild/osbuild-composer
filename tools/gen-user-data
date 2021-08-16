@@ -29,6 +29,7 @@ import json
 import os
 import stat
 import sys
+import yaml
 
 
 def octal_mode_string(mode):
@@ -62,7 +63,12 @@ def main():
             })
 
     with open(f"{args.configdir}/user-data.yml") as f:
-        sys.stdout.write(f.read())
+        yml=f.read()
+        o = yaml.safe_load(yml)
+        if "write_files" in o:
+            print("Input file should not contain `write_files`", file=sys.stderr)
+            return 1
+        sys.stdout.write(yml)
     sys.stdout.write("write_files: ")
     json.dump(write_files, sys.stdout)
     sys.stdout.write("\n")
