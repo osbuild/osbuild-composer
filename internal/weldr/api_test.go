@@ -1102,6 +1102,8 @@ func TestSourcesNew(t *testing.T) {
 		{"POST", "/api/v1/projects/source/new", `{"id": "test-id", "name": "test system repo", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "SystemSource","msg": "test-id is a system source, it cannot be changed."}],"status":false}`},
 		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"distros":["test-distro", "test-distro-2"]}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"distros":["fedora-1"]}`, http.StatusBadRequest, `{"status":false, "errors":[{"id":"ProjectsError", "msg":"Invalid distributions: fedora-1"}]}`},
+		{"POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"proxy":"http://proxy.proxyurl.com:8123"}`, http.StatusOK, `{"status":true}`},
+		{"POST", "/api/v0/projects/source/new", `{"name": "fish","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"proxy":"http://proxy.proxyurl.com:8123","proxy_username":"whistler","proxy_password":"setecastronomy"}`, http.StatusOK, `{"status":true}`},
 	}
 
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
@@ -1220,27 +1222,39 @@ func TestSourcesInfoTomlV1(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	source := `
-id = "fish"
+	var cases = []struct {
+		Post string
+		Get  string
+	}{
+		{`id = "fish"
 name = "fish"
 url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
 type = "yum-baseurl"
 rhsm = true
-`
+`,
+			`{"check_gpg":false,"check_ssl":false,"id":"fish","name":"fish","rhsm":true,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`}, {`id = "fish"
+name = "fish"
+url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
+type = "yum-baseurl"
+proxy = "http://proxy.proxyurl.org:8123"
+proxy_username = "whistler"
+proxy_password = "setecastronomy"
+`,
+			`{"check_gpg":false,"check_ssl":false,"id":"fish","name":"fish","proxy":"http://proxy.proxyurl.org:8123","proxy_username":"whistler","proxy_password":"setecastronomy","rhsm":false,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`}}
 
-	sourceStr := `{"check_gpg":false,"check_ssl":false,"id":"fish","name":"fish","rhsm":true,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`
+	for _, source := range cases {
+		req := httptest.NewRequest("POST", "/api/v1/projects/source/new", bytes.NewReader([]byte(source.Post)))
+		req.Header.Set("Content-Type", "text/x-toml")
+		recorder := httptest.NewRecorder()
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/source/new", bytes.NewReader([]byte(source)))
-	req.Header.Set("Content-Type", "text/x-toml")
-	recorder := httptest.NewRecorder()
+		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+		api.ServeHTTP(recorder, req)
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
-	api.ServeHTTP(recorder, req)
-
-	r := recorder.Result()
-	require.Equal(t, http.StatusOK, r.StatusCode)
-	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
-	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+		r := recorder.Result()
+		require.Equal(t, http.StatusOK, r.StatusCode)
+		test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+source.Get+`},"errors":[]}`)
+		test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+source.Get+`},"errors":[]}`)
+	}
 }
 
 // TestSourcesNewWrongTomlV1 Tests that Empty TOML, and invalid TOML should return an error
