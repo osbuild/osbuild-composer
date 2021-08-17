@@ -13,6 +13,10 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Install openshift client
+greenprint "🔧 Installing oenshift client(oc)"
+curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz | sudo tar -xz -C /usr/local/bin/
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -63,14 +67,16 @@ OSTREE_REF="test/rhel/8/${ARCH}/edge"
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
+QUAY_REPO_URL="docker://quay.io/osbuild/testing-rhel-edge-push"
+QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 BIOS_GUEST_ADDRESS=192.168.100.50
 UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
-STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}/repo/"
-QUAY_REPO_URL="docker://quay.io/osbuild/testing-rhel-edge-push"
-QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
+STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
+STAGE_OCP4_SERVER_NAME="edge-stage-server"
+STAGE_OCP4_REPO_URL="http://${STAGE_OCP4_SERVER_NAME}-${QUAY_REPO_TAG}-frontdoor.apps.ocp.ci.centos.org:8085/repo/"
 ARTIFACTS="ci-artifacts"
 mkdir -p "${ARTIFACTS}"
 
@@ -255,6 +261,7 @@ sudo rm -rf "$PROD_REPO"
 sudo mkdir -p "$PROD_REPO"
 sudo ostree --repo="$PROD_REPO" init --mode=archive
 sudo ostree --repo="$PROD_REPO" remote add --no-gpg-verify edge-stage "$STAGE_REPO_URL"
+sudo ostree --repo="$PROD_REPO" remote add --no-gpg-verify edge-stage-ocp4 "$STAGE_OCP4_REPO_URL"
 
 # Prepare stage repo network
 greenprint "🔧 Prepare stage repo network"
@@ -316,28 +323,36 @@ sudo podman rmi -f -a
 greenprint "🗜 Pushing image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
 skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
-greenprint "Downloading image from quay.io"
-sudo podman login quay.io --username "${QUAY_USERNAME}" --password "${QUAY_PASSWORD}"
-sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
-sudo podman images
-greenprint "🗜 Running the image"
-sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 # Clear image file
 sudo rm -f "$IMAGE_FILENAME"
 
-# Wait for container to be running
-until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
-    sleep 1;
-done;
+# Run stage repo in OCP4
+greenprint "Running stage repo in OCP4"
+oc login --token="${OCP_SA_TOKEN}" --server=https://api.ocp.ci.centos.org:6443 -n frontdoor
+oc process -f /usr/share/tests/osbuild-composer/openshift/edge-stage-server-template.yaml -p EDGE_STAGE_REPO_TAG="${QUAY_REPO_TAG}" -p EDGE_STAGE_SERVER_NAME="${STAGE_OCP4_SERVER_NAME}" | oc apply -f -
+
+# Wait until stage repo ready to use
+for LOOP_COUNTER in $(seq 0 60); do
+    RETURN_CODE=$(curl -o /dev/null -s -w "%{http_code}" "${STAGE_OCP4_REPO_URL}refs/heads/${OSTREE_REF}")
+    if [[ $RETURN_CODE == 200 ]]; then
+        echo "Stage repo is ready"
+        break
+    fi
+    sleep 10
+done
 
 # Sync installer edge content
 greenprint "📡 Sync installer content from stage repo"
-sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
+sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage-ocp4 "$OSTREE_REF"
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up container blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete container > /dev/null
+
+# Clean up OCP4
+greenprint " Clean up OCP4"
+oc delete pod,rc,service,route,dc -l app="${STAGE_OCP4_SERVER_NAME}-${QUAY_REPO_TAG}"
 
 ########################################################
 ##
