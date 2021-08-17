@@ -225,6 +225,9 @@ install -m 0644 -vp test/data/koji/*                            %{buildroot}%{_d
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/x509
 install -m 0644 -vp test/data/x509/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/x509/
 
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/openshift
+install -m 0644 -vp test/data/openshift/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/openshift/
+
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/osbuild-composer/schemas
 install -m 0644 -vp internal/jobqueue/dbjobqueue/schemas/*      %{buildroot}%{_datadir}/tests/osbuild-composer/schemas/
 
