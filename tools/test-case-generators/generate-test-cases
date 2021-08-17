@@ -192,6 +192,22 @@ CUSTOMIZATIONS_BLUEPRINT =  {
     }
 }
 
+FILESYSTEM_CUSTOMIZATIONS = [
+  {
+    "mountpoint": "/usr",
+    "minsize": 2147483648
+  },
+  {
+    "mountpoint": "/var",
+    "minsize": 131072000
+  },
+  {
+    "mountpoint": "/",
+    "minsize": 131072000
+  }
+]
+
+
 
 def main(distro, arch, image_types, keep_image_info, store, output, with_customizations):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
@@ -204,6 +220,9 @@ def main(distro, arch, image_types, keep_image_info, store, output, with_customi
         if len(image_types) > 1 or image_types[0] != "qcow2":
             print("Customizations are only available for qcow2 image type")
             sys.exit(1)
+
+        if distro == "rhel-85":
+            CUSTOMIZATIONS_BLUEPRINT["customizations"]["filesystem"] = FILESYSTEM_CUSTOMIZATIONS
 
         test_case_request = {
             "compose-request": {
