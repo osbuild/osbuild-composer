@@ -14,6 +14,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const (
+	// architecture names
+
+	X86_64ArchName  = "x86_64"
+	Aarch64ArchName = "aarch64"
+	Ppc64leArchName = "ppc64le"
+	S390xArchName   = "s390x"
+)
+
 // A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
 	// Returns the name of the distro.

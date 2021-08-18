@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -52,16 +53,9 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-const (
-	// architecture names
-
-	x86_64ArchName  = "x86_64"
-	aarch64ArchName = "aarch64"
-	ppc64leArchName = "ppc64le"
-	s390xArchName   = "s390x"
-)
-
 type BootType string
+
+type ValidArches map[string]disk.PartitionTable
 
 const (
 	UnsetBootType  BootType = ""
@@ -213,6 +207,8 @@ type imageType struct {
 	bootable bool
 	// If set to a value, it is preferred over the architecture value
 	bootType BootType
+	// List of valid arches for the image type
+	validArches ValidArches
 }
 
 func (t *imageType) Name() string {
@@ -500,7 +496,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   x86_64ArchName,
+		name:   distro.X86_64ArchName,
 		distro: rd,
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey:      x8664BuildPackageSet(),
@@ -513,7 +509,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	}
 
 	aarch64 := architecture{
-		name:   aarch64ArchName,
+		name:   distro.Aarch64ArchName,
 		distro: rd,
 		packageSets: map[string]rpmmd.PackageSet{
 			bootUEFIPkgsKey: aarch64UEFIBootPackageSet(),
@@ -524,7 +520,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 
 	ppc64le := architecture{
 		distro: rd,
-		name:   ppc64leArchName,
+		name:   distro.Ppc64leArchName,
 		packageSets: map[string]rpmmd.PackageSet{
 			bootLegacyPkgsKey: ppc64leLegacyBootPackageSet(),
 			buildPkgsKey:      ppc64leBuildPackageSet(),
@@ -534,7 +530,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	}
 	s390x := architecture{
 		distro: rd,
-		name:   s390xArchName,
+		name:   distro.S390xArchName,
 		packageSets: map[string]rpmmd.PackageSet{
 			bootLegacyPkgsKey: s390xLegacyBootPackageSet(),
 		},
@@ -614,6 +610,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize: 10 * GigaByte,
 		pipelines:   qcow2Pipelines,
 		exports:     []string{"qcow2"},
+		validArches: defaultArches,
 	}
 
 	vhdImgType := imageType{
@@ -633,6 +630,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:   4 * GigaByte,
 		pipelines:     vhdPipelines,
 		exports:       []string{"vpc"},
+		validArches:   defaultArches,
 	}
 
 	vmdkImgType := imageType{
@@ -647,6 +645,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:   4 * GigaByte,
 		pipelines:     vmdkPipelines,
 		exports:       []string{"vmdk"},
+		validArches:   defaultArches,
 	}
 
 	openstackImgType := imageType{
@@ -661,6 +660,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:   4 * GigaByte,
 		pipelines:     openstackPipelines,
 		exports:       []string{"qcow2"},
+		validArches:   defaultArches,
 	}
 
 	// EC2 services
@@ -692,6 +692,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:     10 * GigaByte,
 		pipelines:       ec2Pipelines,
 		exports:         []string{"image"},
+		validArches:     ec2ValidArches,
 	}
 
 	amiImgTypeAarch64 := imageType{
@@ -709,6 +710,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:     10 * GigaByte,
 		pipelines:       ec2Pipelines,
 		exports:         []string{"image"},
+		validArches:     ec2ValidArches,
 	}
 
 	ec2ImgTypeX86_64 := imageType{
@@ -727,6 +729,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:     10 * GigaByte,
 		pipelines:       rhelEc2Pipelines,
 		exports:         []string{"archive"},
+		validArches:     ec2ValidArches,
 	}
 
 	ec2ImgTypeAarch64 := imageType{
@@ -744,6 +747,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:     10 * GigaByte,
 		pipelines:       rhelEc2Pipelines,
 		exports:         []string{"archive"},
+		validArches:     ec2ValidArches,
 	}
 
 	ec2HaImgTypeX86_64 := imageType{
@@ -762,6 +766,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultSize:     10 * GigaByte,
 		pipelines:       rhelEc2Pipelines,
 		exports:         []string{"archive"},
+		validArches:     ec2ValidArches,
 	}
 
 	tarImgType := imageType{
