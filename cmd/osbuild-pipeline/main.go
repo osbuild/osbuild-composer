@@ -24,12 +24,19 @@ type repository struct {
 	CheckGPG   bool   `json:"check_gpg,omitempty"`
 }
 
+type ostreeOptions struct {
+	Ref    string `json:"ref"`
+	Parent string `json:"parent"`
+	URL    string `json:"url"`
+}
+
 type composeRequest struct {
 	Distro       string              `json:"distro"`
 	Arch         string              `json:"arch"`
 	ImageType    string              `json:"image-type"`
 	Blueprint    blueprint.Blueprint `json:"blueprint"`
 	Repositories []repository        `json:"repositories"`
+	OSTree       ostreeOptions       `json:"ostree"`
 }
 
 func main() {
@@ -129,11 +136,19 @@ func main() {
 			panic(err)
 		}
 	} else {
+
+		if composeRequest.OSTree.Ref == "" {
+			// use default OSTreeRef for image type
+			composeRequest.OSTree.Ref = imageType.OSTreeRef()
+		}
+
 		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
 			distro.ImageOptions{
 				Size: imageType.Size(0),
 				OSTree: distro.OSTreeImageOptions{
-					Ref: imageType.OSTreeRef(), // use default OSTreeRef for image type
+					Ref:    composeRequest.OSTree.Ref,
+					Parent: composeRequest.OSTree.Parent,
+					URL:    composeRequest.OSTree.URL,
 				},
 			},
 			repos,
