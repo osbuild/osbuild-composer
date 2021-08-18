@@ -72,6 +72,18 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"org.osbuild.files":{"urls":{"checksum1":{"url":"url1"},"checksum2":{"url":"url2"}}}}`),
 			},
 		},
+		{
+			name: "files-proxy",
+			fields: fields{
+				Name: "org.osbuild.files",
+				Source: &FilesSource{URLs: map[string]FileSource{
+					"checksum1": FileSource{URL: "url1", Proxy: "user:password@proxy:8123"},
+				}},
+			},
+			args: args{
+				data: []byte(`{"org.osbuild.files":{"urls":{"checksum1":{"url":"url1","proxy":"user:password@proxy:8123"}}}}`),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
