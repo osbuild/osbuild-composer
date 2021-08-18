@@ -87,6 +87,19 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"org.osbuild.curl":{"items":{"checksum1":"url1","checksum2":"url2"}}}`),
 			},
 		},
+		{
+			name: "curl-with-proxy",
+			fields: fields{
+				Type: "org.osbuild.curl",
+				Source: &CurlSource{
+					Items: map[string]CurlSourceItem{
+						"checksum1": URLWithSecrets{URL: "url1", Secrets: &URLSecrets{Name: "org.osbuild.rhsm"}, Proxy: "user:password@proxy:8123"},
+					}},
+			},
+			args: args{
+				data: []byte(`{"org.osbuild.curl":{"items":{"checksum1":{"url":"url1","secrets":{"name":"org.osbuild.rhsm"},"proxy":"user:password@proxy:8123"}}}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
