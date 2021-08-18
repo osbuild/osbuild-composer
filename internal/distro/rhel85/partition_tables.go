@@ -27,50 +27,39 @@ const (
 	rootPartitionUUID    = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
 )
 
-var x86PartitionTable = disk.PartitionTable{
-	UUID:       "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-	Type:       "gpt",
-	Partitions: []disk.Partition{},
-}
-
-var aarch64PartitionTable = disk.PartitionTable{
-	UUID:       "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-	Type:       "gpt",
-	Partitions: []disk.Partition{},
-}
-
-var ppc64lePartitionTable = disk.PartitionTable{
-	UUID:       "0x14fc63d2",
-	Type:       "dos",
-	Partitions: []disk.Partition{},
-}
-
-var s390xPartitionTable = disk.PartitionTable{
-	UUID:       "0x14fc63d2",
-	Type:       "dos",
-	Partitions: []disk.Partition{},
-}
-
-var validArches = map[string]disk.PartitionTable{
-	x86_64ArchName:  x86PartitionTable,
-	aarch64ArchName: aarch64PartitionTable,
-	ppc64leArchName: ppc64lePartitionTable,
-	s390xArchName:   s390xPartitionTable,
+var defaultArches = map[string]disk.PartitionTable{
+	distro.X86_64ArchName:  gptPartitionTable,
+	distro.Aarch64ArchName: gptPartitionTable,
+	distro.Ppc64leArchName: dosPartitionTable,
+	distro.S390xArchName:   dosPartitionTable,
 }
 
 var ec2ValidArches = map[string]disk.PartitionTable{
-	x86_64ArchName:  x86PartitionTable,
-	aarch64ArchName: aarch64PartitionTable,
+	distro.X86_64ArchName:  gptPartitionTable,
+	distro.Aarch64ArchName: gptPartitionTable,
+}
+
+var gptPartitionTable = disk.PartitionTable{
+	UUID:       "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+	Type:       "gpt",
+	Partitions: []disk.Partition{},
+}
+
+var dosPartitionTable = disk.PartitionTable{
+	UUID:       "0x14fc63d2",
+	Type:       "dos",
+	Partitions: []disk.Partition{},
 }
 
 func createPartitionTable(
 	mountpoints []blueprint.FilesystemCustomization,
 	imageOptions distro.ImageOptions,
-	arch distro.Arch,
+	t *imageType,
+	ec2 bool,
 	rng *rand.Rand,
 ) disk.PartitionTable {
-	archName := arch.Name()
-	partitionTable, ok := validArches[archName]
+	archName := t.arch.Name()
+	partitionTable, ok := t.validArches[archName]
 
 	if !ok {
 		panic("unknown arch: " + archName)
@@ -78,35 +67,34 @@ func createPartitionTable(
 
 	partitionTable.Size = imageOptions.Size
 	partitions := []disk.Partition{}
-	var start uint64
+	var start uint64 = 2048
 
-	if archName == x86_64ArchName {
-		biosBootPartition := disk.Partition{
-			Bootable: true,
-			Size:     2048,
-			Start:    2048,
-			Type:     biosBootPartitionType,
-			UUID:     biosBootPartitionUUID,
-		}
+	if archName == distro.X86_64ArchName {
+		biosBootPartition := createPartition("bios", 2048, start, archName, rng)
 		partitions = append(partitions, biosBootPartition)
-		bootEFIPartition := createPartition("/boot/efi", 204800, 4096, archName, rng)
-		partitions = append(partitions, bootEFIPartition)
-		start = uint64(4096 + 204800)
-	} else if archName == aarch64ArchName {
-		bootEFIPartition := createPartition("/boot/efi", 204800, 2048, archName, rng)
-		partitions = append(partitions, bootEFIPartition)
-		start = uint64(2048 + 204800)
-	} else if archName == ppc64leArchName {
-		biosBootPartition := disk.Partition{
-			Start:    2048,
-			Size:     8192,
-			Type:     "41",
-			Bootable: true,
+		start += biosBootPartition.Size
+		if t.bootType != LegacyBootType {
+			bootEFIPartition := createPartition("/boot/efi", 204800, start, archName, rng)
+			partitions = append(partitions, bootEFIPartition)
+			start += bootEFIPartition.Size
 		}
+	} else if archName == distro.Aarch64ArchName {
+		if ec2 {
+			bootEFIParition := createPartition("/boot/efi", 409600, start, archName, rng)
+			partitions = append(partitions, bootEFIParition)
+			start += bootEFIParition.Size
+			bootPartition := createPartition("/boot", 1048576, 411648, archName, rng)
+			partitions = append(partitions, bootPartition)
+			start += bootPartition.Size
+		} else {
+			bootEFIPartition := createPartition("/boot/efi", 204800, start, archName, rng)
+			partitions = append(partitions, bootEFIPartition)
+			start += bootEFIPartition.Size
+		}
+	} else if archName == distro.Ppc64leArchName {
+		biosBootPartition := createPartition("bios", 8192, start, archName, rng)
 		partitions = append(partitions, biosBootPartition)
-		start = uint64(10240)
-	} else if archName == s390xArchName {
-		start = uint64(2048)
+		start += biosBootPartition.Size
 	}
 
 	for _, m := range mountpoints {
@@ -130,44 +118,21 @@ func createPartitionTable(
 	return partitionTable
 }
 
-func ec2PartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
-	archName := arch.Name()
-
-	partitionTable, ok := ec2ValidArches[archName]
-
-	if !ok {
-		panic("unsupported EC2 arch: " + archName)
-	}
-
-	partitionTable.Size = imageOptions.Size
-	partitions := []disk.Partition{}
-	var start uint64
-
-	if archName == x86_64ArchName {
-		biosBootPartition := disk.Partition{
-			Bootable: true,
-			Size:     2048,
-			Start:    2048,
-			Type:     biosBootPartitionType,
-			UUID:     biosBootPartitionUUID,
-		}
-		partitions = append(partitions, biosBootPartition)
-		start = 4096
-	} else if archName == aarch64ArchName {
-		bootEFIParition := createPartition("/boot/efi", 409600, 2048, archName, rng)
-		partitions = append(partitions, bootEFIParition)
-		bootPartition := createPartition("/boot", 1048576, 411648, archName, rng)
-		partitions = append(partitions, bootPartition)
-		start = 1460224
-	}
-	rootSize := (imageOptions.Size / sectorSize) - start - 100
-	rootPartition := createPartition("/", rootSize, start, archName, rng)
-	partitions = append(partitions, rootPartition)
-	partitionTable.Partitions = append(partitionTable.Partitions, partitions...)
-	return partitionTable
-}
-
 func createPartition(mountpoint string, size uint64, start uint64, archName string, rng *rand.Rand) disk.Partition {
+	if mountpoint == "bios" {
+		diskPartition := disk.Partition{
+			Start:    start,
+			Size:     size,
+			Bootable: true,
+		}
+		if archName == distro.X86_64ArchName {
+			diskPartition.Type = biosBootPartitionType
+			diskPartition.UUID = biosBootPartitionUUID
+			return diskPartition
+		}
+		diskPartition.Type = "41"
+		return diskPartition
+	}
 	var filesystem disk.Filesystem
 	// /boot/efi mountpoint is a special case
 	// return early
@@ -193,7 +158,7 @@ func createPartition(mountpoint string, size uint64, start uint64, archName stri
 		partition.UUID = bootPartitionUUID
 		return partition
 	}
-	if archName == x86_64ArchName || archName == aarch64ArchName {
+	if archName == distro.X86_64ArchName || archName == distro.Aarch64ArchName {
 		if mountpoint == "/" {
 			// set Label for root mountpoint
 			filesystem.Label = "root"
@@ -205,7 +170,7 @@ func createPartition(mountpoint string, size uint64, start uint64, archName stri
 		partition.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 		return partition
 	}
-	if mountpoint == "/" && archName == s390xArchName {
+	if mountpoint == "/" && archName == distro.S390xArchName {
 		partition.Bootable = true
 	}
 	return partition
