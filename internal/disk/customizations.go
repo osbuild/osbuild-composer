@@ -26,46 +26,23 @@ const (
 
 func CreatePartitionTable(
 	mountpoints []blueprint.FilesystemCustomization,
-	imageOptions distro.ImageOptions,
-	arch distro.Arch,
+	imageSize uint64,
 	basePartitionTable PartitionTable,
-	bootType distro.BootType,
-	ec2 bool,
 	rng *rand.Rand,
 ) PartitionTable {
-	archName := arch.Name()
 
-	basePartitionTable.Size = imageOptions.Size
+	basePartitionTable.Size = imageSize
 	partitions := []Partition{}
-	var start uint64 = 2048
 
-	if archName == distro.X86_64ArchName {
-		biosBootPartition := createPartition("bios", 2048, start, archName, rng)
-		partitions = append(partitions, biosBootPartition)
-		start += biosBootPartition.Size
-		if bootType != distro.LegacyBootType {
-			bootEFIPartition := createPartition("/boot/efi", 204800, start, archName, rng)
-			partitions = append(partitions, bootEFIPartition)
-			start += bootEFIPartition.Size
-		}
-	} else if archName == distro.Aarch64ArchName {
-		if ec2 {
-			bootEFIParition := createPartition("/boot/efi", 409600, start, archName, rng)
-			partitions = append(partitions, bootEFIParition)
-			start += bootEFIParition.Size
-			bootPartition := createPartition("/boot", 1048576, start, archName, rng)
-			partitions = append(partitions, bootPartition)
-			start += bootPartition.Size
-		} else {
-			bootEFIPartition := createPartition("/boot/efi", 204800, start, archName, rng)
-			partitions = append(partitions, bootEFIPartition)
-			start += bootEFIPartition.Size
-		}
-	} else if archName == distro.Ppc64leArchName {
-		biosBootPartition := createPartition("bios", 8192, start, archName, rng)
-		partitions = append(partitions, biosBootPartition)
-		start += biosBootPartition.Size
+	if bootPartition := basePartitionTable.BootPartition(); bootPartition != nil {
+		// the boot partition UUID needs to be set since this
+		// needs to be randomly generated
+		bootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
+
+	// start point for all of the arches is
+	// 2048 sectors.
+	var start uint64 = basePartitionTable.updatePartitionStartPointOffsets(2048)
 
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
@@ -77,93 +54,40 @@ func CreatePartitionTable(
 	}
 
 	// treat the root partition as a special case
-	// by setting it last and setting the size
-	// dynamically
-	rootSize := (imageOptions.Size / sectorSize) - start - 100
-	rootPartition := createPartition("/", rootSize, start, archName, rng)
-	partitions = append(partitions, rootPartition)
+	// by setting the size dynamically
+	rootPartition := basePartitionTable.RootPartition()
+	rootPartition.Start = start
+	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
+	rootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 
+	basePartitionTable.updateRootPartition(*rootPartition)
 	basePartitionTable.Partitions = append(basePartitionTable.Partitions, partitions...)
 
 	return basePartitionTable
 }
 
 func createPartition(mountpoint string, size uint64, start uint64, archName string, rng *rand.Rand) Partition {
-	if mountpoint == "bios" {
-		diskPartition := Partition{
-			Start:    start,
-			Size:     size,
-			Bootable: true,
-		}
-		if archName == distro.X86_64ArchName {
-			diskPartition.Type = BIOSBootPartitionGUID
-			diskPartition.UUID = BIOSBootPartitionUUID
-			return diskPartition
-		}
-		diskPartition.Type = "41"
-		return diskPartition
-	}
-	var filesystem Filesystem
-	// EFI system is a special case
-	// return early
-	if mountpoint == "/boot/efi" {
-		filesystem = createFilesystemDisk(mountpoint, EFIFilesystemUUID)
-		return Partition{
-			Start:      start,
-			Size:       size,
-			Type:       EFISystemPartitionGUID,
-			UUID:       EFISystemPartitionUUID,
-			Filesystem: &filesystem,
-		}
-	}
-	partition := Partition{
-		Start:      start,
-		Size:       size,
-		Filesystem: &filesystem,
-	}
-	diskUUID := uuid.Must(newRandomUUIDFromReader(rng)).String()
-	filesystem = createFilesystemDisk(mountpoint, diskUUID)
-	if mountpoint == "/boot" {
-		partition.Type = FilesystemDataGUID
-		partition.UUID = FilesystemDataUUID
-		return partition
-	}
-	if archName == distro.X86_64ArchName || archName == distro.Aarch64ArchName {
-		if mountpoint == "/" {
-			// set Label for root mountpoint
-			filesystem.Label = "root"
-			partition.Type = FilesystemDataGUID
-			partition.UUID = RootPartitionUUID
-			return partition
-		}
-		partition.Type = FilesystemDataGUID
-		partition.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
-		return partition
-	}
-	if mountpoint == "/" && archName == distro.S390xArchName {
-		partition.Bootable = true
-	}
-	return partition
-}
-
-func createFilesystemDisk(mountpoint string, uuid string) Filesystem {
-	if mountpoint == "/boot/efi" {
-		return Filesystem{
-			Type:         "vfat",
-			UUID:         uuid,
-			Mountpoint:   mountpoint,
-			FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-			FSTabFreq:    0,
-			FSTabPassNo:  2,
-		}
-	}
-	return Filesystem{
+	filesystem := Filesystem{
 		Type:         "xfs",
-		UUID:         uuid,
+		UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,
 		FSTabPassNo:  0,
+	}
+	if archName == distro.Ppc64leArchName || archName == distro.S390xArchName {
+		return Partition{
+			Start:      start,
+			Size:       size,
+			Filesystem: &filesystem,
+		}
+	}
+	return Partition{
+		Start:      start,
+		Size:       size,
+		Type:       FilesystemDataGUID,
+		UUID:       uuid.Must(newRandomUUIDFromReader(rng)).String(),
+		Filesystem: &filesystem,
 	}
 }
 
