@@ -450,6 +450,11 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	if bootPartIndex == -1 {
 		panic("failed to find boot or root partition for grub2.inst stage")
 	}
+	bootPart := pt.Partitions[bootPartIndex]
+	prefixPath := "/boot/grub2"
+	if bootPart.Filesystem.Mountpoint == "/boot" {
+		prefixPath = "/grub2"
+	}
 	core := osbuild.CoreMkImage{
 		Type:       "mkimage",
 		PartLabel:  pt.Type,
@@ -460,7 +465,7 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 		Type:      "partition",
 		PartLabel: pt.Type,
 		Number:    uint(bootPartIndex),
-		Path:      "/boot/grub2",
+		Path:      prefixPath,
 	}
 
 	return &osbuild.Grub2InstStageOptions{
