@@ -157,6 +157,38 @@ func (pt PartitionTable) BootPartitionIndex() int {
 	return rootIdx
 }
 
+func (pt PartitionTable) RootPartitionIndex() int {
+	rootIdx := -1
+	for idx, part := range pt.Partitions {
+		if part.Filesystem == nil {
+			continue
+		}
+		if part.Filesystem.Mountpoint == "/" {
+			rootIdx = idx
+		}
+	}
+	return rootIdx
+}
+
+// dynamically calculate and update the start point
+// for each of the existing partitions
+// return the updated start point
+func (pt *PartitionTable) updatePartitionStartPointOffsets(start uint64) uint64 {
+	for i := range pt.Partitions {
+		partition := &pt.Partitions[i]
+		if partition.Filesystem != nil && partition.Filesystem.Mountpoint == "/" {
+			continue
+		}
+		partition.Start = start
+		start += partition.Size
+	}
+	return start
+}
+
+func (pt *PartitionTable) updateRootPartition(rootPartition Partition) {
+	pt.Partitions[pt.RootPartitionIndex()] = rootPartition
+}
+
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
