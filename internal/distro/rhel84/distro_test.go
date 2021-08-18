@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type rhelFamilyDistro struct {
@@ -661,4 +662,65 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRhel84_ProxySource(t *testing.T) {
+	var cases = []struct {
+		PkgSets  map[string][]rpmmd.PackageSpec
+		Manifest string
+	}{{map[string][]rpmmd.PackageSpec{
+		"packages": []rpmmd.PackageSpec{{
+			Name:    "dep-package1",
+			Epoch:   0,
+			Version: "1.33",
+			Release: "2.fc30",
+			Arch:    "x86_64",
+		}},
+		"build-packages": []rpmmd.PackageSpec{},
+	},
+		`"sources":{"org.osbuild.files":{"urls":{"":{"url":""}}}}`,
+	}, {map[string][]rpmmd.PackageSpec{
+		"packages": []rpmmd.PackageSpec{{
+			Name:          "dep-package2",
+			Epoch:         0,
+			Version:       "1.33",
+			Release:       "2.fc30",
+			Arch:          "x86_64",
+			Proxy:         "http://proxy.host.com:8123",
+			ProxyUsername: "whistler",
+			ProxyPassword: "setecastronomy",
+		}},
+		"build-packages": []rpmmd.PackageSpec{},
+	},
+		`"sources":{"org.osbuild.files":{"urls":{"":{"url":"","proxy":"http://whistler:setecastronomy@proxy.host.com:8123"}}}}`,
+	},
+	}
+
+	d := rhel84.New()
+	bp := blueprint.Blueprint{}
+
+	for _, archName := range d.ListArches() {
+		arch, _ := d.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			if archName == "s390x" && imgTypeName == "tar" {
+				// broken arch-imgType combination; see
+				// https://github.com/osbuild/osbuild-composer/issues/1220
+				continue
+			}
+			if imgTypeName == "rhel-edge-installer" ||
+				imgTypeName == "rhel-edge-commit" ||
+				imgTypeName == "rhel-edge-container" {
+				// rhel-edge-* images dont use source
+				continue
+			}
+			imgType, _ := arch.GetImageType(imgTypeName)
+
+			for _, c := range cases {
+				m, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, c.PkgSets, 0)
+				assert.NoError(t, err)
+				assert.Contains(t, string(m), c.Manifest)
+			}
+		}
+	}
+
 }

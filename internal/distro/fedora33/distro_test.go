@@ -465,11 +465,11 @@ func TestFedora33_ProxySource(t *testing.T) {
 	},
 	}
 
-	f33distro := fedora33.New()
+	d := fedora33.New()
 	bp := blueprint.Blueprint{}
 
-	for _, archName := range f33distro.ListArches() {
-		arch, _ := f33distro.GetArch(archName)
+	for _, archName := range d.ListArches() {
+		arch, _ := d.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 
