@@ -53,16 +53,7 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-type BootType string
-
 type ValidArches map[string]disk.PartitionTable
-
-const (
-	UnsetBootType  BootType = ""
-	LegacyBootType BootType = "legacy"
-	UEFIBootType   BootType = "uefi"
-	HybridBootType BootType = "hybrid"
-)
 
 var mountpointAllowList = []string{"/", "/var", "/var/*", "/home", "/opt", "/srv", "/usr"}
 
@@ -127,7 +118,7 @@ type architecture struct {
 	imageTypeAliases map[string]string
 	packageSets      map[string]rpmmd.PackageSet
 	legacy           string
-	bootType         BootType
+	bootType         distro.BootType
 }
 
 func (a *architecture) Name() string {
@@ -206,7 +197,7 @@ type imageType struct {
 	// bootable image
 	bootable bool
 	// If set to a value, it is preferred over the architecture value
-	bootType BootType
+	bootType distro.BootType
 	// List of valid arches for the image type
 	validArches ValidArches
 }
@@ -275,11 +266,11 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 		var addUEFIBootPkg bool
 
 		switch bt := t.getBootType(); bt {
-		case LegacyBootType:
+		case distro.LegacyBootType:
 			addLegacyBootPkg = true
-		case UEFIBootType:
+		case distro.UEFIBootType:
 			addUEFIBootPkg = true
-		case HybridBootType:
+		case distro.HybridBootType:
 			addLegacyBootPkg = true
 			addUEFIBootPkg = true
 		default:
@@ -326,9 +317,9 @@ func (t *imageType) Exports() []string {
 
 // getBootType returns the BootType which should be used for this particular
 // combination of architecture and image type.
-func (t *imageType) getBootType() BootType {
+func (t *imageType) getBootType() distro.BootType {
 	bootType := t.arch.bootType
-	if t.bootType != UnsetBootType {
+	if t.bootType != distro.UnsetBootType {
 		bootType = t.bootType
 	}
 	return bootType
@@ -336,7 +327,7 @@ func (t *imageType) getBootType() BootType {
 
 func (t *imageType) supportsUEFI() bool {
 	bootType := t.getBootType()
-	if bootType == HybridBootType || bootType == UEFIBootType {
+	if bootType == distro.HybridBootType || bootType == distro.UEFIBootType {
 		return true
 	}
 	return false
@@ -505,7 +496,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			edgePkgsKey:       x8664EdgeCommitPackageSet(),
 		},
 		legacy:   "i386-pc",
-		bootType: HybridBootType,
+		bootType: distro.HybridBootType,
 	}
 
 	aarch64 := architecture{
@@ -515,7 +506,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			bootUEFIPkgsKey: aarch64UEFIBootPackageSet(),
 			edgePkgsKey:     aarch64EdgeCommitPackageSet(),
 		},
-		bootType: UEFIBootType,
+		bootType: distro.UEFIBootType,
 	}
 
 	ppc64le := architecture{
@@ -526,7 +517,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey:      ppc64leBuildPackageSet(),
 		},
 		legacy:   "powerpc-ieee1275",
-		bootType: LegacyBootType,
+		bootType: distro.LegacyBootType,
 	}
 	s390x := architecture{
 		distro: rd,
@@ -534,7 +525,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			bootLegacyPkgsKey: s390xLegacyBootPackageSet(),
 		},
-		bootType: LegacyBootType,
+		bootType: distro.LegacyBootType,
 	}
 
 	// Shared Services
@@ -688,7 +679,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		enabledServices: ec2EnabledServices,
 		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:        true,
-		bootType:        LegacyBootType,
+		bootType:        distro.LegacyBootType,
 		defaultSize:     10 * GigaByte,
 		pipelines:       ec2Pipelines,
 		exports:         []string{"image"},
@@ -725,7 +716,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		enabledServices: ec2EnabledServices,
 		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:        true,
-		bootType:        LegacyBootType,
+		bootType:        distro.LegacyBootType,
 		defaultSize:     10 * GigaByte,
 		pipelines:       rhelEc2Pipelines,
 		exports:         []string{"archive"},
@@ -762,7 +753,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		enabledServices: ec2EnabledServices,
 		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:        true,
-		bootType:        LegacyBootType,
+		bootType:        distro.LegacyBootType,
 		defaultSize:     10 * GigaByte,
 		pipelines:       rhelEc2Pipelines,
 		exports:         []string{"archive"},

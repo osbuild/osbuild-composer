@@ -23,6 +23,15 @@ const (
 	S390xArchName   = "s390x"
 )
 
+type BootType string
+
+const (
+	UnsetBootType  BootType = ""
+	LegacyBootType BootType = "legacy"
+	UEFIBootType   BootType = "uefi"
+	HybridBootType BootType = "hybrid"
+)
+
 // A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
 	// Returns the name of the distro.
