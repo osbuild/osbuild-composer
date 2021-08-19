@@ -396,10 +396,10 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	var err error
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
-	case x86_64ArchName:
+	case distro.X86_64ArchName:
 		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
 	// rhel-ec2-aarch64
-	case aarch64ArchName:
+	case distro.Aarch64ArchName:
 		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
@@ -973,7 +973,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 }
 
 func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string) *osbuild.Stage {
-	if t.arch.name == s390xArchName {
+	if t.arch.name == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
 
@@ -989,7 +989,7 @@ func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *archite
 		return osbuild.NewGrub2InstStage(grub2InstStageOptions(filename, pt, platform))
 	}
 
-	if arch.name == s390xArchName {
+	if arch.name == distro.S390xArchName {
 		return osbuild.NewZiplInstStage(ziplInstStageOptions(kernelVer, pt), disk, devices, mounts)
 	}
 

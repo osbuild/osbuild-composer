@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -135,6 +136,8 @@ type SubscriptionImageOptions struct {
 	BaseUrl       string
 	Insights      bool
 }
+
+type BasePartitionTableMap map[string]disk.PartitionTable
 
 // A Manifest is an opaque JSON object, which is a valid input to osbuild
 type Manifest []byte
