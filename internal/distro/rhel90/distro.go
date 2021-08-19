@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"path"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -49,6 +51,8 @@ const (
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
 )
+
+var mountpointAllowList = []string{"/", "/var", "/var/*", "/home", "/opt", "/srv", "/usr"}
 
 type distribution struct {
 	name             string
@@ -326,6 +330,22 @@ func (t *imageType) supportsUEFI() bool {
 	return false
 }
 
+func (t *imageType) getPartitionTable(
+	mountpoints []blueprint.FilesystemCustomization,
+	options distro.ImageOptions,
+	rng *rand.Rand,
+) (disk.PartitionTable, error) {
+	archName := t.arch.Name()
+
+	basePartitionTable, exists := t.basePartitionTables[archName]
+
+	if !exists {
+		return basePartitionTable, fmt.Errorf("unknown arch: " + archName)
+	}
+
+	return disk.CreatePartitionTable(mountpoints, options.Size, basePartitionTable, rng), nil
+}
+
 // local type for ostree commit metadata used to define commit sources
 type ostreeCommit struct {
 	Checksum string
@@ -402,6 +422,18 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 	return sources
 }
 
+func isMountpointAllowed(mountpoint string) bool {
+	for _, allowed := range mountpointAllowList {
+		// check if the path and its subdirectories
+		// is in the allow list
+		match, _ := path.Match(allowed, mountpoint)
+		if mountpoint == "/" || match {
+			return true
+		}
+	}
+	return false
+}
+
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
 	if t.bootISO && t.rpmOstree {
@@ -423,10 +455,12 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	// only allow root mountpoint for the time-being
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if m.Mountpoint != "/" {
+		if m.Mountpoint == "/usr" && m.MinSize < 2147483648 {
+			m.MinSize = 2147483648
+		}
+		if !isMountpointAllowed(m.Mountpoint) {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}
@@ -572,10 +606,11 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: qcow2CommonPackageSet(),
 		},
-		bootable:    true,
-		defaultSize: 10 * GigaByte,
-		pipelines:   qcow2Pipelines,
-		exports:     []string{"qcow2"},
+		bootable:            true,
+		defaultSize:         10 * GigaByte,
+		pipelines:           qcow2Pipelines,
+		exports:             []string{"qcow2"},
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	vhdImgType := imageType{
@@ -589,12 +624,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			"sshd",
 			"waagent",
 		},
-		defaultTarget: "multi-user.target",
-		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		pipelines:     vhdPipelines,
-		exports:       []string{"vpc"},
+		defaultTarget:       "multi-user.target",
+		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		bootable:            true,
+		defaultSize:         4 * GigaByte,
+		pipelines:           vhdPipelines,
+		exports:             []string{"vpc"},
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	vmdkImgType := imageType{
@@ -604,11 +640,12 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: vmdkCommonPackageSet(),
 		},
-		kernelOptions: "ro net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		pipelines:     vmdkPipelines,
-		exports:       []string{"vmdk"},
+		kernelOptions:       "ro net.ifnames=0",
+		bootable:            true,
+		defaultSize:         4 * GigaByte,
+		pipelines:           vmdkPipelines,
+		exports:             []string{"vmdk"},
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	openstackImgType := imageType{
@@ -618,11 +655,12 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: openstackCommonPackageSet(),
 		},
-		kernelOptions: "ro net.ifnames=0",
-		bootable:      true,
-		defaultSize:   4 * GigaByte,
-		pipelines:     openstackPipelines,
-		exports:       []string{"qcow2"},
+		kernelOptions:       "ro net.ifnames=0",
+		bootable:            true,
+		defaultSize:         4 * GigaByte,
+		pipelines:           openstackPipelines,
+		exports:             []string{"qcow2"},
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	// EC2 services
@@ -646,14 +684,15 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    ec2CommonPackageSet(),
 		},
-		defaultTarget:   "multi-user.target",
-		enabledServices: ec2EnabledServices,
-		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		bootable:        true,
-		bootType:        distro.LegacyBootType,
-		defaultSize:     10 * GigaByte,
-		pipelines:       ec2Pipelines,
-		exports:         []string{"image"},
+		defaultTarget:       "multi-user.target",
+		enabledServices:     ec2EnabledServices,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:            true,
+		bootType:            distro.LegacyBootType,
+		defaultSize:         10 * GigaByte,
+		pipelines:           ec2Pipelines,
+		exports:             []string{"image"},
+		basePartitionTables: ec2BasePartitionTables,
 	}
 
 	amiImgTypeAarch64 := imageType{
@@ -664,13 +703,14 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    ec2CommonPackageSet(),
 		},
-		defaultTarget:   "multi-user.target",
-		enabledServices: ec2EnabledServices,
-		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
-		bootable:        true,
-		defaultSize:     10 * GigaByte,
-		pipelines:       ec2Pipelines,
-		exports:         []string{"image"},
+		defaultTarget:       "multi-user.target",
+		enabledServices:     ec2EnabledServices,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
+		bootable:            true,
+		defaultSize:         10 * GigaByte,
+		pipelines:           ec2Pipelines,
+		exports:             []string{"image"},
+		basePartitionTables: ec2BasePartitionTables,
 	}
 
 	ec2ImgTypeX86_64 := imageType{
@@ -681,14 +721,15 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2PackageSet(),
 		},
-		defaultTarget:   "multi-user.target",
-		enabledServices: ec2EnabledServices,
-		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		bootable:        true,
-		bootType:        distro.LegacyBootType,
-		defaultSize:     10 * GigaByte,
-		pipelines:       rhelEc2Pipelines,
-		exports:         []string{"archive"},
+		defaultTarget:       "multi-user.target",
+		enabledServices:     ec2EnabledServices,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:            true,
+		bootType:            distro.LegacyBootType,
+		defaultSize:         10 * GigaByte,
+		pipelines:           rhelEc2Pipelines,
+		exports:             []string{"archive"},
+		basePartitionTables: ec2BasePartitionTables,
 	}
 
 	ec2ImgTypeAarch64 := imageType{
@@ -699,13 +740,14 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2PackageSet(),
 		},
-		defaultTarget:   "multi-user.target",
-		enabledServices: ec2EnabledServices,
-		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
-		bootable:        true,
-		defaultSize:     10 * GigaByte,
-		pipelines:       rhelEc2Pipelines,
-		exports:         []string{"archive"},
+		defaultTarget:       "multi-user.target",
+		enabledServices:     ec2EnabledServices,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
+		bootable:            true,
+		defaultSize:         10 * GigaByte,
+		pipelines:           rhelEc2Pipelines,
+		exports:             []string{"archive"},
+		basePartitionTables: ec2BasePartitionTables,
 	}
 
 	ec2HaImgTypeX86_64 := imageType{
@@ -716,14 +758,15 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2HaPackageSet(),
 		},
-		defaultTarget:   "multi-user.target",
-		enabledServices: ec2EnabledServices,
-		kernelOptions:   "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
-		bootable:        true,
-		bootType:        distro.LegacyBootType,
-		defaultSize:     10 * GigaByte,
-		pipelines:       rhelEc2Pipelines,
-		exports:         []string{"archive"},
+		defaultTarget:       "multi-user.target",
+		enabledServices:     ec2EnabledServices,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
+		bootable:            true,
+		bootType:            distro.LegacyBootType,
+		defaultSize:         10 * GigaByte,
+		pipelines:           rhelEc2Pipelines,
+		exports:             []string{"archive"},
+		basePartitionTables: ec2BasePartitionTables,
 	}
 
 	tarImgType := imageType{

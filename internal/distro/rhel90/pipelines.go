@@ -23,7 +23,11 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 
 	if options.Subscription == nil {
@@ -70,7 +74,11 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
@@ -98,7 +106,11 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
@@ -126,7 +138,10 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	partitionTable := defaultPartitionTable(options, t.arch, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
@@ -391,9 +406,12 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	partitionTable := ec2PartitionTable(options, t.arch, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
 	var treePipeline *osbuild.Pipeline
-	var err error
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case distro.X86_64ArchName:
