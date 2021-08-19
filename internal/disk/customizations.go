@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 const (
@@ -31,42 +30,41 @@ func CreatePartitionTable(
 	rng *rand.Rand,
 ) PartitionTable {
 
-	basePartitionTable.Size = imageSize
-	partitions := []Partition{}
-
 	if bootPartition := basePartitionTable.BootPartition(); bootPartition != nil {
 		// the boot partition UUID needs to be set since this
 		// needs to be randomly generated
 		bootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
 
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			partitionSize := uint64(m.MinSize) / sectorSize
+			partition := basePartitionTable.createPartition(m.Mountpoint, partitionSize, rng)
+			basePartitionTable.Partitions = append(basePartitionTable.Partitions, partition)
+		}
+	}
+
+	if tableSize := basePartitionTable.getPartitionTableSize(); imageSize < tableSize {
+		imageSize = tableSize
+	}
+
+	basePartitionTable.Size = imageSize
+
 	// start point for all of the arches is
 	// 2048 sectors.
 	var start uint64 = basePartitionTable.updatePartitionStartPointOffsets(2048)
 
-	for _, m := range mountpoints {
-		if m.Mountpoint != "/" {
-			partitionSize := uint64(m.MinSize) / sectorSize
-			partition := createPartition(m.Mountpoint, partitionSize, start, archName, rng)
-			partitions = append(partitions, partition)
-			start += uint64(m.MinSize / sectorSize)
-		}
-	}
-
 	// treat the root partition as a special case
 	// by setting the size dynamically
 	rootPartition := basePartitionTable.RootPartition()
-	rootPartition.Start = start
 	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
 	rootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
-
 	basePartitionTable.updateRootPartition(*rootPartition)
-	basePartitionTable.Partitions = append(basePartitionTable.Partitions, partitions...)
 
 	return basePartitionTable
 }
 
-func createPartition(mountpoint string, size uint64, start uint64, archName string, rng *rand.Rand) Partition {
+func (pt *PartitionTable) createPartition(mountpoint string, size uint64, rng *rand.Rand) Partition {
 	filesystem := Filesystem{
 		Type:         "xfs",
 		UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
@@ -75,15 +73,13 @@ func createPartition(mountpoint string, size uint64, start uint64, archName stri
 		FSTabFreq:    0,
 		FSTabPassNo:  0,
 	}
-	if archName == distro.Ppc64leArchName || archName == distro.S390xArchName {
+	if pt.Type != "gpt" {
 		return Partition{
-			Start:      start,
 			Size:       size,
 			Filesystem: &filesystem,
 		}
 	}
 	return Partition{
-		Start:      start,
 		Size:       size,
 		Type:       FilesystemDataGUID,
 		UUID:       uuid.Must(newRandomUUIDFromReader(rng)).String(),
