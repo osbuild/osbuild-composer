@@ -10,7 +10,7 @@ type XorrisofsStageOptions struct {
 	// System ID to set
 	SysID string `json:"sysid,omitempty"`
 
-	Boot XorrisofsBoot `json:"boot,omitempty"`
+	Boot *XorrisofsBoot `json:"boot,omitempty"`
 
 	EFI string `json:"efi,omitempty"`
 

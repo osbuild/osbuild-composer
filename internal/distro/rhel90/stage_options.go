@@ -304,7 +304,7 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 		Filename: filename,
 		VolID:    fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch),
 		SysID:    "LINUX",
-		Boot: osbuild.XorrisofsBoot{
+		Boot: &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
 		},
