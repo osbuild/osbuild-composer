@@ -5,7 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
-var defaultBasePartitionTables = basePartitionTableMap{
+var defaultBasePartitionTables = distro.BasePartitionTableMap{
 	distro.X86_64ArchName: disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
@@ -112,7 +112,7 @@ var defaultBasePartitionTables = basePartitionTableMap{
 	},
 }
 
-var ec2BasePartitionTables = basePartitionTableMap{
+var ec2BasePartitionTables = distro.BasePartitionTableMap{
 	distro.X86_64ArchName: disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",

@@ -53,8 +53,6 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-type basePartitionTableMap map[string]disk.PartitionTable
-
 var mountpointAllowList = []string{
 	"/", "/var", "/var/*", "/home", "/home/*", "/opt", "/opt/*",
 	"/srv", "/srv/*", "/usr", "/usr/*", "/app", "/app/*",
@@ -203,7 +201,7 @@ type imageType struct {
 	// If set to a value, it is preferred over the architecture value
 	bootType distro.BootType
 	// List of valid arches for the image type
-	basePartitionTables basePartitionTableMap
+	basePartitionTables distro.BasePartitionTableMap
 }
 
 func (t *imageType) Name() string {
