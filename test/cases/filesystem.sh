@@ -11,8 +11,6 @@ if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" ]]; then
     exit 0
 fi
 
-set -xeuo pipefail
-
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
@@ -39,6 +37,7 @@ build_image() {
     blueprint_file=$1
     blueprint_name=$2
     image_type=$3
+    want_fail=$4
 
     # Prepare the blueprint for the compose.
     greenprint "📋 Preparing blueprint"
@@ -55,7 +54,21 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+    STATUS=$(jq -r '.status' "$COMPOSE_START")
+    
+    if [[ $want_fail == "$STATUS" ]]; then
+        echo "Something went wrong with the compose. 😢"
+        sudo pkill -P ${WORKER_JOURNAL_PID}
+        trap - EXIT
+        exit 1
+    elif [[ $want_fail == true && $STATUS == false ]]; then
+        sudo pkill -P ${WORKER_JOURNAL_PID}
+        trap - EXIT
+        ERROR_MSG=$(jq 'first(.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
+        return
+    else
+      COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+    fi
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
@@ -94,9 +107,11 @@ clean_up () {
 
 ##################################################
 ##
-## RHEL8.5 custom filesystems test
+## RHEL8.5 custom filesystems test - success case
 ##
 ##################################################
+
+greenprint "🚀 Checking custom filesystems (success case)"
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -129,7 +144,7 @@ greenprint "📥 Downloading the image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 
-greenprint "📥 Checking mountpoints"
+greenprint "💬 Checking mountpoints"
 INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
@@ -141,9 +156,56 @@ for MOUNTPOINT in '/var' '/usr' '/' '/var/log'; do
 done
 
 # Clean compose and blueprints.
-greenprint "Clean up osbuild-composer again"
+greenprint "🧼 Clean up osbuild-composer again"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete rhel85-custom-filesystem > /dev/null
+
+##################################################
+##
+## RHEL8.5 custom filesystems test - fail case
+##
+##################################################
+
+greenprint "🚀 Checking custom filesystems (fail case)"
+
+# Write a basic blueprint for our image.
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "rhel85-custom-filesystem-fail"
+description = "A base system with custom mountpoints"
+version = "0.0.1"
+
+[[customizations.filesystem]]
+mountpoint = "/"
+size = 2147483648
+
+[[customizations.filesystem]]
+mountpoint = "/etc"
+size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/boot"
+size = 131072000
+
+EOF
+
+# build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
+build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
+
+# Check error message.
+FAILED_MOUNTPOINTS=()
+
+greenprint "💬 Checking expected failures"
+for MOUNTPOINT in '/etc' '/boot' ; do
+  if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
+    FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
+  fi
+done
+
+# Clean compose and blueprints.
+greenprint "🧼 Clean up osbuild-composer again"
+sudo composer-cli blueprints delete rhel85-custom-filesystem-fail > /dev/null
+
+clean_up
 
 if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
   echo "🎉 All tests passed."
