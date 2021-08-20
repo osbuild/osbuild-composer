@@ -115,7 +115,7 @@ func (q *dbJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	}
 	defer func() {
 		err := tx.Rollback(context.Background())
-		if err != nil {
+		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
 			log.Println("error rolling back enqueue transaction: ", err)
 		}
 	}()
@@ -214,8 +214,8 @@ func (q *dbJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	}
 	defer func() {
 		err = tx.Rollback(context.Background())
-		if err != nil {
-			log.Println("error rolling back enqueue transaction: ", err)
+		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
+			log.Println("error rolling back finish job transaction: ", err)
 		}
 
 	}()
