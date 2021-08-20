@@ -51,7 +51,7 @@ func xorrisofsStageInputs(pipeline string) *osbuild.XorrisofsStageInputs {
 }
 
 func copyPipelineTreeInputs(name, inputPipeline string) *osbuild.CopyStageInputs {
-	inputName := "root-tree"
+	inputName := name
 	treeInput := osbuild.CopyStageInput{}
 	treeInput.Type = "org.osbuild.tree"
 	treeInput.Origin = "org.osbuild.pipeline"
