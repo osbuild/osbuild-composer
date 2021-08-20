@@ -46,3 +46,15 @@ func NewCopyStage(options *CopyStageOptions, inputs CopyStageInputsNew, devices 
 		Mounts:  *mounts,
 	}
 }
+
+func NewCopyStageSimple(options *CopyStageOptions, inputs CopyStageInputsNew) *Stage {
+	var stageInputs Inputs
+	if inputs != nil {
+		stageInputs = inputs.(Inputs)
+	}
+	return &Stage{
+		Type:    "org.osbuild.copy",
+		Options: options,
+		Inputs:  stageInputs,
+	}
+}
