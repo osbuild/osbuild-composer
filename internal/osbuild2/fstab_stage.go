@@ -7,9 +7,15 @@ package osbuild2
 // are set to their defaults (if possible).
 type FSTabStageOptions struct {
 	FileSystems []*FSTabEntry `json:"filesystems"`
+
+	OSTree *OSTreeFstab `json:"ostree,omitempty"`
 }
 
 func (FSTabStageOptions) isStageOptions() {}
+
+type OSTreeFstab struct {
+	Deployment OSTreeDeployment `json:"deployment"`
+}
 
 // NewFSTabStage creates a now FSTabStage object
 func NewFSTabStage(options *FSTabStageOptions) *Stage {
