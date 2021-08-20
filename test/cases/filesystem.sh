@@ -6,7 +6,7 @@
 
 source /etc/os-release
 
-if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" ]]; then
+if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
     echo "$0 is only enabled for rhel-8.5; skipping..."
     exit 0
 fi
@@ -107,7 +107,7 @@ clean_up () {
 
 ##################################################
 ##
-## RHEL8.5 custom filesystems test - success case
+## RHEL8.5 & RHEL9.0 custom filesystems test - success case
 ##
 ##################################################
 
@@ -162,7 +162,7 @@ sudo composer-cli blueprints delete rhel85-custom-filesystem > /dev/null
 
 ##################################################
 ##
-## RHEL8.5 custom filesystems test - fail case
+## RHEL8.5 & RHEL9.0 custom filesystems test - fail case
 ##
 ##################################################
 
