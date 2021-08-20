@@ -315,7 +315,7 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 }
 
 func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partition, kernelOptions string,
-	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string, install bool) *osbuild.GRUB2StageOptions {
 	if rootPartition == nil {
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
@@ -333,7 +333,8 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 
 	if uefi {
 		stageOptions.UEFI = &osbuild.GRUB2UEFI{
-			Vendor: "redhat",
+			Vendor:  "redhat",
+			Install: install,
 		}
 	}
 
