@@ -300,18 +300,24 @@ func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	}
 }
 
-func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStageOptions {
-	return &osbuild.XorrisofsStageOptions{
+func xorrisofsStageOptions(filename string, arch string, isolinux bool) *osbuild.XorrisofsStageOptions {
+	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
 		VolID:    fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch),
 		SysID:    "LINUX",
-		Boot: osbuild.XorrisofsBoot{
+		EFI:      "images/efiboot.img",
+	}
+
+	if isolinux {
+		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
-		},
-		EFI:          "images/efiboot.img",
-		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
+		}
+
+		options.IsohybridMBR = "/usr/share/syslinux/isohdpfx.bin"
 	}
+
+	return options
 }
 
 func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partition, kernelOptions string,

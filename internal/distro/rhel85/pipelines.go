@@ -490,7 +490,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	ostreeRepoPath := "/ostree/repo"
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
+	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), false))
 	return pipelines, nil
 }
 
@@ -522,7 +522,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
+	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), true))
 	return pipelines, nil
 }
 
@@ -900,12 +900,12 @@ func bootISOTreePipeline(kernelVer string, arch string, ksOptions *osbuild.Kicks
 
 	return p
 }
-func bootISOPipeline(filename string, arch string) *osbuild.Pipeline {
+func bootISOPipeline(filename string, arch string, isolinux bool) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "bootiso"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, arch), xorrisofsStageInputs("bootiso-tree")))
+	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, arch, isolinux), xorrisofsStageInputs("bootiso-tree")))
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: filename}))
 
 	return p
