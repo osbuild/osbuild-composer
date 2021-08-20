@@ -84,29 +84,6 @@ greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# rhel 8.4 and 8.5 will run off of the internal repos and does not have a redhat subscription
-if [[ $VERSION_ID == 8.4 ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-    # remove the subscription check
-    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    cat "$RHEL84_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    # We need triple quotes at the end of the template to mark the end of the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-elif [[ $VERSION_ID == 8.5 ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-    # remove the subscription check
-    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    cat "$RHEL85_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    # We need triple quotes at the end of the template to mark the end of the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-elif [[ $VERSION_ID == 9.0 ]]; then
-    greenprint "📋 Inserting RHEL 9 mock template"
-    sudo cp schutzbot/rhel-9-mock-configs/templates/rhel-9.tpl /etc/mock/templates/
-    sudo cp schutzbot/rhel-9-mock-configs/*.cfg /etc/mock/
-fi
-
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
 sudo mock -r "$MOCK_CONFIG" --buildsrpm \
