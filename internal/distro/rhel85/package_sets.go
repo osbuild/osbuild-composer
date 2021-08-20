@@ -74,7 +74,12 @@ func x8664LegacyBootPackageSet() rpmmd.PackageSet {
 // x86_64 UEFI arch-specific boot package set
 func x8664UEFIBootPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
-		Include: []string{"dracut-config-generic", "grub2-efi-x64", "shim-x64"},
+		Include: []string{
+			"dracut-config-generic",
+			"efibootmgr",
+			"grub2-efi-x64",
+			"shim-x64",
+		},
 	}
 }
 
