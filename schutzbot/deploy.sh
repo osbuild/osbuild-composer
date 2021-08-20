@@ -103,7 +103,7 @@ if [ -f "rhel8internal.repo" ]; then
     sudo mv rhel8internal.repo /etc/yum.repos.d/
     # Use osbuild from schutzfile if desired for testing custom osbuild-composer packages
     # specified by $REPO_URL in ENV and used in prepare-rhel-internal.sh
-    if [ "$SCHUTZ_OSBUILD" == 1 ]; then
+    if [ "${SCHUTZ_OSBUILD:=false}" == true ]; then
         sudo rm -f /etc/yum.repos.d/osbuild-composer.repo
     else
         sudo rm -f /etc/yum.repos.d/osbuild*.repo
