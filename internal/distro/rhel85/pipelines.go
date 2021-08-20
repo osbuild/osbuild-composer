@@ -882,7 +882,9 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
 	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer)))
+	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, []string{
+		"anaconda",
+	})))
 
 	return p
 }

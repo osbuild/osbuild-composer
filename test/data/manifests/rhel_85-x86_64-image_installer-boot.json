@@ -1778,7 +1778,6 @@
                 "plymouth",
                 "prefixdevname",
                 "prefixdevname-tools",
-                "anaconda",
                 "crypt",
                 "dm",
                 "dmsquash-live",
@@ -1808,7 +1807,8 @@
                 "fs-lib",
                 "img-lib",
                 "shutdown",
-                "uefi-lib"
+                "uefi-lib",
+                "anaconda"
               ],
               "install": [
                 "/.buildstamp"
