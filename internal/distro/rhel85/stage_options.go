@@ -176,7 +176,7 @@ func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
 	}
 }
 
-func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
+func dracutStageOptions(kernelVer string, additionalModules []string) *osbuild.DracutStageOptions {
 	kernel := []string{kernelVer}
 	modules := []string{
 		"bash",
@@ -197,7 +197,6 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"plymouth",
 		"prefixdevname",
 		"prefixdevname-tools",
-		"anaconda",
 		"crypt",
 		"dm",
 		"dmsquash-live",
@@ -229,6 +228,7 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"shutdown",
 		"uefi-lib",
 	}
+	modules = append(modules, additionalModules...)
 	return &osbuild.DracutStageOptions{
 		Kernel:  kernel,
 		Modules: modules,
