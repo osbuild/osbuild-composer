@@ -8,10 +8,10 @@ type OSTreeSource struct {
 func (OSTreeSource) isSource() {}
 
 type OSTreeSourceItem struct {
-	Remote OSTreeRemote `json:"remote"`
+	Remote OSTreeSourceRemote `json:"remote"`
 }
 
-type OSTreeRemote struct {
+type OSTreeSourceRemote struct {
 	// URL of the repository.
 	URL string `json:"url"`
 	// GPG keys to verify the commits
