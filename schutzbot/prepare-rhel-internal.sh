@@ -64,7 +64,7 @@ cp rhel-8.json rhel-8-beta.json
 
 JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 # Do not create tests repo if it's provided from ENV
-if [ -z "$REPO_URL" ]; then
+if [ -z "${REPO_URL+x}" ]; then
     greenprint "📦 Installing requirements"
     sudo dnf -y install createrepo_c wget python3-pip
 
