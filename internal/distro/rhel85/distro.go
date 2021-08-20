@@ -55,7 +55,11 @@ const (
 
 type basePartitionTableMap map[string]disk.PartitionTable
 
-var mountpointAllowList = []string{"/", "/var", "/var/*", "/home", "/opt", "/srv", "/usr"}
+var mountpointAllowList = []string{
+	"/", "/var", "/var/*", "/home", "/home/*", "/opt", "/opt/*",
+	"/srv", "/srv/*", "/usr", "/usr/*", "/app", "/app/*",
+	"/data", "/data/*",
+}
 
 type distribution struct {
 	name             string
