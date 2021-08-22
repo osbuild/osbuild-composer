@@ -22,6 +22,7 @@ type GRUB2StageOptions struct {
 type GRUB2UEFI struct {
 	Vendor  string `json:"vendor"`
 	Install bool   `json:"install,omitempty"`
+	Unified bool   `json:"unified,omitempty"`
 }
 
 func (GRUB2StageOptions) isStageOptions() {}
