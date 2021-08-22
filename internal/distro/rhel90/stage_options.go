@@ -332,7 +332,8 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 
 	if uefi {
 		stageOptions.UEFI = &osbuild.GRUB2UEFI{
-			Vendor: "redhat",
+			Vendor:  "redhat",
+			Unified: legacy == "", // force unified grub scheme for pure efi systems
 		}
 	}
 
