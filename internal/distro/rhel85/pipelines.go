@@ -389,11 +389,13 @@ func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.Packag
 	}
 
 	// EC2 x86_64-specific stages
+	// Add 'nvme' driver to handle the case when initramfs is getting forcefully
+	// rebuild on a Xen instance (and not able to boot on Nitro after that).
 	treePipeline.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
-		Filename: "xen.conf",
+		Filename: "ec2.conf",
 		Config: osbuild.DracutConfigFile{
 			AddDrivers: []string{
-				"xen-netfront",
+				"nvme",
 				"xen-blkfront",
 			},
 		},
