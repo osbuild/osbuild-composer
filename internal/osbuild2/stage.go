@@ -100,6 +100,9 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 	case "org.osbuild.ostree.commit":
 		options = new(OSTreeCommitStageOptions)
 		inputs = new(OSTreeCommitStageInputs)
+	case "org.osbuild.ostree.passwd":
+		options = new(OSTreePasswdStageOptions)
+		inputs = new(OSTreePasswdStageInputs)
 	case "org.osbuild.ostree.pull":
 		options = new(OSTreePullStageOptions)
 		inputs = new(OSTreePullStageInputs)
