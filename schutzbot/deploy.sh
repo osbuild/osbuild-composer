@@ -52,6 +52,7 @@ ARCH=$(uname -m)
 
 if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "Registering RHEL"
+    sudo subscription-manager remove --all
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
 fi
