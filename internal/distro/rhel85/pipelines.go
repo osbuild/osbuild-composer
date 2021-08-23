@@ -657,6 +657,11 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	p.Build = "name:build"
 
 	packages = append(packages, bpPackages...)
+
+	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+		p.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	}
+
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()

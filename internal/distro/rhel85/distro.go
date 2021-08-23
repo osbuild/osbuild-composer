@@ -380,7 +380,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 
 	var commits []ostreeCommit
-	if t.bootISO && options.OSTree.Parent != "" && options.OSTree.URL != "" {
+	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
 		commits = []ostreeCommit{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
 	}
 	return json.Marshal(
