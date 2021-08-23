@@ -55,6 +55,11 @@ type BlueprintsChangesV0 struct {
 	Limit             uint            `json:"limit"`
 	Offset            uint            `json:"offset"`
 }
+
+// BlueprintsChangesV0Weldr is the response to /blueprints/changes/ request using weldr-client
+type BlueprintsChangesV0Weldr struct {
+	Body BlueprintsChangesV0 `json:"body"`
+}
 type bpChange struct {
 	Changes []blueprint.Change `json:"changes"`
 	Name    string             `json:"name"`
