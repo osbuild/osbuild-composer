@@ -52,9 +52,12 @@ ARCH=$(uname -m)
 
 if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "Registering RHEL"
-    sudo subscription-manager remove --all
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
+    for _ in {0..4}
+    do
+        sudo "$RHN_REGISTRATION_SCRIPT" && break
+    sleep 5
+    done
 fi
 
 # Distro version that this script is running on.

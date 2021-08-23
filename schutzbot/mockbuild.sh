@@ -13,9 +13,12 @@ ARCH=$(uname -m)
 # Register RHEL if we are provided with a registration script.
 if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo subscription-manager remove --all
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT" 
+    for _ in {0..4}
+    do
+    	sudo "$RHN_REGISTRATION_SCRIPT" && break
+    sleep 5
+    done
 fi
 
 # Mock configuration file to use for building RPMs.
