@@ -353,10 +353,13 @@ var imageTypeCompatMapping = map[string]string{
 	"rhel-edge-commit":               "rhel-edge-commit",
 	"rhel-edge-container":            "rhel-edge-container",
 	"rhel-edge-installer":            "rhel-edge-installer",
+	"rhel-raw-image":                 "rhel-raw-image",
+	"rhel-edge-raw-image":            "rhel-edge-raw-image",
 	"rhel-edge-simplified-installer": "rhel-edge-simplified-installer",
 	"edge-commit":                    "edge-commit",
 	"edge-container":                 "edge-container",
 	"edge-installer":                 "edge-installer",
+	"edge-raw-image":                 "edge-raw-image",
 	"edge-simplified-installer":      "edge-simplified-installer",
 	"image-installer":                "image-installer",
 	"test_type":                      "test_type",         // used only in json_test.go

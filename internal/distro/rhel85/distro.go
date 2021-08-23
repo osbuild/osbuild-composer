@@ -420,7 +420,11 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 	}
 
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
+	if t.name == "edge-raw-image" && options.OSTree.Parent == "" {
+		return fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+	}
+
+	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree && (!t.bootable || t.bootISO) {
 		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
@@ -515,6 +519,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeCommitPipelines,
 		exports:         []string{"commit-archive"},
 	}
+
 	edgeOCIImgType := imageType{
 		name:        "edge-container",
 		nameAliases: []string{"rhel-edge-container"},
@@ -535,6 +540,24 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		pipelines:       edgeContainerPipelines,
 		exports:         []string{"container"},
 	}
+
+	edgeRawImgType := imageType{
+		name:        "edge-raw-image",
+		nameAliases: []string{"rhel-edge-raw-image"},
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: edgeRawImageBuildPackageSet,
+		},
+		defaultSize:         10 * GigaByte,
+		rpmOstree:           true,
+		bootable:            true,
+		bootISO:             false,
+		pipelines:           edgeRawImagePipelines,
+		exports:             []string{"archive"},
+		basePartitionTables: edgeBasePartitionTables,
+	}
+
 	edgeInstallerImgType := imageType{
 		name:        "edge-installer",
 		nameAliases: []string{"rhel-edge-installer"},
@@ -793,8 +816,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeSimplifiedInstallerImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeSimplifiedInstallerImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 

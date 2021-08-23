@@ -593,6 +593,23 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	return pipelines, xzPipeline.Name, nil
 }
 
+func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+
+	imgName := t.filename
+
+	// create the raw image
+	imagePipelines, _, err := edgeImagePipelines(t, imgName, options, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	pipelines = append(pipelines, imagePipelines...)
+
+	return pipelines, nil
+}
+
 func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
