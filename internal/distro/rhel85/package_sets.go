@@ -65,6 +65,12 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 		})
 }
 
+func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return edgeBuildPackageSet(t).Append(
+		bootPackageSet(t),
+	)
+}
+
 // installer boot package sets, needed for booting and
 // also in the build host
 
