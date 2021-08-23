@@ -976,68 +976,137 @@ def read_selinux_ctx_mismatch(tree, is_ostree):
     return result
 
 
-def read_modprobe_config(tree):
+def _read_glob_paths_with_parser(tree, glob_paths, parser_func):
     """
-    Read all /etc/modprobe.d/*.conf files and for now, extract only blacklisted
-    kernel modules.
+    Use 'parser_func' to read all files obtained by using all 'glob_paths'
+    globbing patterns under the 'tree' path.
 
-    Returns: dictionary with the keys corresponding to configuration file names
-    found in /etc/modprobe.d/. The value of each key is a dictionary with
-    a single key 'blacklist', containing list of kernel module names disallowed
-    by the configuration file.
+    The 'glob_paths' is a list string patterns accepted by glob.glob().
+    The 'parser_func' function is expected to take a single string argument
+    containing the absolute path to a configuration file which should be parsed.
+    Its return value can be arbitrary representation of the parsed
+    configuration.
 
-    An example return value:
+    Returns: dictionary with the keys corresponding to directories, which
+    contain configuration files mathing the provided glob pattern. Value of
+    each key is another dictionary with keys representing each filename and
+    values being the parsed configuration representation as returned by the
+    provided 'parser_func' function.
+
+    An example return value for dracut configuration paths and parser:
     {
-        "blacklist-nouveau.conf": {
-            "blacklist": [
-                "nouveau"
-            ]
+        "/etc/dracut.conf.d": {
+            "sgdisk.conf": {
+                "install_items": " sgdisk "
+            },
+        },
+        "/usr/lib/dracut/dracut.conf.d": {
+            "xen.conf": {
+                "add_drivers": " xen-netfront xen-blkfront "
+            }
         }
     }
     """
     result = {}
 
-    BLACKLIST_CMD = "blacklist"
+    for glob_path in glob_paths:
+        glob_path_result = {}
 
-    files = glob.glob(f"{tree}/etc/modprobe.d/*.conf")
-    for file in files:
-        filename = os.path.basename(file)
-        with open(file) as f:
-            # The format of files under modprobe.d: one command per line,
-            # with blank lines and lines starting with '#' ignored.
-            # A '\' at the end of a line causes it to continue on the next line.
-            line_to_be_continued = ""
-            for line in f:
-                line = line.strip()
-                # line is not blank
-                if line:
-                    # comment, skip it
-                    if line[0] == "#":
-                        continue
-                    # this line continues on the following line
-                    if line[-1] == "\\":
-                        line_to_be_continued += line[:-1]
-                        continue
-                    # this line ends here
-                    else:
-                        # is this line continuation of the previous one?
-                        if line_to_be_continued:
-                            line = line_to_be_continued + line
-                            line_to_be_continued = ""
-                        cmd, cmd_args = line.split(' ', 1)
-                        # we care only about blacklist command for now
-                        if cmd == BLACKLIST_CMD:
-                            try:
-                                file_result = result[filename]
-                            except KeyError:
-                                file_result = result[filename] = {}
-                            try:
-                                modules_list = file_result[BLACKLIST_CMD]
-                            except KeyError:
-                                modules_list = file_result[BLACKLIST_CMD] = []
-                            modules_list.append(cmd_args)
+        files = glob.glob(f"{tree}{glob_path}")
+        for file in files:
+            config = parser_func(file)
+            if config:
+                filename = os.path.basename(file)
+                glob_path_result[filename] = config
+
+        if glob_path_result:
+            checked_path = os.path.dirname(glob_path)
+            result[checked_path] = glob_path_result
 
     return result
+
+
+def read_modprobe_config(config_path):
+    """
+    Read a specific modprobe configuragion file and for now, extract only
+    blacklisted kernel modules.
+
+    Returns: dictionary with the keys corresponding to specific modprobe
+    commands and values being the values of these commands.
+
+    An example return value:
+    {
+        "blacklist": [
+            "nouveau"
+        ]
+    }
+    """
+    file_result = {}
+
+    BLACKLIST_CMD = "blacklist"
+
+    with open(config_path) as f:
+        # The format of files under modprobe.d: one command per line,
+        # with blank lines and lines starting with '#' ignored.
+        # A '\' at the end of a line causes it to continue on the next line.
+        line_to_be_continued = ""
+        for line in f:
+            line = line.strip()
+            # line is not blank
+            if line:
+                # comment, skip it
+                if line[0] == "#":
+                    continue
+                # this line continues on the following line
+                if line[-1] == "\\":
+                    line_to_be_continued += line[:-1]
+                    continue
+                # this line ends here
+                else:
+                    # is this line continuation of the previous one?
+                    if line_to_be_continued:
+                        line = line_to_be_continued + line
+                        line_to_be_continued = ""
+                    cmd, cmd_args = line.split(' ', 1)
+                    # we care only about blacklist command for now
+                    if cmd == BLACKLIST_CMD:
+                        modules_list = file_result[BLACKLIST_CMD] = []
+                        modules_list.append(cmd_args)
+
+    return file_result
+
+
+def read_modprobe_configs(tree):
+    """
+    Read all modprobe *.conf files from a predefined list of paths and extract
+    supported commands. For now, extract only blacklisted kernel modules.
+
+    The searched paths are:
+    - "/etc/modprobe.d/*.conf"
+    - "/usr/lib/modprobe.d/*.conf"
+    - "/usr/local/lib/modprobe.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_modprobe_config()'.
+
+    An example return value:
+    {
+        "/usr/lib/modprobe.d": {
+            "blacklist-nouveau.conf": {
+                "blacklist": [
+                    "nouveau"
+                ]
+            }
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/modprobe.d/*.conf",
+        "/usr/lib/modprobe.d/*.conf",
+        "/usr/local/lib/modprobe.d/*.conf"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_modprobe_config)
 
 
 def read_cloud_init_conf(tree):
@@ -1744,9 +1813,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
             with open(f"{tree}/etc/machine-id") as f:
                 report["machine-id"] = f.readline()
 
-        modprobe_config = read_modprobe_config(tree)
-        if modprobe_config:
-            report["/etc/modprobe.d"] = modprobe_config
+        modprobe_configs = read_modprobe_configs(tree)
+        if modprobe_configs:
+            report["modprobe"] = modprobe_configs
 
         tmpfilesd_config = read_tmpfilesd(tree)
         if tmpfilesd_config:
