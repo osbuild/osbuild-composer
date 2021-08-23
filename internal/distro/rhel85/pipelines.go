@@ -568,6 +568,31 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 	return pipelines, nil
 }
 
+func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptions, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	ostreeRepoPath := "/ostree/repo"
+	imgName := "image.raw"
+
+	partitionTable, err := t.getPartitionTable(nil, options, rng)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// prepare ostree deployment tree
+	treePipeline := ostreeDeployPipeline(t, &partitionTable, ostreeRepoPath, nil, "", rng, options)
+	pipelines = append(pipelines, *treePipeline)
+
+	// make raw image from tree
+	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, &partitionTable, t.arch, "")
+	pipelines = append(pipelines, *imagePipeline)
+
+	// compress image
+	xzPipeline := xzArchivePipeline(imagePipeline.Name, imgName, filename)
+	pipelines = append(pipelines, *xzPipeline)
+
+	return pipelines, xzPipeline.Name, nil
+}
+
 func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
@@ -849,32 +874,21 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	kernelVer := kernelVerStr(installerPackages, "kernel", t.Arch().Name())
-	imgName := "disk.img"
-	imgNameXz := imgName + ".xz"
-	ostreeRepoPath := "/ostree/repo"
+	imgName := "disk.img.xz"
 	installDevice := customizations.GetInstallationDevice()
 
-	partitionTable, err := t.getPartitionTable(nil, options, rng)
+	// create the raw image
+	imagePipelines, imgPipelineName, err := edgeImagePipelines(t, imgName, options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	// prepare ostree deployment tree
-	treePipeline := ostreeDeployPipeline(t, &partitionTable, ostreeRepoPath, customizations.GetKernel(), kernelVer, rng, options)
-	pipelines = append(pipelines, *treePipeline)
-
-	// make raw image from tree
-	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, &partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-
-	// compress image
-	xzPipeline := xzArchivePipeline(imagePipeline.Name, imgName, imgNameXz)
-	pipelines = append(pipelines, *xzPipeline)
+	pipelines = append(pipelines, imagePipelines...)
 
 	// create boot ISO with raw image
 	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name())
 	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, t.Arch().Name())
-	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(xzPipeline.Name, kernelVer)
+	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer)
 
 	pipelines = append(pipelines, *installerTreePipeline, *efibootTreePipeline, *bootISOTreePipeline)
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), false))
