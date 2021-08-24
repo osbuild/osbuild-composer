@@ -1441,45 +1441,65 @@ def read_chrony_conf(tree):
     return result
 
 
-def read_systemd_service_dropins(tree):
+def read_systemd_service_dropin(dropin_dir_path):
     """
-    Read systemd *.service drop-in configuration from /etc/systemd/system.
+    Read systemd .service unit drop-in configurations.
 
-    Returns: dictionary with keys representing names of directories from
-    /etc/systemd/system/ containing drop-in configuration files for systemd
-    service unit files. Value of each key is a representation of the drop-in
-    configuration.
+    Returns: dictionary representing the combined drop-in configurations.
 
     An example return value:
     {
-        "nm-cloud-setup.service.d": {
-            "Service": {
-                "Environment": "NM_CLOUD_SETUP_EC2=yes"
+        "Service": {
+            "Environment": "NM_CLOUD_SETUP_EC2=yes"
+        }
+    }
+    """
+    # read all unit drop-in configurations
+    config_files = glob.glob(f"{dropin_dir_path}/*.conf")
+    parser = configparser.RawConfigParser()
+    # prevent conversion of the opion name to lowercase
+    parser.optionxform = lambda option: option
+    parser.read(config_files)
+
+    dropin_config = {}
+    for section in parser.sections():
+        section_config = {}
+        section_config.update(parser[section])
+        if section_config:
+            dropin_config[section] = section_config
+
+    return dropin_config
+
+
+def read_systemd_service_dropins(tree):
+    """
+    Read all systemd .service unit config files from a predefined list of paths
+    and parse them.
+
+    The searched paths are:
+    - "/etc/systemd/system/*.service.d"
+    - "/usr/lib/systemd/system/*.service.d"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_systemd_service_dropin()'.
+
+    An example return value:
+    {
+        "/etc/systemd/system": {
+            "nm-cloud-setup.service.d": {
+                "Service": {
+                    "Environment": "NM_CLOUD_SETUP_EC2=yes"
+                }
             }
         }
     }
     """
-    result = {}
+    checked_globs = [
+        "/etc/systemd/system/*.service.d",
+        "/usr/lib/systemd/system/*.service.d"
+    ]
 
-    # read all unit drop-in configurations
-    for directory in glob.glob(f"{tree}/etc/systemd/system/*.service.d"):
-        config_files = glob.glob(f"{directory}/**/*.conf", recursive=True)
-        parser = configparser.RawConfigParser()
-        # prevent conversion of the opion name to lowercase
-        parser.optionxform = lambda option: option
-        parser.read(config_files)
-
-        dropin_config = {}
-        for section in parser.sections():
-            section_config = {}
-            section_config.update(parser[section])
-            if section_config:
-                dropin_config[section] = section_config
-
-        if dropin_config:
-            result[os.path.basename(directory)] = dropin_config
-
-    return result
+    return _read_glob_paths_with_parser(tree, checked_globs, read_systemd_service_dropin)
 
 
 def read_tmpfilesd(tree):
