@@ -793,9 +793,10 @@ def read_hosts(tree):
     return result
 
 
-def read_logind_conf(tree):
+def read_logind_config(config_path):
     """
-    Read all uncommented key/values set in /etc/systemd/logind.conf.
+    Read all uncommented key/values from the 'Login" section of system-logind
+    configuration file.
 
     Returns: dictionary with key/values read from the configuration file.
     The returned dictionary may be empty.
@@ -807,15 +808,43 @@ def read_logind_conf(tree):
     """
     result = {}
 
-    with contextlib.suppress(FileNotFoundError):
-        with open(f"{tree}/etc/systemd/logind.conf") as f:
-            parser = configparser.RawConfigParser()
-            # prevent conversion of the option name to lowercase
-            parser.optionxform = lambda option: option
-            parser.read_file(f)
-            with contextlib.suppress(configparser.NoSectionError):
-                result.update(parser["Login"])
+    with open(config_path) as f:
+        parser = configparser.RawConfigParser()
+        # prevent conversion of the option name to lowercase
+        parser.optionxform = lambda option: option
+        parser.read_file(f)
+        with contextlib.suppress(configparser.NoSectionError):
+            result.update(parser["Login"])
     return result
+
+
+def read_logind_configs(tree):
+    """
+    Read all systemd-logind *.conf files from a predefined list of paths and
+    parse them.
+
+    The searched paths are:
+    - "/etc/systemd/logind.conf"
+    - "/etc/systemd/logind.conf.d/*.conf"
+    - "/usr/lib/systemd/logind.conf.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_logind_config()'.
+
+    An example return value:
+    {
+        "/etc/systemd/logind.conf": {
+            "NAutoVTs": "0"
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/systemd/logind.conf",
+        "/etc/systemd/logind.conf.d/*.conf",
+        "/usr/lib/systemd/logind.conf.d/*.conf"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_logind_config)
 
 
 def read_locale(tree):
@@ -1826,9 +1855,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if locale:
             report["locale"] = locale
 
-        logind = read_logind_conf(tree)
-        if logind:
-            report["logind.conf"] = logind
+        logind_configs = read_logind_configs(tree)
+        if logind_configs:
+            report["systemd-logind"] = logind_configs
 
         with contextlib.suppress(FileNotFoundError):
             with open(f"{tree}/etc/machine-id") as f:
