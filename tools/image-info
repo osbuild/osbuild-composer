@@ -1624,7 +1624,7 @@ def read_sysctld(tree):
     return result
 
 
-def read_limitsd(tree):
+def read_security_limits_config(config_path):
     """
     Read all configuration files from /etc/security/limits.d.
 
@@ -1633,48 +1633,81 @@ def read_limitsd(tree):
     uncommented configuration values read from the configuration file.
 
     An example return value:
+    [
+        {
+            "domain": "@sapsys",
+            "item": "nofile",
+            "type": "hard",
+            "value": "65536"
+        },
+        {
+            "domain": "@sapsys",
+            "item": "nofile",
+            "type": "soft",
+            "value": "65536"
+        }
+    ]
+    """
+    values = []
+
+    with open(config_path) as f:
+        for line in f:
+            line = line.strip()
+            # the '#' character introduces a comment - after which the rest of the line is ignored
+            split_line = line.split("#", 1)
+            line = split_line[0]
+            if not line:
+                continue
+            # Syntax of a line is "<domain> <type> <item> <value>"
+            domain, limit_type, item, value = line.split()
+            values.append({
+                "domain": domain,
+                "type": limit_type,
+                "item": item,
+                "value": value
+            })
+
+    return values
+
+
+def read_security_limits_configs(tree):
+    """
+    Read all security limits *.conf files from a predefined list of paths and
+    parse them.
+
+    The searched paths are:
+    - "/etc/security/limits.conf"
+    - "/etc/security/limits.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_security_limits_config()'.
+
+    An example return value:
     {
-        "99-sap.conf": [
-            {
-                "domain": "@sapsys",
-                "item": "nofile",
-                "type": "hard",
-                "value": "65536"
-            },
-            {
-                "domain": "@sapsys",
-                "item": "nofile",
-                "type": "soft",
-                "value": "65536"
-            }
-        ]
+        "/etc/security/limits.d": {
+            "99-sap.conf": [
+                {
+                    "domain": "@sapsys",
+                    "item": "nofile",
+                    "type": "hard",
+                    "value": "65536"
+                },
+                {
+                    "domain": "@sapsys",
+                    "item": "nofile",
+                    "type": "soft",
+                    "value": "65536"
+                }
+            ]
+        }
     }
     """
-    result = {}
+    checked_globs = [
+        "/etc/security/limits.conf",
+        "/etc/security/limits.d/*.conf"
+    ]
 
-    for file in glob.glob(f"{tree}/etc/security/limits.d/*.conf"):
-        with open(file) as f:
-            values = []
-            for line in f:
-                line = line.strip()
-                # the '#' character introduces a comment - after which the rest of the line is ignored
-                split_line = line.split("#", 1)
-                line = split_line[0]
-                if not line:
-                    continue
-                # Syntax of a line is "<domain> <type> <item> <value>"
-                domain, limit_type, item, value = line.split()
-                values.append({
-                    "domain": domain,
-                    "type": limit_type,
-                    "item": item,
-                    "value": value
-                })
-
-            if values:
-                result[os.path.basename(file)] = values
-
-    return result
+    return _read_glob_paths_with_parser(tree, checked_globs, read_tmpfilesd_config)
 
 
 def read_sudoers(tree):
@@ -1921,9 +1954,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if keyboard:
             report["keyboard"] = keyboard
 
-        limitsd_conf = read_limitsd(tree)
-        if limitsd_conf:
-            report["/etc/security/limits.d"] = limitsd_conf
+        security_limits_configs = read_security_limits_configs(tree)
+        if security_limits_configs:
+            report["security-limits"] = security_limits_configs
 
         locale = read_locale(tree)
         if locale:
