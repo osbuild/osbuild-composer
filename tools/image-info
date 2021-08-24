@@ -1589,39 +1589,62 @@ def read_tuned_profile(tree):
     return result
 
 
-def read_sysctld(tree):
+def read_sysctld_config(config_path):
     """
-    Read all configuration files from /etc/sysctl.d.
+    Read sysctl configuration file.
 
-    Returns: dictionary with the keys representing names of configuration files
-    from /etc/sysctl.d. Value of each key is a list of strings representing
-    uncommented lines read from the configuration file.
+    Returns: list of strings representing uncommented lines read from the
+    configuration file.
+
+    An example return value:
+    [
+        "kernel.pid_max = 4194304",
+        "vm.max_map_count = 2147483647"
+    ]
+    """
+    values = []
+
+    with open(config_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # skip comments
+            if line[0] in ["#", ";"]:
+                continue
+            values.append(line)
+
+    return values
+
+
+def read_sysctld_configs(tree):
+    """
+    Read all sysctl.d *.conf files from a predefined list of paths and parse
+    them.
+
+    The searched paths are:
+    - "/etc/sysctl.d/*.conf",
+    - "/usr/lib/sysctl.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_sysctld_config()'.
 
     An example return value:
     {
-        "sap.conf": [
-            "kernel.pid_max = 4194304",
-            "vm.max_map_count = 2147483647"
-        ]
+        "/etc/sysctl.d": {
+            "sap.conf": [
+                "kernel.pid_max = 4194304",
+                "vm.max_map_count = 2147483647"
+            ]
+        }
     }
     """
-    result = {}
+    checked_globs = [
+        "/etc/sysctl.d/*.conf",
+        "/usr/lib/sysctl.d/*.conf"
+    ]
 
-    for file in glob.glob(f"{tree}/etc/sysctl.d/*.conf"):
-        with open(file) as f:
-            values = []
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                # skip comments
-                if line[0] in ["#", ";"]:
-                    continue
-                values.append(line)
-            if values:
-                result[os.path.basename(file)] = values
-
-    return result
+    return _read_glob_paths_with_parser(tree, checked_globs, read_sysctld_config)
 
 
 def read_security_limits_config(config_path):
@@ -1994,9 +2017,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if sysconfig:
             report["sysconfig"] = sysconfig
 
-        sysctld_config = read_sysctld(tree)
-        if sysctld_config:
-            report["/etc/sysctl.d"] = sysctld_config
+        sysctld_configs = read_sysctld_configs(tree)
+        if sysctld_configs:
+            report["sysctl.d"] = sysctld_configs
 
         systemd_service_dropins = read_systemd_service_dropins(tree)
         if systemd_service_dropins:
