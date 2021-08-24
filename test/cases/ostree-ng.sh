@@ -93,18 +93,21 @@ case "${ID}-${VERSION_ID}" in
         CONTAINER_FILENAME=rhel84-container.tar
         INSTALLER_TYPE=rhel-edge-installer
         INSTALLER_FILENAME=rhel84-boot.iso
+        USER_IN_UPGRADE_BP="true"
         ;;
     "rhel-8.5")
         CONTAINER_TYPE=edge-container
         CONTAINER_FILENAME=container.tar
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
+        USER_IN_UPGRADE_BP="false"
         ;;
     "rhel-9.0")
         CONTAINER_TYPE=edge-container
         CONTAINER_FILENAME=container.tar
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
+        USER_IN_UPGRADE_BP="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -283,9 +286,6 @@ groups = []
 [[packages]]
 name = "python36"
 version = "*"
-
-[customizations.kernel]
-name = "kernel-rt"
 
 [[customizations.user]]
 name = "admin"
@@ -563,10 +563,15 @@ name = "kernel-rt"
 name = "admin"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+if [[ "${USER_IN_UPGRADE_BP}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+key = "${SSH_KEY_PUB}"
+EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
