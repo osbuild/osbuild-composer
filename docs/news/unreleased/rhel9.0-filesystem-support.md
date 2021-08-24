@@ -1,6 +1,6 @@
-# Add custom file system support for RHEL 8.5
+# Add custom file system support for RHEL 9.0
 
-The `weldr` api has been extended to support custom file systems for RHEL 8.5.
+The `weldr` api has been extended to support custom file systems for RHEL 9.0.
 Filesystem `mountpoints` and minimum partition `size` can be set under blueprint customizations, as below:
 
 ```toml

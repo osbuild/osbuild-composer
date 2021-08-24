@@ -91,11 +91,11 @@
           },
           {
             "mountpoint": "/var",
-            "minsize": 131072000
+            "minsize": 1073741824
           },
           {
             "mountpoint": "/",
-            "minsize": 131072000
+            "minsize": 2147483648
           }
         ]
       }
@@ -1379,15 +1379,15 @@
                   "type": "41"
                 },
                 {
-                  "size": 16510876,
-                  "start": 4460544
+                  "size": 14669724,
+                  "start": 6301696
                 },
                 {
                   "size": 4194304,
                   "start": 10240
                 },
                 {
-                  "size": 256000,
+                  "size": 2097152,
                   "start": 4204544
                 }
               ]
@@ -1411,8 +1411,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4460544,
-                  "size": 16510876
+                  "start": 6301696,
+                  "size": 14669724
                 }
               }
             }
@@ -1444,7 +1444,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4204544,
-                  "size": 256000
+                  "size": 2097152
                 }
               }
             }
@@ -1473,8 +1473,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4460544,
-                  "size": 16510876
+                  "start": 6301696,
+                  "size": 14669724
                 }
               },
               "usr": {
@@ -1490,7 +1490,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4204544,
-                  "size": 256000
+                  "size": 2097152
                 }
               }
             },
@@ -13104,8 +13104,8 @@
         "fstype": "xfs",
         "label": null,
         "partuuid": "14fc63d2-02",
-        "size": 8453568512,
-        "start": 2283798528,
+        "size": 7510898688,
+        "start": 3226468352,
         "type": "83",
         "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
       },
@@ -13124,7 +13124,7 @@
         "fstype": "xfs",
         "label": null,
         "partuuid": "14fc63d2-04",
-        "size": 131072000,
+        "size": 1073741824,
         "start": 2152726528,
         "type": "83",
         "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
