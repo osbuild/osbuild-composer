@@ -24,6 +24,8 @@ fi
 # used for slack messages in case of success/failure
 curl -L "$COMPOSE_URL/COMPOSE_ID" > COMPOSE_ID
 
+echo "INFO: Testing COMPOSE_ID=$COMPOSE_ID at COMPOSE_URL=$COMPOSE_URL"
+
 # Make sure the compose URL really exists
 RETURN_CODE=$(curl --silent -o -I -L -s -w "%{http_code}" "${COMPOSE_URL}")
 if [ "$RETURN_CODE" != 200 ]
