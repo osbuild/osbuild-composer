@@ -5,6 +5,7 @@ type AWSTargetOptions struct {
 	Region            string   `json:"region"`
 	AccessKeyID       string   `json:"accessKeyID"`
 	SecretAccessKey   string   `json:"secretAccessKey"`
+	SessionToken      string   `json:"sessionToken"`
 	Bucket            string   `json:"bucket"`
 	Key               string   `json:"key"`
 	ShareWithAccounts []string `json:"shareWithAccounts"`
@@ -32,6 +33,7 @@ type AWSS3TargetOptions struct {
 	Region          string `json:"region"`
 	AccessKeyID     string `json:"accessKeyID"`
 	SecretAccessKey string `json:"secretAccessKey"`
+	SessionToken    string `json:"sessionToken"`
 	Bucket          string `json:"bucket"`
 	Key             string `json:"key"`
 }

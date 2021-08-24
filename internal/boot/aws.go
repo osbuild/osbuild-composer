@@ -21,6 +21,7 @@ import (
 type awsCredentials struct {
 	AccessKeyId     string
 	SecretAccessKey string
+	sessionToken    string
 	Region          string
 	Bucket          string
 }
@@ -90,7 +91,7 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 // The s3 key is never returned - the same thing is done in osbuild-composer,
 // the user has no way of getting the s3 key.
 func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
-	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey, "")
+	uploader, err := awsupload.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
 		return fmt.Errorf("cannot create aws uploader: %v", err)
 	}

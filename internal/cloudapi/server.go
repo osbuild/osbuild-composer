@@ -285,6 +285,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 		uploadRequest := ir.UploadRequest
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 		if uploadRequest.Type == UploadTypes_aws {
+			var sessionToken string
 			var awsUploadOptions AWSUploadRequestOptions
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
@@ -300,11 +301,15 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 				share = *awsUploadOptions.Ec2.ShareWithAccounts
 			}
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			if awsUploadOptions.S3.SessionToken != nil {
+				sessionToken = *awsUploadOptions.S3.SessionToken
+			}
 			t := target.NewAWSTarget(&target.AWSTargetOptions{
 				Filename:          imageType.Filename(),
 				Region:            awsUploadOptions.Region,
 				AccessKeyID:       awsUploadOptions.S3.AccessKeyId,
 				SecretAccessKey:   awsUploadOptions.S3.SecretAccessKey,
+				SessionToken:      sessionToken,
 				Bucket:            awsUploadOptions.S3.Bucket,
 				Key:               key,
 				ShareWithAccounts: share,
@@ -318,6 +323,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 			targets = append(targets, t)
 		} else if uploadRequest.Type == UploadTypes_aws_s3 {
 			var awsS3UploadOptions AWSS3UploadRequestOptions
+			var sessionToken string
 			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal aws upload request")
@@ -328,11 +334,15 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 			}
 
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			if awsS3UploadOptions.S3.SessionToken != nil {
+				sessionToken = *awsS3UploadOptions.S3.SessionToken
+			}
 			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
 				Filename:        imageType.Filename(),
 				Region:          awsS3UploadOptions.Region,
 				AccessKeyID:     awsS3UploadOptions.S3.AccessKeyId,
 				SecretAccessKey: awsS3UploadOptions.S3.SecretAccessKey,
+				SessionToken:    sessionToken,
 				Bucket:          awsS3UploadOptions.S3.Bucket,
 				Key:             key,
 			})

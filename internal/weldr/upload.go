@@ -29,6 +29,7 @@ type awsUploadSettings struct {
 	Region          string `json:"region"`
 	AccessKeyID     string `json:"accessKeyID,omitempty"`
 	SecretAccessKey string `json:"secretAccessKey,omitempty"`
+	SessionToken    string `json:"sessionToken,omitempty"`
 	Bucket          string `json:"bucket"`
 	Key             string `json:"key"`
 }
@@ -173,6 +174,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
 			SecretAccessKey: options.SecretAccessKey,
+			SessionToken:    options.SessionToken,
 			Bucket:          options.Bucket,
 			Key:             options.Key,
 		}
