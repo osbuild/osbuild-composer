@@ -599,7 +599,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     x8664InstallerBuildPackageSet().Append(edgeBuildPackageSet()),
+			buildPkgsKey:     edgeInstallerBuildPackageSet(),
 			osPkgsKey:        edgeCommitPackageSet(),
 			installerPkgsKey: edgeInstallerPackageSet(),
 		},
@@ -623,7 +623,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     x8664InstallerBuildPackageSet().Append(edgeBuildPackageSet()),
+			buildPkgsKey:     edgeInstallerBuildPackageSet(),
 			installerPkgsKey: edgeSimplifiedInstallerPackageSet(),
 		},
 		enabledServices:     edgeServices,
@@ -826,7 +826,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:     x8664InstallerBuildPackageSet(),
+			buildPkgsKey:     anacondaBuildPackageSet(),
 			osPkgsKey:        bareMetalPackageSet(),
 			installerPkgsKey: installerPackageSet(),
 		},
