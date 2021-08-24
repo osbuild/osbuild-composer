@@ -49,17 +49,42 @@ func edgeBuildPackageSet() rpmmd.PackageSet {
 
 // x86_64 installer ISO build package set
 // TODO: separate into common installer and arch specific sets
-func x8664InstallerBuildPackageSet() rpmmd.PackageSet {
+func installerBuildPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"efibootmgr", "genisoimage", "grub2-efi-ia32-cdboot",
-			"grub2-efi-x64", "grub2-efi-x64-cdboot", "grub2-pc",
-			"grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
-			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
-			"rpm-ostree", "shim-ia32", "shim-x64", "squashfs-tools",
-			"syslinux", "syslinux-nonlinux", "xorriso",
+			"genisoimage",
+			"isomd5sum",
+			"xorriso",
 		},
 	}
+}
+
+func anacondaBuildPackageSet() rpmmd.PackageSet {
+	return installerBuildPackageSet().Append(rpmmd.PackageSet{
+		Include: []string{
+			"efibootmgr",
+			"grub2-efi-ia32-cdboot",
+			"grub2-efi-x64",
+			"grub2-efi-x64-cdboot",
+			"grub2-pc",
+			"grub2-pc-modules",
+			"grub2-tools",
+			"grub2-tools-efi",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+			"shim-ia32",
+			"shim-x64",
+			"squashfs-tools",
+			"syslinux",
+			"syslinux-nonlinux",
+		},
+	})
+}
+
+func edgeInstallerBuildPackageSet() rpmmd.PackageSet {
+	return anacondaBuildPackageSet().Append(
+		edgeBuildPackageSet(),
+	)
 }
 
 // BOOT PACKAGE SETS
