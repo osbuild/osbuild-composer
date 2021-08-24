@@ -1502,39 +1502,63 @@ def read_systemd_service_dropins(tree):
     return _read_glob_paths_with_parser(tree, checked_globs, read_systemd_service_dropin)
 
 
-def read_tmpfilesd(tree):
+def read_tmpfilesd_config(config_path):
     """
-    Read all configuration files from /etc/tmpfiles.d.
+    Read tmpfiles.d configuration files.
 
-    Returns: dictionary with the keys representing names of configuration files
-    from /etc/tmpfiles.d. Value of each key is a list of strings representing
-    uncommented lines read from the configuration file.
+    Returns: list of strings representing uncommented lines read from the
+    configuration file.
+
+    An example return value:
+    [
+        "x /tmp/.sap*",
+        "x /tmp/.hdb*lock",
+        "x /tmp/.trex*lock"
+    ]
+    """
+    file_lines = []
+
+    with open(config_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line[0] == "#":
+                continue
+            file_lines.append(line)
+
+    return file_lines
+
+
+def read_tmpfilesd_configs(tree):
+    """
+    Read all tmpfiles.d *.conf files from a predefined list of paths and parse
+    them.
+
+    The searched paths are:
+    - "/etc/tmpfiles.d/*.conf"
+    - "/usr/lib/tmpfiles.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_tmpfilesd_config()'.
 
     An example return value:
     {
-        "sap.conf": [
-            "x /tmp/.sap*",
-            "x /tmp/.hdb*lock",
-            "x /tmp/.trex*lock"
-        ]
+        "/etc/tmpfiles.d": {
+            "sap.conf": [
+                "x /tmp/.sap*",
+                "x /tmp/.hdb*lock",
+                "x /tmp/.trex*lock"
+            ]
+        }
     }
     """
-    result = {}
+    checked_globs = [
+        "/etc/tmpfiles.d/*.conf",
+        "/usr/lib/tmpfiles.d/*.conf"
+    ]
 
-    for file in glob.glob(f"{tree}/etc/tmpfiles.d/*.conf"):
-        with open(file) as f:
-            file_lines = []
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                if line[0] == "#":
-                    continue
-                file_lines.append(line)
-            if file_lines:
-                result[os.path.basename(file)] = file_lines
-
-    return result
+    return _read_glob_paths_with_parser(tree, checked_globs, read_tmpfilesd_config)
 
 
 def read_tuned_profile(tree):
@@ -1917,9 +1941,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if modprobe_configs:
             report["modprobe"] = modprobe_configs
 
-        tmpfilesd_config = read_tmpfilesd(tree)
-        if tmpfilesd_config:
-            report["/etc/tmpfiles.d"] = tmpfilesd_config
+        tmpfilesd_configs = read_tmpfilesd_configs(tree)
+        if tmpfilesd_configs:
+            report["tmpfiles.d"] = tmpfilesd_configs
 
         rhsm = read_rhsm(tree)
         if rhsm:
