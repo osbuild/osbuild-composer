@@ -1209,48 +1209,69 @@ def read_cloud_init_conf(tree):
     return result
 
 
-def read_dracut_conf_d(tree):
+def read_dracut_config(config_path):
     """
-    Read all *.conf files from /etc/dracut.conf.d/.
+    Read specific dracut configuration file.
 
-    Returns: dictionary with the keys representing names of configuration files
-    from /etc/dracut.conf.d. Value of each key is a dictionary representing the
-    uncommented configuration options read from the file.
+    Returns: dictionary representing the uncommented configuration options read
+    from the file.
 
     An example return value:
     {
-        "sgdisk.conf": {
-            "install_items": " sgdisk "
-        },
-        "xen.conf": {
-            "add_drivers": " xen-netfront xen-blkfront "
-        }
+        "install_items": " sgdisk "
+        "add_drivers": " xen-netfront xen-blkfront "
     }
     """
     result = {}
 
-    # iterate through all *.conf files in /etc/dracut.conf.d/
-    files = glob.glob(f"{tree}/etc/dracut.conf.d/*.conf")
-    for file in files:
-        confname = os.path.basename(file)
-        config = {}
-        with open(file) as f:
-            # dracut configuration key/values delimiter is '=' or '+='
-            for line in f:
-                line = line.strip()
-                # A '#' indicates the beginning of a comment; following
-                # characters, up to the end of the line are not interpreted.
-                line_comment = line.split("#", 1)
-                line = line_comment[0]
-                if line:
-                    key, value = line.split("=", 1)
-                    if key[-1] == "+":
-                        key = key[:-1]
-                    config[key] = value.strip('"')
-
-        result[confname] = config
+    with open(config_path) as f:
+        # dracut configuration key/values delimiter is '=' or '+='
+        for line in f:
+            line = line.strip()
+            # A '#' indicates the beginning of a comment; following
+            # characters, up to the end of the line are not interpreted.
+            line_comment = line.split("#", 1)
+            line = line_comment[0]
+            if line:
+                key, value = line.split("=", 1)
+                if key[-1] == "+":
+                    key = key[:-1]
+                result[key] = value.strip('"')
 
     return result
+
+
+def read_dracut_configs(tree):
+    """
+    Read all dracut *.conf files from a predefined list of paths and parse them.
+
+    The searched paths are:
+    - "/etc/dracut.conf.d/*.conf"
+    - "/usr/lib/dracut/dracut.conf.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_dracut_config()'.
+
+    An example return value:
+    {
+        "/etc/dracut.conf.d": {
+            "sgdisk.conf": {
+                "install_items": " sgdisk "
+            },
+        },
+        "/usr/lib/dracut/dracut.conf.d": {
+            "xen.conf": {
+                "add_drivers": " xen-netfront xen-blkfront "
+            }
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/dracut.conf.d/*.conf",
+        "/usr/lib/dracut/dracut.conf.d/*.conf"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_dracut_config)
 
 
 def read_keyboard_conf(tree):
@@ -1778,9 +1799,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if dnf_conf:
             report["dnf"] = dnf_conf
 
-        dracut_config = read_dracut_conf_d(tree)
-        if dracut_config:
-            report["/etc/dracut.conf.d"] = dracut_config
+        dracut_configs = read_dracut_configs(tree)
+        if dracut_configs:
+            report["dracut"] = dracut_configs
 
         with contextlib.suppress(FileNotFoundError):
             report["firewall-enabled"] = read_firewall_zone(tree)
