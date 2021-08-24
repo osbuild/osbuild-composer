@@ -1,5 +1,15 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 28.7:
+
+* OSBuild Composer can now work with multiple subscriptions and custom CA
+  certificates. This is useful, for instance, when the host system is
+  subscribed to multiple repositories managed by Satellite.
+
+Contributions from: Martin Sehnoutka
+
+— Brno, 2021-08-24
+
 ## CHANGES WITH 28.6:
 
 * OSBuild output from new (v2) manifest builds are now stable.
