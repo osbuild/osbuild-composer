@@ -2,13 +2,25 @@
 set -euxo pipefail
 
 source /etc/os-release
+ARCH=$(uname -m)
 
 # koji and ansible are not in RHEL repositories. Depending on them in the spec
 # file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel
 # and install koji and ansible here.
-if [[ $ID == rhel || $ID == centos ]]; then
-    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 8 ]] && ! rpm -q epel-release; then
+    curl -Ls --retry 5 --output /tmp/epel.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo rpm -Uvh /tmp/epel.rpm
     sudo dnf install -y koji ansible
+elif [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+    # we have our own small epel for EL9, let's install it
+
+    # install Red Hat certificate, otherwise dnf copr fails
+    curl -LO --insecure https://hdn.corp.redhat.com/rhel8-csb/RPMS/noarch/redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm
+    sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
+    sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
+    # koji is not available yet apparently
+    sudo dnf install -y ansible
 fi
 
 sudo mkdir -p /etc/osbuild-composer
@@ -53,14 +65,21 @@ sudo mkdir -p $REPODIR
 sudo cp -a /usr/share/tests/osbuild-composer/repositories/{fedora,centos}-*.json "$REPODIR"
 # Copy RHEL point relese repos
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR"
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
 
-# RHEL nightly repos need to be overridden in rhel-8.json and rhel-8-beta.json
+# RHEL nightly repos need to be overridden
 case "${ID}-${VERSION_ID}" in
     "rhel-8.5")
         # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.5 test needs nightly repos
         sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR/rhel-8.json"
         # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
         sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json "$REPODIR/rhel-8-beta.json"
+        ;;
+    "rhel-9.0")
+        # Override old rhel-90.json and rhel-90-beta.json because RHEL 9.0 test needs nightly repos
+        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR/rhel-90.json"
+        # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
+        sudo ln -sf /etc/osbuild-composer/repositories/rhel-90.json "$REPODIR/rhel-90-beta.json"
         ;;
     *) ;;
 esac
