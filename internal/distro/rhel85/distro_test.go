@@ -459,6 +459,8 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ec2",
 				"edge-commit",
 				"edge-container",
+				"edge-installer",
+				"edge-simplified-installer",
 				"tar",
 			},
 		},
