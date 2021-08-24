@@ -91,11 +91,11 @@
           },
           {
             "mountpoint": "/var",
-            "minsize": 131072000
+            "minsize": 1073741824
           },
           {
             "mountpoint": "/",
-            "minsize": 131072000
+            "minsize": 2147483648
           }
         ]
       }
@@ -1281,8 +1281,8 @@
               "root_fs_uuid": "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1",
               "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto debug",
               "uefi": {
-                "unified": true,
-                "vendor": "redhat"
+                "vendor": "redhat",
+                "unified": true
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-0.rc3.29.el9.aarch64"
             }
@@ -1319,8 +1319,8 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 16314268,
-                  "start": 4657152,
+                  "size": 14473116,
+                  "start": 6498304,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 },
@@ -1331,7 +1331,7 @@
                   "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
                 },
                 {
-                  "size": 256000,
+                  "size": 2097152,
                   "start": 4401152,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "a178892e-e285-4ce1-9114-55780875d64e"
@@ -1374,8 +1374,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4657152,
-                  "size": 16314268
+                  "start": 6498304,
+                  "size": 14473116
                 }
               }
             }
@@ -1407,7 +1407,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4401152,
-                  "size": 256000
+                  "size": 2097152
                 }
               }
             }
@@ -1444,8 +1444,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4657152,
-                  "size": 16314268
+                  "start": 6498304,
+                  "size": 14473116
                 }
               },
               "usr": {
@@ -1461,7 +1461,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4401152,
-                  "size": 256000
+                  "size": 2097152
                 }
               }
             },
@@ -12205,8 +12205,8 @@
         "fstype": "xfs",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 8352905216,
-        "start": 2384461824,
+        "size": 7410235392,
+        "start": 3327131648,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1"
       },
@@ -12225,7 +12225,7 @@
         "fstype": "xfs",
         "label": null,
         "partuuid": "A178892E-E285-4CE1-9114-55780875D64E",
-        "size": 131072000,
+        "size": 1073741824,
         "start": 2253389824,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"

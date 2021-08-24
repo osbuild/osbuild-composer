@@ -199,11 +199,11 @@ FILESYSTEM_CUSTOMIZATIONS = [
   },
   {
     "mountpoint": "/var",
-    "minsize": 131072000
+    "minsize": 1073741824
   },
   {
     "mountpoint": "/",
-    "minsize": 131072000
+    "minsize": 2147483648
   }
 ]
 
