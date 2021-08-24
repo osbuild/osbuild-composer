@@ -503,8 +503,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
 		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:     distroBuildPackageSet(),
-			edgeBuildPkgsKey: edgeBuildPackageSet(),
+			buildPkgsKey: distroBuildPackageSet(),
 		},
 	}
 
