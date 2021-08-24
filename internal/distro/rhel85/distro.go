@@ -64,7 +64,6 @@ type distribution struct {
 	modulePlatformID string
 	ostreeRef        string
 	arches           map[string]distro.Arch
-	packageSets      map[string]rpmmd.PackageSet
 }
 
 func (d *distribution) Name() string {
@@ -245,10 +244,10 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	mergedSets := make(map[string]rpmmd.PackageSet)
 
 	imageSets := t.packageSets
+
 	archSets := t.arch.packageSets
-	distroSets := t.arch.distro.packageSets
 	for name := range imageSets {
-		mergedSets[name] = imageSets[name].Append(archSets[name]).Append(distroSets[name])
+		mergedSets[name] = imageSets[name].Append(archSets[name])
 	}
 
 	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
@@ -256,10 +255,9 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
 	}
 
-	// build is usually not defined on the image type
-	// handle it explicitly when it's not
+	// every image type must define a 'build' package set
 	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
-		mergedSets[buildPkgsKey] = archSets[buildPkgsKey].Append(distroSets[buildPkgsKey])
+		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
 	}
 
 	// package sets from flags
@@ -280,16 +278,16 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 		}
 
 		if addLegacyBootPkg {
-			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootLegacyPkgsKey]).Append(distroSets[bootLegacyPkgsKey])
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootLegacyPkgsKey])
 		}
 		if addUEFIBootPkg {
-			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootUEFIPkgsKey]).Append(distroSets[bootUEFIPkgsKey])
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootUEFIPkgsKey])
 		}
 	}
 	if t.rpmOstree {
 		// add ostree sets
-		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(archSets[edgeBuildPkgsKey]).Append(distroSets[edgeBuildPkgsKey])
-		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[edgePkgsKey]).Append(distroSets[edgePkgsKey])
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(archSets[edgeBuildPkgsKey])
+		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[edgePkgsKey])
 	}
 
 	// blueprint packages
@@ -502,9 +500,6 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:             name,
 		modulePlatformID: modulePlatformID,
 		ostreeRef:        ostreeRef,
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-		},
 	}
 
 	// Architecture definitions
@@ -643,7 +638,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		defaultTarget: "multi-user.target",
 		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		packageSets: map[string]rpmmd.PackageSet{
-			osPkgsKey: qcow2CommonPackageSet(),
+			buildPkgsKey: distroBuildPackageSet(),
+			osPkgsKey:    qcow2CommonPackageSet(),
 		},
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -657,7 +653,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packageSets: map[string]rpmmd.PackageSet{
-			osPkgsKey: vhdCommonPackageSet(),
+			buildPkgsKey: distroBuildPackageSet(),
+			osPkgsKey:    vhdCommonPackageSet(),
 		},
 		enabledServices: []string{
 			"sshd",
@@ -677,7 +674,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packageSets: map[string]rpmmd.PackageSet{
-			osPkgsKey: vmdkCommonPackageSet(),
+			buildPkgsKey: distroBuildPackageSet(),
+			osPkgsKey:    vmdkCommonPackageSet(),
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -692,7 +690,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]rpmmd.PackageSet{
-			osPkgsKey: openstackCommonPackageSet(),
+			buildPkgsKey: distroBuildPackageSet(),
+			osPkgsKey:    openstackCommonPackageSet(),
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -813,6 +812,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packageSets: map[string]rpmmd.PackageSet{
+			buildPkgsKey: distroBuildPackageSet(),
 			osPkgsKey: {
 				Include: []string{"policycoreutils", "selinux-policy-targeted"},
 				Exclude: []string{"rng-tools"},

@@ -34,29 +34,32 @@ func ppc64leBuildPackageSet() rpmmd.PackageSet {
 
 // common ec2 image build package set
 func ec2BuildPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{"python3-pyyaml"},
-	}
+	return distroBuildPackageSet().Append(
+		rpmmd.PackageSet{
+			Include: []string{"python3-pyyaml"},
+		})
 }
 
 // common edge image build package set
 func edgeBuildPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{"rpm-ostree"},
-		Exclude: nil,
-	}
+	return distroBuildPackageSet().Append(
+		rpmmd.PackageSet{
+			Include: []string{"rpm-ostree"},
+			Exclude: nil,
+		})
 }
 
 // x86_64 installer ISO build package set
 // TODO: separate into common installer and arch specific sets
 func installerBuildPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"genisoimage",
-			"isomd5sum",
-			"xorriso",
-		},
-	}
+	return distroBuildPackageSet().Append(
+		rpmmd.PackageSet{
+			Include: []string{
+				"genisoimage",
+				"isomd5sum",
+				"xorriso",
+			},
+		})
 }
 
 func anacondaBuildPackageSet() rpmmd.PackageSet {
