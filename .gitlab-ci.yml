@@ -274,6 +274,7 @@ API:
         RUNNER:
           - aws/rhel-8-x86_64
           - aws/rhel-8.5-x86_64
+          - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 RHEL 9 on 8:
