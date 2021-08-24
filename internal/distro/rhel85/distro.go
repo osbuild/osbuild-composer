@@ -28,20 +28,8 @@ const (
 	// build package set name
 	buildPkgsKey = "build"
 
-	// Legacy bootable image package set name
-	bootLegacyPkgsKey = "boot.legacy"
-
-	// UEFI bootable image package set name
-	bootUEFIPkgsKey = "boot.uefi"
-
 	// main/common os image package set name
 	osPkgsKey = "packages"
-
-	// edge os image package set name
-	edgePkgsKey = "edge"
-
-	// edge build package set name
-	edgeBuildPkgsKey = "build.edge"
 
 	// container package set name
 	containerPkgsKey = "container"
@@ -117,7 +105,6 @@ type architecture struct {
 	name             string
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
-	packageSets      map[string]rpmmd.PackageSet
 	legacy           string
 	bootType         distro.BootType
 }
@@ -176,13 +163,15 @@ func (a *architecture) Distro() distro.Distro {
 
 type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
+type packageSetFunc func(t *imageType) rpmmd.PackageSet
+
 type imageType struct {
 	arch             *architecture
 	name             string
 	nameAliases      []string
 	filename         string
 	mimeType         string
-	packageSets      map[string]rpmmd.PackageSet
+	packageSets      map[string]packageSetFunc
 	enabledServices  []string
 	disabledServices []string
 	defaultTarget    string
@@ -238,6 +227,15 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
+func (t *imageType) getPackages(name string) rpmmd.PackageSet {
+	getter := t.packageSets[name]
+	if getter == nil {
+		return rpmmd.PackageSet{}
+	}
+
+	return getter(t)
+}
+
 func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
@@ -245,9 +243,8 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 
 	imageSets := t.packageSets
 
-	archSets := t.arch.packageSets
 	for name := range imageSets {
-		mergedSets[name] = imageSets[name].Append(archSets[name])
+		mergedSets[name] = t.getPackages(name)
 	}
 
 	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
@@ -258,36 +255,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	// every image type must define a 'build' package set
 	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
 		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
-	}
-
-	// package sets from flags
-	if t.bootable {
-		var addLegacyBootPkg bool
-		var addUEFIBootPkg bool
-
-		switch bt := t.getBootType(); bt {
-		case distro.LegacyBootType:
-			addLegacyBootPkg = true
-		case distro.UEFIBootType:
-			addUEFIBootPkg = true
-		case distro.HybridBootType:
-			addLegacyBootPkg = true
-			addUEFIBootPkg = true
-		default:
-			panic(fmt.Sprintf("unsupported boot type: %q", bt))
-		}
-
-		if addLegacyBootPkg {
-			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootLegacyPkgsKey])
-		}
-		if addUEFIBootPkg {
-			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[bootUEFIPkgsKey])
-		}
-	}
-	if t.rpmOstree {
-		// add ostree sets
-		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(archSets[edgeBuildPkgsKey])
-		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(archSets[edgePkgsKey])
 	}
 
 	// blueprint packages
@@ -504,44 +471,27 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   distro.X86_64ArchName,
-		distro: rd,
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:      x8664BuildPackageSet(),
-			bootLegacyPkgsKey: x8664LegacyBootPackageSet(),
-			bootUEFIPkgsKey:   x8664UEFIBootPackageSet(),
-			edgePkgsKey:       x8664EdgeCommitPackageSet(),
-		},
+		name:     distro.X86_64ArchName,
+		distro:   rd,
 		legacy:   "i386-pc",
 		bootType: distro.HybridBootType,
 	}
 
 	aarch64 := architecture{
-		name:   distro.Aarch64ArchName,
-		distro: rd,
-		packageSets: map[string]rpmmd.PackageSet{
-			bootUEFIPkgsKey: aarch64UEFIBootPackageSet(),
-			edgePkgsKey:     aarch64EdgeCommitPackageSet(),
-		},
+		name:     distro.Aarch64ArchName,
+		distro:   rd,
 		bootType: distro.UEFIBootType,
 	}
 
 	ppc64le := architecture{
-		distro: rd,
-		name:   distro.Ppc64leArchName,
-		packageSets: map[string]rpmmd.PackageSet{
-			bootLegacyPkgsKey: ppc64leLegacyBootPackageSet(),
-			buildPkgsKey:      ppc64leBuildPackageSet(),
-		},
+		distro:   rd,
+		name:     distro.Ppc64leArchName,
 		legacy:   "powerpc-ieee1275",
 		bootType: distro.LegacyBootType,
 	}
 	s390x := architecture{
-		distro: rd,
-		name:   distro.S390xArchName,
-		packageSets: map[string]rpmmd.PackageSet{
-			bootLegacyPkgsKey: s390xLegacyBootPackageSet(),
-		},
+		distro:   rd,
+		name:     distro.S390xArchName,
 		bootType: distro.LegacyBootType,
 	}
 
@@ -556,9 +506,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		nameAliases: []string{"rhel-edge-commit"},
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: edgeBuildPackageSet(),
-			osPkgsKey:    edgeCommitPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: edgeBuildPackageSet,
+			osPkgsKey:    edgeCommitPackageSet,
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
@@ -570,10 +520,14 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		nameAliases: []string{"rhel-edge-container"},
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:     edgeBuildPackageSet(),
-			osPkgsKey:        edgeCommitPackageSet(),
-			containerPkgsKey: {Include: []string{"nginx"}},
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: edgeBuildPackageSet,
+			osPkgsKey:    edgeCommitPackageSet,
+			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
+				return rpmmd.PackageSet{
+					Include: []string{"nginx"},
+				}
+			},
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
@@ -586,7 +540,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		nameAliases: []string{"rhel-edge-installer"},
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
-		packageSets: map[string]rpmmd.PackageSet{
+		packageSets: map[string]packageSetFunc{
 			// TODO: non-arch-specific package set handling for installers
 			// This image type requires build packages for installers and
 			// ostree/edge.  For now we only have x86-64 installer build
@@ -594,9 +548,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeInstallerBuildPackageSet(),
-			osPkgsKey:        edgeCommitPackageSet(),
-			installerPkgsKey: edgeInstallerPackageSet(),
+			buildPkgsKey:     edgeInstallerBuildPackageSet,
+			osPkgsKey:        edgeCommitPackageSet,
+			installerPkgsKey: edgeInstallerPackageSet,
 		},
 		enabledServices: edgeServices,
 		rpmOstree:       true,
@@ -610,7 +564,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		nameAliases: []string{"rhel-edge-simplified-installer"},
 		filename:    "simplified-installer.iso",
 		mimeType:    "application/x-iso9660-image",
-		packageSets: map[string]rpmmd.PackageSet{
+		packageSets: map[string]packageSetFunc{
 			// TODO: non-arch-specific package set handling for installers
 			// This image type requires build packages for installers and
 			// ostree/edge.  For now we only have x86-64 installer build
@@ -618,8 +572,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeInstallerBuildPackageSet(),
-			installerPkgsKey: edgeSimplifiedInstallerPackageSet(),
+			buildPkgsKey:     edgeInstallerBuildPackageSet,
+			installerPkgsKey: edgeSimplifiedInstallerPackageSet,
 		},
 		enabledServices:     edgeServices,
 		defaultSize:         10 * GigaByte,
@@ -637,9 +591,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		mimeType:      "application/x-qemu-disk",
 		defaultTarget: "multi-user.target",
 		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-			osPkgsKey:    qcow2CommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    qcow2CommonPackageSet,
 		},
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -652,9 +606,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "vhd",
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-			osPkgsKey:    vhdCommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    vhdCommonPackageSet,
 		},
 		enabledServices: []string{
 			"sshd",
@@ -673,9 +627,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "vmdk",
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-			osPkgsKey:    vmdkCommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    vmdkCommonPackageSet,
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -689,9 +643,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "openstack",
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-			osPkgsKey:    openstackCommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    openstackCommonPackageSet,
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -718,9 +672,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "ami",
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: ec2BuildPackageSet(),
-			osPkgsKey:    ec2CommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    ec2CommonPackageSet,
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -737,9 +691,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "ami",
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: ec2BuildPackageSet(),
-			osPkgsKey:    ec2CommonPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    ec2CommonPackageSet,
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -755,9 +709,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "ec2",
 		filename: "image.raw.xz",
 		mimeType: "application/xz",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: ec2BuildPackageSet(),
-			osPkgsKey:    rhelEc2PackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    rhelEc2PackageSet,
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -774,9 +728,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "ec2",
 		filename: "image.raw.xz",
 		mimeType: "application/xz",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: ec2BuildPackageSet(),
-			osPkgsKey:    rhelEc2PackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    rhelEc2PackageSet,
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -792,9 +746,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "ec2-ha",
 		filename: "image.raw.xz",
 		mimeType: "application/xz",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: ec2BuildPackageSet(),
-			osPkgsKey:    rhelEc2HaPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    rhelEc2HaPackageSet,
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -811,11 +765,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "tar",
 		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey: distroBuildPackageSet(),
-			osPkgsKey: {
-				Include: []string{"policycoreutils", "selinux-policy-targeted"},
-				Exclude: []string{"rng-tools"},
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey: func(t *imageType) rpmmd.PackageSet {
+				return rpmmd.PackageSet{
+					Include: []string{"policycoreutils", "selinux-policy-targeted"},
+					Exclude: []string{"rng-tools"},
+				}
 			},
 		},
 		pipelines: tarPipelines,
@@ -825,10 +781,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		name:     "image-installer",
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
-		packageSets: map[string]rpmmd.PackageSet{
-			buildPkgsKey:     anacondaBuildPackageSet(),
-			osPkgsKey:        bareMetalPackageSet(),
-			installerPkgsKey: installerPackageSet(),
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey:     anacondaBuildPackageSet,
+			osPkgsKey:        bareMetalPackageSet,
+			installerPkgsKey: installerPackageSet,
 		},
 		rpmOstree: false,
 		bootISO:   true,

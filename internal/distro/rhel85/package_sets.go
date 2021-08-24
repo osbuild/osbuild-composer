@@ -2,13 +2,18 @@ package rhel85
 
 // This file defines package sets that are used by more than one image type.
 
-import "github.com/osbuild/osbuild-composer/internal/rpmmd"
+import (
+	"fmt"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+)
 
 // BUILD PACKAGE SETS
 
 // distro-wide build package set
-func distroBuildPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"dnf", "dosfstools", "e2fsprogs", "glibc", "lorax-templates-generic",
 			"lorax-templates-rhel", "policycoreutils", "python36",
@@ -16,33 +21,44 @@ func distroBuildPackageSet() rpmmd.PackageSet {
 			"tar", "xfsprogs", "xz",
 		},
 	}
+
+	switch t.arch.Name() {
+
+	case distro.X86_64ArchName:
+		ps = ps.Append(x8664BuildPackageSet(t))
+
+	case distro.Ppc64leArchName:
+		ps = ps.Append(ppc64leBuildPackageSet(t))
+	}
+
+	return ps
 }
 
 // x86_64 build package set
-func x8664BuildPackageSet() rpmmd.PackageSet {
+func x8664BuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"grub2-pc"},
 	}
 }
 
 // ppc64le build package set
-func ppc64leBuildPackageSet() rpmmd.PackageSet {
+func ppc64leBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"grub2-ppc64le", "grub2-ppc64le-modules"},
 	}
 }
 
 // common ec2 image build package set
-func ec2BuildPackageSet() rpmmd.PackageSet {
-	return distroBuildPackageSet().Append(
+func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{"python3-pyyaml"},
 		})
 }
 
 // common edge image build package set
-func edgeBuildPackageSet() rpmmd.PackageSet {
-	return distroBuildPackageSet().Append(
+func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{"rpm-ostree"},
 			Exclude: nil,
@@ -51,8 +67,8 @@ func edgeBuildPackageSet() rpmmd.PackageSet {
 
 // x86_64 installer ISO build package set
 // TODO: separate into common installer and arch specific sets
-func installerBuildPackageSet() rpmmd.PackageSet {
-	return distroBuildPackageSet().Append(
+func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{
 				"genisoimage",
@@ -62,8 +78,8 @@ func installerBuildPackageSet() rpmmd.PackageSet {
 		})
 }
 
-func anacondaBuildPackageSet() rpmmd.PackageSet {
-	return installerBuildPackageSet().Append(rpmmd.PackageSet{
+func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return installerBuildPackageSet(t).Append(rpmmd.PackageSet{
 		Include: []string{
 			"efibootmgr",
 			"grub2-efi-ia32-cdboot",
@@ -84,23 +100,70 @@ func anacondaBuildPackageSet() rpmmd.PackageSet {
 	})
 }
 
-func edgeInstallerBuildPackageSet() rpmmd.PackageSet {
-	return anacondaBuildPackageSet().Append(
-		edgeBuildPackageSet(),
+func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return anacondaBuildPackageSet(t).Append(
+		edgeBuildPackageSet(t),
 	)
 }
 
 // BOOT PACKAGE SETS
 
+func bootPackageSet(t *imageType) rpmmd.PackageSet {
+	if !t.bootable {
+		return rpmmd.PackageSet{}
+	}
+
+	var addLegacyBootPkg bool
+	var addUEFIBootPkg bool
+
+	switch bt := t.getBootType(); bt {
+	case distro.LegacyBootType:
+		addLegacyBootPkg = true
+	case distro.UEFIBootType:
+		addUEFIBootPkg = true
+	case distro.HybridBootType:
+		addLegacyBootPkg = true
+		addUEFIBootPkg = true
+	default:
+		panic(fmt.Sprintf("unsupported boot type: %q", bt))
+	}
+
+	ps := rpmmd.PackageSet{}
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		if addLegacyBootPkg {
+			ps = ps.Append(x8664LegacyBootPackageSet(t))
+		}
+		if addUEFIBootPkg {
+			ps = ps.Append(x8664UEFIBootPackageSet(t))
+		}
+
+	case distro.Aarch64ArchName:
+		ps = ps.Append(aarch64UEFIBootPackageSet(t))
+
+	case distro.Ppc64leArchName:
+		ps = ps.Append(ppc64leLegacyBootPackageSet(t))
+
+	case distro.S390xArchName:
+		ps = ps.Append(s390xLegacyBootPackageSet(t))
+
+	default:
+		panic(fmt.Sprintf("unsupported boot arch: %s", t.arch.Name()))
+	}
+
+	return ps
+}
+
 // x86_64 Legacy arch-specific boot package set
-func x8664LegacyBootPackageSet() rpmmd.PackageSet {
+func x8664LegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"dracut-config-generic", "grub2-pc"},
 	}
 }
 
 // x86_64 UEFI arch-specific boot package set
-func x8664UEFIBootPackageSet() rpmmd.PackageSet {
+func x8664UEFIBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dracut-config-generic",
@@ -112,7 +175,7 @@ func x8664UEFIBootPackageSet() rpmmd.PackageSet {
 }
 
 // aarch64 UEFI arch-specific boot package set
-func aarch64UEFIBootPackageSet() rpmmd.PackageSet {
+func aarch64UEFIBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dracut-config-generic", "efibootmgr", "grub2-efi-aa64",
@@ -122,7 +185,7 @@ func aarch64UEFIBootPackageSet() rpmmd.PackageSet {
 }
 
 // ppc64le Legacy arch-specific boot package set
-func ppc64leLegacyBootPackageSet() rpmmd.PackageSet {
+func ppc64leLegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"dracut-config-generic", "powerpc-utils", "grub2-ppc64le",
@@ -132,7 +195,7 @@ func ppc64leLegacyBootPackageSet() rpmmd.PackageSet {
 }
 
 // s390x Legacy arch-specific boot package set
-func s390xLegacyBootPackageSet() rpmmd.PackageSet {
+func s390xLegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"dracut-config-generic", "s390utils-base"},
 	}
@@ -140,7 +203,7 @@ func s390xLegacyBootPackageSet() rpmmd.PackageSet {
 
 // OS package sets
 
-func qcow2CommonPackageSet() rpmmd.PackageSet {
+func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@core", "authselect-compat", "chrony", "cloud-init",
@@ -166,10 +229,10 @@ func qcow2CommonPackageSet() rpmmd.PackageSet {
 			"libertas-usb8388-firmware", "nss", "plymouth", "rng-tools",
 			"udisks2",
 		},
-	}
+	}.Append(bootPackageSet(t))
 }
 
-func vhdCommonPackageSet() rpmmd.PackageSet {
+func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
@@ -185,10 +248,10 @@ func vhdCommonPackageSet() rpmmd.PackageSet {
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
 		},
-	}
+	}.Append(bootPackageSet(t))
 }
 
-func vmdkCommonPackageSet() rpmmd.PackageSet {
+func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@core", "chrony", "firewalld", "langpacks-en", "open-vm-tools",
@@ -197,11 +260,11 @@ func vmdkCommonPackageSet() rpmmd.PackageSet {
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
 		},
-	}
+	}.Append(bootPackageSet(t))
 
 }
 
-func openstackCommonPackageSet() rpmmd.PackageSet {
+func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
@@ -214,11 +277,11 @@ func openstackCommonPackageSet() rpmmd.PackageSet {
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
 		},
-	}
+	}.Append(bootPackageSet(t))
 
 }
 
-func ec2CommonPackageSet() rpmmd.PackageSet {
+func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@core", "authselect-compat", "chrony", "cloud-init", "cloud-utils-growpart",
@@ -239,19 +302,19 @@ func ec2CommonPackageSet() rpmmd.PackageSet {
 			"libertas-sd8787-firmware", "libertas-usb8388-firmware",
 			"plymouth",
 		},
-	}
+	}.Append(bootPackageSet(t))
 }
 
 // rhel-ec2 image package set
-func rhelEc2PackageSet() rpmmd.PackageSet {
-	ec2PackageSet := ec2CommonPackageSet()
+func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
+	ec2PackageSet := ec2CommonPackageSet(t)
 	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
 	return ec2PackageSet
 }
 
 // rhel-ha-ec2 image package set
-func rhelEc2HaPackageSet() rpmmd.PackageSet {
-	ec2HaPackageSet := ec2CommonPackageSet()
+func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
+	ec2HaPackageSet := ec2CommonPackageSet(t)
 	ec2HaPackageSet.Include = append(ec2HaPackageSet.Include,
 		"fence-agents-all",
 		"pacemaker",
@@ -262,8 +325,8 @@ func rhelEc2HaPackageSet() rpmmd.PackageSet {
 }
 
 // edge commit OS package set
-func edgeCommitPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"redhat-release", "glibc", "glibc-minimal-langpack",
 			"nss-altfiles", "dracut-config-generic", "dracut-network",
@@ -286,9 +349,22 @@ func edgeCommitPackageSet() rpmmd.PackageSet {
 		},
 		Exclude: []string{"rng-tools"},
 	}
+
+	ps = ps.Append(bootPackageSet(t))
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		ps = ps.Append(x8664EdgeCommitPackageSet(t))
+
+	case distro.Aarch64ArchName:
+		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
+	}
+
+	return ps
+
 }
 
-func x8664EdgeCommitPackageSet() rpmmd.PackageSet {
+func x8664EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64",
@@ -302,14 +378,14 @@ func x8664EdgeCommitPackageSet() rpmmd.PackageSet {
 	}
 }
 
-func aarch64EdgeCommitPackageSet() rpmmd.PackageSet {
+func aarch64EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"grub2-efi-aa64", "efibootmgr", "shim-aa64", "iwl7260-firmware"},
 		Exclude: nil,
 	}
 }
 
-func bareMetalPackageSet() rpmmd.PackageSet {
+func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"authselect-compat", "chrony", "cockpit-system", "cockpit-ws",
@@ -327,11 +403,11 @@ func bareMetalPackageSet() rpmmd.PackageSet {
 			"subscription-manager-cockpit", "tar", "tcpdump", "yum",
 		},
 		Exclude: nil,
-	}
+	}.Append(bootPackageSet(t))
 }
 
 // INSTALLER PACKAGE SET
-func installerPackageSet() rpmmd.PackageSet {
+func installerPackageSet(t *imageType) rpmmd.PackageSet {
 	// TODO: simplify
 	return rpmmd.PackageSet{
 		Include: []string{
@@ -385,7 +461,7 @@ func installerPackageSet() rpmmd.PackageSet {
 	}
 }
 
-func edgeSimplifiedInstallerPackageSet() rpmmd.PackageSet {
+func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"cloud-utils-growpart",
@@ -461,7 +537,7 @@ func edgeSimplifiedInstallerPackageSet() rpmmd.PackageSet {
 	}
 }
 
-func edgeInstallerPackageSet() rpmmd.PackageSet {
+func edgeInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"aajohan-comfortaa-fonts", "abattis-cantarell-fonts",
