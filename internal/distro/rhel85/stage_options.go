@@ -269,6 +269,17 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 		comprOptions.BCJ = bcj
 	}
 	isolabel := fmt.Sprintf("RHEL-8-5-0-BaseOS-%s", arch)
+
+	var architectures []string
+
+	if arch == distro.X86_64ArchName {
+		architectures = []string{"IA32", "X64"}
+	} else if arch == distro.Aarch64ArchName {
+		architectures = []string{"AA64"}
+	} else {
+		panic("unsupported architecture")
+	}
+
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
 			Name:    "Red Hat Enterprise Linux",
@@ -278,14 +289,11 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 		Kernel:     kernelVer,
 		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
 		EFI: osbuild.EFI{
-			Architectures: []string{
-				"IA32",
-				"X64",
-			},
-			Vendor: "redhat",
+			Architectures: architectures,
+			Vendor:        "redhat",
 		},
 		ISOLinux: osbuild.ISOLinux{
-			Enabled: true,
+			Enabled: arch == distro.X86_64ArchName,
 			Debug:   false,
 		},
 		Templates: "80-rhel",
