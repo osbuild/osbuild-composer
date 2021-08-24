@@ -1138,9 +1138,9 @@ def read_modprobe_configs(tree):
     return _read_glob_paths_with_parser(tree, checked_globs, read_modprobe_config)
 
 
-def read_cloud_init_conf(tree):
+def read_cloud_init_config(config_path):
     """
-    Read the cloud-init configuration from /etc/cloud/cloud.cfg
+    Read the specific cloud-init configuration file.
 
     Returns: dictionary representing the cloud-init configuration.
 
@@ -1231,11 +1231,41 @@ def read_cloud_init_conf(tree):
     result = {}
 
     with contextlib.suppress(FileNotFoundError):
-        with open(f"{tree}/etc/cloud/cloud.cfg") as f:
+        with open(config_path) as f:
             config = yaml.safe_load(f)
             result.update(config)
 
     return result
+
+
+def read_cloud_init_configs(tree):
+    """
+    Read all cloud-init *.cfg files from a predefined list of paths and parse them.
+
+    The searched paths are:
+    - "/etc/cloud/cloud.cfg"
+    - "/etc/cloud/cloud.cfg.d/*.cfg"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_cloud_init_config()'.
+
+    An example return value:
+    {
+        "/etc/cloud.cfg.d":
+            "ec2.cfg": {
+                "default_user": {
+                    "name": "ec2-user"
+                }
+            }
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/cloud/cloud.cfg",
+        "/etc/cloud/cloud.cfg.d/*.cfg"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_cloud_init_config)
 
 
 def read_dracut_config(config_path):
@@ -1820,9 +1850,9 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if chrony_conf:
             report["chrony"] = chrony_conf
 
-        cloud_init_conf = read_cloud_init_conf(tree)
-        if cloud_init_conf:
-            report["/etc/cloud/cloud.conf"] = cloud_init_conf
+        cloud_init_configs = read_cloud_init_configs(tree)
+        if cloud_init_configs:
+            report["cloud-init"] = cloud_init_configs
 
         dnf_conf = read_dnf_conf(tree)
         if dnf_conf:
