@@ -82,9 +82,11 @@ Conflicts: lorax-composer
 Obsoletes: lorax-composer < 34.3
 %endif
 
-# remove in F34
+# Remove when we stop releasing into Fedora 33
+%if 0%{?fedora} <= 33
 Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
 Provides:  golang-github-osbuild-composer = %{version}-%{release}
+%endif
 
 # remove when F34 is EOL
 Obsoletes: osbuild-composer-koji <= 23
