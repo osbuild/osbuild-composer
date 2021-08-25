@@ -103,7 +103,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 }
 
 func (c *Composer) InitAPI(cert, key string, enableJWT bool, l net.Listener) error {
-	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
+	c.api = cloudapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 
 	clientAuth := tls.RequireAndVerifyClientCert
@@ -210,6 +210,7 @@ func (c *Composer) Start() error {
 	if c.apiListener != nil {
 		go func() {
 			const apiRoute = "/api/composer/v1"
+			const apiRouteV2 = "/api/composer/v2"
 			const kojiRoute = "/api/composer-koji/v1"
 
 			mux := http.NewServeMux()
@@ -217,7 +218,8 @@ func (c *Composer) Start() error {
 			// Add a "/" here, because http.ServeMux expects the
 			// trailing slash for rooted subtrees, whereas the
 			// handler functions don't.
-			mux.Handle(apiRoute+"/", c.api.Handler(apiRoute))
+			mux.Handle(apiRoute+"/", c.api.V1(apiRoute))
+			mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
 			mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
 
