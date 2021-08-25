@@ -99,6 +99,14 @@ get_compose_metadata () {
     cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
+is_weldr_client_installed () {
+    if rpm --quiet -q weldr-client; then
+        echo true
+    else
+        echo false
+    fi
+}
+
 # Export Azure credentials if running on Jenkins
 set +u
 if [ -n "$AZURE_CREDS" ]
@@ -151,13 +159,21 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 # Start the compose and upload to Azure.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bash vhd "$IMAGE_KEY" "$AZURE_CONFIG" | tee "$COMPOSE_START"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+if [ "$(is_weldr_client_installed)" == true ]; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if [ "$(is_weldr_client_installed)" == true ]; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
