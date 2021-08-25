@@ -54,6 +54,9 @@ echo "😃 Passed tests:" "${PASSED_TESTS[@]}"
 echo "☹ Failed tests:" "${FAILED_TESTS[@]}"
 test_divider
 
+sudo cp /var/log/httpd/error_log .
+sudo cp /var/log/httpd/access_log .
+
 # Exit with a failure if tests were executed and any of them failed.
 if [ ${#PASSED_TESTS[@]} -gt 0 ] && [ ${#FAILED_TESTS[@]} -eq 0 ]; then
     echo "🎉 All tests passed."
