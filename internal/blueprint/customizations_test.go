@@ -6,6 +6,48 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCheckAllowed(t *testing.T) {
+	Desc := "Test descritpion"
+	Pass := "testpass"
+	Key := "testkey"
+	Home := "Home"
+	Shell := "Shell"
+	Groups := []string{
+		"Group",
+	}
+	UID := 123
+	GID := 321
+
+	expectedUsers := []UserCustomization{
+		UserCustomization{
+			Name:        "John",
+			Description: &Desc,
+			Password:    &Pass,
+			Key:         &Key,
+			Home:        &Home,
+			Shell:       &Shell,
+			Groups:      Groups,
+			UID:         &UID,
+			GID:         &GID,
+		},
+	}
+
+	var expectedHostname = "Hostname"
+
+	x := Customizations{Hostname: &expectedHostname, User: expectedUsers}
+
+	err := x.CheckAllowed("Hostname", "User")
+	assert.NoError(t, err)
+
+	// "User" not allowed anymore
+	err = x.CheckAllowed("Hostname")
+	assert.Error(t, err)
+
+	// "Hostname" not allowed anymore
+	err = x.CheckAllowed("User")
+	assert.Error(t, err)
+}
+
 func TestGetHostname(t *testing.T) {
 
 	var expectedHostname = "Hostname"
