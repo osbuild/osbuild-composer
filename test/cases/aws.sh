@@ -90,6 +90,14 @@ store_instance_screenshot () {
     jq -r '.ImageData' "$INSTANCE_CONSOLE" | base64 -d - > "$SCREENSHOT_FILE"
 }
 
+is_weldr_client_installed () {
+    if rpm --quiet -q weldr-client; then
+        echo true
+    else
+        echo false
+    fi
+}
+
 # Write an AWS TOML file
 tee "$AWS_CONFIG" > /dev/null << EOF
 provider = "aws"
@@ -130,13 +138,21 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 # Start the compose and upload to AWS.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bash ami "$IMAGE_KEY" "$AWS_CONFIG" | tee "$COMPOSE_START"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+if [ "$(is_weldr_client_installed)" == true ]; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if [ "$(is_weldr_client_installed)" == true ]; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
