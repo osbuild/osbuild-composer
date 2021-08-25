@@ -74,7 +74,11 @@ if [ -z "${REPO_URL+x}" ]; then
         sudo pip3 -q install s3cmd
     fi
 
-    REPO_DIR_LATEST="repo/${JOB_NAME}/latest/internal"
+    # path to be used in constructing local repo directory and then in S3
+    REPO_PATH="${JOB_NAME}/latest/internal"
+
+    # local repo directory
+    REPO_DIR_LATEST="repo/${REPO_PATH}"
     mkdir -p "$REPO_DIR_LATEST"
 
     greenprint "Discover latest osbuild-composer NVR"
@@ -96,17 +100,19 @@ if [ -z "${REPO_URL+x}" ]; then
 
     # Remove the previous latest repo for this job.
     # Don't fail if the path is missing.
-    s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
+    s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_PATH}" || true
 
     # Upload repository to S3.
     greenprint "☁ Uploading RPMs to S3"
-    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    pushd repo
+        s3cmd --acl-public put --recursive . s3://${REPO_BUCKET}/
+    popd
 
     # Public URL for the S3 bucket with our artifacts.
     MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
     # Full URL to the RPM repository after they are uploaded.
-    REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_DIR_LATEST}
+    REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_PATH}
 fi
 
 # amend repository file.

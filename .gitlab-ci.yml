@@ -83,7 +83,6 @@ Prepare-rhel-internal:
     matrix:
       - RUNNER:
           - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -91,7 +90,7 @@ Base:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -122,7 +121,7 @@ Regression:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/regression.sh
@@ -151,7 +150,7 @@ OSTree:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -188,7 +187,7 @@ Integration:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -234,7 +233,7 @@ API:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
@@ -289,7 +288,7 @@ Installer:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-x86_64/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
