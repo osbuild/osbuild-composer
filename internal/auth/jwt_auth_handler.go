@@ -9,6 +9,8 @@ import (
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/openshift-online/ocm-sdk-go/logging"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 // When using this handler for auth, it should be run as high up as possible.
@@ -54,6 +56,12 @@ func BuildJWTAuthHandler(keysURL, caFile, aclFile string, exclude []string, next
 	for _, e := range exclude {
 		builder = builder.Public(e)
 	}
+
+	// In case authentication fails, attach an OperationID
+	builder = builder.OperationID(func(r *http.Request) string {
+		return common.GenerateOperationID()
+	})
+
 	handler, err = builder.Next(next).Build()
 	return
 }

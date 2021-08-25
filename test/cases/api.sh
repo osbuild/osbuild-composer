@@ -656,6 +656,7 @@ function sendCompose() {
 
 function waitForState() {
     local DESIRED_STATE="${1:-success}"
+    local VERSION="${2:-v1}"
     while true
     do
         OUTPUT=$(curl \
@@ -664,7 +665,7 @@ function waitForState() {
                      --cacert /etc/osbuild-composer/ca-crt.pem \
                      --key /etc/osbuild-composer/client-key.pem \
                      --cert /etc/osbuild-composer/client-crt.pem \
-                     https://localhost/api/composer/v1/compose/"$COMPOSE_ID")
+                     https://localhost/api/composer/"$VERSION"/compose/"$COMPOSE_ID")
 
         COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
         UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
@@ -713,6 +714,8 @@ sudo systemctl start "osbuild-worker@1"
 INIT_COMPOSES="$(collectMetrics)"
 sendCompose
 waitForState
+# Same state with v2
+waitForState "success" "v2"
 SUBS_COMPOSES="$(collectMetrics)"
 
 test "$UPLOAD_STATUS" = "success"
@@ -945,6 +948,20 @@ function verifyInAWSS3() {
 
   if [[ "${API_COMMIT_ID}" != "${TAR_COMMIT_ID}" ]]; then
       echo "Commit ID returned from API does not match Commit ID in archive 😠"
+      exit 1
+  fi
+
+  # v2 has the same result
+  API_COMMIT_ID_V2=$(curl \
+    --silent \
+    --show-error \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    --key /etc/osbuild-composer/client-key.pem \
+    --cert /etc/osbuild-composer/client-crt.pem \
+    https://localhost/api/composer/v2/compose/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
+
+  if [[ "${API_COMMIT_ID_V2}" != "${TAR_COMMIT_ID}" ]]; then
+      echo "Commit ID returned from API v2 does not match Commit ID in archive 😠"
       exit 1
   fi
 }

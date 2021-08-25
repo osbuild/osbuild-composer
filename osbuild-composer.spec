@@ -58,6 +58,7 @@ BuildRequires:  golang(github.com/google/go-cmp/cmp)
 BuildRequires:  golang(github.com/gophercloud/gophercloud)
 BuildRequires:  golang(github.com/prometheus/client_golang/prometheus/promhttp)
 BuildRequires:  golang(github.com/openshift-online/ocm-sdk-go)
+BuildRequires:  golang(github.com/segmentio/ksuid)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
@@ -105,7 +106,8 @@ Obsoletes: osbuild-composer-koji <= 23
 # generated code compatible by applying some sed magic.
 #
 # Remove when F33 is EOL
-sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/openapi.gen.go
+sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v1/openapi.v1.gen.go
+sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v2/openapi.v2.gen.go
 %endif
 
 %build
