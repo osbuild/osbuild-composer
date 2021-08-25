@@ -31,6 +31,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/openshift-online/ocm-sdk-go v0.1.198
 	github.com/prometheus/client_golang v1.10.0
+	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.23.0
