@@ -104,8 +104,8 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
-			name: "tar-installer",
-			args: args{"tar-installer"},
+			name: "image-installer",
+			args: args{"image-installer"},
 			want: wantResult{
 				filename: "installer.iso",
 				mimeType: "application/x-iso9660-image",
@@ -264,7 +264,7 @@ func TestImageType_Name(t *testing.T) {
 				"edge-container",
 				"edge-installer",
 				"tar",
-				"tar-installer",
+				"image-installer",
 			},
 		},
 		{
@@ -446,7 +446,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-container",
 				"edge-installer",
 				"tar",
-				"tar-installer",
+				"image-installer",
 			},
 		},
 		{
