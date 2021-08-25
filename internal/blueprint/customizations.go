@@ -1,5 +1,10 @@
 package blueprint
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Customizations struct {
 	Hostname   *string                   `json:"hostname,omitempty" toml:"hostname,omitempty"`
 	Kernel     *KernelCustomization      `json:"kernel,omitempty" toml:"kernel,omitempty"`
@@ -76,6 +81,53 @@ type CustomizationError struct {
 
 func (e *CustomizationError) Error() string {
 	return e.Message
+}
+
+//CheckCustomizations returns an error of type `CustomizationError`
+//if `c` has any customizations not specified in `allowed`
+func (c *Customizations) CheckAllowed(allowed ...string) error {
+	if c == nil {
+		return nil
+	}
+
+	allowMap := make(map[string]bool)
+
+	for _, a := range allowed {
+		allowMap[a] = true
+	}
+
+	t := reflect.TypeOf(*c)
+	v := reflect.ValueOf(*c)
+
+	for i := 0; i < t.NumField(); i++ {
+
+		empty := false
+		field := v.Field(i)
+
+		switch field.Kind() {
+		case reflect.String:
+			if field.String() == "" {
+				empty = true
+			}
+		case reflect.Array, reflect.Slice:
+			if field.Len() == 0 {
+				empty = true
+			}
+		case reflect.Ptr:
+			if field.IsNil() {
+				empty = true
+			}
+		default:
+			panic(fmt.Sprintf("unhandled customization field type %s, %s", v.Kind(), t.Field(i).Name))
+
+		}
+
+		if !empty && !allowMap[t.Field(i).Name] {
+			return &CustomizationError{fmt.Sprintf("'%s' is not allowed", t.Field(i).Name)}
+		}
+	}
+
+	return nil
 }
 
 func (c *Customizations) GetHostname() *string {
