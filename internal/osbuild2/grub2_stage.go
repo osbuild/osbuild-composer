@@ -17,6 +17,7 @@ type GRUB2StageOptions struct {
 	Legacy             string     `json:"legacy,omitempty"`
 	UEFI               *GRUB2UEFI `json:"uefi,omitempty"`
 	SavedEntry         string     `json:"saved_entry,omitempty"`
+	Greenboot          bool       `json:"greenboot,omitempty"`
 }
 
 type GRUB2UEFI struct {
