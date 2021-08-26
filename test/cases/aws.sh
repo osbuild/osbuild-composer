@@ -14,9 +14,18 @@ function greenprint {
 
 # We need awscli to talk to AWS.
 if ! hash aws; then
-    greenprint "Installing awscli"
-    sudo dnf install -y awscli
-    aws --version
+    if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+        # awscli is no longer shippedin RHEL-9 so install with official installer
+        sudo dnf install unzip
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        aws --version
+    else
+        greenprint "Installing awscli"
+        sudo dnf install -y awscli
+        aws --version
+    fi
 fi
 
 TEST_UUID=$(uuidgen)

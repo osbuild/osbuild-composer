@@ -17,19 +17,28 @@ function greenprint {
 
 # Terraform needs azure-cli to talk to Azure.
 if ! hash az; then
+    if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+        # RHEL-9 does not have python-3.6 which is required by azure-cli
+        # using pip to install it instead
+        greenprint "Installing azure-cli via pip"
+        sudo dnf install -y pip
+        pip3 install azure-cli
+        az version
+    else
     # this installation method is taken from the official docs:
     # https://docs.microsoft.com/cs-cz/cli/azure/install-azure-cli-linux?pivots=dnf
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    echo -e "[azure-cli]
+        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        echo -e "[azure-cli]
 name=Azure CLI
 baseurl=https://packages.microsoft.com/yumrepos/azure-cli
 enabled=1
 gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
 
-  greenprint "Installing azure-cli"
-  sudo dnf install -y azure-cli
-  az version
+      greenprint "Installing azure-cli"
+      sudo dnf install -y azure-cli
+      az version
+    fi
 fi
 
 # We need terraform to provision the vm in azure and then destroy it
