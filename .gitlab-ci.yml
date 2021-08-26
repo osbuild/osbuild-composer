@@ -247,6 +247,12 @@ Integration:
           - aws/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
+      - SCRIPT:
+          - aws.sh
+          - azure.sh
+        RUNNER:
+          - aws/rhel-9.0-beta-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
   TARGET:
