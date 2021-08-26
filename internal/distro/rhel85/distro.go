@@ -784,7 +784,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey:     anacondaBuildPackageSet,
 			osPkgsKey:        bareMetalPackageSet,
-			installerPkgsKey: installerPackageSet,
+			installerPkgsKey: anacondaPackageSet,
 		},
 		rpmOstree: false,
 		bootISO:   true,
