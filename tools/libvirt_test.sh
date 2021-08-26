@@ -149,13 +149,21 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 # Start the compose
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+if rpm -q --quiet weldr-client; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
