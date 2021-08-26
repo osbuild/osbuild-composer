@@ -29,7 +29,7 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/prometheus/client_golang v1.10.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.23.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
