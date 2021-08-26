@@ -3,6 +3,7 @@ package target
 type AWSTargetOptions struct {
 	Filename          string   `json:"filename"`
 	Region            string   `json:"region"`
+	Endpoint          string   `json:"endpoint"`
 	AccessKeyID       string   `json:"accessKeyID"`
 	SecretAccessKey   string   `json:"secretAccessKey"`
 	SessionToken      string   `json:"sessionToken"`
@@ -31,6 +32,7 @@ func NewAWSTargetResult(options *AWSTargetResultOptions) *TargetResult {
 type AWSS3TargetOptions struct {
 	Filename        string `json:"filename"`
 	Region          string `json:"region"`
+	Endpoint        string `json:"endpoint"`
 	AccessKeyID     string `json:"accessKeyID"`
 	SecretAccessKey string `json:"secretAccessKey"`
 	SessionToken    string `json:"sessionToken"`

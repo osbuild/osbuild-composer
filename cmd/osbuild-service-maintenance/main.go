@@ -56,7 +56,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		logrus.Info("Cleaning up AWS")
-		err := AWSCleanup(maxCReqs, dryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, "us-east-1", cutoff)
+		err := AWSCleanup(maxCReqs, dryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, "us-east-1", "", cutoff)
 		if err != nil {
 			logrus.Errorf("AWS cleanup failed: %v", err)
 		}

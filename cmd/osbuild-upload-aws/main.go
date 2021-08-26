@@ -14,6 +14,7 @@ func main() {
 	var secretAccessKey string
 	var sessionToken string
 	var region string
+	var endpoint string
 	var bucketName string
 	var keyName string
 	var filename string
@@ -24,6 +25,7 @@ func main() {
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&sessionToken, "session-token", "", "session token")
 	flag.StringVar(&region, "region", "", "target region")
+	flag.StringVar(&endpoint, "endpoint", "", "S3-compatible service endpoint")
 	flag.StringVar(&bucketName, "bucket", "", "target S3 bucket name")
 	flag.StringVar(&keyName, "key", "", "target S3 key name")
 	flag.StringVar(&filename, "image", "", "image file to upload")
@@ -32,7 +34,7 @@ func main() {
 	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
 	flag.Parse()
 
-	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
+	a, err := awscloud.New(region, endpoint, accessKeyID, secretAccessKey, sessionToken)
 	if err != nil {
 		println(err.Error())
 		return
@@ -45,16 +47,4 @@ func main() {
 	}
 
 	fmt.Printf("file uploaded to %s\n", aws.StringValue(&uploadOutput.Location))
-
-	var share []string
-	if shareWith != "" {
-		share = append(share, shareWith)
-	}
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-
-	fmt.Printf("AMI registered: %s\n", aws.StringValue(ami))
 }

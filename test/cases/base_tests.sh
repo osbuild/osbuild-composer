@@ -15,6 +15,7 @@ TEST_CASES=(
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
   "osbuild-composer-dbjobqueue-tests"
+  "osbuild-composer-aws-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -67,6 +68,36 @@ popd
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
+
+# Check available container runtime
+if which podman 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=docker
+else
+    echo No container runtime found, install podman or docker.
+    exit 2
+fi
+
+TEMPDIR=$(mktemp -d)
+function cleanup() {
+    sudo rm -rf "$TEMPDIR"
+}
+trap cleanup EXIT
+
+# Minio container image
+MINIO_IMAGE="quay.io/minio/minio"
+
+# Start a minio container
+sudo "${CONTAINER_RUNTIME}" pull ${MINIO_IMAGE}
+
+sudo docker run -d --rm \
+    -p 9000:9000 \
+    -p 9001:9001 \
+    -e AWS_ACCESS_KEY_ID="ACCESS_KEY_ID" \
+    -e AWS_SECRET_ACCESS_KEY="SECRET_ACCESS_KEY" \
+    -e MINIO_SITE_REGION="eu-central-1" \
+    ${MINIO_IMAGE} server "${TEMPDIR}" --console-address ":9001"
 
 # Run each test case.
 for TEST_CASE in "${TEST_CASES[@]}"; do

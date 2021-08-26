@@ -40,11 +40,11 @@ func appendTargetError(res *worker.OSBuildJobResult, err error) {
 // Returns an *awscloud.AWS object with the credentials of the request. If they
 // are not accessible, then try to use the one obtained in the worker
 // configuration.
-func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awscloud.AWS, error) {
+func (impl *OSBuildJobImpl) getAWS(region string, endpoint string, accessId string, secret string, token string) (*awscloud.AWS, error) {
 	if accessId != "" && secret != "" {
-		return awscloud.New(region, accessId, secret, token)
+		return awscloud.New(region, "", accessId, secret, token)
 	} else {
-		return awscloud.NewFromFile(impl.AWSCreds, region)
+		return awscloud.NewFromFile(impl.AWSCreds, region, "")
 	}
 }
 
@@ -229,7 +229,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSTargetOptions:
-			a, err := impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+			a, err := impl.getAWS(options.Region, options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
@@ -265,7 +265,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSS3TargetOptions:
-			a, err := impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+			a, err := impl.getAWS(options.Region, options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil

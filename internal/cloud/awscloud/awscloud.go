@@ -22,10 +22,11 @@ type AWS struct {
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
-func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error) {
+func newAwsFromCreds(creds *credentials.Credentials, endpoint, region string) (*AWS, error) {
 	// Create a Session with a custom region
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: creds,
+		Endpoint:    aws.String(endpoint),
 		Region:      aws.String(region),
 	})
 	if err != nil {
@@ -40,8 +41,8 @@ func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error
 }
 
 // Initialize a new AWS object from individual bits. SessionToken is optional
-func New(region string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region)
+func New(region string, endpoint string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), endpoint, region)
 }
 
 // Initializes a new AWS object with the credentials info found at filename's location.
@@ -53,8 +54,8 @@ func New(region string, accessKeyID string, accessKey string, sessionToken strin
 // If filename is empty the underlying function will look for the
 // "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
 // $HOME/.aws/credentials.
-func NewFromFile(filename string, region string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region)
+func NewFromFile(filename string, region string, endpoint string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), endpoint, region)
 }
 
 func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, error) {

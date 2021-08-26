@@ -23,6 +23,7 @@ type awsCredentials struct {
 	SecretAccessKey string
 	sessionToken    string
 	Region          string
+	Endpoint        string
 	Bucket          string
 }
 
@@ -34,6 +35,7 @@ func GetAWSCredentialsFromEnv() (*awsCredentials, error) {
 	secretAccessKey, sakExists := os.LookupEnv("V2_AWS_SECRET_ACCESS_KEY")
 	region, regionExists := os.LookupEnv("AWS_REGION")
 	bucket, bucketExists := os.LookupEnv("AWS_BUCKET")
+	endpoint, endpointExists := os.LookupEnv("AWS_ENDPOINT")
 
 	// If non of the variables is set, just ignore the test
 	if !akExists && !sakExists && !bucketExists && !regionExists {
@@ -44,10 +46,16 @@ func GetAWSCredentialsFromEnv() (*awsCredentials, error) {
 		return nil, errors.New("not all required env variables were set")
 	}
 
+	// Endpoint is not required, empty string will result in default value
+	if !endpointExists {
+		endpoint = ""
+	}
+
 	return &awsCredentials{
 		AccessKeyId:     accessKeyId,
 		SecretAccessKey: secretAccessKey,
 		Region:          region,
+		Endpoint:        endpoint,
 		Bucket:          bucket,
 	}, nil
 }
@@ -91,7 +99,7 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 // The s3 key is never returned - the same thing is done in osbuild-composer,
 // the user has no way of getting the s3 key.
 func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
-	uploader, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
+	uploader, err := awscloud.New(c.Region, c.Endpoint, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
 		return fmt.Errorf("cannot create aws uploader: %v", err)
 	}

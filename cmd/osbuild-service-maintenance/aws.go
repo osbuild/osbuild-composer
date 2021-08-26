@@ -11,8 +11,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
 
-func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey, region string, cutoff time.Time) error {
-	a, err := awscloud.New(region, accessKeyID, accessKey, "")
+func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey, region, endpoint string, cutoff time.Time) error {
+	a, err := awscloud.New(region, endpoint, accessKeyID, accessKey, "")
 	if err != nil {
 		return err
 	}
