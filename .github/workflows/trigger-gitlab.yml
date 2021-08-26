@@ -30,7 +30,7 @@ jobs:
 
   trigger-gitlab:
     needs: pr-info
-    if: needs.pr-info.outputs.allowed_user == 'true'
+    if: needs.pr-info.outputs.allowed_user == 'true' || ${{ github.event.sender.login }} == 'dependabot[bot]'
     runs-on: ubuntu-latest
     env:
       SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
