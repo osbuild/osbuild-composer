@@ -1,0 +1,16 @@
+# Basic test trying dependabot
+
+version: 2
+updates:
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for npm
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
