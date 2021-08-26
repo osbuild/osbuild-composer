@@ -2,6 +2,7 @@ package rhel85
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -547,6 +548,28 @@ func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOpt
 	return &osbuild.ChmodStageOptions{
 		Items: map[string]osbuild.ChmodStagePathOptions{
 			path: {Mode: mode, Recursive: recursive},
+		},
+	}
+}
+
+func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigStageOptions {
+	return &osbuild.OSTreeConfigStageOptions{
+		Repo: repo,
+		Config: &osbuild.OSTreeConfig{
+			Sysroot: &osbuild.SysrootOptions{
+				ReadOnly: common.BoolToPtr(readOnly),
+			},
+		},
+	}
+}
+
+func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
+	return &osbuild.MkdirStageOptions{
+		Paths: []osbuild.Path{
+			{
+				Path: "/boot/efi",
+				Mode: os.FileMode(0700),
+			},
 		},
 	}
 }

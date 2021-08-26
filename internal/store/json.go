@@ -340,27 +340,29 @@ func (store *Store) toStoreV0() *storeV0 {
 }
 
 var imageTypeCompatMapping = map[string]string{
-	"vhd":                 "Azure",
-	"ami":                 "AWS",
-	"liveiso":             "LiveISO",
-	"openstack":           "OpenStack",
-	"qcow2":               "qcow2",
-	"vmdk":                "VMWare",
-	"ext4-filesystem":     "Raw-filesystem",
-	"partitioned-disk":    "Partitioned-disk",
-	"tar":                 "Tar",
-	"fedora-iot-commit":   "fedora-iot-commit",
-	"rhel-edge-commit":    "rhel-edge-commit",
-	"rhel-edge-container": "rhel-edge-container",
-	"rhel-edge-installer": "rhel-edge-installer",
-	"edge-commit":         "edge-commit",
-	"edge-container":      "edge-container",
-	"edge-installer":      "edge-installer",
-	"image-installer":     "image-installer",
-	"test_type":           "test_type",         // used only in json_test.go
-	"test_type_invalid":   "test_type_invalid", // used only in json_test.go
-	"ec2":                 "ec2",
-	"ec2-ha":              "ec2-ha",
+	"vhd":                            "Azure",
+	"ami":                            "AWS",
+	"liveiso":                        "LiveISO",
+	"openstack":                      "OpenStack",
+	"qcow2":                          "qcow2",
+	"vmdk":                           "VMWare",
+	"ext4-filesystem":                "Raw-filesystem",
+	"partitioned-disk":               "Partitioned-disk",
+	"tar":                            "Tar",
+	"fedora-iot-commit":              "fedora-iot-commit",
+	"rhel-edge-commit":               "rhel-edge-commit",
+	"rhel-edge-container":            "rhel-edge-container",
+	"rhel-edge-installer":            "rhel-edge-installer",
+	"rhel-edge-simplified-installer": "rhel-edge-simplified-installer",
+	"edge-commit":                    "edge-commit",
+	"edge-container":                 "edge-container",
+	"edge-installer":                 "edge-installer",
+	"edge-simplified-installer":      "edge-simplified-installer",
+	"image-installer":                "image-installer",
+	"test_type":                      "test_type",         // used only in json_test.go
+	"test_type_invalid":              "test_type_invalid", // used only in json_test.go
+	"ec2":                            "ec2",
+	"ec2-ha":                         "ec2-ha",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
