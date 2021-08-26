@@ -52,7 +52,7 @@ func edgeBuildPackageSet() rpmmd.PackageSet {
 func x8664InstallerBuildPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"efibootmgr", "genisoimage", "grub2-efi-ia32-cdboot",
+			"efibootmgr", "grub2-efi-ia32-cdboot",
 			"grub2-efi-x64", "grub2-efi-x64-cdboot", "grub2-pc",
 			"grub2-pc-modules", "grub2-tools", "grub2-tools-efi",
 			"grub2-tools-extra", "grub2-tools-minimal", "isomd5sum",
@@ -283,8 +283,12 @@ func installerPackageSet() rpmmd.PackageSet {
 	  exist in RHEL 9:
 		- dump
 		- gfs2-utils
+		- iwl3945-firmware
+		- iwl4965-firmware
+		- iwl6000-firmware
 		- libertas-sd8686-firmware
 		- libertas-sd8787-firmware
+		- libertas-usb8388-firmware
 		- libertas-usb8388-olpc-firmware
 		- libreport-rhel-anaconda-bugzilla
 		- metacity
@@ -307,14 +311,14 @@ func installerPackageSet() rpmmd.PackageSet {
 			"gsettings-desktop-schemas", "hdparm", "hexedit", "hostname",
 			"initscripts", "ipmitool", "iwl1000-firmware", "iwl100-firmware",
 			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
-			"iwl2030-firmware", "iwl3160-firmware", "iwl3945-firmware",
-			"iwl4965-firmware", "iwl5000-firmware", "iwl5150-firmware",
-			"iwl6000-firmware", "iwl6000g2a-firmware", "iwl6000g2b-firmware",
+			"iwl2030-firmware", "iwl3160-firmware", /*"iwl3945-firmware",*/
+			/*"iwl4965-firmware",*/ "iwl5000-firmware", "iwl5150-firmware",
+			/*"iwl6000-firmware",*/ "iwl6000g2a-firmware", "iwl6000g2b-firmware",
 			"iwl6050-firmware", "iwl7260-firmware", "jomolhari-fonts",
 			"kacst-farsi-fonts", "kacst-qurn-fonts", "kbd", "kbd-misc",
 			"kdump-anaconda-addon", "kernel", "khmeros-base-fonts", "less",
 			"libblockdev-lvm-dbus", /*"libertas-sd8686-firmware",*/
-			/*"libertas-sd8787-firmware",*/ "libertas-usb8388-firmware",
+			/*"libertas-sd8787-firmware",*/ /*"libertas-usb8388-firmware",*/
 			/*"libertas-usb8388-olpc-firmware",*/ "libibverbs",
 			"libreport-plugin-bugzilla", "libreport-plugin-reportuploader",
 			/*"libreport-rhel-anaconda-bugzilla",*/ "librsvg2", "linux-firmware",
