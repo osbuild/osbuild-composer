@@ -53,6 +53,11 @@ else
     exit 1
 fi
 sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
+# set $releasever to 8 when running on RHEL-9 because there is no hashicorp repo for it yet
+if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+    # shellcheck disable=SC2016
+    sudo sed -i 's/$releasever/8/g' /etc/yum.repos.d/hashicorp.repo
+fi
 sudo dnf install -y terraform
 
 ARCH=$(uname -m)
