@@ -100,7 +100,7 @@ if [ -z "${REPO_URL+x}" ]; then
 
     # Upload repository to S3.
     greenprint "☁ Uploading RPMs to S3"
-    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    s3cmd --acl-public put --recursive repo/ s3://${REPO_BUCKET}/repo/
 
     # Public URL for the S3 bucket with our artifacts.
     MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
