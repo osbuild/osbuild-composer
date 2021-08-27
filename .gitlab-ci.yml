@@ -82,8 +82,9 @@ Prepare-rhel-internal:
   parallel:
     matrix:
       - RUNNER:
+          # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
+          # artifacts from all previous jobs and the last one wins
           - aws/rhel-8.5-x86_64
-          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Base:
