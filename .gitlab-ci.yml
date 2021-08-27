@@ -177,6 +177,17 @@ New OSTree:
       - RUNNER:
           - openstack/rhel-8.5-x86_64
 
+OSTree simplified installer:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.5-x86_64
+
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
     - koji.sh
