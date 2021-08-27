@@ -1799,7 +1799,6 @@
                 "rootfs-block",
                 "terminfo",
                 "udev-rules",
-                "biosdevname",
                 "dracut-systemd",
                 "pollcdrom",
                 "usrmount",
@@ -1808,6 +1807,7 @@
                 "img-lib",
                 "shutdown",
                 "uefi-lib",
+                "biosdevname",
                 "anaconda"
               ],
               "install": [

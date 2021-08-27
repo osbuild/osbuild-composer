@@ -1025,7 +1025,7 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	p.AddStage(osbuild.NewSystemdStage(systemdStageOptions([]string{"coreos-installer"}, nil, nil, "")))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, []string{
+	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"rdcore",
 	})))
 
@@ -1146,7 +1146,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
 	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, []string{
+	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",
 	})))
 
