@@ -65,8 +65,61 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 		})
 }
 
-// x86_64 installer ISO build package set
-// TODO: separate into common installer and arch specific sets
+// installer boot package sets, needed for booting and
+// also in the build host
+
+func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{}
+
+	grubCommon := rpmmd.PackageSet{
+		Include: []string{
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+		},
+	}
+
+	efiCommon := rpmmd.PackageSet{
+		Include: []string{
+			"efibootmgr",
+		},
+	}
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		ps = ps.Append(grubCommon)
+		ps = ps.Append(efiCommon)
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"grub2-efi-ia32-cdboot",
+				"grub2-efi-x64",
+				"grub2-efi-x64-cdboot",
+				"grub2-pc",
+				"grub2-pc-modules",
+				"shim-ia32",
+				"shim-x64",
+				"syslinux",
+				"syslinux-nonlinux",
+			},
+		})
+	case distro.Aarch64ArchName:
+		ps = ps.Append(grubCommon)
+		ps = ps.Append(efiCommon)
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"grub2-efi-aa64-cdboot",
+				"grub2-efi-aa64",
+				"shim-aa64",
+			},
+		})
+
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
+	}
+
+	return ps
+}
+
 func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
@@ -79,25 +132,16 @@ func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return installerBuildPackageSet(t).Append(rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
-			"efibootmgr",
-			"grub2-efi-ia32-cdboot",
-			"grub2-efi-x64",
-			"grub2-efi-x64-cdboot",
-			"grub2-pc",
-			"grub2-pc-modules",
-			"grub2-tools",
-			"grub2-tools-efi",
-			"grub2-tools-extra",
-			"grub2-tools-minimal",
-			"shim-ia32",
-			"shim-x64",
 			"squashfs-tools",
-			"syslinux",
-			"syslinux-nonlinux",
 		},
-	})
+	}
+
+	ps = ps.Append(installerBuildPackageSet(t))
+	ps = ps.Append(anacondaBootPackageSet(t))
+
+	return ps
 }
 
 func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
@@ -409,10 +453,9 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 // INSTALLER PACKAGE SET
 
 func installerPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"anaconda-dracut",
-			"biosdevname",
 			"curl",
 			"dracut-config-generic",
 			"dracut-network",
@@ -439,13 +482,23 @@ func installerPackageSet(t *imageType) rpmmd.PackageSet {
 			"rng-tools",
 			"rpcbind",
 			"selinux-policy-targeted",
-			"shim-x64",
 			"systemd",
 			"tar",
 			"xfsprogs",
 			"xz",
 		},
 	}
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"biosdevname",
+			},
+		})
+	}
+
+	return ps
 }
 
 func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
@@ -471,30 +524,19 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"dejavu-sans-fonts",
 			"dejavu-sans-mono-fonts",
 			"device-mapper-persistent-data",
-			"dmidecode",
 			"dnf",
 			"dump",
-			"efibootmgr",
 			"ethtool",
+			"fcoe-utils",
 			"ftp",
 			"gdb-gdbserver",
 			"gdisk",
 			"gfs2-utils",
 			"glibc-all-langpacks",
 			"google-noto-sans-cjk-ttc-fonts",
-			"grub2-efi-ia32-cdboot",
-			"grub2-efi-x64-cdboot",
-			"grub2-tools",
-			"grub2-tools-efi",
-			"grub2-tools-extra",
-			"grub2-tools-minimal",
-			"grubby",
 			"gsettings-desktop-schemas",
 			"hdparm",
 			"hexedit",
-			"grub2-tools-extra",
-			"grub2-tools-minimal",
-			"grubby",
 			"gsettings-desktop-schemas",
 			"hdparm",
 			"hexedit",
@@ -534,7 +576,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"lohit-telugu-fonts",
 			"lsof",
 			"madan-fonts",
-			"memtest86+",
 			"metacity",
 			"mt-st",
 			"mtr",
@@ -554,7 +595,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"rsync",
 			"rsyslog",
 			"sg3_utils",
-			"shim-ia32",
 			"sil-abyssinica-fonts",
 			"sil-padauk-fonts",
 			"sil-scheherazade-fonts",
@@ -562,7 +602,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"smc-meera-fonts",
 			"spice-vdagent",
 			"strace",
-			"syslinux",
 			"system-storage-manager",
 			"thai-scalable-waree-fonts",
 			"tigervnc-server-minimal",
@@ -581,6 +620,29 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"xorg-x11-xauth",
 		},
 	})
+
+	ps = ps.Append(anacondaBootPackageSet(t))
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"biosdevname",
+				"dmidecode",
+				"memtest86+",
+			},
+		})
+
+	case distro.Aarch64ArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"dmidecode",
+			},
+		})
+
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
+	}
 
 	return ps
 }
@@ -618,7 +680,6 @@ func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 			"keyutils",
 			"lldpad",
 			"lvm2",
-			"microcode_ctl",
 			"passwd",
 			"policycoreutils",
 			"policycoreutils-python-utils",
@@ -631,6 +692,17 @@ func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 		Exclude: nil,
 	})
+
+	switch t.arch.Name() {
+
+	case distro.X86_64ArchName:
+		ps = ps.Append(x8664EdgeCommitPackageSet(t))
+	case distro.Aarch64ArchName:
+		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
+
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
+	}
 
 	return ps
 }
