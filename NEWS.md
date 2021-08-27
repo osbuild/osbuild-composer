@@ -1,5 +1,20 @@
 # OSBuild Composer - Operating System Image Composition Services
 
+## CHANGES WITH 32:
+
+  * RHEL-Edge container image now uses nginx and serves on port 8080
+  * Add support for RHEL 8.5 for Edge Raw images (x86_64 and Aarch64)
+  * Add support for RHEL 8.5 Simplified installer (x86_64 and Aarch64)
+  * Add custom file system support for RHEL 8.5
+  * Add custom file system support for RHEL 9.0
+
+Contributions from: Ondřej Budai, Alexander Todorov, Brian C. Lane, Tomas Hozza,
+                    Chloe Kaubisch, Xiaofeng Wang, Achilleas Koutsou, Juan Abia,
+                    Gianluca Zuccarelli, Diaa Sami, Christian Kellner,
+                    Sanne Raymaekers, Jakub Rusz
+
+— Vöcklabruck & Bruxelles, 2021-08-28
+
 ## CHANGES WITH 31:
 
   * Retrieve metadata about a compose through the Cloud API
