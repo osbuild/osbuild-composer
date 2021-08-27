@@ -76,6 +76,10 @@ case "${ID}" in
                 fi
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
+                if [ -n "${NIGHTLY:-}" ]; then
+                    REPO1_NAME="baseos-${ARCH}"
+                    REPO2_NAME="appstream-${ARCH}"
+                fi
                 ;;
             "9" )
                 echo "Running on RHEL 9 is not yet supported"
