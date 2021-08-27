@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -177,7 +178,7 @@ func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
 	}
 }
 
-func dracutStageOptions(kernelVer string, additionalModules []string) *osbuild.DracutStageOptions {
+func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osbuild.DracutStageOptions {
 	kernel := []string{kernelVer}
 	modules := []string{
 		"bash",
@@ -219,7 +220,6 @@ func dracutStageOptions(kernelVer string, additionalModules []string) *osbuild.D
 		"rootfs-block",
 		"terminfo",
 		"udev-rules",
-		"biosdevname",
 		"dracut-systemd",
 		"pollcdrom",
 		"usrmount",
@@ -229,6 +229,11 @@ func dracutStageOptions(kernelVer string, additionalModules []string) *osbuild.D
 		"shutdown",
 		"uefi-lib",
 	}
+
+	if arch == distro.X86_64ArchName {
+		modules = append(modules, "biosdevname")
+	}
+
 	modules = append(modules, additionalModules...)
 	return &osbuild.DracutStageOptions{
 		Kernel:  kernel,
