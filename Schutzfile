@@ -39,12 +39,5 @@
         "commit": "35de3093a7b52569512bdc61d2105febbb9b0c7e"
       }
     }
-  },
-  "rhel-9.0": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "152b14a0d6c5deccfce2096308230f6d9067d23e"
-      }
-    }
   }
 }
