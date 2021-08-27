@@ -188,6 +188,17 @@ OSTree simplified installer:
       - RUNNER:
           - openstack/rhel-8.5-x86_64
 
+OSTree raw image:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.5-x86_64
+
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
     - koji.sh
