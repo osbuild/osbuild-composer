@@ -11,6 +11,8 @@ type OSTreeDeployStageOptions struct {
 
 	Ref string `json:"ref"`
 
+	Remote string `json:"remote,omitempty"`
+
 	Mounts []string `json:"mounts"`
 
 	Rootfs Rootfs `json:"rootfs"`
