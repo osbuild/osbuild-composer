@@ -4,6 +4,8 @@ package osbuild2
 type OSTreePullStageOptions struct {
 	// Location of the ostree repo
 	Repo string `json:"repo"`
+	// Remote to configure for all commits
+	Remote string `json:"remote,omitempty"`
 }
 
 func (OSTreePullStageOptions) isStageOptions() {}
