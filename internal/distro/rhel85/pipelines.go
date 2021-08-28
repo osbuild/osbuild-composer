@@ -1088,10 +1088,11 @@ func ostreeDeployPipeline(
 	p.Name = "image-tree"
 	p.Build = "name:build"
 	osname := "redhat"
+	remote := "rhel-edge"
 
 	p.AddStage(osbuild.OSTreeInitFsStage())
 	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: repoPath},
+		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: remote},
 		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 	p.AddStage(osbuild.NewOSTreeOsInitStage(
@@ -1105,6 +1106,7 @@ func ostreeDeployPipeline(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: osname,
 			Ref:    options.OSTree.Ref,
+			Remote: remote,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
 				Label: "root",
@@ -1117,6 +1119,21 @@ func ostreeDeployPipeline(
 			},
 		},
 	))
+
+	if options.OSTree.URL != "" {
+		p.AddStage(osbuild.NewOSTreeRemotesStage(
+			&osbuild.OSTreeRemotesStageOptions{
+				Repo: "/ostree/repo",
+				Remotes: []osbuild.OSTreeRemote{
+					{
+						Name: remote,
+						URL:  options.OSTree.URL,
+					},
+				},
+			},
+		))
+	}
+
 	p.AddStage(osbuild.NewOSTreeFillvarStage(
 		&osbuild.OSTreeFillvarStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
