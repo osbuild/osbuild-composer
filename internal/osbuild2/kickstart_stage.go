@@ -17,6 +17,7 @@ type OSTreeOptions struct {
 	OSName string `json:"osname"`
 	URL    string `json:"url"`
 	Ref    string `json:"ref"`
+	Remote string `json:"remote,omitempty"`
 	GPG    bool   `json:"gpg"`
 }
 
