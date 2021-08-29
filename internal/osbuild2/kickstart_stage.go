@@ -7,6 +7,9 @@ type KickstartStageOptions struct {
 	OSTree *OSTreeOptions `json:"ostree,omitempty"`
 
 	LiveIMG *LiveIMG `json:"liveimg,omitempty"`
+
+	Users  map[string]UsersStageOptionsUser   `json:"users,omitempty"`
+	Groups map[string]GroupsStageOptionsGroup `json:"groups,omitempty"`
 }
 
 type LiveIMG struct {

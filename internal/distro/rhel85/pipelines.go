@@ -498,7 +498,18 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
 	kickstartOptions := ostreeKickstartStageOptions(makeISORootPath(ostreeRepoPath), options.OSTree.Ref)
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name()))
+
+	users, err := usersFromCustomization(customizations.GetUsers())
+	if err != nil {
+		return nil, err
+	}
+
+	kickstartOptions.Users = users
+	kickstartOptions.Groups = groupsFromCustomization(customizations.GetGroups())
+
+	userModule := len(kickstartOptions.Users) > 0 || len(kickstartOptions.Groups) > 0
+
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), userModule))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions, payloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), false))
 	return pipelines, nil
@@ -531,7 +542,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
 	kickstartOptions := tarKickstartStageOptions(makeISORootPath(tarPath))
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name()))
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), false))
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions, tarPayloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), true))
 	return pipelines, nil
@@ -1154,7 +1165,7 @@ func ostreeDeployPipeline(
 	return p
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string) *osbuild.Pipeline {
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, users bool) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
@@ -1191,7 +1202,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
+	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions(users)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",

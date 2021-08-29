@@ -180,13 +180,19 @@ func buildStampStageOptions(arch string) *osbuild.BuildstampStageOptions {
 	}
 }
 
-func anacondaStageOptions() *osbuild.AnacondaStageOptions {
+func anacondaStageOptions(users bool) *osbuild.AnacondaStageOptions {
+	modules := []string{
+		"org.fedoraproject.Anaconda.Modules.Network",
+		"org.fedoraproject.Anaconda.Modules.Payloads",
+		"org.fedoraproject.Anaconda.Modules.Storage",
+	}
+
+	if users {
+		modules = append(modules, "org.fedoraproject.Anaconda.Modules.Users")
+	}
+
 	return &osbuild.AnacondaStageOptions{
-		KickstartModules: []string{
-			"org.fedoraproject.Anaconda.Modules.Network",
-			"org.fedoraproject.Anaconda.Modules.Payloads",
-			"org.fedoraproject.Anaconda.Modules.Storage",
-		},
+		KickstartModules: modules,
 	}
 }
 

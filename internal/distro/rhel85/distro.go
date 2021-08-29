@@ -415,7 +415,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 			if err := customizations.CheckAllowed("InstallationDevice"); err != nil {
 				return fmt.Errorf("boot ISO image type %q contains unsupported blueprint customizations: %v", t.name, err)
 			}
-		} else if customizations != nil {
+		} else if err := customizations.CheckAllowed("User", "Group"); err != nil {
 			return fmt.Errorf("boot ISO image type %q does not support blueprint customizations", t.name)
 		}
 	}
