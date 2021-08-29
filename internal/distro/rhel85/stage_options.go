@@ -258,6 +258,7 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 			OSName: "rhel",
 			URL:    ostreeURL,
 			Ref:    ostreeRef,
+			Remote: "rhel-edge",
 			GPG:    false,
 		},
 	}
