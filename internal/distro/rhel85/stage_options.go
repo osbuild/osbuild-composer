@@ -55,10 +55,9 @@ func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 	return options
 }
 
-func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
+func usersFromCustomization(users []blueprint.UserCustomization) (map[string]osbuild.UsersStageOptionsUser, error) {
+
+	result := make(map[string]osbuild.UsersStageOptionsUser)
 
 	for _, c := range users {
 		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
@@ -82,7 +81,20 @@ func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageO
 		user.UID = c.UID
 		user.GID = c.GID
 
-		options.Users[c.Name] = user
+		result[c.Name] = user
+	}
+
+	return result, nil
+}
+
+func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
+	res, err := usersFromCustomization(users)
+	if err != nil {
+		return nil, err
+	}
+
+	options := osbuild.UsersStageOptions{
+		Users: res,
 	}
 
 	return &options, nil
@@ -109,10 +121,8 @@ func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuil
 	return options
 }
 
-func groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
-	options := osbuild.GroupsStageOptions{
-		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
-	}
+func groupsFromCustomization(groups []blueprint.GroupCustomization) map[string]osbuild.GroupsStageOptionsGroup {
+	result := map[string]osbuild.GroupsStageOptionsGroup{}
 
 	for _, group := range groups {
 		groupData := osbuild.GroupsStageOptionsGroup{
@@ -120,7 +130,16 @@ func groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsSta
 		}
 		groupData.GID = group.GID
 
-		options.Groups[group.Name] = groupData
+		result[group.Name] = groupData
+	}
+
+	return result
+
+}
+
+func groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
+	options := osbuild.GroupsStageOptions{
+		Groups: groupsFromCustomization(groups),
 	}
 
 	return &options
