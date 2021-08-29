@@ -1063,7 +1063,11 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 	p := new(osbuild.Pipeline)
 	p.Name = "coi-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+
+	rpmOptions := rpmStageOptions(repos)
+	rpmOptions.DisableDracut = true
+
+	p.AddStage(osbuild.NewRPMStage(rpmOptions, rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 	p.AddStage(osbuild.NewSystemdStage(systemdStageOptions([]string{"coreos-installer"}, nil, nil, "")))
@@ -1154,7 +1158,11 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+
+	rpmOptions := rpmStageOptions(repos)
+	rpmOptions.DisableDracut = true
+
+	p.AddStage(osbuild.NewRPMStage(rpmOptions, rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
