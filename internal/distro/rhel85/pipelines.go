@@ -3,6 +3,7 @@ package rhel85
 import (
 	"fmt"
 	"math/rand"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -482,14 +483,23 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	return pipelines, nil
 }
 
+//makeISORootPath return a path that can be used to address files and folders in
+//the root of the iso
+func makeISORootPath(p string) string {
+	fullpath := path.Join("/run/install/repo", p)
+	return fmt.Sprintf("file://%s", fullpath)
+}
+
 func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	kernelVer := kernelVerStr(installerPackages, "kernel", t.Arch().Name())
 	ostreeRepoPath := "/ostree/repo"
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
+	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
+	kickstartOptions := ostreeKickstartStageOptions(makeISORootPath(ostreeRepoPath), options.OSTree.Ref)
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name()))
+	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions, payloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), false))
 	return pipelines, nil
 }
@@ -520,8 +530,9 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages))
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
+	kickstartOptions := tarKickstartStageOptions(makeISORootPath(tarPath))
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name()))
+	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions, tarPayloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name(), true))
 	return pipelines, nil
 }
@@ -1139,14 +1150,11 @@ func ostreeDeployPipeline(
 	return p
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	for _, stage := range payloadStages {
-		p.AddStage(stage)
-	}
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
@@ -1184,7 +1192,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	return p
 }
 
-func bootISOTreePipeline(kernelVer string, arch string, ksOptions *osbuild.KickstartStageOptions) *osbuild.Pipeline {
+func bootISOTreePipeline(kernelVer string, arch string, ksOptions *osbuild.KickstartStageOptions, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "bootiso-tree"
 	p.Build = "name:build"
@@ -1192,6 +1200,10 @@ func bootISOTreePipeline(kernelVer string, arch string, ksOptions *osbuild.Kicks
 	p.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(kernelVer, arch), bootISOMonoStageInputs()))
 	p.AddStage(osbuild.NewKickstartStage(ksOptions))
 	p.AddStage(osbuild.NewDiscinfoStage(discinfoStageOptions(arch)))
+
+	for _, stage := range payloadStages {
+		p.AddStage(stage)
+	}
 
 	return p
 }
