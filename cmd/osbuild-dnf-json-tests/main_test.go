@@ -48,7 +48,7 @@ func TestFetchChecksum(t *testing.T) {
 // this should run cross-arch dependency solving N-1 times.
 func TestCrossArchDepsolve(t *testing.T) {
 	// Load repositories from the definition we provide in the RPM package
-	repoDir := "/usr/share/osbuild-composer"
+	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora33.New()} {
