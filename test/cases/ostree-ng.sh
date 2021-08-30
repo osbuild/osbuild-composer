@@ -100,6 +100,7 @@ case "${ID}-${VERSION_ID}" in
         INSTALLER_TYPE=rhel-edge-installer
         INSTALLER_FILENAME=rhel84-boot.iso
         USER_IN_UPGRADE_BP="true"
+        INSTALLER_PATH="/ostree/repo"
         ;;
     "rhel-8.5")
         CONTAINER_TYPE=edge-container
@@ -107,6 +108,7 @@ case "${ID}-${VERSION_ID}" in
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
         USER_IN_UPGRADE_BP="false"
+        INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
     "rhel-9.0")
         CONTAINER_TYPE=edge-container
@@ -425,7 +427,7 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=rhel-edge --remote=rhel-edge --url=file:///ostree/repo --ref=${OSTREE_REF}
+ostreesetup --nogpg --osname=rhel-edge --remote=rhel-edge --url=file://${INSTALLER_PATH} --ref=${OSTREE_REF}
 poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
