@@ -160,8 +160,38 @@ install -m 0755 -vp _bin/osbuild-composer                       %{buildroot}%{_l
 install -m 0755 -vp _bin/osbuild-worker                         %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                    %{buildroot}%{_libexecdir}/osbuild-composer/
 
+# Only include repositories for the distribution and release
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/osbuild-composer/repositories
-install -m 0644 -vp repositories/*                              %{buildroot}%{_datadir}/osbuild-composer/repositories/
+# CentOS also defines rhel so we check for centos first
+%if 0%{?centos}
+
+# CentOS 9 supports building for CentOS 8 and later
+%if 0%{?centos} >= 9
+install -m 0644 -vp repositories/centos-*                       %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%else
+# CentOS 8 only supports building for CentOS 8
+install -m 0644 -vp repositories/centos-%{centos}*              %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp repositories/centos-stream-%{centos}*       %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+%endif
+%else
+%if 0%{?rhel}
+# RHEL 9 supports building for RHEL 8 and later
+%if 0%{?rhel} >= 9
+install -m 0644 -vp repositories/rhel-*                         %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+%else
+# RHEL 8 only supports building for 8
+install -m 0644 -vp repositories/rhel-%{rhel}*                  %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+%endif
+%endif
+%endif
+
+# Fedora can build for all included fedora releases
+%if 0%{?fedora}
+install -m 0644 -vp repositories/fedora-*                       %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%endif
 
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}             %{buildroot}%{_unitdir}/
