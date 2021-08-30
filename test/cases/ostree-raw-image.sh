@@ -63,6 +63,7 @@ OSTREE_REF="rhel/8/${ARCH}/edge"
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
+BIOS_GUEST_ADDRESS=192.168.100.50
 UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
@@ -367,9 +368,7 @@ ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
 sudo xz -d "${ISO_FILENAME}"
-sudo qemu-img convert -f raw "${COMPOSE_ID}-image.raw" -O qcow2 "${IMAGE_KEY}-uefi.qcow2"
-sudo mv "${IMAGE_KEY}-uefi.qcow2" /var/lib/libvirt/images/
-LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
+sudo qemu-img convert -f raw "${COMPOSE_ID}-image.raw" -O qcow2 "${IMAGE_KEY}.qcow2"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
@@ -378,10 +377,86 @@ sudo composer-cli blueprints delete installer > /dev/null
 
 ##################################################################
 ##
+## Install and test edge vm with edge-raw-image (BIOS)
+##
+##################################################################
+# Prepare qcow2 file for BIOS
+sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
+
+# Ensure SELinux is happy with our new images.
+greenprint "👿 Running restorecon on image directory"
+sudo restorecon -Rv /var/lib/libvirt/images/
+
+greenprint "💿 Installing raw image on BIOS VM"
+sudo virt-install  --name="${IMAGE_KEY}-bios"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --ram 3072 \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:30 \
+                   --import \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=-1 \
+                   --noreboot
+
+# Start VM.
+greenprint "💻 Start BIOS VM"
+sudo virsh start "${IMAGE_KEY}-bios"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${BIOS_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes 
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# Clean up BIOS VM
+greenprint "🧹 Clean up BIOS VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-bios"
+fi
+sudo virsh undefine "${IMAGE_KEY}-bios"
+sudo rm -fr LIBVIRT_IMAGE_PATH
+
+##################################################################
+##
 ## Install and test edge vm with edge-raw-image (UEFI)
 ##
 ##################################################################
-
+# Prepare qcow2 file for UEFI
+sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
