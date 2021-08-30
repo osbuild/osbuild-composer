@@ -1,3 +1,12 @@
+## CHANGES WITH 33:
+
+  * Bootiso: move payload to iso root
+  * Fix building of RHEL 9.0 Edge images
+
+Contributions from: Christian Kellner, Ondřej Budai, Xiaofeng Wang
+
+— Liberec, 2021-08-30
+
 # OSBuild Composer - Operating System Image Composition Services
 
 ## CHANGES WITH 32:
