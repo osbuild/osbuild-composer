@@ -156,7 +156,16 @@ install -m 0755 -vp _bin/osbuild-worker                         %{buildroot}%{_l
 install -m 0755 -vp dnf-json                                    %{buildroot}%{_libexecdir}/osbuild-composer/
 
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/osbuild-composer/repositories
-install -m 0644 -vp repositories/*                              %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp repositories/rhel-8*                        %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%if 0%{?rhel} >= 9
+install -m 0644 -vp repositories/rhel-9*                        %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%endif
+%if 0%{?centos} || 0%{?fedora}
+install -m 0644 -vp repositories/centos-*                       %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%endif
+%if 0%{?fedora}
+install -m 0644 -vp repositories/fedora-*                       %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%endif
 
 install -m 0755 -vd                                             %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}             %{buildroot}%{_unitdir}/
