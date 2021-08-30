@@ -1046,6 +1046,8 @@ func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch strin
 				Opts: []string{"rd.neednet=1",
 					"console=tty0",
 					"console=ttyS0",
+					"systemd.log_target=console",
+					"systemd.journald.forward_to_console=1",
 					"edge.liveiso=" + isolabel,
 					"coreos.inst.install_dev=" + installDevice,
 					"coreos.inst.image_file=/run/media/iso/disk.img.xz",
@@ -1112,8 +1114,6 @@ func ostreeDeployPipeline(
 			KernelOpts: []string{
 				"console=tty0",
 				"console=ttyS0",
-				"systemd.log_target=console",
-				"systemd.journald.forward_to_console=1",
 			},
 		},
 	))
