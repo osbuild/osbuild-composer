@@ -2,6 +2,7 @@ package rhel85_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -627,6 +628,10 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 					MinSize:    1024,
 					Mountpoint: "/var/log",
 				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/log/audit",
+				},
 			},
 		},
 	}
@@ -635,12 +640,82 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
-			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
-				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			if strings.HasPrefix(imgTypeName, "edge-") {
 				continue
 			} else {
 				assert.NoError(t, err)
+			}
+		}
+	}
+}
+
+func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/a",
+				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/a/b",
+				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/a/b/c",
+				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var/a/b/c/d",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if strings.HasPrefix(imgTypeName, "edge-") {
+				continue
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}
+
+func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
+	r8distro := rhel85.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "//",
+				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var//",
+				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/var//log/audit/",
+				},
+			},
+		},
+	}
+	for _, archName := range r8distro.ListArches() {
+		arch, _ := r8distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			if strings.HasPrefix(imgTypeName, "edge-") {
+				continue
+			} else {
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"//\" \"/var//\" \"/var//log/audit/\"]")
 			}
 		}
 	}
@@ -655,6 +730,10 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 					MinSize:    1024,
 					Mountpoint: "/variable",
 				},
+				{
+					MinSize:    1024,
+					Mountpoint: "/variable/log/audit",
+				},
 			},
 		},
 	}
@@ -668,7 +747,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
-				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\"]")
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
 			}
 		}
 	}
