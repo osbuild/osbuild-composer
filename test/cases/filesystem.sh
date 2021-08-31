@@ -132,6 +132,10 @@ mountpoint = "/var/log"
 size = 131072000
 
 [[customizations.filesystem]]
+mountpoint = "/var/log/audit"
+size = 131072000
+
+[[customizations.filesystem]]
 mountpoint = "/usr"
 size = 2147483648
 
