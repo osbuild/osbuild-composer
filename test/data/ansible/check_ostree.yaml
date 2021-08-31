@@ -105,7 +105,6 @@
     
     - set_fact:
         device_name: /dev/vda4
-        vda4_detected: yes
       when: "'/dev/vda4' in result_df.stdout"
 
     # case: check /sysroot moutn point
@@ -403,16 +402,6 @@
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
             fail_msg: "Some errors happened in service boot"
             success_msg: "All greenboot services booted success"
-          when: vda4_detected is not defined
-
-        - assert:
-            that:
-              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
-            fail_msg: "Some errors happened in service boot"
-            success_msg: "All greenboot services booted success"
-          when: vda4_detected is defined
 
       always:
         - set_fact:
@@ -519,17 +508,6 @@
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
             fail_msg: "Fallback log not found"
             success_msg: "Found fallback log"
-          when: vda4_detected is not defined
-
-        - assert:
-            that:
-              - "'FALLBACK BOOT DETECTED! Default rpm-ostree deployment has been rolled back' in result_greenboot_log.stdout"
-              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
-            fail_msg: "Some errors happened in service boot"
-            success_msg: "All greenboot services booted success"
-          when: vda4_detected is defined
 
       always:
         - set_fact:
