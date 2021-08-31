@@ -1,7 +1,13 @@
 # inspired by rhinstaller/anaconda
 
 name: Trigger GitLab CI
-on: [push, pull_request_target]
+
+# do not trigger gitlab CI on pushes to upstream
+on:
+  pull_request_target:
+  push:
+    branches:
+      - main
 
 jobs:
   pr-info:
