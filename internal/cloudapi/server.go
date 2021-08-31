@@ -78,7 +78,7 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	err := json.NewDecoder(ctx.Request().Body).Decode(i)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Cannot parse request body: %s", err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Cannot parse request body: %s", err.Error()))
 	}
 	return nil
 }
@@ -143,7 +143,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 
 	distribution := h.server.distros.GetDistro(request.Distribution)
 	if distribution == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Unsupported distribution: %s", request.Distribution)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported distribution: %s", request.Distribution))
 	}
 
 	var bp = blueprint.Blueprint{}
@@ -170,18 +170,18 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Cannot generate a manifest seed: %s", err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Cannot generate a manifest seed: %s", err.Error()))
 	}
 	manifestSeed := bigSeed.Int64()
 
 	for i, ir := range request.ImageRequests {
 		arch, err := distribution.GetArch(ir.Architecture)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported architecture '%s' for distribution '%s'", ir.Architecture, request.Distribution))
 		}
 		imageType, err := arch.GetImageType(ir.ImageType)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unsupported image type '%s' for %s/%s", ir.ImageType, ir.Architecture, request.Distribution))
 		}
 		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
 		for j, repo := range ir.Repositories {
@@ -213,7 +213,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 				case error:
 					error_type = http.StatusInternalServerError
 				}
-				return echo.NewHTTPError(error_type, "Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error())
+				return echo.NewHTTPError(error_type, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error()))
 			}
 			pkgSpecSets[name] = pkgs
 		}
@@ -234,7 +234,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 		if ostreeOptions == nil || ostreeOptions.Ref == nil {
 			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
 		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid OSTree ref: %s", *ostreeOptions.Ref)
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid OSTree ref: %s", *ostreeOptions.Ref))
 		} else {
 			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
 		}
@@ -244,7 +244,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 			imageOptions.OSTree.URL = *ostreeOptions.Url
 			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, "Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err.Error())
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Error resolving OSTree repo %s: %s", imageOptions.OSTree.URL, err.Error()))
 			}
 			imageOptions.OSTree.Parent = parent
 		}
@@ -275,7 +275,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 
 		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error())
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error()))
 		}
 
 		imageRequests[i].manifest = manifest
@@ -433,20 +433,20 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 func (h *apiHandlers) ComposeStatus(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err.Error()))
 	}
 
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", id, err.Error()))
 	}
 
 	var us *UploadStatus
 	if result.TargetResults != nil {
 		// Only single upload target is allowed, therefore only a single upload target result is allowed as well
 		if len(result.TargetResults) != 1 {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Job %s returned more upload target results than allowed", id)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Job %s returned more upload target results than allowed", id))
 		}
 		tr := *result.TargetResults[0]
 
@@ -481,7 +481,7 @@ func (h *apiHandlers) ComposeStatus(ctx echo.Context, id string) error {
 				ImageName: gcpOptions.ImageName,
 			}
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Job %s returned unknown upload target results %s", id, tr.Name)
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Job %s returned unknown upload target results %s", id, tr.Name))
 		}
 
 		us = &UploadStatus{
@@ -545,18 +545,18 @@ func (h *apiHandlers) GetVersion(ctx echo.Context) error {
 func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter id: %s", err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err.Error()))
 	}
 
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", id, err.Error()))
 	}
 
 	var job worker.OSBuildJob
 	if _, _, _, err = h.server.workers.Job(jobId, &job); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", id, err.Error()))
 	}
 
 	if status.Finished.IsZero() {
@@ -566,7 +566,7 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 
 	manifestVer, err := job.Manifest.Version()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to parse manifest version: %s", err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to parse manifest version: %s", err.Error()))
 	}
 
 	var rpms []rpmmd.RPM
@@ -599,7 +599,7 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 			}
 		}
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Unknown manifest version: %s", manifestVer)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unknown manifest version: %s", manifestVer))
 	}
 
 	rpms = rpmmd.OSBuildStagesToRPMs(coreStages)
