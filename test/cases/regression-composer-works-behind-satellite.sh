@@ -65,14 +65,16 @@ case "${ID}" in
         echo "Running on RHEL"
         case "${VERSION_ID%.*}" in
             "8" )
-                echo "Running on RHEL 8"
+                echo "Running on RHEL ${VERSION_ID}"
+                # starting in 8.5 the override file contains minor version number as well
+                VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
                 if grep beta /etc/os-release;
                 then
                     DISTRO_NAME="rhel-8-beta"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-8-beta.json"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
                 else
                     DISTRO_NAME="rhel-8"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-8.json"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
                 fi
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
