@@ -110,6 +110,7 @@ Obsoletes: osbuild-composer-koji <= 23
 # Remove when F33 is EOL
 sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v1/openapi.v1.gen.go
 sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v2/openapi.v2.gen.go
+sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/worker/api/api.gen.go
 %endif
 
 %build

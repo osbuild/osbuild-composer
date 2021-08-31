@@ -1,9 +1,6 @@
 package worker
 
 import (
-	"encoding/json"
-
-	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -76,29 +73,9 @@ type KojiFinalizeJobResult struct {
 }
 
 //
-// JSON-serializable types for the HTTP API
+// JSON-serializable types for the client
 //
 
-type statusResponse struct {
-	Status string `json:"status"`
-}
-
-type requestJobResponse struct {
-	Id               uuid.UUID         `json:"id"`
-	Location         string            `json:"location"`
-	ArtifactLocation string            `json:"artifact_location"`
-	Type             string            `json:"type"`
-	Args             json.RawMessage   `json:"args,omitempty"`
-	DynamicArgs      []json.RawMessage `json:"dynamic_args,omitempty"`
-}
-
-type getJobResponse struct {
-	Canceled bool `json:"canceled"`
-}
-
 type updateJobRequest struct {
-	Result json.RawMessage `json:"result"`
-}
-
-type updateJobResponse struct {
+	Result interface{} `json:"result"`
 }

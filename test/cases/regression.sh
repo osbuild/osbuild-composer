@@ -29,7 +29,7 @@ run_test_case () {
     echo "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
-    if sudo "${1}" -test.v | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
+    if sudo -E "${1}" -test.v | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
@@ -42,6 +42,14 @@ run_test_case () {
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
+
+ARCH=$(uname -m)
+# Only run this on x86 and rhel8 GA; since the container is based on the ubi
+# container, and we use the weldr api
+if [ "$ARCH" = "x86_64" ] && [ "$ID" = rhel ] && sudo subscription-manager status; then
+    # Always run this one last as it force-installs an older worker
+    TEST_CASES+=("regression-old-worker-new-composer.sh")
+fi
 
 # Run test cases common for all distros.
 for TEST_CASE in "${TEST_CASES[@]}"; do
