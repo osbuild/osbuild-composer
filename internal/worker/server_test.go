@@ -37,7 +37,7 @@ func TestStatus(t *testing.T) {
 
 	server := newTestServer(t, tempdir)
 	handler := server.Handler()
-	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
+	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK", "href": "/api/worker/v1/status", "kind":"Status"}`, "message", "id")
 }
 
 func TestErrors(t *testing.T) {
@@ -68,7 +68,7 @@ func TestErrors(t *testing.T) {
 	for _, c := range cases {
 		server := newTestServer(t, tempdir)
 		handler := server.Handler()
-		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, "{}", "message")
+		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, `{"kind":"Error"}`, "message", "href", "operation_id", "reason", "id", "code")
 	}
 }
 
@@ -98,7 +98,7 @@ func TestCreate(t *testing.T) {
 
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
 		fmt.Sprintf(`{"types":["osbuild"],"arch":"%s"}`, test_distro.TestArchName), http.StatusCreated,
-		`{"type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
+		`{"kind":"RequestJob","href":"/api/worker/v1/jobs","type":"osbuild","args":{"manifest":{"pipeline":{},"sources":{}}}}`, "id", "location", "artifact_location")
 }
 
 func TestCancel(t *testing.T) {
@@ -133,13 +133,13 @@ func TestCancel(t *testing.T) {
 	require.Nil(t, dynamicArgs)
 
 	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
-		`{"canceled":false}`)
+		fmt.Sprintf(`{"canceled":false,"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"JobStatus"}`, token, token))
 
 	err = server.Cancel(jobId)
 	require.NoError(t, err)
 
 	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
-		`{"canceled":true}`)
+		fmt.Sprintf(`{"canceled":true,"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"JobStatus"}`, token, token))
 }
 
 func TestUpdate(t *testing.T) {
@@ -173,8 +173,11 @@ func TestUpdate(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 
-	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK, `{}`)
-	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound, `*`)
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound,
+		`{"href":"/api/composer-worker/v1/errors/5","code":"COMPOSER-WORKER-5","id":"5","kind":"Error","message":"Token not found","reason":"Token not found"}`,
+		"operation_id")
 }
 
 func TestArgs(t *testing.T) {

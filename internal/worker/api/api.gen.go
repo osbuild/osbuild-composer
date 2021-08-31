@@ -4,28 +4,85 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strings"
 )
 
 // Error defines model for Error.
 type Error struct {
-	Message string `json:"message"`
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	Code string `json:"code"`
+
+	// Backward compatibility with workers <= v33, equals reason
+	Message     string `json:"message"`
+	OperationId string `json:"operation_id"`
+	Reason      string `json:"reason"`
 }
 
-// RequestJobJSONBody defines parameters for RequestJob.
-type RequestJobJSONBody struct {
+// GetJobResponse defines model for GetJobResponse.
+type GetJobResponse struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	Canceled bool `json:"canceled"`
+}
+
+// ObjectReference defines model for ObjectReference.
+type ObjectReference struct {
+	Href string `json:"href"`
+	Id   string `json:"id"`
+	Kind string `json:"kind"`
+}
+
+// RequestJobRequest defines model for RequestJobRequest.
+type RequestJobRequest struct {
 	Arch  string   `json:"arch"`
 	Types []string `json:"types"`
 }
 
-// UpdateJobJSONBody defines parameters for UpdateJob.
-type UpdateJobJSONBody struct {
-	Result interface{} `json:"result"`
-	Status string      `json:"status"`
+// RequestJobResponse defines model for RequestJobResponse.
+type RequestJobResponse struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	Args             *json.RawMessage   `json:"args,omitempty"`
+	ArtifactLocation string             `json:"artifact_location"`
+	DynamicArgs      *[]json.RawMessage `json:"dynamic_args,omitempty"`
+	Location         string             `json:"location"`
+	Type             string             `json:"type"`
 }
+
+// StatusResponse defines model for StatusResponse.
+type StatusResponse struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	Status string `json:"status"`
+}
+
+// UpdateJobRequest defines model for UpdateJobRequest.
+type UpdateJobRequest struct {
+	Result json.RawMessage `json:"result"`
+}
+
+// UpdateJobResponse defines model for UpdateJobResponse.
+type UpdateJobResponse ObjectReference
+
+// RequestJobJSONBody defines parameters for RequestJob.
+type RequestJobJSONBody RequestJobRequest
+
+// UpdateJobJSONBody defines parameters for UpdateJob.
+type UpdateJobJSONBody UpdateJobRequest
 
 // RequestJobRequestBody defines body for RequestJob for application/json ContentType.
 type RequestJobJSONRequestBody RequestJobJSONBody
@@ -35,6 +92,9 @@ type UpdateJobJSONRequestBody UpdateJobJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get error description
+	// (GET /errors/{id})
+	GetError(ctx echo.Context, id string) error
 	// Request a job
 	// (POST /jobs)
 	RequestJob(ctx echo.Context) error
@@ -47,6 +107,9 @@ type ServerInterface interface {
 	// Upload an artifact
 	// (PUT /jobs/{token}/artifacts/{name})
 	UploadJobArtifact(ctx echo.Context, token string, name string) error
+	// Get the openapi spec in json format
+	// (GET /openapi)
+	GetOpenapi(ctx echo.Context) error
 	// status
 	// (GET /status)
 	GetStatus(ctx echo.Context) error
@@ -55,6 +118,24 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetError converts echo context to params.
+func (w *ServerInterfaceWrapper) GetError(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	ctx.Set("Bearer.Scopes", []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetError(ctx, id)
+	return err
 }
 
 // RequestJob converts echo context to params.
@@ -122,6 +203,15 @@ func (w *ServerInterfaceWrapper) UploadJobArtifact(ctx echo.Context) error {
 	return err
 }
 
+// GetOpenapi converts echo context to params.
+func (w *ServerInterfaceWrapper) GetOpenapi(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetOpenapi(ctx)
+	return err
+}
+
 // GetStatus converts echo context to params.
 func (w *ServerInterfaceWrapper) GetStatus(ctx echo.Context) error {
 	var err error
@@ -153,10 +243,60 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
+	router.GET("/errors/:id", wrapper.GetError)
 	router.POST("/jobs", wrapper.RequestJob)
 	router.GET("/jobs/:token", wrapper.GetJob)
 	router.PATCH("/jobs/:token", wrapper.UpdateJob)
 	router.PUT("/jobs/:token/artifacts/:name", wrapper.UploadJobArtifact)
+	router.GET("/openapi", wrapper.GetOpenapi)
 	router.GET("/status", wrapper.GetStatus)
 
+}
+
+// Base64 encoded, gzipped, json marshaled Swagger object
+var swaggerSpec = []string{
+
+	"H4sIAAAAAAAC/9xXTW/jNhD9KwTbo2I5TfcioIfNtlhkiyJF0kUXSINgTI0tJhKpDCknhqH/XvDDX5Ji",
+	"Z4H4sDlZCcmZN2/eDIdLLnRVa4XKGp4tuREFVuA//yDS5D6gLC+nPLtZ8p8JpzzjP6WbQ2k8kV5O7lHY",
+	"K5wioRLI22TJa9I1kpXoDQqdo/u1ixp5xo0lqWa8TXiFxsDMr+VoBMnaSq14xs9BPDwB5cz5AysnspR2",
+	"wZ6kLdiTpgckw/5rxuMz8Rubn50lDB8bKA0jBKMVT/quHB5w1u9kPoglHu0v+bXHRhLmPLsJway3dwxv",
+	"QrpdY9CeH97etgn/jPaLnlyhqbUy+KYcgxJY4nZsE61LBNWPYLV1GGPXV9Z1VXigAxS+wOyDVPlhXj17",
+	"fmsSPPTRJfwKHxs0gUP/1UcHJIpBGO4ffoe0WJkXt/CMAxEsegDD+SQ4OATu7RMMNPO/zyczfRJ93xut",
+	"Rlfw9FcUXevQWTkFYe9KLSBU00Cg+UJBJcXdyuiakgPWdwlK+F4n4R+H8u5XtywNhTAs1GsLtjHH4Np4",
+	"y4exx33D8L7WOVjcJ1VC05T2IO0dp/HUkAK3XG5I+S4qnDOpprrfkv8ppGHSMFDs498XbKpp3YmtZhRi",
+	"ZKByVoDKS2T3emJGrhVLWzqYl9fnjSxz9snBMEjshP3rDfCEz5FMcHMam7WCWvKMn43GozFPeA228Jyl",
+	"6G4nky5l3rq/Z2j7WD+jQ8KkMtb1OqanzBbI/FFmahRyKjFnkwXzXWfdwi/ycDjcgM4rQYUWyXhR7Tq5",
+	"+H3HLnfE8cwj5QlXULmgvf1N9iw1mMS71sHGZ6hqz87pWf/Wam/d2ZBJH/wv43G4T5VF5eOGui5lqJL0",
+	"Pt5fG/P7Uh9ibH3Gf/327Sh2PxzFbptwg6IhaRc+LecIhMSzm1tHmGmqCmgRVRBSvp04dzx12vT1qM2A",
+	"fGLBGgZOxCPmpb8WCZuUWjwY1igry7DF18UcZAmTEkc9RW0uhigGNPZc54s346Z/LQaaOuI5PYrD2Gm8",
+	"w10ePxGCxZz/aArrxuE1s9HV1arXudRv9JQurX5Atd2Veo1lJYEj1XRnvBwI5fJP/kPW+05RU6OUVLNA",
+	"f69LD3Rhn5i9jXig89ZgwyS5m8X1HXukWu6NDYOlPD6Gv3csmxAlg13tdEs3XY2eJl066fharhs7pIJS",
+	"Q/5FTz7GE/w1OvQ/3yPD5O3k/DqtamHRnhhLCNUu6V2TL4ny3QnHJdpNkyttBNmsR9SXm/1l3PIanqI5",
+	"P5wyqZjD7mbsCvxg/+EYg1+3yL8qfK5RWMzj2KSFaMjpq9+C3di7F7PjaPOMGpzSr6WbfVnYFV8NxJ4K",
+	"KQpGaBtShhmkuRSrTUOz+vVq5WgdsvPOfI/tMdIbZ2uar3pYQyXPeAq1TMNjL52f+vfy1oKI77mTrR23",
+	"7f8BAAD//yi1+mtgFAAA",
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file.
+func GetSwagger() (*openapi3.Swagger, error) {
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(zr)
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("error loading Swagger: %s", err)
+	}
+	return swagger, nil
 }

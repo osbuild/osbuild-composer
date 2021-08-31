@@ -249,7 +249,8 @@ func TestCompose(t *testing.T) {
 
 			initJobResult, err := json.Marshal(&jobResult{Result: result})
 			require.NoError(t, err)
-			test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK, `{}`)
+			test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK,
+				fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 			wg.Done()
 		}(t, c.initResult)
@@ -300,7 +301,8 @@ func TestCompose(t *testing.T) {
 
 		buildJobResult, err := json.Marshal(&jobResult{Result: c.buildResult})
 		require.NoError(t, err)
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK, `{}`)
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK,
+			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"})
 		require.NoError(t, err)
@@ -322,7 +324,8 @@ func TestCompose(t *testing.T) {
 					"success": true
 				}
 			}
-		}`, test_distro.TestArchName, test_distro.TestDistroName), http.StatusOK, `{}`)
+		}`, test_distro.TestArchName, test_distro.TestDistroName), http.StatusOK,
+			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-finalize"})
 		require.NoError(t, err)
@@ -342,7 +345,8 @@ func TestCompose(t *testing.T) {
 
 		finalizeResult, err := json.Marshal(&jobResult{Result: c.finalizeResult})
 		require.NoError(t, err)
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK, `{}`)
+		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK,
+			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%v", finalizeID), ``, http.StatusOK, c.composeStatus)
 

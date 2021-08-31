@@ -11,11 +11,13 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
@@ -53,11 +55,8 @@ func (s *Server) Handler() http.Handler {
 	e.StdLogger = s.logger
 
 	// log errors returned from handlers
-	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		log.Println(c.Path(), c.QueryParams().Encode(), err.Error())
-		e.DefaultHTTPErrorHandler(err, c)
-	}
-
+	e.HTTPErrorHandler = api.HTTPErrorHandler
+	e.Pre(common.OperationIDMiddleware)
 	handler := apiHandlers{
 		server: s,
 	}
@@ -135,8 +134,10 @@ func (s *Server) Job(id uuid.UUID, job interface{}) (string, json.RawMessage, []
 		return "", nil, nil, err
 	}
 
-	if err := json.Unmarshal(rawArgs, job); err != nil {
-		return "", nil, nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
+	if job != nil {
+		if err := json.Unmarshal(rawArgs, job); err != nil {
+			return "", nil, nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
+		}
 	}
 
 	return jobType, rawArgs, deps, nil
@@ -284,10 +285,37 @@ type apiHandlers struct {
 	server *Server
 }
 
+func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
+	spec, err := api.GetSwagger()
+	if err != nil {
+		return api.HTTPError(api.ErrorFailedLoadingOpenAPISpec)
+	}
+	return ctx.JSON(http.StatusOK, spec)
+}
+
 func (h *apiHandlers) GetStatus(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, &statusResponse{
+	return ctx.JSON(http.StatusOK, &api.StatusResponse{
+		ObjectReference: api.ObjectReference{
+			Href: fmt.Sprintf("%s/status", api.BasePath),
+			Id:   "status",
+			Kind: "Status",
+		},
 		Status: "OK",
 	})
+}
+
+func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
+	errorId, err := strconv.Atoi(id)
+	if err != nil {
+		return api.HTTPError(api.ErrorInvalidErrorId)
+	}
+
+	apiError := api.APIError(api.ServiceErrorCode(errorId), nil, ctx)
+	// If the service error wasn't found, it's a 404 in this instance
+	if apiError.Id == fmt.Sprintf("%d", api.ErrorServiceErrorNotFound) {
+		return api.HTTPError(api.ErrorErrorNotFound)
+	}
+	return ctx.JSON(http.StatusOK, apiError)
 }
 
 func (h *apiHandlers) RequestJob(ctx echo.Context) error {
@@ -299,47 +327,73 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
 	if err != nil {
-		return err
+		return api.HTTPErrorWithInternal(api.ErrorRequestingJob, err)
 	}
 
-	return ctx.JSON(http.StatusCreated, requestJobResponse{
-		Id:               jobId,
+	var respArgs *json.RawMessage
+	if len(jobArgs) != 0 {
+		respArgs = &jobArgs
+	}
+	var respDynArgs *[]json.RawMessage
+	if len(dynamicJobArgs) != 0 {
+		respDynArgs = &dynamicJobArgs
+	}
+
+	response := api.RequestJobResponse{
+		ObjectReference: api.ObjectReference{
+			Href: fmt.Sprintf("%s/jobs", api.BasePath),
+			Id:   jobId.String(),
+			Kind: "RequestJob",
+		},
 		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
 		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
 		Type:             jobType,
-		Args:             jobArgs,
-		DynamicArgs:      dynamicJobArgs,
-	})
+		Args:             respArgs,
+		DynamicArgs:      respDynArgs,
+	}
+	return ctx.JSON(http.StatusCreated, response)
 }
 
 func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
+		return api.HTTPError(api.ErrorMalformedJobToken)
 	}
 
 	jobId, err := h.server.jobs.IdFromToken(token)
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotExist:
-			return ErrInvalidToken
+			return api.HTTPError(api.ErrorJobNotFound)
 		default:
-			return err
+			return api.HTTPError(api.ErrorResolvingJobId)
 		}
 	}
 
 	if jobId == uuid.Nil {
-		return ctx.JSON(http.StatusOK, getJobResponse{})
+		return ctx.JSON(http.StatusOK, api.GetJobResponse{
+			ObjectReference: api.ObjectReference{
+				Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+				Id:   token.String(),
+				Kind: "JobStatus",
+			},
+			Canceled: false,
+		})
 	}
 
 	h.server.jobs.RefreshHeartbeat(token)
 
 	status, _, err := h.server.JobStatus(jobId, &json.RawMessage{})
 	if err != nil {
-		return err
+		return api.HTTPErrorWithInternal(api.ErrorRetrievingJobStatus, err)
 	}
 
-	return ctx.JSON(http.StatusOK, getJobResponse{
+	return ctx.JSON(http.StatusOK, api.GetJobResponse{
+		ObjectReference: api.ObjectReference{
+			Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+			Id:   token.String(),
+			Kind: "JobStatus",
+		},
 		Canceled: status.Canceled,
 	})
 }
@@ -347,10 +401,10 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	token, err := uuid.Parse(idstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
+		return api.HTTPError(api.ErrorMalformedJobId)
 	}
 
-	var body updateJobRequest
+	var body api.UpdateJobRequest
 	err = ctx.Bind(&body)
 	if err != nil {
 		return err
@@ -360,21 +414,25 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	if err != nil {
 		switch err {
 		case ErrInvalidToken:
-			fallthrough
+			return api.HTTPError(api.ErrorJobNotFound)
 		case ErrJobNotRunning:
-			return echo.NewHTTPError(http.StatusNotFound, "not found")
+			return api.HTTPError(api.ErrorJobNotRunning)
 		default:
-			return err
+			return api.HTTPError(api.ErrorFinishingJob)
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, updateJobResponse{})
+	return ctx.JSON(http.StatusOK, api.UpdateJobResponse{
+		Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		Id:   token.String(),
+		Kind: "UpdateJobResponse",
+	})
 }
 
 func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse job token")
+		return api.HTTPError(api.ErrorMalformedJobId)
 	}
 
 	request := ctx.Request()
@@ -382,19 +440,19 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 	if h.server.artifactsDir == "" {
 		_, err := io.Copy(ioutil.Discard, request.Body)
 		if err != nil {
-			return fmt.Errorf("error discarding artifact: %v", err)
+			return api.HTTPError(api.ErrorDiscardingArtifact)
 		}
 		return ctx.NoContent(http.StatusOK)
 	}
 
 	f, err := os.Create(path.Join(h.server.artifactsDir, "tmp", token.String(), name))
 	if err != nil {
-		return fmt.Errorf("cannot create artifact file: %v", err)
+		return api.HTTPError(api.ErrorDiscardingArtifact)
 	}
 
 	_, err = io.Copy(f, request.Body)
 	if err != nil {
-		return fmt.Errorf("error writing artifact file: %v", err)
+		return api.HTTPError(api.ErrorWritingArtifact)
 	}
 
 	return ctx.NoContent(http.StatusOK)
@@ -410,12 +468,12 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "request must be json-encoded")
+		return api.HTTPError(api.ErrorUnsupportedMediaType)
 	}
 
 	err := json.NewDecoder(request.Body).Decode(i)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "cannot parse request body: "+err.Error())
+		return api.HTTPError(api.ErrorBodyDecodingError)
 	}
 
 	return nil

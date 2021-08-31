@@ -185,7 +185,7 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		return nil, errorFromResponse(response, "error requesting job")
 	}
 
-	var jr requestJobResponse
+	var jr api.RequestJobResponse
 	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %v", err)
@@ -201,12 +201,26 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
 	}
 
+	jobId, err := uuid.Parse(jr.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing job id in response: %v", err)
+	}
+
+	args := json.RawMessage{}
+	if jr.Args != nil {
+		args = *jr.Args
+	}
+	dynamicArgs := []json.RawMessage{}
+	if jr.DynamicArgs != nil {
+		dynamicArgs = *jr.DynamicArgs
+	}
+
 	return &job{
 		client:           c,
-		id:               jr.Id,
+		id:               jobId,
 		jobType:          jr.Type,
-		args:             jr.Args,
-		dynamicArgs:      jr.DynamicArgs,
+		args:             args,
+		dynamicArgs:      dynamicArgs,
 		location:         location.String(),
 		artifactLocation: artifactLocation.String(),
 	}, nil
@@ -242,7 +256,7 @@ func (j *job) DynamicArgs(i int, args interface{}) error {
 
 func (j *job) Update(result interface{}) error {
 	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(api.UpdateJobJSONRequestBody{
+	err := json.NewEncoder(&buf).Encode(updateJobRequest{
 		Result: result,
 	})
 	if err != nil {
@@ -285,7 +299,7 @@ func (j *job) Canceled() (bool, error) {
 		return false, errorFromResponse(response, "error fetching job info")
 	}
 
-	var jr getJobResponse
+	var jr api.GetJobResponse
 	err = json.NewDecoder(response.Body).Decode(&jr)
 	if err != nil {
 		return false, fmt.Errorf("error parsing reponse: %v", err)
@@ -337,5 +351,5 @@ func errorFromResponse(response *http.Response, message string) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse error response: %v", err)
 	}
-	return fmt.Errorf("%v: %v — %v", message, response.StatusCode, e.Message)
+	return fmt.Errorf("%v: %v — %s (%v)", message, response.StatusCode, e.Reason, e.Code)
 }

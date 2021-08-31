@@ -5,105 +5,76 @@ info:
   description: This is an API for workers to request and handle jobs.
 servers:
   - url: /api/worker/v1
+  - url: /api/composer-worker/v1
+
 paths:
+  /openapi:
+    get:
+      operationId: getOpenapi
+      summary: Get the openapi spec in json format
+      responses:
+        '200':
+          description: openapi spec in json format
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /status:
     get:
+      operationId: GetStatus
       summary: status
-      tags: []
+      description: Simple status handler which returns service status
       responses:
         '200':
           description: OK
-          headers: {}
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - OK
-                required:
-                  - status
-        4XX:
+                $ref: '#/components/schemas/StatusResponse'
+        '4XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        5XX:
-          description: ''
+        '5XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      operationId: GetStatus
-      description: Simple status handler to check whether the service is up.
+
   /jobs:
     post:
+      operationId: RequestJob
       summary: Request a job
-      tags: []
+      description: Requests a job. This operation blocks until a job is available.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestJobRequest'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  location:
-                    type: string
-                  artifact_location:
-                    type: string
-                  type:
-                    type: string
-                    enum:
-                      - osbuild
-                  args: {}
-                  dynamic_args:
-                    type: array
-                    items: {}
-                required:
-                  - type
-                  - location
-                  - id
-        4XX:
+                $ref: '#/components/schemas/RequestJobResponse'
+        '4XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        5XX:
+        '5XX':
           description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      operationId: RequestJob
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                types:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                      - osbuild
-                arch:
-                  type: string
-              required:
-                - types
-                - arch
-        description: ''
-      description: Requests a job. This operation blocks until a job is available.
-    parameters: []
-  '/jobs/{token}':
+
+  /jobs/{token}:
     parameters:
       - schema:
           type: string
@@ -111,98 +82,212 @@ paths:
         in: path
         required: true
     get:
+      operationId: GetJob
       summary: Get running job
-      tags: []
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  canceled:
-                    type: boolean
-                required:
-                  - canceled
-        4XX:
-          description: ''
+                $ref: '#/components/schemas/GetJobResponse'
+        '4XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        5XX:
-          description: ''
+        '5XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      operationId: GetJob
-      description: ''
     patch:
-      summary: Update a running job
-      tags: []
-      responses: {}
       operationId: UpdateJob
+      summary: Update a running job
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - WAITING
-                    - RUNNING
-                    - FINISHED
-                    - FAILED
-                result: {}
-              required:
-                - status
-                - result
-  '/jobs/{token}/artifacts/{name}':
-    parameters:
-      - schema:
-          type: string
-        name: name
-        in: path
-        required: true
-      - schema:
-          type: string
-        name: token
-        in: path
-        required: true
-    put:
-      summary: Upload an artifact
-      tags: []
+              $ref: '#/components/schemas/UpdateJobRequest'
       responses:
         '200':
           description: OK
-        4XX:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateJobResponse'
+        '4XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        5XX:
-          description: ''
+        '5XX':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /jobs/{token}/artifacts/{name}:
+    put:
       operationId: UploadJobArtifact
+      summary: Upload an artifact
       requestBody:
         content:
           application/octet-stream:
             schema:
               type: string
+      parameters:
+        - schema:
+            type: string
+          name: name
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: token
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+        '4XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /errors/{id}:
+    get:
+      operationId: getError
+      summary: Get error description
+      description: Get an instance of the error specified by id
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            example: '13'
+          required: true
+          description: ID of the error
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '4XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
-    Error:
-      title: Error
+    ObjectReference:
       type: object
-      properties:
-        message:
-          type: string
       required:
-        - message
+        - id
+        - kind
+        - href
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - code
+          - reason
+          - operation_id
+          - message
+        properties:
+          code:
+            type: string
+          reason:
+            type: string
+          operation_id:
+            type: string
+          message:
+            description: Backward compatibility with workers <= v33, equals reason
+            type: string
+
+    StatusResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - status
+        properties:
+          status:
+            type: string
+
+    RequestJobRequest:
+      type: object
+      required:
+        - types
+        - arch
+      properties:
+        types:
+          type: array
+          items:
+            type: string
+        arch:
+          type: string
+    RequestJobResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - type
+          - location
+          - artifact_location
+        properties:
+          location:
+            type: string
+          artifact_location:
+            type: string
+          type:
+            type: string
+          args:
+            x-go-type: json.RawMessage
+          dynamic_args:
+            type: array
+            items:
+              x-go-type: json.RawMessage
+
+    GetJobResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - canceled
+        properties:
+          canceled:
+            type: boolean
+    UpdateJobRequest:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          x-go-type: json.RawMessage
+    UpdateJobResponse:
+      $ref: '#/components/schemas/ObjectReference'
