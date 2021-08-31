@@ -13,6 +13,9 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Start firewalld
+sudo systemctl enable --now firewalld
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -21,7 +24,7 @@ sudo virsh list --all > /dev/null
 # Set a customized dnsmasq configuration for libvirt so we always get the
 # same address on bootup.
 sudo tee /tmp/integration.xml > /dev/null << EOF
-<network>
+<network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
   <name>integration</name>
   <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
   <forward mode='nat'>
@@ -29,17 +32,23 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
       <port start='1024' end='65535'/>
     </nat>
   </forward>
-  <bridge name='integration' stp='on' delay='0'/>
+  <bridge name='integration' zone='trusted' stp='on' delay='0'/>
   <mac address='52:54:00:36:46:ef'/>
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
+      <host mac='34:49:22:B0:83:30' name='vm-httpboot' ip='192.168.100.50'/>
       <host mac='34:49:22:B0:83:31' name='vm-uefi' ip='192.168.100.51'/>
     </dhcp>
   </ip>
+  <dnsmasq:options>
+    <dnsmasq:option value='dhcp-vendorclass=set:efi-http,HTTPClient:Arch:00016'/>
+    <dnsmasq:option value='dhcp-option-force=tag:efi-http,60,HTTPClient'/>
+    <dnsmasq:option value='dhcp-boot=tag:efi-http,&quot;http://192.168.100.1/httpboot/EFI/BOOT/BOOTX64.EFI&quot;'/>
+  </dnsmasq:options>
 </network>
 EOF
+
 if ! sudo virsh net-info integration > /dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
 fi
@@ -63,6 +72,7 @@ OSTREE_REF="rhel/8/${ARCH}/edge"
 OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
+HTTP_GUEST_ADDRESS=192.168.100.50
 UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
@@ -367,7 +377,7 @@ build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
 greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
-sudo mv "${ISO_FILENAME}" /var/lib/libvirt/images
+sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
@@ -376,7 +386,97 @@ sudo composer-cli blueprints delete installer > /dev/null
 
 ##################################################################
 ##
-## Install and test edge vm with edge-simplified-installer (UEFI)
+## Install edge vm with edge-simplified-installer (http boot)
+##
+##################################################################
+
+HTTPD_PATH="/var/www/html"
+GRUB_CFG=${HTTPD_PATH}/httpboot/EFI/BOOT/grub.cfg
+
+greenprint "📋 Mount simplified installer iso and copy content to webserver/httpboot"
+sudo mkdir -p ${HTTPD_PATH}/httpboot
+sudo mkdir /mnt/installer
+sudo mount -o loop "${ISO_FILENAME}" /mnt/installer
+sudo cp -R /mnt/installer/* ${HTTPD_PATH}/httpboot/
+sudo chmod -R +r ${HTTPD_PATH}/httpboot/*
+
+greenprint "📋 Update grub.cfg file for http boot"
+sudo sed -i 's/timeout=60/timeout=10/' "${GRUB_CFG}"
+sudo sed -i 's/coreos.inst.install_dev=\/dev\/sda/coreos.inst.install_dev=\/dev\/vda/' "${GRUB_CFG}"
+sudo sed -i 's/linux \/images\/pxeboot\/vmlinuz/linuxefi \/httpboot\/images\/pxeboot\/vmlinuz/' "${GRUB_CFG}"
+sudo sed -i 's/initrd \/images\/pxeboot\/initrd.img/initrdefi \/httpboot\/images\/pxeboot\/initrd.img/' "${GRUB_CFG}"
+sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/disk.img.xz/coreos.inst.image_url=http:\/\/192.168.100.1\/httpboot\/disk.img.xz/' "${GRUB_CFG}"
+
+greenprint "📋 Create libvirt image disk"
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+greenprint "📋 Install edge vm via http boot"
+sudo virt-install --name="${IMAGE_KEY}-http"\
+                  --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                  --ram 3072 \
+                  --vcpus 2 \
+                  --network network=integration,mac=34:49:22:B0:83:30 \
+                  --os-type linux \
+                  --os-variant rhel8-unknown \
+                  --pxe \
+                  --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                  --nographics \
+                  --noautoconsole \
+                  --wait=-1 \
+                  --noreboot
+
+# Start VM.
+greenprint "💻 Start HTTP BOOT VM"
+sudo virsh start "${IMAGE_KEY}-http"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $HTTP_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${HTTP_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes 
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# Clean up BIOS VM
+greenprint "🧹 Clean up BIOS VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-http") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-http"
+fi
+sudo virsh undefine "${IMAGE_KEY}-http" --nvram
+sudo rm -f "$LIBVIRT_IMAGE_PATH"
+
+##################################################################
+##
+## Install edge vm with edge-simplified-installer (UEFI)
 ##
 ##################################################################
 
@@ -386,7 +486,6 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 
 # Create qcow2 file for virt install.
 greenprint "🖥 Create qcow2 file for virt install"
-LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
@@ -541,8 +640,6 @@ sudo composer-cli blueprints delete upgrade > /dev/null
 greenprint "🗳 Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
-
-
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
