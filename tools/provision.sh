@@ -85,12 +85,13 @@ case "${ID}-${VERSION_ID}" in
 esac
 
 # overrides for RHEL nightly builds testing
+VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
 if [ -f "rhel-8.json" ]; then
-    sudo cp rhel-8.json "$REPODIR"
+    sudo cp rhel-8.json "$REPODIR/rhel-${VERSION_SUFFIX}.json"
 fi
 
 if [ -f "rhel-8-beta.json" ]; then
-    sudo cp rhel-8-beta.json "$REPODIR"
+    sudo cp rhel-8-beta.json "$REPODIR/rhel-${VERSION_SUFFIX}-beta.json"
 fi
 
 # Generate all X.509 certificates for the tests
