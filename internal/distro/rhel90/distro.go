@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -52,7 +53,9 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-var mountpointAllowList = []string{"/", "/var", "/var/*", "/home", "/opt", "/srv", "/usr"}
+var mountpointAllowList = []string{
+	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home",
+}
 
 type distribution struct {
 	name             string
@@ -424,10 +427,17 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 
 func isMountpointAllowed(mountpoint string) bool {
 	for _, allowed := range mountpointAllowList {
-		// check if the path and its subdirectories
-		// is in the allow list
 		match, _ := path.Match(allowed, mountpoint)
-		if mountpoint == "/" || match {
+		if match {
+			return true
+		}
+		// ensure that only clean mountpoints
+		// are valid
+		if strings.Contains(mountpoint, "//") {
+			return false
+		}
+		match = strings.HasPrefix(mountpoint, allowed+"/")
+		if allowed != "/" && match {
 			return true
 		}
 	}
