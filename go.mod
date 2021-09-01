@@ -23,18 +23,18 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/google/uuid v1.1.2
 	github.com/gophercloud/gophercloud v0.11.0
-	github.com/jackc/pgtype v1.7.0
-	github.com/jackc/pgx/v4 v4.11.0
+	github.com/jackc/pgtype v1.8.1
+	github.com/jackc/pgx/v4 v4.12.1-0.20210724153913-640aa07df17c
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/prometheus/client_golang v1.10.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.23.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
-	golang.org/x/sys v0.0.0-20210423082822-04245dca01da
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
 	google.golang.org/protobuf v1.25.0
