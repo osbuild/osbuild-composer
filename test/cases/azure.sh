@@ -1,4 +1,5 @@
 #!/bin/bash
+shopt -s expand_aliases
 set -euo pipefail
 
 source /etc/os-release
@@ -12,34 +13,46 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Container image used for cloud provider CLI tools
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
+# Check available container runtime
+if which podman 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=docker
+else
+    echo No container runtime found, install podman or docker.
+    exit 2
+fi
+
+TEMPDIR=$(mktemp -d)
+function cleanup() {
+    sudo rm -rf "$TEMPDIR"
+}
+trap cleanup EXIT
+
 # Terraform needs azure-cli to talk to Azure.
 if ! hash az; then
-    if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
-        # RHEL-9 does not have python-3.6 which is required by azure-cli
-        # using pip to install it instead
-        greenprint "Installing azure-cli via pip"
-        sudo dnf install -y pip
-        pip3 install azure-cli
-        az version
-    else
-    # this installation method is taken from the official docs:
-    # https://docs.microsoft.com/cs-cz/cli/azure/install-azure-cli-linux?pivots=dnf
-        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        echo -e "[azure-cli]
-name=Azure CLI
-baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
+    echo "Using 'azure-cli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
-      greenprint "Installing azure-cli"
-      sudo dnf install -y azure-cli
-      az version
-    fi
+    # directory mounted to the container, in which azure-cli stores the credentials after logging in
+    AZURE_CMD_CREDS_DIR="${TEMPDIR}/azure-cli_credentials"
+    mkdir "${AZURE_CMD_CREDS_DIR}"
+
+    AZURE_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        -v ${AZURE_CMD_CREDS_DIR}:/root/.azure:Z \
+        -v ${TEMPDIR}:${TEMPDIR}:Z \
+        ${CONTAINER_IMAGE_CLOUD_TOOLS} az"
+    alias az='${AZURE_CMD}'
+    else
+        echo "Using pre-installed 'azure-cli' from the system"
 fi
+az version
 
 # We need terraform to provision the vm in azure and then destroy it
 if [ "$ID" == "rhel" ] || [ "$ID" == "centos" ]
@@ -71,7 +84,6 @@ if [[ ${WORKSPACE:-empty} == empty ]]; then
 fi
 
 # Set up temporary files.
-TEMPDIR=$(mktemp -d)
 AZURE_CONFIG=${TEMPDIR}/azure.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
