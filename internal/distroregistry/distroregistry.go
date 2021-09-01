@@ -19,6 +19,7 @@ var supportedDistros = []supportedDistro{
 	{fedora33.New, fedora33.NewHostDistro},
 	{fedora33.NewF34, fedora33.NewHostDistro},
 	{fedora33.NewF35, fedora33.NewHostDistro},
+	{fedora33.NewF36, fedora33.NewHostDistro},
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel84.New, rhel84.NewHostDistro},
 	{rhel84.NewCentos, rhel84.NewCentosHostDistro},
