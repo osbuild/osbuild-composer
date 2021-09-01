@@ -29,6 +29,10 @@ const f35Name = "fedora-35"
 const f35modulePlatformID = "platform:f35"
 const f35ostreeRef = "fedora/35/%s/iot"
 
+const f36Name = "fedora-36"
+const f36modulePlatformID = "platform:f36"
+const f36ostreeRef = "fedora/36/%s/iot"
+
 type distribution struct {
 	name             string
 	modulePlatformID string
@@ -636,6 +640,10 @@ func NewF34() distro.Distro {
 
 func NewF35() distro.Distro {
 	return newDistro(f35Name, f35modulePlatformID, f35ostreeRef)
+}
+
+func NewF36() distro.Distro {
+	return newDistro(f36Name, f36modulePlatformID, f36ostreeRef)
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
