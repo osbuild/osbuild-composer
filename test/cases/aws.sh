@@ -9,19 +9,30 @@ function greenprint {
     echo -e "\033[1;32m${1}\033[0m"
 }
 
+# Container image used for cloud provider CLI tools
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-# We need awscli to talk to AWS.
-if ! hash aws; then
-    greenprint "Installing awscli"
-    sudo dnf install -y awscli
-    aws --version
+# Check available container runtime
+if which podman 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=docker
+else
+    echo No container runtime found, install podman or docker.
+    exit 2
 fi
+
+TEMPDIR=$(mktemp -d)
+function cleanup() {
+    sudo rm -rf "$TEMPDIR"
+}
+trap cleanup EXIT
 
 TEST_UUID=$(uuidgen)
 IMAGE_KEY=osbuild-composer-aws-test-${TEST_UUID}
-AWS_CMD="aws --region $AWS_REGION --output json --color on"
 
 # Jenkins sets WORKSPACE to the job workspace, but if this script runs
 # outside of Jenkins, we can set up a temporary directory instead.
@@ -30,7 +41,6 @@ if [[ ${WORKSPACE:-empty} == empty ]]; then
 fi
 
 # Set up temporary files.
-TEMPDIR=$(mktemp -d)
 AWS_CONFIG=${TEMPDIR}/aws.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 AWS_INSTANCE_JSON=${TEMPDIR}/aws-instance.json
@@ -42,6 +52,23 @@ INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${IMAGE_KEY}.json
 
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
+
+# We need awscli to talk to AWS.
+if ! hash aws; then
+    echo "Using 'awscli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+
+    AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+        -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+        -v ${TEMPDIR}:${TEMPDIR}:Z \
+        -v ${SSH_DATA_DIR}:${SSH_DATA_DIR}:Z \
+        ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
+else
+    echo "Using pre-installed 'aws' from the system"
+    AWS_CMD="aws --region $AWS_REGION --output json --color on"
+fi
+$AWS_CMD --version
 
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
