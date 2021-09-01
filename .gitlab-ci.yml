@@ -220,6 +220,7 @@ OSTree raw image:
     - azure.sh
     - vmware.sh
     - filesystem.sh
+    - cross-distro.sh
 
 Integration:
   stage: test
