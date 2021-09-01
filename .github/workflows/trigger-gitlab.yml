@@ -49,7 +49,9 @@ jobs:
           fetch-depth: 0
 
       - name: Push to gitlab
+        if: ${{ github.event.sender.login }} != 'dependabot[bot]'
         run: |
+          echo ${{ github.event.sender.login }}
           mkdir -p ~/.ssh
           echo "${SCHUTZBOT_SSH_KEY}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
