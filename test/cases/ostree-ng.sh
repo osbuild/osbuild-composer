@@ -83,7 +83,6 @@ mkdir -p "${ARTIFACTS}"
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-KS_FILE=${TEMPDIR}/ks.cfg
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
@@ -100,7 +99,8 @@ case "${ID}-${VERSION_ID}" in
         INSTALLER_TYPE=rhel-edge-installer
         INSTALLER_FILENAME=rhel84-boot.iso
         USER_IN_UPGRADE_BP="true"
-        INSTALLER_PATH="/ostree/repo"
+        ANSIBLE_USER_FOR_BIOS="admin"
+        USER_IN_INSTALLER_BP="false"
         ;;
     "rhel-8.5")
         CONTAINER_TYPE=edge-container
@@ -108,7 +108,8 @@ case "${ID}-${VERSION_ID}" in
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
         USER_IN_UPGRADE_BP="false"
-        INSTALLER_PATH="/run/install/repo/ostree/repo"
+        ANSIBLE_USER_FOR_BIOS="installeruser"
+        USER_IN_INSTALLER_BP="true"
         ;;
     "rhel-9.0")
         CONTAINER_TYPE=edge-container
@@ -122,6 +123,62 @@ case "${ID}-${VERSION_ID}" in
         exit 1;;
 esac
 
+# modify existing kickstart by prepending and appending commands
+function modksiso {
+    sudo dnf install -y lorax  # for mkksiso
+    isomount=$(mktemp -d)
+    kspath=$(mktemp -d)
+
+    iso="$1"
+    newiso="$2"
+
+    echo "Mounting ${iso} -> ${isomount}"
+    sudo mount -v -o ro "${iso}" "${isomount}"
+
+    cleanup() {
+        sudo umount -v "${isomount}"
+        rmdir -v "${isomount}"
+        rm -rv "${kspath}"
+    }
+
+    trap cleanup RETURN
+
+    ksfiles=("${isomount}"/*.ks)
+    ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
+    echo "Found kickstart file ${ksfile}"
+
+    ksbase=$(basename "${ksfile}")
+    newksfile="${kspath}/${ksbase}"
+    oldks=$(cat "${ksfile}")
+    echo "Preparing modified kickstart file"
+    cat > "${newksfile}" << EOFKS
+text
+network --bootproto=dhcp --device=link --activate --onboot=on
+zerombr
+clearpart --all --initlabel --disklabel=msdos
+autopart --nohome --noswap --type=plain
+${oldks}
+poweroff
+
+%post --log=/var/log/anaconda/post-install.log --erroronfail
+
+# no sudo password for user admin and installeruser
+echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+echo -e 'installeruser\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+
+# delete local ostree repo and add external prod edge repo
+ostree remote delete rhel
+ostree remote add --no-gpg-verify --no-sign-verify rhel ${PROD_REPO_URL}
+%end
+EOFKS
+
+    echo "Writing new ISO"
+    sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+
+    echo "==== NEW KICKSTART FILE ===="
+    cat "${newksfile}"
+    echo "============================"
+}
 
 # Get the compose log.
 get_compose_log () {
@@ -378,6 +435,18 @@ modules = []
 groups = []
 EOF
 
+if [[ "$USER_IN_INSTALLER_BP" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "installeruser"
+description = "Added by installer blueprint"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/installeruser/"
+groups = ["wheel"]
+EOF
+fi
+
 greenprint "📄 installer blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -394,7 +463,8 @@ build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
 greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
-sudo mv "${ISO_FILENAME}" /var/lib/libvirt/images
+modksiso "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
+sudo rm "${ISO_FILENAME}"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
@@ -418,29 +488,6 @@ LIBVIRT_UEFI_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_BIOS_IMAGE_PATH}" 20G
 sudo qemu-img create -f qcow2 "${LIBVIRT_UEFI_IMAGE_PATH}" 20G
 
-# Write kickstart file for ostree image installation.
-greenprint "📑 Generate kickstart file"
-tee "$KS_FILE" > /dev/null << STOPHERE
-text
-network --bootproto=dhcp --device=link --activate --onboot=on
-
-zerombr
-clearpart --all --initlabel --disklabel=msdos
-autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=rhel-edge --remote=rhel-edge --url=file://${INSTALLER_PATH} --ref=${OSTREE_REF}
-poweroff
-
-%post --log=/var/log/anaconda/post-install.log --erroronfail
-
-# no sudo password for user admin
-echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
-
-# delete local ostree repo and add external prod edge repo
-ostree remote delete rhel-edge
-ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${PROD_REPO_URL}
-%end
-STOPHERE
-
 ##################################################
 ##
 ## Install and test Edge image on BIOS VM
@@ -448,16 +495,14 @@ STOPHERE
 ##################################################
 # Install ostree image via anaconda.
 greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}-bios" \
+sudo virt-install  --name="${IMAGE_KEY}-bios" \
                    --disk path="${LIBVIRT_BIOS_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
@@ -487,20 +532,22 @@ INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Run Edge test on BIOS VM
 # Add instance IP address into /etc/ansible/hosts
+# RHEL 8.5: Run BIOS VM test with installeruser added by edge-installer bp as ansible user
+# RHEL 8.4: Run BIOS VM test with admin added in edge-container bp as ansible user
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${BIOS_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=${ANSIBLE_USER_FOR_BIOS}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -518,16 +565,14 @@ sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 ##################################################
 # Install ostree image via anaconda.
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}-uefi"\
+sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_UEFI_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
@@ -648,8 +693,7 @@ sudo composer-cli blueprints delete upgrade > /dev/null
 
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'sudo rpm-ostree upgrade'
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'sudo rpm-ostree upgrade --os=rhel --reboot' || true
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -670,6 +714,7 @@ done
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
+# Run UEFI VM test with admin as ansible user
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${UEFI_GUEST_ADDRESS}
@@ -682,7 +727,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
