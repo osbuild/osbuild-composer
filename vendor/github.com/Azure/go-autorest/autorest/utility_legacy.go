@@ -1,4 +1,5 @@
-package autorest
+//go:build !go1.13
+// +build !go1.13
 
 // Copyright 2017 Microsoft Corporation
 //
@@ -14,28 +15,18 @@ package autorest
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-import (
-	"fmt"
-	"runtime"
-)
+package autorest
 
-const number = "v14.2.1"
+import "github.com/Azure/go-autorest/autorest/adal"
 
-var (
-	userAgent = fmt.Sprintf("Go/%s (%s-%s) go-autorest/%s",
-		runtime.Version(),
-		runtime.GOARCH,
-		runtime.GOOS,
-		number,
-	)
-)
-
-// UserAgent returns a string containing the Go version, system architecture and OS, and the go-autorest version.
-func UserAgent() string {
-	return userAgent
-}
-
-// Version returns the semantic version (see http://semver.org).
-func Version() string {
-	return number
+// IsTokenRefreshError returns true if the specified error implements the TokenRefreshError
+// interface.  If err is a DetailedError it will walk the chain of Original errors.
+func IsTokenRefreshError(err error) bool {
+	if _, ok := err.(adal.TokenRefreshError); ok {
+		return true
+	}
+	if de, ok := err.(DetailedError); ok {
+		return IsTokenRefreshError(de.Original)
+	}
+	return false
 }
