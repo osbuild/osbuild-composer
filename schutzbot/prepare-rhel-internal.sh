@@ -23,7 +23,7 @@ for ARCH in $ALL_ARCHES; do
 
 [rhel8-internal-baseos-$ARCH]
 name=RHEL Internal BaseOS
-baseurl=${COMPOSE_URL}/compose/BaseOS/${ARCH}/os
+baseurl=${COMPOSE_URL}/compose/BaseOS/${ARCH}/os/
 enabled=1
 gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
@@ -31,7 +31,7 @@ priority=1
 
 [rhel8-internal-appstream-$ARCH]
 name=RHEL Internal AppStream
-baseurl=${COMPOSE_URL}/compose/AppStream/${ARCH}/os
+baseurl=${COMPOSE_URL}/compose/AppStream/${ARCH}/os/
 enabled=1
 gpgcheck=0
 # osbuild-composer repo priority is 5
