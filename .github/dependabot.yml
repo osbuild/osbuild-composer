@@ -8,6 +8,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      time: "04:00"
     open-pull-requests-limit: 5
 
   # Maintain dependencies for Go
@@ -15,4 +16,5 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "04:00"
     open-pull-requests-limit: 5
