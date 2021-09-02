@@ -390,6 +390,38 @@ def rpm_verify(tree):
     }
 
 
+def rpm_not_installed_docs(tree, is_ostree):
+    """
+    Gathers information on documentation, which is part of RPM packages,
+    but was not installed.
+
+    Returns: list of documentation files, which are normally a part of
+    the installed RPM packages, but were not installed (e.g. due to using
+    '--excludedocs' option when executing 'rpm' command).
+
+    An example return value:
+    [
+        "/usr/share/man/man1/sdiff.1.gz",
+        "/usr/share/man/man1/seapplet.1.gz",
+        "/usr/share/man/man1/secon.1.gz",
+        "/usr/share/man/man1/secret-tool.1.gz",
+        "/usr/share/man/man1/sed.1.gz",
+        "/usr/share/man/man1/seq.1.gz"
+    ]
+    """
+    # check not installed Docs (e.g. when RPMs are installed with --excludedocs)
+    not_installed_docs = []
+    cmd = ["rpm", "--root", tree, "-qad", "--state"]
+    if is_ostree:
+        cmd += ["--dbpath", "/usr/share/rpm"]
+    output = subprocess_check_output(cmd)
+    for line in output.splitlines():
+        if line.startswith("not installed"):
+            not_installed_docs.append(line.split()[-1])
+
+    return sorted(not_installed_docs)
+
+
 def rpm_packages(tree, is_ostree):
     """
     Read NVRs of RPM packages installed on the system.
@@ -1952,6 +1984,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         report["packages"] = rpm_packages(tree, is_ostree)
         if not is_ostree:
             report["rpm-verify"] = rpm_verify(tree)
+
+        not_installed_docs = rpm_not_installed_docs(tree, is_ostree)
+        if not_installed_docs:
+            report["rpm_not_installed_docs"] = not_installed_docs
 
         with open(f"{tree}/etc/os-release") as f:
             report["os-release"] = parse_environment_vars(f.read())
