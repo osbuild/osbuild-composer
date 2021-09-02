@@ -1919,6 +1919,34 @@ def read_authselect_conf(tree):
     return result
 
 
+def read_resolv_conf(tree):
+    """
+    Read /etc/resolv.conf.
+
+    Returns: a list of uncommented lines from the /etc/resolv.conf.
+
+    An example return value:
+    [
+        "search redhat.com",
+        "nameserver 192.168.1.1",
+        "nameserver 192.168.1.2"
+    ]
+    """
+    result = []
+
+    with contextlib.suppress(FileNotFoundError):
+        with open(f"{tree}/resolv.conf") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if line[0] == "#":
+                    continue
+                result.append(line)
+
+    return result
+
+
 def append_filesystem(report, tree, *, is_ostree=False):
     if os.path.exists(f"{tree}/etc/os-release"):
         report["packages"] = rpm_packages(tree, is_ostree)
@@ -2028,6 +2056,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         tuned_profile = read_tuned_profile(tree)
         if tuned_profile:
             report["tuned"] = tuned_profile
+
+        resolv_conf = read_resolv_conf(tree)
+        # add even empty resolv_conf to the report to express that it is empty or non-existent
+        report["/etc/resolv.conf"] = resolv_conf
 
         udev_rules = read_udev_rules(tree)
         if udev_rules:
