@@ -1009,7 +1009,7 @@ def read_selinux_ctx_mismatch(tree, is_ostree):
             # context for /etc path
             CMD.extend(["-e", f"{tree}/etc"])
 
-        output = subprocess.check_output(CMD).decode()
+        output = subprocess_check_output(CMD)
 
         # output are lines such as:
         # Would relabel /tmp/tmpwrozmb47/dev from system_u:object_r:root_t:s0 to system_u:object_r:device_t:s0\n
