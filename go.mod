@@ -19,8 +19,8 @@ require (
 	github.com/deepmap/oapi-codegen v1.3.12
 	github.com/getkin/kin-openapi v0.13.0
 	github.com/gobwas/glob v0.2.3
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.3.0
 	github.com/gophercloud/gophercloud v0.20.0
 	github.com/jackc/pgtype v1.8.1
@@ -37,6 +37,6 @@ require (
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/ini.v1 v1.62.0
 )
