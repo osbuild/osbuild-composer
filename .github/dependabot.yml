@@ -8,6 +8,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      time: "04:00"
     open-pull-requests-limit: 5
     rebase-strategy: "disabled"
 
@@ -16,5 +17,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "04:00"
     open-pull-requests-limit: 5
     rebase-strategy: "disabled"
