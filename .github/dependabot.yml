@@ -9,6 +9,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    rebase-strategy: "disabled"
 
   # Maintain dependencies for Go
   - package-ecosystem: "gomod"
@@ -16,3 +17,4 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
+    rebase-strategy: "disabled"
