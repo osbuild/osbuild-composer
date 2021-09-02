@@ -29,6 +29,14 @@ type ListOpts struct {
 	// Flavor is the name of the flavor in URL format.
 	Flavor string `q:"flavor"`
 
+	// IP is a regular expression to match the IPv4 address of the server.
+	IP string `q:"ip"`
+
+	// This requires the client to be set to microversion 2.5 or later, unless
+	// the user is an admin.
+	// IP is a regular expression to match the IPv6 address of the server.
+	IP6 string `q:"ip6"`
+
 	// Name of the server as a string; can be queried with regular expressions.
 	// Realize that ?name=bob returns both bob and bobb. If you need to match bob
 	// only, you can use a regular expression matching the syntax of the
@@ -55,6 +63,11 @@ type ListOpts struct {
 	// Setting "AllTenants = true" is required.
 	TenantID string `q:"tenant_id"`
 
+	// This requires the client to be set to microversion 2.83 or later, unless
+	// the user is an admin.
+	// UserID lists servers for a particular user.
+	UserID string `q:"user_id"`
+
 	// This requires the client to be set to microversion 2.26 or later.
 	// Tags filters on specific server tags. All tags must be present for the server.
 	Tags string `q:"tags"`
@@ -70,6 +83,9 @@ type ListOpts struct {
 	// This requires the client to be set to microversion 2.26 or later.
 	// NotTagsAny filters on specific server tags. At least one of the tags must be absent for the server.
 	NotTagsAny string `q:"not-tags-any"`
+
+	// Display servers based on their availability zone (Admin only until microversion 2.82).
+	AvailabilityZone string `q:"availability_zone"`
 }
 
 // ToServerListQuery formats a ListOpts into a query string.
@@ -112,6 +128,13 @@ type Network struct {
 
 	// FixedIP specifies a fixed IPv4 address to be used on this network.
 	FixedIP string
+
+	// Tag may contain an optional device role tag for the server's virtual
+	// network interface. This can be used to identify network interfaces when
+	// multiple networks are connected to one server.
+	//
+	// Requires microversion 2.32 through 2.36 or 2.42 or later.
+	Tag string
 }
 
 // Personality is an array of files that are injected into the server at launch.
@@ -199,10 +222,6 @@ type CreateOpts struct {
 	// Max specifies Maximum number of servers to launch.
 	Max int `json:"max_count,omitempty"`
 
-	// ServiceClient will allow calls to be made to retrieve an image or
-	// flavor ID by name.
-	ServiceClient *gophercloud.ServiceClient `json:"-"`
-
 	// Tags allows a server to be tagged with single-word metadata.
 	// Requires microversion 2.52 or later.
 	Tags []string `json:"tags,omitempty"`
@@ -211,7 +230,6 @@ type CreateOpts struct {
 // ToServerCreateMap assembles a request body based on the contents of a
 // CreateOpts.
 func (opts CreateOpts) ToServerCreateMap() (map[string]interface{}, error) {
-	opts.ServiceClient = nil
 	b, err := gophercloud.BuildRequestBody(opts, "")
 	if err != nil {
 		return nil, err
@@ -249,6 +267,9 @@ func (opts CreateOpts) ToServerCreateMap() (map[string]interface{}, error) {
 				}
 				if net.FixedIP != "" {
 					networks[i]["fixed_ip"] = net.FixedIP
+				}
+				if net.Tag != "" {
+					networks[i]["tag"] = net.Tag
 				}
 			}
 			b["networks"] = networks
@@ -447,10 +468,6 @@ type RebuildOpts struct {
 	// Personality [optional] includes files to inject into the server at launch.
 	// Rebuild will base64-encode file contents for you.
 	Personality Personality `json:"personality,omitempty"`
-
-	// ServiceClient will allow calls to be made to retrieve an image or
-	// flavor ID by name.
-	ServiceClient *gophercloud.ServiceClient `json:"-"`
 }
 
 // ToServerRebuildMap formats a RebuildOpts struct into a map for use in JSON
