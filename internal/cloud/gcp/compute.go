@@ -9,7 +9,6 @@ import (
 	"time"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	cloudbuildpb "google.golang.org/genproto/googleapis/devtools/cloudbuild/v1"
@@ -134,7 +133,7 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 
 	// Get the returned Build struct
 	buildOpMetadata := &cloudbuildpb.BuildOperationMetadata{}
-	if err := ptypes.UnmarshalAny(resp.Metadata, buildOpMetadata); err != nil {
+	if err := resp.Metadata.UnmarshalTo(buildOpMetadata); err != nil {
 		return nil, err
 	}
 	imageBuild = buildOpMetadata.Build
