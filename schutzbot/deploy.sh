@@ -54,6 +54,15 @@ EOF
 source /etc/os-release
 ARCH=$(uname -m)
 
+if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
+  # There's a bug in RHEL 9 that causes /tmp to be mounted on tmpfs.
+  # Explicitly stop and mask the mount unit to prevent this.
+  # Otherwise, the tests will randomly fail because we use /tmp quite a lot.
+  # See https://bugzilla.redhat.com/show_bug.cgi?id=1959826
+  greenprint "Disabling /tmp as tmpfs on RHEL 9"
+  sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
+fi
+
 if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "Registering RHEL"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
