@@ -279,6 +279,7 @@ Installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64
+          - openstack/rhel-9.0-beta-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
