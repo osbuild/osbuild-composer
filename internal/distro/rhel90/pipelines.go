@@ -340,15 +340,8 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 			WaitForNetwork: true,
 		}))
 	} else {
+		// The EC2 images should keep the RHSM DNF plugins enabled (RHBZ#1996670)
 		rhsmStageOptions := &osbuild.RHSMStageOptions{
-			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
-				},
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
-				},
-			},
 			// RHBZ#1932802
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
