@@ -1061,14 +1061,6 @@
           {
             "type": "org.osbuild.rhsm",
             "options": {
-              "dnf-plugins": {
-                "product-id": {
-                  "enabled": false
-                },
-                "subscription-manager": {
-                  "enabled": false
-                }
-              },
               "subscription-manager": {
                 "rhsm": {
                   "manage_repos": false
@@ -10780,10 +10772,10 @@
     "rhsm": {
       "dnf-plugins": {
         "product-id": {
-          "enabled": false
+          "enabled": true
         },
         "subscription-manager": {
-          "enabled": false
+          "enabled": true
         }
       },
       "rhsm.conf": {
@@ -10833,8 +10825,6 @@
     "rpm-verify": {
       "changed": {
         "/etc/chrony.conf": "S.5....T.",
-        "/etc/dnf/plugins/product-id.conf": "..5....T.",
-        "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
         "/etc/machine-id": ".M.......",
         "/etc/nsswitch.conf": "....L....",
         "/etc/pam.d/fingerprint-auth": "....L....",
