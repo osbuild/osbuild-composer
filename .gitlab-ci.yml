@@ -6,7 +6,7 @@ stages:
   - cleanup
   - finish
 
-.terraform:
+.base:
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
@@ -18,6 +18,17 @@ stages:
       - journal-log
       - ci-artifacts
     when: always
+
+.terraform:
+  extends: .base
+  tags:
+    - terraform
+
+.terraform/openstack:
+  extends: .base
+  tags:
+    - terraform/openstack
+
 
 init:
   stage: init
@@ -150,7 +161,7 @@ Regression:
 
 OSTree:
   stage: test
-  extends: .terraform
+  extends: .terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
@@ -235,18 +246,6 @@ Integration:
           - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
-          - libvirt.sh
-        RUNNER:
-          - aws/fedora-33-x86_64
-          - openstack/centos-stream-8-x86_64
-      - SCRIPT:
-          - libvirt.sh
-        RUNNER:
-          - aws/rhel-8-x86_64
-          - openstack/rhel-8.5-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - SCRIPT:
           - aws.sh
           - azure.sh
         RUNNER:
@@ -284,6 +283,26 @@ API:
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
+libvirt:
+  stage: test
+  extends: .terraform/openstack
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/libvirt.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/fedora-33-x86_64
+          - openstack/centos-stream-8-x86_64
+      - RUNNER:
+          - openstack/rhel-8-x86_64
+          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-9.0-beta-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 RHEL 9 on 8:
   stage: test
   extends: .terraform
@@ -318,7 +337,7 @@ NIGHTLY_SUCCESS:
 
 Installer:
   stage: test
-  extends: .terraform
+  extends: .terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
