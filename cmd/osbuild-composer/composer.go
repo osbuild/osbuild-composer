@@ -12,6 +12,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -21,7 +23,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Composer struct {
