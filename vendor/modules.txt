@@ -291,8 +291,11 @@ github.com/ubccr/kerby/khttp
 github.com/valyala/bytebufferpool
 # github.com/valyala/fasttemplate v1.2.1
 github.com/valyala/fasttemplate
-# github.com/vmware/govmomi v0.23.0
+# github.com/vmware/govmomi v0.26.1
 ## explicit
+github.com/vmware/govmomi/cns
+github.com/vmware/govmomi/cns/methods
+github.com/vmware/govmomi/cns/types
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/govc/cli
 github.com/vmware/govmomi/govc/datastore
@@ -308,6 +311,9 @@ github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/ovf
+github.com/vmware/govmomi/pbm
+github.com/vmware/govmomi/pbm/methods
+github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
 github.com/vmware/govmomi/session/cache
@@ -328,6 +334,7 @@ github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
 github.com/vmware/govmomi/vmdk
+github.com/vmware/govmomi/vsan/vsanfs/types
 # go.opencensus.io v0.22.5
 go.opencensus.io
 go.opencensus.io/internal
