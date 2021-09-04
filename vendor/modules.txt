@@ -25,7 +25,7 @@ github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources
 github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10-01/storage
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/azure-storage-blob-go v0.13.0
+# github.com/Azure/azure-storage-blob-go v0.14.0
 ## explicit
 github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-autorest v14.2.0+incompatible
@@ -227,7 +227,7 @@ github.com/julienschmidt/httprouter
 # github.com/kolo/xmlrpc v0.0.0-20200310150728-e0350524596b
 ## explicit
 github.com/kolo/xmlrpc
-# github.com/kr/pretty v0.1.0
+# github.com/kr/pretty v0.2.1
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
