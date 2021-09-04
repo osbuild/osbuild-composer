@@ -9,7 +9,6 @@ import (
 	"math"
 	"math/big"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,7 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -527,70 +526,52 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 		return ctx.JSON(200, ComposeMetadata{})
 	}
 
-	manifestVer, err := job.Manifest.Version()
-	if err != nil {
-		panic("Failed to parse manifest version: " + err.Error())
-	}
-
-	var rpms []rpmmd.RPM
-	var ostreeCommitResult *osbuild1.StageResult
-	var coreStages []osbuild1.StageResult
-	switch manifestVer {
-	case "1":
-		coreStages = result.OSBuildOutput.Stages
-		if assemblerResult := result.OSBuildOutput.Assembler; assemblerResult.Name == "org.osbuild.ostree.commit" {
-			ostreeCommitResult = result.OSBuildOutput.Assembler
+	var ostreeCommitMetadata *osbuild.OSTreeCommitStageMetadata
+	var rpmStagesMd []osbuild.RPMStageMetadata // collect non-build rpm stage metadata
+	for plName, plMd := range result.OSBuildOutput.Metadata {
+		if plName == "build" {
+			// skip build pipeline
+			continue
 		}
-	case "2":
-		// v2 manifest results store all stage output in the main stages
-		// here we filter out the build stages to collect only the RPMs for the
-		// core stages
-		// the filtering relies on two assumptions:
-		// 1. the build pipeline is named "build"
-		// 2. the stage results from v2 manifests when converted to v1 are
-		// named by prefixing the pipeline name
-		for _, stage := range result.OSBuildOutput.Stages {
-			if !strings.HasPrefix(stage.Name, "build") {
-				coreStages = append(coreStages, stage)
+		for _, stageMd := range plMd {
+			switch md := stageMd.(type) {
+			case *osbuild.RPMStageMetadata:
+				rpmStagesMd = append(rpmStagesMd, *md)
+			case *osbuild.OSTreeCommitStageMetadata:
+				ostreeCommitMetadata = md
 			}
 		}
-		// find the ostree.commit stage
-		for idx, stage := range result.OSBuildOutput.Stages {
-			if strings.HasSuffix(stage.Name, "org.osbuild.ostree.commit") {
-				ostreeCommitResult = &result.OSBuildOutput.Stages[idx]
-				break
-			}
-		}
-	default:
-		panic("Unknown manifest version: " + manifestVer)
 	}
 
-	rpms = rpmmd.OSBuildStagesToRPMs(coreStages)
-
-	packages := make([]PackageMetadata, len(rpms))
-	for idx, rpm := range rpms {
-		packages[idx] = PackageMetadata{
-			Type:      rpm.Type,
-			Name:      rpm.Name,
-			Version:   rpm.Version,
-			Release:   rpm.Release,
-			Epoch:     rpm.Epoch,
-			Arch:      rpm.Arch,
-			Sigmd5:    rpm.Sigmd5,
-			Signature: rpm.Signature,
-		}
-	}
+	packages := stagesToPackageMetadata(rpmStagesMd)
 
 	resp := new(ComposeMetadata)
 	resp.Packages = &packages
 
-	if ostreeCommitResult != nil && ostreeCommitResult.Metadata != nil {
-		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
-		if !ok {
-			panic("Failed to convert ostree commit stage metadata")
-		}
-		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
+	if ostreeCommitMetadata != nil {
+		resp.OstreeCommit = &ostreeCommitMetadata.Compose.OSTreeCommit
 	}
 
 	return ctx.JSON(200, resp)
+}
+
+func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadata {
+	packages := make([]PackageMetadata, 0)
+	for _, md := range stages {
+		for _, rpm := range md.Packages {
+			packages = append(packages,
+				PackageMetadata{
+					Type:      "rpm",
+					Name:      rpm.Name,
+					Version:   rpm.Version,
+					Release:   rpm.Release,
+					Epoch:     rpm.Epoch,
+					Arch:      rpm.Arch,
+					Sigmd5:    rpm.SigMD5,
+					Signature: rpmmd.PackageMetadataToSignature(rpm),
+				},
+			)
+		}
+	}
+	return packages
 }
