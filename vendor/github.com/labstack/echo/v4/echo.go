@@ -48,7 +48,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -59,12 +59,17 @@ import (
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 type (
 	// Echo is the top-level framework instance.
 	Echo struct {
 		common
+		// startupMutex is mutex to lock Echo instance access during server configuration and startup. Useful for to get
+		// listener address info (on which interface/port was listener binded) without having data races.
+		startupMutex     sync.RWMutex
 		StdLogger        *stdLog.Logger
 		colorer          *color.Color
 		premiddleware    []MiddlewareFunc
@@ -85,9 +90,12 @@ type (
 		HidePort         bool
 		HTTPErrorHandler HTTPErrorHandler
 		Binder           Binder
+		JSONSerializer   JSONSerializer
 		Validator        Validator
 		Renderer         Renderer
 		Logger           Logger
+		IPExtractor      IPExtractor
+		ListenerNetwork  string
 	}
 
 	// Route contains a handler and information for matching against requests.
@@ -116,6 +124,12 @@ type (
 	// Validator is the interface that wraps the Validate function.
 	Validator interface {
 		Validate(i interface{}) error
+	}
+
+	// JSONSerializer is the interface that encodes and decodes JSON to and from interfaces.
+	JSONSerializer interface {
+		Serialize(c Context, i interface{}, indent string) error
+		Deserialize(c Context, i interface{}) error
 	}
 
 	// Renderer is the interface that wraps the Render function.
@@ -227,7 +241,7 @@ const (
 
 const (
 	// Version of Echo
-	Version = "4.1.11"
+	Version = "4.5.0"
 	website = "https://echo.labstack.com"
 	// http://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=Echo
 	banner = `
@@ -277,6 +291,7 @@ var (
 	ErrInvalidRedirectCode         = errors.New("invalid redirect status code")
 	ErrCookieNotFound              = errors.New("cookie not found")
 	ErrInvalidCertOrKeyType        = errors.New("invalid cert or key type, must be string or []byte")
+	ErrInvalidListenerNetwork      = errors.New("invalid listener network")
 )
 
 // Error handlers
@@ -298,14 +313,16 @@ func New() (e *Echo) {
 		AutoTLSManager: autocert.Manager{
 			Prompt: autocert.AcceptTOS,
 		},
-		Logger:   log.New("echo"),
-		colorer:  color.New(),
-		maxParam: new(int),
+		Logger:          log.New("echo"),
+		colorer:         color.New(),
+		maxParam:        new(int),
+		ListenerNetwork: "tcp",
 	}
 	e.Server.Handler = e
 	e.TLSServer.Handler = e
 	e.HTTPErrorHandler = e.DefaultHTTPErrorHandler
 	e.Binder = &DefaultBinder{}
+	e.JSONSerializer = &DefaultJSONSerializer{}
 	e.Logger.SetLevel(log.ERROR)
 	e.StdLogger = stdLog.New(e.Logger.Output(), e.Logger.Prefix()+": ", 0)
 	e.pool.New = func() interface{} {
@@ -354,10 +371,16 @@ func (e *Echo) DefaultHTTPErrorHandler(err error, c Context) {
 			Message: http.StatusText(http.StatusInternalServerError),
 		}
 	}
-	if e.Debug {
-		he.Message = err.Error()
-	} else if m, ok := he.Message.(string); ok {
-		he.Message = Map{"message": m}
+
+	// Issue #1426
+	code := he.Code
+	message := he.Message
+	if m, ok := he.Message.(string); ok {
+		if e.Debug {
+			message = Map{"message": m, "error": err.Error()}
+		} else {
+			message = Map{"message": m}
+		}
 	}
 
 	// Send response
@@ -365,7 +388,7 @@ func (e *Echo) DefaultHTTPErrorHandler(err error, c Context) {
 		if c.Request().Method == http.MethodHead { // Issue #608
 			err = c.NoContent(he.Code)
 		} else {
-			err = c.JSON(he.Code, he.Message)
+			err = c.JSON(code, message)
 		}
 		if err != nil {
 			e.Logger.Error(err)
@@ -472,11 +495,31 @@ func (common) static(prefix, root string, get func(string, HandlerFunc, ...Middl
 		if err != nil {
 			return err
 		}
-		name := filepath.Join(root, path.Clean("/"+p)) // "/"+ for security
+
+		name := filepath.Join(root, filepath.Clean("/"+p)) // "/"+ for security
+		fi, err := os.Stat(name)
+		if err != nil {
+			// The access path does not exist
+			return NotFoundHandler(c)
+		}
+
+		// If the request is for a directory and does not end with "/"
+		p = c.Request().URL.Path // path must not be empty.
+		if fi.IsDir() && p[len(p)-1] != '/' {
+			// Redirect to ends with "/"
+			return c.Redirect(http.StatusMovedPermanently, p+"/")
+		}
 		return c.File(name)
 	}
-	if prefix == "/" {
-		return get(prefix+"*", h)
+	// Handle added routes based on trailing slash:
+	// 	/prefix  => exact route "/prefix" + any route "/prefix/*"
+	// 	/prefix/ => only any route "/prefix/*"
+	if prefix != "" {
+		if prefix[len(prefix)-1] == '/' {
+			// Only add any route for intentional trailing slash
+			return get(prefix+"*", h)
+		}
+		get(prefix, h)
 	}
 	return get(prefix+"/*", h)
 }
@@ -497,11 +540,7 @@ func (e *Echo) add(host, method, path string, handler HandlerFunc, middleware ..
 	name := handlerName(handler)
 	router := e.findRouter(host)
 	router.Add(method, path, func(c Context) error {
-		h := handler
-		// Chain middleware
-		for i := len(middleware) - 1; i >= 0; i-- {
-			h = middleware[i](h)
-		}
+		h := applyMiddleware(handler, middleware...)
 		return h(c)
 	})
 	r := &Route{
@@ -553,7 +592,7 @@ func (e *Echo) Reverse(name string, params ...interface{}) string {
 	for _, r := range e.router.routes {
 		if r.Name == name {
 			for i, l := 0, len(r.Path); i < l; i++ {
-				if r.Path[i] == ':' && n < ln {
+				if (r.Path[i] == ':' || r.Path[i] == '*') && n < ln {
 					for ; i < l && r.Path[i] != '/'; i++ {
 					}
 					uri.WriteString(fmt.Sprintf("%v", params[n]))
@@ -595,16 +634,15 @@ func (e *Echo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Acquire context
 	c := e.pool.Get().(*context)
 	c.Reset(r, w)
-
 	h := NotFoundHandler
 
 	if e.premiddleware == nil {
-		e.findRouter(r.Host).Find(r.Method, getPath(r), c)
+		e.findRouter(r.Host).Find(r.Method, GetPath(r), c)
 		h = c.Handler()
 		h = applyMiddleware(h, e.middleware...)
 	} else {
 		h = func(c Context) error {
-			e.findRouter(r.Host).Find(r.Method, getPath(r), c)
+			e.findRouter(r.Host).Find(r.Method, GetPath(r), c)
 			h := c.Handler()
 			h = applyMiddleware(h, e.middleware...)
 			return h(c)
@@ -623,21 +661,30 @@ func (e *Echo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Start starts an HTTP server.
 func (e *Echo) Start(address string) error {
+	e.startupMutex.Lock()
 	e.Server.Addr = address
-	return e.StartServer(e.Server)
+	if err := e.configureServer(e.Server); err != nil {
+		e.startupMutex.Unlock()
+		return err
+	}
+	e.startupMutex.Unlock()
+	return e.Server.Serve(e.Listener)
 }
 
 // StartTLS starts an HTTPS server.
 // If `certFile` or `keyFile` is `string` the values are treated as file paths.
 // If `certFile` or `keyFile` is `[]byte` the values are treated as the certificate or key as-is.
 func (e *Echo) StartTLS(address string, certFile, keyFile interface{}) (err error) {
+	e.startupMutex.Lock()
 	var cert []byte
 	if cert, err = filepathOrContent(certFile); err != nil {
+		e.startupMutex.Unlock()
 		return
 	}
 
 	var key []byte
 	if key, err = filepathOrContent(keyFile); err != nil {
+		e.startupMutex.Unlock()
 		return
 	}
 
@@ -645,10 +692,17 @@ func (e *Echo) StartTLS(address string, certFile, keyFile interface{}) (err erro
 	s.TLSConfig = new(tls.Config)
 	s.TLSConfig.Certificates = make([]tls.Certificate, 1)
 	if s.TLSConfig.Certificates[0], err = tls.X509KeyPair(cert, key); err != nil {
+		e.startupMutex.Unlock()
 		return
 	}
 
-	return e.startTLS(address)
+	e.configureTLS(address)
+	if err := e.configureServer(s); err != nil {
+		e.startupMutex.Unlock()
+		return err
+	}
+	e.startupMutex.Unlock()
+	return s.Serve(e.TLSListener)
 }
 
 func filepathOrContent(fileOrContent interface{}) (content []byte, err error) {
@@ -664,24 +718,45 @@ func filepathOrContent(fileOrContent interface{}) (content []byte, err error) {
 
 // StartAutoTLS starts an HTTPS server using certificates automatically installed from https://letsencrypt.org.
 func (e *Echo) StartAutoTLS(address string) error {
+	e.startupMutex.Lock()
 	s := e.TLSServer
 	s.TLSConfig = new(tls.Config)
 	s.TLSConfig.GetCertificate = e.AutoTLSManager.GetCertificate
 	s.TLSConfig.NextProtos = append(s.TLSConfig.NextProtos, acme.ALPNProto)
-	return e.startTLS(address)
+
+	e.configureTLS(address)
+	if err := e.configureServer(s); err != nil {
+		e.startupMutex.Unlock()
+		return err
+	}
+	e.startupMutex.Unlock()
+	return s.Serve(e.TLSListener)
 }
 
-func (e *Echo) startTLS(address string) error {
+func (e *Echo) configureTLS(address string) {
 	s := e.TLSServer
 	s.Addr = address
 	if !e.DisableHTTP2 {
 		s.TLSConfig.NextProtos = append(s.TLSConfig.NextProtos, "h2")
 	}
-	return e.StartServer(e.TLSServer)
 }
 
 // StartServer starts a custom http server.
 func (e *Echo) StartServer(s *http.Server) (err error) {
+	e.startupMutex.Lock()
+	if err := e.configureServer(s); err != nil {
+		e.startupMutex.Unlock()
+		return err
+	}
+	if s.TLSConfig != nil {
+		e.startupMutex.Unlock()
+		return s.Serve(e.TLSListener)
+	}
+	e.startupMutex.Unlock()
+	return s.Serve(e.Listener)
+}
+
+func (e *Echo) configureServer(s *http.Server) (err error) {
 	// Setup
 	e.colorer.SetOutput(e.Logger.Output())
 	s.ErrorLog = e.StdLogger
@@ -696,7 +771,7 @@ func (e *Echo) StartServer(s *http.Server) (err error) {
 
 	if s.TLSConfig == nil {
 		if e.Listener == nil {
-			e.Listener, err = newListener(s.Addr)
+			e.Listener, err = newListener(s.Addr, e.ListenerNetwork)
 			if err != nil {
 				return err
 			}
@@ -704,10 +779,10 @@ func (e *Echo) StartServer(s *http.Server) (err error) {
 		if !e.HidePort {
 			e.colorer.Printf("⇨ http server started on %s\n", e.colorer.Green(e.Listener.Addr()))
 		}
-		return s.Serve(e.Listener)
+		return nil
 	}
 	if e.TLSListener == nil {
-		l, err := newListener(s.Addr)
+		l, err := newListener(s.Addr, e.ListenerNetwork)
 		if err != nil {
 			return err
 		}
@@ -716,12 +791,65 @@ func (e *Echo) StartServer(s *http.Server) (err error) {
 	if !e.HidePort {
 		e.colorer.Printf("⇨ https server started on %s\n", e.colorer.Green(e.TLSListener.Addr()))
 	}
-	return s.Serve(e.TLSListener)
+	return nil
+}
+
+// ListenerAddr returns net.Addr for Listener
+func (e *Echo) ListenerAddr() net.Addr {
+	e.startupMutex.RLock()
+	defer e.startupMutex.RUnlock()
+	if e.Listener == nil {
+		return nil
+	}
+	return e.Listener.Addr()
+}
+
+// TLSListenerAddr returns net.Addr for TLSListener
+func (e *Echo) TLSListenerAddr() net.Addr {
+	e.startupMutex.RLock()
+	defer e.startupMutex.RUnlock()
+	if e.TLSListener == nil {
+		return nil
+	}
+	return e.TLSListener.Addr()
+}
+
+// StartH2CServer starts a custom http/2 server with h2c (HTTP/2 Cleartext).
+func (e *Echo) StartH2CServer(address string, h2s *http2.Server) (err error) {
+	e.startupMutex.Lock()
+	// Setup
+	s := e.Server
+	s.Addr = address
+	e.colorer.SetOutput(e.Logger.Output())
+	s.ErrorLog = e.StdLogger
+	s.Handler = h2c.NewHandler(e, h2s)
+	if e.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+	}
+
+	if !e.HideBanner {
+		e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
+	}
+
+	if e.Listener == nil {
+		e.Listener, err = newListener(s.Addr, e.ListenerNetwork)
+		if err != nil {
+			e.startupMutex.Unlock()
+			return err
+		}
+	}
+	if !e.HidePort {
+		e.colorer.Printf("⇨ http server started on %s\n", e.colorer.Green(e.Listener.Addr()))
+	}
+	e.startupMutex.Unlock()
+	return s.Serve(e.Listener)
 }
 
 // Close immediately stops the server.
 // It internally calls `http.Server#Close()`.
 func (e *Echo) Close() error {
+	e.startupMutex.Lock()
+	defer e.startupMutex.Unlock()
 	if err := e.TLSServer.Close(); err != nil {
 		return err
 	}
@@ -731,6 +859,8 @@ func (e *Echo) Close() error {
 // Shutdown stops the server gracefully.
 // It internally calls `http.Server#Shutdown()`.
 func (e *Echo) Shutdown(ctx stdContext.Context) error {
+	e.startupMutex.Lock()
+	defer e.startupMutex.Unlock()
 	if err := e.TLSServer.Shutdown(ctx); err != nil {
 		return err
 	}
@@ -748,6 +878,9 @@ func NewHTTPError(code int, message ...interface{}) *HTTPError {
 
 // Error makes it compatible with `error` interface.
 func (he *HTTPError) Error() string {
+	if he.Internal == nil {
+		return fmt.Sprintf("code=%d, message=%v", he.Code, he.Message)
+	}
 	return fmt.Sprintf("code=%d, message=%v, internal=%v", he.Code, he.Message, he.Internal)
 }
 
@@ -755,6 +888,11 @@ func (he *HTTPError) Error() string {
 func (he *HTTPError) SetInternal(err error) *HTTPError {
 	he.Internal = err
 	return he
+}
+
+// Unwrap satisfies the Go 1.13 error wrapper interface.
+func (he *HTTPError) Unwrap() error {
+	return he.Internal
 }
 
 // WrapHandler wraps `http.Handler` into `echo.HandlerFunc`.
@@ -779,7 +917,11 @@ func WrapMiddleware(m func(http.Handler) http.Handler) MiddlewareFunc {
 	}
 }
 
-func getPath(r *http.Request) string {
+// GetPath returns RawPath, if it's empty returns Path from URL
+// Difference between RawPath and Path is:
+//  * Path is where request path is stored. Value is stored in decoded form: /%47%6f%2f becomes /Go/.
+//  * RawPath is an optional field which only gets set if the default encoding is different from Path.
+func GetPath(r *http.Request) string {
 	path := r.URL.RawPath
 	if path == "" {
 		path = r.URL.Path
@@ -822,14 +964,18 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 		return
 	} else if err = c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 		return
-	} else if err = c.(*net.TCPConn).SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		return
 	}
+	// Ignore error from setting the KeepAlivePeriod as some systems, such as
+	// OpenBSD, do not support setting TCP_USER_TIMEOUT on IPPROTO_TCP
+	_ = c.(*net.TCPConn).SetKeepAlivePeriod(3 * time.Minute)
 	return
 }
 
-func newListener(address string) (*tcpKeepAliveListener, error) {
-	l, err := net.Listen("tcp", address)
+func newListener(address, network string) (*tcpKeepAliveListener, error) {
+	if network != "tcp" && network != "tcp4" && network != "tcp6" {
+		return nil, ErrInvalidListenerNetwork
+	}
+	l, err := net.Listen(network, address)
 	if err != nil {
 		return nil, err
 	}
