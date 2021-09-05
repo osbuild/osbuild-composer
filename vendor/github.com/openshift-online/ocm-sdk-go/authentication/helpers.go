@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 // tokenRemaining determines if the given token will eventually expire (offile access tokens, for

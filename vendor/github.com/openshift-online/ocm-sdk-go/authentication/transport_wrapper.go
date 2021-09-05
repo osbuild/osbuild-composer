@@ -35,7 +35,7 @@ import (
 
 	//
 	"github.com/cenkalti/backoff/v4"
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/openshift-online/ocm-sdk-go/internal"
 	"github.com/openshift-online/ocm-sdk-go/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -612,14 +612,14 @@ func (w *TransportWrapper) Tokens(ctx context.Context, expiresIn ...time.Duratio
 		code, access, refresh, err = w.tokens(ctx, attempt, expiresDuration)
 		if err != nil {
 			if code >= http.StatusInternalServerError {
-				w.logger.Error(
+				w.logger.Debug(
 					ctx,
 					"Can't get tokens, got HTTP code %d, will retry: %v",
 					code, err,
 				)
 				return err
 			}
-			w.logger.Error(
+			w.logger.Debug(
 				ctx,
 				"Can't get tokens, got HTTP code %d, will not retry: %v",
 				code, err,
@@ -628,7 +628,7 @@ func (w *TransportWrapper) Tokens(ctx context.Context, expiresIn ...time.Duratio
 		}
 
 		if attempt > 1 {
-			w.logger.Info(ctx, "Got tokens on attempt %d", attempt)
+			w.logger.Debug(ctx, "Got tokens on attempt %d", attempt)
 		} else {
 			w.logger.Debug(ctx, "Got tokens on first attempt")
 		}

@@ -221,6 +221,49 @@ func (b *ClientSelectorBuilder) createCookieJar() (result http.CookieJar, err er
 // created previously for the server address it will be reused, otherwise it will be created.
 func (s *ClientSelector) Select(ctx context.Context, address *ServerAddress) (client *http.Client,
 	err error) {
+	// We will be modifiying the clients table so we need to acquire the lock before proceeding:
+	s.clientsMutex.Lock()
+	defer s.clientsMutex.Unlock()
+
+	// Get an existing client, or create a new one if it doesn't exist yet:
+	key := s.key(address)
+	client, ok := s.clientsTable[key]
+	if ok {
+		return
+	}
+	s.logger.Debug(ctx, "Client for key '%s' doesn't exist, will create it", key)
+	client, err = s.create(ctx, address)
+	if err != nil {
+		return
+	}
+	s.clientsTable[key] = client
+
+	return
+}
+
+// Forget forgets the client for the given server address. This is intended for situations where a
+// client is missbehaving, for example when it is generating protocol errors. In those situations
+// connections may be still open but already unusable. To avoid additional errors is beter to
+// discard the client and create a new one.
+func (s *ClientSelector) Forget(ctx context.Context, address *ServerAddress) error {
+	// We will be modifiying the clients table so we need to acquire the lock before proceeding:
+	s.clientsMutex.Lock()
+	defer s.clientsMutex.Unlock()
+
+	// Close the client and delete it from the table:
+	key := s.key(address)
+	client, ok := s.clientsTable[key]
+	if ok {
+		delete(s.clientsTable, key)
+		client.CloseIdleConnections()
+	}
+	s.logger.Debug(ctx, "Discarded client for key '%s'", key)
+
+	return nil
+}
+
+// key calculates from the given server address the key that is used to store clients in the table.
+func (s *ClientSelector) key(address *ServerAddress) string {
 	// We need to use a different client for each TCP host name and each Unix socket because we
 	// explicitly set the TLS server name to the host name. For example, if the first request is
 	// for the SSO service (it will usually be) then we would set the TLS server name to
@@ -242,24 +285,7 @@ func (s *ClientSelector) Select(ctx context.Context, address *ServerAddress) (cl
 	case TCPNetwork:
 		key = fmt.Sprintf("%s:%s", key, address.Host)
 	}
-
-	// We will be modifiying the clients table so we need to acquire the lock before proceeding:
-	s.clientsMutex.Lock()
-	defer s.clientsMutex.Unlock()
-
-	// Get an existing client, or create a new one if it doesn't exist yet:
-	client, ok := s.clientsTable[key]
-	if ok {
-		return
-	}
-	s.logger.Debug(ctx, "Client for key '%s' doesn't exist, will create it", key)
-	client, err = s.create(ctx, address)
-	if err != nil {
-		return
-	}
-	s.clientsTable[key] = client
-
-	return
+	return key
 }
 
 // create creates a new HTTP client to use to connect to the given address.

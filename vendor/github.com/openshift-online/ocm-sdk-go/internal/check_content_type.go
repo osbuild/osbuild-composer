@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"strings"
 
-	strip "github.com/grokify/html-strip-tags-go"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 var wsRegex = regexp.MustCompile(`\s+`)
@@ -78,7 +78,7 @@ func contentSummary(mediaType string, response *http.Response) (summary string, 
 	limit := 250
 	runes := []rune(string(body))
 	if strings.EqualFold(mediaType, "text/html") && len(runes) > limit {
-		content := html.UnescapeString(strip.StripTags(string(body)))
+		content := html.UnescapeString(bluemonday.StrictPolicy().Sanitize(string(body)))
 		content = wsRegex.ReplaceAllString(strings.TrimSpace(content), " ")
 		runes = []rune(content)
 	}
