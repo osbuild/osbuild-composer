@@ -22,7 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 // ContextWithToken creates a new context containing the given token.

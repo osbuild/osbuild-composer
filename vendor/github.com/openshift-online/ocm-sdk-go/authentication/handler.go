@@ -35,8 +35,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/ghodss/yaml"
+	"github.com/golang-jwt/jwt"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/logging"
@@ -828,18 +828,21 @@ func (h *Handler) checkToken(w http.ResponseWriter, r *http.Request,
 // something is wrong it sends an error response to the client and returns false.
 func (h *Handler) checkClaims(w http.ResponseWriter, r *http.Request,
 	claims jwt.MapClaims) bool {
-	value, ok := h.checkStringClaim(w, r, claims, "typ")
+	// Check the token type:
+	typ, ok := h.checkStringClaim(w, r, claims, "typ")
 	if !ok {
 		return false
 	}
-	if !strings.EqualFold(value, "Bearer") {
+	if !strings.EqualFold(typ, "Bearer") {
 		h.sendError(
 			w, r,
 			"Bearer token type '%s' isn't supported",
-			value,
+			typ,
 		)
 		return false
 	}
+
+	// Check the format of the issue and expiration date claims:
 	_, ok = h.checkTimeClaim(w, r, claims, "iat")
 	if !ok {
 		return false
@@ -847,6 +850,27 @@ func (h *Handler) checkClaims(w http.ResponseWriter, r *http.Request,
 	_, ok = h.checkTimeClaim(w, r, claims, "exp")
 	if !ok {
 		return false
+	}
+
+	// Make sure that the impersonation flag claim doesn't exist, or is `false`:
+	value, ok := claims["impersonated"]
+	if ok {
+		flag, ok := value.(bool)
+		if !ok {
+			h.sendError(
+				w, r,
+				"Impersonation claim contains incorrect boolean value '%v'",
+				value,
+			)
+			return false
+		}
+		if flag {
+			h.sendError(
+				w, r,
+				"Impersonation isn't allowed",
+			)
+			return false
+		}
 	}
 	return true
 }
