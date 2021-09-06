@@ -2,6 +2,9 @@ package osbuild2
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+	"sort"
 )
 
 type PipelineResult []StageResult
@@ -86,4 +89,44 @@ type Result struct {
 	Error    json.RawMessage             `json:"error"`
 	Log      map[string]PipelineResult   `json:"log"`
 	Metadata map[string]PipelineMetadata `json:"metadata"`
+}
+
+func (cr *Result) Write(writer io.Writer) error {
+	if cr.Log == nil {
+		fmt.Fprintf(writer, "The compose result is empty.\n")
+	}
+
+	// The pipeline results don't have a stable order
+	// (see https://github.com/golang/go/issues/27179)
+	// Sort based on pipeline name to have a stable print order
+	pipelineNames := make([]string, 0, len(cr.Log))
+	for name := range cr.Log {
+		pipelineNames = append(pipelineNames, name)
+	}
+	sort.Strings(pipelineNames)
+
+	for _, pipelineName := range pipelineNames {
+		fmt.Fprintf(writer, "Pipeline %s\n", pipelineName)
+		pipelineMD := cr.Metadata[pipelineName]
+		for _, stage := range cr.Log[pipelineName] {
+			fmt.Fprintf(writer, "Stage %s\n", stage.Type)
+			fmt.Fprintf(writer, "Output:\n%s\n", stage.Output)
+
+			// print structured stage metadata if available
+			if pipelineMD != nil {
+				if md, ok := pipelineMD[stage.Type]; ok {
+					fmt.Fprint(writer, "Metadata:\n")
+					enc := json.NewEncoder(writer)
+					enc.SetIndent("", "  ")
+					err := enc.Encode(md)
+					if err != nil {
+						return err
+					}
+				}
+				fmt.Fprint(writer, "\n")
+			}
+		}
+	}
+
+	return nil
 }
