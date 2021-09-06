@@ -201,6 +201,7 @@ OSTree simplified installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64-large
+          - openstack/rhel-9.0-beta-nightly-x86_64
 
 OSTree raw image:
   stage: test
