@@ -102,6 +102,12 @@ type ImageType interface {
 	// image type.
 	PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet
 
+	// Returns the names of the pipelines that set up the build environment (buildroot).
+	BuildPipelines() []string
+
+	// Returns the names of the pipelines that create the image.
+	PayloadPipelines() []string
+
 	// Returns the names of the stages that will produce the build output.
 	Exports() []string
 
@@ -242,4 +248,22 @@ func readOSRelease(r io.Reader) (map[string]string, error) {
 	}
 
 	return osrelease, nil
+}
+
+// Fallbacks: When a new method is added to an interface to provide to provide
+// information that isn't available for older implementations, the older
+// methods should return a fallback/default value by calling the appropriate
+// function from below.
+// Example: Exports() simply returns "assembler" for older image type
+// implementations that didn't produce v1 manifests that have named pipelines.
+func BuildPipelinesFallback() []string {
+	return []string{"build"}
+}
+
+func PayloadPipelinesFallback() []string {
+	return []string{"os", "assembler"}
+}
+
+func ExportsFallback() []string {
+	return []string{"assembler"}
 }

@@ -28,6 +28,9 @@ type imageTypeS2 struct {
 	bootISO          bool
 	rpmOstree        bool
 	defaultSize      uint64
+	buildPipelines   []string
+	payloadPipelines []string
+	exports          []string
 }
 
 func (t *imageTypeS2) Arch() distro.Arch {
@@ -116,8 +119,16 @@ func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Packa
 	return sets
 }
 
+func (t *imageTypeS2) BuildPipelines() []string {
+	return t.buildPipelines
+}
+
+func (t *imageTypeS2) PayloadPipelines() []string {
+	return t.payloadPipelines
+}
+
 func (t *imageTypeS2) Exports() []string {
-	return []string{"assembler"}
+	return t.exports
 }
 
 func (t *imageTypeS2) Manifest(c *blueprint.Customizations,

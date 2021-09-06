@@ -58,6 +58,9 @@ type imageType struct {
 	bootable                bool
 	rpmOstree               bool
 	defaultSize             uint64
+	buildPipelines          []string
+	payloadPipelines        []string
+	exports                 []string
 	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable
 	assembler               func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
@@ -146,6 +149,9 @@ func (a *architecture) addImageTypes(imageTypes ...imageType) {
 			bootable:                it.bootable,
 			rpmOstree:               it.rpmOstree,
 			defaultSize:             it.defaultSize,
+			buildPipelines:          it.buildPipelines,
+			payloadPipelines:        it.payloadPipelines,
+			exports:                 it.exports,
 			partitionTableGenerator: it.partitionTableGenerator,
 			assembler:               it.assembler,
 		}
@@ -171,6 +177,9 @@ func (a *architecture) addS2ImageTypes(imageTypes ...imageTypeS2) {
 			rpmOstree:        it.rpmOstree,
 			defaultSize:      it.defaultSize,
 			bootISO:          it.bootISO,
+			buildPipelines:   it.buildPipelines,
+			payloadPipelines: it.payloadPipelines,
+			exports:          it.exports,
 		}
 	}
 }
@@ -256,8 +265,28 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	}
 }
 
+func (t *imageType) BuildPipelines() []string {
+	if len(t.buildPipelines) > 0 {
+		return t.buildPipelines
+	}
+	// fallback for v1 image types
+	return distro.BuildPipelinesFallback()
+}
+
+func (t *imageType) PayloadPipelines() []string {
+	if len(t.payloadPipelines) > 0 {
+		return t.payloadPipelines
+	}
+	// fallback for v1 image types
+	return distro.PayloadPipelinesFallback()
+}
+
 func (t *imageType) Exports() []string {
-	return []string{"assembler"}
+	if len(t.exports) > 0 {
+		return t.exports
+	}
+	// fallback for v1 image types
+	return distro.ExportsFallback()
 }
 
 func (t *imageType) Manifest(c *blueprint.Customizations,
@@ -1302,9 +1331,12 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 			},
 			"container": {Include: []string{"httpd"}},
 		},
-		enabledServices: edgeImgTypeX86_64.enabledServices,
-		rpmOstree:       true,
-		bootISO:         false,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "assembler"},
+		exports:          []string{"assembler"},
+		enabledServices:  edgeImgTypeX86_64.enabledServices,
+		rpmOstree:        true,
+		bootISO:          false,
 	}
 
 	edgeBuildPkgs := []string{
@@ -1523,9 +1555,12 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 			},
 			"installer": {Include: edgeInstallerPkgs},
 		},
-		enabledServices: edgeImgTypeX86_64.enabledServices,
-		rpmOstree:       true,
-		bootISO:         true,
+		enabledServices:  edgeImgTypeX86_64.enabledServices,
+		rpmOstree:        true,
+		bootISO:          true,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "assembler"},
+		exports:          []string{"assembler"},
 	}
 
 	edgeOCIImgTypeAarch64 := imageTypeS2{
@@ -1539,9 +1574,12 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 			},
 			"container": {Include: []string{"httpd"}},
 		},
-		enabledServices: edgeImgTypeAarch64.enabledServices,
-		rpmOstree:       true,
-		bootISO:         false,
+		enabledServices:  edgeImgTypeAarch64.enabledServices,
+		rpmOstree:        true,
+		bootISO:          false,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "assembler"},
+		exports:          []string{"assembler"},
 	}
 
 	x8664.addImageTypes(

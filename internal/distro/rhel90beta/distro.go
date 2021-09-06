@@ -187,6 +187,8 @@ type imageType struct {
 	defaultTarget    string
 	kernelOptions    string
 	defaultSize      uint64
+	buildPipelines   []string
+	payloadPipelines []string
 	exports          []string
 	pipelines        pipelinesFunc
 
@@ -308,11 +310,16 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 
 }
 
+func (t *imageType) BuildPipelines() []string {
+	return t.buildPipelines
+}
+
+func (t *imageType) PayloadPipelines() []string {
+	return t.payloadPipelines
+}
+
 func (t *imageType) Exports() []string {
-	if len(t.exports) > 0 {
-		return t.exports
-	}
-	return []string{"assembler"}
+	return t.exports
 }
 
 // getBootType returns the BootType which should be used for this particular
@@ -565,10 +572,12 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: edgeBuildPackageSet(),
 			osPkgsKey:    edgeCommitPackageSet(),
 		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		pipelines:       edgeCommitPipelines,
-		exports:         []string{"commit-archive"},
+		enabledServices:  edgeServices,
+		rpmOstree:        true,
+		pipelines:        edgeCommitPipelines,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"ostree-tree", "ostree-commit", "commit-archive"},
+		exports:          []string{"commit-archive"},
 	}
 	edgeOCIImgType := imageType{
 		name:        "edge-container",
@@ -580,11 +589,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			osPkgsKey:        edgeCommitPackageSet(),
 			containerPkgsKey: {Include: []string{"httpd"}},
 		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		bootISO:         false,
-		pipelines:       edgeContainerPipelines,
-		exports:         []string{containerPkgsKey},
+		enabledServices:  edgeServices,
+		rpmOstree:        true,
+		bootISO:          false,
+		pipelines:        edgeContainerPipelines,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
+		exports:          []string{"container"},
 	}
 	edgeInstallerImgType := imageType{
 		name:        "edge-installer",
@@ -603,11 +614,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			osPkgsKey:        edgeCommitPackageSet(),
 			installerPkgsKey: edgeInstallerPackageSet(),
 		},
-		enabledServices: edgeServices,
-		rpmOstree:       true,
-		bootISO:         true,
-		pipelines:       edgeInstallerPipelines,
-		exports:         []string{"bootiso"},
+		enabledServices:  edgeServices,
+		rpmOstree:        true,
+		bootISO:          true,
+		pipelines:        edgeInstallerPipelines,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
 	}
 
 	qcow2ImgType := imageType{
@@ -622,6 +635,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
 		pipelines:           qcow2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
@@ -642,6 +657,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
 		pipelines:           vhdPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
@@ -657,6 +674,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
 		pipelines:           vmdkPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
@@ -672,6 +691,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
 		pipelines:           openstackPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
@@ -704,6 +725,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * GigaByte,
 		pipelines:           ec2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
@@ -722,6 +745,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
 		pipelines:           ec2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
@@ -741,6 +766,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * GigaByte,
 		pipelines:           rhelEc2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
@@ -759,6 +786,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
 		pipelines:           rhelEc2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
@@ -778,6 +807,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * GigaByte,
 		pipelines:           rhelEc2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
@@ -811,8 +842,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 				Exclude: []string{"rng-tools"},
 			},
 		},
-		pipelines: tarPipelines,
-		exports:   []string{"root-tar"},
+		pipelines:        tarPipelines,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "root-tar"},
+		exports:          []string{"root-tar"},
 	}
 	tarInstallerImgTypeX86_64 := imageType{
 		name:     "image-installer",
@@ -823,11 +856,13 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			osPkgsKey:        bareMetalPackageSet(),
 			installerPkgsKey: installerPackageSet(),
 		},
-		rpmOstree: false,
-		bootISO:   true,
-		bootable:  true,
-		pipelines: tarInstallerPipelines,
-		exports:   []string{"bootiso"},
+		rpmOstree:        false,
+		bootISO:          true,
+		bootable:         true,
+		pipelines:        tarInstallerPipelines,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
 	}
 
 	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType)
