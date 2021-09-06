@@ -21,8 +21,8 @@ $ cd osbuild-composer
 2. To install the build-requirements for Fedora and friends, use:
 
 ```
-$ sudo dnf group install 'RPM Development Tools'   # Install rpmbuild
-$ sudo dnf builddep osbuild-composer.spec          # Install build-time dependencies
+$ sudo dnf group install -y 'RPM Development Tools'   # Install rpmbuild
+$ sudo dnf builddep -y osbuild-composer.spec          # Install build-time dependencies
 $ sudo dnf -y install cockpit-composer             # Optional: Install cockpit integration
 $ sudo systemctl start cockpit.socket              # Optional: Start cockpit
 ```
@@ -44,12 +44,13 @@ Alternatively you can use `composer-cli` to interact with the Weldr API. We
 don't have any client for the RCM API, so the only option there is a
 plain `curl`.
 
-When developing the code, use `go` executable to build, run, and test you
-code [1]:
+When developing the code, use `go` executable to generate, build, run, and test you
+code [1], alternatively you can use the script `tools/prepare-source.sh`:
 
 ```
 $ go test ./...
 $ go build ./...
+$ go generate ./...
 $ go run ./cmd/osbuild-pipeline/
 ```
 
