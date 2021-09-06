@@ -229,8 +229,16 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 	}
 }
 
+func (t *imageType) BuildPipelines() []string {
+	return distro.BuildPipelinesFallback()
+}
+
+func (t *imageType) PayloadPipelines() []string {
+	return distro.PayloadPipelinesFallback()
+}
+
 func (t *imageType) Exports() []string {
-	return []string{"assembler"}
+	return distro.ExportsFallback()
 }
 
 func (t *imageType) Manifest(c *blueprint.Customizations,
