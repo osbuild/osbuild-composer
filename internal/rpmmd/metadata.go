@@ -1,7 +1,7 @@
 package rpmmd
 
 import (
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 type RPM struct {
@@ -15,10 +15,10 @@ type RPM struct {
 	Signature *string `json:"signature"`
 }
 
-func OSBuildStagesToRPMs(stages []osbuild.StageResult) []RPM {
+func OSBuildMetadataToRPMs(stagesMetadata map[string]osbuild.StageMetadata) []RPM {
 	rpms := make([]RPM, 0)
-	for _, stage := range stages {
-		switch metadata := stage.Metadata.(type) {
+	for _, md := range stagesMetadata {
+		switch metadata := md.(type) {
 		case *osbuild.RPMStageMetadata:
 			for _, pkg := range metadata.Packages {
 				rpms = append(rpms, RPM{
@@ -29,7 +29,7 @@ func OSBuildStagesToRPMs(stages []osbuild.StageResult) []RPM {
 					Release:   pkg.Release,
 					Arch:      pkg.Arch,
 					Sigmd5:    pkg.SigMD5,
-					Signature: packageMetadataToSignature(pkg),
+					Signature: PackageMetadataToSignature(pkg),
 				})
 			}
 		default:
@@ -39,7 +39,7 @@ func OSBuildStagesToRPMs(stages []osbuild.StageResult) []RPM {
 	return rpms
 }
 
-func packageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
+func PackageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
 	if pkg.SigGPG != "" {
 		return &pkg.SigGPG
 	} else if pkg.SigPGP != "" {
