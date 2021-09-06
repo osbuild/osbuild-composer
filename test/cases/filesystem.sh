@@ -3,6 +3,7 @@
 #
 # Test the ability to specify custom mountpoints for RHEL8.5 and above
 #
+set -euo pipefail
 
 source /etc/os-release
 
@@ -53,8 +54,13 @@ build_image() {
 
     # Start the compose.
     greenprint "🚀 Starting compose"
-    sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    STATUS=$(jq -r '.status' "$COMPOSE_START")
+    # this needs "|| true" at the end for the fail case scenario
+    sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START" || true
+    if rpm -q --quiet weldr-client; then
+        STATUS=$(jq -r '.body.status' "$COMPOSE_START")
+    else
+        STATUS=$(jq -r '.status' "$COMPOSE_START")
+    fi
     
     if [[ $want_fail == "$STATUS" ]]; then
         echo "Something went wrong with the compose. 😢"
@@ -64,17 +70,29 @@ build_image() {
     elif [[ $want_fail == true && $STATUS == false ]]; then
         sudo pkill -P ${WORKER_JOURNAL_PID}
         trap - EXIT
-        ERROR_MSG=$(jq 'first(.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
+        if rpm -q --quiet weldr-client; then
+            ERROR_MSG=$(jq 'first(.body.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
+        else
+            ERROR_MSG=$(jq 'first(.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
+        fi
         return
     else
-      COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+        if rpm -q --quiet weldr-client; then
+            COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+        else
+            COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+        fi
     fi
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        if rpm -q --quiet weldr-client; then
+            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+        else
+            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        fi
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
@@ -141,7 +159,7 @@ size = 2147483648
 
 EOF
 
-build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem qcow2
+build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem qcow2 false
 
 # Download the image.
 greenprint "📥 Downloading the image"
