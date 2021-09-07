@@ -5,10 +5,10 @@
 # doesn't fail to depsolve this blueprint.
 #
 # The script currently works only for RHEL and CentOS which provide
-# "redhat-lsb-core" package and exclude "nss" package in the image type
+# "nss-devel" package and exclude "nss" package in the image type
 # definition. The testing blueprint contains explicit "nss" requirement
 # to remove it from the list of excluded packages and thus enable the
-# installation of "redhat-lsb-core".
+# installation of "nss-devel".
 #
 # Bug report: https://github.com/osbuild/osbuild-composer/issues/921
 
@@ -27,30 +27,38 @@ fi
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "redhat-lsb-core"
-description = "A base system with redhat-lsb-core"
+name = "nss-devel"
+description = "A base system with nss-devel"
 version = "0.0.1"
 
 [[packages]]
-name = "redhat-lsb-core"
+name = "nss-devel"
 
 [[packages]]
-# The nss package is excluded in the RHEL8.4 image type, but it is required by the
-# redhat-lsb-core package. This test verifies it can be added again when explicitly
-# mentioned in the blueprint.
+# The nss package is excluded in the RHEL8.4, RHEL8.5 and RHEL9.0 qcow image type
+# but it is required by the nss-devel package.This test verifies it can be added
+# again when explicitly mentioned in the blueprint.
 name = "nss"
 EOF
 
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve redhat-lsb-core
-sudo composer-cli --json compose start redhat-lsb-core qcow2 | tee "${COMPOSE_START}"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+sudo composer-cli blueprints depsolve nss-devel
+sudo composer-cli --json compose start nss-devel qcow2 | tee "${COMPOSE_START}"
+if rpm -q --quiet weldr-client; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
