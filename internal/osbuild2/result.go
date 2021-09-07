@@ -168,26 +168,32 @@ func (res *Result) fromV1(resv1 osbuild1.Result) {
 	metadata := make(map[string]PipelineMetadata)
 
 	// make build pipeline from build result
-	buildResult, buildMetadata := convertStageResults(resv1.Build.Stages)
-	log["build"] = buildResult
-	if len(buildMetadata) > 0 {
-		metadata["build"] = buildMetadata
+	if resv1.Build != nil {
+		buildResult, buildMetadata := convertStageResults(resv1.Build.Stages)
+		log["build"] = buildResult
+		if len(buildMetadata) > 0 {
+			metadata["build"] = buildMetadata
+		}
 	}
 
 	// make assembler pipeline from assembler result
-	assemblerResult, assemblerMetadata := convertStageResult(resv1.Assembler)
-	log["assembler"] = []StageResult{*assemblerResult}
-	if assemblerMetadata != nil {
-		metadata["assembler"] = map[string]StageMetadata{
-			resv1.Assembler.Name: assemblerMetadata,
+	if resv1.Assembler != nil {
+		assemblerResult, assemblerMetadata := convertStageResult(resv1.Assembler)
+		log["assembler"] = []StageResult{*assemblerResult}
+		if assemblerMetadata != nil {
+			metadata["assembler"] = map[string]StageMetadata{
+				resv1.Assembler.Name: assemblerMetadata,
+			}
 		}
 	}
 
 	// make os pipeline from main stage results
-	osResult, osMetadata := convertStageResults(resv1.Stages)
-	log["os"] = osResult
-	if len(buildMetadata) > 0 {
-		metadata["os"] = osMetadata
+	if len(resv1.Stages) > 0 {
+		osResult, osMetadata := convertStageResults(resv1.Stages)
+		log["os"] = osResult
+		if len(osMetadata) > 0 {
+			metadata["os"] = osMetadata
+		}
 	}
 
 	res.Log = log
