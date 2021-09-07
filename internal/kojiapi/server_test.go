@@ -19,7 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/require"
