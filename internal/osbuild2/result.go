@@ -9,6 +9,14 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild1"
 )
 
+type Result struct {
+	Type     string                      `json:"type"`
+	Success  bool                        `json:"success"`
+	Error    json.RawMessage             `json:"error"`
+	Log      map[string]PipelineResult   `json:"log"`
+	Metadata map[string]PipelineMetadata `json:"metadata"`
+}
+
 type PipelineResult []StageResult
 
 type StageResult struct {
@@ -83,14 +91,6 @@ func (md PipelineMetadata) UnmarshalJSON(data []byte) error {
 	}
 	md = pmd
 	return nil
-}
-
-type Result struct {
-	Type     string                      `json:"type"`
-	Success  bool                        `json:"success"`
-	Error    json.RawMessage             `json:"error"`
-	Log      map[string]PipelineResult   `json:"log"`
-	Metadata map[string]PipelineMetadata `json:"metadata"`
 }
 
 func (res *Result) UnmarshalJSON(data []byte) error {
