@@ -3,7 +3,6 @@ package osbuild1
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,83 +68,6 @@ func TestUnmarshal(t *testing.T) {
 	package2 := metadata.Packages[1]
 	assert.Equal(t, package2.SigPGP, "89023304000108001d162104963a2beb02009608fe67ea4249fd77499570ff3105025f5a272b000a091049fd77499570ff31ccdb0ffe38b95a55ebf3c021526b3cd4f2358c7e23f7767d1f5ce4b7cccef7b33653c6a96a23022313a818fbaf7abeb41837910f0d3ac15664e02838d5939d38ff459aa0076e248728a032d3ae09ddfaec955f941601081a2e3f9bbd49586fd65c1bc1b31685aeb0405687d1791471eab7359ccf00d5584ddef680e99ebc8a4846316391b9baa68ac8ed8ad696ee16fd625d847f8edd92517df3ea6920a46b77b4f119715a0f619f38835d25e0bd0eb5cfad08cd9c796eace6a2b28f4d3dee552e6068255d9748dc2a1906c951e0ba8aed9922ab24e1f659413a06083f8a0bfea56cfff14bddef23bced449f36bcd369da72f90ddf0512e7b0801ba5a0c8eaa8eb0582c630815e992192042cfb0a7c7239f76219197c2fdf18b6553260c105280806d4f037d7b04bdf3da9fd7e9a207db5c71f7e548f4288928f047c989c4cb9cbb8088eec7bd2fa5c252e693f51a3cfc660f666af6a255a5ca0fd2216d5ccd66cbd9c11afa61067d7f615ec8d0dc0c879b5fe633d8c9443f97285da597e4da8a3993af36f0be06acfa9b8058ec70bbc78b876e4c6c5d2108fb05c15a74ba48a3d7ded697cbc1748c228d77d1e0794a41fd5240fa67c3ed745fe47555a47c3d6163d8ce95fd6c2d0d6fa48f8e5b411e571e442109b1cb200d9a8117ee08bfe645f96aca34f7b7559622bbab75143dcad59f126ae0d319e6668ebba417e725638c4febf2e")
 	assert.Empty(t, package2.SigGPG)
-}
-
-func TestUnmarshalV1Success(t *testing.T) {
-	var result Result
-	err := json.Unmarshal([]byte(v1ResultSuccess), &result)
-	assert.NoError(t, err)
-
-	assert.True(t, result.Success)
-
-	assert.True(t, result.Build.Success)
-	assert.Len(t, result.Build.Stages, 2)
-	assert.True(t, result.Build.Stages[1].Success)
-	assert.Equal(t, "org.osbuild.rpm", result.Build.Stages[0].Name)
-
-	assert.Len(t, result.Stages, 11)
-	assert.True(t, result.Stages[10].Success)
-	assert.Equal(t, result.Stages[0].Name, "org.osbuild.rpm")
-
-	assert.True(t, result.Assembler.Success)
-	assert.Equal(t, result.Assembler.Name, "org.osbuild.qemu")
-}
-
-func TestUnmarshalV1Failure(t *testing.T) {
-	var result Result
-	err := json.Unmarshal([]byte(v1ResultFailure), &result)
-	assert.NoError(t, err)
-
-	assert.False(t, result.Success)
-
-	assert.True(t, result.Build.Success)
-	assert.Len(t, result.Build.Stages, 2)
-	assert.True(t, result.Build.Stages[1].Success)
-	assert.Equal(t, "org.osbuild.rpm", result.Build.Stages[0].Name)
-
-	assert.Len(t, result.Stages, 9)
-	assert.False(t, result.Stages[8].Success)
-	assert.Equal(t, result.Stages[0].Name, "org.osbuild.rpm")
-
-	assert.Nil(t, result.Assembler)
-}
-
-func TestUnmarshalV2Success(t *testing.T) {
-	var result Result
-	err := json.Unmarshal([]byte(v2ResultSuccess), &result)
-	assert.NoError(t, err)
-
-	assert.True(t, result.Success)
-
-	assert.Len(t, result.Stages, 16)
-	assert.True(t, result.Stages[15].Success)
-	assert.NotEmpty(t, result.Stages[0].Name)
-
-	// check metadata
-	for _, stage := range result.Stages {
-		if strings.HasSuffix(stage.Name, "org.osbuild.rpm") {
-			rpmMd, convOk := stage.Metadata.(RPMStageMetadata)
-			assert.True(t, convOk)
-			assert.Greater(t, len(rpmMd.Packages), 0)
-		} else if strings.HasSuffix(stage.Name, "org.osbuild.ostree.commit") {
-			commitMd, convOk := stage.Metadata.(OSTreeCommitStageMetadata)
-			assert.True(t, convOk)
-			assert.NotEmpty(t, commitMd.Compose.Ref)
-		}
-	}
-}
-
-func TestUnmarshalV2Failure(t *testing.T) {
-	var result Result
-	err := json.Unmarshal([]byte(v2ResultFailure), &result)
-	assert.NoError(t, err)
-
-	assert.False(t, result.Success)
-
-	assert.Len(t, result.Stages, 7)
-	assert.True(t, result.Stages[5].Success)
-	assert.False(t, result.Stages[6].Success)
-	assert.NotEmpty(t, result.Stages[0].Name)
 }
 
 func TestWriteFull(t *testing.T) {
