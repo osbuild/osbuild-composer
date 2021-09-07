@@ -8,7 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
