@@ -13,7 +13,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -120,32 +120,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	log.Println("Build stages results:")
-
-	// Include the build stages output inside the worker's logs.
-	for _, stage := range osbuildJobResult.OSBuildOutput.Build.Stages {
-		if stage.Success {
-			log.Println(stage.Name, " success")
-		} else {
-			log.Printf("%s failure:\n", stage.Name)
-			stageOutput := strings.Split(stage.Output, "\n")
-			for _, line := range stageOutput {
-				log.Printf("	%s", line)
-			}
-		}
-	}
-
-	log.Println("Stages results:")
-
-	// Include the stages output inside the worker's logs.
-	for _, stage := range osbuildJobResult.OSBuildOutput.Stages {
-		if stage.Success {
-			log.Println(stage.Name, " success")
-		} else {
-			log.Printf("%s failure:\n", stage.Name)
-			stageOutput := strings.Split(stage.Output, "\n")
-			for _, line := range stageOutput {
-				log.Printf("	%s", line)
+	// Include pipeline stages output inside the worker's logs.
+	for pipelineName, pipelineLog := range osbuildJobResult.OSBuildOutput.Log {
+		log.Printf("%s pipeline results:\n", pipelineName)
+		for _, stageResult := range pipelineLog {
+			if stageResult.Success {
+				log.Printf("  %s success", stageResult.Type)
+			} else {
+				log.Printf("  %s failure:", stageResult.Type)
+				stageOutput := strings.Split(stageResult.Output, "\n")
+				for _, line := range stageOutput {
+					log.Printf("    %s", line)
+				}
 			}
 		}
 	}

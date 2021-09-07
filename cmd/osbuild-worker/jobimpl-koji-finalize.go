@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -132,6 +133,12 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var buildRoots []koji.BuildRoot
 	var images []koji.Image
 	for i, buildArgs := range osbuildKojiResults {
+		buildPipelineMd := buildArgs.OSBuildOutput.Metadata["build"]
+		buildRPMs := rpmmd.OSBuildMetadataToRPMs(buildPipelineMd)
+		// this dedupe is usually not necessary since we generally only have
+		// one rpm stage in the build pipeline, but it's not invalid to have
+		// multiple
+		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
 		buildRoots = append(buildRoots, koji.BuildRoot{
 			ID: uint64(i),
 			Host: koji.Host{
@@ -147,8 +154,27 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				Arch: buildArgs.Arch,
 			},
 			Tools: []koji.Tool{},
-			RPMs:  rpmmd.OSBuildStagesToRPMs(buildArgs.OSBuildOutput.Build.Stages),
+			RPMs:  buildRPMs,
 		})
+
+		// collect metadata from all other pipelines
+		// use pipeline name + stage name as key while collecting since all RPM
+		// stage metadata will have the same key within a single pipeline
+		imagePipelinesMd := make(map[string]osbuild.StageMetadata)
+		for pipelineName, pipelineMetadata := range buildArgs.OSBuildOutput.Metadata {
+			if pipelineName == "build" {
+				continue
+			}
+			for stageName, stageMetadata := range pipelineMetadata {
+				imagePipelinesMd[pipelineName+":"+stageName] = stageMetadata
+			}
+		}
+
+		// collect packages from all stages
+		imageRPMs := rpmmd.OSBuildMetadataToRPMs(imagePipelinesMd)
+		// deduplicate
+		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
+
 		images = append(images, koji.Image{
 			BuildRootID:  uint64(i),
 			Filename:     args.KojiFilenames[i],
@@ -157,7 +183,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			ChecksumType: "md5",
 			MD5:          buildArgs.ImageHash,
 			Type:         "image",
-			RPMs:         rpmmd.OSBuildStagesToRPMs(buildArgs.OSBuildOutput.Stages),
+			RPMs:         imageRPMs,
 			Extra: koji.ImageExtra{
 				Info: koji.ImageExtraInfo{
 					Arch: buildArgs.Arch,
