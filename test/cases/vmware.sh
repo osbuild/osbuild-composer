@@ -139,13 +139,21 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 # Start the compose and upload to VMWare.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bash vmdk "$IMAGE_KEY" "$VMWARE_CONFIG" | tee "$COMPOSE_START"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+if rpm -q --quiet weldr-client; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
@@ -180,7 +188,8 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     -ds="${GOVMOMI_DATASTORE}" \
     -folder="${GOVMOMI_FOLDER}" \
     -net="${GOVMOMI_NETWORK}" \
-    -m=2048 -g=rhel8_64Guest -on=true -firmware=bios \
+    -net.adapter=vmxnet3 \
+    -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=bios \
     -disk="${IMAGE_KEY}"/"${IMAGE_KEY}".vmdk \
     --disk.controller=ide \
     "${IMAGE_KEY}"
