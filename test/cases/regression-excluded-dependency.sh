@@ -5,21 +5,21 @@
 # osbuild-composer doesn't fail to depsolve this blueprint.
 #
 # The script currently works only for RHEL and CentOS which provide
-# "redhat-lsb-core" package and exclude "nss" package in the image type
-# definition. The testing contains the "redhat-lsb-core" package which can only
+# "nss-devel" package and exclude "nss" package in the image type
+# definition. The testing contains the "nss-devel" package which can only
 # be installed if the "nss" package isn't excluded
 #
 # Bug report: https://github.com/osbuild/osbuild-composer/issues/921
 
-# NOTE: ONLY WORKS IN RHEL 8.5
+# NOTE: ONLY WORKS IN RHEL 8.5 and RHEL 9.0
 # Get OS data.
 source /etc/os-release
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" ]]; then
-    echo "$0 is only enabled for rhel-8.5; skipping..."
+if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
+    echo "$0 is only enabled for rhel-8.5 and rhel-9.0; skipping..."
     exit 0
 fi
 
@@ -32,27 +32,34 @@ COMPOSE_INFO=/tmp/compose-info.json
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "redhat-lsb-core"
-description = "A base system with redhat-lsb-core"
+name = "nss-devel"
+description = "A base system with nss-devel"
 version = "0.0.1"
 
-# The nss package is excluded in the RHEL 8.5 image type and is required by the
-# redhat-lsb-core package. This test verifies the excluded dependency doesn't
-# restrict the installation of the dependant.
+# The nss package is excluded in the RHEL 8.5 and RHEL 9.0 qcow image type
+# and is required by the nss-devel package. This test verifies the excluded
+# dependency doesn't restrict the installation of the dependant.
 [[packages]]
-name = "redhat-lsb-core"
+name = "nss-devel"
 EOF
 
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve redhat-lsb-core
-sudo composer-cli --json compose start redhat-lsb-core qcow2 | tee "${COMPOSE_START}"
-COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-
+sudo composer-cli blueprints depsolve nss-devel
+sudo composer-cli --json compose start nss-devel qcow2 | tee "${COMPOSE_START}"
+if rpm -q --quiet weldr-client; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
