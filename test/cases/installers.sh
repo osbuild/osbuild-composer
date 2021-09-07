@@ -115,6 +115,10 @@ SSH_USER="admin"
 IMAGE_KEY="osbuild-composer-installer-test-${TEST_UUID}"
 GUEST_ADDRESS=192.168.100.50
 
+if [[ ${WORKSPACE:-empty} == empty ]]; then
+    WORKSPACE=$(mktemp -d)
+fi
+
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
