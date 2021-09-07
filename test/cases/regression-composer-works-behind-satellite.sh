@@ -84,8 +84,23 @@ case "${ID}" in
                 fi
                 ;;
             "9" )
-                echo "Running on RHEL 9 is not yet supported"
-                exit 0
+                echo "Running on RHEL ${VERSION_ID}"
+                # in 9.0 the override file contains minor version number as well
+                VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
+                if grep beta /etc/os-release;
+                then
+                    DISTRO_NAME="rhel-90-beta"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
+                else
+                    DISTRO_NAME="rhel-90"
+                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
+                fi
+                REPO1_NAME="baseos"
+                REPO2_NAME="appstream"
+                if [ -n "${NIGHTLY:-}" ]; then
+                    REPO1_NAME="baseos-${ARCH}"
+                    REPO2_NAME="appstream-${ARCH}"
+                fi
                 ;;
             *)
                 echo "Unknown RHEL: ${VERSION_ID}"
@@ -295,13 +310,21 @@ then
   sudo journalctl -xe --unit osbuild-worker
   exit 1
 fi
-COMPOSE_ID=$(jq -r '.build_id' "${COMPOSE_START}")
+if rpm -q --quiet weldr-client; then
+    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+else
+    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+fi
 
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
-    COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+    else
+        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+    fi
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
