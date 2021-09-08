@@ -187,7 +187,7 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.5-x86_64-large
 
 OSTree simplified installer:
   stage: test
@@ -198,7 +198,7 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.5-x86_64
+          - openstack/rhel-8.5-x86_64-large
 
 OSTree raw image:
   stage: test
