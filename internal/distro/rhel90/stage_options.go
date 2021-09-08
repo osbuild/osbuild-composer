@@ -29,10 +29,6 @@ func rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {
 
 	return &osbuild.RPMStageOptions{
 		GPGKeys: gpgKeys,
-		Exclude: &osbuild.Exclude{
-			// NOTE: Make configurable?
-			Docs: true,
-		},
 	}
 }
 
