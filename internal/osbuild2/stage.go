@@ -55,6 +55,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(LocaleStageOptions)
 	case "org.osbuild.selinux":
 		options = new(SELinuxStageOptions)
+	case "org.osbuild.selinux.config":
+		options = new(SELinuxConfigStageOptions)
 	case "org.osbuild.hostname":
 		options = new(HostnameStageOptions)
 	case "org.osbuild.users":

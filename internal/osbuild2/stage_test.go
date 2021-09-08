@@ -386,6 +386,29 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "selinux.config-empty",
+			fields: fields{
+				Type:    "org.osbuild.selinux.config",
+				Options: &SELinuxConfigStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.selinux.config","options":{}}`),
+			},
+		},
+		{
+			name: "selinux.config",
+			fields: fields{
+				Type: "org.osbuild.selinux.config",
+				Options: &SELinuxConfigStageOptions{
+					State: SELinuxStatePermissive,
+					Type:  SELinuxTypeMinimum,
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.selinux.config","options":{"state":"permissive","type":"minimum"}}`),
+			},
+		},
+		{
 			name: "sysconfig",
 			fields: fields{
 				Type:    "org.osbuild.sysconfig",
