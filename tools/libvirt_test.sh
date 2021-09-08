@@ -76,15 +76,15 @@ TEST_UUID=$(uuidgen)
 IMAGE_KEY=osbuild-composer-qemu-test-${TEST_UUID}
 INSTANCE_ADDRESS=192.168.100.50
 
-if [[ ${WORKSPACE:-empty} == empty ]]; then
-    WORKSPACE=$(mktemp -d)
-fi
-
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
+
+if [[ ${WORKSPACE:-empty} == empty ]]; then
+    WORKSPACE=$(mktemp -d)
+fi
 
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
