@@ -399,3 +399,23 @@ func edgeInstallerPackageSet() rpmmd.PackageSet {
 		Exclude: nil,
 	}
 }
+
+func bareMetalPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"authselect-compat", "chrony", "cockpit-system", "cockpit-ws",
+			"@core", "dhcp-client", "dnf", "dnf-utils", "dosfstools",
+			"insights-client", "iwl1000-firmware", "iwl100-firmware",
+			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
+			"iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+			"iwl5150-firmware", "iwl6000g2a-firmware", "iwl6000g2b-firmware",
+			"iwl6050-firmware", "iwl7260-firmware", "lvm2", "net-tools",
+			"NetworkManager", "nfs-utils", "oddjob", "oddjob-mkhomedir",
+			"policycoreutils", "psmisc", "python3-jsonschema",
+			"qemu-guest-agent", "redhat-release", "redhat-release-eula",
+			"rsync", "selinux-policy-targeted", "subscription-manager-cockpit",
+			"tar", "tcpdump", "yum",
+		},
+		Exclude: nil,
+	}
+}
