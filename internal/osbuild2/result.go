@@ -65,14 +65,14 @@ func (sr *StageResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (md PipelineMetadata) UnmarshalJSON(data []byte) error {
+func (md *PipelineMetadata) UnmarshalJSON(data []byte) error {
 	var rawPipelineMetadata map[string]json.RawMessage
 	if err := json.Unmarshal(data, &rawPipelineMetadata); err != nil {
 		return err
 	}
-	pmd := make(map[string]StageMetadata)
-	var metadata StageMetadata
+	var pmd PipelineMetadata = make(map[string]StageMetadata)
 	for name, rawStageData := range rawPipelineMetadata {
+		var metadata StageMetadata
 		switch name {
 		case "org.osbuild.rpm":
 			metadata = new(RPMStageMetadata)
@@ -89,7 +89,7 @@ func (md PipelineMetadata) UnmarshalJSON(data []byte) error {
 		}
 		pmd[name] = metadata
 	}
-	md = pmd
+	*md = pmd
 	return nil
 }
 
