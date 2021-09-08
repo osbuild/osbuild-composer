@@ -332,9 +332,8 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 }
 
 func (c *Customizations) GetInstallationDevice() string {
-	defaultDevice := "/dev/sda"
 	if c == nil || c.InstallationDevice == "" {
-		return defaultDevice
+		return ""
 	}
 	return c.InstallationDevice
 }
