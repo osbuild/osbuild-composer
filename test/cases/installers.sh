@@ -383,7 +383,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test OS
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${TEMPDIR}"/inventory /usr/share/tests/osbuild-composer/ansible/check_install.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory /usr/share/tests/osbuild-composer/ansible/check_install.yaml || RESULTS=0
 check_result
 
 # Final success clean up
