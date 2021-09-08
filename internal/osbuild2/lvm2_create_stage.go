@@ -22,11 +22,8 @@ func (o LVM2CreateStageOptions) validate() error {
 
 	nameRegex := regexp.MustCompile(lvmVolNameRegex)
 	for _, volume := range o.Volumes {
-		fmt.Printf("testing volume %q\n", volume.Name)
 		if !nameRegex.MatchString(volume.Name) {
 			return fmt.Errorf("volume name %q doesn't conform to schema (%s)", volume.Name, nameRegex.String())
-		} else {
-			fmt.Printf("volume.Name %q is ok\n", volume.Name)
 		}
 	}
 	return nil
