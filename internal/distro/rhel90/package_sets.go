@@ -419,3 +419,43 @@ func bareMetalPackageSet() rpmmd.PackageSet {
 		Exclude: nil,
 	}
 }
+
+func edgeSimplifiedInstallerPackageSet() rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"attr",
+			"basesystem",
+			"binutils",
+			"bsdtar",
+			"cloud-utils-growpart",
+			"coreos-installer",
+			"coreos-installer-bootinfra",
+			"coreutils",
+			"device-mapper-multipath",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-live",
+			"e2fsprogs",
+			"fcoe-utils",
+			"gzip",
+			"ima-evm-utils",
+			"iproute",
+			"iptables",
+			"iputils",
+			"iscsi-initiator-utils",
+			"keyutils",
+			"lldpad",
+			"lvm2",
+			"passwd",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"procps-ng",
+			"rootfiles",
+			"setools-console",
+			"sudo",
+			"traceroute",
+			"util-linux",
+		},
+		Exclude: nil,
+	}
+}

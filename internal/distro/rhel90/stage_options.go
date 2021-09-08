@@ -2,12 +2,14 @@ package rhel90
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -227,6 +229,7 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"img-lib",
 		"shutdown",
 		"uefi-lib",
+		"rdcore",
 	}
 	return &osbuild.DracutStageOptions{
 		Kernel:  kernel,
@@ -314,7 +317,7 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 }
 
 func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partition, kernelOptions string,
-	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string, install bool) *osbuild.GRUB2StageOptions {
 	if rootPartition == nil {
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
@@ -334,6 +337,7 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 		stageOptions.UEFI = &osbuild.GRUB2UEFI{
 			Vendor:  "redhat",
 			Unified: legacy == "", // force unified grub scheme for pure efi systems
+			Install: install,
 		}
 	}
 
@@ -510,9 +514,31 @@ func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions
 	}
 }
 
+func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigStageOptions {
+	return &osbuild.OSTreeConfigStageOptions{
+		Repo: repo,
+		Config: &osbuild.OSTreeConfig{
+			Sysroot: &osbuild.SysrootOptions{
+				ReadOnly: common.BoolToPtr(readOnly),
+			},
+		},
+	}
+}
+
 func kernelCmdlineStageOptions(rootUUID string, kernelOptions string) *osbuild.KernelCmdlineStageOptions {
 	return &osbuild.KernelCmdlineStageOptions{
 		RootFsUUID: rootUUID,
 		KernelOpts: kernelOptions,
+	}
+}
+
+func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
+	return &osbuild.MkdirStageOptions{
+		Paths: []osbuild.Path{
+			{
+				Path: "/boot/efi",
+				Mode: os.FileMode(0700),
+			},
+		},
 	}
 }
