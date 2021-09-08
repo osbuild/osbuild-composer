@@ -295,52 +295,116 @@ version = "0.0.1"
 name = "zsh"
 STOPHERE
 
-COMPOSE_START=/tmp/compose-start.json
-COMPOSE_INFO=/tmp/compose-info.json
-sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
-then
-  sudo cat /var/log/httpd/error_log
-  sudo journalctl -xe --unit osbuild-composer
-  exit 1
-fi
-if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}";
-then
-  sudo journalctl -xe --unit osbuild-composer
-  sudo journalctl -xe --unit osbuild-worker
-  exit 1
-fi
-if rpm -q --quiet weldr-client; then
-    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-else
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-fi
-
-# Wait for the compose to finish.
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
+function try_image_build {
+    COMPOSE_START=/tmp/compose-start.json
+    COMPOSE_INFO=/tmp/compose-info.json
+    sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+    if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
+    then
+    sudo cat /var/log/httpd/error_log
+    sudo journalctl -xe --unit osbuild-composer
+    exit 1
+    fi
+    if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}";
+    then
+    sudo journalctl -xe --unit osbuild-composer
+    sudo journalctl -xe --unit osbuild-worker
+    exit 1
+    fi
     if rpm -q --quiet weldr-client; then
-        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+        COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
     else
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
     fi
 
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
+    # Wait for the compose to finish.
+    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
+    while true; do
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
+        if rpm -q --quiet weldr-client; then
+            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+        else
+            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        fi
+
+        # Is the compose finished?
+        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
+            break
+        fi
+
+        # Wait 30 seconds and try again.
+        sleep 30
+
+    done
+
+    sudo journalctl -xe --unit osbuild-composer
+    sudo journalctl -xe --unit osbuild-worker
+
+    # Did the compose finish with success?
+    if [[ $COMPOSE_STATUS != FINISHED ]]; then
+        echo "Something went wrong with the compose. 😢"
+        exit 1
     fi
+}
 
-    # Wait 30 seconds and try again.
-    sleep 30
+try_image_build
 
-done
+# Part two, try that the fallback mechanism work
 
-sudo journalctl -xe --unit osbuild-composer
-sudo journalctl -xe --unit osbuild-worker
+# Remove the redhat.repo file
+REDHAT_REPO_BACKUP_2="${REDHAT_REPO}.backup2"
+chattr -i ${REDHAT_REPO}
+sudo mv "${REDHAT_REPO}" "${REDHAT_REPO_BACKUP_2}"
 
-# Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
-    echo "Something went wrong with the compose. 😢"
+REDHAT_CA_CERT="/etc/rhsm/ca/redhat-uep.pem"
+REDHAT_CA_CERT_BACKUP="${REDHAT_CA_CERT}.backup"
+if [ -f "${REDHAT_CA_CERT}" ];
+then
+    sudo mv "${REDHAT_CA_CERT}" "${REDHAT_CA_CERT_BACKUP}"
+fi
+
+# Make sure the directory exists
+sudo mkdir -p /etc/rhsm/ca
+# Copy the test CA cert instead of the official RH one
+sudo cp "${PKI_DIR}/ca1/ca.crt" "${REDHAT_CA_CERT}"
+
+# Make sure the directory with entitlements is empty
+ENTITLEMENTS_DIR="/etc/pki/entitlement"
+ENTITLEMENTS_DIR_BACKUP="${ENTITLEMENTS_DIR}.backup"
+if [ -d "${ENTITLEMENTS_DIR}" ];
+then
+    sudo mv "${ENTITLEMENTS_DIR}" "${ENTITLEMENTS_DIR_BACKUP}"
+fi
+sudo mkdir -p "${ENTITLEMENTS_DIR}"
+
+# Create the very first file to be encountered by the fallback mechanism
+CLIENT_KEY="/etc/pki/entitlement/0-key.pem"
+CLIENT_CERT="/etc/pki/entitlement/0.pem"
+sudo cp "${PKI_DIR}/ca1/client.key" "${CLIENT_KEY}"
+sudo cp "${PKI_DIR}/ca1/client.crt" "${CLIENT_CERT}"
+
+# Reconfigure the proxies to use only a single CA
+sudo sed -i "s|${PKI_DIR}/ca2|${PKI_DIR}/ca1|" /etc/httpd/conf.d/repo2.conf
+sudo systemctl restart httpd
+sleep 5
+sudo systemctl status httpd
+
+greenprint "Verify absence of redhat.repo"
+ls -l /etc/yum.repos.d/
+if [ -f "${REDHAT_REPO}" ];
+then
+    echo "The ${REDHAT_REPO} file shouldn't exist!"
     exit 1
 fi
+
+try_image_build
+
+# Put things back to their previous configuration
+set +eu
+sudo rm -f "${REDHAT_REPO}"
+sudo mv "${REDHAT_REPO_BACKUP_2}" "${REDHAT_REPO}"
+sudo rm -f "${REDHAT_CA_CERT}"
+sudo mv "${REDHAT_CA_CERT_BACKUP}" "${REDHAT_CA_CERT}"
+sudo rm -rf "${ENTITLEMENTS_DIR}"
+sudo mv "${ENTITLEMENTS_DIR_BACKUP}" "${ENTITLEMENTS_DIR}"
+set -eu
