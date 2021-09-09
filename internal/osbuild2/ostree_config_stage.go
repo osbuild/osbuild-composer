@@ -19,7 +19,7 @@ type SysrootOptions struct {
 	ReadOnly *bool `json:"readonly,omitempty"`
 }
 
-// A new org.osbuild.ostree.init stage to create an OSTree repository
+// A new org.osbuild.ostree.config stage to configure an OSTree repository
 func NewOSTreeConfigStage(options *OSTreeConfigStageOptions) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.ostree.config",
