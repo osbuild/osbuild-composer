@@ -16,7 +16,8 @@ type OSTreeConfig struct {
 }
 
 type SysrootOptions struct {
-	ReadOnly *bool `json:"readonly,omitempty"`
+	ReadOnly   *bool  `json:"readonly,omitempty"`
+	Bootloader string `json:"bootloader,omitempty"`
 }
 
 // A new org.osbuild.ostree.config stage to configure an OSTree repository
