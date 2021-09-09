@@ -91,6 +91,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(ScriptStageOptions)
 	case "org.osbuild.sysconfig":
 		options = new(SysconfigStageOptions)
+	case "org.osbuild.tmpfilesd":
+		options = new(TmpfilesdStageOptions)
 	case "org.osbuild.kernel-cmdline":
 		options = new(KernelCmdlineStageOptions)
 	case "org.osbuild.rpm":

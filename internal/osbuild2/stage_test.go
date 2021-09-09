@@ -527,6 +527,24 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "tmpfilesd",
+			fields: fields{
+				Type: "org.osbuild.tmpfilesd",
+				Options: &TmpfilesdStageOptions{
+					Filename: "example.conf",
+					Config: []TmpfilesdConfigLine{
+						{
+							Type: "d",
+							Path: "/tmp/my-example-path",
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.tmpfilesd","options":{"filename":"example.conf","config":[{"type":"d","path":"/tmp/my-example-path"}]}}`),
+			},
+		},
+		{
 			name: "users",
 			fields: fields{
 				Type:    "org.osbuild.users",
