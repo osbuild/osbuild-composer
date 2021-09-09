@@ -566,7 +566,8 @@ func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigS
 		Repo: repo,
 		Config: &osbuild.OSTreeConfig{
 			Sysroot: &osbuild.SysrootOptions{
-				ReadOnly: common.BoolToPtr(readOnly),
+				ReadOnly:   common.BoolToPtr(readOnly),
+				Bootloader: "none",
 			},
 		},
 	}
