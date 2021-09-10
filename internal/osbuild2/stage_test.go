@@ -500,6 +500,27 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "sysctld",
+			fields: fields{
+				Type: "org.osbuild.sysctld",
+				Options: &SysctldStageOptions{
+					Filename: "example.conf",
+					Config: []SysctldConfigLine{
+						{
+							Key:   "net.ipv4.conf.*.rp_filter",
+							Value: "2",
+						},
+						{
+							Key: "-net.ipv4.conf.all.rp_filter",
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sysctld","options":{"filename":"example.conf","config":[{"key":"net.ipv4.conf.*.rp_filter","value":"2"},{"key":"-net.ipv4.conf.all.rp_filter"}]}}`),
+			},
+		},
+		{
 			name: "systemd",
 			fields: fields{
 				Type:    "org.osbuild.systemd",
