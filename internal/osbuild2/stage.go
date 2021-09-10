@@ -122,6 +122,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(PamLimitsConfStageOptions)
 	case "org.osbuild.truncate":
 		options = new(TruncateStageOptions)
+	case "org.osbuild.tuned":
+		options = new(TunedStageOptions)
 	case "org.osbuild.sfdisk":
 		options = new(SfdiskStageOptions)
 	case "org.osbuild.copy":
