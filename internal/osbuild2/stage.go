@@ -114,6 +114,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(OSTreeInitStageOptions)
 	case "org.osbuild.ostree.preptree":
 		options = new(OSTreePrepTreeStageOptions)
+	case "org.osbuild.pam.limits.conf":
+		options = new(PamLimitsConfStageOptions)
 	case "org.osbuild.truncate":
 		options = new(TruncateStageOptions)
 	case "org.osbuild.sfdisk":

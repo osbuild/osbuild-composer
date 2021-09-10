@@ -329,6 +329,46 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "pam-limits-conf-str",
+			fields: fields{
+				Type: "org.osbuild.pam.limits.conf",
+				Options: &PamLimitsConfStageOptions{
+					Filename: "example.conf",
+					Config: []PamLimitsConfigLine{
+						{
+							Domain: "user1",
+							Type:   PamLimitsTypeHard,
+							Item:   PamLimitsItemNofile,
+							Value:  PamLimitsValueUnlimited,
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.pam.limits.conf","options":{"filename":"example.conf","config":[{"domain":"user1","type":"hard","item":"nofile","value":"unlimited"}]}}`),
+			},
+		},
+		{
+			name: "pam-limits-conf-int",
+			fields: fields{
+				Type: "org.osbuild.pam.limits.conf",
+				Options: &PamLimitsConfStageOptions{
+					Filename: "example.conf",
+					Config: []PamLimitsConfigLine{
+						{
+							Domain: "user1",
+							Type:   PamLimitsTypeHard,
+							Item:   PamLimitsItemNofile,
+							Value:  PamLimitsValueInt(-1),
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.pam.limits.conf","options":{"filename":"example.conf","config":[{"domain":"user1","type":"hard","item":"nofile","value":-1}]}}`),
+			},
+		},
+		{
 			name: "rhsm-empty",
 			fields: fields{
 				Type:    "org.osbuild.rhsm",
