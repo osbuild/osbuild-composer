@@ -349,7 +349,7 @@ func (s *ClientSelector) createTransport(ctx context.Context,
 				dialer := net.Dialer{}
 				return dialer.DialContext(ctx, UnixNetwork, address.Socket)
 			}
-			transport.DialTLS = func(_, _ string) (net.Conn, error) {
+			transport.DialTLS = func(_, _ string) (net.Conn, error) { // nolint
 				// TODO: This ignores the passed context because it isn't currently
 				// supported. Once we migrate to Go 1.15 it should be done like
 				// this:

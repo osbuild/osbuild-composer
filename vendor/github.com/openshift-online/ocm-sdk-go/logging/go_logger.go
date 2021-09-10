@@ -120,7 +120,7 @@ func (l *GoLogger) Debug(ctx context.Context, format string, args ...interface{}
 	if l.debugEnabled {
 		msg := fmt.Sprintf(format, args...)
 		// #nosec G104
-		log.Output(1, msg)
+		_ = log.Output(1, msg)
 	}
 }
 
@@ -130,7 +130,7 @@ func (l *GoLogger) Info(ctx context.Context, format string, args ...interface{})
 	if l.infoEnabled {
 		msg := fmt.Sprintf(format, args...)
 		// #nosec G104
-		log.Output(1, msg)
+		_ = log.Output(1, msg)
 	}
 }
 
@@ -140,7 +140,7 @@ func (l *GoLogger) Warn(ctx context.Context, format string, args ...interface{})
 	if l.warnEnabled {
 		msg := fmt.Sprintf(format, args...)
 		// #nosec G104
-		log.Output(1, msg)
+		_ = log.Output(1, msg)
 	}
 }
 
@@ -150,7 +150,7 @@ func (l *GoLogger) Error(ctx context.Context, format string, args ...interface{}
 	if l.errorEnabled {
 		msg := fmt.Sprintf(format, args...)
 		// #nosec G104
-		log.Output(1, msg)
+		_ = log.Output(1, msg)
 	}
 }
 
@@ -160,6 +160,6 @@ func (l *GoLogger) Error(ctx context.Context, format string, args ...interface{}
 func (l *GoLogger) Fatal(ctx context.Context, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	// #nosec G104
-	log.Output(1, msg)
+	_ = log.Output(1, msg)
 	os.Exit(1)
 }
