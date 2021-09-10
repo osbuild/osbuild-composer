@@ -99,6 +99,10 @@ func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, bui
 	return s.jobs.Enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
+func (s *Server) EnqueueDepsolve(job *DepsolveJob) (uuid.UUID, error) {
+	return s.jobs.Enqueue("depsolve", job, nil)
+}
+
 func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid.UUID, error) {
 	rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
 	if err != nil {

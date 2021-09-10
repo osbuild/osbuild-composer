@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -157,23 +158,39 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 
 		packageSets := imageType.PackageSets(bp)
 		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
-		for name, packages := range packageSets {
-			pkgs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name(), distribution.Releasever())
-			if err != nil {
-				var error_type int
-				switch err.(type) {
-				// Known DNF errors falls under BadRequest
-				case *rpmmd.DNFError:
-					error_type = http.StatusBadRequest
-				// All other kind of errors are internal server Errors.
-				// (json marshalling issues for instance)
-				case error:
-					error_type = http.StatusInternalServerError
-				}
-				return echo.NewHTTPError(error_type, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err.Error()))
-			}
-			pkgSpecSets[name] = pkgs
+
+		depsolveJobID, err := h.server.workers.EnqueueDepsolve(&worker.DepsolveJob{
+			PackageSets:      packageSets,
+			Repos:            repositories,
+			ModulePlatformID: distribution.ModulePlatformID(),
+			Arch:             arch.Name(),
+			Releasever:       distribution.Releasever(),
+		})
+
+		if err != nil {
+			panic(err)
 		}
+
+		var depsolveResults worker.DepsolveJobResult
+		for {
+			status, _, err := h.server.workers.JobStatus(depsolveJobID, &depsolveResults)
+			if err != nil {
+				panic(err)
+			}
+			if status.Canceled {
+				panic("unexpected cancellation of a depsolve job")
+			}
+			if !status.Finished.IsZero() {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+		if depsolveResults.Error != "" {
+			panic(depsolveResults.Error)
+		}
+
+		pkgSpecSets = depsolveResults.PackageSpecs
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 		if request.Customizations != nil && request.Customizations.Subscription != nil {
