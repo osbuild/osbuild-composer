@@ -69,6 +69,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(CloudInitStageOptions)
 	case "org.osbuild.chrony":
 		options = new(ChronyStageOptions)
+	case "org.osbuild.dnf.config":
+		options = new(DNFConfigStageOptions)
 	case "org.osbuild.dracut":
 		options = new(DracutStageOptions)
 	case "org.osbuild.dracut.conf":
