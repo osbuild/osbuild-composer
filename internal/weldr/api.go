@@ -2350,6 +2350,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			ImageName:       imageType.Filename(),
 			StreamOptimized: imageType.Name() == "vmdk", // https://github.com/osbuild/osbuild/issues/528
 			Exports:         imageType.Exports(),
+			PipelineNames: &worker.PipelineNames{
+				Build:   imageType.BuildPipelines(),
+				Payload: imageType.PayloadPipelines(),
+			},
 		})
 		if err == nil {
 			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packageSets["packages"])

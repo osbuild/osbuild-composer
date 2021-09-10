@@ -116,6 +116,9 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		}
 	}
 
+	// copy pipeline info to the result
+	result.PipelineNames = args.PipelineNames
+
 	err = job.Update(&result)
 	if err != nil {
 		return fmt.Errorf("Error reporting job result: %v", err)
