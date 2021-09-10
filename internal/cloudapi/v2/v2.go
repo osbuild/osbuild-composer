@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -197,17 +198,40 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		packageSets := imageType.PackageSets(bp)
-		pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
-		for name, packages := range packageSets {
-			pkgs, _, err := h.server.rpmMetadata.Depsolve(packages, repositories, distribution.ModulePlatformID(), arch.Name(), distribution.Releasever())
-			var dnfError *rpmmd.DNFError
-			if err != nil && errors.As(err, &dnfError) {
-				return HTTPError(ErrorDNFError)
-			} else if err != nil {
-				return HTTPError(ErrorFailedToDepsolve)
-			}
-			pkgSpecSets[name] = pkgs
+		depsolveJobID, err := h.server.workers.EnqueueDepsolve(&worker.DepsolveJob{
+			PackageSets:      packageSets,
+			Repos:            repositories,
+			ModulePlatformID: distribution.ModulePlatformID(),
+			Arch:             arch.Name(),
+			Releasever:       distribution.Releasever(),
+		})
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
+
+		var depsolveResults worker.DepsolveJobResult
+		for {
+			status, _, err := h.server.workers.JobStatus(depsolveJobID, &depsolveResults)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorGettingDepsolveJobStatus, err)
+			}
+			if status.Canceled {
+				return HTTPErrorWithInternal(ErrorDepsolveJobCanceled, err)
+			}
+			if !status.Finished.IsZero() {
+				break
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+
+		if depsolveResults.Error != "" {
+			if depsolveResults.ErrorType == worker.DepsolveErrorType {
+				return HTTPError(ErrorDNFError)
+			}
+			return HTTPErrorWithInternal(ErrorFailedToDepsolve, errors.New(depsolveResults.Error))
+		}
+
+		pkgSpecSets := depsolveResults.PackageSpecs
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 		if request.Customizations != nil && request.Customizations.Subscription != nil {
