@@ -50,6 +50,8 @@ const (
 	ErrorUnknownManifestVersion                   ServiceErrorCode = 1010
 	ErrorUnableToConvertOSTreeCommitStageMetadata ServiceErrorCode = 1011
 	ErrorMalformedOSBuildJobResult                ServiceErrorCode = 1012
+	ErrorGettingDepsolveJobStatus                 ServiceErrorCode = 1013
+	ErrorDepsolveJobCanceled                      ServiceErrorCode = 1014
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -107,6 +109,8 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorUnknownManifestVersion, http.StatusInternalServerError, "Unknown manifest version"},
 		serviceError{ErrorUnableToConvertOSTreeCommitStageMetadata, http.StatusInternalServerError, "Unable to convert ostree commit stage metadata"},
 		serviceError{ErrorMalformedOSBuildJobResult, http.StatusInternalServerError, "OSBuildJobResult does not have expected fields set"},
+		serviceError{ErrorGettingDepsolveJobStatus, http.StatusInternalServerError, "Unable to get depsolve job status"},
+		serviceError{ErrorDepsolveJobCanceled, http.StatusInternalServerError, "Depsolve job was cancelled"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},

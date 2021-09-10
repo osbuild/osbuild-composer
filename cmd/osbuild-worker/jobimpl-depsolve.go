@@ -33,6 +33,12 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	var result worker.DepsolveJobResult
 	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
+		switch err.(type) {
+		case *rpmmd.DNFError:
+			result.ErrorType = worker.DepsolveErrorType
+		case error:
+			result.ErrorType = worker.OtherErrorType
+		}
 		result.Error = err.Error()
 	}
 

@@ -81,9 +81,17 @@ type DepsolveJob struct {
 	Releasever       string                      `json:"releasever"`
 }
 
+type ErrorType string
+
+const (
+	DepsolveErrorType ErrorType = "depsolve"
+	OtherErrorType    ErrorType = "other"
+)
+
 type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
 	Error        string                         `json:"error"`
+	ErrorType    ErrorType                      `json:"error_type"`
 }
 
 //
