@@ -17,6 +17,7 @@ type OSBuildJob struct {
 	ImageName       string           `json:"image_name,omitempty"`
 	StreamOptimized bool             `json:"stream_optimized,omitempty"`
 	Exports         []string         `json:"export_stages,omitempty"`
+	PipelineNames   *PipelineNames   `json:"pipeline_names,omitempty"`
 }
 
 type OSBuildJobResult struct {
@@ -25,6 +26,7 @@ type OSBuildJobResult struct {
 	TargetResults []*target.TargetResult `json:"target_results,omitempty"`
 	TargetErrors  []string               `json:"target_errors,omitempty"`
 	UploadStatus  string                 `json:"upload_status"`
+	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
 }
 
 type KojiInitJob struct {
@@ -44,6 +46,7 @@ type OSBuildKojiJob struct {
 	Manifest      distro.Manifest `json:"manifest"`
 	ImageName     string          `json:"image_name"`
 	Exports       []string        `json:"exports"`
+	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
 	KojiServer    string          `json:"koji_server"`
 	KojiDirectory string          `json:"koji_directory"`
 	KojiFilename  string          `json:"koji_filename"`
@@ -53,6 +56,7 @@ type OSBuildKojiJobResult struct {
 	HostOS        string          `json:"host_os"`
 	Arch          string          `json:"arch"`
 	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
+	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
 	ImageHash     string          `json:"image_hash"`
 	ImageSize     uint64          `json:"image_size"`
 	KojiError     string          `json:"koji_error"`
@@ -71,6 +75,20 @@ type KojiFinalizeJob struct {
 
 type KojiFinalizeJobResult struct {
 	KojiError string `json:"koji_error"`
+}
+
+// PipelineNames is used to provide two pieces of information related to a job:
+// 1. A categorization of each pipeline into one of two groups
+// // 2. A pipeline ordering when the lists are concatenated: build -> os
+// 2. A pipeline ordering when the lists are concatenated: build -> os
+type PipelineNames struct {
+	Build   []string `json:"build"`
+	Payload []string `json:"payload"`
+}
+
+// Returns a concatenated list of the pipeline names
+func (pn *PipelineNames) All() []string {
+	return append(pn.Build, pn.Payload...)
 }
 
 type DepsolveJob struct {
