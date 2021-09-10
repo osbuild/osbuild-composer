@@ -379,6 +379,18 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "tuned",
+			fields: fields{
+				Type: "org.osbuild.tuned",
+				Options: &TunedStageOptions{
+					Profiles: []string{"sap-hana"},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.tuned","options":{"profiles":["sap-hana"]}}`),
+			},
+		},
+		{
 			name: "rhsm-empty",
 			fields: fields{
 				Type:    "org.osbuild.rhsm",
