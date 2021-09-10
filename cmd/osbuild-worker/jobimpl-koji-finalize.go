@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"time"
 
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -133,10 +132,14 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var buildRoots []koji.BuildRoot
 	var images []koji.Image
 	for i, buildArgs := range osbuildKojiResults {
-		buildPipelineMd := buildArgs.OSBuildOutput.Metadata["build"]
-		buildRPMs := rpmmd.OSBuildMetadataToRPMs(buildPipelineMd)
+		buildRPMs := make([]rpmmd.RPM, 0)
+		// collect packages from stages in build pipelines
+		for _, plName := range buildArgs.PipelineNames.Build {
+			buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+			buildRPMs = append(buildRPMs, rpmmd.OSBuildMetadataToRPMs(buildPipelineMd)...)
+		}
 		// this dedupe is usually not necessary since we generally only have
-		// one rpm stage in the build pipeline, but it's not invalid to have
+		// one rpm stage in one build pipeline, but it's not invalid to have
 		// multiple
 		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
 		buildRoots = append(buildRoots, koji.BuildRoot{
@@ -157,21 +160,13 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			RPMs:  buildRPMs,
 		})
 
-		// collect metadata from all other pipelines
-		// use pipeline name + stage name as key while collecting since all RPM
-		// stage metadata will have the same key within a single pipeline
-		imagePipelinesMd := make(map[string]osbuild.StageMetadata)
-		for pipelineName, pipelineMetadata := range buildArgs.OSBuildOutput.Metadata {
-			if pipelineName == "build" {
-				continue
-			}
-			for stageName, stageMetadata := range pipelineMetadata {
-				imagePipelinesMd[pipelineName+":"+stageName] = stageMetadata
-			}
+		// collect packages from stages in payload pipelines
+		imageRPMs := make([]rpmmd.RPM, 0)
+		for _, plName := range buildArgs.PipelineNames.Payload {
+			payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+			imageRPMs = append(imageRPMs, rpmmd.OSBuildMetadataToRPMs(payloadPipelineMd)...)
 		}
 
-		// collect packages from all stages
-		imageRPMs := rpmmd.OSBuildMetadataToRPMs(imagePipelinesMd)
 		// deduplicate
 		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 

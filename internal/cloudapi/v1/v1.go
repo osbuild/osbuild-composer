@@ -107,9 +107,10 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 
 	// imagerequest
 	type imageRequest struct {
-		manifest distro.Manifest
-		arch     string
-		exports  []string
+		manifest      distro.Manifest
+		arch          string
+		exports       []string
+		pipelineNames worker.PipelineNames
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
 	var targets []*target.Target
@@ -243,6 +244,10 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 		imageRequests[i].manifest = manifest
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].exports = imageType.Exports()
+		imageRequests[i].pipelineNames = worker.PipelineNames{
+			Build:   imageType.BuildPipelines(),
+			Payload: imageType.PayloadPipelines(),
+		}
 
 		uploadRequest := ir.UploadRequest
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
@@ -377,9 +382,10 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 	}
 
 	id, err := h.server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
-		Manifest: ir.manifest,
-		Targets:  targets,
-		Exports:  ir.exports,
+		Manifest:      ir.manifest,
+		Targets:       targets,
+		Exports:       ir.exports,
+		PipelineNames: &ir.pipelineNames,
 	})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enqueue manifest")
@@ -527,10 +533,10 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 	}
 
 	var ostreeCommitMetadata *osbuild.OSTreeCommitStageMetadata
-	var rpmStagesMd []osbuild.RPMStageMetadata // collect non-build rpm stage metadata
-	for plName, plMd := range result.OSBuildOutput.Metadata {
-		if plName == "build" {
-			// skip build pipeline
+	var rpmStagesMd []osbuild.RPMStageMetadata // collect rpm stage metadata from payload pipelines
+	for _, plName := range job.PipelineNames.Payload {
+		plMd, hasMd := result.OSBuildOutput.Metadata[plName]
+		if !hasMd {
 			continue
 		}
 		for _, stageMd := range plMd {

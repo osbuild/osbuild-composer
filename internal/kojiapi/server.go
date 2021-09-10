@@ -82,10 +82,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	type imageRequest struct {
-		manifest distro.Manifest
-		arch     string
-		filename string
-		exports  []string
+		manifest      distro.Manifest
+		arch          string
+		filename      string
+		exports       []string
+		pipelineNames *worker.PipelineNames
 	}
 
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
@@ -140,6 +141,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].filename = imageType.Filename()
 		imageRequests[i].exports = imageType.Exports()
+		imageRequests[i].pipelineNames = &worker.PipelineNames{
+			Build:   imageType.BuildPipelines(),
+			Payload: imageType.PayloadPipelines(),
+		}
 
 		kojiFilenames[i] = fmt.Sprintf(
 			"%s-%s-%s.%s%s",
@@ -168,6 +173,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			Manifest:      ir.manifest,
 			ImageName:     ir.filename,
 			Exports:       ir.exports,
+			PipelineNames: ir.pipelineNames,
 			KojiServer:    request.Koji.Server,
 			KojiDirectory: kojiDirectory,
 			KojiFilename:  kojiFilenames[i],
@@ -432,8 +438,8 @@ func (h *apiHandlers) getFinalizeJob(id uuid.UUID) (*worker.KojiFinalizeJob, []u
 }
 
 // getInitJob retrieves a KojiInitJob from the job queue given its ID.
-// It returns an error if the ID matches a job of a different type.
 func (h *apiHandlers) getInitJob(id uuid.UUID) (*worker.KojiInitJob, error) {
+	// It returns an error if the ID matches a job of a different type.
 	job := new(worker.KojiInitJob)
 	jobType, _, _, err := h.server.workers.Job(id, job)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,7 +20,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -151,10 +150,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	var imageRequest struct {
-		manifest distro.Manifest
-		arch     string
-		exports  []string
-		target   *target.Target
+		manifest      distro.Manifest
+		arch          string
+		exports       []string
+		target        *target.Target
+		pipelineNames worker.PipelineNames
 	}
 
 	// use the same seed for all images so we get the same IDs
@@ -287,6 +287,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	imageRequest.manifest = manifest
 	imageRequest.arch = arch.Name()
 	imageRequest.exports = imageType.Exports()
+	imageRequest.pipelineNames = worker.PipelineNames{
+		Build:   imageType.BuildPipelines(),
+		Payload: imageType.PayloadPipelines(),
+	}
 
 	/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 	switch ir.ImageType {
@@ -403,9 +407,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	id, err := h.server.workers.EnqueueOSBuild(imageRequest.arch, &worker.OSBuildJob{
-		Manifest: imageRequest.manifest,
-		Targets:  []*target.Target{imageRequest.target},
-		Exports:  imageRequest.exports,
+		Manifest:      imageRequest.manifest,
+		Targets:       []*target.Target{imageRequest.target},
+		Exports:       imageRequest.exports,
+		PipelineNames: &imageRequest.pipelineNames,
 	})
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -575,63 +580,29 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 		})
 	}
 
-	manifestVer, err := job.Manifest.Version()
-	if err != nil {
-		return HTTPError(ErrorFailedToParseManifestVersion)
-	}
-
-	if result.OSBuildOutput == nil || result.OSBuildOutput.Assembler == nil {
+	if result.OSBuildOutput == nil || len(result.OSBuildOutput.Log) == 0 {
+		// no osbuild output recorded for job, error
 		return HTTPError(ErrorMalformedOSBuildJobResult)
 	}
 
-	var rpms []rpmmd.RPM
-	var ostreeCommitResult *osbuild1.StageResult
-	var coreStages []osbuild1.StageResult
-	switch manifestVer {
-	case "1":
-		coreStages = result.OSBuildOutput.Stages
-		if assemblerResult := result.OSBuildOutput.Assembler; assemblerResult.Name == "org.osbuild.ostree.commit" {
-			ostreeCommitResult = result.OSBuildOutput.Assembler
+	var ostreeCommitMetadata *osbuild.OSTreeCommitStageMetadata
+	var rpmStagesMd []osbuild.RPMStageMetadata // collect rpm stage metadata from payload pipelines
+	for _, plName := range job.PipelineNames.Payload {
+		plMd, hasMd := result.OSBuildOutput.Metadata[plName]
+		if !hasMd {
+			continue
 		}
-	case "2":
-		// v2 manifest results store all stage output in the main stages
-		// here we filter out the build stages to collect only the RPMs for the
-		// core stages
-		// the filtering relies on two assumptions:
-		// 1. the build pipeline is named "build"
-		// 2. the stage results from v2 manifests when converted to v1 are
-		// named by prefixing the pipeline name
-		for _, stage := range result.OSBuildOutput.Stages {
-			if !strings.HasPrefix(stage.Name, "build") {
-				coreStages = append(coreStages, stage)
+		for _, stageMd := range plMd {
+			switch md := stageMd.(type) {
+			case *osbuild.RPMStageMetadata:
+				rpmStagesMd = append(rpmStagesMd, *md)
+			case *osbuild.OSTreeCommitStageMetadata:
+				ostreeCommitMetadata = md
 			}
 		}
-		// find the ostree.commit stage
-		for idx, stage := range result.OSBuildOutput.Stages {
-			if strings.HasSuffix(stage.Name, "org.osbuild.ostree.commit") {
-				ostreeCommitResult = &result.OSBuildOutput.Stages[idx]
-				break
-			}
-		}
-	default:
-		return HTTPError(ErrorUnknownManifestVersion)
 	}
 
-	rpms = rpmmd.OSBuildStagesToRPMs(coreStages)
-
-	packages := make([]PackageMetadata, len(rpms))
-	for idx, rpm := range rpms {
-		packages[idx] = PackageMetadata{
-			Type:      rpm.Type,
-			Name:      rpm.Name,
-			Version:   rpm.Version,
-			Release:   rpm.Release,
-			Epoch:     rpm.Epoch,
-			Arch:      rpm.Arch,
-			Sigmd5:    rpm.Sigmd5,
-			Signature: rpm.Signature,
-		}
-	}
+	packages := stagesToPackageMetadata(rpmStagesMd)
 
 	resp := &ComposeMetadata{
 		ObjectReference: ObjectReference{
@@ -642,13 +613,30 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 		Packages: &packages,
 	}
 
-	if ostreeCommitResult != nil && ostreeCommitResult.Metadata != nil {
-		commitMetadata, ok := ostreeCommitResult.Metadata.(*osbuild1.OSTreeCommitStageMetadata)
-		if !ok {
-			return HTTPError(ErrorUnableToConvertOSTreeCommitStageMetadata)
-		}
-		resp.OstreeCommit = &commitMetadata.Compose.OSTreeCommit
+	if ostreeCommitMetadata != nil {
+		resp.OstreeCommit = &ostreeCommitMetadata.Compose.OSTreeCommit
 	}
 
 	return ctx.JSON(200, resp)
+}
+
+func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadata {
+	packages := make([]PackageMetadata, 0)
+	for _, md := range stages {
+		for _, rpm := range md.Packages {
+			packages = append(packages,
+				PackageMetadata{
+					Type:      "rpm",
+					Name:      rpm.Name,
+					Version:   rpm.Version,
+					Release:   rpm.Release,
+					Epoch:     rpm.Epoch,
+					Arch:      rpm.Arch,
+					Sigmd5:    rpm.SigMD5,
+					Signature: rpmmd.PackageMetadataToSignature(rpm),
+				},
+			)
+		}
+	}
+	return packages
 }
