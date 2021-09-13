@@ -556,8 +556,11 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 	if err != nil {
 		return nil, err
 	}
+
+	nginxConfigPath := "/etc/nginx.conf"
+	httpPort := "8080"
 	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations))
-	pipelines = append(pipelines, *containerPipeline(t))
+	pipelines = append(pipelines, *containerPipeline(t, nginxConfigPath, httpPort))
 	return pipelines, nil
 }
 
@@ -814,7 +817,7 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 	return p
 }
 
-func containerPipeline(t *imageType) *osbuild.Pipeline {
+func containerPipeline(t *imageType, nginxConfigPath, listenPort string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "container"
 	p.Build = "name:build"
@@ -822,8 +825,8 @@ func containerPipeline(t *imageType) *osbuild.Pipeline {
 		Architecture: t.arch.Name(),
 		Filename:     t.Filename(),
 		Config: &osbuild.OCIArchiveConfig{
-			Cmd:          []string{"httpd", "-D", "FOREGROUND"},
-			ExposedPorts: []string{"80"},
+			Cmd:          []string{"nginx", "-c", nginxConfigPath},
+			ExposedPorts: []string{listenPort},
 		},
 	}
 	baseInput := new(osbuild.OCIArchiveStageInput)
