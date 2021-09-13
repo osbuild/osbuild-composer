@@ -1016,7 +1016,7 @@
           {
             "type": "org.osbuild.ostree.init",
             "options": {
-              "path": "/var/www/html/repo"
+              "path": "/usr/share/nginx/html/repo"
             }
           },
           {
@@ -1033,7 +1033,30 @@
               }
             },
             "options": {
-              "repo": "/var/www/html/repo"
+              "repo": "/usr/share/nginx/html/repo"
+            }
+          },
+          {
+            "type": "org.osbuild.chmod",
+            "options": {
+              "items": {
+                "/var/log/nginx": {
+                  "mode": "o+w",
+                  "recursive": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.nginx.conf",
+            "options": {
+              "path": "/etc/nginx.conf",
+              "config": {
+                "listen": "8080",
+                "root": "/usr/share/nginx/html",
+                "pid": "/tmp/nginx.pid",
+                "daemon": false
+              }
             }
           }
         ]
@@ -1058,12 +1081,12 @@
               "filename": "container.tar",
               "config": {
                 "Cmd": [
-                  "httpd",
-                  "-D",
-                  "FOREGROUND"
+                  "nginx",
+                  "-c",
+                  "/etc/nginx.conf"
                 ],
                 "ExposedPorts": [
-                  "80"
+                  "8080"
                 ]
               }
             }
