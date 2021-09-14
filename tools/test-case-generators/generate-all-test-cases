@@ -129,6 +129,109 @@ class RunnerMountPoint:
 
 class BaseRunner(contextlib.AbstractContextManager):
     """
+    Base class representing a generic runner, which is used for generating image
+    test case definitions.
+    """
+
+    def __init__(self, hostname, username="root", password=None, port=22):
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.runner_ready = False
+
+    def run_command(self, command):
+        """
+        Runs a given command on the Runner over ssh in a blocking fashion.
+
+        Calling this method before is_ready() returned True has undefined
+        behavior.
+
+        Returns stdin, stdout, stderr from the run command.
+        """
+        ssh = paramiko.SSHClient()
+        # don't ask / fail on unknown remote host fingerprint, just accept any
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            ssh.connect(self.hostname, self.port, self.username, self.password)
+            ssh_tansport = ssh.get_transport()
+            channel = ssh_tansport.open_session()
+            # don't log commands when the vm is not yet ready for use
+            if self.runner_ready:
+                log.debug("Running on runner: '%s'", command)
+            channel.exec_command(command)
+            stdout = ""
+            stderr = ""
+            # wait for the command to finish
+            while True:
+                while channel.recv_ready():
+                    stdout += channel.recv(1024).decode()
+                while channel.recv_stderr_ready():
+                    stderr += channel.recv_stderr(1024).decode()
+                if channel.exit_status_ready():
+                    break
+                time.sleep(0.01)
+            returncode = channel.recv_exit_status()
+        except Exception as e:
+            # don't log errors when vm is not ready yet, because there are many errors
+            if self.runner_ready:
+                log.error("Running command over SSH failed: %s", str(e))
+            raise e
+        finally:
+            # closes the underlying transport
+            ssh.close()
+
+        return stdout, stderr, returncode
+
+    def run_command_check_call(self, command):
+        """
+        Runs a command on the runner over SSH in a similar fashion as subprocess.check_call()
+        """
+        _, _, ret = self.run_command(command)
+        if ret != 0:
+            raise subprocess.CalledProcessError(ret, command)
+
+    def wait_until_ready(self, timeout=None, retry_sec=15):
+        """
+        Waits for the runner until it is ready for use. This is determined by
+        executing the 'is_ready()' method in a blocking fashion.
+
+        This method is blocking, unless 'timeout' is provided.
+        """
+        now = time.time()
+        while not self.is_ready():
+            if timeout is not None and time.time() > (now + timeout):
+                raise subprocess.TimeoutExpired("wait_until_ready()", timeout)
+            time.sleep(retry_sec)
+
+    def is_ready(self, command="id"):
+        """
+        Returns True if the runner is ready to be used, which is determined by
+        running the provided 'command', which must exit with 0 return value.
+        """
+        if self.runner_ready:
+            return True
+
+        try:
+            # run command to determine if the host is ready for use
+            self.run_command_check_call(command)
+        except (paramiko.ChannelException,
+                paramiko.ssh_exception.NoValidConnectionsError,
+                paramiko.ssh_exception.SSHException,
+                EOFError,
+                socket.timeout,
+                subprocess.CalledProcessError) as _:
+            # ignore all reasonable paramiko exceptions, this is useful when the host is still stating up
+            pass
+        else:
+            log.debug("Runner is ready for use")
+            self.runner_ready = True
+
+        return self.runner_ready
+
+
+class BaseQEMURunner(BaseRunner):
+    """
     Base class representing a QEMU VM runner, which is used for generating image
     test case definitions.
 
@@ -142,7 +245,8 @@ class BaseRunner(contextlib.AbstractContextManager):
     # the actual command to use for running QEMU VM
     QEMU_CMD = None
 
-    def __init__(self, image, user, passwd, cdrom_iso=None, mount_points=None):
+    def __init__(self, image, username, password, cdrom_iso=None, mount_points=None):
+        super().__init__("localhost", username=username, password=password)
         self._check_qemu_bin()
 
         # path to image to run
@@ -153,16 +257,10 @@ class BaseRunner(contextlib.AbstractContextManager):
         self.mount_points = mount_points if mount_points else list()
         # Popen object of the qemu process
         self.vm = None
-        self.vm_ready = False
         # following values are set after the VM is terminated
         self.vm_return_code = None
         self.vm_stdout = None
         self.vm_stderr = None
-        # credentials used to SSH to the VM
-        self.vm_user = user
-        self.vm_pass = passwd
-        # port on host to forward the guest's SSH port (22) to
-        self.host_fwd_ssh_port = None
 
     def _check_qemu_bin(self):
         """
@@ -206,9 +304,9 @@ class BaseRunner(contextlib.AbstractContextManager):
         # get a random free TCP port. This should work in majority of cases
         with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
             sock.bind(('localhost', 0))
-            self.host_fwd_ssh_port = sock.getsockname()[1]
+            self.port = sock.getsockname()[1]
 
-            return ["-net", "user,hostfwd=tcp::{}-:22".format(self.host_fwd_ssh_port)]
+            return ["-net", "user,hostfwd=tcp::{}-:22".format(self.port)]
 
     def _run_qemu_cmd(self, qemu_cmd):
         """
@@ -251,9 +349,9 @@ class BaseRunner(contextlib.AbstractContextManager):
         log.info(
             "Runner started. You can SSH to it once it has been configured:" +\
             "'ssh %s@localhost -p %d' using password: '%s'",
-            self.vm_user,
-            self.host_fwd_ssh_port,
-            self.vm_pass
+            self.username,
+            self.port,
+            self.password
         )
 
     def stop(self):
@@ -285,77 +383,14 @@ class BaseRunner(contextlib.AbstractContextManager):
                           self.vm_return_code, self.vm_stdout, self.vm_stderr)
 
             self.vm = None
-            self.vm_ready = False
+            self.runner_ready = False
 
-    def run_command(self, command):
-        """
-        Runs a given command on the VM over ssh in a blocking fashion.
-
-        Calling this method before is_ready() returned True has undefined
-        behavior.
-
-        Returns stdin, stdout, stderr from the run command.
-        """
-        ssh = paramiko.SSHClient()
-        # don't ask / fail on unknown remote host fingerprint, just accept any
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            ssh.connect("localhost", self.host_fwd_ssh_port, self.vm_user, self.vm_pass)
-            ssh_tansport = ssh.get_transport()
-            channel = ssh_tansport.open_session()
-            # don't log commands when the vm is not yet ready for use
-            if self.vm_ready:
-                log.debug("Running on VM: '%s'", command)
-            channel.exec_command(command)
-            stdout = ""
-            stderr = ""
-            # wait for the command to finish
-            while True:
-                while channel.recv_ready():
-                    stdout += channel.recv(1024).decode()
-                while channel.recv_stderr_ready():
-                    stderr += channel.recv_stderr(1024).decode()
-                if channel.exit_status_ready():
-                    break
-                time.sleep(0.01)
-            returncode = channel.recv_exit_status()
-        except Exception as e:
-            # don't log errors when vm is not ready yet, because there are many errors
-            if self.vm_ready:
-                log.error("Running command over ssh failed: %s", str(e))
-            raise e
-        finally:
-            # closes the underlying transport
-            ssh.close()
-
-        return stdout, stderr, returncode
-
-    def run_command_check_call(self, command):
-        """
-        Runs a command on the VM over ssh in a similar fashion as subprocess.check_call()
-        """
-        _, _, ret = self.run_command(command)
-        if ret != 0:
-            raise subprocess.CalledProcessError(ret, command)
-
-    def wait_until_ready(self, timeout=None):
-        """
-        Waits for the VM to be ready for use (cloud-init configuration finished).
-
-        If timeout is provided
-        """
-        now = time.time()
-        while not self.is_ready():
-            if timeout is not None and time.time() > (now + timeout):
-                raise subprocess.TimeoutExpired("wait_until_ready()", timeout)
-            time.sleep(15)
-
-    def is_ready(self):
+    def is_ready(self, command="ls /var/lib/cloud/instance/boot-finished"):
         """
         Returns True if the VM is ready to be used.
         VM is ready after the cloud-init setup is finished.
         """
-        if self.vm_ready:
+        if self.runner_ready:
             return True
 
         # check if the runner didn't terminate unexpectedly before being ready
@@ -371,22 +406,7 @@ class BaseRunner(contextlib.AbstractContextManager):
             qemu_bin = self.QEMU_BIN
             raise RuntimeError(f"'{qemu_bin}' process ended before being ready to use")
 
-        try:
-            # cloud-init touches /var/lib/cloud/instance/boot-finished after it finishes
-            self.run_command_check_call("ls /var/lib/cloud/instance/boot-finished")
-        except (paramiko.ChannelException,
-                paramiko.ssh_exception.NoValidConnectionsError,
-                paramiko.ssh_exception.SSHException,
-                EOFError,
-                socket.timeout,
-                subprocess.CalledProcessError) as _:
-            # ignore all reasonable paramiko exceptions, this is useful when the VM is still stating up
-            pass
-        else:
-            log.debug("VM is ready for use")
-            self.vm_ready = True
-
-        return self.vm_ready
+        return super().is_ready(command)
 
     def mount_mount_points(self):
         """
@@ -476,7 +496,7 @@ class BaseRunner(contextlib.AbstractContextManager):
         return iso_path
 
 
-class X86_64Runner(BaseRunner):
+class X86_64QEMURunner(BaseQEMURunner):
     """
     VM Runner for x86_64 architecture
     """
@@ -494,7 +514,7 @@ class X86_64Runner(BaseRunner):
     ]
 
 
-class Ppc64Runner(BaseRunner):
+class Ppc64QEMURunner(BaseQEMURunner):
     """
     VM Runner for ppc64le architecture
     """
@@ -511,7 +531,7 @@ class Ppc64Runner(BaseRunner):
     ]
 
 
-class Aarch64Runner(BaseRunner):
+class Aarch64QEMURunner(BaseQEMURunner):
     """
     VM Runner for aarch64 architecture
     """
@@ -535,7 +555,7 @@ class Aarch64Runner(BaseRunner):
     ]
 
 
-class S390xRunner(BaseRunner):
+class S390xQEMURunner(BaseQEMURunner):
     """
     VM Runner for s390x architecture
     """
@@ -596,10 +616,10 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
     """
 
     ARCH_RUNNER_MAP = {
-        "x86_64": X86_64Runner,
-        "aarch64": Aarch64Runner,
-        "ppc64le": Ppc64Runner,
-        "s390x": S390xRunner
+        "x86_64": X86_64QEMURunner,
+        "aarch64": Aarch64QEMURunner,
+        "ppc64le": Ppc64QEMURunner,
+        "s390x": S390xQEMURunner
     }
 
     def __init__(self, images, ci_userdata, arch_gen_matrix, output, keep_image_info):
@@ -756,7 +776,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         """
         # use the same CDROM ISO image for all VMs
         with tempfile.TemporaryDirectory(prefix="osbuild-composer-test-gen-") as tmpdir:
-            cdrom_iso = BaseRunner.prepare_cloud_init_cdrom(self.ci_userdata, tmpdir)
+            cdrom_iso = BaseQEMURunner.prepare_cloud_init_cdrom(self.ci_userdata, tmpdir)
 
             # Load user / password from the cloud-init user-data
             if os.path.isdir(self.ci_userdata):
