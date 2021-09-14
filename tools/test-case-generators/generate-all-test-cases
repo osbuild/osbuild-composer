@@ -622,6 +622,16 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "s390x": S390xQEMURunner
     }
 
+    # packages to be installed on the Runner before generating test cases
+    INSTALL_RPMS = [
+        "osbuild",
+        "osbuild-selinux",
+        "osbuild-ostree",
+        "osbuild-composer",
+        "golang",
+        "python3-pyyaml"  # needed by image-info
+    ]
+
     def __init__(self, images, ci_userdata, arch_gen_matrix, output, keep_image_info):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
@@ -702,6 +712,8 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
             guest_osbuild_store_dir = "/home/admin/osbuild-store"
             runner.run_command_check_call(f"sudo mkdir {guest_osbuild_store_dir}")
 
+            # install necessary packages
+            runner.run_command_check_call("sudo dnf install -y " + " ".join(TestCaseMatrixGenerator.INSTALL_RPMS))
             # Log installed versions of important RPMs
             rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
             log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
