@@ -3,6 +3,7 @@ package rhel90
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -559,7 +560,7 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 
 	nginxConfigPath := "/etc/nginx.conf"
 	httpPort := "8080"
-	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations))
+	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort))
 	pipelines = append(pipelines, *containerPipeline(t, nginxConfigPath, httpPort))
 	return pipelines, nil
 }
@@ -684,6 +685,11 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	p.Build = "name:build"
 
 	packages = append(packages, bpPackages...)
+
+	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+		p.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	}
+
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
@@ -797,7 +803,7 @@ func tarStage(source, filename string) *osbuild.Stage {
 	return osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: filename}, &osbuild.TarStageInputs{Tree: tree})
 }
 
-func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations) *osbuild.Pipeline {
+func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "container-tree"
 	p.Build = "name:build"
@@ -808,12 +814,21 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 	} else {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US"}))
 	}
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/var/www/html/repo"}))
+
+	htmlRoot := "/usr/share/nginx/html"
+	repoPath := filepath.Join(htmlRoot, "repo")
+	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: repoPath}))
 
 	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: "/var/www/html/repo"},
+		&osbuild.OSTreePullStageOptions{Repo: repoPath},
 		ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
 	))
+
+	// make nginx log directory world writeable, otherwise nginx can't start in
+	// an unprivileged container
+	p.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/log/nginx", "o+w", true)))
+
+	p.AddStage(osbuild.NewNginxConfigStage(nginxConfigStageOptions(nginxConfigPath, htmlRoot, listenPort)))
 	return p
 }
 
