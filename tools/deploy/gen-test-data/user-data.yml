@@ -16,5 +16,3 @@ ssh_pwauth: True
 chpasswd:
   expire: False
 sudo: 'ALL=(ALL) NOPASSWD:ALL'
-runcmd:
-  - /run/provision-scripts/deploy.sh
