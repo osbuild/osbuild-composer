@@ -485,7 +485,7 @@ class BaseQEMURunner(BaseRunner):
                     "-iso",
                     "-joliet",
                     "-o", iso_path,
-                    "{cidatadir}"
+                    f"{cidatadir}"
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
