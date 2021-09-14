@@ -505,7 +505,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add the token to the context:
-	ctx = ContextWithToken(ctx, token)
+	ctx = ContextWithToken(ctx, token.object)
 	r = r.WithContext(ctx)
 
 	// Call the next handler:
@@ -728,18 +728,22 @@ func (h *Handler) parseKey(data keyData) (key interface{}, err error) {
 // checkToken checks if the token is valid. If it is valid it returns the parsed token, the
 // claims and true. If it isn't valid it sends an error response to the client and returns false.
 func (h *Handler) checkToken(w http.ResponseWriter, r *http.Request,
-	bearer string) (token *jwt.Token, claims jwt.MapClaims, ok bool) {
+	bearer string) (token *tokenInfo, claims jwt.MapClaims, ok bool) {
 	// Get the context:
 	ctx := r.Context()
 
 	// Parse the token:
 	claims = jwt.MapClaims{}
-	token, err := h.tokenParser.ParseWithClaims(
+	object, err := h.tokenParser.ParseWithClaims(
 		bearer, claims,
 		func(token *jwt.Token) (key interface{}, err error) {
 			return h.selectKey(ctx, token)
 		},
 	)
+	token = &tokenInfo{
+		text:   bearer,
+		object: object,
+	}
 	if err != nil {
 		switch typed := err.(type) {
 		case *jwt.ValidationError:
@@ -828,18 +832,26 @@ func (h *Handler) checkToken(w http.ResponseWriter, r *http.Request,
 // something is wrong it sends an error response to the client and returns false.
 func (h *Handler) checkClaims(w http.ResponseWriter, r *http.Request,
 	claims jwt.MapClaims) bool {
-	// Check the token type:
-	typ, ok := h.checkStringClaim(w, r, claims, "typ")
-	if !ok {
-		return false
-	}
-	if !strings.EqualFold(typ, "Bearer") {
-		h.sendError(
-			w, r,
-			"Bearer token type '%s' isn't supported",
-			typ,
-		)
-		return false
+	// The `typ` claim is optional, but if it exists the value must be `Bearer`:
+	value, ok := claims["typ"]
+	if ok {
+		typ, ok := value.(string)
+		if !ok {
+			h.sendError(
+				w, r,
+				"Bearer token type claim contains incorrect string value '%v'",
+				value,
+			)
+			return false
+		}
+		if !strings.EqualFold(typ, "Bearer") {
+			h.sendError(
+				w, r,
+				"Bearer token type '%s' isn't allowed",
+				typ,
+			)
+			return false
+		}
 	}
 
 	// Check the format of the issue and expiration date claims:
@@ -853,7 +865,7 @@ func (h *Handler) checkClaims(w http.ResponseWriter, r *http.Request,
 	}
 
 	// Make sure that the impersonation flag claim doesn't exist, or is `false`:
-	value, ok := claims["impersonated"]
+	value, ok = claims["impersonated"]
 	if ok {
 		flag, ok := value.(bool)
 		if !ok {
@@ -894,27 +906,6 @@ func (h *Handler) checkTimeClaim(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	result = time.Unix(int64(seconds), 0)
-	return
-}
-
-// checkStringClaim checks that the given claim exists and that the value is a string. If it doesn't
-// exist or it has a wrong type it sends an error response to the client and returns false. If it
-// exists it returns its value and true.
-func (h *Handler) checkStringClaim(w http.ResponseWriter, r *http.Request,
-	claims jwt.MapClaims, name string) (result string, ok bool) {
-	value, ok := h.checkClaim(w, r, claims, name)
-	if !ok {
-		return
-	}
-	result, ok = value.(string)
-	if !ok {
-		h.sendError(
-			w, r,
-			"Bearer token claim '%s' contains incorrect text value '%v'",
-			name, value,
-		)
-		return
-	}
 	return
 }
 
