@@ -124,6 +124,14 @@ export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS=-mod=vendor
 %endif
 
+# Set the commit hash so that composer can report what source version
+# was used to build it. This has to be set explicitly when calling rpmbuild,
+# this script will not attempt to automatically discover it.
+%if %{?commit:1}0
+export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.GitRev=%{commit}'"
+%endif
+export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.RpmVersion=%{name}-%{epoch}:%{version}-%{release}.%{_arch}'"
+
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 

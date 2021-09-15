@@ -561,7 +561,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		DBVersion:     "0",
 		SchemaVersion: "0",
 		Backend:       "osbuild-composer",
-		Build:         "devel",
+		Build:         common.BuildVersion(),
 		Messages:      make([]string, 0),
 	})
 	common.PanicOnError(err)
