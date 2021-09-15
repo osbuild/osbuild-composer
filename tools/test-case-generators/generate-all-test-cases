@@ -80,6 +80,7 @@ import socket
 import contextlib
 import multiprocessing
 import logging
+import glob
 
 import yaml
 import paramiko
@@ -133,11 +134,10 @@ class BaseRunner(contextlib.AbstractContextManager):
     test case definitions.
     """
 
-    def __init__(self, hostname, username="root", password=None, port=22):
+    def __init__(self, hostname, username="root", port=22):
         self.hostname = hostname
         self.port = port
         self.username = username
-        self.password = password
         self.runner_ready = False
 
     def run_command(self, command):
@@ -153,7 +153,7 @@ class BaseRunner(contextlib.AbstractContextManager):
         # don't ask / fail on unknown remote host fingerprint, just accept any
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(self.hostname, self.port, self.username, self.password)
+            ssh.connect(self.hostname, self.port, self.username)
             ssh_tansport = ssh.get_transport()
             channel = ssh_tansport.open_session()
             # don't log commands when the vm is not yet ready for use
@@ -245,8 +245,13 @@ class BaseQEMURunner(BaseRunner):
     # the actual command to use for running QEMU VM
     QEMU_CMD = None
 
-    def __init__(self, image, username, password, cdrom_iso=None, mount_points=None):
-        super().__init__("localhost", username=username, password=password)
+    DEFAULT_CI_USER_DATA = {
+        "user": "admin",
+        "sudo": "ALL=(ALL) NOPASSWD:ALL"
+    }
+
+    def __init__(self, image, username, cdrom_iso=None, mount_points=None):
+        super().__init__("localhost", username)
         self._check_qemu_bin()
 
         # path to image to run
@@ -347,11 +352,10 @@ class BaseQEMURunner(BaseRunner):
         if self.vm is None:
             self._run_qemu_cmd(list(self.QEMU_CMD))
         log.info(
-            "Runner started. You can SSH to it once it has been configured:" +\
-            "'ssh %s@localhost -p %d' using password: '%s'",
+            "Runner started. You can SSH to it once it has been configured:" + \
+            "'ssh %s@localhost -p %d'",
             self.username,
-            self.port,
-            self.password
+            self.port
         )
 
     def stop(self):
@@ -434,12 +438,40 @@ class BaseQEMURunner(BaseRunner):
     def __exit__(self, *exc_details):
         self.stop()
 
+    @classmethod
+    def create_default_ci_userdata(cls, workdir):
+        """
+        Creates the default 'user-data.yml' file for cloud-init inside the
+        'workdir'. The path of the created file is returned.
+        """
+        default_ci_userdata_path = f"{workdir}/user-data.yml"
+
+        with open(default_ci_userdata_path, "w") as f:
+            f.write("#cloud-config\n")
+            yaml.safe_dump(cls.DEFAULT_CI_USER_DATA, f)
+
+        return default_ci_userdata_path
+
     @staticmethod
-    def prepare_cloud_init_cdrom(userdata, workdir):
+    def ci_userdata_add_authorized_ssh_key(userdata_file, ssh_id_file):
+        """
+        Modifies the provided 'userdata_file' in-place by appending the provided
+        'ssh_id_file' as authorized SSH key to it.
+        """
+        append_data = {}
+        with open(ssh_id_file, encoding="utf-8") as f:
+            append_data["ssh_authorized_keys"] = [f.read().strip()]
+
+        with open(userdata_file, "a") as f:
+            yaml.safe_dump(append_data, f, width=float("inf"))
+
+    @staticmethod
+    def prepare_cloud_init_cdrom(ssh_id_file, workdir, userdata=None):
         """
         Generates a CDROM ISO used as a data source for cloud-init.
 
-        Returns path to the generated CDROM ISO image.
+        Returns path to the generated CDROM ISO image and path to the used
+        cloud-init userdata.
         """
         iso_path = os.path.join(workdir, "cloudinit.iso")
         cidatadir = os.path.join(workdir, "cidata")
@@ -447,13 +479,31 @@ class BaseQEMURunner(BaseRunner):
         meta_data_path = os.path.join(cidatadir, "meta-data")
 
         os.mkdir(cidatadir)
+
+        # If no userdata were provided, use the default one
+        if not userdata:
+            userdata = BaseQEMURunner.create_default_ci_userdata(workdir)
+            log.debug("Using default cloud-init user-data created at: %s", userdata)
+
         if os.path.isdir(userdata):
+            # create a copy of the provided userdata, since they will be modified
+            userdata_tmp_dir = f"{workdir}/ci_userdata_copy"
+            os.makedirs(userdata_tmp_dir)
+            shutil.copytree(userdata, userdata_tmp_dir)
+            userdata = userdata_tmp_dir
+
+            # Add the ssh key to the user-data
+            userdata_file = f"{userdata}/user-data.yml"
+            BaseQEMURunner.ci_userdata_add_authorized_ssh_key(userdata_file, ssh_id_file)
+
             with open(user_data_path, "w") as f:
                 script_dir = os.path.dirname(__file__)
                 subprocess.check_call(
                     [os.path.abspath(f"{script_dir}/../gen-user-data"), userdata], stdout=f)
         else:
             shutil.copy(userdata, user_data_path)
+            # Add the ssh key to the user-data
+            BaseQEMURunner.ci_userdata_add_authorized_ssh_key(user_data_path, ssh_id_file)
 
         with open(meta_data_path, "w") as f:
             f.write("instance-id: nocloud\nlocal-hostname: vm\n")
@@ -493,7 +543,7 @@ class BaseQEMURunner(BaseRunner):
         else:
             raise NotImplementedError(f"Unsupported system '{sysname}' for generating cdrom iso")
 
-        return iso_path
+        return iso_path, userdata
 
 
 class X86_64QEMURunner(BaseQEMURunner):
@@ -632,7 +682,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml"  # needed by image-info
     ]
 
-    def __init__(self, images, ci_userdata, arch_gen_matrix, output, keep_image_info):
+    def __init__(self, images, arch_gen_matrix, output, keep_image_info, ssh_id_file, ci_userdata=None):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -641,8 +691,6 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
             "arch2": "<image path>",
             ...
         }
-        'ci_userdata' is path to file / directory containing cloud-init user-data used
-        for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
         {
             "arch1": {
@@ -664,13 +712,18 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         }
         'output' is a directory path, where the generated test case manifests should be stored.
         'keep_image_info' specifies whether to pass the '--keep-image-info' option to the 'generate-test-cases' script.
+        'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
+        'ci_userdata' is path to file / directory containing cloud-init user-data used
+        for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
+        If the value is not provided, then the default internal cloud-init user-data are used.
         """
         self._processes = list()
         self.images = images
-        self.ci_userdata = ci_userdata
         self.arch_gen_matrix = arch_gen_matrix
         self.output = output
         self.keep_image_info = keep_image_info
+        self.ssh_id_file = ssh_id_file
+        self.ci_userdata = ci_userdata
 
         # check that we have image for each needed architecture
         for arch in self.arch_gen_matrix.keys():
@@ -678,7 +731,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 raise RuntimeError(f"architecture '{arch}' is in requested test matrix, but no image was provided")
 
     @staticmethod
-    def runner_function(arch, runner_cls, image, user, passwd, cdrom_iso, generation_matrix, output, keep_image_info):
+    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, output, keep_image_info):
         """
         Generate test cases using VM with appropriate architecture.
 
@@ -702,7 +755,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         go_tls_timeout_retries = 3
 
         # spin up appropriate VM represented by 'runner'
-        with runner_cls(image, user, passwd, cdrom_iso, mount_points=mount_points) as runner:
+        with runner_cls(image, user, cdrom_iso, mount_points=mount_points) as runner:
             log.info("Waiting for the '%s' runner to be configured by cloud-init", arch)
             runner.wait_until_ready()
             runner.mount_mount_points()
@@ -788,23 +841,24 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         """
         # use the same CDROM ISO image for all VMs
         with tempfile.TemporaryDirectory(prefix="osbuild-composer-test-gen-") as tmpdir:
-            cdrom_iso = BaseQEMURunner.prepare_cloud_init_cdrom(self.ci_userdata, tmpdir)
+            cdrom_iso, used_userdata = BaseQEMURunner.prepare_cloud_init_cdrom(
+                self.ssh_id_file, tmpdir, self.ci_userdata
+            )
 
-            # Load user / password from the cloud-init user-data
-            if os.path.isdir(self.ci_userdata):
-                user_data_path = os.path.join(self.ci_userdata, "user-data.yml")
+            # Load user from the cloud-init user-data
+            if os.path.isdir(used_userdata):
+                user_data_path = f"{used_userdata}/user-data.yml"
             else:
-                user_data_path = self.ci_userdata
+                user_data_path = used_userdata
             with open(user_data_path, "r") as ud:
                 user_data = yaml.safe_load(ud)
                 vm_user = user_data["user"]
-                vm_pass = user_data["password"]
 
             # Start a separate runner VM for each required architecture
             for arch, generation_matrix in self.arch_gen_matrix.items():
                 process = multiprocessing.Process(
                     target=self.runner_function,
-                    args=(arch, self.ARCH_RUNNER_MAP[arch], self.images[arch], vm_user, vm_pass, cdrom_iso,
+                    args=(arch, self.ARCH_RUNNER_MAP[arch], self.images[arch], vm_user, cdrom_iso,
                           generation_matrix, self.output, self.keep_image_info))
                 self._processes.append(process)
                 process.start()
@@ -832,6 +886,32 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
 
     def __exit__(self, *exc_details):
         self.cleanup()
+
+
+def get_default_ssh_id_file():
+    """
+    Returns the path of the default SSH ID file to use.
+
+    The defalt SSH ID file is the most recent file that matches: ~/.ssh/id*.pub,
+    (excluding those that match ~/.ssh/*-cert.pub). This mimics the bahaviour
+    of the 'ssh-copy-id' command.
+    """
+    id_files = glob.glob(os.path.expanduser("~/.ssh/id*.pub"))
+    id_files = [f for f in id_files if not f.endswith("-cert.pub")]
+
+    try:
+        most_recent_file = id_files[0]
+    except IndexError as e:
+        raise RuntimeError("Found no files matching '~/.ssh/id*.pub'") from e
+    most_recent_file_mtime = os.path.getmtime(most_recent_file)
+
+    for id_file in id_files[1:]:
+        id_file_mtime = os.path.getmtime(id_file)
+        if most_recent_file_mtime < id_file_mtime:
+            most_recent_file = id_file
+            most_recent_file_mtime = id_file_mtime
+
+    return most_recent_file
 
 
 def get_args():
@@ -901,6 +981,12 @@ def get_args():
         type=os.path.abspath
     )
     parser.add_argument(
+        "-i", "--ssh-id-file",
+        help="Path to the SSH ID file to use for authenticating to the runner VMs. If the file does not end with " + \
+            ".pub, it will be appended to it.",
+        type=os.path.abspath
+    )
+    parser.add_argument(
         "-d", "--debug",
         action='store_true',
         default=False,
@@ -909,7 +995,7 @@ def get_args():
     return parser.parse_args()
 
 # pylint: disable=too-many-arguments,too-many-locals
-def main(vm_images, distros, arches, image_types, ci_userdata, gen_matrix_file, output, keep_image_info):
+def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_matrix_file, output, keep_image_info):
     if not os.path.isdir(output):
         raise RuntimeError(f"output directory {output} does not exist")
 
@@ -951,10 +1037,15 @@ def main(vm_images, distros, arches, image_types, ci_userdata, gen_matrix_file, 
 
     log.debug("arch_gen_matrix_dict:\n%s", json.dumps(arch_gen_matrix_dict, indent=2, sort_keys=True))
 
-    ci_userdata_path = ci_userdata if ci_userdata else os.path.abspath(f"{script_dir}/../deploy/gen-test-data")
-    log.debug("Using cloud-init user-data from '%s'", ci_userdata_path)
+    # determine the SSH ID file to be used
+    ssh_id_file = args.ssh_id_file
+    if not ssh_id_file:
+        ssh_id_file = get_default_ssh_id_file()
+    if not ssh_id_file.endswith(".pub"):
+        ssh_id_file += ".pub"
+    log.debug("Using SSH ID file: %s", ssh_id_file)
 
-    with TestCaseMatrixGenerator(vm_images, ci_userdata_path, arch_gen_matrix_dict, output, keep_image_info) as generator:
+    with TestCaseMatrixGenerator(vm_images, arch_gen_matrix_dict, output, keep_image_info, ssh_id_file, ci_userdata) as generator:
         generator.generate()
 
 
@@ -977,6 +1068,7 @@ if __name__ == '__main__':
             args.distro,
             args.arch,
             args.image_types,
+            args.ssh_id_file,
             args.ci_userdata,
             args.gen_matrix_file,
             args.output,
