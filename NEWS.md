@@ -1,3 +1,32 @@
+# OSBuild Composer - Operating System Image Composition Services
+
+## CHANGES WITH 34:
+
+  * Support temporary AWS credentials
+  * Composer-api and worker-api: OAuth2 support
+  * Install docs in RHEL 8.5 and 9.0 images
+  * RHEL-8.5 / RHEL-9.0: RHSM DNF plugins are now enabled by default on `ec2`
+    and `ami` images
+  * Added support for the following osbuild stages
+    * `org.osbuild.selinux.config` - configures SELinux policy state and type
+      on the system
+    * `org.osbuild.tmpfilesd` - creates tmpfiles.d configuration files
+    * `org.osbuild.pam.limits.conf` - creates configuration files for
+       pam_limits module
+    * `org.osbuild.sysctld` - creates sysctl.d configuration files
+    * `org.osbuild.dnf.config` - configures DNF (currently only variables)
+    * `org.osbuild.tuned` - sets active tuned profile (or more profiles)
+  * More accurate HTTP return status for success requests in cloudapi
+
+
+Contributions from: Alexander Todorov, Antonio Murdaca, Brian C. Lane,
+                    Chloe Kaubisch, Diaa Sami, Gianluca Zuccarelli, Jakub Rusz,
+                    Juan Abia, Martin Sehnoutka, Ondřej Budai, Simon Steinbeiss,
+                    Thomas Lavocat, Tom Gundersen, Tomas Hozza, Sanne Raymaekers,
+                    Yi He
+
+— Berlin, 2021-09-15
+
 ## CHANGES WITH 33:
 
   * Bootiso: move payload to iso root
@@ -6,8 +35,6 @@
 Contributions from: Christian Kellner, Ondřej Budai, Xiaofeng Wang
 
 — Liberec, 2021-08-30
-
-# OSBuild Composer - Operating System Image Composition Services
 
 ## CHANGES WITH 32:
 
