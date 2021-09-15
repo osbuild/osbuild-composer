@@ -50,32 +50,11 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
           - aws/rhel-8.5-x86_64
           - aws/rhel-8.5-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
-
-Container:
-  stage: rpmbuild
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - sh "schutzbot/containerbuild.sh"
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/fedora-33-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -110,16 +89,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          # - aws/fedora-34-aarch64
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
           - aws/rhel-8.5-x86_64
           - aws/rhel-8.5-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
@@ -143,14 +112,6 @@ Regression:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
-          # Enable f34 once we have rpmrepo snapshots for it
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
           - aws/rhel-8.5-x86_64
           - aws/rhel-8.5-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
@@ -174,10 +135,6 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/fedora-33-x86_64
-          # See COMPOSER-919
-          # - openstack/fedora-34-x86_64
-          - openstack/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
 
 New OSTree:
@@ -235,13 +192,6 @@ Integration:
     matrix:
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          - aws/centos-stream-8-x86_64
-      - <<: *INTEGRATION_TESTS
-        RUNNER:
-          - aws/rhel-8-x86_64
           - aws/rhel-8.5-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
@@ -277,13 +227,6 @@ API:
     matrix:
       - <<: *API_TESTS
         RUNNER:
-          - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          - aws/centos-stream-8-x86_64
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8-x86_64
           - aws/rhel-8.5-x86_64
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -300,26 +243,9 @@ libvirt:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/fedora-33-x86_64
-          - openstack/centos-stream-8-x86_64
-      - RUNNER:
-          - openstack/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
-
-RHEL 9 on 8:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-  variables:
-    RUNNER: aws/rhel-8-x86_64
-    INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-90
 
 NIGHTLY_FAIL:
   stage: finish
