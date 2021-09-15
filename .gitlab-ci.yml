@@ -103,6 +103,9 @@ Base:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/base_tests.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -131,11 +134,15 @@ Base:
       - "*.repo"
     when: always
 
+
 Regression:
   stage: test
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/regression*.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -167,6 +174,9 @@ OSTree:
   extends: .terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/ostree.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -184,6 +194,10 @@ OSTree:
 New OSTree:
   stage: test
   extends: OSTree
+  rules:
+    - changes:
+      - internal/**
+      - test/cases/ostree-ng.sh
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-ng.sh
@@ -206,6 +220,10 @@ New OSTree (RHEL9-BETA):
 OSTree simplified installer:
   stage: test
   extends: OSTree
+  rules:
+    - changes:
+      - internal/**
+      - test/cases/ostree-simplified-installer.sh
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
@@ -217,6 +235,10 @@ OSTree simplified installer:
 OSTree raw image:
   stage: test
   extends: OSTree
+  rules:
+    - changes:
+      - internal/**
+      - test/cases/ostree-raw-image.sh
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
@@ -239,6 +261,13 @@ Integration:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+      - internal/**
+      - test/cases/aws.sh
+      - test/cases/azure.sh
+      - test/cases/filesystem.sh
+      - test/cases/azure_hyperv_gen2.sh
+      - test/cases/koji.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -287,6 +316,9 @@ API:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/api.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -318,6 +350,9 @@ libvirt:
   extends: .terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/libvirt.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
@@ -338,6 +373,9 @@ RHEL 9 on 8:
   extends: .terraform
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/koji.sh
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
@@ -370,6 +408,9 @@ Installer:
   extends: .terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      changes:
+        - internal/**
+        - test/cases/installers.sh
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
     - schutzbot/deploy.sh
