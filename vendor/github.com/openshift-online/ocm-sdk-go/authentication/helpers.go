@@ -25,15 +25,22 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// tokenRemaining determines if the given token will eventually expire (offile access tokens, for
-// example, never expire) and the time till it expires. That time will be positive if the token
-// isn't expired, and negative if the token has already expired.
+// tokenRemaining determines if the given token will eventually expire (offile access tokens and
+// opaque tokens, for example, never expire) and the time till it expires. That time will be
+// positive if the token isn't expired, and negative if the token has already expired.
 //
 // For tokens that don't have the `exp` claim, or that have it with value zero (typical for offline
 // access tokens) the result will always be `false` and zero.
-func tokenRemaining(token *jwt.Token, now time.Time) (expires bool, duration time.Duration,
+func tokenRemaining(token *tokenInfo, now time.Time) (expires bool, duration time.Duration,
 	err error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
+	// For opaque tokens we can't use the claims to determine when they expire, so we will
+	// assume that they never expire.
+	if token == nil || token.object == nil {
+		return
+	}
+
+	// For JSON web tokens we use tthe `exp` claim to determine when they expire.
+	claims, ok := token.object.Claims.(jwt.MapClaims)
 	if !ok {
 		err = fmt.Errorf("expected map claims but got %T", claims)
 		return
