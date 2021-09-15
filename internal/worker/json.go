@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"encoding/json"
+
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -125,4 +127,76 @@ type ManifestJobByIDResult struct {
 
 type updateJobRequest struct {
 	Result interface{} `json:"result"`
+}
+
+func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
+	// handles unmarshalling old jobs in the queue that don't contain newer fields
+	// adds default/fallback values to missing data
+	type aliastype OSBuildJob
+	var alias aliastype
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	if alias.PipelineNames == nil {
+		alias.PipelineNames = &PipelineNames{
+			Build:   distro.BuildPipelinesFallback(),
+			Payload: distro.PayloadPipelinesFallback(),
+		}
+	}
+	*j = OSBuildJob(alias)
+	return nil
+}
+
+func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {
+	// handles unmarshalling old jobs in the queue that don't contain newer fields
+	// adds default/fallback values to missing data
+	type aliastype OSBuildJobResult
+	var alias aliastype
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	if alias.PipelineNames == nil {
+		alias.PipelineNames = &PipelineNames{
+			Build:   distro.BuildPipelinesFallback(),
+			Payload: distro.PayloadPipelinesFallback(),
+		}
+	}
+	*j = OSBuildJobResult(alias)
+	return nil
+}
+
+func (j *OSBuildKojiJob) UnmarshalJSON(data []byte) error {
+	// handles unmarshalling old jobs in the queue that don't contain newer fields
+	// adds default/fallback values to missing data
+	type aliastype OSBuildKojiJob
+	var alias aliastype
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	if alias.PipelineNames == nil {
+		alias.PipelineNames = &PipelineNames{
+			Build:   distro.BuildPipelinesFallback(),
+			Payload: distro.PayloadPipelinesFallback(),
+		}
+	}
+	*j = OSBuildKojiJob(alias)
+	return nil
+}
+
+func (j *OSBuildKojiJobResult) UnmarshalJSON(data []byte) error {
+	// handles unmarshalling old jobs in the queue that don't contain newer fields
+	// adds default/fallback values to missing data
+	type aliastype OSBuildKojiJobResult
+	var alias aliastype
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	if alias.PipelineNames == nil {
+		alias.PipelineNames = &PipelineNames{
+			Build:   distro.BuildPipelinesFallback(),
+			Payload: distro.PayloadPipelinesFallback(),
+		}
+	}
+	*j = OSBuildKojiJobResult(alias)
+	return nil
 }
