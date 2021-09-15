@@ -12,7 +12,7 @@ import (
 type Result struct {
 	Type     string                      `json:"type"`
 	Success  bool                        `json:"success"`
-	Error    json.RawMessage             `json:"error"`
+	Error    json.RawMessage             `json:"error,omitempty"`
 	Log      map[string]PipelineResult   `json:"log"`
 	Metadata map[string]PipelineMetadata `json:"metadata"`
 }
