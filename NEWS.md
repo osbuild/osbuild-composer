@@ -1,3 +1,18 @@
+## CHANGES WITH 33.1:
+
+  * Install docs in RHEL 8.5 and 9.0 images
+  * RHEL-8.5 / RHEL-9.0: RHSM DNF plugins are now enabled by default on `ec2`
+    and `ami` images
+  * Mountpoints in blueprints can now have an arbitrary depth
+  * Weldr API on RHEL is no longer able to build Fedora/CentOS Stream images
+  * RHEL 8.5: Greenboot logs now have the same format in all edge image types
+
+Contributions from: Alexander Todorov, Antonio Murdaca, Brian C. Lane,
+                    Gianluca Zuccarelli, Ondřej Budai, Tom Gundersen,
+                    Tomas Hozza, yih
+
+— Liberec, 2021-09-15
+
 ## CHANGES WITH 33:
 
   * Bootiso: move payload to iso root
