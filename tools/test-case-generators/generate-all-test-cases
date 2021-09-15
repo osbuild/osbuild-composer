@@ -30,8 +30,7 @@
     and later mounted into /mnt/output on the Runner. The next execution on
     Runners is as follows:
     - Wait for the runner to be configured using cloud-init.
-        - includes installing osbuild, osbuild-composer and golang
-    - Create /mnt/sources and /mnt/output and mount appropriate devices
+    - Install necessary RPMs - osbuild, osbuild-composer and golang
     - in /mnt/sources execute tools/test-case-generators/generate-test-cases
       for each requested distro and image type combination on the particular
       architecture. Output manifest is written into /mnt/output
@@ -49,10 +48,6 @@
 
     Images need to have enough disk space to be able to build images using
     osbuild. You can resize them using 'qemu-img resize <image> 20G' command.
-
-    Known issues:
-    - The tool does not work with RHEL qcow2 images, becuase the "9p" filesystem
-    is not supported on RHEL.
 
     HW requirements:
     - The x86_64 VM uses 1 CPU and 1GB of RAM
@@ -92,36 +87,6 @@ formatter = logging.Formatter("%(asctime)s [%(levelname)s] - %(processName)s: %(
 sh = logging.StreamHandler()
 sh.setFormatter(formatter)
 log.addHandler(sh)
-
-
-class RunnerMountPoint:
-    """
-    Data structure to represent basic data used by Runners to attach host
-    directory as virtfs to the guest and then to mount it.
-    """
-    def __init__(self, src_host, dst_guest, mount_tag, security_model, readonly):
-        self.src_host = src_host
-        self.dst_guest = dst_guest
-        self.security_model = security_model
-        self.readonly = readonly
-        self.mount_tag = mount_tag
-
-    @staticmethod
-    def get_default_runner_mount_points(output_dir, sources_dir=None):
-        """
-        Returns a list of default mount points used by Runners when generating
-        image test cases.
-        """
-        sources_dir = os.getcwd() if sources_dir is None else sources_dir
-        # Use 'passthrough' security policy for /mnt/sources. The reason is that
-        # we need it to be exported to the VM without attributes, like symlink
-        # target, being mapped in xattrs. Otherwise copying the directory
-        # elsewhere produces errors.
-        mount_points = [
-            RunnerMountPoint(sources_dir, "/mnt/sources", "sources", "passthrough", True),
-            RunnerMountPoint(output_dir, "/mnt/output", "output", "mapped-xattr", False)
-        ]
-        return mount_points
 
 
 class BaseRunner(contextlib.AbstractContextManager):
@@ -175,9 +140,65 @@ class BaseRunner(contextlib.AbstractContextManager):
         """
         Runs a command on the runner over SSH in a similar fashion as subprocess.check_call()
         """
-        _, _, ret = self.run_command(command)
+        stdout, stderr, ret = self.run_command(command)
         if ret != 0:
-            raise subprocess.CalledProcessError(ret, command)
+            raise subprocess.CalledProcessError(ret, command, stdout, stderr)
+
+    def run_command_check_output(self, command):
+        """
+        Runs a command on the runner over SSH in a similar fashion as subprocess.check_output()
+        """
+        stdout, stderr, ret = self.run_command(command)
+        if ret != 0:
+            raise subprocess.CalledProcessError(ret, command, stdout, stderr)
+        return stdout
+
+    @contextlib.contextmanager
+    def get_managed_workdir(self, basedir="~", cleanup=True):
+        """
+        Context manager which creates a random workdir under the specified
+        'basedir' on the runner. The 'basedir' defaults to user's home ('~').
+        The created workdir is by default deleted on context manager exit,
+        unless 'cleanup' is set to False.
+        """
+        workdir = self.run_command_check_output(f"TMPDIR={basedir} mktemp -d").strip()
+        try:
+            yield workdir
+        finally:
+            if cleanup:
+                self.run_command_check_output(f"sudo rm -rf {workdir}")
+
+    def copytree_to_runner(self, host_path, runner_path):
+        """
+        Copies the content of 'host_path' directory from the host to the
+        'runner_path' directory on the runner using rsync.
+        """
+        if not host_path[-1] == "/":
+            host_path += "/"
+        rsync_command = [
+            "rsync",
+            "-az",
+            "-e", f"ssh -p {self.port} -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oLogLevel=ERROR",
+            host_path,
+            f"{self.username}@{self.hostname}:{runner_path}"
+        ]
+        subprocess.check_call(rsync_command)
+
+    def copytree_from_runner(self, runner_path, host_path):
+        """
+        Copies the content of 'runner_path' directory from the runner to the
+        'host_path' directory on the host using rsync.
+        """
+        if not runner_path[-1] == "/":
+            runner_path += "/"
+        rsync_command = [
+            "rsync",
+            "-az",
+            "-e", f"ssh -p {self.port} -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oLogLevel=ERROR",
+            f"{self.username}@{self.hostname}:{runner_path}",
+            host_path
+        ]
+        subprocess.check_call(rsync_command)
 
     def wait_until_ready(self, timeout=None, retry_sec=15):
         """
@@ -191,6 +212,8 @@ class BaseRunner(contextlib.AbstractContextManager):
             if timeout is not None and time.time() > (now + timeout):
                 raise subprocess.TimeoutExpired("wait_until_ready()", timeout)
             time.sleep(retry_sec)
+        # make sure that rsync is installed to be able to transfer the data
+        self.run_command_check_call("sudo dnf -y install rsync")
 
     def is_ready(self, command="id"):
         """
@@ -233,7 +256,7 @@ class BaseQEMURunner(BaseRunner):
         "sudo": "ALL=(ALL) NOPASSWD:ALL"
     }
 
-    def __init__(self, image, username, cdrom_iso=None, mount_points=None):
+    def __init__(self, image, username, cdrom_iso=None):
         super().__init__("localhost", username)
         self._check_qemu_bin()
 
@@ -241,8 +264,6 @@ class BaseQEMURunner(BaseRunner):
         self.image = image
         # path to cdrom iso to attach (for cloud-init)
         self.cdrom_iso = cdrom_iso
-        # host directories to share with the VM as virtfs devices
-        self.mount_points = mount_points if mount_points else list()
         # Popen object of the qemu process
         self.vm = None
         # following values are set after the VM is terminated
@@ -302,14 +323,6 @@ class BaseQEMURunner(BaseRunner):
         """
         # handle CDROM
         qemu_cmd.extend(self._get_qemu_cdrom_option())
-
-        # handle mount points
-        for mount_point in self.mount_points:
-            src_host = mount_point.src_host
-            tag = mount_point.mount_tag
-            security_model = mount_point.security_model
-            readonly = ",readonly" if mount_point.readonly else ""
-            qemu_cmd.extend(["-virtfs", f"local,path={src_host},mount_tag={tag},security_model={security_model}{readonly}"])
 
         # handle boot image
         qemu_cmd.extend(self._get_qemu_boot_image_option())
@@ -394,25 +407,6 @@ class BaseQEMURunner(BaseRunner):
             raise RuntimeError(f"'{qemu_bin}' process ended before being ready to use")
 
         return super().is_ready(command)
-
-    def mount_mount_points(self):
-        """
-        This method mounts the needed mount points on the VM.
-
-        It should be called only after is_vm_ready() returned True. Otherwise it will fail.
-        """
-        for mount_point in self.mount_points:
-            dst_guest = mount_point.dst_guest
-            mount_tag = mount_point.mount_tag
-            self.run_command_check_call(f"sudo mkdir {dst_guest}")
-            #! FIXME: "9p" filesystem is not supported on RHEL!
-            out, err, ret = self.run_command(f"sudo mount -t 9p -o trans=virtio {mount_tag} {dst_guest} -oversion=9p2000.L")
-            if ret != 0:
-                log.error("Mounting '%s' to '%s' failed with retcode: %d\nstdout: %s\nstderr: %s", mount_tag, dst_guest,
-                ret, out, err)
-                raise subprocess.CalledProcessError(
-                    ret,
-                    f"sudo mount -t 9p -o trans=virtio {mount_tag} {dst_guest} -oversion=9p2000.L")
 
     def __enter__(self):
         self.start()
@@ -662,10 +656,10 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "osbuild-ostree",
         "osbuild-composer",
         "golang",
-        "python3-pyyaml"  # needed by image-info
+        "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, images, arch_gen_matrix, output, keep_image_info, ssh_id_file, ci_userdata=None):
+    def __init__(self, images, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, ci_userdata=None):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -693,6 +687,8 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
             },
             ...
         }
+        'sources' is a directory path with the osbuild-composer sources, which will be used to generate image test
+        cases.
         'output' is a directory path, where the generated test case manifests should be stored.
         'keep_image_info' specifies whether to pass the '--keep-image-info' option to the 'generate-test-cases' script.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
@@ -703,6 +699,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self._processes = list()
         self.images = images
         self.arch_gen_matrix = arch_gen_matrix
+        self.sources = sources
         self.output = output
         self.keep_image_info = keep_image_info
         self.ssh_id_file = ssh_id_file
@@ -714,7 +711,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 raise RuntimeError(f"architecture '{arch}' is in requested test matrix, but no image was provided")
 
     @staticmethod
-    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, output, keep_image_info):
+    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, sources, output, keep_image_info):
         """
         Generate test cases using VM with appropriate architecture.
 
@@ -734,82 +731,90 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         }
         """
 
-        mount_points = RunnerMountPoint.get_default_runner_mount_points(output)
         go_tls_timeout_retries = 3
 
         # spin up appropriate VM represented by 'runner'
-        with runner_cls(image, user, cdrom_iso, mount_points=mount_points) as runner:
-            log.info("Waiting for the '%s' runner to be configured by cloud-init", arch)
+        with runner_cls(image, user, cdrom_iso) as runner:
+            log.info("Waiting for the '%s' runner to become ready", arch)
             runner.wait_until_ready()
-            runner.mount_mount_points()
 
-            # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
-            # removing some of the downloaded RPMs due to "ageing"
-            guest_osbuild_store_dir = "/home/admin/osbuild-store"
-            runner.run_command_check_call(f"sudo mkdir {guest_osbuild_store_dir}")
+            # First create a workdir, which will be deleted after everything is finished
+            with runner.get_managed_workdir() as runner_workdir:
+                log.debug("Using '%s' workdir on the runner", runner_workdir)
 
-            # install necessary packages
-            runner.run_command_check_call("sudo dnf install -y " + " ".join(TestCaseMatrixGenerator.INSTALL_RPMS))
-            # Log installed versions of important RPMs
-            rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
-            log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
+                # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
+                # removing some of the downloaded RPMs due to "ageing"
+                runner_osbuild_store_dir = f"{runner_workdir}/osbuild-store"
+                runner.run_command_check_call(f"mkdir {runner_osbuild_store_dir}")
 
-            # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host.
-            # It is not possible to relabel the 'image-info' in the mounted path, because it is read-only.
-            # Also bind-mounting copy of image-info with proper SELinux labels to /mnt/sources didn't do the trick.
-            # For the reason above, make a full copy of sources in /home/admin and operate on it instead.
-            osbuild_label, stderr, retcode = runner.run_command("matchpathcon -n /usr/bin/osbuild")
-            if retcode:
-                raise RuntimeError(f"Running 'matchpathcon' on the guest failed. retcode: {retcode}\n\nstderr: {stderr}")
-            osbuild_label = osbuild_label.strip()
-            sources_path = "/home/admin/sources"
-            image_info_guest_path = f"{sources_path}/tools/image-info"
-            log.info(f"Making copy of sources in '{sources_path}'.")
-            # exclude test/data/manifests, because it is mounted from the host into /mnt/output and
-            # has UID and GID set, which does not allow us to access it. And it is not needed
-            # to generate a test case!
-            runner.run_command_check_call(f"rsync -a --exclude=test/data/manifests /mnt/sources/ {sources_path}")
-            runner.run_command_check_call(f"chcon {osbuild_label} {image_info_guest_path}")
+                # install necessary packages
+                runner.run_command_check_call("sudo dnf install -y " + " ".join(TestCaseMatrixGenerator.INSTALL_RPMS))
+                # Log installed versions of important RPMs
+                rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
+                log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
 
-            for distro, img_type_list in generation_matrix.items():
-                for image_type in img_type_list:
-                    log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
+                # copy sources from the host to the runner
+                runner_sources_dir = f"{runner_workdir}/sources"
+                runner.copytree_to_runner(sources, runner_sources_dir)
 
-                    # is the image with customizations?
-                    if image_type.endswith("-customize"):
-                        with_customizations = True
-                        image_type = image_type.rstrip("-customize")
-                    else:
-                        with_customizations = False
+                # create output directory for the results on the runner
+                runner_output_dir = f"{runner_workdir}/output"
+                runner.run_command_check_call(f"mkdir {runner_output_dir}")
 
-                    gen_test_cases_cmd = f"cd {sources_path}; sudo tools/test-case-generators/generate-test-cases" + \
-                        f" --distro {distro} --arch {arch} --image-types {image_type}" + \
-                        f" --store {guest_osbuild_store_dir} --output /mnt/output/"
-                    if with_customizations:
-                        gen_test_cases_cmd += " --with-customizations"
-                    if keep_image_info:
-                        gen_test_cases_cmd += " --keep-image-info"
+                # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host.
+                # It is not possible to relabel the 'image-info' in the mounted path, because it is read-only.
+                # Also bind-mounting copy of image-info with proper SELinux labels to /mnt/sources didn't do the trick.
+                # For the reason above, make a full copy of sources in /home/admin and operate on it instead.
+                osbuild_label = runner.run_command_check_output("matchpathcon -n /usr/bin/osbuild")
+                osbuild_label = osbuild_label.strip()
+                image_info_runner_path = f"{runner_sources_dir}/tools/image-info"
+                runner.run_command_check_call(f"chcon {osbuild_label} {image_info_runner_path}")
 
-                    # allow fixed number of retries if the command fails for a specific reason
-                    for i in range(1, go_tls_timeout_retries+1):
-                        if i > 1:
-                            log.info("Retrying image test case generation (%d of %d)", i, go_tls_timeout_retries)
+                for distro, img_type_list in generation_matrix.items():
+                    # clean up the store direcotry for each distro, to prevent running out of space
+                    runner.run_command_check_call(f"sudo rm -rf {runner_osbuild_store_dir}/*")
 
-                        stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
+                    for image_type in img_type_list:
+                        log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
 
-                        if retcode != 0:
-                            log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
-                                      stdout, stderr)
-
-                            # Retry the command, if there was an error due to TLS handshake timeout
-                            # This is happening on all runners using other than host's arch from time to time.
-                            if stderr.find("net/http: TLS handshake timeout") != -1:
-                                continue
+                        # is the image with customizations?
+                        if image_type.endswith("-customize"):
+                            with_customizations = True
+                            image_type = image_type.rstrip("-customize")
                         else:
-                            log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
+                            with_customizations = False
 
-                        # don't retry if the process ended successfully or if there was a different error
-                        break
+                        gen_test_cases_cmd = f"cd {runner_sources_dir}; sudo tools/test-case-generators/generate-test-cases" + \
+                            f" --distro {distro} --arch {arch} --image-types {image_type}" + \
+                            f" --store {runner_osbuild_store_dir} --output {runner_output_dir}"
+                        if with_customizations:
+                            gen_test_cases_cmd += " --with-customizations"
+                        if keep_image_info:
+                            gen_test_cases_cmd += " --keep-image-info"
+
+                        # allow fixed number of retries if the command fails for a specific reason
+                        for i in range(1, go_tls_timeout_retries+1):
+                            if i > 1:
+                                log.info("Retrying image test case generation (%d of %d)", i, go_tls_timeout_retries)
+
+                            stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
+
+                            if retcode != 0:
+                                log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
+                                        stdout, stderr)
+
+                                # Retry the command, if there was an error due to TLS handshake timeout
+                                # This is happening on all runners using other than host's arch from time to time.
+                                if stderr.find("net/http: TLS handshake timeout") != -1:
+                                    continue
+                            else:
+                                log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
+
+                            # don't retry if the process ended successfully or if there was a different error
+                            break
+
+                        # copy partial results back to the host
+                        runner.copytree_from_runner(runner_output_dir, output)
 
             log.info("'%s' runner finished its work", arch)
 
@@ -842,7 +847,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 process = multiprocessing.Process(
                     target=self.runner_function,
                     args=(arch, self.ARCH_RUNNER_MAP[arch], self.images[arch], vm_user, cdrom_iso,
-                          generation_matrix, self.output, self.keep_image_info))
+                          generation_matrix, self.sources, self.output, self.keep_image_info))
                 self._processes.append(process)
                 process.start()
                 log.info("Started '%s' runner - %s", arch, process.name)
@@ -953,6 +958,13 @@ def get_args():
         required=True
     )
     parser.add_argument(
+        "--sources",
+        metavar="SOURCES_DIRECTORY",
+        type=os.path.abspath,
+        help="Path to the osbuild-composer sources directory, which will be used to generate test cases. " + \
+            "If not provided, the current working directory is used."
+    )
+    parser.add_argument(
         "--gen-matrix-file",
         help="Path to JSON file from which to read the test case generation matrix (distro x arch x image type)." + \
             " If not provided, '<script_location_dir>/distro-arch-imagetype-map.json' is read.",
@@ -973,12 +985,12 @@ def get_args():
         "-d", "--debug",
         action='store_true',
         default=False,
-        help="turn on debug logging"
+        help="Turn on debug logging."
     )
     return parser.parse_args()
 
 # pylint: disable=too-many-arguments,too-many-locals
-def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_matrix_file, output, keep_image_info):
+def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_matrix_file, sources, output, keep_image_info):
     if not os.path.isdir(output):
         raise RuntimeError(f"output directory {output} does not exist")
 
@@ -1028,7 +1040,11 @@ def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_
         ssh_id_file += ".pub"
     log.debug("Using SSH ID file: %s", ssh_id_file)
 
-    with TestCaseMatrixGenerator(vm_images, arch_gen_matrix_dict, output, keep_image_info, ssh_id_file, ci_userdata) as generator:
+    # determine the osbuild-composer sources path
+    if not sources:
+        sources = os.getcwd()
+
+    with TestCaseMatrixGenerator(vm_images, arch_gen_matrix_dict, sources, output, keep_image_info, ssh_id_file, ci_userdata) as generator:
         generator.generate()
 
 
@@ -1054,6 +1070,7 @@ if __name__ == '__main__':
             args.ssh_id_file,
             args.ci_userdata,
             args.gen_matrix_file,
+            args.sources,
             args.output,
             args.keep_image_info
         )
