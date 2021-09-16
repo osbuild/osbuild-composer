@@ -53,6 +53,6 @@ require (
 	google.golang.org/api v0.56.0
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
 	google.golang.org/protobuf v1.27.1
-	gopkg.in/ini.v1 v1.63.0
+	gopkg.in/ini.v1 v1.63.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
