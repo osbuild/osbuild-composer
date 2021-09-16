@@ -179,6 +179,7 @@ OSTree:
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8-x86_64
           - openstack/rhel-8.5-x86_64
+          - openstack/rhel-9.0-beta-nightly-x86_64
 
 New OSTree:
   stage: test
@@ -190,6 +191,17 @@ New OSTree:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64-large
+
+New OSTree (RHEL9-BETA):
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-ng-og.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-9.0-beta-nightly-x86_64
 
 OSTree simplified installer:
   stage: test

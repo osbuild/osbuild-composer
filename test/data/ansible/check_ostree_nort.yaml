@@ -1,0 +1,530 @@
+---
+- hosts: ostree_guest
+  become: no
+  vars:
+    workspace: "{{ lookup('env', 'WORKSPACE') }}"
+    total_counter: "0"
+    failed_counter: "0"
+
+  tasks:
+    # current target host's IP address
+    - debug: var=ansible_all_ipv4_addresses
+
+    # default kernel or rt kernel
+    - name: check installed kernel
+      command: uname -r
+      register: result_kernel
+
+    # first installed or upgraded
+    # first installed has one commit, but upgraded has two
+    - name: determin which stage the checking is running on
+      shell: rpm-ostree status --json | jq '.deployments | length'
+      register: result_stage
+
+    - set_fact:
+        checking_stage: "{{ result_stage.stdout }}"
+
+    # case: check ostree commit correctly updated
+    - name: get deployed ostree commit
+      command: rpm-ostree status --json
+      register: result_commit
+
+    - name: make a json result
+      set_fact:
+        deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
+
+    - name: check commit deployed and built
+      block:
+        - assert:
+            that:
+              - deploy_commit == ostree_commit
+            fail_msg: "deployed ostree commit is not commit built by osbuild-composer"
+            success_msg: "successful building and deployment"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case from bug: https://bugzilla.redhat.com/show_bug.cgi?id=1848453
+    - name: check ostree-remount status
+      command: systemctl is-active ostree-remount.service
+      register: result_remount
+
+    - name: ostree-remount should be started
+      block:
+        - assert:
+            that:
+              - result_remount.stdout == "active"
+            fail_msg: "ostree-remount is not started by default"
+            success_msg: "starting ostree-remount successful"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # bios or uefi
+    - name: bios or uefi
+      stat:
+        path: /sys/firmware/efi
+      register: result_uefi
+
+    - set_fact:
+        device_name: /dev/vda2
+
+    - set_fact:
+        device_name: /dev/vda3
+      when: result_uefi.stat.exists
+
+    # for edge-simplified-installer and edge-raw-image, /sysroot is mounted at /dev/vda4, need to set device_name to /dev/vda4
+    - name: check if it is simplified-installer or raw-image
+      command: df -h
+      register: result_df
+    
+    - set_fact:
+        device_name: /dev/vda4
+      when: "'/dev/vda4' in result_df.stdout"
+
+    # case: check /sysroot moutn point
+    - name: check /sysroot mount point
+      command: findmnt -r -o SOURCE -n /sysroot
+      register: result_sysroot_mount_point
+
+    - name: "/sysroot should be mounted on {{ device_name }}"
+      block:
+        - assert:
+            that:
+              - result_sysroot_mount_point.stdout == "{{ device_name }}"
+            fail_msg: "/var does not mount on {{ device_name }}"
+            success_msg: "/var mounts on {{ device_name }}"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check /sysroot mount status
+    - name: check /sysroot mount status
+      shell: findmnt -r -o OPTIONS -n /sysroot | awk -F "," '{print $1}'
+      register: result_sysroot_mount_status
+
+    - name: /sysroot should be mount with rw permission
+      block:
+        - assert:
+            that:
+              - result_sysroot_mount_status.stdout == "rw"
+            fail_msg: "/sysroot is not mounted with rw permission"
+            success_msg: "/sysroot is mounted with rw permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check /var mount point
+    - name: check /var mount point
+      command: findmnt -r -o SOURCE -n /var
+      register: result_var_mount_point
+
+    - name: "/var should be mounted on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+      block:
+        - assert:
+            that:
+              - result_var_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+            fail_msg: "/var does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+            success_msg: "/var mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check /var mount status
+    - name: check /var mount status
+      shell: findmnt -r -o OPTIONS -n /var | awk -F "," '{print $1}'
+      register: result_var_mount_status
+
+    - name: /var should be mount with rw permission
+      block:
+        - assert:
+            that:
+              - result_var_mount_status.stdout == "rw"
+            fail_msg: "/var is not mounted with rw permission"
+            success_msg: "/var is mounted with rw permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check /usr mount point
+    - name: check /usr mount point
+      command: findmnt -r -o SOURCE -n /usr
+      register: result_usr_mount_point
+
+    - name: "/usr should be mounted on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+      block:
+        - assert:
+            that:
+              - result_usr_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+            fail_msg: "/usr does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+            success_msg: "/usr mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check /usr mount status
+    - name: check /usr mount status
+      shell: findmnt -r -o OPTIONS -n /usr | awk -F "," '{print $1}'
+      register: result_usr_mount_status
+
+    - name: /usr should be mount with rw permission
+      block:
+        - assert:
+            that:
+              - result_usr_mount_status.stdout == "ro"
+            fail_msg: "/usr is not mounted with ro permission"
+            success_msg: "/usr is mounted with ro permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: get the first 10 chars in commit hash
+      set_fact:
+        commit_log: "{{ deploy_commit[:11] }}"
+
+    # case: check wget installed after upgrade
+    - name: check installed package
+      shell: rpm -qa | sort
+      register: result_packages
+
+    - name: check wget installed
+      block:
+        - assert:
+            that:
+              - "'wget' in result_packages.stdout"
+            fail_msg: "wget not installed, ostree upgrade might be failed"
+            success_msg: "wget installed in ostree upgrade"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: checking_stage == "2"
+
+    - name: save installed package to log file
+      copy:
+        content: "{{ result_packages.stdout }}"
+        dest: "{{ workspace }}/{{ commit_log }}.installed.ostree.log"
+      delegate_to: localhost
+
+    # case: check ostree-remount mount log
+    - name: check ostree-remount mount log
+      command: journalctl -u ostree-remount
+      register: result_remount_jounalctl
+
+    - name: ostree-remount should remount /var and /sysroot
+      block:
+        - assert:
+            that:
+              - "'/sysroot' in result_remount_jounalctl.stdout"
+              - "'/var' in result_remount_jounalctl.stdout"
+            fail_msg: "/sysroot or /var are not remounted by ostree-remount"
+            success_msg: "/sysroot and /var are remount"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check dmesg error and failed log
+    - name: check dmesg output
+      command: dmesg
+      register: result_dmesg
+
+    - name: save dmesg output to log file
+      copy:
+        content: "{{ result_dmesg.stdout }}"
+        dest: "{{ workspace }}/{{ commit_log }}.dmesg.ostree.log"
+      delegate_to: localhost
+
+    - name: check dmesg error and fail log
+      shell: dmesg --notime | grep -i "error\|fail" || true
+      register: result_dmesg_error
+
+    # case: check running container with podman
+    - name: run ubi8 image
+      command: podman run registry.access.redhat.com/ubi8/ubi-minimal:latest cat /etc/redhat-release
+      register: podman_result
+      become: yes
+      ignore_errors: yes  # due to https://bugzilla.redhat.com/show_bug.cgi?id=1903983
+
+    - name: run container test
+      block:
+        - assert:
+            that:
+              - podman_result is succeeded
+              - "'Red Hat Enterprise Linux release' in podman_result.stdout"
+            fail_msg: "failed run container with podman"
+            success_msg: "running container with podman successed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check dnf package and it should not be installed
+    # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L642
+    - name: dnf should not be installed
+      block:
+        - name: dnf should not be installed
+          shell: rpm -qa | grep dnf || echo -n PASS
+          register: result_dnf
+
+        - assert:
+            that:
+              - result_dnf.stdout == "PASS"
+            fail_msg: "dnf is installed"
+            success_msg: "No dnf installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] != '8.5'
+
+    # case: check installed greenboot packages
+    # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L634
+    - name: greenboot and it's related packages should be installed
+      block:
+        - name: greenboot and it's related packages should be installed
+          shell: rpm -qa | grep greenboot
+          register: result_greenboot_packages
+
+        - assert:
+            that:
+              - "'greenboot-0' in result_greenboot_packages.stdout"
+              - "'greenboot-grub2' in result_greenboot_packages.stdout"
+              - "'greenboot-rpm-ostree-grub2' in result_greenboot_packages.stdout"
+              - "'greenboot-reboot' in result_greenboot_packages.stdout"
+              - "'greenboot-status' in result_greenboot_packages.stdout"
+            fail_msg: "Some of greenboot and its related packages are not installed"
+            success_msg: "All greenboot and its related packages are installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check greenboot* services
+    - name: a list of greenboot* service should be enabled
+      block:
+        - name: a list of greenboot* service should be enabled
+          command: systemctl is-enabled greenboot-grub2-set-counter greenboot-grub2-set-success greenboot-healthcheck greenboot-rpm-ostree-grub2-check-fallback greenboot-status greenboot-task-runner redboot-auto-reboot redboot-task-runner
+          register: result_greenboot_service
+
+        - assert:
+            that:
+              - result_greenboot_service.stdout == 'enabled\nenabled\nenabled\nenabled\nenabled\nenabled\nenabled\nenabled'
+            fail_msg: "Some of greenboot* services are not enabled"
+            success_msg: "All greenboot* services are enabled"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check greenboot* services log
+    - name: all greenboot* service should run without error
+      block:
+        - name: all greenboot* service should run without error
+          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          register: result_greenboot_log
+
+        - assert:
+            that:
+              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
+              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
+              - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
+              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
+              - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
+              - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
+              - "'greenboot MotD Generator' in result_greenboot_log.stdout"
+            fail_msg: "Some errors happened in service boot"
+            success_msg: "All greenboot services booted success"
+
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check grubenv variables
+    - name: grubenv variables should contain boot_success=1
+      block:
+        - name: grubenv variables should contain boot_success=1
+          command: grub2-editenv list
+          register: result_grubenv
+          become: yes
+
+        - assert:
+            that:
+              - "'boot_success=1' in result_grubenv.stdout"
+            fail_msg: "Not found boot_success=1"
+            success_msg: "Found boot_success=1"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check rollback function if boot error found
+    - name: install sanely failing health check unit to test red boot status behavior
+      block:
+        - name: install sanely failing health check unit to test red boot status behavior
+          command: rpm-ostree install http://file-server-virt-qe-3rd.apps.ocp4.prod.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
+          become: yes
+
+        - name: reboot to deploy new ostree commit
+          reboot:
+          become: yes
+
+        - name: waits until instance is reachable
+          wait_for:
+            host: "{{ ansible_all_ipv4_addresses[0] }}"
+            port: 22
+            search_regex: OpenSSH
+            delay: 10
+          register: result_rollback
+
+        - assert:
+            that:
+              - result_rollback is succeeded
+            fail_msg: "Rollback failed"
+            success_msg: "Rollback success"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check ostree commit after rollback
+    - name: check ostree commit after rollback
+      block:
+        - name: check ostree commit after rollback
+          command: rpm-ostree status --json
+          register: result_commit
+
+        - name: make a json result
+          set_fact:
+            deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
+
+        - assert:
+            that:
+              - deploy_commit == ostree_commit
+            fail_msg: "Not rollback to last commit"
+            success_msg: "Rollback success"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: result_rollback is succeeded
+
+    # case: check greenboot* services log again
+    - name: fallback log should be found here
+      block:
+        - name: fallback log should be found here
+          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          register: result_greenboot_log
+
+        - assert:
+            that:
+              - "'FALLBACK BOOT DETECTED! Default rpm-ostree deployment has been rolled back' in result_greenboot_log.stdout"
+              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
+              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
+              - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
+              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
+              - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
+              - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
+              - "'greenboot MotD Generator' in result_greenboot_log.stdout"
+            fail_msg: "Fallback log not found"
+            success_msg: "Found fallback log"
+
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: result_rollback is succeeded
+
+    # case: check grubenv variables again
+    - name: grubenv variables should contain boot_success=1
+      block:
+        - name: grubenv variables should contain boot_success=1
+          command: grub2-editenv list
+          register: result_grubenv
+          become: yes
+
+        - assert:
+            that:
+              - "'boot_success=1' in result_grubenv.stdout"
+            fail_msg: "Not found boot_success=1"
+            success_msg: "Found boot_success=1"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: result_rollback is succeeded
+
+    - assert:
+        that:
+          - failed_counter == "0"
+        fail_msg: "Run {{ total_counter }} tests, but {{ failed_counter }} of them failed"
+        success_msg: "Totally {{ total_counter }} test passed"
