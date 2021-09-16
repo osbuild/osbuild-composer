@@ -659,7 +659,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, images, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, ci_userdata=None):
+    def __init__(self, images, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, ci_userdata=None, log_level=logging.INFO):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -704,6 +704,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self.keep_image_info = keep_image_info
         self.ssh_id_file = ssh_id_file
         self.ci_userdata = ci_userdata
+        self.log_level = log_level
 
         # check that we have image for each needed architecture
         for arch in self.arch_gen_matrix.keys():
@@ -711,7 +712,7 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 raise RuntimeError(f"architecture '{arch}' is in requested test matrix, but no image was provided")
 
     @staticmethod
-    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, sources, output, keep_image_info):
+    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, sources, output, keep_image_info, log_level):
         """
         Generate test cases using VM with appropriate architecture.
 
@@ -730,8 +731,10 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
             ...
         }
         """
-
         go_tls_timeout_retries = 3
+
+        # set the expected log level in the new process
+        log.setLevel(log_level)
 
         # spin up appropriate VM represented by 'runner'
         with runner_cls(image, user, cdrom_iso) as runner:
@@ -847,7 +850,8 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 process = multiprocessing.Process(
                     target=self.runner_function,
                     args=(arch, self.ARCH_RUNNER_MAP[arch], self.images[arch], vm_user, cdrom_iso,
-                          generation_matrix, self.sources, self.output, self.keep_image_info))
+                          generation_matrix, self.sources, self.output, self.keep_image_info,
+                          self.log_level))
                 self._processes.append(process)
                 process.start()
                 log.info("Started '%s' runner - %s", arch, process.name)
@@ -1044,7 +1048,9 @@ def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_
     if not sources:
         sources = os.getcwd()
 
-    with TestCaseMatrixGenerator(vm_images, arch_gen_matrix_dict, sources, output, keep_image_info, ssh_id_file, ci_userdata) as generator:
+    with TestCaseMatrixGenerator(
+        vm_images, arch_gen_matrix_dict, sources, output,
+        keep_image_info, ssh_id_file, ci_userdata, log.level) as generator:
         generator.generate()
 
 
