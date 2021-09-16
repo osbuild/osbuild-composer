@@ -279,21 +279,6 @@ func aarch64EdgeCommitPackageSet() rpmmd.PackageSet {
 // INSTALLER PACKAGE SET
 func installerPackageSet() rpmmd.PackageSet {
 	// TODO: simplify
-	/* TODO: These packages were temporarily removed because they don't
-	  exist in RHEL 9:
-		- dump
-		- gfs2-utils
-		- iwl3945-firmware
-		- iwl4965-firmware
-		- iwl6000-firmware
-		- libertas-sd8686-firmware
-		- libertas-sd8787-firmware
-		- libertas-usb8388-firmware
-		- libertas-usb8388-olpc-firmware
-		- libreport-rhel-anaconda-bugzilla
-		- metacity
-		- system-storage-manager
-	*/
 	return rpmmd.PackageSet{
 		Include: []string{
 			"aajohan-comfortaa-fonts", "abattis-cantarell-fonts",
@@ -356,30 +341,30 @@ func edgeInstallerPackageSet() rpmmd.PackageSet {
 			"bzip2", "cryptsetup", "curl", "dbus-x11", "dejavu-sans-fonts",
 			"dejavu-sans-mono-fonts", "device-mapper-persistent-data",
 			"dmidecode", "dnf", "dracut-config-generic", "dracut-network",
-			"dump", "efibootmgr", "ethtool", "ftp", "gdb-gdbserver", "gdisk",
-			"gfs2-utils", "glibc-all-langpacks",
+			/*"dump",*/ "efibootmgr", "ethtool", "ftp", "gdb-gdbserver", "gdisk",
+			/*"gfs2-utils",*/ "glibc-all-langpacks",
 			"google-noto-sans-cjk-ttc-fonts", "grub2-efi-ia32-cdboot",
 			"grub2-efi-x64-cdboot", "grub2-tools", "grub2-tools-efi",
 			"grub2-tools-extra", "grub2-tools-minimal", "grubby",
 			"gsettings-desktop-schemas", "hdparm", "hexedit", "hostname",
 			"initscripts", "ipmitool", "iwl1000-firmware", "iwl100-firmware",
 			"iwl105-firmware", "iwl135-firmware", "iwl2000-firmware",
-			"iwl2030-firmware", "iwl3160-firmware", "iwl3945-firmware",
-			"iwl4965-firmware", "iwl5000-firmware", "iwl5150-firmware",
+			"iwl2030-firmware", "iwl3160-firmware", /*"iwl3945-firmware",*/
+			/*"iwl4965-firmware",*/ "iwl5000-firmware", "iwl5150-firmware",
 			"iwl6000g2a-firmware", "iwl6000g2b-firmware",
 			"iwl6050-firmware", "iwl7260-firmware", "jomolhari-fonts",
 			"kacst-farsi-fonts", "kacst-qurn-fonts", "kbd", "kbd-misc",
 			"kdump-anaconda-addon", "kernel", "khmeros-base-fonts", "less",
-			"libblockdev-lvm-dbus", "libertas-sd8686-firmware",
-			"libertas-sd8787-firmware", "libertas-usb8388-firmware",
-			"libertas-usb8388-olpc-firmware", "libibverbs",
+			"libblockdev-lvm-dbus", /*"libertas-sd8686-firmware",*/
+			/*"libertas-sd8787-firmware",*/ /*"libertas-usb8388-firmware",*/
+			/*"libertas-usb8388-olpc-firmware",*/ "libibverbs",
 			"libreport-plugin-bugzilla", "libreport-plugin-reportuploader",
-			"libreport-rhel-anaconda-bugzilla", "librsvg2", "linux-firmware",
+			/*"libreport-rhel-anaconda-bugzilla",*/ "librsvg2", "linux-firmware",
 			"lklug-fonts", "lohit-assamese-fonts", "lohit-bengali-fonts",
 			"lohit-devanagari-fonts", "lohit-gujarati-fonts",
 			"lohit-gurmukhi-fonts", "lohit-kannada-fonts", "lohit-odia-fonts",
 			"lohit-tamil-fonts", "lohit-telugu-fonts", "lsof", "madan-fonts",
-			"memtest86+", "metacity", "mtr", "mt-st", "net-tools", "nfs-utils",
+			"memtest86+" /*"metacity",*/, "mtr", "mt-st", "net-tools", "nfs-utils",
 			"nmap-ncat", "nm-connection-editor", "nss-tools",
 			"openssh-clients", "openssh-server", "oscap-anaconda-addon",
 			"ostree", "pciutils", "perl-interpreter", "pigz", "plymouth",
@@ -389,7 +374,7 @@ func edgeInstallerPackageSet() rpmmd.PackageSet {
 			"shim-ia32", "shim-x64", "sil-abyssinica-fonts",
 			"sil-padauk-fonts", "sil-scheherazade-fonts", "smartmontools",
 			"smc-meera-fonts", "spice-vdagent", "strace", "syslinux",
-			"systemd", "system-storage-manager", "tar",
+			"systemd" /*"system-storage-manager",*/, "tar",
 			"thai-scalable-waree-fonts", "tigervnc-server-minimal",
 			"tigervnc-server-module", "udisks2", "udisks2-iscsi", "usbutils",
 			"vim-minimal", "volume_key", "wget", "xfsdump", "xfsprogs",
