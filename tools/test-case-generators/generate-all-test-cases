@@ -83,7 +83,6 @@ import logging
 import glob
 
 import yaml
-import paramiko
 
 
 # setup logging
@@ -93,9 +92,6 @@ formatter = logging.Formatter("%(asctime)s [%(levelname)s] - %(processName)s: %(
 sh = logging.StreamHandler()
 sh.setFormatter(formatter)
 log.addHandler(sh)
-
-# suppress all errors logged by paramiko
-paramiko.util.log_to_file(os.devnull)
 
 
 class RunnerMountPoint:
@@ -149,39 +145,31 @@ class BaseRunner(contextlib.AbstractContextManager):
 
         Returns stdin, stdout, stderr from the run command.
         """
-        ssh = paramiko.SSHClient()
-        # don't ask / fail on unknown remote host fingerprint, just accept any
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_command = [
+            "ssh",
+            "-oStrictHostKeyChecking=no",  # don't verify the remote host's key
+            "-oUserKnownHostsFile=/dev/null",  # don't add the remote host's key as trusted
+            "-oLogLevel=ERROR",  # don't log warning that the host's key has been added as trusted
+            "-p", f"{self.port}",
+            f"{self.username}@{self.hostname}",
+            command
+        ]
+
         try:
-            ssh.connect(self.hostname, self.port, self.username)
-            ssh_tansport = ssh.get_transport()
-            channel = ssh_tansport.open_session()
             # don't log commands when the vm is not yet ready for use
             if self.runner_ready:
                 log.debug("Running on runner: '%s'", command)
-            channel.exec_command(command)
-            stdout = ""
-            stderr = ""
-            # wait for the command to finish
-            while True:
-                while channel.recv_ready():
-                    stdout += channel.recv(1024).decode()
-                while channel.recv_stderr_ready():
-                    stderr += channel.recv_stderr(1024).decode()
-                if channel.exit_status_ready():
-                    break
-                time.sleep(0.01)
-            returncode = channel.recv_exit_status()
+            completed_process = subprocess.run(ssh_command, capture_output=True, text=True)
         except Exception as e:
             # don't log errors when vm is not ready yet, because there are many errors
             if self.runner_ready:
                 log.error("Running command over SSH failed: %s", str(e))
             raise e
-        finally:
-            # closes the underlying transport
-            ssh.close()
 
-        return stdout, stderr, returncode
+        stdout = completed_process.stdout if completed_process.stdout else ""
+        stderr = completed_process.stderr if completed_process.stderr else ""
+
+        return stdout, stderr, completed_process.returncode
 
     def run_command_check_call(self, command):
         """
@@ -215,13 +203,8 @@ class BaseRunner(contextlib.AbstractContextManager):
         try:
             # run command to determine if the host is ready for use
             self.run_command_check_call(command)
-        except (paramiko.ChannelException,
-                paramiko.ssh_exception.NoValidConnectionsError,
-                paramiko.ssh_exception.SSHException,
-                EOFError,
-                socket.timeout,
-                subprocess.CalledProcessError) as _:
-            # ignore all reasonable paramiko exceptions, this is useful when the host is still stating up
+        except (subprocess.CalledProcessError) as _:
+            # ignore exceptions, this is useful when the host is still stating up
             pass
         else:
             log.debug("Runner is ready for use")
