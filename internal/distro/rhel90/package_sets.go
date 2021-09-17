@@ -233,7 +233,7 @@ func edgeCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"redhat-release", "glibc", "glibc-minimal-langpack",
-			/*"nss-altfiles", see rhbz#1916260 */ "dracut-config-generic", "dracut-network",
+			"nss-altfiles", "dracut-config-generic", "dracut-network",
 			"basesystem", "bash", "platform-python", "shadow-utils", "chrony",
 			"setup", "shadow-utils", "sudo", "systemd", "coreutils",
 			"util-linux", "curl", "vim-minimal", "rpm", "rpm-ostree", "polkit",
