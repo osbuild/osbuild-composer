@@ -667,7 +667,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, log_level=logging.INFO):
+    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, log_level=logging.INFO):
         """
         'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
         {
@@ -691,7 +691,6 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         'sources' is a directory path with the osbuild-composer sources, which will be used to generate image test
         cases.
         'output' is a directory path, where the generated test case manifests should be stored.
-        'keep_image_info' specifies whether to pass the '--keep-image-info' option to the 'generate-test-cases' script.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
         'log_level' is the desired log level to be used by new processes created for each runner.
         """
@@ -699,7 +698,6 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self.arch_gen_matrix = arch_gen_matrix
         self.sources = sources
         self.output = output
-        self.keep_image_info = keep_image_info
         self.ssh_id_file = ssh_id_file
         self.log_level = log_level
 
@@ -820,8 +818,6 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
                         f" --store {runner_osbuild_store_dir} --output {runner_output_dir}"
                     if with_customizations:
                         gen_test_cases_cmd += " --with-customizations"
-                    if self.keep_image_info:
-                        gen_test_cases_cmd += " --keep-image-info"
 
                     # allow fixed number of retries if the command fails for a specific reason
                     for i in range(1, go_tls_timeout_retries+1):
@@ -904,7 +900,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": S390xQEMURunner
     }
 
-    def __init__(self, images, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, ci_userdata=None, log_level=logging.INFO):
+    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, ci_userdata=None, log_level=logging.INFO):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -935,13 +931,12 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         'sources' is a directory path with the osbuild-composer sources, which will be used to generate image test
         cases.
         'output' is a directory path, where the generated test case manifests should be stored.
-        'keep_image_info' specifies whether to pass the '--keep-image-info' option to the 'generate-test-cases' script.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
         'ci_userdata' is path to file / directory containing cloud-init user-data used
         for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         If the value is not provided, then the default internal cloud-init user-data are used.
         """
-        super().__init__(arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, log_level)
         self.images = images
         self.ci_userdata = ci_userdata
 
@@ -1031,11 +1026,10 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
             "s390x": parser_args.image_s390x
         }
         ci_userdata = parser_args.ci_userdata
-        keep_image_info = parser_args.keep_image_info
 
         with QEMUTestCaseMatrixGenerator(
             vm_images, arch_gen_matrix_dict, sources, output,
-            keep_image_info, ssh_id_file, ci_userdata, log.level) as generator:
+            ssh_id_file, ci_userdata, log.level) as generator:
             generator.generate()
 
 
@@ -1120,11 +1114,6 @@ def get_args():
         help="SSH ID file to use for authenticating to the runner VMs. If the file does not end with " + \
             ".pub, it will be appended to it.",
         type=os.path.abspath
-    )
-    parser.add_argument(
-        "--keep-image-info",
-        action='store_true',
-        help="skip image info (re)generation, but keep the one found in the existing test case"
     )
     parser.add_argument(
         "-d", "--debug",
