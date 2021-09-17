@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -90,6 +91,7 @@ func (s *Server) IncRequests(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
+	logrus.Info("GetOpenapi")
 	spec, err := GetSwagger()
 	if err != nil {
 		return HTTPError(ErrorFailedToLoadOpenAPISpec)
@@ -98,6 +100,7 @@ func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
 }
 
 func (h *apiHandlers) GetErrorList(ctx echo.Context, params GetErrorListParams) error {
+	logrus.Info("GetErrorList", params)
 	page := 0
 	var err error
 	if params.Page != nil {
@@ -119,6 +122,7 @@ func (h *apiHandlers) GetErrorList(ctx echo.Context, params GetErrorListParams) 
 }
 
 func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
+	logrus.Info("GetError", id)
 	errorId, err := strconv.Atoi(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidErrorId)
@@ -138,6 +142,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	logrus.Info("PostCompose", request)
 
 	distribution := h.server.distros.GetDistro(request.Distribution)
 	if distribution == nil {
@@ -425,6 +430,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 }
 
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
+	logrus.Info("GetComposeStatus", id)
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
@@ -522,6 +528,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 
 // ComposeMetadata handles a /compose/{id}/metadata GET request
 func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
+	logrus.Info("GetComposeMetadata", id)
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
