@@ -948,6 +948,17 @@ func (api *API) sourceDeleteHandler(writer http.ResponseWriter, request *http.Re
 		}
 	}
 
+	// Return an error for unknown sources
+	s := api.store.GetSource(name[0][1:])
+	if s == nil {
+		errors := responseError{
+			ID:  "UnknownSource",
+			Msg: name[0][1:] + " is not a valid source.",
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	// Only delete the first name, which will have a / at the start because of the /*source route
 	if isRequestVersionAtLeast(params, 1) {
 		api.store.DeleteSourceByID(name[0][1:])
