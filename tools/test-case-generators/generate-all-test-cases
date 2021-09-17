@@ -30,6 +30,7 @@
 
     The script supports the following commands:
      - 'qemu' - generates image test cases locally using QEMU VMs.
+     - 'remote' - generates image test cases on existing remote hosts.
 
     'qemu' command
     ==============
@@ -71,6 +72,24 @@
 
     Tested with:
     - Fedora 32 (x86_64) and QEMU version 4.2.1
+
+    'remote' command
+    ================
+    Example (builds rhel-8 qcow2 images on aarch64 s390x ppc64le):
+    tools/test-case-generators/generate-all-test-cases \
+        --output test/data/manifests \
+        --arch aarch64 \
+        --arch s390x \
+        --arch ppc64le \
+        --distro rhel-8 \
+        --image-type qcow2 \
+        remote \
+        --host-ppc64le 192.168.1.10 \
+        --host-aarch64 192.168.1.20 \
+        --host-s390x 192.168.1.30
+
+    When using this command, the script uses existing remote hosts accessible
+    via SSH for each architecture.
 """
 
 
@@ -97,6 +116,16 @@ formatter = logging.Formatter("%(asctime)s [%(levelname)s] - %(processName)s: %(
 sh = logging.StreamHandler()
 sh.setFormatter(formatter)
 log.addHandler(sh)
+
+
+# list holding all supported generator classes
+SUPPORTED_GENERATORS = []
+
+
+# decorator to register new generator classes
+def register_generator_cls(cls):
+    SUPPORTED_GENERATORS.append(cls)
+    return cls
 
 
 class BaseRunner(contextlib.AbstractContextManager):
@@ -244,6 +273,15 @@ class BaseRunner(contextlib.AbstractContextManager):
             self.runner_ready = True
 
         return self.runner_ready
+
+
+class RemoteRunner(BaseRunner):
+    """
+    Runner class representing existing remote host accessible via SSH.
+    """
+
+    def __exit__(self, *exc_details):
+        pass
 
 
 class BaseQEMURunner(BaseRunner):
@@ -881,6 +919,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         raise NotImplementedError()
 
 
+@register_generator_cls
 class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
     """
     Class representing generation of all test cases based on provided test
@@ -1033,6 +1072,138 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
             generator.generate()
 
 
+@register_generator_cls
+class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
+    """
+    Class representing generation of all test cases based on provided test
+    cases matrix using existing remote runners.
+    """
+
+    arch_runner_map = {
+        "x86_64": RemoteRunner,
+        "aarch64": RemoteRunner,
+        "ppc64le": RemoteRunner,
+        "s390x": RemoteRunner
+    }
+
+    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, log_level=logging.INFO):
+        """
+        'hosts' is a dict of a remote system hostnames or IP addresses for each supported architecture,
+        that should be used to generate image test cases:
+        {
+            "arch1": "<hostname/IP>",
+            "arch2": "<hostname/IP>",
+            ...
+        }
+        'username' is a username to be used to SSH to the remote hosts. The same username is used for all remote
+        hosts.
+        'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
+        {
+            "arch1": {
+                "distro1": [
+                    "image-type1",
+                    "image-type2"
+                ],
+                "distro2": [
+                    "image-type2",
+                    "image-type3"
+                ]
+            },
+            "arch2": {
+                "distro2": [
+                    "image-type2"
+                ]
+            },
+            ...
+        }
+        'sources' is a directory path with the osbuild-composer sources, which will be used to generate image test
+        cases.
+        'output' is a directory path, where the generated test case manifests should be stored.
+        'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
+        """
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, log_level)
+        self.hosts = hosts
+        self.username = username
+
+        # check that we have image for each needed architecture
+        for arch in self.arch_gen_matrix.keys():
+            if self.hosts.get(arch) is None:
+                raise RuntimeError(f"architecture '{arch}' is in requested test matrix, but no host was provided")
+
+    def generate(self):
+        """
+        Generates all test cases based on provided data in a blocking manner.
+        """
+        # Create architecture-specific map or runner class arguments and start the test case generation.
+        arch_runner_cls_args_map = {}
+        for arch in self.arch_gen_matrix.keys():
+            arch_runner_cls_args_map[arch] = (self.hosts[arch], self.username)
+
+        self._generate(arch_runner_cls_args_map)
+
+    @staticmethod
+    def add_subparser(subparsers):
+        """
+        Adds subparser for the 'remote' command
+        """
+        parser_remote = subparsers.add_parser(
+            "remote",
+            description="generate test cases on existing remote systems",
+            help="generate test cases on existing remote systems"
+        )
+
+        parser_remote.add_argument(
+            "--host-x86_64",
+            metavar="HOSTNAME",
+            help="hostname or an IP address of the remote x86_64 host",
+            required=False
+        )
+        parser_remote.add_argument(
+            "--host-ppc64le",
+            metavar="HOSTNAME",
+            help="hostname or an IP address of the remote ppc64le host",
+            required=False
+        )
+        parser_remote.add_argument(
+            "--host-aarch64",
+            metavar="HOSTNAME",
+            help="hostname or an IP address of the remote aarch64 host",
+            required=False
+        )
+        parser_remote.add_argument(
+            "--host-s390x",
+            metavar="HOSTNAME",
+            help="hostname or an IP address of the remote s390x host",
+            required=False
+        )
+        parser_remote.add_argument(
+            "-u", "--username",
+            metavar="USER",
+            help="username to use to SSH to the remote systems. The same username " + \
+                "is used to connect to all remote hosts. (default 'root')",
+            default="root"
+        )
+        parser_remote.set_defaults(func=RemoteTestCaseMatrixGenerator.main)
+
+    @staticmethod
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+        """
+        The main function of the 'remote' command
+        """
+        hosts = {
+            "x86_64": parser_args.host_x86_64,
+            "aarch64": parser_args.host_aarch64,
+            "ppc64le": parser_args.host_ppc64le,
+            "s390x": parser_args.host_s390x
+        }
+        username = parser_args.username
+
+        with RemoteTestCaseMatrixGenerator(
+            hosts, username, arch_gen_matrix_dict, sources, output,
+            ssh_id_file, log.level) as generator:
+            generator.generate()
+
+
 def get_default_ssh_id_file():
     """
     Returns the path of the default SSH ID file to use.
@@ -1124,7 +1295,8 @@ def get_args():
 
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True
-    QEMUTestCaseMatrixGenerator.add_subparser(subparsers)
+    for supported_generator_cls in SUPPORTED_GENERATORS:
+        supported_generator_cls.add_subparser(subparsers)
 
     return parser.parse_args()
 
