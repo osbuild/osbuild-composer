@@ -10,30 +10,45 @@
     `--image-types` arguments.
 
     The script is intended to be run from the osbuild-composer sources directory
-    root, for which the image test cases should be (re)generated.
+    root, for which the image test cases should be (re)generated. Alternatively,
+    one can specify the path to the sources using the `--sources` option.
 
+    The script generates image test cases in so-called Runner, which is a system
+    of a specific architecture. The used Runner type is specific to the used
+    command, but in general it is a system accessible via SSH connection.
+
+    In simplified example, the script does the following:
+    1. Provisions Runners if needed.
+    2. Waits for the Runner to be ready for use by running a specific command
+       on it.
+    3. Installs RPMs necessary for the test case generation on the Runner.
+    4. Copies the 'sources' using rsync to the Runner.
+    5. Executes the 'tools/test-case-generators/generate-test-cases' on the
+       runner for each requested distro and image type.
+    6. After each image test case is generated successfully, the result is
+       copied using rsync from the Runner to 'output' directory.
+
+    The script supports the following commands:
+     - 'qemu' - generates image test cases locally using QEMU VMs.
+
+    'qemu' command
+    ==============
     Example (builds rhel-8 qcow2 images on aarch64 s390x ppc64le):
     tools/test-case-generators/generate-all-test-cases \
-        --output=test/data/manifests \
+        --output test/data/manifests \
+        --arch aarch64 \
+        --arch s390x \
+        --arch ppc64le \
+        --distro rhel-8 \
+        --image-type qcow2 \
+        qemu \
         --image-x86_64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2 \
         --image-ppc64le ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.ppc64le.qcow2 \
         --image-aarch64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.aarch64.qcow2 \
-        --image-s390x ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.s390x.qcow2 \
-        --arch aarch64 s390x ppc64le \
-        --distro rhel-8 \
-        --image-types qcow2
+        --image-s390x ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.s390x.qcow2
 
-    The script spins up an ephemeral QEMU VM (called Runner) per each required
-    architecture. The CWD (sources dir root) is attached to the Runner using
-    virtfs as readonly and later mounted into /mnt/sources on the Runner.
-    The 'output' directory is also attached to the Runner using virtfs as r/w
-    and later mounted into /mnt/output on the Runner. The next execution on
-    Runners is as follows:
-    - Wait for the runner to be configured using cloud-init.
-    - Install necessary RPMs - osbuild, osbuild-composer and golang
-    - in /mnt/sources execute tools/test-case-generators/generate-test-cases
-      for each requested distro and image type combination on the particular
-      architecture. Output manifest is written into /mnt/output
+    When using this command, the script spins up an ephemeral QEMU VM per each
+    required architecture.
 
     One can use e.q. Fedora cloud qcow2 images:
     x86_64: https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2
@@ -56,11 +71,6 @@
 
     Tested with:
     - Fedora 32 (x86_64) and QEMU version 4.2.1
-
-    Not tested:
-    - installation of newer 'osbuild-composer' or 'osbuild' packages from the
-      local 'osbuild' repository, which is configured by cloud-init. Not sure
-      how dnf will behave if there are packages for multiple architectures.
 """
 
 
@@ -630,10 +640,255 @@ class S390xQEMURunner(BaseQEMURunner):
         ]
 
 
-class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
+class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
+    """
+    Base class representing generation of all test cases based on provided test
+    cases matrix using any runner.
+    """
+
+    # Define an appropriate Runner class for each supported architecture name
+    # in the child class.
+    # Example:
+    # arch_runner_map = {
+    #     "x86_64": MyX86_64Runner,
+    #     "aarch64": MyAarch64Runner,
+    #     "ppc64le": MyPpc64Runner,
+    #     "s390x": MyS390xRunner
+    # }
+    arch_runner_map = {}
+
+    # packages to be installed on the Runner before generating test cases
+    install_rpms_list = [
+        "osbuild",
+        "osbuild-selinux",
+        "osbuild-ostree",
+        "osbuild-composer",
+        "golang",
+        "python3-pyyaml",  # needed by image-info
+    ]
+
+    def __init__(self, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, log_level=logging.INFO):
+        """
+        'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
+        {
+            "arch1": {
+                "distro1": [
+                    "image-type1",
+                    "image-type2"
+                ],
+                "distro2": [
+                    "image-type2",
+                    "image-type3"
+                ]
+            },
+            "arch2": {
+                "distro2": [
+                    "image-type2"
+                ]
+            },
+            ...
+        }
+        'sources' is a directory path with the osbuild-composer sources, which will be used to generate image test
+        cases.
+        'output' is a directory path, where the generated test case manifests should be stored.
+        'keep_image_info' specifies whether to pass the '--keep-image-info' option to the 'generate-test-cases' script.
+        'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
+        'log_level' is the desired log level to be used by new processes created for each runner.
+        """
+        self._processes = list()
+        self.arch_gen_matrix = arch_gen_matrix
+        self.sources = sources
+        self.output = output
+        self.keep_image_info = keep_image_info
+        self.ssh_id_file = ssh_id_file
+        self.log_level = log_level
+
+        # check that the generator class supports each needed architecture
+        for arch in self.arch_gen_matrix.keys():
+            if self.arch_runner_map.get(arch) is None:
+                raise RuntimeError(f"architecture '{arch}' is not supported by {self.__class__.__name__}")
+
+    def generate(self):
+        """
+        Generates all test cases based on provided data in a blocking manner.
+
+        The method must be implemented in the child class and call '_generate()' method.
+        """
+        # In a child class:
+        # 1. Construct a dictionary of architecture-specific runner class arguments in 'arch_runner_cls_args'
+        # 2. call 'self._generate(arch_runner_cls_args)'
+        raise NotImplementedError()
+
+    def _generate(self, arch_runner_cls_args_map):
+        """
+        Generates all test cases based on provided data in a blocking manner.
+
+        The method runs a separate Runner for each architecture. All runners
+        are run in parallel in a new process. The method blocks until all runners
+        finish their work.
+        """
+        # Start a separate runner for each required architecture
+        for arch in self.arch_gen_matrix.keys():
+            process = multiprocessing.Process(
+                target=self._runner_process_main,
+                args=(self.arch_runner_map[arch], arch_runner_cls_args_map[arch], arch))
+            process.name = f"{arch}-Runner"
+            self._processes.append(process)
+            process.start()
+            log.info("Started '%s'", process.name)
+
+        # wait for all processes to finish
+        log.info("Waiting for all runner processes to finish")
+        for process in self._processes:
+            process.join()
+        self._processes.clear()
+
+    def _runner_process_main(self, runner_cls, runner_cls_args, arch):
+        """
+        Main function of a process generating test cases for a single architecture
+        using the provided Runner class
+        """
+        # set the expected log level in the new process
+        log.setLevel(self.log_level)
+
+        # spin up appropriate VM represented by 'runner'
+        with runner_cls(*runner_cls_args) as runner:
+            self._generate_arch_with_runner(runner, arch)
+
+    def _generate_arch_with_runner(self, runner, arch):
+        """
+        Generate test cases for one architecture using the provided Runner.
+
+        'runner' is a specific Runner class instance, which can be used to generate
+        image test cases.
+        'arch' is the architecture of the Runner class instance. This information
+        is used to determine which image test cases should be generated.
+        """
+        current_process_name = multiprocessing.current_process().name
+        generation_matrix = self.arch_gen_matrix[arch]
+        go_tls_timeout_retries = 3
+
+        log.info("Waiting for '%s' to become ready", current_process_name)
+        runner.wait_until_ready()
+
+        # First create a workdir, which will be deleted after everything is finished
+        with runner.get_managed_workdir() as runner_workdir:
+            log.debug("Using '%s' as a workdir", runner_workdir)
+
+            # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
+            # removing some of the downloaded RPMs due to "ageing"
+            runner_osbuild_store_dir = f"{runner_workdir}/osbuild-store"
+            runner.run_command_check_call(f"mkdir {runner_osbuild_store_dir}")
+
+            # install necessary packages
+            runner.run_command_check_call("sudo dnf install -y " + " ".join(self.install_rpms_list))
+            # Log installed versions of important RPMs
+            rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
+            log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
+
+            # copy sources from the host to the runner
+            log.info("Copying sources to the runner")
+            runner_sources_dir = f"{runner_workdir}/sources"
+            runner.copytree_to_runner(self.sources, runner_sources_dir)
+
+            # create output directory for the results on the runner
+            runner_output_dir = f"{runner_workdir}/output"
+            runner.run_command_check_call(f"mkdir {runner_output_dir}")
+
+            # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host.
+            # It is not possible to relabel the 'image-info' in the mounted path, because it is read-only.
+            # Also bind-mounting copy of image-info with proper SELinux labels to /mnt/sources didn't do the trick.
+            # For the reason above, make a full copy of sources in /home/admin and operate on it instead.
+            osbuild_label = runner.run_command_check_output("matchpathcon -n /usr/bin/osbuild")
+            osbuild_label = osbuild_label.strip()
+            image_info_runner_path = f"{runner_sources_dir}/tools/image-info"
+            runner.run_command_check_call(f"chcon {osbuild_label} {image_info_runner_path}")
+
+            for distro, img_type_list in generation_matrix.items():
+                for image_type in img_type_list:
+                    log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
+
+                    # is the image with customizations?
+                    if image_type.endswith("-customize"):
+                        with_customizations = True
+                        image_type = image_type.rstrip("-customize")
+                    else:
+                        with_customizations = False
+
+                    gen_test_cases_cmd = f"cd {runner_sources_dir}; sudo tools/test-case-generators/generate-test-cases" + \
+                        f" --distro {distro} --arch {arch} --image-types {image_type}" + \
+                        f" --store {runner_osbuild_store_dir} --output {runner_output_dir}"
+                    if with_customizations:
+                        gen_test_cases_cmd += " --with-customizations"
+                    if self.keep_image_info:
+                        gen_test_cases_cmd += " --keep-image-info"
+
+                    # allow fixed number of retries if the command fails for a specific reason
+                    for i in range(1, go_tls_timeout_retries+1):
+                        if i > 1:
+                            log.info("Retrying image test case generation (%d of %d)", i, go_tls_timeout_retries)
+
+                        stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
+
+                        if retcode != 0:
+                            log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
+                                    stdout, stderr)
+
+                            # Retry the command, if there was an error due to TLS handshake timeout
+                            # This is happening on all runners using other than host's arch from time to time.
+                            if stderr.find("net/http: TLS handshake timeout") != -1:
+                                continue
+                        else:
+                            log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
+
+                        # don't retry if the process ended successfully or if there was a different error
+                        break
+
+                    # copy partial results back to the host
+                    runner.copytree_from_runner(runner_output_dir, self.output)
+
+                # clean up the store direcotry after each distro, to prevent running out of space
+                runner.run_command_check_call(f"sudo rm -rf {runner_osbuild_store_dir}/*")
+
+        log.info("'%s' finished its work", current_process_name)
+
+    def _cleanup(self):
+        """
+        Terminates all running Runner processes.
+        """
+        # ensure that all Runner processes are stopped
+        for process in self._processes:
+            process.terminate()
+            process.join(5)
+            # kill the process if it didn't terminate yet
+            if process.exitcode is None:
+                process.kill()
+            process.close()
+        self._processes.clear()
+
+    def __exit__(self, *exc_details):
+        self._cleanup()
+
+    def __getstate__(self):
+        # references to already spawned processes are problematic for pickle
+        state = self.__dict__.copy()
+        # remove problematic variable
+        state.pop("_processes")
+        return state
+
+    @staticmethod
+    def add_subparser(subparsers):
+        raise NotImplementedError()
+
+    @staticmethod
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+        raise NotImplementedError()
+
+
+class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
     """
     Class representing generation of all test cases based on provided test
-    cases matrix.
+    cases matrix using QEMU runners.
 
     The class should be used as a context manager to ensure that cleanup
     of all resources is done (mainly VMs and processes running them).
@@ -642,22 +897,12 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
     generation is done in parallel.
     """
 
-    ARCH_RUNNER_MAP = {
+    arch_runner_map = {
         "x86_64": X86_64QEMURunner,
         "aarch64": Aarch64QEMURunner,
         "ppc64le": Ppc64QEMURunner,
         "s390x": S390xQEMURunner
     }
-
-    # packages to be installed on the Runner before generating test cases
-    INSTALL_RPMS = [
-        "osbuild",
-        "osbuild-selinux",
-        "osbuild-ostree",
-        "osbuild-composer",
-        "golang",
-        "python3-pyyaml",  # needed by image-info
-    ]
 
     def __init__(self, images, arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, ci_userdata=None, log_level=logging.INFO):
         """
@@ -696,139 +941,18 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
         for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         If the value is not provided, then the default internal cloud-init user-data are used.
         """
-        self._processes = list()
+        super().__init__(arch_gen_matrix, sources, output, keep_image_info, ssh_id_file, log_level)
         self.images = images
-        self.arch_gen_matrix = arch_gen_matrix
-        self.sources = sources
-        self.output = output
-        self.keep_image_info = keep_image_info
-        self.ssh_id_file = ssh_id_file
         self.ci_userdata = ci_userdata
-        self.log_level = log_level
 
         # check that we have image for each needed architecture
         for arch in self.arch_gen_matrix.keys():
-            if self.images.get(arch, None) is None:
+            if self.images.get(arch) is None:
                 raise RuntimeError(f"architecture '{arch}' is in requested test matrix, but no image was provided")
-
-    @staticmethod
-    def runner_function(arch, runner_cls, image, user, cdrom_iso, generation_matrix, sources, output, keep_image_info, log_level):
-        """
-        Generate test cases using VM with appropriate architecture.
-
-        'generation_matrix' is expected to be already architecture-specific
-        dict of 'distro' x 'image-type' matrix.
-
-        {
-            "fedora-32": [
-                "qcow2",
-                "vmdk"
-            ],
-            "rhel-84": [
-                "qcow2",
-                "tar"
-            ],
-            ...
-        }
-        """
-        go_tls_timeout_retries = 3
-
-        # set the expected log level in the new process
-        log.setLevel(log_level)
-
-        # spin up appropriate VM represented by 'runner'
-        with runner_cls(image, user, cdrom_iso) as runner:
-            log.info("Waiting for the '%s' runner to become ready", arch)
-            runner.wait_until_ready()
-
-            # First create a workdir, which will be deleted after everything is finished
-            with runner.get_managed_workdir() as runner_workdir:
-                log.debug("Using '%s' workdir on the runner", runner_workdir)
-
-                # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
-                # removing some of the downloaded RPMs due to "ageing"
-                runner_osbuild_store_dir = f"{runner_workdir}/osbuild-store"
-                runner.run_command_check_call(f"mkdir {runner_osbuild_store_dir}")
-
-                # install necessary packages
-                runner.run_command_check_call("sudo dnf install -y " + " ".join(TestCaseMatrixGenerator.INSTALL_RPMS))
-                # Log installed versions of important RPMs
-                rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
-                log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
-
-                # copy sources from the host to the runner
-                runner_sources_dir = f"{runner_workdir}/sources"
-                runner.copytree_to_runner(sources, runner_sources_dir)
-
-                # create output directory for the results on the runner
-                runner_output_dir = f"{runner_workdir}/output"
-                runner.run_command_check_call(f"mkdir {runner_output_dir}")
-
-                # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host.
-                # It is not possible to relabel the 'image-info' in the mounted path, because it is read-only.
-                # Also bind-mounting copy of image-info with proper SELinux labels to /mnt/sources didn't do the trick.
-                # For the reason above, make a full copy of sources in /home/admin and operate on it instead.
-                osbuild_label = runner.run_command_check_output("matchpathcon -n /usr/bin/osbuild")
-                osbuild_label = osbuild_label.strip()
-                image_info_runner_path = f"{runner_sources_dir}/tools/image-info"
-                runner.run_command_check_call(f"chcon {osbuild_label} {image_info_runner_path}")
-
-                for distro, img_type_list in generation_matrix.items():
-                    # clean up the store direcotry for each distro, to prevent running out of space
-                    runner.run_command_check_call(f"sudo rm -rf {runner_osbuild_store_dir}/*")
-
-                    for image_type in img_type_list:
-                        log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
-
-                        # is the image with customizations?
-                        if image_type.endswith("-customize"):
-                            with_customizations = True
-                            image_type = image_type.rstrip("-customize")
-                        else:
-                            with_customizations = False
-
-                        gen_test_cases_cmd = f"cd {runner_sources_dir}; sudo tools/test-case-generators/generate-test-cases" + \
-                            f" --distro {distro} --arch {arch} --image-types {image_type}" + \
-                            f" --store {runner_osbuild_store_dir} --output {runner_output_dir}"
-                        if with_customizations:
-                            gen_test_cases_cmd += " --with-customizations"
-                        if keep_image_info:
-                            gen_test_cases_cmd += " --keep-image-info"
-
-                        # allow fixed number of retries if the command fails for a specific reason
-                        for i in range(1, go_tls_timeout_retries+1):
-                            if i > 1:
-                                log.info("Retrying image test case generation (%d of %d)", i, go_tls_timeout_retries)
-
-                            stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
-
-                            if retcode != 0:
-                                log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
-                                        stdout, stderr)
-
-                                # Retry the command, if there was an error due to TLS handshake timeout
-                                # This is happening on all runners using other than host's arch from time to time.
-                                if stderr.find("net/http: TLS handshake timeout") != -1:
-                                    continue
-                            else:
-                                log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
-
-                            # don't retry if the process ended successfully or if there was a different error
-                            break
-
-                        # copy partial results back to the host
-                        runner.copytree_from_runner(runner_output_dir, output)
-
-            log.info("'%s' runner finished its work", arch)
-
-            # TODO: Possibly remove after testing / fine tuning the script
-            log.info("Waiting for 1 hour, before terminating the runner (CTRL + c will terminate all VMs)")
-            time.sleep(3600)
-            runner.stop()
 
     def generate(self):
         """
-        Generates all test cases based on provided data
+        Generates all test cases based on provided data in a blocking manner.
         """
         # use the same CDROM ISO image for all VMs
         with tempfile.TemporaryDirectory(prefix="osbuild-composer-test-gen-") as tmpdir:
@@ -845,39 +969,74 @@ class TestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 user_data = yaml.safe_load(ud)
                 vm_user = user_data["user"]
 
-            # Start a separate runner VM for each required architecture
-            for arch, generation_matrix in self.arch_gen_matrix.items():
-                process = multiprocessing.Process(
-                    target=self.runner_function,
-                    args=(arch, self.ARCH_RUNNER_MAP[arch], self.images[arch], vm_user, cdrom_iso,
-                          generation_matrix, self.sources, self.output, self.keep_image_info,
-                          self.log_level))
-                self._processes.append(process)
-                process.start()
-                log.info("Started '%s' runner - %s", arch, process.name)
+            # Create architecture-specific map or runner class arguments and start the test case generation.
+            arch_runner_cls_args_map = {}
+            for arch in self.arch_gen_matrix.keys():
+                arch_runner_cls_args_map[arch] = (self.images[arch], vm_user, cdrom_iso)
 
-            # wait for all processes to finish
-            log.info("Waiting for all runner processes to finish")
-            for process in self._processes:
-                process.join()
-            self._processes.clear()
+            self._generate(arch_runner_cls_args_map)
 
-    def cleanup(self):
+    @staticmethod
+    def add_subparser(subparsers):
         """
-        Terminates all running processes of VM runners.
+        Adds subparser for the 'qemu' command
         """
-        # ensure that all processes running VMs are stopped
-        for process in self._processes:
-            process.terminate()
-            process.join(5)
-            # kill the process if it didn't terminate yet
-            if process.exitcode is None:
-                process.kill()
-            process.close()
-        self._processes.clear()
+        parser_qemu = subparsers.add_parser(
+            "qemu",
+            description="generate test cases locally using QEMU",
+            help="generate test cases locally using QEMU"
+        )
 
-    def __exit__(self, *exc_details):
-        self.cleanup()
+        parser_qemu.add_argument(
+            "--image-x86_64",
+            metavar="PATH",
+            help="x86_64 image to use for QEMU VM",
+            required=False
+        )
+        parser_qemu.add_argument(
+            "--image-ppc64le",
+            metavar="PATH",
+            help="ppc64le image to use for QEMU VM",
+            required=False
+        )
+        parser_qemu.add_argument(
+            "--image-aarch64",
+            metavar="PATH",
+            help="aarch64 image to use for QEMU VM",
+            required=False
+        )
+        parser_qemu.add_argument(
+            "--image-s390x",
+            metavar="PATH",
+            help="s390x image to use for QEMU VM",
+            required=False
+        )
+        parser_qemu.add_argument(
+            "--ci-userdata",
+            metavar="PATH",
+            help="file or directory with cloud-init user-data, to use to configure runner VMs",
+            type=os.path.abspath
+        )
+        parser_qemu.set_defaults(func=QEMUTestCaseMatrixGenerator.main)
+
+    @staticmethod
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+        """
+        The main function of the 'qemu' command
+        """
+        vm_images = {
+            "x86_64": parser_args.image_x86_64,
+            "aarch64": parser_args.image_aarch64,
+            "ppc64le": parser_args.image_ppc64le,
+            "s390x": parser_args.image_s390x
+        }
+        ci_userdata = parser_args.ci_userdata
+        keep_image_info = parser_args.keep_image_info
+
+        with QEMUTestCaseMatrixGenerator(
+            vm_images, arch_gen_matrix_dict, sources, output,
+            keep_image_info, ssh_id_file, ci_userdata, log.level) as generator:
+            generator.generate()
 
 
 def get_default_ssh_id_file():
@@ -911,90 +1070,93 @@ def get_args():
     Returns ArgumentParser instance specific to this script.
     """
     parser = argparse.ArgumentParser(description="(re)generate image all test cases")
-    parser.add_argument(
-        "--image-x86_64",
-        help="Path to x86_64 image to use for QEMU VM",
-        required=False
-    )
-    parser.add_argument(
-        "--image-ppc64le",
-        help="Path to ppc64le image to use for QEMU VM",
-        required=False
-    )
-    parser.add_argument(
-        "--image-aarch64",
-        help="Path to aarch64 image to use for QEMU VM",
-        required=False
-    )
-    parser.add_argument(
-        "--image-s390x",
-        help="Path to s390x image to use for QEMU VM",
-        required=False
-    )
-    parser.add_argument(
-        "--distro",
-        help="Filters the matrix for generation only to specified distro",
-        nargs='*',
-        required=False
-    )
-    parser.add_argument(
-        "--arch",
-        help="Filters the matrix for generation only to specified architecture",
-        nargs='*',
-        required=False
-    )
-    parser.add_argument(
-        "--image-types",
-        help="Filters the matrix for generation only to specified image types",
-        nargs='*',
-        required=False
-    )
-    parser.add_argument(
-        "--keep-image-info",
-        action='store_true',
-        help="Skip image info (re)generation, but keep the one found in the existing test case"
-    )
+
     parser.add_argument(
         "--output",
-        metavar="OUTPUT_DIRECTORY",
+        metavar="DIR",
         type=os.path.abspath,
-        help="Path to the output directory, where to store resulting manifests for image test cases",
+        help="directory for storing generated image test cases",
         required=True
     )
     parser.add_argument(
         "--sources",
-        metavar="SOURCES_DIRECTORY",
+        metavar="DIR",
         type=os.path.abspath,
-        help="Path to the osbuild-composer sources directory, which will be used to generate test cases. " + \
+        help="osbuild-composer sources directory used when generate test cases. " + \
             "If not provided, the current working directory is used."
     )
     parser.add_argument(
+        "--distro",
+        help="reduce the generation matrix only to specified distribution. " + \
+            "Can be specified multiple times.",
+        action="append",
+        default=[]
+    )
+    parser.add_argument(
+        "--arch",
+        help="reduce the generation matrix only to specified architecture. " + \
+            "Can be specified multiple times.",
+        action="append",
+        default=[]
+    )
+    parser.add_argument(
+        "--image-type",
+        metavar="TYPE",
+        help="reduce the generation matrix only to specified image type." + \
+            "Can be specified multiple times.",
+        action="append",
+        default=[]
+    )
+    parser.add_argument(
         "--gen-matrix-file",
-        help="Path to JSON file from which to read the test case generation matrix (distro x arch x image type)." + \
+        metavar="PATH",
+        help="JSON file with test case generation matrix (distro x arch x image type)." + \
             " If not provided, '<script_location_dir>/distro-arch-imagetype-map.json' is read.",
         type=os.path.abspath
     )
     parser.add_argument(
-        "--ci-userdata",
-        help="Path to a file/directory with cloud-init user-data, which should be used to configure runner VMs",
+        "-i", "--ssh-id-file",
+        metavar="PATH",
+        help="SSH ID file to use for authenticating to the runner VMs. If the file does not end with " + \
+            ".pub, it will be appended to it.",
         type=os.path.abspath
     )
     parser.add_argument(
-        "-i", "--ssh-id-file",
-        help="Path to the SSH ID file to use for authenticating to the runner VMs. If the file does not end with " + \
-            ".pub, it will be appended to it.",
-        type=os.path.abspath
+        "--keep-image-info",
+        action='store_true',
+        help="skip image info (re)generation, but keep the one found in the existing test case"
     )
     parser.add_argument(
         "-d", "--debug",
         action='store_true',
         default=False,
-        help="Turn on debug logging."
+        help="turn on debug logging."
     )
+
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.required = True
+    QEMUTestCaseMatrixGenerator.add_subparser(subparsers)
+
     return parser.parse_args()
 
-# pylint: disable=too-many-arguments,too-many-locals
-def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_matrix_file, sources, output, keep_image_info):
+
+def main(args):
+    output = args.output
+    sources = args.sources if args.sources else os.getcwd()
+    gen_matrix_file = args.gen_matrix_file
+
+    distros = args.distro
+    arches = args.arch
+    image_types = args.image_type
+
+    # determine the SSH ID file to be used
+    ssh_id_file = args.ssh_id_file
+    if not ssh_id_file:
+        ssh_id_file = get_default_ssh_id_file()
+    if not ssh_id_file.endswith(".pub"):
+        ssh_id_file += ".pub"
+    log.debug("Using SSH ID file: %s", ssh_id_file)
+
     if not os.path.isdir(output):
         raise RuntimeError(f"output directory {output} does not exist")
 
@@ -1036,22 +1198,7 @@ def main(vm_images, distros, arches, image_types, ssh_id_file, ci_userdata, gen_
 
     log.debug("arch_gen_matrix_dict:\n%s", json.dumps(arch_gen_matrix_dict, indent=2, sort_keys=True))
 
-    # determine the SSH ID file to be used
-    ssh_id_file = args.ssh_id_file
-    if not ssh_id_file:
-        ssh_id_file = get_default_ssh_id_file()
-    if not ssh_id_file.endswith(".pub"):
-        ssh_id_file += ".pub"
-    log.debug("Using SSH ID file: %s", ssh_id_file)
-
-    # determine the osbuild-composer sources path
-    if not sources:
-        sources = os.getcwd()
-
-    with TestCaseMatrixGenerator(
-        vm_images, arch_gen_matrix_dict, sources, output,
-        keep_image_info, ssh_id_file, ci_userdata, log.level) as generator:
-        generator.generate()
+    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, args)
 
 
 if __name__ == '__main__':
@@ -1060,25 +1207,7 @@ if __name__ == '__main__':
     if  args.debug:
         log.setLevel(logging.DEBUG)
 
-    vm_images = {
-        "x86_64": args.image_x86_64,
-        "aarch64": args.image_aarch64,
-        "ppc64le": args.image_ppc64le,
-        "s390x": args.image_s390x
-    }
-
     try:
-        main(
-            vm_images,
-            args.distro,
-            args.arch,
-            args.image_types,
-            args.ssh_id_file,
-            args.ci_userdata,
-            args.gen_matrix_file,
-            args.sources,
-            args.output,
-            args.keep_image_info
-        )
+        main(args)
     except KeyboardInterrupt as _:
         log.info("Interrupted by user")
