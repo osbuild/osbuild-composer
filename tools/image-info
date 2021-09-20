@@ -2242,6 +2242,7 @@ def analyse_directory(path):
         append_ostree_repo(report, repo)
     elif os.path.isdir(os.path.join(path, "refs")):
         report["type"] = "ostree/repo"
+        repo = os.path.join(path, "repo")
         append_ostree_repo(report, repo)
     else:
         append_directory(report, path)
