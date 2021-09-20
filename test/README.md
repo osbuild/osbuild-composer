@@ -86,17 +86,60 @@ OSBUILD_LABEL=$(matchpathcon -n $(which osbuild))
 chcon $OSBUILD_LABEL tools/image-info
 ```
 
-Alternatively to (re)generate test cases for all architectures, or just
-the ones different from your host's architecture, you can use the tool
-`tools/test-case-generators/generate-all-test-cases`. It creates
-an ephemeral virtual machine for each necessary architecture using the
-`qemu-system-<arch>` command and generates test cases using the
-`generate-test-cases` tool inside the virtual machine. It is important
-to note that test case generation in virtual machines may take several
-hours. The script also handles the "unknown SELinux labels" issue automatically
-for you and produces correct reports. The `generate-all-test-cases` currently
-does not work with RHEL images because of missing "9p" filesystem support.
-It also does not work on MacOS due to missing support for virtfs in QEMU.
+### Generating all test cases
+
+To (re)generate test cases for all architectures, or just
+the ones different from your host's architecture, you can use the
+`tools/test-case-generators/generate-all-test-cases` script.
+
+The script generates image test cases in so-called Runner, which is a system
+of a specific architecture. The used Runner type is specific to the used
+command, but in general it is a system accessible via SSH connection.
+
+In simplified example, the script does the following:
+
+1. Provisions Runners if needed.
+2. Waits for the Runner to be ready for use by running a specific command n it.
+3. Installs RPMs necessary for the test case generation on the Runner.
+4. Copies the 'sources' using rsync to the Runner.
+5. Executes the 'tools/test-case-generators/generate-test-cases' on the runner for each requested distro and image type.
+6. After each image test case is generated successfully, the result is copied using rsync from the Runner to 'output' directory.
+
+The script supports the following commands:
+
+- `qemu` - generates image test cases locally using QEMU VMs.
+- `remote` - generates image test cases on existing remote hosts.
+
+**Generating test cases in QEMU example:**
+```bash
+$ ./tools/test-case-generators/generate-all-test-cases \
+        --output test/data/manifests \
+        --arch aarch64 \
+        --arch s390x \
+        --arch ppc64le \
+        --distro rhel-8 \
+        --image-type qcow2 \
+        qemu \
+        --image-x86_64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2 \
+        --image-ppc64le ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.ppc64le.qcow2 \
+        --image-aarch64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.aarch64.qcow2 \
+        --image-s390x ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.s390x.qcow2
+```
+
+**Generating test cases using existing remote hosts example:**
+```bash
+$ ./tools/test-case-generators/generate-all-test-cases \
+        --output test/data/manifests \
+        --arch aarch64 \
+        --arch s390x \
+        --arch ppc64le \
+        --distro rhel-8 \
+        --image-type qcow2 \
+        remote \
+        --host-ppc64le 192.168.1.10 \
+        --host-aarch64 192.168.1.20 \
+        --host-s390x 192.168.1.30
+```
 
 ### Setting up Azure upload tests
 
