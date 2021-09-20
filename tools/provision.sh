@@ -20,7 +20,12 @@ elif [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
     sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
     sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
     # koji is not available yet apparently
-    sudo dnf install -y ansible
+    # jmespath required for json_query
+    sudo dnf install -y ansible python3-jmespath
+
+    # json_query filter, used in our ansible playbooks, was moved to the
+    # 'community.general' collection
+    sudo ansible-galaxy collection install community.general
 fi
 
 sudo mkdir -p /etc/osbuild-composer
