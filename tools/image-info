@@ -269,6 +269,7 @@ def read_partition_table(device):
             "partuuid": partuuid
         })
 
+    info["partitions"] = sorted(info["partitions"], key=operator.itemgetter("partuuid"))
     info["partition-table"] = ptable["label"]
     info["partition-table-id"] = ptable["id"]
 
