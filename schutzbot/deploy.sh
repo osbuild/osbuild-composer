@@ -73,6 +73,8 @@ if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}"
     done
 fi
 
+sudo dnf -y update
+
 # Distro version that this script is running on.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
