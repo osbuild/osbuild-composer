@@ -705,7 +705,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, log_level=logging.INFO):
+    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, keep_workdir=False, log_level=logging.INFO):
         """
         'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
         {
@@ -730,6 +730,8 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         cases.
         'output' is a directory path, where the generated test case manifests should be stored.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
+        'keep_workdir' is a boolean specifying if the workdir created on the remote host should be deleted
+        after the runner finishes its work.
         'log_level' is the desired log level to be used by new processes created for each runner.
         """
         self._processes = list()
@@ -737,6 +739,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self.sources = sources
         self.output = output
         self.ssh_id_file = ssh_id_file
+        self.keep_workdir = keep_workdir
         self.log_level = log_level
 
         # check that the generator class supports each needed architecture
@@ -808,7 +811,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         runner.wait_until_ready()
 
         # First create a workdir, which will be deleted after everything is finished
-        with runner.get_managed_workdir() as runner_workdir:
+        with runner.get_managed_workdir(cleanup=not self.keep_workdir) as runner_workdir:
             log.debug("Using '%s' as a workdir", runner_workdir)
 
             # don't use /var/tmp for osbuild's store directory to prevent systemd from possibly
@@ -918,7 +921,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         raise NotImplementedError()
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
         raise NotImplementedError()
 
 
@@ -942,7 +945,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": S390xQEMURunner
     }
 
-    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, ci_userdata=None, log_level=logging.INFO):
+    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, ci_userdata=None, keep_workdir=False, log_level=logging.INFO):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -978,7 +981,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         If the value is not provided, then the default internal cloud-init user-data are used.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level)
         self.images = images
         self.ci_userdata = ci_userdata
 
@@ -1057,7 +1060,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_qemu.set_defaults(func=QEMUTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
         """
         The main function of the 'qemu' command
         """
@@ -1071,7 +1074,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with QEMUTestCaseMatrixGenerator(
             vm_images, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, ci_userdata, log.level) as generator:
+            ssh_id_file, ci_userdata, keep_workdir, log.level) as generator:
             generator.generate()
 
 
@@ -1089,7 +1092,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": RemoteRunner
     }
 
-    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, log_level=logging.INFO):
+    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level=logging.INFO):
         """
         'hosts' is a dict of a remote system hostnames or IP addresses for each supported architecture,
         that should be used to generate image test cases:
@@ -1124,7 +1127,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         'output' is a directory path, where the generated test case manifests should be stored.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level)
         self.hosts = hosts
         self.username = username
 
@@ -1189,7 +1192,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_remote.set_defaults(func=RemoteTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
         """
         The main function of the 'remote' command
         """
@@ -1203,7 +1206,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with RemoteTestCaseMatrixGenerator(
             hosts, username, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, log.level) as generator:
+            ssh_id_file, keep_workdir, log.level) as generator:
             generator.generate()
 
 
@@ -1290,6 +1293,12 @@ def get_args():
         type=os.path.abspath
     )
     parser.add_argument(
+            "--keep-workdir",
+            action="store_true",
+            help="Don't delete the workdir created on the remote host after finishing.",
+            default=False
+        )
+    parser.add_argument(
         "-d", "--debug",
         action='store_true',
         default=False,
@@ -1312,6 +1321,7 @@ def main(args):
     distros = args.distro
     arches = args.arch
     image_types = args.image_type
+    keep_workdir = args.keep_workdir
 
     # determine the SSH ID file to be used
     ssh_id_file = args.ssh_id_file
@@ -1362,7 +1372,7 @@ def main(args):
 
     log.debug("arch_gen_matrix_dict:\n%s", json.dumps(arch_gen_matrix_dict, indent=2, sort_keys=True))
 
-    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, args)
+    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, args)
 
 
 if __name__ == '__main__':
