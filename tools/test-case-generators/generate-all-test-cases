@@ -840,7 +840,9 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
             image_info_runner_path = f"{runner_sources_dir}/tools/image-info"
             runner.run_command_check_call(f"chcon {osbuild_label} {image_info_runner_path}")
 
+            results = {}
             for distro, img_type_list in generation_matrix.items():
+                results[distro] = distro_results = {"SUCCESS": [], "FAIL": []}
                 for image_type in img_type_list:
                     log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
 
@@ -865,16 +867,16 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
                         stdout, stderr, retcode = runner.run_command(gen_test_cases_cmd)
 
                         if retcode != 0:
-                            log.error("'%s' retcode: %d\nstdout: %s\nstderr: %s", gen_test_cases_cmd, retcode,
-                                    stdout, stderr)
-
+                            log.error("Generating test case for %s-%s-%s - FAIL\nretcode: %d\nstdout: %s\nstderr: %s",
+                                    distro, arch, image_type, retcode, stdout, stderr)
                             # Retry the command, if there was an error due to TLS handshake timeout
                             # This is happening on all runners using other than host's arch from time to time.
                             if stderr.find("net/http: TLS handshake timeout") != -1:
                                 continue
+                            distro_results["FAIL"].append(image_type)
                         else:
-                            log.info("Generating test case for %s-%s-%s - SUCCEEDED\nstdout: %s\nstderr: %s", distro, arch, image_type, stdout, stderr)
-
+                            log.info("Generating test case for %s-%s-%s - SUCCESS", distro, arch, image_type)
+                            distro_results["SUCCESS"].append(image_type)
                         # don't retry if the process ended successfully or if there was a different error
                         break
 
@@ -885,6 +887,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 runner.run_command_check_call(f"sudo rm -rf {runner_osbuild_store_dir}/*")
 
         log.info("'%s' finished its work", current_process_name)
+        log.info("Results: %s", results)
 
     def _cleanup(self):
         """
