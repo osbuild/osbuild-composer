@@ -69,7 +69,8 @@
         }
       }
     },
-    "overrides": {}
+    "overrides": {},
+    "supported_arches": ["x86_64"]
   },
   "rhel-edge-commit": {
     "compose-request": {
@@ -108,7 +109,8 @@
         }
       }
     },
-    "overrides": {}
+    "overrides": {},
+    "supported_arches": ["x86_64"]
   },
   "fedora-iot-commit": {
     "compose-request": {
