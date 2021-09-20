@@ -62,7 +62,6 @@
             "qcow2",
             "qcow2-customize",
             "rhel-edge-commit",
-            "rhel-edge-commit-rt",
             "rhel-edge-container",
             "vhd",
             "vmdk"
@@ -93,8 +92,8 @@
             "qcow2",
             "qcow2-customize",
             "edge-commit",
-            "edge-commit-rt",
             "edge-container",
+            "image_installer",
             "vhd",
             "vmdk"
         ],
@@ -103,30 +102,52 @@
             "ec2",
             "openstack",
             "qcow2",
+            "qcow2-customize",
             "edge-commit",
             "edge-container",
             "tar"
         ],
         "ppc64le": [
             "qcow2",
+            "qcow2-customize",
             "tar"
         ],
         "s390x": [
-            "qcow2"
+            "qcow2",
+            "qcow2-customize",
+            "tar"
         ]
     },
     "rhel-90": {
         "x86_64": [
-            "qcow2"
+            "ami",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "tar",
+            "vhd",
+            "vmdk"
         ],
         "aarch64": [
-            "qcow2"
+            "ami",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "qcow2-customize",
+            "tar"
         ],
         "ppc64le": [
-            "qcow2"
+            "qcow2",
+            "qcow2-customize",
+            "tar"
         ],
         "s390x": [
-            "qcow2"
+            "qcow2",
+            "qcow2-customize",
+            "tar"
         ]
     }
 }
