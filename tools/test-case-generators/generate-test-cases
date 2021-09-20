@@ -242,6 +242,11 @@ def main(distro, arch, image_types, keep_image_info, store, output, with_customi
         if filtered_request["compose-request"]["image-type"] not in image_types:
                 continue
         filtered_request["compose-request"]["distro"] = distro
+        # if the compose-request has specified supported arches, then generate
+        # the test case only if the requested arch is in the list
+        supported_arches = filtered_request.get("supported_arches")
+        if supported_arches is not None and arch not in supported_arches:
+            continue
         filtered_request["compose-request"]["arch"] = arch
         filtered_request["compose-request"]["repositories"] = repos_dict[distro][arch]
 
