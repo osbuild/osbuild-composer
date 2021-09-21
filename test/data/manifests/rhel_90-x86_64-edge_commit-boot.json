@@ -817,7 +817,15 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "greenboot-grub2-set-counter",
+                "greenboot-grub2-set-success",
+                "greenboot-healthcheck",
+                "greenboot-rpm-ostree-grub2-check-fallback",
+                "greenboot-status",
+                "greenboot-task-runner",
+                "redboot-auto-reboot",
+                "redboot-task-runner"
               ]
             }
           },
@@ -9085,6 +9093,16 @@
           "actual": "system_u:object_r:mnt_t:s0",
           "expected": "system_u:object_r:default_t:s0",
           "filename": "/proc"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_unit_file_t:s0",
+          "filename": "/usr/lib/systemd/system/usbguard.service"
+        },
+        {
+          "actual": "system_u:object_r:unlabeled_t:s0",
+          "expected": "system_u:object_r:usbguard_exec_t:s0",
+          "filename": "/usr/sbin/usbguard-daemon"
         }
       ],
       "policy": {
@@ -9102,12 +9120,6 @@
       "exit.target",
       "fstrim.timer",
       "fwupd-refresh.timer",
-      "greenboot-grub2-set-counter.service",
-      "greenboot-grub2-set-success.service",
-      "greenboot-healthcheck.service",
-      "greenboot-rpm-ostree-grub2-check-fallback.service",
-      "greenboot-status.service",
-      "greenboot-task-runner.service",
       "halt.target",
       "kexec.target",
       "mdcheck_continue.timer",
@@ -9124,8 +9136,6 @@
       "proc-sys-fs-binfmt_misc.mount",
       "raid-check.timer",
       "rdisc.service",
-      "redboot-auto-reboot.service",
-      "redboot-task-runner.service",
       "remote-cryptsetup.target",
       "remote-veritysetup.target",
       "rpm-ostree-bootstatus.service",
@@ -9161,6 +9171,12 @@
       "dm-event.socket",
       "firewalld.service",
       "getty@.service",
+      "greenboot-grub2-set-counter.service",
+      "greenboot-grub2-set-success.service",
+      "greenboot-healthcheck.service",
+      "greenboot-rpm-ostree-grub2-check-fallback.service",
+      "greenboot-status.service",
+      "greenboot-task-runner.service",
       "import-state.service",
       "loadmodules.service",
       "lvm2-lvmpolld.socket",
@@ -9170,6 +9186,8 @@
       "nis-domainname.service",
       "ostree-remount.service",
       "reboot.target",
+      "redboot-auto-reboot.service",
+      "redboot-task-runner.service",
       "remote-fs.target",
       "runlevel6.target",
       "selinux-autorelabel-mark.service",
