@@ -10178,40 +10178,7 @@
     ]
   },
   "image-info": {
-    "/etc/security/limits.d": {
-      "realtime.conf": [
-        {
-          "domain": "@realtime",
-          "item": "cpu",
-          "type": "soft",
-          "value": "unlimited"
-        },
-        {
-          "domain": "@realtime",
-          "item": "rtprio",
-          "type": "-",
-          "value": "99"
-        },
-        {
-          "domain": "@realtime",
-          "item": "nice",
-          "type": "-",
-          "value": "-20"
-        },
-        {
-          "domain": "@realtime",
-          "item": "memlock",
-          "type": "-",
-          "value": "unlimited"
-        }
-      ]
-    },
-    "/etc/sysctl.d": {
-      "99-sysctl.conf": [
-        "kernel.hung_task_panic = 0",
-        "kernel.hung_task_timeout_secs = 600"
-      ]
-    },
+    "/etc/resolv.conf": [],
     "/etc/udev/rules.d": {
       "70-persistent-ipoib.rules": [],
       "99-rhel-rt.rules": [
@@ -10230,6 +10197,36 @@
       ]
     },
     "default-target": "graphical.target",
+    "dracut": {
+      "/usr/lib/dracut/dracut.conf.d": {
+        "01-dist.conf": {
+          "early_microcode": "yes",
+          "hostonly": "yes",
+          "hostonly_cmdline": "no",
+          "i18n_default_font": "eurlatgr",
+          "i18n_install_all": "yes",
+          "i18n_vars": "/etc/sysconfig/keyboard:KEYTABLE-KEYMAP /etc/sysconfig/i18n:SYSFONT-FONT,FONTACM-FONT_MAP,FONT_UNIMAP",
+          "install_optional_items": " vi /etc/virc ps grep cat rm ",
+          "prefix": "/",
+          "reproducible": "yes",
+          "stdloglvl": "3",
+          "sysloglvl": "5",
+          "systemdsystemconfdir": "/etc/systemd/system",
+          "systemdsystemunitdir": "/usr/lib/systemd/system",
+          "systemdutildir": "/usr/lib/systemd",
+          "udevdir": "/usr/lib/udev"
+        },
+        "01-microcode.conf": {
+          "early_microcode": "yes"
+        },
+        "02-generic-image.conf": {
+          "hostonly": "no"
+        },
+        "50-nss-softokn.conf": {
+          "add_dracutmodules": " nss-softokn "
+        }
+      }
+    },
     "firewall-enabled": [
       "ssh",
       "dhcpv6-client",
@@ -10289,6 +10286,15 @@
       "LANG": "en_US.UTF-8"
     },
     "machine-id": "",
+    "modprobe": {
+      "/usr/lib/modprobe.d": {
+        "dist-blacklist.conf": {
+          "blacklist": [
+            "chsc_sch"
+          ]
+        }
+      }
+    },
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -10752,6 +10758,16 @@
       "systemd-resolve:x:193:193:systemd Resolver:/:/sbin/nologin",
       "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin"
     ],
+    "security-limits": {
+      "/etc/security/limits.d": {
+        "realtime.conf": [
+          "@realtime       soft    cpu             unlimited",
+          "@realtime       -       rtprio          99",
+          "@realtime       -       nice            -20",
+          "@realtime       -       memlock         unlimited"
+        ]
+      }
+    },
     "selinux": {
       "context-mismatch": [
         {
@@ -10878,7 +10894,296 @@
         "NOZEROCONF": "yes"
       }
     },
+    "sysctl.d": {
+      "/etc/sysctl.d": {
+        "99-sysctl.conf": [
+          "kernel.hung_task_panic = 0",
+          "kernel.hung_task_timeout_secs = 600"
+        ]
+      },
+      "/usr/lib/sysctl.d": {
+        "10-default-yama-scope.conf": [
+          "kernel.yama.ptrace_scope = 0"
+        ],
+        "50-coredump.conf": [
+          "kernel.core_pattern=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %e",
+          "kernel.core_pipe_limit=16"
+        ],
+        "50-default.conf": [
+          "kernel.sysrq = 16",
+          "kernel.core_uses_pid = 1",
+          "kernel.kptr_restrict = 1",
+          "net.ipv4.conf.all.rp_filter = 1",
+          "net.ipv4.conf.all.accept_source_route = 0",
+          "net.ipv4.conf.all.promote_secondaries = 1",
+          "net.core.default_qdisc = fq_codel",
+          "fs.protected_hardlinks = 1",
+          "fs.protected_symlinks = 1"
+        ],
+        "50-libkcapi-optmem_max.conf": [
+          "net.core.optmem_max = 81920"
+        ],
+        "50-pid-max.conf": [
+          "kernel.pid_max = 4194304"
+        ]
+      }
+    },
+    "systemd-service-dropins": {
+      "/usr/lib/systemd/system": {
+        "systemd-udev-trigger.service.d": {
+          "Unit": {
+            "RefuseManualStop": "true"
+          }
+        }
+      }
+    },
     "timezone": "New_York",
+    "tmpfiles.d": {
+      "/usr/lib/tmpfiles.d": {
+        "criu.conf": [
+          "d /run/criu 0755 root root -"
+        ],
+        "cryptsetup.conf": [
+          "d /run/cryptsetup 0700 root root -"
+        ],
+        "dbus.conf": [
+          "d /var/lib/dbus 0755 - - -",
+          "L /var/lib/dbus/machine-id - - - - /etc/machine-id"
+        ],
+        "etc.conf": [
+          "L /etc/os-release - - - - ../usr/lib/os-release",
+          "L /etc/localtime - - - - ../usr/share/zoneinfo/UTC",
+          "L+ /etc/mtab - - - - ../proc/self/mounts",
+          "C /etc/nsswitch.conf - - - -",
+          "C /etc/pam.d - - - -"
+        ],
+        "greenboot-status-motd.conf": [
+          "f   /run/motd.d/boot-status     -   -   -   -   -"
+        ],
+        "home.conf": [
+          "Q /home 0755 - - -",
+          "q /srv 0755 - - -"
+        ],
+        "journal-nocow.conf": [
+          "h /var/log/journal - - - - +C",
+          "h /var/log/journal/%m - - - - +C",
+          "h /var/log/journal/remote - - - - +C"
+        ],
+        "legacy.conf": [
+          "d /run/lock 0755 root root -",
+          "L /var/lock - - - - ../run/lock",
+          "d /run/lock/subsys 0755 root root -",
+          "r! /forcefsck",
+          "r! /fastboot",
+          "r! /forcequotacheck"
+        ],
+        "libselinux.conf": [
+          "d /run/setrans 0755 root root"
+        ],
+        "lvm2.conf": [
+          "d /run/lock/lvm 0700 root root -",
+          "d /run/lvm 0700 root root -"
+        ],
+        "mdadm.conf": [
+          "d /run/mdadm 0710 root root -"
+        ],
+        "openssh.conf": [
+          "d /var/empty/sshd 711 root root -"
+        ],
+        "ostree-tmpfiles.conf": [
+          "R! /var/tmp/ostree-unlock-ovl.*"
+        ],
+        "pam.conf": [
+          "d /run/console 0755 root root -",
+          "d /run/faillock 0755 root root -",
+          "d /run/sepermit 0755 root root -"
+        ],
+        "podman.conf": [
+          "x /tmp/podman-run-*",
+          "x /tmp/containers-user-*",
+          "x /tmp/run-*/libpod",
+          "D! /run/podman 0700 root root",
+          "D! /var/lib/cni/networks"
+        ],
+        "portables.conf": [
+          "Q /var/lib/portables 0700"
+        ],
+        "rpm-ostree-0-integration.conf": [
+          "d /var/home 0755 root root -",
+          "d /var/opt 0755 root root -",
+          "d /var/srv 0755 root root -",
+          "d /var/roothome 0700 root root -",
+          "d /var/usrlocal 0755 root root -",
+          "d /var/usrlocal/bin 0755 root root -",
+          "d /var/usrlocal/etc 0755 root root -",
+          "d /var/usrlocal/games 0755 root root -",
+          "d /var/usrlocal/include 0755 root root -",
+          "d /var/usrlocal/lib 0755 root root -",
+          "d /var/usrlocal/man 0755 root root -",
+          "d /var/usrlocal/sbin 0755 root root -",
+          "d /var/usrlocal/share 0755 root root -",
+          "d /var/usrlocal/src 0755 root root -",
+          "d /var/mnt 0755 root root -",
+          "d /run/media 0755 root root -",
+          "d /var/lib 0755 root root -",
+          "L /var/lib/rpm - - - - ../../usr/share/rpm"
+        ],
+        "rpm-ostree-1-autovar.conf": [
+          "d /var/lib 0755 root root - -",
+          "d /var/lib/games 0755 root root - -",
+          "d /var/lib/misc 0755 root root - -",
+          "d /var/lib/rpm-state 0755 root root - -",
+          "d /var/lib/alternatives 0755 root root - -",
+          "d /var/lib/selinux 0755 root root - -",
+          "d /var/lib/selinux/tmp 0755 root root - -",
+          "d /var/lib/selinux/targeted 0755 root root - -",
+          "d /var/lib/selinux/final 0700 root root - -",
+          "d /var/lib/dbus 0755 root root - -",
+          "L /var/lib/dbus/machine-id - - - - /etc/machine-id",
+          "d /var/lib/initramfs 0755 root root - -",
+          "d /var/lib/os-prober 0755 root root - -",
+          "d /var/lib/systemd 0755 root root - -",
+          "d /var/lib/systemd/catalog 0755 root root - -",
+          "d /var/lib/systemd/coredump 0755 root root - -",
+          "d /var/lib/portables 0700 root root - -",
+          "d /var/lib/private 0700 root root - -",
+          "d /var/lib/tpm 0700 tss tss - -",
+          "d /var/lib/polkit-1 0750 root polkitd - -",
+          "d /var/lib/polkit-1/localauthority 0755 root root - -",
+          "d /var/lib/polkit-1/localauthority/10-vendor.d 0755 root root - -",
+          "d /var/lib/polkit-1/localauthority/20-org.d 0755 root root - -",
+          "d /var/lib/polkit-1/localauthority/30-site.d 0755 root root - -",
+          "d /var/lib/polkit-1/localauthority/50-local.d 0755 root root - -",
+          "d /var/lib/polkit-1/localauthority/90-mandatory.d 0755 root root - -",
+          "d /var/lib/NetworkManager 0700 root root - -",
+          "d /var/lib/kdump 0755 root root - -",
+          "d /var/lib/containers 0755 root root - -",
+          "d /var/lib/containers/sigstore 0755 root root - -",
+          "d /var/lib/udisks2 0700 root root - -",
+          "d /var/lib/fwupd 0755 root root - -",
+          "d /var/lib/fwupd/builder 0755 root root - -",
+          "d /var/lib/tuned 0755 root root - -",
+          "d /var/lib/chrony 0750 chrony chrony - -",
+          "d /var/lib/dnsmasq 0755 root dnsmasq - -",
+          "L /var/lib/rpm - - - - ../../usr/share/rpm",
+          "L /var/lock - - - - ../run/lock",
+          "d /var/log 0755 root root - -",
+          "d /var/log/private 0700 root root - -",
+          "d /var/log/usbguard 0755 root root - -",
+          "d /var/log/tuned 0755 root root - -",
+          "d /var/log/audit 0700 root root - -",
+          "d /var/log/chrony 0750 chrony chrony - -",
+          "d /var/adm 0755 root root - -",
+          "d /var/cache 0755 root root - -",
+          "d /var/cache/bpf 0755 root root - -",
+          "d /var/cache/ldconfig 0700 root root - -",
+          "d /var/cache/private 0700 root root - -",
+          "d /var/cache/fwupd 0755 root root - -",
+          "d /var/db 0755 root root - -",
+          "d /var/db/sudo 0700 root root - -",
+          "d /var/db/sudo/lectured 0700 root root - -",
+          "d /var/empty 0755 root root - -",
+          "d /var/empty/sshd 0711 root root - -",
+          "d /var/ftp 0755 root root - -",
+          "d /var/games 0755 root root - -",
+          "d /var/gopher 0755 root root - -",
+          "d /var/local 0755 root root - -",
+          "L /var/mail - - - - spool/mail",
+          "d /var/nis 0755 root root - -",
+          "d /var/opt 0755 root root - -",
+          "d /var/preserve 0755 root root - -",
+          "d /var/spool 0755 root root - -",
+          "d /var/spool/lpd 0755 root root - -",
+          "d /var/spool/mail 0775 root mail - -",
+          "d /var/tmp 1777 root root - -",
+          "d /var/yp 0755 root root - -",
+          "d /var/kerberos 0755 root root - -",
+          "d /var/kerberos/krb5 0755 root root - -",
+          "d /var/kerberos/krb5/user 0755 root root - -",
+          "d /var/crash 0755 root root - -"
+        ],
+        "rpm.conf": [
+          "r /var/lib/rpm/__db.*"
+        ],
+        "selinux-policy.conf": [
+          "z /sys/devices/system/cpu/online - - -",
+          "Z /sys/class/net - - -",
+          "z /sys/kernel/uevent_helper - - -",
+          "w /sys/fs/selinux/checkreqprot - - - - 0"
+        ],
+        "sudo.conf": [
+          "d /run/sudo 0711 root root",
+          "D /run/sudo/ts 0700 root root"
+        ],
+        "systemd-nologin.conf": [
+          "F! /run/nologin 0644 - - - \"System is booting up. Unprivileged users are not permitted to log in yet. Please come back later. For technical details, see pam_nologin(8).\""
+        ],
+        "systemd.conf": [
+          "d /run/user 0755 root root -",
+          "F! /run/utmp 0664 root utmp -",
+          "d /run/systemd/ask-password 0755 root root -",
+          "d /run/systemd/seats 0755 root root -",
+          "d /run/systemd/sessions 0755 root root -",
+          "d /run/systemd/users 0755 root root -",
+          "d /run/systemd/machines 0755 root root -",
+          "d /run/systemd/shutdown 0755 root root -",
+          "d /run/log 0755 root root -",
+          "z /run/log/journal 2755 root systemd-journal - -",
+          "Z /run/log/journal/%m ~2750 root systemd-journal - -",
+          "a+ /run/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /run/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /run/log/journal/%m/*.journal* - - - - group:adm:r--,group:wheel:r--",
+          "z /var/log/journal 2755 root systemd-journal - -",
+          "z /var/log/journal/%m 2755 root systemd-journal - -",
+          "z /var/log/journal/%m/system.journal 0640 root systemd-journal - -",
+          "a+ /var/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal    - - - - group::r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m/system.journal - - - - group:adm:r--,group:wheel:r--",
+          "d /var/lib/systemd 0755 root root -",
+          "d /var/lib/systemd/coredump 0755 root root 3d",
+          "d /var/lib/private 0700 root root -",
+          "d /var/log/private 0700 root root -",
+          "d /var/cache/private 0700 root root -"
+        ],
+        "tmp.conf": [
+          "q /tmp 1777 root root 10d",
+          "q /var/tmp 1777 root root 30d",
+          "x /tmp/systemd-private-%b-*",
+          "X /tmp/systemd-private-%b-*/tmp",
+          "x /var/tmp/systemd-private-%b-*",
+          "X /var/tmp/systemd-private-%b-*/tmp",
+          "R! /tmp/systemd-private-*",
+          "R! /var/tmp/systemd-private-*"
+        ],
+        "tuned.conf": [
+          "d /run/tuned 0755 root root -"
+        ],
+        "udisks2.conf": [
+          "d /run/media 0755 root root"
+        ],
+        "var.conf": [
+          "q /var 0755 - - -",
+          "L /var/run - - - - ../run",
+          "d /var/log 0755 - - -",
+          "f /var/log/wtmp 0664 root utmp -",
+          "f /var/log/btmp 0660 root utmp -",
+          "f /var/log/lastlog 0664 root utmp -",
+          "d /var/cache 0755 - - -",
+          "d /var/lib 0755 - - -",
+          "d /var/spool 0755 - - -"
+        ],
+        "x11.conf": [
+          "D! /tmp/.X11-unix 1777 root root 10d",
+          "D! /tmp/.ICE-unix 1777 root root 10d",
+          "D! /tmp/.XIM-unix 1777 root root 10d",
+          "D! /tmp/.font-unix 1777 root root 10d",
+          "D! /tmp/.Test-unix 1777 root root 10d",
+          "r! /tmp/.X[0-9]*-lock"
+        ]
+      }
+    },
     "type": "ostree/commit"
   }
 }

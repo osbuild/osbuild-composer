@@ -2,6 +2,7 @@
   "compose-request": {
     "distro": "rhel-85",
     "arch": "ppc64le",
+    "image-type": "qcow2",
     "repositories": [
       {
         "name": "baseos",
@@ -14,15 +15,17 @@
         "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n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\nvt61kpkXoRGxjTlc6h+69aidSg==\n=ls8J\n-----END PGP PUBLIC KEY BLOCK-----\n"
       }
     ],
-    "image-type": "qcow2",
     "filename": "disk.qcow2",
     "blueprint": {
+      "name": "qcow2-customize-boot-test",
+      "description": "Image for boot test",
       "packages": [
         {
           "name": "bash",
           "version": "*"
         }
       ],
+      "modules": [],
       "groups": [
         {
           "name": "core"
@@ -13775,88 +13778,7 @@
     ]
   },
   "image-info": {
-    "/etc/cloud/cloud.conf": {
-      "cloud_config_modules": [
-        "mounts",
-        "locale",
-        "set-passwords",
-        "rh_subscription",
-        "yum-add-repo",
-        "package-update-upgrade-install",
-        "timezone",
-        "puppet",
-        "chef",
-        "salt-minion",
-        "mcollective",
-        "disable-ec2-metadata",
-        "runcmd"
-      ],
-      "cloud_final_modules": [
-        "rightscale_userdata",
-        "scripts-per-once",
-        "scripts-per-boot",
-        "scripts-per-instance",
-        "scripts-user",
-        "ssh-authkey-fingerprints",
-        "keys-to-console",
-        "phone-home",
-        "final-message",
-        "power-state-change"
-      ],
-      "cloud_init_modules": [
-        "disk_setup",
-        "migrator",
-        "bootcmd",
-        "write-files",
-        "growpart",
-        "resizefs",
-        "set_hostname",
-        "update_hostname",
-        "update_etc_hosts",
-        "rsyslog",
-        "users-groups",
-        "ssh"
-      ],
-      "disable_root": 1,
-      "disable_vmware_customization": false,
-      "mount_default_fields": [
-        null,
-        null,
-        "auto",
-        "defaults,nofail,x-systemd.requires=cloud-init.service",
-        "0",
-        "2"
-      ],
-      "resize_rootfs_tmp": "/dev",
-      "ssh_deletekeys": 1,
-      "ssh_genkeytypes": null,
-      "ssh_pwauth": 0,
-      "syslog_fix_perms": null,
-      "system_info": {
-        "default_user": {
-          "gecos": "Cloud User",
-          "groups": [
-            "adm",
-            "systemd-journal"
-          ],
-          "lock_passwd": true,
-          "name": "cloud-user",
-          "shell": "/bin/bash",
-          "sudo": [
-            "ALL=(ALL) NOPASSWD:ALL"
-          ]
-        },
-        "distro": "rhel",
-        "paths": {
-          "cloud_dir": "/var/lib/cloud",
-          "templates_dir": "/etc/cloud/templates"
-        },
-        "ssh_svcname": "sshd"
-      },
-      "users": [
-        "default"
-      ]
-    },
+    "/etc/resolv.conf": [],
     "/etc/udev/rules.d": {
       "70-persistent-ipoib.rules": [],
       "90-vpdupdate.rules": [
@@ -13921,7 +13843,138 @@
         "time.example.com iburst"
       ]
     },
+    "cloud-init": {
+      "/etc/cloud": {
+        "cloud.cfg": {
+          "cloud_config_modules": [
+            "mounts",
+            "locale",
+            "set-passwords",
+            "rh_subscription",
+            "yum-add-repo",
+            "package-update-upgrade-install",
+            "timezone",
+            "puppet",
+            "chef",
+            "salt-minion",
+            "mcollective",
+            "disable-ec2-metadata",
+            "runcmd"
+          ],
+          "cloud_final_modules": [
+            "rightscale_userdata",
+            "scripts-per-once",
+            "scripts-per-boot",
+            "scripts-per-instance",
+            "scripts-user",
+            "ssh-authkey-fingerprints",
+            "keys-to-console",
+            "phone-home",
+            "final-message",
+            "power-state-change"
+          ],
+          "cloud_init_modules": [
+            "disk_setup",
+            "migrator",
+            "bootcmd",
+            "write-files",
+            "growpart",
+            "resizefs",
+            "set_hostname",
+            "update_hostname",
+            "update_etc_hosts",
+            "rsyslog",
+            "users-groups",
+            "ssh"
+          ],
+          "disable_root": 1,
+          "disable_vmware_customization": false,
+          "mount_default_fields": [
+            null,
+            null,
+            "auto",
+            "defaults,nofail,x-systemd.requires=cloud-init.service",
+            "0",
+            "2"
+          ],
+          "resize_rootfs_tmp": "/dev",
+          "ssh_deletekeys": 1,
+          "ssh_genkeytypes": null,
+          "ssh_pwauth": 0,
+          "syslog_fix_perms": null,
+          "system_info": {
+            "default_user": {
+              "gecos": "Cloud User",
+              "groups": [
+                "adm",
+                "systemd-journal"
+              ],
+              "lock_passwd": true,
+              "name": "cloud-user",
+              "shell": "/bin/bash",
+              "sudo": [
+                "ALL=(ALL) NOPASSWD:ALL"
+              ]
+            },
+            "distro": "rhel",
+            "paths": {
+              "cloud_dir": "/var/lib/cloud",
+              "templates_dir": "/etc/cloud/templates"
+            },
+            "ssh_svcname": "sshd"
+          },
+          "users": [
+            "default"
+          ]
+        }
+      },
+      "/etc/cloud/cloud.cfg.d": {
+        "05_logging.cfg": {
+          "_log": [
+            "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+            "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n",
+            "[handler_cloudLogHandler]\nclass=handlers.SysLogHandler\nlevel=DEBUG\nformatter=simpleFormatter\nargs=(\"/dev/log\", handlers.SysLogHandler.LOG_USER)\n"
+          ],
+          "log_cfgs": [
+            [
+              "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+              "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n"
+            ]
+          ],
+          "output": {
+            "all": "| tee -a /var/log/cloud-init-output.log"
+          }
+        }
+      }
+    },
     "default-target": "multi-user.target",
+    "dracut": {
+      "/usr/lib/dracut/dracut.conf.d": {
+        "01-dist.conf": {
+          "early_microcode": "yes",
+          "hostonly": "yes",
+          "hostonly_cmdline": "no",
+          "i18n_default_font": "eurlatgr",
+          "i18n_install_all": "yes",
+          "i18n_vars": "/etc/sysconfig/keyboard:KEYTABLE-KEYMAP /etc/sysconfig/i18n:SYSFONT-FONT,FONTACM-FONT_MAP,FONT_UNIMAP",
+          "install_optional_items": " vi /etc/virc ps grep cat rm ",
+          "prefix": "/",
+          "reproducible": "yes",
+          "stdloglvl": "3",
+          "sysloglvl": "5",
+          "systemdsystemconfdir": "/etc/systemd/system",
+          "systemdsystemunitdir": "/usr/lib/systemd/system",
+          "systemdutildir": "/usr/lib/systemd",
+          "udevdir": "/usr/lib/udev"
+        },
+        "02-generic-image.conf": {
+          "hostonly": "no"
+        },
+        "02-rescue.conf": {
+          "dracut_rescue_image": "yes"
+        }
+      }
+    },
     "firewall-enabled": [
       "ssh",
       "dhcpv6-client",
@@ -14023,6 +14076,15 @@
       "LANG": "el_CY.UTF-8"
     },
     "machine-id": "",
+    "modprobe": {
+      "/usr/lib/modprobe.d": {
+        "dist-blacklist.conf": {
+          "blacklist": [
+            "chsc_sch"
+          ]
+        }
+      }
+    },
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -14836,6 +14898,195 @@
         "NOZEROCONF": "yes"
       }
     },
-    "timezone": "London"
+    "sysctl.d": {
+      "/usr/lib/sysctl.d": {
+        "10-default-yama-scope.conf": [
+          "kernel.yama.ptrace_scope = 0"
+        ],
+        "50-coredump.conf": [
+          "kernel.core_pattern=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %e"
+        ],
+        "50-default.conf": [
+          "kernel.sysrq = 16",
+          "kernel.core_uses_pid = 1",
+          "kernel.kptr_restrict = 1",
+          "net.ipv4.conf.all.rp_filter = 1",
+          "net.ipv4.conf.all.accept_source_route = 0",
+          "net.ipv4.conf.all.promote_secondaries = 1",
+          "net.core.default_qdisc = fq_codel",
+          "fs.protected_hardlinks = 1",
+          "fs.protected_symlinks = 1"
+        ],
+        "50-libkcapi-optmem_max.conf": [
+          "net.core.optmem_max = 81920"
+        ],
+        "50-pid-max.conf": [
+          "kernel.pid_max = 4194304"
+        ]
+      }
+    },
+    "systemd-service-dropins": {
+      "/usr/lib/systemd/system": {
+        "systemd-udev-trigger.service.d": {
+          "Unit": {
+            "RefuseManualStop": "true"
+          }
+        }
+      }
+    },
+    "timezone": "London",
+    "tmpfiles.d": {
+      "/usr/lib/tmpfiles.d": {
+        "cloud-init.conf": [
+          "d /run/cloud-init 0700 root root - -"
+        ],
+        "cockpit-tempfiles.conf": [
+          "C /run/cockpit/inactive.motd 0640 root wheel - /usr/share/cockpit/motd/inactive.motd",
+          "f /run/cockpit/active.motd   0640 root wheel -",
+          "L+ /run/cockpit/motd - - - - inactive.motd"
+        ],
+        "cryptsetup.conf": [
+          "d /run/cryptsetup 0700 root root -"
+        ],
+        "dbus.conf": [
+          "d /var/lib/dbus 0755 - - -",
+          "L /var/lib/dbus/machine-id - - - - /etc/machine-id"
+        ],
+        "dnf.conf": [
+          "R /var/tmp/dnf*/locks/*",
+          "r /var/cache/dnf/download_lock.pid",
+          "r /var/cache/dnf/metadata_lock.pid",
+          "r /var/lib/dnf/rpmdb_lock.pid",
+          "r /var/log/log_lock.pid"
+        ],
+        "etc.conf": [
+          "L /etc/os-release - - - - ../usr/lib/os-release",
+          "L /etc/localtime - - - - ../usr/share/zoneinfo/UTC",
+          "L+ /etc/mtab - - - - ../proc/self/mounts",
+          "C /etc/nsswitch.conf - - - -",
+          "C /etc/pam.d - - - -"
+        ],
+        "home.conf": [
+          "Q /home 0755 - - -",
+          "q /srv 0755 - - -"
+        ],
+        "journal-nocow.conf": [
+          "h /var/log/journal - - - - +C",
+          "h /var/log/journal/%m - - - - +C",
+          "h /var/log/journal/remote - - - - +C"
+        ],
+        "legacy.conf": [
+          "d /run/lock 0755 root root -",
+          "L /var/lock - - - - ../run/lock",
+          "d /run/lock/subsys 0755 root root -",
+          "r! /forcefsck",
+          "r! /fastboot",
+          "r! /forcequotacheck"
+        ],
+        "libselinux.conf": [
+          "d /run/setrans 0755 root root"
+        ],
+        "man-db.conf": [
+          "d /var/cache/man 0755 root root 1w"
+        ],
+        "openssh.conf": [
+          "d /var/empty/sshd 711 root root -"
+        ],
+        "pam.conf": [
+          "d /run/console 0755 root root -",
+          "d /run/faillock 0755 root root -",
+          "d /run/sepermit 0755 root root -"
+        ],
+        "portables.conf": [
+          "Q /var/lib/portables 0700"
+        ],
+        "rpcbind.conf": [
+          "D     /run/rpcbind 0700  rpc  rpc  -  -"
+        ],
+        "rpm.conf": [
+          "r /var/lib/rpm/__db.*"
+        ],
+        "selinux-policy.conf": [
+          "z /sys/devices/system/cpu/online - - -",
+          "Z /sys/class/net - - -",
+          "z /sys/kernel/uevent_helper - - -",
+          "w /sys/fs/selinux/checkreqprot - - - - 0"
+        ],
+        "setroubleshoot.conf": [
+          "d /run/setroubleshoot 711 setroubleshoot setroubleshoot -"
+        ],
+        "subscription-manager.conf": [
+          "d /run/rhsm 0755 root root -"
+        ],
+        "sudo.conf": [
+          "d /run/sudo 0711 root root",
+          "D /run/sudo/ts 0700 root root"
+        ],
+        "systemd-nologin.conf": [
+          "F! /run/nologin 0644 - - - \"System is booting up. Unprivileged users are not permitted to log in yet. Please come back later. For technical details, see pam_nologin(8).\""
+        ],
+        "systemd.conf": [
+          "d /run/user 0755 root root -",
+          "F! /run/utmp 0664 root utmp -",
+          "d /run/systemd/ask-password 0755 root root -",
+          "d /run/systemd/seats 0755 root root -",
+          "d /run/systemd/sessions 0755 root root -",
+          "d /run/systemd/users 0755 root root -",
+          "d /run/systemd/machines 0755 root root -",
+          "d /run/systemd/shutdown 0755 root root -",
+          "d /run/log 0755 root root -",
+          "z /run/log/journal 2755 root systemd-journal - -",
+          "Z /run/log/journal/%m ~2750 root systemd-journal - -",
+          "a+ /run/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /run/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /run/log/journal/%m/*.journal* - - - - group:adm:r--,group:wheel:r--",
+          "z /var/log/journal 2755 root systemd-journal - -",
+          "z /var/log/journal/%m 2755 root systemd-journal - -",
+          "z /var/log/journal/%m/system.journal 0640 root systemd-journal - -",
+          "a+ /var/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal    - - - - group::r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m/system.journal - - - - group:adm:r--,group:wheel:r--",
+          "d /var/lib/systemd 0755 root root -",
+          "d /var/lib/systemd/coredump 0755 root root 3d",
+          "d /var/lib/private 0700 root root -",
+          "d /var/log/private 0700 root root -",
+          "d /var/cache/private 0700 root root -"
+        ],
+        "tmp.conf": [
+          "q /tmp 1777 root root 10d",
+          "q /var/tmp 1777 root root 30d",
+          "x /tmp/systemd-private-%b-*",
+          "X /tmp/systemd-private-%b-*/tmp",
+          "x /var/tmp/systemd-private-%b-*",
+          "X /var/tmp/systemd-private-%b-*/tmp",
+          "R! /tmp/systemd-private-*",
+          "R! /var/tmp/systemd-private-*"
+        ],
+        "tuned.conf": [
+          "d /run/tuned 0755 root root -"
+        ],
+        "var.conf": [
+          "q /var 0755 - - -",
+          "L /var/run - - - - ../run",
+          "d /var/log 0755 - - -",
+          "f /var/log/wtmp 0664 root utmp -",
+          "f /var/log/btmp 0660 root utmp -",
+          "f /var/log/lastlog 0664 root utmp -",
+          "d /var/cache 0755 - - -",
+          "d /var/lib 0755 - - -",
+          "d /var/spool 0755 - - -"
+        ],
+        "x11.conf": [
+          "D! /tmp/.X11-unix 1777 root root 10d",
+          "D! /tmp/.ICE-unix 1777 root root 10d",
+          "D! /tmp/.XIM-unix 1777 root root 10d",
+          "D! /tmp/.font-unix 1777 root root 10d",
+          "D! /tmp/.Test-unix 1777 root root 10d",
+          "r! /tmp/.X[0-9]*-lock"
+        ]
+      }
+    }
   }
 }

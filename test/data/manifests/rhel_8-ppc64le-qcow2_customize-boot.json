@@ -15,18 +15,76 @@
     ],
     "filename": "disk.qcow2",
     "blueprint": {
-      "name": "qcow2-boot-test",
+      "name": "qcow2-customize-boot-test",
       "description": "Image for boot test",
-      "packages": [],
+      "packages": [
+        {
+          "name": "bash",
+          "version": "*"
+        }
+      ],
       "modules": [],
-      "groups": [],
+      "groups": [
+        {
+          "name": "core"
+        }
+      ],
       "customizations": {
-        "user": [
+        "hostname": "my-host",
+        "kernel": {
+          "append": "debug"
+        },
+        "sshkey": [
           {
-            "name": "redhat",
+            "user": "user1",
             "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
           }
-        ]
+        ],
+        "user": [
+          {
+            "name": "user2",
+            "description": "description 2",
+            "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
+            "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost",
+            "home": "/home/home2",
+            "shell": "/bin/sh",
+            "groups": [
+              "group1"
+            ],
+            "uid": 1020,
+            "gid": 1050
+          }
+        ],
+        "group": [
+          {
+            "name": "group1",
+            "gid": 1030
+          },
+          {
+            "name": "group2",
+            "gid": 1050
+          }
+        ],
+        "timezone": {
+          "timezone": "Europe/London",
+          "ntpservers": [
+            "time.example.com"
+          ]
+        },
+        "locale": {
+          "languages": [
+            "el_CY.UTF-8"
+          ],
+          "keyboard": "dvorak"
+        },
+        "services": {
+          "enabled": [
+            "sshd.socket"
+          ],
+          "disabled": [
+            "bluetooth.service"
+          ]
+        }
       }
     }
   },
@@ -3740,24 +3798,88 @@
           "name": "org.osbuild.grub2",
           "options": {
             "root_fs_uuid": "0bd700f8-090f-4556-b797-b340297ea1bd",
-            "kernel_opts": "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0",
+            "kernel_opts": "console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0 debug",
             "legacy": "powerpc-ieee1275"
           }
         },
         {
           "name": "org.osbuild.locale",
           "options": {
-            "language": "en_US"
+            "language": "el_CY.UTF-8"
+          }
+        },
+        {
+          "name": "org.osbuild.keymap",
+          "options": {
+            "keymap": "dvorak"
+          }
+        },
+        {
+          "name": "org.osbuild.hostname",
+          "options": {
+            "hostname": "my-host"
+          }
+        },
+        {
+          "name": "org.osbuild.timezone",
+          "options": {
+            "zone": "Europe/London"
+          }
+        },
+        {
+          "name": "org.osbuild.chrony",
+          "options": {
+            "timeservers": [
+              "time.example.com"
+            ]
+          }
+        },
+        {
+          "name": "org.osbuild.groups",
+          "options": {
+            "groups": {
+              "group1": {
+                "name": "group1",
+                "gid": 1030
+              },
+              "group2": {
+                "name": "group2",
+                "gid": 1050
+              }
+            }
           }
         },
         {
           "name": "org.osbuild.users",
           "options": {
             "users": {
-              "redhat": {
+              "user1": {
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+              },
+              "user2": {
+                "uid": 1020,
+                "gid": 1050,
+                "groups": [
+                  "group1"
+                ],
+                "description": "description 2",
+                "home": "/home/home2",
+                "shell": "/bin/sh",
+                "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
                 "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
               }
             }
+          }
+        },
+        {
+          "name": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "sshd.socket"
+            ],
+            "disabled_services": [
+              "bluetooth.service"
+            ]
           }
         },
         {
@@ -10273,7 +10395,7 @@
       ]
     },
     "boot-environment": {
-      "kernelopts": "root=UUID=0bd700f8-090f-4556-b797-b340297ea1bd console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0"
+      "kernelopts": "root=UUID=0bd700f8-090f-4556-b797-b340297ea1bd console=ttyS0 console=ttyS0,115200n8 no_timer_check crashkernel=auto net.ifnames=0 debug"
     },
     "bootloader": "unknown",
     "bootmenu": [
@@ -10293,8 +10415,8 @@
       "leapsectz": [
         "right/UTC"
       ],
-      "pool": [
-        "2.rhel.pool.ntp.org iburst"
+      "server": [
+        "time.example.com iburst"
       ]
     },
     "cloud-init": {
@@ -10451,6 +10573,8 @@
       "floppy:x:19:",
       "ftp:x:50:",
       "games:x:20:",
+      "group1:x:1030:user2",
+      "group2:x:1050:",
       "input:x:999:",
       "kmem:x:9:",
       "kvm:x:36:",
@@ -10461,7 +10585,6 @@
       "mem:x:8:",
       "nobody:x:65534:",
       "polkitd:x:996:",
-      "redhat:x:1000:",
       "render:x:998:",
       "rngd:x:987:",
       "root:x:0:",
@@ -10481,12 +10604,14 @@
       "tss:x:59:",
       "tty:x:5:",
       "unbound:x:993:",
+      "user1:x:1000:",
       "users:x:100:",
       "utempter:x:35:",
       "utmp:x:22:",
       "video:x:39:",
       "wheel:x:10:"
     ],
+    "hostname": "my-host",
     "hosts": [
       "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
       "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
@@ -10495,8 +10620,13 @@
       "compat": "1.1",
       "type": "qcow2"
     },
+    "keyboard": {
+      "vconsole": {
+        "KEYMAP": "dvorak"
+      }
+    },
     "locale": {
-      "LANG": "en_US"
+      "LANG": "el_CY.UTF-8"
     },
     "machine-id": "",
     "modprobe": {
@@ -11064,7 +11194,6 @@
       "nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin",
       "operator:x:11:0:operator:/root:/sbin/nologin",
       "polkitd:x:998:996:User for polkitd:/:/sbin/nologin",
-      "redhat:x:1000:1000::/home/redhat:/bin/bash",
       "rngd:x:991:987:Random Number Generator Daemon:/var/lib/rngd:/sbin/nologin",
       "root:x:0:0:root:/root:/bin/bash",
       "rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin",
@@ -11078,7 +11207,9 @@
       "systemd-resolve:x:193:193:systemd Resolver:/:/sbin/nologin",
       "tcpdump:x:72:72::/:/sbin/nologin",
       "tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin",
-      "unbound:x:997:993:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
+      "unbound:x:997:993:Unbound DNS resolver:/etc/unbound:/sbin/nologin",
+      "user1:x:1000:1000::/home/user1:/bin/bash",
+      "user2:x:1020:1050:description 2:/home/home2:/bin/sh"
     ],
     "rhsm": {
       "dnf-plugins": {
@@ -11133,6 +11264,7 @@
     },
     "rpm-verify": {
       "changed": {
+        "/etc/chrony.conf": "S.5....T.",
         "/etc/dnf/plugins/product-id.conf": "..5....T.",
         "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
         "/etc/machine-id": ".M.......",
@@ -11182,7 +11314,6 @@
       "runlevel6.target",
       "serial-getty@.service",
       "sshd-keygen@.service",
-      "sshd.socket",
       "sssd-autofs.socket",
       "sssd-nss.socket",
       "sssd-pac.socket",
@@ -11227,6 +11358,7 @@
       "rtas_errd.service",
       "selinux-autorelabel-mark.service",
       "sshd.service",
+      "sshd.socket",
       "sssd-kcm.socket",
       "sssd.service",
       "syslog.service",
@@ -11286,7 +11418,7 @@
         }
       }
     },
-    "timezone": "UTC",
+    "timezone": "London",
     "tmpfiles.d": {
       "/usr/lib/tmpfiles.d": {
         "cloud-init.conf": [

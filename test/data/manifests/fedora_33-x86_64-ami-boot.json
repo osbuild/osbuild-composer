@@ -9426,91 +9426,7 @@
     ]
   },
   "image-info": {
-    "/etc/cloud/cloud.conf": {
-      "cloud_config_modules": [
-        "ssh-import-id",
-        "locale",
-        "set-passwords",
-        "spacewalk",
-        "yum-add-repo",
-        "ntp",
-        "timezone",
-        "disable-ec2-metadata",
-        "runcmd"
-      ],
-      "cloud_final_modules": [
-        "package-update-upgrade-install",
-        "puppet",
-        "chef",
-        "mcollective",
-        "salt-minion",
-        "rightscale_userdata",
-        "scripts-vendor",
-        "scripts-per-once",
-        "scripts-per-boot",
-        "scripts-per-instance",
-        "scripts-user",
-        "ssh-authkey-fingerprints",
-        "keys-to-console",
-        "phone-home",
-        "final-message",
-        "power-state-change"
-      ],
-      "cloud_init_modules": [
-        "migrator",
-        "seed_random",
-        "bootcmd",
-        "write-files",
-        "growpart",
-        "resizefs",
-        "disk_setup",
-        "mounts",
-        "set_hostname",
-        "update_hostname",
-        "update_etc_hosts",
-        "ca-certs",
-        "rsyslog",
-        "users-groups",
-        "ssh"
-      ],
-      "disable_root": true,
-      "mount_default_fields": [
-        null,
-        null,
-        "auto",
-        "defaults,nofail",
-        "0",
-        "2"
-      ],
-      "preserve_hostname": false,
-      "resize_rootfs_tmp": "/dev",
-      "ssh_pwauth": 0,
-      "system_info": {
-        "default_user": {
-          "gecos": "fedora Cloud User",
-          "groups": [
-            "wheel",
-            "adm",
-            "systemd-journal"
-          ],
-          "lock_passwd": true,
-          "name": "fedora",
-          "shell": "/bin/bash",
-          "sudo": [
-            "ALL=(ALL) NOPASSWD:ALL"
-          ]
-        },
-        "distro": "fedora",
-        "paths": {
-          "cloud_dir": "/var/lib/cloud/",
-          "templates_dir": "/etc/cloud/templates/"
-        },
-        "ssh_svcname": "sshd"
-      },
-      "users": [
-        "default"
-      ]
-    },
+    "/etc/resolv.conf": [],
     "/etc/udev/rules.d": {
       "70-persistent-ipoib.rules": []
     },
@@ -9538,7 +9454,163 @@
         "2.fedora.pool.ntp.org iburst"
       ]
     },
+    "cloud-init": {
+      "/etc/cloud": {
+        "cloud.cfg": {
+          "cloud_config_modules": [
+            "ssh-import-id",
+            "locale",
+            "set-passwords",
+            "spacewalk",
+            "yum-add-repo",
+            "ntp",
+            "timezone",
+            "disable-ec2-metadata",
+            "runcmd"
+          ],
+          "cloud_final_modules": [
+            "package-update-upgrade-install",
+            "puppet",
+            "chef",
+            "mcollective",
+            "salt-minion",
+            "rightscale_userdata",
+            "scripts-vendor",
+            "scripts-per-once",
+            "scripts-per-boot",
+            "scripts-per-instance",
+            "scripts-user",
+            "ssh-authkey-fingerprints",
+            "keys-to-console",
+            "phone-home",
+            "final-message",
+            "power-state-change"
+          ],
+          "cloud_init_modules": [
+            "migrator",
+            "seed_random",
+            "bootcmd",
+            "write-files",
+            "growpart",
+            "resizefs",
+            "disk_setup",
+            "mounts",
+            "set_hostname",
+            "update_hostname",
+            "update_etc_hosts",
+            "ca-certs",
+            "rsyslog",
+            "users-groups",
+            "ssh"
+          ],
+          "disable_root": true,
+          "mount_default_fields": [
+            null,
+            null,
+            "auto",
+            "defaults,nofail",
+            "0",
+            "2"
+          ],
+          "preserve_hostname": false,
+          "resize_rootfs_tmp": "/dev",
+          "ssh_pwauth": 0,
+          "system_info": {
+            "default_user": {
+              "gecos": "fedora Cloud User",
+              "groups": [
+                "wheel",
+                "adm",
+                "systemd-journal"
+              ],
+              "lock_passwd": true,
+              "name": "fedora",
+              "shell": "/bin/bash",
+              "sudo": [
+                "ALL=(ALL) NOPASSWD:ALL"
+              ]
+            },
+            "distro": "fedora",
+            "paths": {
+              "cloud_dir": "/var/lib/cloud/",
+              "templates_dir": "/etc/cloud/templates/"
+            },
+            "ssh_svcname": "sshd"
+          },
+          "users": [
+            "default"
+          ]
+        }
+      },
+      "/etc/cloud/cloud.cfg.d": {
+        "05_logging.cfg": {
+          "_log": [
+            "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+            "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log',)\n",
+            "[handler_cloudLogHandler]\nclass=handlers.SysLogHandler\nlevel=DEBUG\nformatter=simpleFormatter\nargs=(\"/dev/log\", handlers.SysLogHandler.LOG_USER)\n"
+          ],
+          "log_cfgs": [
+            [
+              "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+              "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log',)\n"
+            ]
+          ],
+          "output": {
+            "all": "| tee -a /var/log/cloud-init-output.log"
+          }
+        }
+      }
+    },
     "default-target": "graphical.target",
+    "dracut": {
+      "/usr/lib/dracut/dracut.conf.d": {
+        "01-dist.conf": {
+          "dbus": "/usr/share/dbus-1",
+          "dbusconfdir": "/etc/dbus-1",
+          "dbusinterfaces": "/usr/share/dbus-1/interfaces",
+          "dbusinterfacesconfdir": "/etc/dbus-1/interfaces",
+          "dbusservices": "/usr/share/dbus-1/services",
+          "dbusservicesconfdir": "/etc/dbus-1/services",
+          "dbussession": "/usr/share/dbus-1/session.d",
+          "dbussessionconfdir": "/etc/dbus-1/session.d",
+          "dbussystem": "confdir/etc/dbus-1/system.d",
+          "dbussystemservices": "/usr/share/dbus-1/system-services",
+          "dbussystemservicesconfdir": "/etc/dbus-1/system-services",
+          "early_microcode": "yes",
+          "environment": "/usr/lib/environment.d",
+          "environmentconfdir": "/etc/environment.d",
+          "hostonly": "yes",
+          "hostonly_cmdline": "no",
+          "i18n_default_font": "eurlatgr",
+          "i18n_install_all": "yes",
+          "i18n_vars": "/etc/sysconfig/keyboard:KEYTABLE-KEYMAP /etc/sysconfig/i18n:SYSFONT-FONT,FONTACM-FONT_MAP,FONT_UNIMAP",
+          "install_optional_items": " vi /etc/virc ps grep cat rm ",
+          "prefix": "/",
+          "reproducible": "yes",
+          "stdloglvl": "3",
+          "sysctlconfdir": "/etc/sysctl.d",
+          "sysctld": "/usr/lib/sysctl.d",
+          "sysloglvl": "5",
+          "systemdcatalog": "/usr/lib/systemd/catalog",
+          "systemdntpunits": "/usr/lib/systemd/ntp-units.d",
+          "systemdntpunitsconfdir": "/etc/systemd/ntp-units.d",
+          "systemdportable": "/usr/lib/systemd/portable",
+          "systemdportableconfdir": "/etc/systemd/portable",
+          "systemdsystemconfdir": "/etc/systemd/system",
+          "systemdsystemunitdir": "/usr/lib/systemd/system",
+          "systemduser": "/usr/lib/systemd/user",
+          "systemduserconfdir": "/etc/systemd/user",
+          "systemdutilconfdir": "/etc/systemd",
+          "systemdutildir": "/usr/lib/systemd",
+          "sysusers": "/usr/lib/sysusers.d",
+          "sysusersconfdir": "/etc/sysusers.d",
+          "udevdir": "/usr/lib/udev"
+        },
+        "02-generic-image.conf": {
+          "hostonly": "no"
+        }
+      }
+    },
     "firewall-enabled": [
       "ssh",
       "mdns",
@@ -9608,6 +9680,15 @@
       "LANG": "en_US"
     },
     "machine-id": "",
+    "modprobe": {
+      "/usr/lib/modprobe.d": {
+        "dist-blacklist.conf": {
+          "blacklist": [
+            "chsc_sch"
+          ]
+        }
+      }
+    },
     "os-release": {
       "ANSI_COLOR": "0;38;2;60;110;180",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -10140,6 +10221,225 @@
         "%wheel\tALL=(ALL)\tALL"
       ]
     },
-    "timezone": "UTC"
+    "sysctl.d": {
+      "/usr/lib/sysctl.d": {
+        "10-default-yama-scope.conf": [
+          "kernel.yama.ptrace_scope = 0"
+        ],
+        "50-coredump.conf": [
+          "kernel.core_pattern=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h",
+          "kernel.core_pipe_limit=16",
+          "fs.suid_dumpable=2"
+        ],
+        "50-default.conf": [
+          "kernel.sysrq = 16",
+          "kernel.core_uses_pid = 1",
+          "net.ipv4.conf.default.rp_filter = 2",
+          "net.ipv4.conf.*.rp_filter = 2",
+          "-net.ipv4.conf.all.rp_filter",
+          "net.ipv4.conf.default.accept_source_route = 0",
+          "net.ipv4.conf.*.accept_source_route = 0",
+          "-net.ipv4.conf.all.accept_source_route",
+          "net.ipv4.conf.default.promote_secondaries = 1",
+          "net.ipv4.conf.*.promote_secondaries = 1",
+          "-net.ipv4.conf.all.promote_secondaries",
+          "-net.ipv4.ping_group_range = 0 2147483647",
+          "-net.core.default_qdisc = fq_codel",
+          "fs.protected_hardlinks = 1",
+          "fs.protected_symlinks = 1",
+          "fs.protected_regular = 1",
+          "fs.protected_fifos = 1"
+        ],
+        "50-libkcapi-optmem_max.conf": [
+          "net.core.optmem_max = 81920"
+        ],
+        "50-pid-max.conf": [
+          "kernel.pid_max = 4194304"
+        ]
+      }
+    },
+    "systemd-service-dropins": {
+      "/usr/lib/systemd/system": {
+        "systemd-hostnamed.service.d": {
+          "Service": {
+            "PrivateDevices": "no"
+          }
+        },
+        "systemd-logind.service.d": {
+          "Service": {
+            "Environment": "SYSTEMD_REBOOT_TO_BOOT_LOADER_MENU=true"
+          }
+        },
+        "systemd-udev-trigger.service.d": {
+          "Unit": {
+            "RefuseManualStop": "true"
+          }
+        }
+      }
+    },
+    "timezone": "UTC",
+    "tmpfiles.d": {
+      "/usr/lib/tmpfiles.d": {
+        "cloud-init.conf": [
+          "d /run/cloud-init 0700 root root - -"
+        ],
+        "cryptsetup.conf": [
+          "d /run/cryptsetup 0700 root root -"
+        ],
+        "dnf.conf": [
+          "R /var/tmp/dnf*/locks/*",
+          "r /var/cache/dnf/download_lock.pid",
+          "r /var/cache/dnf/metadata_lock.pid",
+          "r /var/lib/dnf/rpmdb_lock.pid",
+          "r /var/log/log_lock.pid"
+        ],
+        "etc.conf": [
+          "L /etc/os-release - - - - ../usr/lib/os-release",
+          "L+ /etc/mtab - - - - ../proc/self/mounts",
+          "L! /etc/resolv.conf - - - - ../run/systemd/resolve/stub-resolv.conf",
+          "C! /etc/nsswitch.conf - - - -",
+          "C! /etc/pam.d - - - -",
+          "C! /etc/issue - - - -"
+        ],
+        "home.conf": [
+          "Q /home 0755 - - -",
+          "q /srv 0755 - - -"
+        ],
+        "journal-nocow.conf": [
+          "h /var/log/journal - - - - +C",
+          "h /var/log/journal/%m - - - - +C",
+          "h /var/log/journal/remote - - - - +C"
+        ],
+        "legacy.conf": [
+          "d /run/lock 0755 root root -",
+          "L /var/lock - - - - ../run/lock",
+          "d /run/lock/subsys 0755 root root -",
+          "r! /forcefsck",
+          "r! /fastboot",
+          "r! /forcequotacheck"
+        ],
+        "libselinux.conf": [
+          "d /run/setrans 0755 root root"
+        ],
+        "man-db.conf": [
+          "d /var/cache/man 0755 root root 1w"
+        ],
+        "openssh.conf": [
+          "d /var/empty/sshd 711 root root -"
+        ],
+        "pam.conf": [
+          "d /run/console 0755 root root -",
+          "d /run/faillock 0755 root root -",
+          "d /run/sepermit 0755 root root -",
+          "d /run/motd.d 0755 root root -",
+          "f /var/log/tallylog 0600 root root -"
+        ],
+        "portables.conf": [
+          "Q /var/lib/portables 0700"
+        ],
+        "rpm.conf": [
+          "r /var/lib/rpm/__db.*"
+        ],
+        "selinux-policy.conf": [
+          "z /sys/devices/system/cpu/online - - -",
+          "Z /sys/class/net - - -",
+          "z /sys/kernel/uevent_helper - - -",
+          "w /sys/fs/selinux/checkreqprot - - - - 0"
+        ],
+        "setup.conf": [
+          "f /run/motd 0644 root root -",
+          "d /run/motd.d 0755 root root -"
+        ],
+        "static-nodes-permissions.conf": [
+          "z /dev/snd/seq      0660 - audio -",
+          "z /dev/snd/timer    0660 - audio -",
+          "z /dev/loop-control 0660 - disk  -",
+          "z /dev/net/tun      0666 - -     -",
+          "z /dev/fuse         0666 - -     -",
+          "z /dev/kvm          0666 - kvm -"
+        ],
+        "sudo.conf": [
+          "d /run/sudo 0711 root root",
+          "D /run/sudo/ts 0700 root root"
+        ],
+        "systemd-nologin.conf": [
+          "F! /run/nologin 0644 - - - \"System is booting up. Unprivileged users are not permitted to log in yet. Please come back later. For technical details, see pam_nologin(8).\""
+        ],
+        "systemd-pstore.conf": [
+          "d /var/lib/systemd/pstore 0755 root root 14d",
+          "w- /sys/module/kernel/parameters/crash_kexec_post_notifiers - - - - Y"
+        ],
+        "systemd-tmp.conf": [
+          "x /tmp/systemd-private-%b-*",
+          "X /tmp/systemd-private-%b-*/tmp",
+          "x /var/tmp/systemd-private-%b-*",
+          "X /var/tmp/systemd-private-%b-*/tmp",
+          "R! /tmp/systemd-private-*",
+          "R! /var/tmp/systemd-private-*",
+          "x  /var/lib/systemd/coredump/.#core*.%b*",
+          "r! /var/lib/systemd/coredump/.#*"
+        ],
+        "systemd.conf": [
+          "d /run/user 0755 root root -",
+          "F! /run/utmp 0664 root utmp -",
+          "d /run/systemd/ask-password 0755 root root -",
+          "d /run/systemd/seats 0755 root root -",
+          "d /run/systemd/sessions 0755 root root -",
+          "d /run/systemd/users 0755 root root -",
+          "d /run/systemd/machines 0755 root root -",
+          "d /run/systemd/shutdown 0755 root root -",
+          "d /run/systemd/netif 0755 systemd-network systemd-network -",
+          "d /run/systemd/netif/links 0755 systemd-network systemd-network -",
+          "d /run/systemd/netif/leases 0755 systemd-network systemd-network -",
+          "d /run/systemd/netif/lldp 0755 systemd-network systemd-network -",
+          "d /run/log 0755 root root -",
+          "z /run/log/journal 2755 root systemd-journal - -",
+          "Z /run/log/journal/%m ~2750 root systemd-journal - -",
+          "a+ /run/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x,group::r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /run/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /run/log/journal/%m/*.journal* - - - - group:adm:r--,group:wheel:r--",
+          "z /var/log/journal 2755 root systemd-journal - -",
+          "z /var/log/journal/%m 2755 root systemd-journal - -",
+          "z /var/log/journal/%m/system.journal 0640 root systemd-journal - -",
+          "a+ /var/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x,group::r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m/system.journal - - - - group:adm:r--,group:wheel:r--",
+          "d /var/lib/systemd 0755 root root -",
+          "d /var/lib/systemd/coredump 0755 root root 3d",
+          "d /var/lib/private 0700 root root -",
+          "d /var/log/private 0700 root root -",
+          "d /var/cache/private 0700 root root -"
+        ],
+        "tmp.conf": [
+          "q /tmp 1777 root root 10d",
+          "q /var/tmp 1777 root root 30d"
+        ],
+        "tpm2-tss-fapi.conf": [
+          "d       /var/lib/tpm2-tss/system/keystore   2775 tss  tss   -           -",
+          "a+      /var/lib/tpm2-tss/system/keystore   -    -    -     -           default:group:tss:rwx",
+          "d       /run/tpm2-tss/eventlog                2775 tss  tss   -           -",
+          "a+      /run/tpm2-tss/eventlog                -    -    -     -           default:group:tss:rwx"
+        ],
+        "var.conf": [
+          "q /var 0755 - - -",
+          "L /var/run - - - - ../run",
+          "d /var/log 0755 - - -",
+          "f /var/log/wtmp 0664 root utmp -",
+          "f /var/log/btmp 0660 root utmp -",
+          "f /var/log/lastlog 0664 root utmp -",
+          "d /var/cache 0755 - - -",
+          "d /var/lib 0755 - - -",
+          "d /var/spool 0755 - - -"
+        ],
+        "x11.conf": [
+          "D! /tmp/.X11-unix 1777 root root 10d",
+          "D! /tmp/.ICE-unix 1777 root root 10d",
+          "D! /tmp/.XIM-unix 1777 root root 10d",
+          "D! /tmp/.font-unix 1777 root root 10d",
+          "D! /tmp/.Test-unix 1777 root root 10d",
+          "r! /tmp/.X[0-9]*-lock"
+        ]
+      }
+    }
   }
 }

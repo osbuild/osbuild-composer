@@ -16,7 +16,7 @@
       },
       {
         "name": "rt",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730.2",
         "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n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\nvt61kpkXoRGxjTlc6h+69aidSg==\n=ls8J\n-----END PGP PUBLIC KEY BLOCK-----\n"
       },
       {
@@ -873,6 +873,7 @@
                   "sha256:bafc9ec3dd737b0dbdf179b9d9b4c8a9b5c1a92423eae1e4eb3047522107695e",
                   "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d",
                   "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806",
+                  "sha256:cfbcca348edef28fca7d7ce948aca980d4b396f7b247696b4eca9ae3a2649dc8",
                   "sha256:1ce2b8f96a88a9495b3098d3e752da53ad7e811a6e6432f8d1748bc5a1f4fe0c",
                   "sha256:736b0ca8f47e6f9f28c44a8e7b39b9206b9ca9ec0b46af8d7ffb34c752df2cbb",
                   "sha256:587fc7547ee34760bbbfa22b3b31fca25bfeca81aad29682d02abb5dbc14be2d",
@@ -893,7 +894,6 @@
                   "sha256:9335ca77f2525cf72ec1511d99e360c8c672ff0a57f01839edf0ee8cb8959b61",
                   "sha256:f0a0d6221cd414237b13d66329642cde2ae6d4f2309496b4938caf6abd8c8890",
                   "sha256:454d56c01c68a1d2d4bf30ed763025072f03dc60e2ce6dfdf274f7c4b44ab08e",
-                  "sha256:cfbcca348edef28fca7d7ce948aca980d4b396f7b247696b4eca9ae3a2649dc8",
                   "sha256:ce7e129103cab9de8081b9752a9990a632b5930e371988892e671bb47d42d14e",
                   "sha256:d84d9c2262e0ccdff46b3f6363c1a74ef870795947f716ada3d5ccf160d7b433",
                   "sha256:b9584e6823ffe9ccf79282bd57ee076a1e3a71c4c1020a20b5e1975141a50f14",
@@ -1481,7 +1481,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/fence-agents-rsa-4.2.1-74.el8.noarch.rpm"
           },
           "sha256:0d302eaa89f07fc1d03018efb056b4d1c9d25b2130a723b7976c0acb4d37ff93": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-openssl-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-openssl-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:0d3f8e14265aa162bfcec4aff8064fa26188f1e51e897f20760bab906a9f9e5e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/perl-threads-2.21-2.el8.x86_64.rpm"
@@ -1532,7 +1532,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/avahi-libs-0.7-20.el8.x86_64.rpm"
           },
           "sha256:13d1a1c655ae782e72bd20791d64cf999b4af49a5f9e197515c84f53b5b5ff7e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-1.18-1.el8.x86_64.rpm"
           },
           "sha256:13d3c0c2db0b1207012bad406cfb60c509f40618be1a9d342ae06963a3930202": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/freetype-2.9.1-4.el8_3.1.x86_64.rpm"
@@ -1598,7 +1598,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/pkgconf-pkg-config-1.4.2-1.el8.x86_64.rpm"
           },
           "sha256:1ce2b8f96a88a9495b3098d3e752da53ad7e811a6e6432f8d1748bc5a1f4fe0c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/clufter-bin-0.77.1-5.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/clufter-bin-0.77.1-5.el8.x86_64.rpm"
           },
           "sha256:1cee3daa217cea4534d4b90805907236846539013283adb9f79009c06f490669": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/which-2.21-16.el8.x86_64.rpm"
@@ -1862,7 +1862,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/rpm-build-libs-4.14.3-15.el8.x86_64.rpm"
           },
           "sha256:454d56c01c68a1d2d4bf30ed763025072f03dc60e2ce6dfdf274f7c4b44ab08e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/resource-agents-4.1.1-97.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/resource-agents-4.1.1-97.el8.x86_64.rpm"
           },
           "sha256:45740507b141cacf5bf5360a9e5823266f878a3c7ce8e212e3d0e7692d8dfc22": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/python3-libselinux-2.9-5.el8.x86_64.rpm"
@@ -1907,7 +1907,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/libreport-filesystem-2.9.5-15.el8.x86_64.rpm"
           },
           "sha256:4ab8a7b5c36a771adc66da53e084d414fd005b2f7ff8926b6c0101dfeeac5437": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lz4-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lz4-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:4ad66a3a1dd79384852669609567108dcc429607d40ca8adc5f1dbe6a9d6bdde": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/python3-pyudev-0.21.0-7.el8.noarch.rpm"
@@ -1922,7 +1922,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/bzip2-libs-1.0.6-26.el8.x86_64.rpm"
           },
           "sha256:4d86a96a8af2642394dd08c24b045e5296a229398d1e96f681cfdb0de97e0f79": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-plugins-all-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-plugins-all-1.18-1.el8.x86_64.rpm"
           },
           "sha256:4e468750831505a71d52553acee82dd9091d30f6c39f6dcf717fed544714c3c3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/shared-mime-info-1.9-3.el8.x86_64.rpm"
@@ -2006,7 +2006,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/fence-agents-apc-snmp-4.2.1-74.el8.noarch.rpm"
           },
           "sha256:587fc7547ee34760bbbfa22b3b31fca25bfeca81aad29682d02abb5dbc14be2d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/corosync-3.1.4-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/corosync-3.1.4-1.el8.x86_64.rpm"
           },
           "sha256:589fa333c866d9a59bc607ec6c45b7df30c8602c80c16b2aac2c0f916ebed6e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/python3-decorator-4.2.1-2.el8.noarch.rpm"
@@ -2102,7 +2102,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/fence-agents-ilo-moonshot-4.2.1-74.el8.noarch.rpm"
           },
           "sha256:69f8301466e3382daeffed4262b1c3cc1d75c82fcff6524b7189fa3b170d07ee": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pacemaker-2.1.0-3.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pacemaker-2.1.0-3.el8.x86_64.rpm"
           },
           "sha256:6a1e0d10b570d901d96addafb4bc57d42c44f1989387b7cf44015b0375b7c2c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/ipmitool-1.8.18-18.el8.x86_64.rpm"
@@ -2135,7 +2135,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/dnf-4.7.0-1.el8.noarch.rpm"
           },
           "sha256:6e8addbcd06d9279c4b26d41dfe6b7e4938e0b4d9ffbcd5d422e689bf0ebbe9d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pacemaker-cli-2.1.0-3.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pacemaker-cli-2.1.0-3.el8.x86_64.rpm"
           },
           "sha256:6ebb53d63749a68b2a5571fb30c2dc974673e1efc4d6a01ce7973c3ade6dd474": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/ethtool-5.8-6.el8.x86_64.rpm"
@@ -2156,7 +2156,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/ruby-irb-2.5.9-107.module+el8.4.0+10822+fe4fffb1.noarch.rpm"
           },
           "sha256:736b0ca8f47e6f9f28c44a8e7b39b9206b9ca9ec0b46af8d7ffb34c752df2cbb": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/clufter-common-0.77.1-5.el8.noarch.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/clufter-common-0.77.1-5.el8.noarch.rpm"
           },
           "sha256:73c29baa2cd94f1ae6a1d1333818969a281b16dd4262f413ad284c5333719a4d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/groff-base-1.22.3-18.el8.x86_64.rpm"
@@ -2366,7 +2366,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/python3-audit-3.0-0.17.20191104git1c2f876.el8.x86_64.rpm"
           },
           "sha256:8f44a02ab7aa0cc91734da2111d8fe019b210fc2b9855c5fa2617a7cd5069ec9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-bzip2-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-bzip2-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:8feb2ad7758487b1fa632fbc353cb4f93d2bdaf4d29262b9498baee122aa9502": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/cloud-utils-growpart-0.31-3.el8.noarch.rpm"
@@ -2405,7 +2405,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/NetworkManager-team-1.32.4-1.el8.x86_64.rpm"
           },
           "sha256:9335ca77f2525cf72ec1511d99e360c8c672ff0a57f01839edf0ee8cb8959b61": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pcs-0.10.8-4.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pcs-0.10.8-4.el8.x86_64.rpm"
           },
           "sha256:9461fa7a5e74bfd8d9e9961af9d3003d9d2b496830c2fd6b0641ae8b8bc8e178": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/libacl-2.2.53-1.el8.x86_64.rpm"
@@ -2489,7 +2489,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/libusal-1.1.11-39.el8.x86_64.rpm"
           },
           "sha256:a0c177cab725f48d0766e0fea5c23d4a3b32d05d110674a30c545d8cc554075a": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lzo2-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lzo2-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:a1c0df07a5bc2b91ea4e078109ffea652ff3bef5ea2a590356ef7f29847d5cb4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/rubygem-psych-3.0.2-107.module+el8.4.0+10822+fe4fffb1.x86_64.rpm"
@@ -2624,7 +2624,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/python3-pexpect-4.3.1-3.el8.noarch.rpm"
           },
           "sha256:b6664263f480a85ad1ff2a099e9cf3a0e2d547aea8465713cc87564286df4f80": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-zlib-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-zlib-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:b6cb316e21a7f15ae85c44c486e3f8b35cc3b4a67fef49da676f66550a2b688a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/dnf-plugins-core-4.0.21-1.el8.noarch.rpm"
@@ -2858,7 +2858,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/polkit-libs-0.115-12.el8.x86_64.rpm"
           },
           "sha256:d5114f76a7ee99c97c34468a1ba936ca3a3e0ab28e8f3a9011dc2ef7d08f0400": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-plugins-all-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-plugins-all-1.18-1.el8.x86_64.rpm"
           },
           "sha256:d570af0578f5b2c6225f1f2354404f65bccf91c3974e98dcbc0c7b55a61b9b46": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/grep-3.1-6.el8.x86_64.rpm"
@@ -2909,7 +2909,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/libdb-5.3.28-40.el8.x86_64.rpm"
           },
           "sha256:dcc4e264099579f9f7321165fd7610c4efbd366a2894e81855bb29f09bf624c2": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lzma-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lzma-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:dd6a948e5a656701156c618e202c0b6defd11ba6f162b6790cbb42cea15141ae": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/perl-URI-1.73-3.el8.noarch.rpm"
@@ -2918,7 +2918,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/fence-agents-heuristics-ping-4.2.1-74.el8.noarch.rpm"
           },
           "sha256:ddf650d4fb3c28f821a5cd48c1614ecb5502d31ea2b18c41d7de60be31ed8181": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-plugins-all-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-plugins-all-1.18-1.el8.x86_64.rpm"
           },
           "sha256:de0dc658b7e69ec3ddbd5f63c1ff7c8337ec4ec31ca1a5f370beb9a758c96479": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.5-20210730/Packages/fence-agents-hpblade-4.2.1-74.el8.noarch.rpm"
@@ -2954,7 +2954,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/perl-Unicode-Normalize-1.25-396.el8.x86_64.rpm"
           },
           "sha256:e2ae9cafd5b4f07e865316fe92afd80f676bff2e449524da9c491c8249376741": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libnozzle1-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libnozzle1-1.18-1.el8.x86_64.rpm"
           },
           "sha256:e3f276e87d06e4af5c92d5030a4a6129124b4aef309ab0b0f6b25f66444cbc9e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/bash-4.4.20-2.el8.x86_64.rpm"
@@ -3056,7 +3056,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/slang-2.3.2-3.el8.x86_64.rpm"
           },
           "sha256:f0a0d6221cd414237b13d66329642cde2ae6d4f2309496b4938caf6abd8c8890": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/python3-clufter-0.77.1-5.el8.noarch.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/python3-clufter-0.77.1-5.el8.noarch.rpm"
           },
           "sha256:f0cb56a04fa3b27c1a3bb8896372077234123b36fe3461aca8ddc7b912030ce8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/kbd-legacy-2.0.4-10.el8.noarch.rpm"
@@ -3149,7 +3149,7 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/libssh-0.9.4-3.el8.x86_64.rpm"
           },
           "sha256:fdf78ca2f6c5cb2e533a8bfb18f652c28b28f54800b69b47ab4d334a6326ab4b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-nss-plugin-1.18-1.el8.x86_64.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-nss-plugin-1.18-1.el8.x86_64.rpm"
           },
           "sha256:fe1a3e821eab7aafd11152c5d5b9f6cf57de36d8ef3b517e0e2f2315b062742c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.5-20210730/Packages/python3-jwt-1.6.1-2.el8.noarch.rpm"
@@ -11763,12 +11763,21 @@
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       },
       {
+        "name": "rh-amazon-rhui-client-ha",
+        "epoch": 0,
+        "version": "3.0.40",
+        "release": "1.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rhui-3-20210730/Packages/rh-amazon-rhui-client-ha-3.0.40-1.el8.noarch.rpm",
+        "checksum": "sha256:cfbcca348edef28fca7d7ce948aca980d4b396f7b247696b4eca9ae3a2649dc8"
+      },
+      {
         "name": "clufter-bin",
         "epoch": 0,
         "version": "0.77.1",
         "release": "5.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/clufter-bin-0.77.1-5.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/clufter-bin-0.77.1-5.el8.x86_64.rpm",
         "checksum": "sha256:1ce2b8f96a88a9495b3098d3e752da53ad7e811a6e6432f8d1748bc5a1f4fe0c"
       },
       {
@@ -11777,7 +11786,7 @@
         "version": "0.77.1",
         "release": "5.el8",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/clufter-common-0.77.1-5.el8.noarch.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/clufter-common-0.77.1-5.el8.noarch.rpm",
         "checksum": "sha256:736b0ca8f47e6f9f28c44a8e7b39b9206b9ca9ec0b46af8d7ffb34c752df2cbb"
       },
       {
@@ -11786,7 +11795,7 @@
         "version": "3.1.4",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/corosync-3.1.4-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/corosync-3.1.4-1.el8.x86_64.rpm",
         "checksum": "sha256:587fc7547ee34760bbbfa22b3b31fca25bfeca81aad29682d02abb5dbc14be2d"
       },
       {
@@ -11795,7 +11804,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:13d1a1c655ae782e72bd20791d64cf999b4af49a5f9e197515c84f53b5b5ff7e"
       },
       {
@@ -11804,7 +11813,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-bzip2-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-bzip2-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:8f44a02ab7aa0cc91734da2111d8fe019b210fc2b9855c5fa2617a7cd5069ec9"
       },
       {
@@ -11813,7 +11822,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lz4-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lz4-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:4ab8a7b5c36a771adc66da53e084d414fd005b2f7ff8926b6c0101dfeeac5437"
       },
       {
@@ -11822,7 +11831,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lzma-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lzma-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:dcc4e264099579f9f7321165fd7610c4efbd366a2894e81855bb29f09bf624c2"
       },
       {
@@ -11831,7 +11840,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-lzo2-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-lzo2-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:a0c177cab725f48d0766e0fea5c23d4a3b32d05d110674a30c545d8cc554075a"
       },
       {
@@ -11840,7 +11849,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-plugins-all-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-plugins-all-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:d5114f76a7ee99c97c34468a1ba936ca3a3e0ab28e8f3a9011dc2ef7d08f0400"
       },
       {
@@ -11849,7 +11858,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-compress-zlib-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-compress-zlib-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:b6664263f480a85ad1ff2a099e9cf3a0e2d547aea8465713cc87564286df4f80"
       },
       {
@@ -11858,7 +11867,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-nss-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-nss-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:fdf78ca2f6c5cb2e533a8bfb18f652c28b28f54800b69b47ab4d334a6326ab4b"
       },
       {
@@ -11867,7 +11876,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-openssl-plugin-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-openssl-plugin-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:0d302eaa89f07fc1d03018efb056b4d1c9d25b2130a723b7976c0acb4d37ff93"
       },
       {
@@ -11876,7 +11885,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-crypto-plugins-all-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-crypto-plugins-all-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:4d86a96a8af2642394dd08c24b045e5296a229398d1e96f681cfdb0de97e0f79"
       },
       {
@@ -11885,7 +11894,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libknet1-plugins-all-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libknet1-plugins-all-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:ddf650d4fb3c28f821a5cd48c1614ecb5502d31ea2b18c41d7de60be31ed8181"
       },
       {
@@ -11894,7 +11903,7 @@
         "version": "1.18",
         "release": "1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/libnozzle1-1.18-1.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/libnozzle1-1.18-1.el8.x86_64.rpm",
         "checksum": "sha256:e2ae9cafd5b4f07e865316fe92afd80f676bff2e449524da9c491c8249376741"
       },
       {
@@ -11903,7 +11912,7 @@
         "version": "2.1.0",
         "release": "3.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pacemaker-2.1.0-3.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pacemaker-2.1.0-3.el8.x86_64.rpm",
         "checksum": "sha256:69f8301466e3382daeffed4262b1c3cc1d75c82fcff6524b7189fa3b170d07ee"
       },
       {
@@ -11912,7 +11921,7 @@
         "version": "2.1.0",
         "release": "3.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pacemaker-cli-2.1.0-3.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pacemaker-cli-2.1.0-3.el8.x86_64.rpm",
         "checksum": "sha256:6e8addbcd06d9279c4b26d41dfe6b7e4938e0b4d9ffbcd5d422e689bf0ebbe9d"
       },
       {
@@ -11921,7 +11930,7 @@
         "version": "0.10.8",
         "release": "4.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/pcs-0.10.8-4.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/pcs-0.10.8-4.el8.x86_64.rpm",
         "checksum": "sha256:9335ca77f2525cf72ec1511d99e360c8c672ff0a57f01839edf0ee8cb8959b61"
       },
       {
@@ -11930,7 +11939,7 @@
         "version": "0.77.1",
         "release": "5.el8",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/python3-clufter-0.77.1-5.el8.noarch.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/python3-clufter-0.77.1-5.el8.noarch.rpm",
         "checksum": "sha256:f0a0d6221cd414237b13d66329642cde2ae6d4f2309496b4938caf6abd8c8890"
       },
       {
@@ -11939,107 +11948,13 @@
         "version": "4.1.1",
         "release": "97.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rt-n8.5-20210730/Packages/resource-agents-4.1.1-97.el8.x86_64.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-ha-n8.5-20210730/Packages/resource-agents-4.1.1-97.el8.x86_64.rpm",
         "checksum": "sha256:454d56c01c68a1d2d4bf30ed763025072f03dc60e2ce6dfdf274f7c4b44ab08e"
-      },
-      {
-        "name": "rh-amazon-rhui-client-ha",
-        "epoch": 0,
-        "version": "3.0.40",
-        "release": "1.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rhui-3-20210730/Packages/rh-amazon-rhui-client-ha-3.0.40-1.el8.noarch.rpm",
-        "checksum": "sha256:cfbcca348edef28fca7d7ce948aca980d4b396f7b247696b4eca9ae3a2649dc8"
       }
     ]
   },
   "image-info": {
-    "/etc/cloud/cloud.conf": {
-      "cloud_config_modules": [
-        "mounts",
-        "locale",
-        "set-passwords",
-        "rh_subscription",
-        "yum-add-repo",
-        "package-update-upgrade-install",
-        "timezone",
-        "puppet",
-        "chef",
-        "salt-minion",
-        "mcollective",
-        "disable-ec2-metadata",
-        "runcmd"
-      ],
-      "cloud_final_modules": [
-        "rightscale_userdata",
-        "scripts-per-once",
-        "scripts-per-boot",
-        "scripts-per-instance",
-        "scripts-user",
-        "ssh-authkey-fingerprints",
-        "keys-to-console",
-        "phone-home",
-        "final-message",
-        "power-state-change"
-      ],
-      "cloud_init_modules": [
-        "disk_setup",
-        "migrator",
-        "bootcmd",
-        "write-files",
-        "growpart",
-        "resizefs",
-        "set_hostname",
-        "update_hostname",
-        "update_etc_hosts",
-        "rsyslog",
-        "users-groups",
-        "ssh"
-      ],
-      "disable_root": 1,
-      "disable_vmware_customization": false,
-      "mount_default_fields": [
-        null,
-        null,
-        "auto",
-        "defaults,nofail,x-systemd.requires=cloud-init.service",
-        "0",
-        "2"
-      ],
-      "resize_rootfs_tmp": "/dev",
-      "ssh_deletekeys": 1,
-      "ssh_genkeytypes": [
-        "rsa",
-        "ecdsa",
-        "ed25519"
-      ],
-      "ssh_pwauth": 0,
-      "syslog_fix_perms": null,
-      "system_info": {
-        "default_user": {
-          "gecos": "Cloud User",
-          "groups": [
-            "adm",
-            "systemd-journal"
-          ],
-          "lock_passwd": true,
-          "name": "cloud-user",
-          "shell": "/bin/bash",
-          "sudo": [
-            "ALL=(ALL) NOPASSWD:ALL"
-          ]
-        },
-        "distro": "rhel",
-        "paths": {
-          "cloud_dir": "/var/lib/cloud",
-          "templates_dir": "/etc/cloud/templates"
-        },
-        "ssh_svcname": "sshd"
-      },
-      "users": [
-        "default"
-      ]
-    },
+    "/etc/resolv.conf": [],
     "authselect": {
       "enabled-features": [],
       "profile-id": "sssd"
@@ -12078,7 +11993,161 @@
         "169.254.169.123 prefer iburst minpoll 4 maxpoll 4"
       ]
     },
+    "cloud-init": {
+      "/etc/cloud": {
+        "cloud.cfg": {
+          "cloud_config_modules": [
+            "mounts",
+            "locale",
+            "set-passwords",
+            "rh_subscription",
+            "yum-add-repo",
+            "package-update-upgrade-install",
+            "timezone",
+            "puppet",
+            "chef",
+            "salt-minion",
+            "mcollective",
+            "disable-ec2-metadata",
+            "runcmd"
+          ],
+          "cloud_final_modules": [
+            "rightscale_userdata",
+            "scripts-per-once",
+            "scripts-per-boot",
+            "scripts-per-instance",
+            "scripts-user",
+            "ssh-authkey-fingerprints",
+            "keys-to-console",
+            "phone-home",
+            "final-message",
+            "power-state-change"
+          ],
+          "cloud_init_modules": [
+            "disk_setup",
+            "migrator",
+            "bootcmd",
+            "write-files",
+            "growpart",
+            "resizefs",
+            "set_hostname",
+            "update_hostname",
+            "update_etc_hosts",
+            "rsyslog",
+            "users-groups",
+            "ssh"
+          ],
+          "disable_root": 1,
+          "disable_vmware_customization": false,
+          "mount_default_fields": [
+            null,
+            null,
+            "auto",
+            "defaults,nofail,x-systemd.requires=cloud-init.service",
+            "0",
+            "2"
+          ],
+          "resize_rootfs_tmp": "/dev",
+          "ssh_deletekeys": 1,
+          "ssh_genkeytypes": [
+            "rsa",
+            "ecdsa",
+            "ed25519"
+          ],
+          "ssh_pwauth": 0,
+          "syslog_fix_perms": null,
+          "system_info": {
+            "default_user": {
+              "gecos": "Cloud User",
+              "groups": [
+                "adm",
+                "systemd-journal"
+              ],
+              "lock_passwd": true,
+              "name": "cloud-user",
+              "shell": "/bin/bash",
+              "sudo": [
+                "ALL=(ALL) NOPASSWD:ALL"
+              ]
+            },
+            "distro": "rhel",
+            "paths": {
+              "cloud_dir": "/var/lib/cloud",
+              "templates_dir": "/etc/cloud/templates"
+            },
+            "ssh_svcname": "sshd"
+          },
+          "users": [
+            "default"
+          ]
+        }
+      },
+      "/etc/cloud/cloud.cfg.d": {
+        "00-rhel-default-user.cfg": {
+          "system_info": {
+            "default_user": {
+              "name": "ec2-user"
+            }
+          }
+        },
+        "05_logging.cfg": {
+          "_log": [
+            "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+            "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n",
+            "[handler_cloudLogHandler]\nclass=handlers.SysLogHandler\nlevel=DEBUG\nformatter=simpleFormatter\nargs=(\"/dev/log\", handlers.SysLogHandler.LOG_USER)\n"
+          ],
+          "log_cfgs": [
+            [
+              "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
+              "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n"
+            ]
+          ],
+          "output": {
+            "all": "| tee -a /var/log/cloud-init-output.log"
+          }
+        }
+      }
+    },
     "default-target": "multi-user.target",
+    "dracut": {
+      "/usr/lib/dracut/dracut.conf.d": {
+        "01-dist.conf": {
+          "early_microcode": "yes",
+          "hostonly": "yes",
+          "hostonly_cmdline": "no",
+          "i18n_default_font": "eurlatgr",
+          "i18n_install_all": "yes",
+          "i18n_vars": "/etc/sysconfig/keyboard:KEYTABLE-KEYMAP /etc/sysconfig/i18n:SYSFONT-FONT,FONTACM-FONT_MAP,FONT_UNIMAP",
+          "install_optional_items": " vi /etc/virc ps grep cat rm ",
+          "prefix": "/",
+          "reproducible": "yes",
+          "stdloglvl": "3",
+          "sysloglvl": "5",
+          "systemdsystemconfdir": "/etc/systemd/system",
+          "systemdsystemunitdir": "/usr/lib/systemd/system",
+          "systemdutildir": "/usr/lib/systemd",
+          "udevdir": "/usr/lib/udev"
+        },
+        "01-microcode.conf": {
+          "early_microcode": "yes"
+        },
+        "02-generic-image.conf": {
+          "hostonly": "no"
+        },
+        "02-rescue.conf": {
+          "dracut_rescue_image": "yes"
+        },
+        "50-nss-softokn.conf": {
+          "add_dracutmodules": " nss-softokn "
+        },
+        "ec2.conf": {
+          "add_drivers": " nvme xen-blkfront "
+        },
+        "sgdisk.conf": {
+          "install_items": " sgdisk "
+        }
+      }
+    },
     "fstab": [
       [
         "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -12154,6 +12223,20 @@
       "LANG": "en_US.UTF-8"
     },
     "machine-id": "",
+    "modprobe": {
+      "/usr/lib/modprobe.d": {
+        "blacklist-nouveau.conf": {
+          "blacklist": [
+            "nouveau"
+          ]
+        },
+        "dist-blacklist.conf": {
+          "blacklist": [
+            "chsc_sch"
+          ]
+        }
+      }
+    },
     "os-release": {
       "ANSI_COLOR": "0;31",
       "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
@@ -12748,16 +12831,6 @@
     "partitions": [
       {
         "bootable": false,
-        "fstype": null,
-        "label": null,
-        "partuuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
-        "size": 1048576,
-        "start": 1048576,
-        "type": "21686148-6449-6E6F-744E-656564454649",
-        "uuid": null
-      },
-      {
-        "bootable": false,
         "fstype": "xfs",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
@@ -12765,6 +12838,16 @@
         "start": 2097152,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+      },
+      {
+        "bootable": false,
+        "fstype": null,
+        "label": null,
+        "partuuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
+        "size": 1048576,
+        "start": 1048576,
+        "type": "21686148-6449-6E6F-744E-656564454649",
+        "uuid": null
       }
     ],
     "passwd": [
@@ -13012,6 +13095,210 @@
         }
       }
     },
-    "timezone": "UTC"
+    "sysctl.d": {
+      "/usr/lib/sysctl.d": {
+        "10-default-yama-scope.conf": [
+          "kernel.yama.ptrace_scope = 0"
+        ],
+        "50-coredump.conf": [
+          "kernel.core_pattern=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %e",
+          "kernel.core_pipe_limit=16"
+        ],
+        "50-default.conf": [
+          "kernel.sysrq = 16",
+          "kernel.core_uses_pid = 1",
+          "kernel.kptr_restrict = 1",
+          "net.ipv4.conf.all.rp_filter = 1",
+          "net.ipv4.conf.all.accept_source_route = 0",
+          "net.ipv4.conf.all.promote_secondaries = 1",
+          "net.core.default_qdisc = fq_codel",
+          "fs.protected_hardlinks = 1",
+          "fs.protected_symlinks = 1"
+        ],
+        "50-libkcapi-optmem_max.conf": [
+          "net.core.optmem_max = 81920"
+        ],
+        "50-pid-max.conf": [
+          "kernel.pid_max = 4194304"
+        ]
+      }
+    },
+    "systemd-logind": {
+      "/usr/lib/systemd/logind.conf.d": {
+        "00-getty-fixes.conf": {
+          "NAutoVTs": "0"
+        }
+      }
+    },
+    "systemd-service-dropins": {
+      "/usr/lib/systemd/system": {
+        "nm-cloud-setup.service.d": {
+          "Service": {
+            "Environment": "NM_CLOUD_SETUP_EC2=yes"
+          }
+        },
+        "systemd-udev-trigger.service.d": {
+          "Unit": {
+            "RefuseManualStop": "true"
+          }
+        }
+      }
+    },
+    "timezone": "UTC",
+    "tmpfiles.d": {
+      "/usr/lib/tmpfiles.d": {
+        "cloud-init.conf": [
+          "d /run/cloud-init 0700 root root - -"
+        ],
+        "cryptsetup.conf": [
+          "d /run/cryptsetup 0700 root root -"
+        ],
+        "dbus.conf": [
+          "d /var/lib/dbus 0755 - - -",
+          "L /var/lib/dbus/machine-id - - - - /etc/machine-id"
+        ],
+        "dnf.conf": [
+          "R /var/tmp/dnf*/locks/*",
+          "r /var/cache/dnf/download_lock.pid",
+          "r /var/cache/dnf/metadata_lock.pid",
+          "r /var/lib/dnf/rpmdb_lock.pid",
+          "r /var/log/log_lock.pid"
+        ],
+        "etc.conf": [
+          "L /etc/os-release - - - - ../usr/lib/os-release",
+          "L /etc/localtime - - - - ../usr/share/zoneinfo/UTC",
+          "L+ /etc/mtab - - - - ../proc/self/mounts",
+          "C /etc/nsswitch.conf - - - -",
+          "C /etc/pam.d - - - -"
+        ],
+        "home.conf": [
+          "Q /home 0755 - - -",
+          "q /srv 0755 - - -"
+        ],
+        "journal-nocow.conf": [
+          "h /var/log/journal - - - - +C",
+          "h /var/log/journal/%m - - - - +C",
+          "h /var/log/journal/remote - - - - +C"
+        ],
+        "legacy.conf": [
+          "d /run/lock 0755 root root -",
+          "L /var/lock - - - - ../run/lock",
+          "d /run/lock/subsys 0755 root root -",
+          "r! /forcefsck",
+          "r! /fastboot",
+          "r! /forcequotacheck"
+        ],
+        "libselinux.conf": [
+          "d /run/setrans 0755 root root"
+        ],
+        "lvm2.conf": [
+          "d /run/lock/lvm 0700 root root -",
+          "d /run/lvm 0700 root root -"
+        ],
+        "man-db.conf": [
+          "d /var/cache/man 0755 root root 1w"
+        ],
+        "openssh.conf": [
+          "d /var/empty/sshd 711 root root -"
+        ],
+        "pam.conf": [
+          "d /run/console 0755 root root -",
+          "d /run/faillock 0755 root root -",
+          "d /run/sepermit 0755 root root -"
+        ],
+        "portables.conf": [
+          "Q /var/lib/portables 0700"
+        ],
+        "resource-agents.conf": [
+          "d /run/resource-agents 1755 root root"
+        ],
+        "rpcbind.conf": [
+          "D     /run/rpcbind 0700  rpc  rpc  -  -"
+        ],
+        "rpm.conf": [
+          "r /var/lib/rpm/__db.*"
+        ],
+        "samba.conf": [
+          "d /run/samba  755 root root"
+        ],
+        "selinux-policy.conf": [
+          "z /sys/devices/system/cpu/online - - -",
+          "Z /sys/class/net - - -",
+          "z /sys/kernel/uevent_helper - - -",
+          "w /sys/fs/selinux/checkreqprot - - - - 0"
+        ],
+        "subscription-manager.conf": [
+          "d /run/rhsm 0755 root root -"
+        ],
+        "sudo.conf": [
+          "d /run/sudo 0711 root root",
+          "D /run/sudo/ts 0700 root root"
+        ],
+        "systemd-nologin.conf": [
+          "F! /run/nologin 0644 - - - \"System is booting up. Unprivileged users are not permitted to log in yet. Please come back later. For technical details, see pam_nologin(8).\""
+        ],
+        "systemd.conf": [
+          "d /run/user 0755 root root -",
+          "F! /run/utmp 0664 root utmp -",
+          "d /run/systemd/ask-password 0755 root root -",
+          "d /run/systemd/seats 0755 root root -",
+          "d /run/systemd/sessions 0755 root root -",
+          "d /run/systemd/users 0755 root root -",
+          "d /run/systemd/machines 0755 root root -",
+          "d /run/systemd/shutdown 0755 root root -",
+          "d /run/log 0755 root root -",
+          "z /run/log/journal 2755 root systemd-journal - -",
+          "Z /run/log/journal/%m ~2750 root systemd-journal - -",
+          "a+ /run/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /run/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /run/log/journal/%m/*.journal* - - - - group:adm:r--,group:wheel:r--",
+          "z /var/log/journal 2755 root systemd-journal - -",
+          "z /var/log/journal/%m 2755 root systemd-journal - -",
+          "z /var/log/journal/%m/system.journal 0640 root systemd-journal - -",
+          "a+ /var/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal    - - - - group::r-x,group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x",
+          "a+ /var/log/journal/%m - - - - group:adm:r-x,group:wheel:r-x",
+          "a+ /var/log/journal/%m/system.journal - - - - group:adm:r--,group:wheel:r--",
+          "d /var/lib/systemd 0755 root root -",
+          "d /var/lib/systemd/coredump 0755 root root 3d",
+          "d /var/lib/private 0700 root root -",
+          "d /var/log/private 0700 root root -",
+          "d /var/cache/private 0700 root root -"
+        ],
+        "tmp.conf": [
+          "q /tmp 1777 root root 10d",
+          "q /var/tmp 1777 root root 30d",
+          "x /tmp/systemd-private-%b-*",
+          "X /tmp/systemd-private-%b-*/tmp",
+          "x /var/tmp/systemd-private-%b-*",
+          "X /var/tmp/systemd-private-%b-*/tmp",
+          "R! /tmp/systemd-private-*",
+          "R! /var/tmp/systemd-private-*"
+        ],
+        "tuned.conf": [
+          "d /run/tuned 0755 root root -"
+        ],
+        "var.conf": [
+          "q /var 0755 - - -",
+          "L /var/run - - - - ../run",
+          "d /var/log 0755 - - -",
+          "f /var/log/wtmp 0664 root utmp -",
+          "f /var/log/btmp 0660 root utmp -",
+          "f /var/log/lastlog 0664 root utmp -",
+          "d /var/cache 0755 - - -",
+          "d /var/lib 0755 - - -",
+          "d /var/spool 0755 - - -"
+        ],
+        "x11.conf": [
+          "D! /tmp/.X11-unix 1777 root root 10d",
+          "D! /tmp/.ICE-unix 1777 root root 10d",
+          "D! /tmp/.XIM-unix 1777 root root 10d",
+          "D! /tmp/.font-unix 1777 root root 10d",
+          "D! /tmp/.Test-unix 1777 root root 10d",
+          "r! /tmp/.X[0-9]*-lock"
+        ]
+      }
+    }
   }
 }
