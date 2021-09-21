@@ -615,6 +615,7 @@
                   "sha256:48f54283e14169425e68b87180435123af1906bd12c6631895d48106f5e841c9",
                   "sha256:7f3874f19f5af6867d7d9ff0a34442f4d92c153c139a1c0a058c7e3ae4ce1e7a",
                   "sha256:8a46cffbaee57de4881ef8c746195cb4da090ae0544bf90cf346dcfe3f322f4d",
+                  "sha256:d12649d69a0a7088ee0663735ce9aa6f05ae710aefe1391004cb1cb424dbdf40",
                   "sha256:785dba3e8f6c225e5a6eb5ae410c03e19c890573d010a368b754bb83e606ce94",
                   "sha256:2a399fa929245800ed68c8febee80ca2e1c20a08e92f9cd8c73e2cdd3aa04490",
                   "sha256:0f72fb02c99abc767b209829f3ebba2fe62c908a5d58317d3243f17ebd183709",
@@ -781,7 +782,15 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "greenboot-grub2-set-counter",
+                "greenboot-grub2-set-success",
+                "greenboot-healthcheck",
+                "greenboot-rpm-ostree-grub2-check-fallback",
+                "greenboot-status",
+                "greenboot-task-runner",
+                "redboot-auto-reboot",
+                "redboot-task-runner"
               ]
             }
           },
@@ -2018,6 +2027,9 @@
           },
           "sha256:d0b15c7dbe30b7890b86d77dcde6034409c9604809ff103ab54597f4a09aff28": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20210827/Packages/libblockdev-fs-2.25-7.el9.aarch64.rpm"
+          },
+          "sha256:d12649d69a0a7088ee0663735ce9aa6f05ae710aefe1391004cb1cb424dbdf40": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20210827/Packages/nss-altfiles-2.18.1-20.el9.aarch64.rpm"
           },
           "sha256:d165d14d89664d4e60cadc3625d5a76735a8c47043d9da3e3808ed44a90aeeeb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20210827/Packages/python3-libs-3.9.6-6.el9.aarch64.rpm"
@@ -9026,6 +9038,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20210827/Packages/nss-3.67.0-8.el9.aarch64.rpm",
         "checksum": "sha256:8a46cffbaee57de4881ef8c746195cb4da090ae0544bf90cf346dcfe3f322f4d"
+      },
+      {
+        "name": "nss-altfiles",
+        "epoch": 0,
+        "version": "2.18.1",
+        "release": "20.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20210827/Packages/nss-altfiles-2.18.1-20.el9.aarch64.rpm",
+        "checksum": "sha256:d12649d69a0a7088ee0663735ce9aa6f05ae710aefe1391004cb1cb424dbdf40"
       },
       {
         "name": "nss-softokn",
