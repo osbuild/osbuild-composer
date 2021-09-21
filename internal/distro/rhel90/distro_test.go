@@ -65,6 +65,14 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "ec2-sap",
+			args: args{"ec2-sap"},
+			want: wantResult{
+				filename: "image.raw.xz",
+				mimeType: "application/xz",
+			},
+		},
+		{
 			name: "qcow2",
 			args: args{"qcow2"},
 			want: wantResult{
@@ -261,6 +269,7 @@ func TestImageType_Name(t *testing.T) {
 				"ami",
 				"ec2",
 				"ec2-ha",
+				"ec2-sap",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
@@ -443,6 +452,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ami",
 				"ec2",
 				"ec2-ha",
+				"ec2-sap",
 				"edge-commit",
 				"edge-container",
 				"edge-installer",

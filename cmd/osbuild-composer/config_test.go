@@ -47,6 +47,7 @@ func TestDefaultConfig(t *testing.T) {
 				[]string{
 					"ec2",
 					"ec2-ha",
+					"ec2-sap",
 				},
 			},
 		},

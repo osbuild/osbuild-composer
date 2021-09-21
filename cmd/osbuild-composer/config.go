@@ -87,6 +87,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 					ImageTypeDenyList: []string{
 						"ec2",
 						"ec2-ha",
+						"ec2-sap",
 					},
 				},
 			},

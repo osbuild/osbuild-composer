@@ -432,6 +432,146 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
+func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	var treePipeline *osbuild.Pipeline
+	switch arch := t.arch.Name(); arch {
+	// rhel-sap-ec2
+	case distro.X86_64ArchName:
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
+	default:
+		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// SAP-specific configuration
+	treePipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{
+		State: osbuild.SELinuxStatePermissive,
+	}))
+
+	// RHBZ#1960617
+	treePipeline.AddStage(osbuild.NewTunedStage(osbuild.NewTunedStageOptions("sap-hana")))
+
+	// RHBZ#1959979
+	treePipeline.AddStage(osbuild.NewTmpfilesdStage(osbuild.NewTmpfilesdStageOptions("sap.conf",
+		[]osbuild.TmpfilesdConfigLine{
+			{
+				Type: "x",
+				Path: "/tmp/.sap*",
+			},
+			{
+				Type: "x",
+				Path: "/tmp/.hdb*lock",
+			},
+			{
+				Type: "x",
+				Path: "/tmp/.trex*lock",
+			},
+		},
+	)))
+
+	// RHBZ#1959963
+	treePipeline.AddStage(osbuild.NewPamLimitsConfStage(osbuild.NewPamLimitsConfStageOptions("99-sap.conf",
+		[]osbuild.PamLimitsConfigLine{
+			{
+				Domain: "@sapsys",
+				Type:   osbuild.PamLimitsTypeHard,
+				Item:   osbuild.PamLimitsItemNofile,
+				Value:  osbuild.PamLimitsValueInt(65536),
+			},
+			{
+				Domain: "@sapsys",
+				Type:   osbuild.PamLimitsTypeSoft,
+				Item:   osbuild.PamLimitsItemNofile,
+				Value:  osbuild.PamLimitsValueInt(65536),
+			},
+			{
+				Domain: "@dba",
+				Type:   osbuild.PamLimitsTypeHard,
+				Item:   osbuild.PamLimitsItemNofile,
+				Value:  osbuild.PamLimitsValueInt(65536),
+			},
+			{
+				Domain: "@dba",
+				Type:   osbuild.PamLimitsTypeSoft,
+				Item:   osbuild.PamLimitsItemNofile,
+				Value:  osbuild.PamLimitsValueInt(65536),
+			},
+			{
+				Domain: "@sapsys",
+				Type:   osbuild.PamLimitsTypeHard,
+				Item:   osbuild.PamLimitsItemNproc,
+				Value:  osbuild.PamLimitsValueUnlimited,
+			},
+			{
+				Domain: "@sapsys",
+				Type:   osbuild.PamLimitsTypeSoft,
+				Item:   osbuild.PamLimitsItemNproc,
+				Value:  osbuild.PamLimitsValueUnlimited,
+			},
+			{
+				Domain: "@dba",
+				Type:   osbuild.PamLimitsTypeHard,
+				Item:   osbuild.PamLimitsItemNproc,
+				Value:  osbuild.PamLimitsValueUnlimited,
+			},
+			{
+				Domain: "@dba",
+				Type:   osbuild.PamLimitsTypeSoft,
+				Item:   osbuild.PamLimitsItemNproc,
+				Value:  osbuild.PamLimitsValueUnlimited,
+			},
+		},
+	)))
+
+	// RHBZ#1959962
+	treePipeline.AddStage(osbuild.NewSysctldStage(osbuild.NewSysctldStageOptions("sap.conf",
+		[]osbuild.SysctldConfigLine{
+			{
+				Key:   "kernel.pid_max",
+				Value: "4194304",
+			},
+			{
+				Key:   "vm.max_map_count",
+				Value: "2147483647",
+			},
+		},
+	)))
+
+	// E4S/EUS
+	treePipeline.AddStage(osbuild.NewDNFConfigStage(osbuild.NewDNFConfigStageOptions(
+		[]osbuild.DNFVariable{
+			{
+				Name:  "releasever",
+				Value: "9.0",
+			},
+		},
+	)))
+
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
+	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
+	// The last stage must be the SELinux stage
+	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	pipelines = append(pipelines, *treePipeline)
+
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, *imagePipeline)
+	return pipelines, nil
+}
+
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
 func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, false, t.Filename())
@@ -442,6 +582,21 @@ func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, op
 	rawImageFilename := "image.raw"
 
 	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	lastPipeline := pipelines[len(pipelines)-1]
+	pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, rawImageFilename, t.Filename()))
+
+	return pipelines, nil
+}
+
+// rhelEc2SapPipelines returns pipelines which produce XZ-compressed EC2 SAP images which are expected to use RHUI for content
+func rhelEc2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	rawImageFilename := "image.raw"
+
+	pipelines, err := ec2SapPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
 	if err != nil {
 		return nil, err
 	}
