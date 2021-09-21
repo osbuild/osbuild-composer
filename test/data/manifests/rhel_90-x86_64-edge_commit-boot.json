@@ -650,6 +650,7 @@
                   "sha256:731b91b14eb7bc79961d02940db4fe2f8644c6c5d5005bd3c62cc3830443b692",
                   "sha256:22bee502caf00522d7e3733699502e9d109d1a884c3006ee212e900101b07231",
                   "sha256:ad91a2693eae9b8159810a59526a22e0f9518d79d4845f81531331dd6cbac36d",
+                  "sha256:0178538e8a7935d1418e78f74c58880239ad3e8eab94638af562a128ad133e20",
                   "sha256:f31d17d77b9b35e6907b1803e47cede1d3d552d5cb45d46d940d4bd57d28dac5",
                   "sha256:925973b321b7f87ddba9ca957f75ba6585d95a1b2604fe880a05ef1d3621c50a",
                   "sha256:6e5a2b51da0bfecbbc0f11fc023eb17f4fcaf70f23ada1294ba4be8b33bda125",
@@ -914,6 +915,9 @@
           },
           "sha256:01619e0b96181bff3b990016a5857b9d8859b7a4887d8c120b6f60c688bac526": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210827/Packages/npth-1.6-8.el9.x86_64.rpm"
+          },
+          "sha256:0178538e8a7935d1418e78f74c58880239ad3e8eab94638af562a128ad133e20": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210827/Packages/nss-altfiles-2.18.1-20.el9.x86_64.rpm"
           },
           "sha256:02c6622480af52421fc2e54be42b8dd1ce6502e237c9a4e8231ae587b49767e3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210827/Packages/zlib-1.2.11-31.el9.x86_64.rpm"
@@ -8300,6 +8304,15 @@
         "checksum": "sha256:ad91a2693eae9b8159810a59526a22e0f9518d79d4845f81531331dd6cbac36d"
       },
       {
+        "name": "nss-altfiles",
+        "epoch": 0,
+        "version": "2.18.1",
+        "release": "20.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210827/Packages/nss-altfiles-2.18.1-20.el9.x86_64.rpm",
+        "checksum": "sha256:0178538e8a7935d1418e78f74c58880239ad3e8eab94638af562a128ad133e20"
+      },
+      {
         "name": "nss-softokn",
         "epoch": 0,
         "version": "3.67.0",
@@ -8931,6 +8944,7 @@
       "npth-1.6-8.el9.x86_64",
       "nspr-4.31.0-5.el9.x86_64",
       "nss-3.67.0-8.el9.x86_64",
+      "nss-altfiles-2.18.1-20.el9.x86_64",
       "nss-softokn-3.67.0-8.el9.x86_64",
       "nss-softokn-freebl-3.67.0-8.el9.x86_64",
       "nss-sysinit-3.67.0-8.el9.x86_64",
