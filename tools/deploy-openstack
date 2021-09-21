@@ -25,6 +25,20 @@ scriptdir=$(dirname "$0")
 config=$1
 userdata=$2
 
+if [ ! -f "$config" ]; then
+  echo "first parameter should be a file"
+  exit 1
+fi
+
+if [ -d "$(dirname "$config")/../.git" ]; then
+  if [ "$(git status --porcelain -uno | wc -l)" -gt 0 ] || [ "$(git branch --show-current)" != "main" ]; then
+    read -p "Are you sure you want to deploy from git repo with non-main branch or dirty files ? " -n 1 -r
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+      exit 1
+    fi
+  fi
+fi
+
 # Verify that an openstackrc file has been sourced. This will fail when the
 # variables do not exist.
 printenv OS_PROJECT_NAME OS_USERNAME > /dev/null
