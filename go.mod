@@ -34,8 +34,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
-	github.com/labstack/echo/v4 v4.5.0
-	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/labstack/echo/v4 v4.6.0
 	github.com/openshift-online/ocm-sdk-go v0.1.208
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.30.0 // indirect
@@ -44,12 +43,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.26.1
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
-	golang.org/x/sys v0.0.0-20210903071746-97244b99971b
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
 	google.golang.org/api v0.56.0
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
 	google.golang.org/protobuf v1.27.1
