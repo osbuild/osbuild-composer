@@ -550,6 +550,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	// Shared Services
 	edgeServices := []string{
 		"NetworkManager.service", "firewalld.service", "sshd.service",
+		"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck",
+		"greenboot-rpm-ostree-grub2-check-fallback", "greenboot-status", "greenboot-task-runner",
+		"redboot-auto-reboot", "redboot-task-runner",
 	}
 
 	// Image Definitions
