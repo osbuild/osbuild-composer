@@ -32,6 +32,17 @@
     },
     "overrides": {}
   },
+  "ec2-sap": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "ec2-sap",
+      "repositories": [],
+      "filename": "image.raw.xz",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "edge-commit": {
     "compose-request": {
       "distro": "",
