@@ -307,6 +307,9 @@ github.com/prometheus/procfs/internal/util
 # github.com/segmentio/ksuid v1.0.4
 ## explicit
 github.com/segmentio/ksuid
+# github.com/sirupsen/logrus v1.8.1
+## explicit
+github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
