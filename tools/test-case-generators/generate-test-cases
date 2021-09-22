@@ -108,134 +108,11 @@ def generate_test_case(test_type, distro, arch, output_format, test_case_request
         case_file.write("\n")
 
 
-CUSTOMIZATIONS_BLUEPRINT =  {
-    "packages": [
-        {
-            "name": "bash",
-            "version": "*"
-        }
-    ],
-    "groups": [
-        {
-            "name": "core"
-        }
-    ],
-    "customizations": {
-        "hostname": "my-host",
-        "kernel": {
-            "append": "debug"
-        },
-        "sshkey": [
-            {
-                "user": "user1",
-                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-            }
-        ],
-        "user": [
-            {
-                "name": "user2",
-                "description": "description 2",
-                "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
-                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost",
-                "home": "/home/home2",
-                "shell": "/bin/sh",
-                "groups": [
-                    "group1"
-                ],
-                "uid": 1020,
-                "gid": 1050,
-            }
-        ],
-        "group": [
-            {
-                "name": "group1",
-                "gid": 1030
-            },
-            {
-                "name": "group2",
-                "gid": 1050
-            }
-        ],
-        "timezone": {
-            "timezone": "Europe/London",
-            "ntpservers": [
-                "time.example.com"
-            ]
-        },
-        "locale": {
-            "languages": [
-                "el_CY.UTF-8"
-            ],
-            "keyboard": "dvorak"
-        },
-#       "firewall": {
-#           "ports": [
-#               "25:tcp"
-#           ],
-#           "services": {
-#               "enabled": [
-#                   "cockpit"
-#               ],
-#               "disabled": [
-#                   "ssh"
-#               ]
-#           }
-#       },
-        "services": {
-            "enabled": [
-                "sshd.socket"
-            ],
-            "disabled": [
-                "bluetooth.service"
-            ]
-        }
-    }
-}
-
-FILESYSTEM_CUSTOMIZATIONS = [
-  {
-    "mountpoint": "/usr",
-    "minsize": 2147483648
-  },
-  {
-    "mountpoint": "/var",
-    "minsize": 1073741824
-  },
-  {
-    "mountpoint": "/",
-    "minsize": 2147483648
-  }
-]
-
-
-
-def main(distro, arch, image_types, keep_image_info, store, output, with_customizations):
+def main(distro, arch, image_types, keep_image_info, store, output):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
         format_request_dict = json.load(format_request_json)
     with open("tools/test-case-generators/repos.json") as repos_json:
         repos_dict = json.load(repos_json)
-
-    # Apply all customizations from the CUSTOMIZATIONS_BLUEPRINT dictionary
-    if with_customizations:
-        if len(image_types) > 1 or image_types[0] != "qcow2":
-            print("Customizations are only available for qcow2 image type")
-            sys.exit(1)
-
-        if distro == "rhel-85":
-            CUSTOMIZATIONS_BLUEPRINT["customizations"]["filesystem"] = FILESYSTEM_CUSTOMIZATIONS
-
-        test_case_request = {
-            "compose-request": {
-                "distro": distro,
-                "arch": arch,
-                "repositories": repos_dict[distro][arch],
-                "image-type": "qcow2",
-                "filename": "disk.qcow2",
-                "blueprint": CUSTOMIZATIONS_BLUEPRINT,
-            }
-        }
-        generate_test_case("customize", distro, arch, "qcow2", test_case_request, keep_image_info, store, output)
-        return
 
     filtered_test_case_request_items = [
         "overrides",
@@ -270,8 +147,7 @@ if __name__ == '__main__':
     parser.add_argument("--keep-image-info", action='store_true', help="skip image info (re)generation, but keep the one found in the existing test case")
     parser.add_argument("--store", metavar="STORE_DIRECTORY", type=os.path.abspath, help="path to the osbuild store", required=True)
     parser.add_argument("--output", metavar="OUTPUT_DIRECTORY", type=os.path.abspath, help="path to the output directory", required=True)
-    parser.add_argument("--with-customizations", action='store_true', help="apply all currently supported customizations to the image (qcow2 only)")
     args = parser.parse_args()
 
-    main(args.distro, args.arch, args.image_types, args.keep_image_info, args.store, args.output, args.with_customizations)
+    main(args.distro, args.arch, args.image_types, args.keep_image_info, args.store, args.output)
     sys.exit()
