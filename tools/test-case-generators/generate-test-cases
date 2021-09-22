@@ -237,14 +237,18 @@ def main(distro, arch, image_types, keep_image_info, store, output, with_customi
         generate_test_case("customize", distro, arch, "qcow2", test_case_request, keep_image_info, store, output)
         return
 
+    filtered_test_case_request_items = [
+        "overrides",
+        "supported_arches"
+    ]
     for output_format, test_case_request in format_request_dict.items():
-        filtered_request = dict(filter(lambda i: i[0] != "overrides", test_case_request.items()))
+        filtered_request = dict(filter(lambda i: i[0] not in filtered_test_case_request_items, test_case_request.items()))
         if filtered_request["compose-request"]["image-type"] not in image_types:
                 continue
         filtered_request["compose-request"]["distro"] = distro
         # if the compose-request has specified supported arches, then generate
         # the test case only if the requested arch is in the list
-        supported_arches = filtered_request.get("supported_arches")
+        supported_arches = test_case_request.get("supported_arches")
         if supported_arches is not None and arch not in supported_arches:
             continue
         filtered_request["compose-request"]["arch"] = arch
