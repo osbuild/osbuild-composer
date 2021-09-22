@@ -213,7 +213,7 @@ class Cli(contextlib.AbstractContextManager):
     def _spawn_composer(sockets):
         cmd = [
             "/usr/libexec/osbuild-composer/osbuild-composer",
-            "-v",
+            "-verbose",
         ]
 
         # Prepare the environment for osbuild-composer. Note that we cannot use
