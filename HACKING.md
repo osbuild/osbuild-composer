@@ -83,7 +83,7 @@ should be the same location as the `$CONTAINER_CONFIG_DIR` described above
 The services also require a config file each which they expect to be in the
 same directory. The following test files can be copied into it:
 
-    cp ./test/data/composer/osbuild-composer.toml ./test/data/composer/osbuild-worker.toml ./containers/config/
+    cp ./test/data/composer/osbuild-composer.toml ./test/data/worker/osbuild-worker.toml ./containers/config/
 
 The `$CONTAINER_CONFIG_DIR` (default `containers/config`) directory will be mounted inside both containers (see
 the [`docker-composer.yml`](./distribution/docker-compose.yml) file).
