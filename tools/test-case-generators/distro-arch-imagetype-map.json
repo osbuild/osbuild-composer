@@ -5,7 +5,6 @@
             "fedora-iot-commit",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "vhd",
             "vmdk"
         ],
@@ -18,7 +17,6 @@
             "ami",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "tar",
             "vhd",
             "vmdk"
@@ -32,7 +30,6 @@
             "ami",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "rhel-edge-commit",
             "tar",
             "vhd",
@@ -60,7 +57,6 @@
             "openstack",
             "tar",
             "qcow2",
-            "qcow2-customize",
             "rhel-edge-commit",
             "rhel-edge-container",
             "vhd",
@@ -90,7 +86,6 @@
             "openstack",
             "tar",
             "qcow2",
-            "qcow2-customize",
             "edge-commit",
             "edge-container",
             "image_installer",
@@ -102,19 +97,16 @@
             "ec2",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "edge-commit",
             "edge-container",
             "tar"
         ],
         "ppc64le": [
             "qcow2",
-            "qcow2-customize",
             "tar"
         ],
         "s390x": [
             "qcow2",
-            "qcow2-customize",
             "tar"
         ]
     },
@@ -125,7 +117,6 @@
             "edge-container",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "tar",
             "vhd",
             "vmdk"
@@ -136,17 +127,14 @@
             "edge-container",
             "openstack",
             "qcow2",
-            "qcow2-customize",
             "tar"
         ],
         "ppc64le": [
             "qcow2",
-            "qcow2-customize",
             "tar"
         ],
         "s390x": [
             "qcow2",
-            "qcow2-customize",
             "tar"
         ]
     }

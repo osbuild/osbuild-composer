@@ -849,18 +849,9 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
                 for image_type in img_type_list:
                     log.info("Generating test case for '%s' '%s' image on '%s'", distro, image_type, arch)
 
-                    # is the image with customizations?
-                    if image_type.endswith("-customize"):
-                        with_customizations = True
-                        image_type = image_type.rstrip("-customize")
-                    else:
-                        with_customizations = False
-
                     gen_test_cases_cmd = f"cd {runner_sources_dir}; sudo tools/test-case-generators/generate-test-cases" + \
                         f" --distro {distro} --arch {arch} --image-types {image_type}" + \
                         f" --store {runner_osbuild_store_dir} --output {runner_output_dir}"
-                    if with_customizations:
-                        gen_test_cases_cmd += " --with-customizations"
 
                     # allow fixed number of retries if the command fails for a specific reason
                     for i in range(1, go_tls_timeout_retries+1):
