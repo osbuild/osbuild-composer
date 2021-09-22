@@ -147,7 +147,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	var bp = blueprint.Blueprint{}
 	err = bp.Initialize()
 	if err != nil {
-		return HTTPError(ErrorFailedToInitializeBlueprint)
+		return HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
 	}
 	if request.Customizations != nil && request.Customizations.Packages != nil {
 		for _, p := range *request.Customizations.Packages {
@@ -235,7 +235,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			imageOptions.OSTree.URL = *ostreeOptions.Url
 			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
 			if err != nil {
-				return HTTPError(ErrorInvalidOSTreeRepo)
+				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, err)
 			}
 			imageOptions.OSTree.Parent = parent
 		}
@@ -266,7 +266,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
 		if err != nil {
-			return HTTPError(ErrorFailedToMakeManifest)
+			return HTTPErrorWithInternal(ErrorFailedToMakeManifest, err)
 		}
 
 		imageRequests[i].manifest = manifest
@@ -411,8 +411,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		Exports:  ir.exports,
 	})
 	if err != nil {
-		return HTTPError(ErrorEnqueueingJob)
+		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
+
+	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get("operationID"))
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{
@@ -530,12 +532,12 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.JobStatus(jobId, &result)
 	if err != nil {
-		return HTTPError(ErrorComposeNotFound)
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 
 	var job worker.OSBuildJob
 	if _, _, _, err = h.server.workers.Job(jobId, &job); err != nil {
-		return HTTPError(ErrorComposeNotFound)
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 
 	if status.Finished.IsZero() {

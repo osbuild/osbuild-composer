@@ -219,7 +219,14 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 			apiErr := APIError(code, sec, c)
 
 			if sec.httpStatus == http.StatusInternalServerError {
-				c.Logger().Errorf("Internal server error. Code: %s, OperationId: %s", apiErr.Code, apiErr.OperationId)
+				internalError, ok := echoError.(*echo.HTTPError)
+				errMsg := fmt.Sprintf("Internal server error. Code: %s, OperationId: %s", apiErr.Code, apiErr.OperationId)
+
+				if ok {
+					errMsg += fmt.Sprintf(", InternalError: %v", internalError)
+				}
+
+				c.Logger().Error(errMsg)
 			}
 
 			if c.Request().Method == http.MethodHead {
@@ -237,6 +244,7 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 
 	he, ok := echoError.(*echo.HTTPError)
 	if !ok {
+		c.Logger().Errorf("ErrorNotHTTPError %v", echoError)
 		doResponse(ErrorNotHTTPError, c)
 		return
 	}
