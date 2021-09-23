@@ -313,6 +313,34 @@ API:
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
+.APIV2_TESTS: &APIV2_TESTS
+  TARGET:
+    - aws
+
+APIV2:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api_v2.sh ${TARGET}
+  parallel:
+    matrix:
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/fedora-33-x86_64
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/centos-stream-8-x86_64
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-9.0-beta-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 libvirt:
   stage: test
   extends: .terraform/openstack

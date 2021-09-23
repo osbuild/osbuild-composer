@@ -291,15 +291,20 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				share = *awsUploadOptions.Ec2.ShareWithAccounts
 			}
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-			t := target.NewAWSTarget(&target.AWSTargetOptions{
+			awsTarget := target.AWSTargetOptions{
 				Filename:          imageType.Filename(),
 				Region:            awsUploadOptions.Region,
-				AccessKeyID:       awsUploadOptions.S3.AccessKeyId,
-				SecretAccessKey:   awsUploadOptions.S3.SecretAccessKey,
 				Bucket:            awsUploadOptions.S3.Bucket,
 				Key:               key,
 				ShareWithAccounts: share,
-			})
+			}
+			if awsUploadOptions.S3.AccessKeyId != nil {
+				awsTarget.AccessKeyID = *awsUploadOptions.S3.AccessKeyId
+			}
+			if awsUploadOptions.S3.SecretAccessKey != nil {
+				awsTarget.SecretAccessKey = *awsUploadOptions.S3.SecretAccessKey
+			}
+			t := target.NewAWSTarget(&awsTarget)
 			if awsUploadOptions.Ec2.SnapshotName != nil {
 				t.ImageName = *awsUploadOptions.Ec2.SnapshotName
 			} else {
@@ -319,14 +324,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-				Filename:        imageType.Filename(),
-				Region:          awsS3UploadOptions.Region,
-				AccessKeyID:     awsS3UploadOptions.S3.AccessKeyId,
-				SecretAccessKey: awsS3UploadOptions.S3.SecretAccessKey,
-				Bucket:          awsS3UploadOptions.S3.Bucket,
-				Key:             key,
-			})
+			awss3target := target.AWSS3TargetOptions{
+				Filename: imageType.Filename(),
+				Region:   awsS3UploadOptions.Region,
+				Bucket:   awsS3UploadOptions.S3.Bucket,
+				Key:      key,
+			}
+			if awsS3UploadOptions.S3.AccessKeyId != nil {
+				awss3target.AccessKeyID = *awsS3UploadOptions.S3.AccessKeyId
+			}
+			if awsS3UploadOptions.S3.SecretAccessKey != nil {
+				awss3target.SecretAccessKey = *awsS3UploadOptions.S3.SecretAccessKey
+			}
+			t := target.NewAWSS3Target(&awss3target)
 			t.ImageName = key
 
 			targets = append(targets, t)

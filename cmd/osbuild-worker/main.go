@@ -97,6 +97,9 @@ func main() {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
 		} `toml:"authentication"`
+		AWS *struct {
+			Credentials string `toml:"credentials,omitempty"`
+		} `toml:"AWS"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -218,6 +221,13 @@ func main() {
 		}
 	}
 
+	// If the credentials are not provided in the configuration, then the worker will look in $HOME/.aws/credentials or
+	// at the file pointed by the "AWS_SHARED_CREDENTIALS_FILE" variable
+	var awsCredentials = ""
+	if config.AWS != nil {
+		awsCredentials = config.AWS.Credentials
+	}
+
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
 			Store:       store,
@@ -225,6 +235,7 @@ func main() {
 			KojiServers: kojiServers,
 			GCPCreds:    gcpCredentials,
 			AzureCreds:  azureCredentials,
+			AWSCreds:    awsCredentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:       store,

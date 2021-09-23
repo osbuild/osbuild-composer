@@ -563,8 +563,6 @@ components:
     AWSUploadRequestOptionsS3:
       type: object
       required:
-        - access_key_id
-        - secret_access_key
         - bucket
       properties:
         access_key_id:
@@ -579,9 +577,6 @@ components:
           example: 'my-bucket'
     AWSUploadRequestOptionsEc2:
       type: object
-      required:
-        - access_key_id
-        - secret_access_key
       properties:
         access_key_id:
           type: string

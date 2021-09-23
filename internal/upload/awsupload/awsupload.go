@@ -21,10 +21,8 @@ type AWS struct {
 	s3       *s3.S3
 }
 
-func New(region, accessKeyID, accessKey, sessionToken string) (*AWS, error) {
-	// Session credentials
-	creds := credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken)
-
+// Create a new session from the credentials and the region and returns an *AWS object initialized with it.
+func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error) {
 	// Create a Session with a custom region
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: creds,
@@ -39,6 +37,23 @@ func New(region, accessKeyID, accessKey, sessionToken string) (*AWS, error) {
 		ec2:      ec2.New(sess),
 		s3:       s3.New(sess),
 	}, nil
+}
+
+// Initialize a new AWS object from individual bits. SessionToken is optional
+func New(region string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region)
+}
+
+// Initializes a new AWS object with the credentials info found at filename's location.
+// The credential files should match the AWS format, such as:
+// [default]
+// aws_access_key_id = secretString1
+// aws_secret_access_key = secretString2
+//
+// If filename is empty the underlying function will look for the "AWS_SHARED_CREDENTIALS_FILE" env variable or will
+// default to $HOME/.aws/credentials
+func NewFromFile(filename string, region string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region)
 }
 
 func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, error) {
