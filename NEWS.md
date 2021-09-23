@@ -1,5 +1,3 @@
-# OSBuild Composer - Operating System Image Composition Services
-
 ## CHANGES WITH 34:
 
   * Support temporary AWS credentials
