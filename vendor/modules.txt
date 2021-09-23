@@ -252,9 +252,12 @@ github.com/kr/text
 # github.com/labstack/echo/v4 v4.5.0
 ## explicit
 github.com/labstack/echo/v4
+github.com/labstack/echo/v4/middleware
 # github.com/labstack/gommon v0.3.0
+github.com/labstack/gommon/bytes
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
+github.com/labstack/gommon/random
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-ieproxy v0.0.1
@@ -433,6 +436,8 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
+# golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
+golang.org/x/time/rate
 # google.golang.org/api v0.56.0
 ## explicit
 google.golang.org/api/compute/v1
