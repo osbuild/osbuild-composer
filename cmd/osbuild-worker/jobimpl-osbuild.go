@@ -28,12 +28,24 @@ type OSBuildJobImpl struct {
 	KojiServers map[string]koji.GSSAPICredentials
 	GCPCreds    []byte
 	AzureCreds  *azure.Credentials
+	AWSCreds    string
 }
 
 func appendTargetError(res *worker.OSBuildJobResult, err error) {
 	errStr := err.Error()
 	log.Printf("target failed: %s", errStr)
 	res.TargetErrors = append(res.TargetErrors, errStr)
+}
+
+// Returns an *awsupload.AWS object with the credentials of the request. If they
+// are not accessible, then try to use the one obtained in the worker
+// configuration.
+func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awsupload.AWS, error) {
+	if accessId != "" && secret != "" {
+		return awsupload.New(region, accessId, secret, token)
+	} else {
+		return awsupload.NewFromFile(impl.AWSCreds, region)
+	}
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -206,7 +218,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSTargetOptions:
-			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+			a, err := impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
@@ -242,7 +254,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSS3TargetOptions:
-			a, err := awsupload.New(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+			a, err := impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
 			if err != nil {
 				appendTargetError(osbuildJobResult, err)
 				return nil
