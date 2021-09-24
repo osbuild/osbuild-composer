@@ -35,6 +35,7 @@ type ComposerConfigFile struct {
 		JWTACLFile string `toml:"jwt_acl_file"`
 	} `toml:"composer_api"`
 	WeldrAPI WeldrAPIConfig `toml:"weldr_api"`
+	logLevel string         `toml:"log_level"`
 }
 
 type WeldrAPIConfig struct {

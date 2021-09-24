@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,8 +35,17 @@ func main() {
 		if os.IsNotExist(err) {
 			config = &ComposerConfigFile{}
 		} else {
-			log.Fatalf("Error loading configuration: %v", err)
+			logrus.Fatalf("Error loading configuration: %v", err)
 		}
+	}
+
+	logrus.SetOutput(os.Stdout)
+	logLevel, err := logrus.ParseLevel(config.logLevel)
+
+	if err == nil {
+		logrus.SetLevel(logLevel)
+	} else {
+		logrus.Info("Failed to load loglevel from config:", err)
 	}
 
 	log.Println("Loaded configuration:")

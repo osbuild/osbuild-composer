@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 	"net/http"
@@ -31,7 +30,6 @@ import (
 
 // Server represents the state of the cloud Server
 type Server struct {
-	logger      *log.Logger
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distroregistry.Registry
@@ -43,7 +41,7 @@ type apiHandlers struct {
 
 type binder struct{}
 
-func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
+func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
 	server := &Server{
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
@@ -56,10 +54,9 @@ func (server *Server) Handler(path string) http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
 	e.HTTPErrorHandler = server.HTTPErrorHandler
-	e.StdLogger = server.logger
 	e.Pre(common.OperationIDMiddleware)
-
 	e.Use(middleware.Recover())
+	e.Logger = common.Logger()
 
 	handler := apiHandlers{
 		server: server,

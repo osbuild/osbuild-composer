@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
+	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
@@ -29,7 +28,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server) {
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	v2Server := v2.NewServer(log.New(os.Stdout, "", 0), rpmFixture.Workers, rpm, distros)
+	v2Server := v2.NewServer(rpmFixture.Workers, rpm, distros)
 	require.NotNil(t, v2Server)
 
 	return v2Server, rpmFixture.Workers
