@@ -1,6 +1,6 @@
 [Unit]
 Description=OSBuild Composer Remote Worker (%i)
-After=multi-user.target
+After=network.target
 
 [Service]
 Type=simple
