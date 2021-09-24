@@ -117,6 +117,16 @@ sudo mock -r "$MOCK_CONFIG" \
     --resultdir "$REPO_DIR" \
     srpm/*.src.rpm
 
+# Hack in weldr-client building
+git clone https://github.com/bcl/weldr-client.git
+pushd weldr-client
+git checkout main-rhel8-spec
+sudo dnf install -y rpm-build make
+sudo make builddep
+sudo make scratch-rpm
+popd
+sudo cp weldr-client/rpmbuild/RPMS/x86_64/*.rpm "$REPO_DIR"
+
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R "$USER" "${REPO_DIR%%/*}"
 
