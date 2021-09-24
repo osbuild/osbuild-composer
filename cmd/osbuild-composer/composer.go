@@ -103,7 +103,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 }
 
 func (c *Composer) InitAPI(cert, key string, enableJWT bool, l net.Listener) error {
-	c.api = cloudapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
+	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 
 	clientAuth := tls.RequireAndVerifyClientCert
