@@ -64,7 +64,7 @@ github.com/Azure/go-autorest/tracing
 ## explicit
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
-# github.com/aws/aws-sdk-go v1.40.46
+# github.com/aws/aws-sdk-go v1.40.49
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
