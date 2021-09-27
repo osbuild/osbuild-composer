@@ -16,7 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/BurntSushi/toml v0.4.1
-	github.com/aws/aws-sdk-go v1.40.46
+	github.com/aws/aws-sdk-go v1.40.49
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/coreos/go-semver v0.3.0
