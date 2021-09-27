@@ -1,5 +1,4 @@
 # cloud.google.com/go v0.94.1
-## explicit
 cloud.google.com/go
 cloud.google.com/go/compute/metadata
 cloud.google.com/go/iam
@@ -434,7 +433,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 golang.org/x/time/rate
-# google.golang.org/api v0.56.0
+# google.golang.org/api v0.57.0
 ## explicit
 google.golang.org/api/compute/v1
 google.golang.org/api/googleapi
