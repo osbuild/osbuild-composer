@@ -19,8 +19,6 @@ podman \
 
 # Push to reuse later in the pipeline (see regression tests)
 BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
-if [[ "$BRANCH_NAME" =~ ^PR-[0-9]+$ ]]; then
-    podman push \
-         --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" \
-         "${IMAGE_NAME}:${IMAGE_TAG}"
-fi
+podman push \
+       --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" \
+       "${IMAGE_NAME}:${IMAGE_TAG}"
