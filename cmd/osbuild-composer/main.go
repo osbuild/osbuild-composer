@@ -48,46 +48,46 @@ func main() {
 		logrus.Info("Failed to load loglevel from config:", err)
 	}
 
-	log.Println("Loaded configuration:")
-	err = DumpConfig(config, log.Writer())
+	logrus.Info("Loaded configuration:")
+	err = DumpConfig(config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
 	if err != nil {
-		log.Fatalf("Error printing configuration: %v", err)
+		logrus.Fatalf("Error printing configuration: %v", err)
 	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
 	if !ok {
-		log.Fatal("STATE_DIRECTORY is not set. Is the service file missing StateDirectory=?")
+		logrus.Fatal("STATE_DIRECTORY is not set. Is the service file missing StateDirectory=?")
 	}
 
 	cacheDir, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
-		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+		logrus.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 
 	composer, err := NewComposer(config, stateDir, cacheDir, logger)
 	if err != nil {
-		log.Fatalf("%v", err)
+		logrus.Fatalf("%v", err)
 	}
 
 	listeners, err := activation.ListenersWithNames()
 	if err != nil {
-		log.Fatalf("Could not get listening sockets: " + err.Error())
+		logrus.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
 	if l, exists := listeners["osbuild-composer.socket"]; exists {
 		if len(l) != 1 {
-			log.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
+			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
 		}
 
 		err = composer.InitWeldr(repositoryConfigs, l[0], config.weldrDistrosImageTypeDenyList())
 		if err != nil {
-			log.Fatalf("Error initializing weldr API: %v", err)
+			logrus.Fatalf("Error initializing weldr API: %v", err)
 		}
 	}
 
 	if l, exists := listeners["osbuild-local-worker.socket"]; exists {
 		if len(l) != 1 {
-			log.Fatal("The osbuild-local-worker.socket unit is misconfigured. It should contain only one socket.")
+			logrus.Fatal("The osbuild-local-worker.socket unit is misconfigured. It should contain only one socket.")
 		}
 
 		composer.InitLocalWorker(l[0])
@@ -95,28 +95,28 @@ func main() {
 
 	if l, exists := listeners["osbuild-composer-api.socket"]; exists {
 		if len(l) != 1 {
-			log.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
+			logrus.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
 		}
 
 		err = composer.InitAPI(ServerCertFile, ServerKeyFile, config.ComposerAPI.EnableJWT, l[0])
 		if err != nil {
-			log.Fatalf("Error initializing koji API: %v", err)
+			logrus.Fatalf("Error initializing koji API: %v", err)
 		}
 	}
 
 	if l, exists := listeners["osbuild-remote-worker.socket"]; exists {
 		if len(l) != 1 {
-			log.Fatal("The osbuild-remote-worker.socket unit is misconfigured. It should contain only one socket.")
+			logrus.Fatal("The osbuild-remote-worker.socket unit is misconfigured. It should contain only one socket.")
 		}
 
 		err = composer.InitRemoteWorkers(ServerCertFile, ServerKeyFile, config.Worker.EnableJWT, l[0])
 		if err != nil {
-			log.Fatalf("Error initializing worker API: %v", err)
+			logrus.Fatalf("Error initializing worker API: %v", err)
 		}
 	}
 
 	err = composer.Start()
 	if err != nil {
-		log.Fatalf("%v", err)
+		logrus.Fatalf("%v", err)
 	}
 }
