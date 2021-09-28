@@ -14,7 +14,6 @@ WORKER_RPM=osbuild-composer-worker-33-1.20210830git8f21f0b.el8.x86_64
 REPOS=$(mktemp -d)
 sudo dnf -y install osbuild-composer-tests
 sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
-sudo cp -fv "$REPOS/repositories/rhel-8.json" "$REPOS/repositories/rhel-84.json"
 
 # Remove the "new" worker
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
@@ -47,10 +46,15 @@ WELDR_SOCK="$WELDR_DIR/api.socket"
 
 sudo podman pull --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
+
+# The host entitlement doesn't get picked up by composer
+# see https://github.com/osbuild/osbuild-composer/issues/1845
 sudo podman run  \
      --name=composer \
      -d \
      -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
+     -v /etc/rhsm:/etc/rhsm:Z \
+     -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
      -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
      -v "$WELDR_DIR:/run/weldr/":Z \
      -p 8700:8700 \
