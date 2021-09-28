@@ -17,14 +17,19 @@ type ComposerConfigFile struct {
 }
 
 type KojiAPIConfig struct {
-	AllowedDomains []string `toml:"allowed_domains"`
-	CA             string   `toml:"ca"`
-	EnableTLS      bool     `toml:"enable_tls"`
-	EnableMTLS     bool     `toml:"enable_mtls"`
-	EnableJWT      bool     `toml:"enable_jwt"`
-	JWTKeysURL     string   `toml:"jwt_keys_url"`
-	JWTKeysCA      string   `toml:"jwt_ca_file"`
-	JWTACLFile     string   `toml:"jwt_acl_file"`
+	AllowedDomains []string  `toml:"allowed_domains"`
+	CA             string    `toml:"ca"`
+	EnableTLS      bool      `toml:"enable_tls"`
+	EnableMTLS     bool      `toml:"enable_mtls"`
+	EnableJWT      bool      `toml:"enable_jwt"`
+	JWTKeysURL     string    `toml:"jwt_keys_url"`
+	JWTKeysCA      string    `toml:"jwt_ca_file"`
+	JWTACLFile     string    `toml:"jwt_acl_file"`
+	AWSConfig      AWSConfig `toml:"aws_config"`
+}
+
+type AWSConfig struct {
+	Bucket string `toml:"bucket"`
 }
 
 type WorkerAPIConfig struct {

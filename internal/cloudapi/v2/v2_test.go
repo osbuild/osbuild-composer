@@ -108,21 +108,17 @@ func TestCompose(t *testing.T) {
 		"distribution": "unsupported_distro",
 		"image_requests":[{
 			"architecture": "%s",
-			"image_type": "%s",
+			"image_type": "aws.ec2",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1",
+				"share_with_accounts": ["123456789012"]
 			}
 		 }]
-	}`, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusBadRequest, `
+	}`, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/composer/v2/errors/4",
 		"id": "4",
@@ -137,21 +133,16 @@ func TestCompose(t *testing.T) {
 		"distribution": "%s",
 		"image_requests":[{
 			"architecture": "unsupported_arch",
-			"image_type": "%s",
+			"image_type": "aws",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1"
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestImageTypeName), http.StatusBadRequest, `
+	}`, test_distro.TestDistroName), http.StatusBadRequest, `
 	{
 		"href": "/api/composer/v2/errors/5",
 		"id": "5",
@@ -171,16 +162,11 @@ func TestCompose(t *testing.T) {
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1"
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestArchName), http.StatusBadRequest, `
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/composer/v2/errors/6",
 		"id": "6",
@@ -200,16 +186,11 @@ func TestCompose(t *testing.T) {
 	//			"baseurl": "somerepo.org",
 	//			"rhsm": false
 	//		}],
-	//		"upload_request": {
-	//			"type": "aws.s3",
-	//			"options": {
-	//				"access_key_id": "somekey",
-	//				"secret_access_key": "somesecretkey",
-	//				"bucket": "somebucket"
-	//			}
+	//		"upload_options": {
+	//			"region": "eu-central-1"
 	//		}
 	//          }]
-	// }`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusMethodNotAllowed, `
+	// }`, test_distro.TestDistroName, test_distro.TestArch3Name, test_distro.TestImageTypeName), http.StatusMethodNotAllowed, `
 	// {
 	//	"href": "/api/composer/v2/errors/22",
 	//	"id": "22",
@@ -223,21 +204,16 @@ func TestCompose(t *testing.T) {
 		"distribution": "%s",
 		"image_requests":[{
 			"architecture": "%s",
-			"image_type": "%s",
+			"image_type": "aws",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1"
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusCreated, `
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/composer/v2/compose",
 		"kind": "ComposeId"
@@ -255,27 +231,22 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"distribution": "%s",
 		"image_requests":[{
 			"architecture": "%s",
-			"image_type": "%s",
+			"image_type": "aws",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1"
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusCreated, `
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild"})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
@@ -325,27 +296,22 @@ func TestComposeStatusFailure(t *testing.T) {
 		"distribution": "%s",
 		"image_requests":[{
 			"architecture": "%s",
-			"image_type": "%s",
+			"image_type": "aws",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1"
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusCreated, `
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild"})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
@@ -394,21 +360,145 @@ func TestComposeCustomizations(t *testing.T) {
 		},
 		"image_requests":[{
 			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+}
+
+func TestImageTypes(t *testing.T) {
+	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+	srv, _ := newV2Server(t, dir)
+
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}],
-			"upload_request": {
-				"type": "aws.s3",
-				"options": {
-					"access_key_id": "somekey",
-					"secret_access_key": "somesecretkey",
-					"bucket": "somebucket"
-				}
+			"upload_options": {
+				"region": "eu-central-1",
+				"snapshot_name": "name",
+				"share_with_accounts": ["123456789012","234567890123"]
 			}
 		 }]
-	}`, test_distro.TestDistroName, test_distro.TestArchName, test_distro.TestImageTypeName), http.StatusCreated, `
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_commit)), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_installer)), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"subscription_id": "4e5d8b2c-ab24-4413-90c5-612306e809e2",
+				"tenant_id": "5c7ef5b6-1c3f-4da0-a622-0b060239d7d7",
+				"resource_group": "ToucanResourceGroup",
+				"location": "westeurope"
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_azure)), http.StatusCreated, `
+	{
+		"href": "/api/composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu",
+				"bucket": "some-eu-bucket",
+				"share_with_accounts": ["user:alice@example.com"]
+			}
+		 }]
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_gcp)), http.StatusCreated, `
 	{
 		"href": "/api/composer/v2/compose",
 		"kind": "ComposeId"

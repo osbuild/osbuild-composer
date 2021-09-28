@@ -28,6 +28,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+const (
+	Bucket = "image-builder.service"
+)
+
 // Server represents the state of the cloud Server
 type Server struct {
 	workers     *worker.Server
@@ -177,7 +181,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return HTTPError(ErrorUnsupportedArchitecture)
 		}
-		imageType, err := arch.GetImageType(ir.ImageType)
+		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType))
 		if err != nil {
 			return HTTPError(ErrorUnsupportedImageType)
 		}
@@ -273,11 +277,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		imageRequests[i].arch = arch.Name()
 		imageRequests[i].exports = imageType.Exports()
 
-		uploadRequest := ir.UploadRequest
 		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
-		if uploadRequest.Type == UploadTypes_aws {
-			var awsUploadOptions AWSUploadRequestOptions
-			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+		switch ir.ImageType {
+		case ImageTypes_aws:
+			var awsUploadOptions AWSEC2UploadOptions
+			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 			if err != nil {
 				return HTTPError(ErrorJSONMarshallingError)
 			}
@@ -286,30 +290,26 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				return HTTPError(ErrorJSONUnMarshallingError)
 			}
 
-			var share []string
-			if awsUploadOptions.Ec2.ShareWithAccounts != nil {
-				share = *awsUploadOptions.Ec2.ShareWithAccounts
-			}
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 			t := target.NewAWSTarget(&target.AWSTargetOptions{
 				Filename:          imageType.Filename(),
 				Region:            awsUploadOptions.Region,
-				AccessKeyID:       awsUploadOptions.S3.AccessKeyId,
-				SecretAccessKey:   awsUploadOptions.S3.SecretAccessKey,
-				Bucket:            awsUploadOptions.S3.Bucket,
+				Bucket:            Bucket,
 				Key:               key,
-				ShareWithAccounts: share,
+				ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 			})
-			if awsUploadOptions.Ec2.SnapshotName != nil {
-				t.ImageName = *awsUploadOptions.Ec2.SnapshotName
+			if awsUploadOptions.SnapshotName != nil {
+				t.ImageName = *awsUploadOptions.SnapshotName
 			} else {
 				t.ImageName = key
 			}
 
 			targets = append(targets, t)
-		} else if uploadRequest.Type == UploadTypes_aws_s3 {
-			var awsS3UploadOptions AWSS3UploadRequestOptions
-			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+		case ImageTypes_edge_installer:
+			fallthrough
+		case ImageTypes_edge_commit:
+			var awsS3UploadOptions AWSS3UploadOptions
+			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 			if err != nil {
 				return HTTPError(ErrorJSONMarshallingError)
 			}
@@ -320,19 +320,17 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-				Filename:        imageType.Filename(),
-				Region:          awsS3UploadOptions.Region,
-				AccessKeyID:     awsS3UploadOptions.S3.AccessKeyId,
-				SecretAccessKey: awsS3UploadOptions.S3.SecretAccessKey,
-				Bucket:          awsS3UploadOptions.S3.Bucket,
-				Key:             key,
+				Filename: imageType.Filename(),
+				Region:   awsS3UploadOptions.Region,
+				Bucket:   Bucket,
+				Key:      key,
 			})
 			t.ImageName = key
 
 			targets = append(targets, t)
-		} else if uploadRequest.Type == UploadTypes_gcp {
-			var gcpUploadOptions GCPUploadRequestOptions
-			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+		case ImageTypes_gcp:
+			var gcpUploadOptions GCPUploadOptions
+			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 			if err != nil {
 				return HTTPError(ErrorJSONMarshallingError)
 			}
@@ -345,14 +343,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if gcpUploadOptions.ShareWithAccounts != nil {
 				share = *gcpUploadOptions.ShareWithAccounts
 			}
-			var region string
-			if gcpUploadOptions.Region != nil {
-				region = *gcpUploadOptions.Region
-			}
+
 			object := fmt.Sprintf("composer-api-%s", uuid.New().String())
 			t := target.NewGCPTarget(&target.GCPTargetOptions{
 				Filename:          imageType.Filename(),
-				Region:            region,
+				Region:            gcpUploadOptions.Region,
 				Os:                "", // not exposed in cloudapi for now
 				Bucket:            gcpUploadOptions.Bucket,
 				Object:            object,
@@ -366,9 +361,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 
 			targets = append(targets, t)
-		} else if uploadRequest.Type == UploadTypes_azure {
-			var azureUploadOptions AzureUploadRequestOptions
-			jsonUploadOptions, err := json.Marshal(uploadRequest.Options)
+		case ImageTypes_azure:
+			var azureUploadOptions AzureUploadOptions
+			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 			if err != nil {
 				return HTTPError(ErrorJSONMarshallingError)
 			}
@@ -392,8 +387,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 
 			targets = append(targets, t)
-		} else {
-			return HTTPError(ErrorInvalidUploadType)
+		default:
+			return HTTPError(ErrorUnsupportedImageType)
 		}
 	}
 
@@ -426,6 +421,22 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	})
 }
 
+func imageTypeFromApiImageType(it ImageTypes) string {
+	switch it {
+	case ImageTypes_aws:
+		return "ami"
+	case ImageTypes_gcp:
+		return "vhd"
+	case ImageTypes_azure:
+		return "vhd"
+	case ImageTypes_edge_commit:
+		return "rhel-edge-commit"
+	case ImageTypes_edge_installer:
+		return "rhel-edge-installer"
+	}
+	return ""
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
@@ -453,7 +464,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		case "org.osbuild.aws":
 			uploadType = UploadTypes_aws
 			awsOptions := tr.Options.(*target.AWSTargetResultOptions)
-			uploadOptions = AWSUploadStatus{
+			uploadOptions = AWSEC2UploadStatus{
 				Ami:    awsOptions.Ami,
 				Region: awsOptions.Region,
 			}

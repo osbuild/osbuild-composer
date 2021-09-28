@@ -41,9 +41,16 @@ const (
 
 	TestArchName  = "test_arch"
 	TestArch2Name = "test_arch2"
+	TestArch3Name = "test_arch3"
 
 	TestImageTypeName  = "test_type"
 	TestImageType2Name = "test_type2"
+
+	// added for cloudapi tests
+	TestImageTypeAmi           = "ami"
+	TestImageTypeVhd           = "vhd"
+	TestImageTypeEdgeCommit    = "rhel-edge-commit"
+	TestImageTypeEdgeInstaller = "rhel-edge-installer"
 )
 
 // TestDistro
@@ -215,6 +222,10 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 		name: TestArch2Name,
 	}
 
+	ta3 := TestArch{
+		name: TestArch3Name,
+	}
+
 	it1 := TestImageType{
 		name: TestImageTypeName,
 	}
@@ -223,10 +234,27 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 		name: TestImageType2Name,
 	}
 
+	it3 := TestImageType{
+		name: TestImageTypeAmi,
+	}
+
+	it4 := TestImageType{
+		name: TestImageTypeVhd,
+	}
+
+	it5 := TestImageType{
+		name: TestImageTypeEdgeCommit,
+	}
+
+	it6 := TestImageType{
+		name: TestImageTypeEdgeInstaller,
+	}
+
 	ta1.addImageTypes(it1)
 	ta2.addImageTypes(it1, it2)
+	ta3.addImageTypes(it3, it4, it5, it6)
 
-	td.addArches(&ta1, &ta2)
+	td.addArches(&ta1, &ta2, &ta3)
 
 	return &td
 }
