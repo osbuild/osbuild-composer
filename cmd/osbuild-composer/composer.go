@@ -24,6 +24,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type Composer struct {
@@ -62,6 +63,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	}
 
 	c.distros = distroregistry.NewDefault()
+	logrus.Info(fmt.Sprintf("Loaded %d distros", len(c.distros.List())))
 
 	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
