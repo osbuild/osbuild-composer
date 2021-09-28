@@ -378,11 +378,18 @@ components:
           $ref: '#/components/schemas/UploadTypes'
         options:
           oneOf:
-            - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/AWSEC2UploadStatus'
             - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
-    AWSUploadStatus:
+    UploadTypes:
+      type: string
+      enum:
+        - aws
+        - aws.s3
+        - gcp
+        - azure
+    AWSEC2UploadStatus:
       type: object
       required:
         - ami
@@ -483,22 +490,29 @@ components:
         - architecture
         - image_type
         - repositories
-        - upload_request
+        - upload_options
       properties:
         architecture:
           type: string
           example: 'x86_64'
         image_type:
-          type: string
-          example: 'ami'
+          $ref: '#/components/schemas/ImageTypes'
         repositories:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
         ostree:
           $ref: '#/components/schemas/OSTree'
-        upload_request:
-          $ref: '#/components/schemas/UploadRequest'
+        upload_options:
+          $ref: '#/components/schemas/UploadOptions'
+    ImageTypes:
+      type: string
+      enum:
+        - aws
+        - gcp
+        - azure
+        - edge-commit
+        - edge-installer
     Repository:
       type: object
       required:
@@ -518,78 +532,21 @@ components:
           type: string
           format: url
           example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
-    UploadRequest:
-      type: object
-      required:
-        - type
-        - options
-      properties:
-        type:
-          $ref: '#/components/schemas/UploadTypes'
-        options:
-          oneOf:
-            -  $ref: '#/components/schemas/AWSUploadRequestOptions'
-            -  $ref: '#/components/schemas/AWSS3UploadRequestOptions'
-            -  $ref: '#/components/schemas/GCPUploadRequestOptions'
-            -  $ref: '#/components/schemas/AzureUploadRequestOptions'
-    UploadTypes:
-      type: string
-      enum: ['aws', 'aws.s3', 'gcp', 'azure']
-    AWSUploadRequestOptions:
+    UploadOptions:
+      oneOf:
+      - $ref: '#/components/schemas/AWSEC2UploadOptions'
+      - $ref: '#/components/schemas/AWSS3UploadOptions'
+      - $ref: '#/components/schemas/GCPUploadOptions'
+      - $ref: '#/components/schemas/AzureUploadOptions'
+    AWSEC2UploadOptions:
       type: object
       required:
         - region
-        - s3
-        - ec2
+        - share_with_accounts
       properties:
         region:
           type: string
           example: 'eu-west-1'
-        s3:
-          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
-        ec2:
-          $ref: '#/components/schemas/AWSUploadRequestOptionsEc2'
-    AWSS3UploadRequestOptions:
-      type: object
-      required:
-        - region
-        - s3
-      properties:
-        region:
-          type: string
-          example: 'eu-west-1'
-        s3:
-          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
-    AWSUploadRequestOptionsS3:
-      type: object
-      required:
-        - access_key_id
-        - secret_access_key
-        - bucket
-      properties:
-        access_key_id:
-          type: string
-          example: 'AKIAIOSFODNN7EXAMPLE'
-        secret_access_key:
-          type: string
-          format: password
-          example: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-        bucket:
-          type: string
-          example: 'my-bucket'
-    AWSUploadRequestOptionsEc2:
-      type: object
-      required:
-        - access_key_id
-        - secret_access_key
-      properties:
-        access_key_id:
-          type: string
-          example: 'AKIAIOSFODNN7EXAMPLE'
-        secret_access_key:
-          type: string
-          format: password
-          example: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
         snapshot_name:
           type: string
           example: 'my-snapshot'
@@ -598,9 +555,18 @@ components:
           example: ['123456789012']
           items:
             type: string
-    GCPUploadRequestOptions:
+    AWSS3UploadOptions:
       type: object
       required:
+        - region
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+    GCPUploadOptions:
+      type: object
+      required:
+        - region
         - bucket
       properties:
         region:
@@ -651,7 +617,7 @@ components:
             account.
           items:
             type: string
-    AzureUploadRequestOptions:
+    AzureUploadOptions:
       type: object
       required:
         - tenant_id
