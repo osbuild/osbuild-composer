@@ -1,3 +1,17 @@
+## CHANGES WITH 33.2:
+
+  * Edge images for 8.5 now ship with bootloader set to none which fixes
+    deploying an update commit.
+  * Edge images for 9.0 have adjusted package sets. Before that, they
+    weren't buildable, or bootable.
+  * Image Installer for 9.0 has now a very similar package set as in 8.5,
+    which makes the image much more usable even with an empty blueprint.
+
+Contributions from: Achilleas Koutsou, Christian Kellner, Diaa Sami,
+                    Tomas Hozza, Yi He
+
+— Liberec, 2021-09-28
+
 ## CHANGES WITH 33.1:
 
   * Install docs in RHEL 8.5 and 9.0 images
