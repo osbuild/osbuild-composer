@@ -24,7 +24,6 @@ const (
 	ErrorInvalidOSTreeRef        ServiceErrorCode = 9
 	ErrorInvalidOSTreeRepo       ServiceErrorCode = 10
 	ErrorFailedToMakeManifest    ServiceErrorCode = 11
-	ErrorInvalidUploadType       ServiceErrorCode = 12
 	ErrorMultiImageCompose       ServiceErrorCode = 13
 	ErrorInvalidComposeId        ServiceErrorCode = 14
 	ErrorComposeNotFound         ServiceErrorCode = 15
@@ -83,7 +82,6 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidOSTreeRef, http.StatusBadRequest, "Invalid OSTree ref"},
 		serviceError{ErrorInvalidOSTreeRepo, http.StatusBadRequest, "Error resolving OSTree repo"},
 		serviceError{ErrorFailedToMakeManifest, http.StatusBadRequest, "Failed to get manifest"},
-		serviceError{ErrorInvalidUploadType, http.StatusBadRequest, "Unknown upload request type"},
 		serviceError{ErrorMultiImageCompose, http.StatusBadRequest, "Only single-image composes are currently supported"},
 		serviceError{ErrorInvalidComposeId, http.StatusBadRequest, "Invalid format for compose id"},
 		serviceError{ErrorComposeNotFound, http.StatusNotFound, "Compose with given id not found"},
