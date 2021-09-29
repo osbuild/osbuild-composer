@@ -149,7 +149,9 @@ paths:
     post:
       operationId: postCompose
       summary: Create compose
-      description: Create a new compose, potentially consisting of several images and upload each to their destinations.
+      description: |
+        Creates the depsolving step of a compose. The build job can be added by calling
+        /composes/{id}/build with the id returned by /compose.
       security:
         - Bearer: []
       requestBody:
@@ -161,6 +163,63 @@ paths:
       responses:
         '201':
           description: Compose has started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeId'
+        '400':
+          description: Invalid compose request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /composes/{id}/build:
+    post:
+      operationId: postBuild
+      summary: Build a compose
+      description: |
+        Creates the build step of a composer.
+
+        Note that currently /compose creates this step as well. And calling this method isn't
+        necessary yet, and will just return the same id.
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+      responses:
+        '201':
+          description: Build has started
           content:
             application/json:
               schema:

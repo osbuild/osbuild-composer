@@ -441,6 +441,22 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 	return ""
 }
 
+func (h *apiHandlers) PostBuild(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	return ctx.JSON(http.StatusCreated, &ComposeId{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/composer/v2/composes/%v/build", jobId),
+			Id:   jobId.String(),
+			Kind: "ComposeId",
+		},
+		Id: jobId.String(),
+	})
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
