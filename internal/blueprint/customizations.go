@@ -73,7 +73,7 @@ type ServicesCustomization struct {
 
 type FilesystemCustomization struct {
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
-	MinSize    int    `json:"minsize,omitempty" toml:"size,omitempty"`
+	MinSize    uint64 `json:"minsize,omitempty" toml:"size,omitempty"`
 }
 
 type CustomizationError struct {
@@ -258,7 +258,7 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 	if c == nil {
 		return 0
 	}
-	agg := 0
+	var agg uint64
 	for _, m := range c.Filesystem {
 		agg += m.MinSize
 	}
@@ -267,7 +267,7 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 	if agg%512 != 0 {
 		agg = (agg/512 + 1) * 512
 	}
-	return uint64(agg)
+	return agg
 }
 
 func (c *Customizations) GetInstallationDevice() string {
