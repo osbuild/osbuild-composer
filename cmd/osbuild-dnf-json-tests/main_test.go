@@ -53,10 +53,6 @@ func TestCrossArchDepsolve(t *testing.T) {
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	for _, distroStruct := range []distro.Distro{fedora33.New()} {
 		t.Run(distroStruct.Name(), func(t *testing.T) {
-
-			// Run tests in parallel to speed up run times.
-			t.Parallel()
-
 			// Set up temporary directory for rpm/dnf cache
 			dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
 			require.Nilf(t, err, "Failed to create tmp dir for depsolve test: %v", err)
