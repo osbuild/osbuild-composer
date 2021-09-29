@@ -33,7 +33,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /compose/{id}:
+  /composes/{id}:
     get:
       operationId: getComposeStatus
       summary: The status of a compose
@@ -89,7 +89,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /compose/{id}/metadata:
+  /composes/{id}/metadata:
     get:
       operationId: getComposeMetadata
       summary: Get the metadata for a compose.

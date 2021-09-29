@@ -656,6 +656,12 @@ function sendCompose() {
 function waitForState() {
     local DESIRED_STATE="${1:-success}"
     local VERSION="${2:-v1}"
+    local URL="https://localhost/api/composer/v1/compose/$COMPOSE_ID"
+
+    if [ "$VERSION" = "v2" ]; then
+        URL="https://localhost/api/composer/v2/composes/$COMPOSE_ID"
+    fi
+
     while true
     do
         OUTPUT=$(curl \
@@ -664,7 +670,7 @@ function waitForState() {
                      --cacert /etc/osbuild-composer/ca-crt.pem \
                      --key /etc/osbuild-composer/client-key.pem \
                      --cert /etc/osbuild-composer/client-crt.pem \
-                     https://localhost/api/composer/"$VERSION"/compose/"$COMPOSE_ID")
+                     "$URL")
 
         COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
         UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
@@ -957,7 +963,7 @@ function verifyInAWSS3() {
     --cacert /etc/osbuild-composer/ca-crt.pem \
     --key /etc/osbuild-composer/client-key.pem \
     --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v2/compose/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
+    https://localhost/api/composer/v2/composes/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
 
   if [[ "${API_COMMIT_ID_V2}" != "${TAR_COMMIT_ID}" ]]; then
       echo "Commit ID returned from API v2 does not match Commit ID in archive 😠"
