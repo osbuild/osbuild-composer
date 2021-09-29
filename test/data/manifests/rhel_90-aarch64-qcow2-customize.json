@@ -1415,7 +1415,7 @@
               "filename": "disk.qcow2",
               "format": {
                 "type": "qcow2",
-                "compat": "0.10"
+                "compat": "1.1"
               }
             }
           }
