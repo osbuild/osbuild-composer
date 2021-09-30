@@ -97,7 +97,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 func LoadConfig(name string) (*ComposerConfigFile, error) {
 	c := GetDefaultConfig()
 	_, err := toml.DecodeFile(name, c)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 	err = loadConfigFromEnv(c)
