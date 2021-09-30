@@ -16,9 +16,8 @@ func TestEmpty(t *testing.T) {
 
 func TestNonExisting(t *testing.T) {
 	config, err := LoadConfig("testdata/non-existing-config.toml")
-	require.Error(t, err)
-	require.True(t, os.IsNotExist(err))
-	require.Nil(t, config)
+	require.Nil(t, err)
+	require.Equal(t, config, GetDefaultConfig())
 }
 
 func TestDefaultConfig(t *testing.T) {
