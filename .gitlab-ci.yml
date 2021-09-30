@@ -61,6 +61,8 @@ RPM:
       - RUNNER:
           - aws/rhel-8.5-nightly-x86_64
           - aws/rhel-8.5-nightly-aarch64
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -96,6 +98,7 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -122,6 +125,8 @@ Base:
       - RUNNER:
           - aws/rhel-8.5-nightly-x86_64
           - aws/rhel-8.5-nightly-aarch64
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -153,6 +158,8 @@ Regression:
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.5-nightly-x86_64
           - aws/rhel-8.5-nightly-aarch64
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -179,6 +186,7 @@ OSTree:
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8.4-ga-x86_64
           - openstack/rhel-8.5-devel-x86_64
+          - openstack/rhel-8.6-nightly-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
 
 New OSTree:
@@ -191,6 +199,7 @@ New OSTree:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64-large
+          - openstack/rhel-8.6-nightly-x86_64-large
 
 New OSTree (RHEL9-BETA):
   stage: test
@@ -213,6 +222,7 @@ OSTree simplified installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-x86_64-large
+          - openstack/rhel-8.6-nightly-x86_64-large
 
 OSTree raw image:
   stage: test
@@ -224,6 +234,7 @@ OSTree raw image:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-devel-x86_64
+          - openstack/rhel-8.6-nightly-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
@@ -261,12 +272,14 @@ Integration:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
         RUNNER:
           - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
@@ -304,6 +317,7 @@ API:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -324,6 +338,7 @@ libvirt:
       - RUNNER:
           - openstack/rhel-8.4-ga-x86_64
           - openstack/rhel-8.5-devel-x86_64
+          - openstack/rhel-8.6-nightly-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -372,6 +387,7 @@ Installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-devel-x86_64
+          - openstack/rhel-8.6-nightly-x86_64
           - openstack/rhel-9.0-beta-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
