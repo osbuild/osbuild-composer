@@ -267,10 +267,13 @@ func LoadAllRepositories(confPaths []string) (DistrosRepoConfigs, error) {
 					continue
 				}
 
-				distroRepos, err := loadRepositoriesFromFile(filepath.Join(reposPath, fileEntry.Name()))
+				configFile := filepath.Join(reposPath, fileEntry.Name())
+				distroRepos, err := loadRepositoriesFromFile(configFile)
 				if err != nil {
 					return nil, err
 				}
+
+				log.Println("Loaded repository configuration file:", configFile)
 
 				distrosRepoConfigs[distro] = distroRepos
 			}
