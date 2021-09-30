@@ -32,11 +32,7 @@ func main() {
 
 	config, err := LoadConfig(configFile)
 	if err != nil {
-		if os.IsNotExist(err) {
-			config = &ComposerConfigFile{}
-		} else {
-			logrus.Fatalf("Error loading configuration: %v", err)
-		}
+		logrus.Fatalf("Error loading configuration: %v", err)
 	}
 
 	logrus.SetOutput(os.Stdout)
