@@ -110,6 +110,38 @@
             "tar"
         ]
     },
+    "rhel-86": {
+        "x86_64": [
+            "ami",
+            "ec2",
+            "ec2-ha",
+            "openstack",
+            "tar",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "image_installer",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "ec2",
+            "openstack",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
+    },
     "rhel-90": {
         "x86_64": [
             "ami",
