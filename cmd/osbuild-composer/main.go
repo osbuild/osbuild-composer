@@ -40,7 +40,7 @@ func main() {
 	}
 
 	logrus.SetOutput(os.Stdout)
-	logLevel, err := logrus.ParseLevel(config.logLevel)
+	logLevel, err := logrus.ParseLevel(config.LogLevel)
 
 	if err == nil {
 		logrus.SetLevel(logLevel)
@@ -98,7 +98,7 @@ func main() {
 			logrus.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitAPI(ServerCertFile, ServerKeyFile, config.ComposerAPI.EnableJWT, l[0])
+		err = composer.InitAPI(ServerCertFile, ServerKeyFile, config.Koji.EnableTLS, config.Koji.EnableMTLS, config.Koji.EnableJWT, l[0])
 		if err != nil {
 			logrus.Fatalf("Error initializing koji API: %v", err)
 		}
@@ -109,7 +109,7 @@ func main() {
 			logrus.Fatal("The osbuild-remote-worker.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitRemoteWorkers(ServerCertFile, ServerKeyFile, config.Worker.EnableJWT, l[0])
+		err = composer.InitRemoteWorkers(ServerCertFile, ServerKeyFile, config.Worker.EnableTLS, config.Worker.EnableMTLS, config.Worker.EnableJWT, l[0])
 		if err != nil {
 			logrus.Fatalf("Error initializing worker API: %v", err)
 		}
