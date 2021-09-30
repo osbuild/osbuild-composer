@@ -10,32 +10,38 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji struct {
-		AllowedDomains []string `toml:"allowed_domains"`
-		CA             string   `toml:"ca"`
-	} `toml:"koji"`
-	Worker struct {
-		AllowedDomains []string `toml:"allowed_domains"`
-		CA             string   `toml:"ca"`
-		PGHost         string   `toml:"pg_host" env:"PGHOST"`
-		PGPort         string   `toml:"pg_port" env:"PGPORT"`
-		PGDatabase     string   `toml:"pg_database" env:"PGDATABASE"`
-		PGUser         string   `toml:"pg_user" env:"PGUSER"`
-		PGPassword     string   `toml:"pg_password" env:"PGPASSWORD"`
-		PGSSLMode      string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
-		EnableJWT      bool     `toml:"enable_jwt"`
-		JWTKeysURL     string   `toml:"jwt_keys_url"`
-		JWTKeysCA      string   `toml:"jwt_ca_file"`
-		JWTACLFile     string   `toml:"jwt_acl_file"`
-	} `toml:"worker"`
-	ComposerAPI struct {
-		EnableJWT  bool   `toml:"enable_jwt"`
-		JWTKeysURL string `toml:"jwt_keys_url"`
-		JWTKeysCA  string `toml:"jwt_ca_file"`
-		JWTACLFile string `toml:"jwt_acl_file"`
-	} `toml:"composer_api"`
-	WeldrAPI WeldrAPIConfig `toml:"weldr_api"`
-	logLevel string         `toml:"log_level"`
+	Koji     KojiAPIConfig   `toml:"koji"`
+	Worker   WorkerAPIConfig `toml:"worker"`
+	WeldrAPI WeldrAPIConfig  `toml:"weldr_api"`
+	LogLevel string          `toml:"log_level"`
+}
+
+type KojiAPIConfig struct {
+	AllowedDomains []string `toml:"allowed_domains"`
+	CA             string   `toml:"ca"`
+	EnableTLS      bool     `toml:"enable_tls"`
+	EnableMTLS     bool     `toml:"enable_mtls"`
+	EnableJWT      bool     `toml:"enable_jwt"`
+	JWTKeysURL     string   `toml:"jwt_keys_url"`
+	JWTKeysCA      string   `toml:"jwt_ca_file"`
+	JWTACLFile     string   `toml:"jwt_acl_file"`
+}
+
+type WorkerAPIConfig struct {
+	AllowedDomains []string `toml:"allowed_domains"`
+	CA             string   `toml:"ca"`
+	PGHost         string   `toml:"pg_host" env:"PGHOST"`
+	PGPort         string   `toml:"pg_port" env:"PGPORT"`
+	PGDatabase     string   `toml:"pg_database" env:"PGDATABASE"`
+	PGUser         string   `toml:"pg_user" env:"PGUSER"`
+	PGPassword     string   `toml:"pg_password" env:"PGPASSWORD"`
+	PGSSLMode      string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
+	EnableTLS      bool     `toml:"enable_tls"`
+	EnableMTLS     bool     `toml:"enable_mtls"`
+	EnableJWT      bool     `toml:"enable_jwt"`
+	JWTKeysURL     string   `toml:"jwt_keys_url"`
+	JWTKeysCA      string   `toml:"jwt_ca_file"`
+	JWTACLFile     string   `toml:"jwt_acl_file"`
 }
 
 type WeldrAPIConfig struct {
@@ -65,6 +71,16 @@ func (c *ComposerConfigFile) weldrDistrosImageTypeDenyList() map[string][]string
 // - 'ec2' and 'ec2-ha' image types on 'rhel-85' are not exposed via Weldr API
 func GetDefaultConfig() *ComposerConfigFile {
 	return &ComposerConfigFile{
+		Koji: KojiAPIConfig{
+			EnableTLS:  true,
+			EnableMTLS: true,
+			EnableJWT:  false,
+		},
+		Worker: WorkerAPIConfig{
+			EnableTLS:  true,
+			EnableMTLS: true,
+			EnableJWT:  false,
+		},
 		WeldrAPI: WeldrAPIConfig{
 			map[string]WeldrDistroConfig{
 				"rhel-*": {

@@ -1157,26 +1157,24 @@ sudo mv -f /usr/libexec/osbuild-composer/dnf-json.bak /usr/libexec/osbuild-compo
 #
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
 [koji]
-allowed_domains = [ "localhost", "client.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-
+enable_tls = false
+enable_mtls = false
+enable_jwt = true
+jwt_keys_url = "https://localhost:8080/certs"
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_acl_file = ""
 [worker]
-allowed_domains = [ "localhost", "worker.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
 pg_host = "localhost"
 pg_port = "5432"
 pg_database = "osbuildcomposer"
 pg_user = "postgres"
 pg_password = "foobar"
 pg_ssl_mode = "disable"
+enable_tls = false
+enable_mtls = false
 enable_jwt = true
 jwt_keys_url = "https://localhost:8080/certs"
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-[composer_api]
-enable_jwt = true
-jwt_keys_url = "https://localhost:8080/certs"
-jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-jwt_acl_file = ""
 EOF
 
 cat <<EOF | sudo tee "/etc/osbuild-worker/token"
@@ -1205,21 +1203,19 @@ TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
 
 [ "$(curl \
         --silent \
-        --cacert /etc/osbuild-composer/ca-crt.pem \
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer $TOKEN" \
-        https://localhost/api/composer/v1/version)" = "200" ]
+        http://localhost:443/api/composer/v1/version)" = "200" ]
 
 [ "$(curl \
         --silent \
-        --cacert /etc/osbuild-composer/ca-crt.pem \
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer badtoken" \
-        https://localhost/api/composer/v1/version)" = "401" ]
+        http://localhost:443/api/composer/v1/version)" = "401" ]
 
-sudo systemctl start osbuild-remote-worker@https:--localhost:8700.service
-sudo systemctl is-active --quiet osbuild-remote-worker@https:--localhost:8700.service
+sudo systemctl start osbuild-remote-worker@http:--localhost:8700.service
+sudo systemctl is-active --quiet osbuild-remote-worker@http:--localhost:8700.service
 
 exit 0

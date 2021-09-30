@@ -104,9 +104,19 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	return nil
 }
 
-func (c *Composer) InitAPI(cert, key string, enableJWT bool, l net.Listener) error {
+func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
 	c.api = cloudapi.NewServer(c.workers, c.rpm, c.distros)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
+
+	if !enableTLS {
+		c.apiListener = l
+		return nil
+	}
+
+	// If both are off or both are on, error out
+	if enableJWT == enableMTLS {
+		return fmt.Errorf("API: Either mTLS or JWT authentication must be enabled")
+	}
 
 	clientAuth := tls.RequireAndVerifyClientCert
 	if enableJWT {
@@ -133,7 +143,17 @@ func (c *Composer) InitLocalWorker(l net.Listener) {
 	c.localWorkerListener = l
 }
 
-func (c *Composer) InitRemoteWorkers(cert, key string, enableJWT bool, l net.Listener) error {
+func (c *Composer) InitRemoteWorkers(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
+	if !enableTLS {
+		c.workerListener = l
+		return nil
+	}
+
+	// If both are off or both are on, error out
+	if enableJWT == enableMTLS {
+		return fmt.Errorf("Remote worker API: Either mTLS or JWT authentication must be enabled")
+	}
+
 	clientAuth := tls.RequireAndVerifyClientCert
 	if enableJWT {
 		// jwt enabled => tls listener without client auth
@@ -227,11 +247,11 @@ func (c *Composer) Start() error {
 
 			handler := http.Handler(mux)
 			var err error
-			if c.config.ComposerAPI.EnableJWT {
+			if c.config.Koji.EnableJWT {
 				handler, err = auth.BuildJWTAuthHandler(
-					c.config.ComposerAPI.JWTKeysURL,
-					c.config.ComposerAPI.JWTKeysCA,
-					c.config.ComposerAPI.JWTACLFile,
+					c.config.Koji.JWTKeysURL,
+					c.config.Koji.JWTKeysCA,
+					c.config.Koji.JWTACLFile,
 					[]string{
 						"/metrics/?$",
 					}, mux)

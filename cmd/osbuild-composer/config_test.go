@@ -23,12 +23,23 @@ func TestNonExisting(t *testing.T) {
 
 func TestDefaultConfig(t *testing.T) {
 	defaultConfig := GetDefaultConfig()
-	require.Empty(t, defaultConfig.Koji)
-	require.Empty(t, defaultConfig.Worker)
-	require.False(t, defaultConfig.ComposerAPI.EnableJWT)
-	require.Equal(t, "", defaultConfig.ComposerAPI.JWTKeysCA)
+
+	require.False(t, defaultConfig.Koji.EnableJWT)
+	require.Equal(t, "", defaultConfig.Koji.JWTKeysCA)
 	require.False(t, defaultConfig.Worker.EnableJWT)
 	require.Equal(t, "", defaultConfig.Worker.JWTKeysCA)
+
+	require.Equal(t, KojiAPIConfig{
+		EnableTLS:  true,
+		EnableMTLS: true,
+		EnableJWT:  false,
+	}, defaultConfig.Koji)
+
+	require.Equal(t, WorkerAPIConfig{
+		EnableTLS:  true,
+		EnableMTLS: true,
+		EnableJWT:  false,
+	}, defaultConfig.Worker)
 
 	expectedWeldrAPIConfig := WeldrAPIConfig{
 		DistroConfigs: map[string]WeldrDistroConfig{
@@ -66,10 +77,10 @@ func TestConfig(t *testing.T) {
 	require.NotNil(t, config)
 	require.Equal(t, "composer-db", config.Worker.PGDatabase)
 
-	require.True(t, config.ComposerAPI.EnableJWT)
-	require.Equal(t, "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs", config.ComposerAPI.JWTKeysURL)
-	require.Equal(t, "", config.ComposerAPI.JWTKeysCA)
-	require.Equal(t, "/var/lib/osbuild-composer/acl", config.ComposerAPI.JWTACLFile)
+	require.False(t, config.Koji.EnableJWT)
+	require.Equal(t, "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs", config.Koji.JWTKeysURL)
+	require.Equal(t, "", config.Koji.JWTKeysCA)
+	require.Equal(t, "/var/lib/osbuild-composer/acl", config.Koji.JWTACLFile)
 }
 
 func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
