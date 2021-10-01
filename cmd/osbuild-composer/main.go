@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
@@ -25,9 +24,8 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Print access log")
 	flag.Parse()
 
-	var logger *log.Logger
-	if verbose {
-		logger = log.New(os.Stdout, "", 0)
+	if !verbose {
+		logrus.Print("verbose flag is provided for backward compatibility only, current behavior is always printing the access log")
 	}
 
 	config, err := LoadConfig(configFile)
@@ -60,7 +58,7 @@ func main() {
 		logrus.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 
-	composer, err := NewComposer(config, stateDir, cacheDir, logger)
+	composer, err := NewComposer(config, stateDir, cacheDir)
 	if err != nil {
 		logrus.Fatalf("%v", err)
 	}

@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -16,6 +15,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -70,7 +70,7 @@ func WatchJob(ctx context.Context, job worker.Job) {
 		case <-time.After(15 * time.Second):
 			canceled, err := job.Canceled()
 			if err == nil && canceled {
-				log.Println("Job was canceled. Exiting.")
+				logrus.Info("Job was canceled. Exiting.")
 				os.Exit(0)
 			}
 		case <-ctx.Done():
@@ -116,19 +116,19 @@ func main() {
 
 	_, err := toml.DecodeFile(configFile, &config)
 	if err == nil {
-		log.Println("Composer configuration:")
-		encoder := toml.NewEncoder(log.Writer())
+		logrus.Info("Composer configuration:")
+		encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
 		err := encoder.Encode(&config)
 		if err != nil {
-			log.Fatalf("Could not print config: %v", err)
+			logrus.Fatalf("Could not print config: %v", err)
 		}
 	} else if !os.IsNotExist(err) {
-		log.Fatalf("Could not load config file '%s': %v", configFile, err)
+		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
 	}
 
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
-		log.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
+		logrus.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
 	}
 	store := path.Join(cacheDirectory, "osbuild-store")
 	output := path.Join(cacheDirectory, "output")
@@ -155,20 +155,20 @@ func main() {
 		if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
 			t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
 			if err != nil {
-				log.Fatalf("Could not read offline token: %v", err)
+				logrus.Fatalf("Could not read offline token: %v", err)
 			}
 			t2 := strings.TrimSpace(string(t))
 			token = &t2
 
 			if config.Authentication.OAuthURL == "" {
-				log.Fatal("OAuth URL should be specified together with the offline token")
+				logrus.Fatal("OAuth URL should be specified together with the offline token")
 			}
 			oAuthURL = &config.Authentication.OAuthURL
 
 			if strings.HasPrefix(address, "http") {
 				out, err := exec.Command("systemd-escape", "-u", address).Output()
 				if err != nil {
-					log.Fatalf("Could not escape remote worker address: %v", err)
+					logrus.Fatalf("Could not escape remote worker address: %v", err)
 				}
 				address = strings.TrimSpace(string(out))
 			} else {
@@ -185,13 +185,13 @@ func main() {
 		if _, err = os.Stat(conConf.CACertFile); err == nil {
 			conf, err = createTLSConfig(conConf)
 			if err != nil {
-				log.Fatalf("Error creating TLS config: %v", err)
+				logrus.Fatalf("Error creating TLS config: %v", err)
 			}
 		}
 
 		client, err = worker.NewClient(address, conf, token, oAuthURL)
 		if err != nil {
-			log.Fatalf("Error creating worker client: %v", err)
+			logrus.Fatalf("Error creating worker client: %v", err)
 		}
 	}
 
@@ -202,7 +202,7 @@ func main() {
 	if config.Azure != nil {
 		azureCredentials, err = azure.ParseAzureCredentialsFile(config.Azure.Credentials)
 		if err != nil {
-			log.Fatalf("cannot load azure credentials: %v", err)
+			logrus.Fatalf("cannot load azure credentials: %v", err)
 		}
 	}
 
@@ -214,7 +214,7 @@ func main() {
 	if config.GCP != nil {
 		gcpCredentials, err = ioutil.ReadFile(config.GCP.Credentials)
 		if err != nil {
-			log.Fatalf("cannot load GCP credentials: %v", err)
+			logrus.Fatalf("cannot load GCP credentials: %v", err)
 		}
 	}
 
@@ -245,19 +245,19 @@ func main() {
 	}
 
 	for {
-		fmt.Println("Waiting for a new job...")
+		logrus.Info("Waiting for a new job...")
 		job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 
 		impl, exists := jobImpls[job.Type()]
 		if !exists {
-			log.Printf("Ignoring job with unknown type %s", job.Type())
+			logrus.Warnf("Ignoring job with unknown type %s", job.Type())
 			continue
 		}
 
-		fmt.Printf("Running '%s' job %v\n", job.Type(), job.Id())
+		logrus.Infof("Running '%s' job %v\n", job.Type(), job.Id())
 
 		ctx, cancelWatcher := context.WithCancel(context.Background())
 		go WatchJob(ctx, job)
@@ -265,10 +265,10 @@ func main() {
 		err = impl.Run(job)
 		cancelWatcher()
 		if err != nil {
-			log.Printf("Job %s failed: %v", job.Id(), err)
+			logrus.Warnf("Job %s failed: %v", job.Id(), err)
 			continue
 		}
 
-		log.Printf("Job %s finished", job.Id())
+		logrus.Infof("Job %s finished", job.Id())
 	}
 }
