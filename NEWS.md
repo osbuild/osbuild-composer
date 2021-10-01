@@ -1,3 +1,11 @@
+## CHANGES WITH 33.3:
+
+  * qcow2 images for RHEL 9.0 are now shipped in v3 format instead of v2. 
+
+Contributions from: Ondřej Budai
+
+— Liberec, 2021-09-28
+
 ## CHANGES WITH 33.2:
 
   * Edge images for 8.5 now ship with bootloader set to none which fixes
