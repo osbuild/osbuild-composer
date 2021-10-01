@@ -392,10 +392,9 @@ func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever string) (dnfRepoConfig, error) {
-	id := strconv.Itoa(i)
+func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, arch, releasever string) (dnfRepoConfig, error) {
 	dnfRepo := dnfRepoConfig{
-		ID:             id,
+		ID:             repo.Name,
 		BaseURL:        repo.BaseURL,
 		Metalink:       repo.Metalink,
 		MirrorList:     repo.MirrorList,
@@ -420,8 +419,8 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever
 
 func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, releasever string) (PackageList, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
-	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
+	for _, repo := range repos {
+		dnfRepo, err := repo.toDNFRepoConfig(r, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -454,8 +453,8 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, re
 func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
 
-	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
+	for _, repo := range repos {
+		dnfRepo, err := repo.toDNFRepoConfig(r, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
