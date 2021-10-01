@@ -56,6 +56,23 @@ def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     # downloading metadata (when depsolving) and downloading packages.
     base.conf.fastestmirror = True
 
+    # We use the same cachedir for multiple architectures. Unfortunately,
+    # this is something that doesn't work well in certain situations
+    # with zchunk:
+    # Imagine that we already have cache for arch1. Then, we use dnf-json
+    # to depsolve for arch2. If ZChunk is enabled and available (that's
+    # the case for Fedora), dnf will try to download only differences
+    # between arch1 and arch2 metadata. But, as these are completely
+    # different, dnf must basically redownload everything.
+    # For downloding deltas, zchunk uses HTTP range requests. Unfortunately,
+    # if the mirror doesn't support multi range requests, then zchunk will
+    # download one small segment per a request. Because we need to update
+    # the whole metadata (10s of MB), this can be extremely slow in some cases.
+    # I think that we can come up with a better fix but let's just disable
+    # zchunk for now. As we are already downloading a lot of data when
+    # building images, I don't care if we download even more.
+    base.conf.zchunk = False
+
     # Try another mirror if it takes longer than 5 seconds to connect.
     base.conf.timeout = 5
 
