@@ -1,3 +1,22 @@
+## CHANGES WITH 35:
+
+  * Change filesystem minsize from int, which is platform dependent, to uint64
+  * Fix a bug in the startup of composer where e.g. Plymouth would leave it hanging
+  * RHEL-9.0: Use qcow2 compat 1.1
+  * RHEL-9.0: Re-add `nss-altfiles` which is needed for OSTree based systems
+  * RHEL-9.0: Add `gnome-kiosk` package and switch to `python3` from `python36`
+  * RHEL-8.5: Set bootloader to `none` for Edge raw images
+  * Improve logging for the Cloud API
+  * Return a 500 error and write to log on middleware panic
+  * Return a 400 error when deleting an unknown source in the weldr API
+
+Contributions from: Achilleas Koutsou, Alexander Todorov, Brian C. Lane,
+                    Christian Kellner, Diaa Sami, Gianluca Zuccarelli, Jakub Rusz,
+                    Martin Sehnoutka, Ondřej Budai, Sanne Raymaekers,
+                    Simon Steinbeiss, Tomas Hozza
+
+— Vöcklabruck, 2021-09-30
+
 ## CHANGES WITH 34:
 
   * Support temporary AWS credentials
