@@ -1,0 +1,10 @@
+[allowlist]
+  description = "Test keys and passwords that should not be reported as leaks"
+  regexes = [
+      '''\$6\$BhyxFBgrEFh0VrPJ\$MllG8auiU26x2pmzL4\.1maHzPHrA\.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD\/zEm8r\/OF05F2icWB0K''',  # qcow2 test manifest user password
+      '''\\\$6\\\$GRmb7S0p8vsYmXzH\\\$o0E020S\.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ\/OkwZQfW\/76ktHd0NX5nls2LPxPuUdl\.''',  # hashed user password for ostree tests
+  ]
+  paths = [
+      '''test/data/keyring/id_rsa''',  # boot test private key
+      '''internal/crypt/crypt_test.go''',  # sample hashed passwords for testing crypt sniffer function
+  ]
