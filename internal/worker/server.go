@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
@@ -52,7 +53,7 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) 
 func (s *Server) Handler() http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
-	e.StdLogger = s.logger
+	e.Logger = common.Logger()
 
 	// log errors returned from handlers
 	e.HTTPErrorHandler = api.HTTPErrorHandler
@@ -73,10 +74,10 @@ func (s *Server) WatchHeartbeats() {
 	for range time.Tick(time.Second * 30) {
 		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
 			id, _ := s.jobs.IdFromToken(token)
-			log.Printf("Removing unresponsive job: %s\n", id)
+			logrus.Infof("Removing unresponsive job: %s\n", id)
 			err := s.FinishJob(token, nil)
 			if err != nil {
-				log.Printf("Error finishing unresponsive job: %v", err)
+				logrus.Errorf("Error finishing unresponsive job: %v", err)
 			}
 		}
 	}
@@ -271,7 +272,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	if s.artifactsDir != "" {
 		err := os.Rename(path.Join(s.artifactsDir, "tmp", token.String()), path.Join(s.artifactsDir, jobId.String()))
 		if err != nil {
-			log.Printf("Error moving artifacts for job%s: %v", jobId, err)
+			logrus.Errorf("Error moving artifacts for job %s: %v", jobId, err)
 		}
 	}
 

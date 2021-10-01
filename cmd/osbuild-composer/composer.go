@@ -44,12 +44,11 @@ type Composer struct {
 	weldrListener, localWorkerListener, workerListener, apiListener net.Listener
 }
 
-func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *log.Logger) (*Composer, error) {
+func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Composer, error) {
 	c := Composer{
 		config:   config,
 		stateDir: stateDir,
 		cacheDir: cacheDir,
-		logger:   logger,
 	}
 
 	queueDir, err := c.ensureStateDirectory("jobs", 0700)
@@ -63,7 +62,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string, logger *
 	}
 
 	c.distros = distroregistry.NewDefault()
-	logrus.Info(fmt.Sprintf("Loaded %d distros", len(c.distros.List())))
+	logrus.Infof("Loaded %d distros", len(c.distros.List()))
 
 	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
 
