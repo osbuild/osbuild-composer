@@ -41,10 +41,13 @@ def dnfrepo(desc, parent_conf=None):
 
     # In dnf, the default metadata expiration time is 48 hours. However,
     # some repositories never expire the metadata, and others expire it much
-    # sooner than that. Therefore we must make this configurable. If nothing
-    # is provided, we default to never expiring the metadata, as hardcoding
-    # some arbitrary does not seem very helpful.
-    repo.metadata_expire = desc.get("metadata_expire", "-1")
+    # sooner than that. We therefore allow this to be configured. If nothing
+    # is provided we error on the side of checking if we should invalidate
+    # the cache. If cache invalidation is not necessary, the overhead of
+    # checking is in the hundreds of milliseconds. In order to avoid this
+    # overhead accumulating for API calls that consist of several dnf calls,
+    # we set the expiration to a short time period, rather than 0.
+    repo.metadata_expire = desc.get("metadata_expire", "20s")
 
     return repo
 
