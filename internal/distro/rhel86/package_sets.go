@@ -341,7 +341,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release-eula", "rsync", "tar", "qemu-guest-agent",
 		},
 		Exclude: []string{
-			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
+			"aic94xx-firmware", "alsa-firmware",
 			"alsa-tools-firmware", "biosdevname", "firewalld", "iprutils", "ivtv-firmware",
 			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware",
 			"iwl135-firmware", "iwl2000-firmware", "iwl2030-firmware",
@@ -359,6 +359,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
 	ec2PackageSet := ec2CommonPackageSet(t)
 	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
+	ec2PackageSet.Exclude = append(ec2PackageSet.Exclude, "alsa-lib")
 	return ec2PackageSet
 }
 
@@ -371,7 +372,51 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 		"pcs",
 		"rh-amazon-rhui-client-ha",
 	)
+	ec2HaPackageSet.Exclude = append(ec2HaPackageSet.Exclude, "alsa-lib")
 	return ec2HaPackageSet
+}
+
+// rhel-sap-ec2 image package set
+func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
+	ec2SapPackageSet := ec2CommonPackageSet(t)
+	ec2SapPackageSet.Include = append(ec2SapPackageSet.Include,
+		// SAP System Roles
+		// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+		"ansible",
+		"rhel-system-roles-sap",
+		// RHBZ#1959813
+		"bind-utils",
+		"compat-sap-c++-9",
+		"nfs-utils",
+		"tcsh",
+		// RHBZ#1959955
+		"uuidd",
+		// RHBZ#1959923
+		"cairo",
+		"expect",
+		"graphviz",
+		"gtk2",
+		"iptraf-ng",
+		"krb5-workstation",
+		"libaio",
+		"libatomic",
+		"libcanberra-gtk2",
+		"libicu",
+		"libpng12",
+		"libtool-ltdl",
+		"lm_sensors",
+		"net-tools",
+		"numactl",
+		"PackageKit-gtk3-module",
+		"xorg-x11-xauth",
+		// RHBZ#1960617
+		"tuned-profiles-sap-hana",
+		// RHBZ#1961168
+		"libnsl",
+		// RHUI client
+		"rh-amazon-rhui-client-sap-bundle-e4s",
+	)
+	return ec2SapPackageSet
 }
 
 // edge commit OS package set
