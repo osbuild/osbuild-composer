@@ -101,16 +101,32 @@ In simplified example, the script does the following:
 1. Provisions Runners if needed.
 2. Waits for the Runner to be ready for use by running a specific command n it.
 3. Installs RPMs necessary for the test case generation on the Runner.
+    - In case you need to install packages from a specific external repository, you can specify each such repository using `--repofrompath` option. For example if you want to use the latest `osbuild` upstream build, use `--repofrompath 'osbuild,https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild/fedora-$releasever-$basearch/'`.
 4. Copies the 'sources' using rsync to the Runner.
 5. Executes the 'tools/test-case-generators/generate-test-cases' on the runner for each requested distro and image type.
 6. After each image test case is generated successfully, the result is copied using rsync from the Runner to 'output' directory.
 
+The script by default generates all image test cases defined in
+`tools/test-case-generators/distro-arch-imagetype-map.json`. Unless you want to
+reduce the matrix of generated test cases, you don't need to specify any of
+`--arch`, `--distro` or `--image-type` options. These only filter the default
+matrix. So to e.g. generate all image test cases for RHEL-8.5, simply run:
+
+```bash
+$ ./tools/test-case-generators/generate-all-test-cases \
+        --output test/data/manifests \
+        --distro rhel-85 \
+        <COMMAND> \
+        ...
+```
+
 The script supports the following commands:
 
 - `qemu` - generates image test cases locally using QEMU VMs.
-- `remote` - generates image test cases on existing remote hosts.
+- `remote` - generates image test cases on existing remote hosts. This command does not use QEMU on the remote host. It executes commands directly on the remote system.
 
 **Generating test cases in QEMU example:**
+
 ```bash
 $ ./tools/test-case-generators/generate-all-test-cases \
         --output test/data/manifests \
@@ -127,6 +143,7 @@ $ ./tools/test-case-generators/generate-all-test-cases \
 ```
 
 **Generating test cases using existing remote hosts example:**
+
 ```bash
 $ ./tools/test-case-generators/generate-all-test-cases \
         --output test/data/manifests \

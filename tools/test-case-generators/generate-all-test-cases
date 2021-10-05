@@ -22,6 +22,9 @@
     2. Waits for the Runner to be ready for use by running a specific command
        on it.
     3. Installs RPMs necessary for the test case generation on the Runner.
+      - In case you need to install packages from a specific external repository,
+        you can specify each such repository using --repofrompath option.
+        e.g. --repofrompath 'osbuild,https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild/fedora-$releasever-$basearch/'
     4. Copies the 'sources' using rsync to the Runner.
     5. Executes the 'tools/test-case-generators/generate-test-cases' on the
        runner for each requested distro and image type.
@@ -132,12 +135,16 @@ class BaseRunner(contextlib.AbstractContextManager):
     """
     Base class representing a generic runner, which is used for generating image
     test case definitions.
+
+    'repos' is a list of strings such as "<repo>,<path/url>", specifying additional
+    DNF repositories to use when installing packages.
     """
 
-    def __init__(self, hostname, username="root", port=22):
+    def __init__(self, hostname, username="root", repos=[], port=22):
         self.hostname = hostname
         self.port = port
         self.username = username
+        self.repos = repos
         self.runner_ready = False
 
     def run_command(self, command):
@@ -252,7 +259,25 @@ class BaseRunner(contextlib.AbstractContextManager):
                 raise subprocess.TimeoutExpired("wait_until_ready()", timeout)
             time.sleep(retry_sec)
         # make sure that rsync is installed to be able to transfer the data
-        self.run_command_check_call("sudo dnf -y install rsync")
+        self.dnf_install(["rsync"])
+
+    def dnf_install(self, packages):
+        """
+        Installs always the latest version of provided packages using DNF.
+        If the packages are already installed and there is a newer version in
+        tne repos, packages are upgraded.
+
+        If the runner was instantiated with a list of repositories, these will
+        be added to the DNF command.
+        """
+        cmd = ["dnf", "-y"]
+        for repo in self.repos:
+            cmd.append(f"--repofrompath='{repo}'")
+            repo_name, _ = repo.split(',', 1)
+            cmd.append(f"--setopt={repo_name}.gpgcheck=0")
+
+        self.run_command_check_call(" ".join(cmd + ["--refresh", "install"] + packages))
+        self.run_command_check_call(" ".join(cmd + ["upgrade"] + packages))
 
     def is_ready(self, command="id"):
         """
@@ -304,8 +329,8 @@ class BaseQEMURunner(BaseRunner):
         "sudo": "ALL=(ALL) NOPASSWD:ALL"
     }
 
-    def __init__(self, image, username, cdrom_iso=None):
-        super().__init__("localhost", username)
+    def __init__(self, image, username, repos=[], cdrom_iso=None):
+        super().__init__("localhost", username, repos)
         self._check_qemu_bin()
 
         # path to image to run
@@ -705,7 +730,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, keep_workdir=False, log_level=logging.INFO):
+    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, repos=[], keep_workdir=False, log_level=logging.INFO):
         """
         'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
         {
@@ -730,6 +755,8 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         cases.
         'output' is a directory path, where the generated test case manifests should be stored.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
+        'repos' is a list of strings such as "<repo>,<path/url>", specifying additional
+        DNF repositories to use when installing packages.
         'keep_workdir' is a boolean specifying if the workdir created on the remote host should be deleted
         after the runner finishes its work.
         'log_level' is the desired log level to be used by new processes created for each runner.
@@ -739,6 +766,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self.sources = sources
         self.output = output
         self.ssh_id_file = ssh_id_file
+        self.repos = repos
         self.keep_workdir = keep_workdir
         self.log_level = log_level
 
@@ -820,7 +848,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
             runner.run_command_check_call(f"mkdir {runner_osbuild_store_dir}")
 
             # install necessary packages
-            runner.run_command_check_call("sudo dnf install -y " + " ".join(self.install_rpms_list))
+            runner.dnf_install(self.install_rpms_list)
             # Log installed versions of important RPMs
             rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
             log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
@@ -912,7 +940,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         raise NotImplementedError()
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
         raise NotImplementedError()
 
 
@@ -936,7 +964,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": S390xQEMURunner
     }
 
-    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, ci_userdata=None, keep_workdir=False, log_level=logging.INFO):
+    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, repos=[], ci_userdata=None, keep_workdir=False, log_level=logging.INFO):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -972,7 +1000,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         If the value is not provided, then the default internal cloud-init user-data are used.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level)
         self.images = images
         self.ci_userdata = ci_userdata
 
@@ -1003,7 +1031,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
             # Create architecture-specific map or runner class arguments and start the test case generation.
             arch_runner_cls_args_map = {}
             for arch in self.arch_gen_matrix.keys():
-                arch_runner_cls_args_map[arch] = (self.images[arch], vm_user, cdrom_iso)
+                arch_runner_cls_args_map[arch] = (self.images[arch], vm_user, self.repos, cdrom_iso)
 
             self._generate(arch_runner_cls_args_map)
 
@@ -1051,7 +1079,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_qemu.set_defaults(func=QEMUTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
         """
         The main function of the 'qemu' command
         """
@@ -1065,7 +1093,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with QEMUTestCaseMatrixGenerator(
             vm_images, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, ci_userdata, keep_workdir, log.level) as generator:
+            ssh_id_file, repos, ci_userdata, keep_workdir, log.level) as generator:
             generator.generate()
 
 
@@ -1083,7 +1111,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": RemoteRunner
     }
 
-    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level=logging.INFO):
+    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level=logging.INFO):
         """
         'hosts' is a dict of a remote system hostnames or IP addresses for each supported architecture,
         that should be used to generate image test cases:
@@ -1118,7 +1146,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         'output' is a directory path, where the generated test case manifests should be stored.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, keep_workdir, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level)
         self.hosts = hosts
         self.username = username
 
@@ -1134,7 +1162,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         # Create architecture-specific map or runner class arguments and start the test case generation.
         arch_runner_cls_args_map = {}
         for arch in self.arch_gen_matrix.keys():
-            arch_runner_cls_args_map[arch] = (self.hosts[arch], self.username)
+            arch_runner_cls_args_map[arch] = (self.hosts[arch], self.username, self.repos)
 
         self._generate(arch_runner_cls_args_map)
 
@@ -1183,7 +1211,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_remote.set_defaults(func=RemoteTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
         """
         The main function of the 'remote' command
         """
@@ -1197,7 +1225,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with RemoteTestCaseMatrixGenerator(
             hosts, username, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, keep_workdir, log.level) as generator:
+            ssh_id_file, repos, keep_workdir, log.level) as generator:
             generator.generate()
 
 
@@ -1290,6 +1318,14 @@ def get_args():
             default=False
         )
     parser.add_argument(
+            "--repofrompath",
+            metavar="<repo>,<path/url>",
+            action="append",
+            help="Specify a repository to add to the repositories used when installing packages on the runner. " + \
+                "Can be specified multiple times.",
+            default=[]
+        )
+    parser.add_argument(
         "-d", "--debug",
         action='store_true',
         default=False,
@@ -1312,6 +1348,7 @@ def main(args):
     distros = args.distro
     arches = args.arch
     image_types = args.image_type
+    repos = args.repofrompath
     keep_workdir = args.keep_workdir
 
     # determine the SSH ID file to be used
@@ -1363,7 +1400,7 @@ def main(args):
 
     log.debug("arch_gen_matrix_dict:\n%s", json.dumps(arch_gen_matrix_dict, indent=2, sort_keys=True))
 
-    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, keep_workdir, args)
+    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, args)
 
 
 if __name__ == '__main__':
