@@ -25,7 +25,7 @@ type KojiAPIConfig struct {
 	JWTKeysURL     string    `toml:"jwt_keys_url"`
 	JWTKeysCA      string    `toml:"jwt_ca_file"`
 	JWTACLFile     string    `toml:"jwt_acl_file"`
-	AWSConfig      AWSConfig `toml:"aws_config"`
+	AWS            AWSConfig `toml:"aws_config"`
 }
 
 type AWSConfig struct {
@@ -80,6 +80,9 @@ func GetDefaultConfig() *ComposerConfigFile {
 			EnableTLS:  true,
 			EnableMTLS: true,
 			EnableJWT:  false,
+			AWS: AWSConfig{
+				Bucket: "image-builder.service",
+			},
 		},
 		Worker: WorkerAPIConfig{
 			EnableTLS:  true,

@@ -32,6 +32,9 @@ func TestDefaultConfig(t *testing.T) {
 		EnableTLS:  true,
 		EnableMTLS: true,
 		EnableJWT:  false,
+		AWS: AWSConfig{
+			Bucket: "image-builder.service",
+		},
 	}, defaultConfig.Koji)
 
 	require.Equal(t, WorkerAPIConfig{

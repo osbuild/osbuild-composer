@@ -28,15 +28,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-const (
-	Bucket = "image-builder.service"
-)
-
 // Server represents the state of the cloud Server
 type Server struct {
 	workers     *worker.Server
 	rpmMetadata rpmmd.RPMMD
 	distros     *distroregistry.Registry
+	awsBucket   string
 }
 
 type apiHandlers struct {
@@ -45,11 +42,12 @@ type apiHandlers struct {
 
 type binder struct{}
 
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
+func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry, bucket string) *Server {
 	server := &Server{
 		workers:     workers,
 		rpmMetadata: rpmMetadata,
 		distros:     distros,
+		awsBucket:   bucket,
 	}
 	return server
 }
@@ -294,7 +292,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			t := target.NewAWSTarget(&target.AWSTargetOptions{
 				Filename:          imageType.Filename(),
 				Region:            awsUploadOptions.Region,
-				Bucket:            Bucket,
+				Bucket:            h.server.awsBucket,
 				Key:               key,
 				ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 			})
@@ -322,7 +320,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
 				Filename: imageType.Filename(),
 				Region:   awsS3UploadOptions.Region,
-				Bucket:   Bucket,
+				Bucket:   h.server.awsBucket,
 				Key:      key,
 			})
 			t.ImageName = key
