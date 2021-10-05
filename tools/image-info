@@ -2202,12 +2202,19 @@ def analyse_image(image):
 
 
 def append_directory(report, tree):
-    if os.path.lexists(f"{tree}/ostree"):
-        os.makedirs(f"{tree}/etc", exist_ok=True)
-        with mount_at(f"{tree}/usr/etc", f"{tree}/etc", extra=["--bind"]):
-            append_filesystem(report, tree, is_ostree=True)
-    else:
-        append_filesystem(report, tree)
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
+        tree_ro = os.path.join(tmpdir, "root_ro")
+        os.makedirs(tree_ro)
+        # Make sure that the tools which analyse the directory in-place
+        # can not modify its content (e.g. create additional files).
+        # mount_at() always mounts the source as read-only!
+        with mount_at(tree, tree_ro, ["bind"]) as mountpoint:
+            if os.path.lexists(f"{tree}/ostree"):
+                os.makedirs(f"{tree}/etc", exist_ok=True)
+                with mount_at(f"{tree}/usr/etc", f"{tree}/etc", extra=["--bind"]):
+                    append_filesystem(report, tree_ro, is_ostree=True)
+            else:
+                append_filesystem(report, tree_ro)
 
 
 def append_ostree_repo(report, repo):
