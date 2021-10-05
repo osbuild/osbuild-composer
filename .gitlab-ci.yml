@@ -43,7 +43,7 @@ RPM:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - sh "time schutzbot/mockbuild.sh"
+    - time schutzbot/mockbuild.sh
   after_script:
     - time schutzbot/update_github_status.sh update
     - time schutzbot/save_journal.sh
@@ -71,7 +71,7 @@ Container:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - sh "time schutzbot/containerbuild.sh"
+    - time schutzbot/containerbuild.sh
   parallel:
     matrix:
       - RUNNER:
