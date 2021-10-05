@@ -271,6 +271,8 @@ Integration:
           - aws.sh
           - azure.sh
           - filesystem.sh
+          - vmware.sh
+          - cross-distro.sh
         RUNNER:
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
