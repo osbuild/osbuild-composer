@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -57,6 +58,7 @@ func (s *Server) Handler() http.Handler {
 
 	// log errors returned from handlers
 	e.HTTPErrorHandler = api.HTTPErrorHandler
+	e.Use(middleware.Recover())
 	e.Pre(common.OperationIDMiddleware)
 	handler := apiHandlers{
 		server: s,
