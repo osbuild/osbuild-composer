@@ -7,10 +7,12 @@ stages:
   - finish
 
 .base:
+  before_script:
+    - sudo dnf install -y time
   after_script:
-    - time schutzbot/update_github_status.sh update
-    - time schutzbot/save_journal.sh
-    - time schutzbot/run_cloud_cleaner.sh
+    - /usr/bin/time -v schutzbot/update_github_status.sh update
+    - /usr/bin/time -v schutzbot/save_journal.sh
+    - /usr/bin/time -v schutzbot/run_cloud_cleaner.sh
   tags:
     - terraform
   artifacts:
@@ -35,7 +37,7 @@ init:
   tags:
     - shell
   script:
-    - time schutzbot/update_github_status.sh start
+    - schutzbot/update_github_status.sh start
 
 RPM:
   stage: rpmbuild
@@ -43,10 +45,10 @@ RPM:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - time schutzbot/mockbuild.sh
+    - /usr/bin/time -v schutzbot/mockbuild.sh
   after_script:
-    - time schutzbot/update_github_status.sh update
-    - time schutzbot/save_journal.sh
+    - /usr/bin/time -v schutzbot/update_github_status.sh update
+    - /usr/bin/time -v schutzbot/save_journal.sh
   parallel:
     matrix:
       - RUNNER:
@@ -71,7 +73,7 @@ Container:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - time schutzbot/containerbuild.sh
+    - /usr/bin/time -v schutzbot/containerbuild.sh
   parallel:
     matrix:
       - RUNNER:
@@ -83,7 +85,7 @@ Prepare-rhel-internal:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
-    - time schutzbot/prepare-rhel-internal.sh
+    - /usr/bin/time -v schutzbot/prepare-rhel-internal.sh
   artifacts:
     paths:
       - rhel-8.json
@@ -105,8 +107,8 @@ Base:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/base_tests.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/base_tests.sh
   parallel:
     matrix:
       - RUNNER:
@@ -138,8 +140,8 @@ Regression:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/regression.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/regression.sh
   parallel:
     matrix:
       - RUNNER:
@@ -169,8 +171,8 @@ OSTree:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/ostree.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/ostree.sh
   parallel:
     matrix:
       - RUNNER:
@@ -185,8 +187,8 @@ New OSTree:
   stage: test
   extends: OSTree
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/ostree-ng.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/ostree-ng.sh
   parallel:
     matrix:
       - RUNNER:
@@ -196,8 +198,8 @@ New OSTree (RHEL9-BETA):
   stage: test
   extends: OSTree
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/ostree-ng-og.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/ostree-ng-og.sh
   parallel:
     matrix:
       - RUNNER:
@@ -207,8 +209,8 @@ OSTree simplified installer:
   stage: test
   extends: OSTree
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
   parallel:
     matrix:
       - RUNNER:
@@ -218,8 +220,8 @@ OSTree raw image:
   stage: test
   extends: OSTree
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
   parallel:
     matrix:
       - RUNNER:
@@ -241,8 +243,8 @@ Integration:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/${SCRIPT}
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
       - <<: *INTEGRATION_TESTS
@@ -289,8 +291,8 @@ API:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
   parallel:
     matrix:
       - <<: *API_TESTS
@@ -324,8 +326,8 @@ APIV2:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/api_v2.sh ${TARGET}
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/api_v2.sh ${TARGET}
   parallel:
     matrix:
       - <<: *API_TESTS
@@ -348,8 +350,8 @@ libvirt:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/libvirt.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/libvirt.sh
   parallel:
     matrix:
       - RUNNER:
@@ -367,8 +369,8 @@ RHEL 9 on 8:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - time schutzbot/deploy.sh
-    - time /usr/libexec/tests/osbuild-composer/koji.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
     RUNNER: aws/rhel-8.4-ga-x86_64
     INTERNAL_NETWORK: "true"
@@ -400,8 +402,8 @@ Installer:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/installers.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v /usr/libexec/tests/osbuild-composer/installers.sh
   parallel:
     matrix:
       - RUNNER:
@@ -417,12 +419,12 @@ SCHEDULED_CLOUD_CLEANER:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
   script:
-    - schutzbot/deploy.sh
-    - schutzbot/scheduled_cloud_cleaner.sh
+    - /usr/bin/time -v schutzbot/deploy.sh
+    - /usr/bin/time -v schutzbot/scheduled_cloud_cleaner.sh
 
 finish:
   stage: finish
   tags:
     - shell
   script:
-    - schutzbot/update_github_status.sh finish
+    - /usr/bin/time -v schutzbot/update_github_status.sh finish

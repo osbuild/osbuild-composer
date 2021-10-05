@@ -47,7 +47,7 @@ function cleanup {
 }
 
 # Provision the software under tet.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 source /etc/os-release
 ARCH=$(uname -m)

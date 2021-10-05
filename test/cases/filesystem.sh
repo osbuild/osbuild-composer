@@ -13,7 +13,7 @@ if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" && "${ID}-${VERSION_ID}" != "rhel-9.0"
 fi
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 # Colorful output.
 function greenprint {

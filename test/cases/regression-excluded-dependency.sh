@@ -16,7 +16,7 @@
 source /etc/os-release
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
     echo "$0 is only enabled for rhel-8.5 and rhel-9.0; skipping..."

@@ -16,7 +16,7 @@ function greenprint {
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 # Check available container runtime
 if which podman 2>/dev/null >&2; then

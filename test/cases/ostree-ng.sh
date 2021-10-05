@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh

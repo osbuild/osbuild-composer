@@ -30,7 +30,7 @@ run_test_case () {
     echo "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
-    if sudo "${1}" -test.v | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
+    if /usr/bin/time -v sudo "${1}" -test.v | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
         PASSED_TESTS+=("$TEST_NAME")
     else
         FAILED_TESTS+=("$TEST_NAME")
@@ -42,7 +42,7 @@ run_test_case () {
 
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/bin/time -v /usr/libexec/osbuild-composer-test/provision.sh
 
 # Set up a basic postgres db
 sudo dnf install -y go postgresql postgresql-server postgresql-contrib
