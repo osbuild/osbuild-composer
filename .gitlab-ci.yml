@@ -261,20 +261,12 @@ Integration:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.5-nightly-x86_64
+          - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
         RUNNER:
           - aws/rhel-8.5-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - SCRIPT:
-          - aws.sh
-          - azure.sh
-          - filesystem.sh
-          - vmware.sh
-          - cross-distro.sh
-        RUNNER:
-          - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
