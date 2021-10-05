@@ -101,7 +101,7 @@ To start the containers, change into the `distribution/` directory and run:
 You can send requests to the *osbuild-composer* container directly using the
 generated certificate and client key. For example, from the project root, run:
 
-    curl -k --cert ./containers/config/client-crt.pem --key ./containers/config/client-key.pem https://172.30.0.10:9196/api/composer-koji/v1/status
+    curl -k --cert ./containers/config/client-crt.pem --key ./containers/config/client-key.pem https://172.30.0.10:8080/api/composer-koji/v1/status
 
 To rebuild the containers after a change, add the `--build` flag to the `docker-compose` command:
 

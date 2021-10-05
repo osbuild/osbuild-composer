@@ -1,0 +1,2 @@
+# Openshift deploy templates
+

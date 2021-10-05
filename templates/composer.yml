@@ -1,25 +1,27 @@
 apiVersion: v1
 kind: Template
-labels:
-  app: osbuild-composer
-  template: osbuild-composer
 metadata:
+  name: composer
   annotations:
-    description: OCP template for osbuild-composer in cloud.redhat.com
-  name: osbuild-composer
+    openshift.io/display-name: Image-Builder composer service
+    description: Composer component of the image-builder serivce
+    tags: golang
+    iconClass: icon-shadowman
+    template.openshift.io/provider-display-name: Red Hat, Inc.
+labels:
+  template: composer
 objects:
-
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
-      service: osbuild-composer
-    name: osbuild-composer
+      service: image-builder
+    name: composer
   spec:
-    replicas: 1
+    replicas: 3
     selector:
       matchLabels:
-        name: osbuild-composer
+        app: composer
     strategy:
       # Update pods 1 at a time
       type: RollingUpdate
@@ -31,48 +33,49 @@ objects:
     template:
       metadata:
         labels:
-          name: osbuild-composer
+          app: composer
       spec:
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
-          name: osbuild-composer
+          name: composer
           env:
           - name: PGHOST
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.host
           - name: PGPORT
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.port
           - name: PGDATABASE
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.name
           - name: PGUSER
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.user
           - name: PGPASSWORD
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.password
           - name: PGSSLMODE
             value: "${PGSSLMODE}"
           ports:
-          - name: api
-            containerPort: 9196
+          - name: composer-api
             protocol: TCP
-          - name: workers
-            containerPort: 8700
+            containerPort: "${COMPOSER_API_PORT}"
+          - name: composer-worker-api
+            protocol: TCP
+            containerPort: "${COMPOSER_WORKER_API_PORT}"
           volumeMounts:
           - name: composer-config
-            mountPath: "/etc/osbuild-composer"
+            mountPath: "${COMPOSER_CONFIG_DIR}"
             readOnly: true
           - name: state-directory
             mountPath: "/var/lib/osbuild-composer"
@@ -86,39 +89,38 @@ objects:
           secret:
             secretName: db
         - name: state-directory
-          persistentVolumeClaim:
-            claimName: osbuild-composer-state-dir
+          emptyDir: {}
         - name: cache-directory
           emptyDir: {}
         initContainers:
-        - name: osbuild-composer-migrate
+        - name: composer-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
           command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
           env:
           - name: PGHOST
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.host
           - name: PGPORT
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.port
           - name: PGDATABASE
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.name
           - name: PGUSER
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.user
           - name: PGPASSWORD
             valueFrom:
               secretKeyRef:
-                name: osbuild-composer-db
+                name: composer-db
                 key: db.password
           - name: PGSSLMODE
             value: "${PGSSLMODE}"
@@ -126,80 +128,82 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    labels:
-      service: composer
     name: composer
+    labels:
+      app: composer
+      port: composer-api
   spec:
     ports:
-      - name: composer-api
-        protocol: TCP
-        port: ${{API_LISTENER_PORT}}
-        targetPort: 9196
+      - protocol: TCP
+        port: 80
+        targetPort: "${COMPOSER_API_PORT}"
     selector:
-      name: osbuild-composer
+      app: composer
 
 - apiVersion: v1
   kind: Service
   metadata:
-    labels:
-      service: composer-worker
     name: composer-worker
+    labels:
+      app: composer
+      port: composer-worker-api
   spec:
     ports:
-      - name: composer-worker
-        protocol: TCP
-        port: ${{API_LISTENER_PORT}}
-        targetPort: 8700
+      - protocol: TCP
+        port: 80
+        targetPort: "${COMPOSER_WORKER_API_PORT}"
     selector:
-      name: osbuild-composer
+      app: composer
 
-- apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: osbuild-composer-state-dir
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${STATE_VOLUME_CAPACITY}
-
+# This map should probably move to app-intf
 - apiVersion: v1
   kind: ConfigMap
   metadata:
     name: composer-config
   data:
+    acl.yml: |
+      - claim: email
+        pattern: ^osbuilders@redhat\.com$
     osbuild-composer.toml: |
+      log_level = "info"
       [koji]
+      enable_tls = false
+      enable_mtls = false
+      enable_jwt = true
+      jwt_keys_url = ""
+      jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
+      jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       [worker]
-      identity_filter = [${WORKER_API_IDENTITY_FILTER}]
-      [composer_api]
-      identity_filter = [${COMPOSER_API_IDENTITY_FILTER}]
-
+      enable_tls = false
+      enable_mtls = false
+      enable_jwt = true
+      jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
+      jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
 
 parameters:
-  - description: osbuild-composer image name
+  - description: composer image name
     name: IMAGE_NAME
-    value: quay.io/cloudservices/osbuild-composer
+    value: quay.io/app-sre/composer
     required: true
-  - description: osbuild-composer image tag
+  - description: composer image tag
     name: IMAGE_TAG
     required: true
-  - description: api listener port
-    name: API_LISTENER_PORT
-    value: "8080"
-  - description: Size of composer state directory
-    name: STATE_VOLUME_CAPACITY
-    value: 2Gi
-  - description: Identity filter for the composer api
-    name: COMPOSER_API_IDENTITY_FILTER
-    value: "" # example: '"012345", "123456"'
-  - description: Identity filter for the composer api
-    name: WORKER_API_IDENTITY_FILTER
-    value: ""
-  - description: db-secrets directory
-    name: DB_SECRETS_DIR
-    value: "/etc/osbuild-composer/db-secrets"
   - description: postgres sslmode to use when connecting to the db
     name: PGSSLMODE
     value: "require"
+  - description: base sso url
+    name: SSO_BASE_URL
+    required: true
+    value: "https://sso.redhat.com/auth/realms/redhat-external"
+  - description: base sso url
+    name: COMPOSER_CONFIG_DIR
+    required: true
+    value: "/etc/osbuild-composer"
+  - description: composer-api port
+    name: COMPOSER_API_PORT
+    required: true
+    value: "8080"
+  - description: composer-worker-api port
+    name: COMPOSER_WORKER_API_PORT
+    required: true
+    value: "8700"
