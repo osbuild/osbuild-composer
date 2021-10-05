@@ -14,6 +14,9 @@ function greenprint {
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
+# Make sure podman-plugins are installed
+sudo dnf -y install podman-plugins
+
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
 
