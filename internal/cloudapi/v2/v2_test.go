@@ -28,7 +28,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server) {
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	v2Server := v2.NewServer(rpmFixture.Workers, rpm, distros)
+	v2Server := v2.NewServer(rpmFixture.Workers, rpm, distros, "image-builder.service")
 	require.NotNil(t, v2Server)
 
 	return v2Server, rpmFixture.Workers

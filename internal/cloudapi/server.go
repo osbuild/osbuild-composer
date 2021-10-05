@@ -16,10 +16,10 @@ type Server struct {
 	v2 *v2.Server
 }
 
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
+func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry, awsBucket string) *Server {
 	server := &Server{
 		v1: v1.NewServer(workers, rpmMetadata, distros),
-		v2: v2.NewServer(workers, rpmMetadata, distros),
+		v2: v2.NewServer(workers, rpmMetadata, distros, awsBucket),
 	}
 	return server
 }
