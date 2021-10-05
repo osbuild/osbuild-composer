@@ -22,5 +22,5 @@ COPY ./dnf-json /usr/libexec/osbuild-composer/
 COPY ./internal/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
 COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/
 
-EXPOSE 9196 8700
-ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--composer-api-port", "9196"]
+EXPOSE 8080 8700
+ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--composer-api-port", "8080"]
