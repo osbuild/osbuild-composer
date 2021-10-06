@@ -107,9 +107,9 @@ if [[ "$PROJECT" != "osbuild-composer" ]]; then
   fi
 fi
 
-if [ -f "rhel8internal.repo" ]; then
+if [ -f "rhel${VERSION_ID%.*}internal.repo" ]; then
     greenprint "Preparing repos for internal build testing"
-    sudo mv rhel8internal.repo /etc/yum.repos.d/
+    sudo mv rhel"${VERSION_ID%.*}"internal.repo /etc/yum.repos.d/
     # Use osbuild from schutzfile if desired for testing custom osbuild-composer packages
     # specified by $REPO_URL in ENV and used in prepare-rhel-internal.sh
     if [ "${SCHUTZ_OSBUILD:=false}" == true ]; then

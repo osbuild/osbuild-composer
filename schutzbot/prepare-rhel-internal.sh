@@ -17,11 +17,11 @@ fi
 
 # Create a repository file for installing the osbuild-composer RPMs
 greenprint "📜 Generating dnf repository file"
-rm -f rhel8internal.repo
+rm -f rhel"${VERSION_ID%.*}"internal.repo
 for ARCH in $ALL_ARCHES; do
-    tee -a rhel8internal.repo << EOF
+    tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
 
-[rhel8-internal-baseos-$ARCH]
+[rhel${VERSION_ID}-internal-baseos-${ARCH}]
 name=RHEL Internal BaseOS
 baseurl=${COMPOSE_URL}/compose/BaseOS/${ARCH}/os/
 enabled=1
@@ -29,7 +29,7 @@ gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
 priority=1
 
-[rhel8-internal-appstream-$ARCH]
+[rhel${VERSION_ID}-internal-appstream-${ARCH}]
 name=RHEL Internal AppStream
 baseurl=${COMPOSE_URL}/compose/AppStream/${ARCH}/os/
 enabled=1
@@ -42,12 +42,12 @@ done
 
 # Create an osbuild-composer JSON file for content consumption
 greenprint "📜 Generate osbuild-composer JSON source file"
-tee rhel-8.json << EOF
+tee rhel-"${VERSION_ID%.*}".json << EOF
 {
 EOF
 
 for ARCH in $ALL_ARCHES; do
-    tee -a rhel-8.json << EOF
+    tee -a rhel-"${VERSION_ID%.*}".json << EOF
     "${ARCH}": [
         {
             "name": "baseos-${ARCH}",
@@ -63,7 +63,7 @@ EOF
 
     # only x86_64 has an RT repository
     if [ "$ARCH" == "x86_64" ]; then
-        tee -a rhel-8.json << EOF
+        tee -a rhel-"${VERSION_ID%.*}".json << EOF
         ,{
             "name": "rt-${ARCH}",
             "baseurl": "${COMPOSE_URL}/compose/RT/${ARCH}/os",
@@ -72,23 +72,23 @@ EOF
 EOF
     fi
 
-    tee -a rhel-8.json << EOF
+    tee -a rhel-"${VERSION_ID%.*}".json << EOF
     ]
 EOF
 
     # append comma for all arches except the last one
     if [ "$ARCH" != "x86_64" ]; then
-        tee -a rhel-8.json << EOF
+        tee -a rhel-"${VERSION_ID%.*}".json << EOF
         ,
 EOF
     fi
 done
 
-tee -a rhel-8.json << EOF
+tee -a rhel-"${VERSION_ID%.*}".json << EOF
 }
 EOF
 
-cp rhel-8.json rhel-8-beta.json
+cp rhel-"${VERSION_ID%.*}".json rhel-"${VERSION_ID%.*}"-beta.json
 
 JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 # Do not create tests repo if it's provided from ENV
@@ -114,7 +114,7 @@ if [ -z "${REPO_URL+x}" ]; then
     # version matches osbuild-composer from the internal tree
     greenprint "Downloading osbuild-composer-tests RPMs from Brew"
     for ARCH in $ALL_ARCHES; do
-        TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-8/packages/osbuild-composer/%{version}/%{release}/$ARCH/osbuild-composer-tests-%{version}-%{release}.$ARCH.rpm")
+        TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-${VERSION_ID%.*}/packages/osbuild-composer/%{version}/%{release}/$ARCH/osbuild-composer-tests-%{version}-%{release}.$ARCH.rpm")
         wget --directory-prefix "$REPO_DIR_LATEST" "$TESTS_RPM_URL"
     done
 
@@ -145,7 +145,7 @@ fi
 
 # amend repository file.
 greenprint "📜 Amend dnf repository file"
-tee -a rhel8internal.repo << EOF
+tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
 
 [osbuild-composer-tests-multi-arch]
 name=Tests ${JOB_NAME}
