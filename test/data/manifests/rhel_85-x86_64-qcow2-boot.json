@@ -10653,7 +10653,7 @@
       "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
     ],
     "image-format": {
-      "compat": "1.1",
+      "compat": "0.10",
       "type": "qcow2"
     },
     "locale": {
