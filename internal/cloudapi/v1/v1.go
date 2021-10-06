@@ -384,7 +384,7 @@ func (h *apiHandlers) Compose(ctx echo.Context) error {
 	var response ComposeResult
 	response.Id = id.String()
 
-	return ctx.JSON(http.StatusOK, response)
+	return ctx.JSON(http.StatusCreated, response)
 }
 
 // ComposeStatus handles a /compose/{id} GET request
