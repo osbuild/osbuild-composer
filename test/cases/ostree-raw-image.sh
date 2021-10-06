@@ -85,13 +85,7 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.5")
-        CONTAINER_TYPE=edge-container
-        CONTAINER_FILENAME=container.tar
-        INSTALLER_TYPE=edge-raw-image
-        INSTALLER_FILENAME=image.raw.xz
-        ;;
-    "rhel-9.0")
+    "rhel-8.5" | "rhel-8.6" | "rhel-9.0")
         CONTAINER_TYPE=edge-container
         CONTAINER_FILENAME=container.tar
         INSTALLER_TYPE=edge-raw-image

@@ -29,7 +29,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8.4"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/";;
-    "rhel-8.5")
+    "rhel-8.5" | "rhel-8.6")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
