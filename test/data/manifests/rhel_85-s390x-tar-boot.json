@@ -8841,23 +8841,6 @@
       "missing": []
     },
     "selinux": {
-      "context-mismatch": [
-        {
-          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
-          "expected": "system_u:object_r:rpm_var_lib_t:s0",
-          "filename": "/var/lib/rpm/__db.001"
-        },
-        {
-          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
-          "expected": "system_u:object_r:rpm_var_lib_t:s0",
-          "filename": "/var/lib/rpm/__db.002"
-        },
-        {
-          "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
-          "expected": "system_u:object_r:rpm_var_lib_t:s0",
-          "filename": "/var/lib/rpm/__db.003"
-        }
-      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"
