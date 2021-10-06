@@ -639,7 +639,8 @@ function collectMetrics(){
 }
 
 function sendCompose() {
-    OUTPUT=$(curl \
+    OUTPUT=$(mktemp)
+    HTTPSTATUS=$(curl \
                  --silent \
                  --show-error \
                  --cacert /etc/osbuild-composer/ca-crt.pem \
@@ -648,9 +649,12 @@ function sendCompose() {
                  --header 'Content-Type: application/json' \
                  --request POST \
                  --data @"$REQUEST_FILE" \
+                 --write-out '%{http_code}' \
+                 --output "$OUTPUT" \
                  https://localhost/api/composer/v1/compose)
 
-    COMPOSE_ID=$(echo "$OUTPUT" | jq -r '.id')
+    test "$HTTPSTATUS" = "201"
+    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
 }
 
 function waitForState() {
