@@ -22,7 +22,7 @@ fi
 
 # Skip 'selinux/contect-mismatch' part of the image-info report on RHEL-8.
 # https://bugzilla.redhat.com/show_bug.cgi?id=1973754
-if [[ "${DISTRO_CODE}" =~ "rhel-8" ]]; then
+if [[ "${DISTRO_CODE}" =~ "rhel-84" ]]; then
     IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} -skip-selinux-ctx-check"
 fi
 
@@ -36,7 +36,7 @@ test_divider () {
 
 # Get a list of test cases.
 get_test_cases () {
-    TEST_CASE_SELECTOR="${DISTRO_CODE}-${ARCH}"
+    TEST_CASE_SELECTOR="${DISTRO_CODE/-/_}-${ARCH}"
     pushd $IMAGE_TEST_CASES_PATH > /dev/null
         ls "$TEST_CASE_SELECTOR"*.json
     popd > /dev/null
