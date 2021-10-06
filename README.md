@@ -23,6 +23,10 @@ instance, includes a
  * **Bug Tracker**: <https://github.com/osbuild/osbuild-composer/issues>
  * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
 
+#### Contributing
+
+Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
+
 ### About
 
 Composer is a middleman between the workhorses from *osbuild* and the
