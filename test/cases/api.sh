@@ -401,6 +401,14 @@ case "$ID-$VERSION_ID" in
       SSH_USER="cloud-user"
     fi
     ;;
+  "rhel-8.6")
+    DISTRO="rhel-86"
+    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
+      SSH_USER="ec2-user"
+    else
+      SSH_USER="cloud-user"
+    fi
+    ;;
   "rhel-8.5")
     DISTRO="rhel-85"
     if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
