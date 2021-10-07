@@ -26,10 +26,10 @@ func TestAPIError(t *testing.T) {
 		ctx := e.NewContext(nil, nil)
 		ctx.Set("operationID", "test-operation-id")
 		apiError := APIError(se.code, nil, ctx)
-		require.Equal(t, fmt.Sprintf("/api/composer/v2/errors/%d", se.code), apiError.Href)
+		require.Equal(t, fmt.Sprintf("/api/image-builder-composer/v2/errors/%d", se.code), apiError.Href)
 		require.Equal(t, fmt.Sprintf("%d", se.code), apiError.Id)
 		require.Equal(t, "Error", apiError.Kind)
-		require.Equal(t, fmt.Sprintf("COMPOSER-%d", se.code), apiError.Code)
+		require.Equal(t, fmt.Sprintf("IMAGE-BUILDER-COMPOSER-%d", se.code), apiError.Code)
 		require.Equal(t, "test-operation-id", apiError.OperationId)
 		require.Equal(t, se.reason, apiError.Reason)
 	}
@@ -39,15 +39,15 @@ func TestAPIErrorOperationID(t *testing.T) {
 	ctx := echo.New().NewContext(nil, nil)
 
 	apiError := APIError(ErrorUnauthenticated, nil, ctx)
-	require.Equal(t, "COMPOSER-10003", apiError.Code)
+	require.Equal(t, "IMAGE-BUILDER-COMPOSER-10003", apiError.Code)
 
 	ctx.Set("operationID", 5)
 	apiError = APIError(ErrorUnauthenticated, nil, ctx)
-	require.Equal(t, "COMPOSER-10003", apiError.Code)
+	require.Equal(t, "IMAGE-BUILDER-COMPOSER-10003", apiError.Code)
 
 	ctx.Set("operationID", "test-operation-id")
 	apiError = APIError(ErrorUnauthenticated, nil, ctx)
-	require.Equal(t, "COMPOSER-401", apiError.Code)
+	require.Equal(t, "IMAGE-BUILDER-COMPOSER-401", apiError.Code)
 }
 
 func TestAPIErrorList(t *testing.T) {
@@ -74,12 +74,12 @@ func TestAPIErrorList(t *testing.T) {
 	require.Equal(t, 10, errs.Size)
 	require.Equal(t, len(getServiceErrors()), errs.Total)
 	require.Equal(t, 0, errs.Page)
-	require.Equal(t, "COMPOSER-401", errs.Items[0].Code)
+	require.Equal(t, "IMAGE-BUILDER-COMPOSER-401", errs.Items[0].Code)
 	errs = APIErrorList(1, 10, ctx)
 	require.Equal(t, 10, errs.Size)
 	require.Equal(t, len(getServiceErrors()), errs.Total)
 	require.Equal(t, 1, errs.Page)
-	require.Equal(t, "COMPOSER-11", errs.Items[0].Code)
+	require.Equal(t, "IMAGE-BUILDER-COMPOSER-11", errs.Items[0].Code)
 
 	// high page
 	errs = APIErrorList(1000, 1, ctx)

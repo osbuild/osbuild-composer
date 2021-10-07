@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	ErrorCodePrefix = "COMPOSER-"
-	ErrorHREF       = "/api/composer/v2/errors"
+	ErrorCodePrefix = "IMAGE-BUILDER-COMPOSER-"
+	ErrorHREF       = "/api/image-builder-composer/v2/errors"
 
 	// ocm-sdk sends ErrorUnauthenticated with id 401 & code COMPOSER-401
 	ErrorUnauthenticated ServiceErrorCode = 401

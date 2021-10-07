@@ -231,7 +231,7 @@ func (c *Composer) Start() error {
 	if c.apiListener != nil {
 		go func() {
 			const apiRoute = "/api/composer/v1"
-			const apiRouteV2 = "/api/composer/v2"
+			const apiRouteV2 = "/api/image-builder-composer/v2"
 			const kojiRoute = "/api/composer-koji/v1"
 
 			mux := http.NewServeMux()
