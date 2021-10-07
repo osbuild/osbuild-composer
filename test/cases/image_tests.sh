@@ -26,6 +26,13 @@ if [[ "${DISTRO_CODE}" =~ "rhel-84" ]]; then
     IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} -skip-selinux-ctx-check"
 fi
 
+# Skip the /usr/lib/tmpfiles.d/rpm-ostree-1-autovar.conf file form the 'tmpfiles.d'
+# section of the image-info report. The content of the file is dynamically generated
+# and lines are not deterministically sorted, thus the diff often fails.
+if [[ "${DISTRO_CODE}" =~ "fedora" ]]; then
+    IMAGE_TEST_CASE_RUNNER="${IMAGE_TEST_CASE_RUNNER} -skip-tmpfilesd-path /usr/lib/tmpfiles.d/rpm-ostree-1-autovar.conf"
+fi
+
 PASSED_TESTS=()
 FAILED_TESTS=()
 
