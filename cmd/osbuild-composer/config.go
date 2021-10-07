@@ -35,6 +35,7 @@ type AWSConfig struct {
 type WorkerAPIConfig struct {
 	AllowedDomains []string `toml:"allowed_domains"`
 	CA             string   `toml:"ca"`
+	BasePath       string   `toml:"base_path"`
 	PGHost         string   `toml:"pg_host" env:"PGHOST"`
 	PGPort         string   `toml:"pg_port" env:"PGPORT"`
 	PGDatabase     string   `toml:"pg_database" env:"PGDATABASE"`
@@ -85,6 +86,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 			},
 		},
 		Worker: WorkerAPIConfig{
+			BasePath:   "/api/worker/v1",
 			EnableTLS:  true,
 			EnableMTLS: true,
 			EnableJWT:  false,

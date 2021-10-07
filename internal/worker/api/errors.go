@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	ErrorCodePrefix = "COMPOSER-WORKER-"
-	ErrorHREF       = "/api/composer-worker/v1/errors"
+	ErrorCodePrefix = "IMAGE-BUILDER-WORKER-"
 
 	ErrorUnsupportedMediaType ServiceErrorCode = 3
 	ErrorJobNotFound          ServiceErrorCode = 5
@@ -122,7 +121,7 @@ func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context)
 
 	return &Error{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("%s/%d", ErrorHREF, se.code),
+			Href: fmt.Sprintf("%s/errors/%d", BasePath, se.code),
 			Id:   fmt.Sprintf("%d", se.code),
 			Kind: "Error",
 		},

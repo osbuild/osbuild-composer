@@ -21,12 +21,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-func newTestServer(t *testing.T, tempdir string) *worker.Server {
+func newTestServer(t *testing.T, tempdir string, basePath string) *worker.Server {
 	q, err := fsjobqueue.New(tempdir)
 	if err != nil {
 		t.Fatalf("error creating fsjobqueue: %v", err)
 	}
-	return worker.NewServer(nil, q, "")
+	return worker.NewServer(nil, q, "", basePath)
 }
 
 // Ensure that the status request returns OK.
@@ -35,7 +35,7 @@ func TestStatus(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 	handler := server.Handler()
 	test.TestRoute(t, handler, false, "GET", "/api/worker/v1/status", ``, http.StatusOK, `{"status":"OK", "href": "/api/worker/v1/status", "kind":"Status"}`, "message", "id")
 }
@@ -66,7 +66,39 @@ func TestErrors(t *testing.T) {
 	defer os.RemoveAll(tempdir)
 
 	for _, c := range cases {
-		server := newTestServer(t, tempdir)
+		server := newTestServer(t, tempdir, "/api/worker/v1")
+		handler := server.Handler()
+		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, `{"kind":"Error"}`, "message", "href", "operation_id", "reason", "id", "code")
+	}
+}
+
+func TestErrorsAlteredBasePath(t *testing.T) {
+	var cases = []struct {
+		Method         string
+		Path           string
+		Body           string
+		ExpectedStatus int
+	}{
+		// Bogus path
+		{"GET", "/api/image-builder-worker/v1/foo", ``, http.StatusNotFound},
+		// Create job with invalid body
+		{"POST", "/api/image-builder-worker/v1/jobs", ``, http.StatusBadRequest},
+		// Wrong method
+		{"GET", "/api/image-builder-worker/v1/jobs", ``, http.StatusMethodNotAllowed},
+		// Update job with invalid ID
+		{"PATCH", "/api/image-builder-worker/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
+		// Update job that does not exist, with invalid body
+		{"PATCH", "/api/image-builder-worker/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", ``, http.StatusBadRequest},
+		// Update job that does not exist
+		{"PATCH", "/api/image-builder-worker/v1/jobs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", `{"status":"FINISHED"}`, http.StatusNotFound},
+	}
+
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	for _, c := range cases {
+		server := newTestServer(t, tempdir, "/api/image-builder-worker/v1")
 		handler := server.Handler()
 		test.TestRoute(t, handler, false, c.Method, c.Path, c.Body, c.ExpectedStatus, `{"kind":"Error"}`, "message", "href", "operation_id", "reason", "id", "code")
 	}
@@ -90,7 +122,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 	handler := server.Handler()
 
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -119,7 +151,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -160,7 +192,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 	handler := server.Handler()
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -176,7 +208,7 @@ func TestUpdate(t *testing.T) {
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound,
-		`{"href":"/api/composer-worker/v1/errors/5","code":"COMPOSER-WORKER-5","id":"5","kind":"Error","message":"Token not found","reason":"Token not found"}`,
+		`{"href":"/api/worker/v1/errors/5","code":"IMAGE-BUILDER-WORKER-5","id":"5","kind":"Error","message":"Token not found","reason":"Token not found"}`,
 		"operation_id")
 }
 
@@ -192,7 +224,7 @@ func TestArgs(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "worker-tests-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 
 	job := worker.OSBuildJob{
 		Manifest:  manifest,
@@ -232,7 +264,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, tempdir)
+	server := newTestServer(t, tempdir, "/api/worker/v1")
 	handler := server.Handler()
 
 	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
@@ -248,6 +280,40 @@ func TestUpload(t *testing.T) {
 	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
 }
 
+func TestUploadAlteredBasePath(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+	server := newTestServer(t, tempdir, "/api/image-builder-worker/v1")
+	handler := server.Handler()
+
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, jobID, j)
+	require.Equal(t, "osbuild", typ)
+	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
+
+	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/image-builder-worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
+}
+
 func TestOAuth(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "worker-tests-")
 	require.NoError(t, err)
@@ -255,7 +321,7 @@ func TestOAuth(t *testing.T) {
 
 	q, err := fsjobqueue.New(tempdir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, tempdir)
+	workerServer := worker.NewServer(nil, q, tempdir, "/api/image-builder-worker/v1")
 	handler := workerServer.Handler()
 
 	workSrv := httptest.NewServer(handler)
@@ -311,7 +377,7 @@ func TestOAuth(t *testing.T) {
 	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
 	require.NoError(t, err)
 
-	client, err := worker.NewClient(proxySrv.URL, nil, &offlineToken, &oauthSrv.URL)
+	client, err := worker.NewClient(proxySrv.URL, nil, &offlineToken, &oauthSrv.URL, "/api/image-builder-worker/v1")
 	require.NoError(t, err)
 	job, err := client.RequestJob([]string{"osbuild"}, arch.Name())
 	require.NoError(t, err)

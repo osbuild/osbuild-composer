@@ -2,4 +2,5 @@
 
 package api
 
-const BasePath = "/api/worker/v1"
+// default basepath, can be overwritten
+var BasePath = "/api/worker/v1"

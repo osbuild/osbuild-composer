@@ -87,7 +87,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		}
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir)
+	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, config.Worker.BasePath)
 
 	return &c, nil
 }

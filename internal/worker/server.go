@@ -41,12 +41,15 @@ type JobStatus struct {
 var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string) *Server {
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, basePath string) *Server {
 	s := &Server{
 		jobs:         jobs,
 		logger:       logger,
 		artifactsDir: artifactsDir,
 	}
+
+	api.BasePath = basePath
+
 	go s.WatchHeartbeats()
 	return s
 }
