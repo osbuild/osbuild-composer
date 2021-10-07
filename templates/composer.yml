@@ -70,9 +70,9 @@ objects:
           - name: composer-api
             protocol: TCP
             containerPort: ${{COMPOSER_API_PORT}}
-          - name: composer-worker-api
+          - name: worker-api
             protocol: TCP
-            containerPort: ${{COMPOSER_WORKER_API_PORT}}
+            containerPort: ${{WORKER_API_PORT}}
           volumeMounts:
           - name: composer-config
             mountPath: "${COMPOSER_CONFIG_DIR}"
@@ -146,12 +146,12 @@ objects:
     name: composer-worker
     labels:
       app: composer
-      port: composer-worker-api
+      port: worker-api
   spec:
     ports:
       - protocol: TCP
         port: 80
-        targetPort: ${{COMPOSER_WORKER_API_PORT}}
+        targetPort: ${{WORKER_API_PORT}}
     selector:
       app: composer
 
@@ -203,7 +203,7 @@ parameters:
     name: COMPOSER_API_PORT
     required: true
     value: "8080"
-  - description: composer-worker-api port
-    name: COMPOSER_WORKER_API_PORT
+  - description: worker-api port
+    name: WORKER_API_PORT
     required: true
     value: "8700"
