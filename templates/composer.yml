@@ -128,7 +128,7 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: composer
+    name: image-builder-composer
     labels:
       app: composer
       port: composer-api
@@ -143,7 +143,7 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: composer-worker
+    name: image-builder-worker
     labels:
       app: composer
       port: worker-api
@@ -173,6 +173,7 @@ objects:
       jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       [worker]
+      base_path = "/api/image-builder-worker/v1"
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
