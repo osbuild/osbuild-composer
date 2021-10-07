@@ -55,11 +55,13 @@ type job struct {
 	dynamicArgs      []json.RawMessage
 }
 
-func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string) (*Client, error) {
+func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string, basePath string) (*Client, error) {
 	server, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
 	}
+
+	api.BasePath = basePath
 
 	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {
@@ -76,11 +78,13 @@ func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string)
 	return &Client{server, requester, offlineToken, oAuthURL, nil, nil, &sync.Mutex{}}, nil
 }
 
-func NewClientUnix(path string) *Client {
+func NewClientUnix(path string, basePath string) *Client {
 	server, err := url.Parse("http://localhost/")
 	if err != nil {
 		panic(err)
 	}
+
+	api.BasePath = basePath
 
 	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {

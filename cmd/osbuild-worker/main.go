@@ -97,6 +97,7 @@ func main() {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
 		} `toml:"authentication"`
+		BasePath string `toml:"base_path"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -126,6 +127,10 @@ func main() {
 		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
 	}
 
+	if config.BasePath == "" {
+		config.BasePath = "/api/worker/v1"
+	}
+
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
 		logrus.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
@@ -148,7 +153,7 @@ func main() {
 
 	var client *worker.Client
 	if unix {
-		client = worker.NewClientUnix(address)
+		client = worker.NewClientUnix(address, config.BasePath)
 	} else {
 		var token *string
 		var oAuthURL *string
@@ -189,7 +194,7 @@ func main() {
 			}
 		}
 
-		client, err = worker.NewClient(address, conf, token, oAuthURL)
+		client, err = worker.NewClient(address, conf, token, oAuthURL, config.BasePath)
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)
 		}
