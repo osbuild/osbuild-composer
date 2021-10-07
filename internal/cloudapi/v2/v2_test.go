@@ -40,12 +40,12 @@ func TestUnknownRoute(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, _ := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", "/api/composer/v2/badroute", ``, http.StatusNotFound, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/badroute", ``, http.StatusNotFound, `
 	{
-		"href": "/api/composer/v2/errors/21",
+		"href": "/api/image-builder-composer/v2/errors/21",
 		"id": "21",
 		"kind": "Error",
-		"code": "COMPOSER-21",
+		"code": "IMAGE-BUILDER-COMPOSER-21",
 		"reason": "Requested resource doesn't exist"
 	}`, "operation_id")
 }
@@ -56,21 +56,21 @@ func TestGetError(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, _ := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", "/api/composer/v2/errors/4", ``, http.StatusOK, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/4", ``, http.StatusOK, `
 	{
-		"href": "/api/composer/v2/errors/4",
+		"href": "/api/image-builder-composer/v2/errors/4",
 		"id": "4",
 		"kind": "Error",
-		"code": "COMPOSER-4",
+		"code": "IMAGE-BUILDER-COMPOSER-4",
 		"reason": "Unsupported distribution"
 	}`, "operation_id")
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", "/api/composer/v2/errors/3000", ``, http.StatusNotFound, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/3000", ``, http.StatusNotFound, `
 	{
-		"href": "/api/composer/v2/errors/17",
+		"href": "/api/image-builder-composer/v2/errors/17",
 		"id": "17",
 		"kind": "Error",
-		"code": "COMPOSER-17",
+		"code": "IMAGE-BUILDER-COMPOSER-17",
 		"reason": "Error with given id not found"
 	}`, "operation_id")
 }
@@ -81,16 +81,16 @@ func TestGetErrorList(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, _ := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", "/api/composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
 	{
 		"kind": "ErrorList",
 		"page": 3,
 		"size": 1,
 		"items": [{
-			"href": "/api/composer/v2/errors/4",
+			"href": "/api/image-builder-composer/v2/errors/4",
 			"id": "4",
 			"kind": "Error",
-			"code": "COMPOSER-4",
+			"code": "IMAGE-BUILDER-COMPOSER-4",
 			"reason": "Unsupported distribution"
 		 }]
 	}`, "operation_id", "total")
@@ -103,7 +103,7 @@ func TestCompose(t *testing.T) {
 	srv, _ := newV2Server(t, dir)
 
 	// unsupported distribution
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "unsupported_distro",
 		"image_requests":[{
@@ -120,15 +120,15 @@ func TestCompose(t *testing.T) {
 		 }]
 	}`, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
-		"href": "/api/composer/v2/errors/4",
+		"href": "/api/image-builder-composer/v2/errors/4",
 		"id": "4",
 		"kind": "Error",
-		"code": "COMPOSER-4",
+		"code": "IMAGE-BUILDER-COMPOSER-4",
 		"reason": "Unsupported distribution"
 	}`, "operation_id")
 
 	// unsupported architecture
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -144,15 +144,15 @@ func TestCompose(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName), http.StatusBadRequest, `
 	{
-		"href": "/api/composer/v2/errors/5",
+		"href": "/api/image-builder-composer/v2/errors/5",
 		"id": "5",
 		"kind": "Error",
-		"code": "COMPOSER-5",
+		"code": "IMAGE-BUILDER-COMPOSER-5",
 		"reason": "Unsupported architecture"
 	}`, "operation_id")
 
 	// unsupported imagetype
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -168,15 +168,15 @@ func TestCompose(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
-		"href": "/api/composer/v2/errors/6",
+		"href": "/api/image-builder-composer/v2/errors/6",
 		"id": "6",
 		"kind": "Error",
-		"code": "COMPOSER-6",
+		"code": "IMAGE-BUILDER-COMPOSER-6",
 		"reason": "Unsupported image type"
 	}`, "operation_id")
 
 	// Returns 404, but should be 405; see https://github.com/labstack/echo/issues/1981
-	// test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", "/api/composer/v2/compose", fmt.Sprintf(`
+	// test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	// {
 	//	"distribution": "%s",
 	//	"image_requests":[{
@@ -192,14 +192,14 @@ func TestCompose(t *testing.T) {
 	//          }]
 	// }`, test_distro.TestDistroName, test_distro.TestArch3Name, test_distro.TestImageTypeName), http.StatusMethodNotAllowed, `
 	// {
-	//	"href": "/api/composer/v2/errors/22",
+	//	"href": "/api/image-builder-composer/v2/errors/22",
 	//	"id": "22",
 	//	"kind": "Error",
-	//	"code": "COMPOSER-22",
+	//	"code": "IMAGE-BUILDER-COMPOSER-22",
 	//	"reason": "Requested method isn't supported for resource"
 	// }`, "operation_id")
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -215,7 +215,7 @@ func TestCompose(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 }
@@ -226,7 +226,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, wrksrv := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -242,7 +242,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
@@ -250,9 +250,9 @@ func TestComposeStatusSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", fmt.Sprintf("/api/composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/compose/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "building"}
@@ -266,20 +266,20 @@ func TestComposeStatusSuccess(t *testing.T) {
 
 	err = wrksrv.FinishJob(token, res)
 	require.NoError(t, err)
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", fmt.Sprintf("/api/composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/compose/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "success"}
 	}`, jobId, jobId))
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", fmt.Sprintf("/api/composer/v2/compose/%v/metadata", jobId), ``, http.StatusInternalServerError, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v/metadata", jobId), ``, http.StatusInternalServerError, `
 	{
-		"href": "/api/composer/v2/errors/1012",
+		"href": "/api/image-builder-composer/v2/errors/1012",
 		"id": "1012",
 		"kind": "Error",
-		"code": "COMPOSER-1012",
+		"code": "IMAGE-BUILDER-COMPOSER-1012",
 		"reason": "OSBuildJobResult does not have expected fields set"
 	}`, "operation_id")
 
@@ -291,7 +291,7 @@ func TestComposeStatusFailure(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, wrksrv := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -307,7 +307,7 @@ func TestComposeStatusFailure(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
@@ -315,9 +315,9 @@ func TestComposeStatusFailure(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", fmt.Sprintf("/api/composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/compose/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "building"}
@@ -325,9 +325,9 @@ func TestComposeStatusFailure(t *testing.T) {
 
 	err = wrksrv.FinishJob(token, nil)
 	require.NoError(t, err)
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "GET", fmt.Sprintf("/api/composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/compose/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "failure"}
@@ -340,7 +340,7 @@ func TestComposeCustomizations(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, _ := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"customizations": {
@@ -371,7 +371,7 @@ func TestComposeCustomizations(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 }
@@ -382,7 +382,7 @@ func TestImageTypes(t *testing.T) {
 	defer os.RemoveAll(dir)
 	srv, _ := newV2Server(t, dir)
 
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -400,10 +400,10 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -419,10 +419,10 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -438,10 +438,10 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_commit)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -457,10 +457,10 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_installer)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -479,10 +479,10 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_azure)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-	test.TestRoute(t, srv.Handler("/api/composer/v2"), false, "POST", "/api/composer/v2/compose", fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -500,7 +500,7 @@ func TestImageTypes(t *testing.T) {
 		 }]
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_gcp)), http.StatusCreated, `
 	{
-		"href": "/api/composer/v2/compose",
+		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 }

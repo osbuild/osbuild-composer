@@ -9,11 +9,11 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 servers:
-- url: https://api.openshift.com/api/composer/v2
+- url: https://api.openshift.com/api/image-builder-composer/v2
   description: Main (production) server
-- url: https://api.stage.openshift.com/api/composer/v2
+- url: https://api.stage.openshift.com/api/image-builder-composer/v2
   description: Staging server
-- url: /api/composer/v2
+- url: /api/image-builder-composer/v2
   description: current domain
 
 paths:

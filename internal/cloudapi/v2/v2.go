@@ -411,7 +411,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{
-			Href: "/api/composer/v2/compose",
+			Href: "/api/image-builder-composer/v2/compose",
 			Id:   id.String(),
 			Kind: "ComposeId",
 		},
@@ -498,7 +498,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 	return ctx.JSON(http.StatusOK, ComposeStatus{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/composer/v2/compose/%v", jobId),
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId),
 			Id:   jobId.String(),
 			Kind: "ComposeStatus",
 		},
@@ -553,7 +553,7 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 		// job still running: empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/composer/v2/%v/metadata", jobId),
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/%v/metadata", jobId),
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
@@ -564,7 +564,7 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 		// job canceled or failed, empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/composer/v2/%v/metadata", jobId),
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/%v/metadata", jobId),
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
@@ -631,7 +631,7 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 
 	resp := &ComposeMetadata{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/composer/v2/compose/%v/metadata", jobId),
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/compose/%v/metadata", jobId),
 			Id:   jobId.String(),
 			Kind: "ComposeMetadata",
 		},
