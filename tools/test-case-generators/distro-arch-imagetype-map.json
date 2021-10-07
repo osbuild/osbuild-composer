@@ -113,6 +113,8 @@
     "rhel-90": {
         "x86_64": [
             "ami",
+            "ec2",
+            "ec2-ha",
             "edge-commit",
             "edge-container",
             "openstack",
@@ -123,6 +125,7 @@
         ],
         "aarch64": [
             "ami",
+            "ec2",
             "edge-commit",
             "edge-container",
             "openstack",
