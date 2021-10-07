@@ -170,7 +170,6 @@ objects:
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
-      jwt_keys_url = ""
       jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       [worker]
