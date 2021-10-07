@@ -115,6 +115,7 @@
             "ami",
             "ec2",
             "ec2-ha",
+            "ec2-sap",
             "edge-commit",
             "edge-container",
             "openstack",
