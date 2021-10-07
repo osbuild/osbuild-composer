@@ -17,6 +17,7 @@ stages:
     paths:
       - journal-log
       - ci-artifacts
+      - iostats.json
     when: always
 
 .terraform:
@@ -43,7 +44,9 @@ RPM:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
+    - schutzbot/start_iostats.sh
     - sh "schutzbot/mockbuild.sh"
+    - schutzbot/stop_iostats.sh
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
@@ -73,7 +76,9 @@ Container:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
+    - schutzbot/start_iostats.sh
     - sh "schutzbot/containerbuild.sh"
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -85,7 +90,9 @@ Prepare-rhel-internal:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/prepare-rhel-internal.sh
+    - schutzbot/stop_iostats.sh
   artifacts:
     paths:
       - rhel-8.json
@@ -108,8 +115,10 @@ Base:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -143,8 +152,10 @@ Regression:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/regression.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -176,8 +187,10 @@ OSTree:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -193,8 +206,10 @@ New OSTree:
   stage: test
   extends: OSTree
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-ng.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -205,8 +220,10 @@ New OSTree (RHEL9-BETA):
   stage: test
   extends: OSTree
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-ng-og.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -216,8 +233,10 @@ OSTree simplified installer:
   stage: test
   extends: OSTree
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -228,8 +247,10 @@ OSTree raw image:
   stage: test
   extends: OSTree
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -252,8 +273,10 @@ Integration:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - <<: *INTEGRATION_TESTS
@@ -296,8 +319,10 @@ API:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - <<: *API_TESTS
@@ -328,8 +353,10 @@ libvirt:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/libvirt.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
@@ -348,8 +375,10 @@ RHEL 9 on 8:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
+    - schutzbot/stop_iostats.sh
   variables:
     RUNNER: aws/rhel-8.4-ga-x86_64
     INTERNAL_NETWORK: "true"
@@ -381,8 +410,10 @@ Installer:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[8-9]\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true"'
   script:
+    - schutzbot/start_iostats.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
+    - schutzbot/stop_iostats.sh
   parallel:
     matrix:
       - RUNNER:
