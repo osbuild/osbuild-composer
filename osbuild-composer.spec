@@ -314,13 +314,13 @@ cd $PWD/_build/src/%{goipath}
 
 %package core
 Summary:    The core osbuild-composer binary
+Requires:   %{name}-dnf-json = %{version}-%{release}
 
 %description core
 The core osbuild-composer binary. This is suitable both for spawning in containers and by systemd.
 
 %files core
 %{_libexecdir}/osbuild-composer/osbuild-composer
-%{_libexecdir}/osbuild-composer/dnf-json
 %{_datadir}/osbuild-composer/
 
 %package worker
@@ -329,6 +329,7 @@ Requires:   systemd
 Requires:   qemu-img
 Requires:   osbuild >= 37
 Requires:   osbuild-ostree >= 37
+Requires:   %{name}-dnf-json = %{version}-%{release}
 
 # remove in F34
 Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
@@ -357,6 +358,15 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %postun worker
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
+
+%package dnf-json
+Summary: The dnf-json binary used by osbuild-composer and the workers
+
+%description dnf-json
+The dnf-json binary used by osbuild-composer and the workers.
+
+%files dnf-json
+%{_libexecdir}/osbuild-composer/dnf-json
 
 %if %{with tests} || 0%{?rhel}
 
