@@ -10,10 +10,11 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji     KojiAPIConfig   `toml:"koji"`
-	Worker   WorkerAPIConfig `toml:"worker"`
-	WeldrAPI WeldrAPIConfig  `toml:"weldr_api"`
-	LogLevel string          `toml:"log_level"`
+	Koji      KojiAPIConfig   `toml:"koji"`
+	Worker    WorkerAPIConfig `toml:"worker"`
+	WeldrAPI  WeldrAPIConfig  `toml:"weldr_api"`
+	LogLevel  string          `toml:"log_level"`
+	LogFormat string          `toml:"log_format"`
 }
 
 type KojiAPIConfig struct {
@@ -102,6 +103,8 @@ func GetDefaultConfig() *ComposerConfigFile {
 				},
 			},
 		},
+		LogLevel:  "info",
+		LogFormat: "text",
 	}
 }
 

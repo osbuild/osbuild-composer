@@ -58,6 +58,7 @@ func TestDefaultConfig(t *testing.T) {
 	}
 
 	require.Equal(t, expectedWeldrAPIConfig, defaultConfig.WeldrAPI)
+	require.Equal(t, "text", defaultConfig.LogFormat)
 }
 
 func TestConfig(t *testing.T) {

@@ -42,6 +42,15 @@ func main() {
 		logrus.Info("Failed to load loglevel from config:", err)
 	}
 
+	switch config.LogFormat {
+	case "text":
+		logrus.SetFormatter(&logrus.TextFormatter{})
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		logrus.Infof("Failed to set logging format from config, '%s' is not a valid option", config.LogFormat)
+	}
+
 	logrus.Info("Loaded configuration:")
 	err = DumpConfig(*config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
 	if err != nil {
