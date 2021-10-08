@@ -250,7 +250,7 @@ sudo ostree --repo="$PROD_REPO" remote add --no-gpg-verify edge-stage "$STAGE_RE
 
 # Prepare stage repo network
 greenprint "🔧 Prepare stage repo network"
-sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --ip-range=192.168.200.0/24 --gateway=192.168.200.254 edge
+sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
 
 ##########################################################
 ##
