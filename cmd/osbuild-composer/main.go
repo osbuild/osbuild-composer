@@ -43,7 +43,7 @@ func main() {
 	}
 
 	logrus.Info("Loaded configuration:")
-	err = DumpConfig(config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	err = DumpConfig(*config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
 	if err != nil {
 		logrus.Fatalf("Error printing configuration: %v", err)
 	}

@@ -148,6 +148,8 @@ func loadConfigFromEnv(intf interface{}) error {
 	return nil
 }
 
-func DumpConfig(c *ComposerConfigFile, w io.Writer) error {
+func DumpConfig(c ComposerConfigFile, w io.Writer) error {
+	// sensor sensitive fields
+	c.Worker.PGPassword = ""
 	return toml.NewEncoder(w).Encode(c)
 }
