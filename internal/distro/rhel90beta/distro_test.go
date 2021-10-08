@@ -1,4 +1,4 @@
-package rhel90_test
+package rhel90beta_test
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
+	rhel90 "github.com/osbuild/osbuild-composer/internal/distro/rhel90beta"
 )
 
 type rhelFamilyDistro struct {
@@ -554,6 +554,11 @@ func TestRhel90_GetArch(t *testing.T) {
 
 func TestRhel90_Name(t *testing.T) {
 	distro := rhel90.New()
+	assert.Equal(t, "rhel-90-beta", distro.Name())
+}
+
+func TestRhel90Base_Name(t *testing.T) {
+	distro := rhel90.NewRHEL90()
 	assert.Equal(t, "rhel-90", distro.Name())
 }
 

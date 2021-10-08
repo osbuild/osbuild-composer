@@ -1,4 +1,4 @@
-package rhel90
+package rhel90beta
 
 // This file defines package sets that are used by more than one image type.
 
