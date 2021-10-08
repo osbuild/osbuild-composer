@@ -1,4 +1,4 @@
-package rhel90
+package rhel90beta
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
