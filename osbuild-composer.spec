@@ -20,9 +20,8 @@ Name:           osbuild-composer
 Release:        1%{?dist}
 Summary:        An image building service based on osbuild
 
-# osbuild-composer doesn't have support for building i686 images
-# and also RHEL and Fedora has now only limited support for this arch.
-ExcludeArch:    i686
+# osbuild-composer doesn't have support for building i686 and armv7hl images
+ExcludeArch:    i686 armv7hl
 
 # Upstream license specification: Apache-2.0
 License:        ASL 2.0
