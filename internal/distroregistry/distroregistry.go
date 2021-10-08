@@ -27,6 +27,7 @@ var supportedDistros = []supportedDistro{
 	{rhel85.New, rhel85.NewHostDistro},
 	{rhel86.New, rhel86.NewHostDistro},
 	{rhel90.New, rhel90.NewHostDistro},
+	{rhel90.NewRHEL90, rhel90.NewHostDistro},
 }
 
 type supportedDistro struct {

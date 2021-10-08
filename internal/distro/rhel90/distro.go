@@ -16,7 +16,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const defaultName = "rhel-90"
+const defaultName = "rhel-90-beta"
+const baseAliasName = "rhel-90"
 const osVersion = "9.0"
 const releaseVersion = "9"
 const modulePlatformID = "platform:el9"
@@ -485,6 +486,10 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	return newDistro(defaultName, modulePlatformID, ostreeRef)
+}
+
+func NewRHEL90() distro.Distro {
+	return newDistro(baseAliasName, modulePlatformID, ostreeRef)
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
