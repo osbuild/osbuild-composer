@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -93,4 +94,19 @@ func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
 	}
 
 	require.Equal(t, expectedWeldrDistrosImageTypeDenyList, config.weldrDistrosImageTypeDenyList())
+}
+
+func TestDumpConfig(t *testing.T) {
+	config := &ComposerConfigFile{
+		Worker: WorkerAPIConfig{
+			PGPassword: "sensitive",
+		},
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, DumpConfig(*config, &buf))
+	require.Contains(t, buf.String(), "pg_password = \"\"")
+	require.NotContains(t, buf.String(), "sensitive")
+	// DumpConfig takes a copy
+	require.Equal(t, "sensitive", config.Worker.PGPassword)
 }
