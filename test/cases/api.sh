@@ -710,17 +710,9 @@ function waitForState() {
     done
 }
 
-# a pending shouldn't state shouldn't trip up the heartbeats
-sudo systemctl stop "osbuild-worker@*"
 sendCompose
-waitForState "pending"
-# jobs time out after 2 minutes, so 180 seconds gives ample time to make sure it
-# doesn't time out for pending jobs
-sleep 180
-waitForState "pending"
 
 # crashed/stopped/killed worker should result in a failed state
-sudo systemctl start "osbuild-worker@1"
 waitForState "building"
 sudo systemctl stop "osbuild-worker@*"
 waitForState "failure"
@@ -738,8 +730,8 @@ test "$UPLOAD_STATUS" = "success"
 test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
-# Make sure we get 1 job entry in the db per compose
-sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "2 rows"
+# Make sure we get 2 job entries in the db per compose (depsolve + build)
+sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "4 rows"
 
 #
 # Save the Manifest from the osbuild-composer store
