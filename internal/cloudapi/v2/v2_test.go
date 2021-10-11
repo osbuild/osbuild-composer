@@ -411,7 +411,8 @@ func TestImageTypes(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _ := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir)
+	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
