@@ -88,7 +88,7 @@
             "qcow2",
             "edge-commit",
             "edge-container",
-            "image_installer",
+            "image-installer",
             "vhd",
             "vmdk"
         ],
@@ -121,7 +121,7 @@
             "qcow2",
             "edge-commit",
             "edge-container",
-            "image_installer",
+            "image-installer",
             "vhd",
             "vmdk"
         ],
