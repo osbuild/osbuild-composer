@@ -147,12 +147,12 @@ func systemdStageOptions(enabledServices, disabledServices []string, s *blueprin
 	}
 }
 
-func buildStampStageOptions(arch string) *osbuild.BuildstampStageOptions {
+func buildStampStageOptions(arch, product, osVersion, variant string) *osbuild.BuildstampStageOptions {
 	return &osbuild.BuildstampStageOptions{
 		Arch:    arch,
-		Product: "Red Hat Enterprise Linux",
+		Product: product,
 		Version: osVersion,
-		Variant: "edge",
+		Variant: variant,
 		Final:   true,
 	}
 }
@@ -259,13 +259,11 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 	}
 }
 
-func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMonoStageOptions {
+func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
 	comprOptions := new(osbuild.FSCompressionOptions)
 	if bcj := osbuild.BCJOption(arch); bcj != "" {
 		comprOptions.BCJ = bcj
 	}
-	isolabel := fmt.Sprintf("RHEL-8-6-0-BaseOS-%s", arch)
-
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
@@ -278,7 +276,7 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
-			Name:    "Red Hat Enterprise Linux",
+			Name:    product,
 			Version: osVersion,
 		},
 		ISOLabel:   isolabel,
@@ -286,7 +284,7 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
 		EFI: osbuild.EFI{
 			Architectures: architectures,
-			Vendor:        "redhat",
+			Vendor:        vendor,
 		},
 		ISOLinux: osbuild.ISOLinux{
 			Enabled: arch == distro.X86_64ArchName,
@@ -303,6 +301,40 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 	}
 }
 
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.GrubISOStageOptions {
+	var architectures []string
+
+	if arch == "x86_64" {
+		architectures = []string{"IA32", "X64"}
+	} else if arch == "aarch64" {
+		architectures = []string{"AA64"}
+	} else {
+		panic("unsupported architecture")
+	}
+
+	return &osbuild.GrubISOStageOptions{
+		Product: osbuild.Product{
+			Name:    product,
+			Version: osVersion,
+		},
+		ISOLabel: isolabel,
+		Kernel: osbuild.ISOKernel{
+			Dir: "/images/pxeboot",
+			Opts: []string{"rd.neednet=1",
+				"console=tty0",
+				"console=ttyS0",
+				"systemd.log_target=console",
+				"systemd.journald.forward_to_console=1",
+				"edge.liveiso=" + isolabel,
+				"coreos.inst.install_dev=" + installDevice,
+				"coreos.inst.image_file=/run/media/iso/disk.img.xz",
+				"coreos.inst.insecure"},
+		},
+		Architectures: architectures,
+		Vendor:        vendor,
+	}
+}
+
 func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	return &osbuild.DiscinfoStageOptions{
 		BaseArch: arch,
@@ -310,10 +342,10 @@ func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	}
 }
 
-func xorrisofsStageOptions(filename string, arch string, isolinux bool) *osbuild.XorrisofsStageOptions {
+func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbuild.XorrisofsStageOptions {
 	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
-		VolID:    fmt.Sprintf("RHEL-8-6-0-BaseOS-%s", arch),
+		VolID:    fmt.Sprintf(isolabel, arch),
 		SysID:    "LINUX",
 		EFI:      "images/efiboot.img",
 	}
@@ -330,8 +362,15 @@ func xorrisofsStageOptions(filename string, arch string, isolinux bool) *osbuild
 	return options
 }
 
-func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partition, kernelOptions string,
-	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string, install bool) *osbuild.GRUB2StageOptions {
+func grub2StageOptions(rootPartition *disk.Partition,
+	bootPartition *disk.Partition,
+	kernelOptions string,
+	kernel *blueprint.KernelCustomization,
+	kernelVer string,
+	uefi bool,
+	legacy string,
+	vendor string,
+	install bool) *osbuild.GRUB2StageOptions {
 	if rootPartition == nil {
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
@@ -349,7 +388,7 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 
 	if uefi {
 		stageOptions.UEFI = &osbuild.GRUB2UEFI{
-			Vendor:  "redhat",
+			Vendor:  vendor,
 			Install: install,
 		}
 	}
