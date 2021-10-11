@@ -134,7 +134,8 @@ objects:
       port: composer-api
   spec:
     ports:
-      - protocol: TCP
+      - name: composer-api
+        protocol: TCP
         port: 80
         targetPort: ${{COMPOSER_API_PORT}}
     selector:
@@ -149,7 +150,8 @@ objects:
       port: worker-api
   spec:
     ports:
-      - protocol: TCP
+      - name: worker-api
+        protocol: TCP
         port: 80
         targetPort: ${{WORKER_API_PORT}}
     selector:
