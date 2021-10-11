@@ -4,6 +4,7 @@ package rhel86
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -259,8 +260,8 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"@core", "authselect-compat", "chrony", "cloud-init",
 			"cloud-utils-growpart", "cockpit-system", "cockpit-ws",
 			"dhcp-client", "dnf", "dnf-utils", "dosfstools", "dracut-norescue",
-			"insights-client", "NetworkManager", "net-tools", "nfs-utils",
-			"oddjob", "oddjob-mkhomedir", "psmisc", "python3-jsonschema",
+			"NetworkManager", "net-tools", "nfs-utils", "oddjob",
+			"oddjob-mkhomedir", "psmisc", "python3-jsonschema",
 			"qemu-guest-agent", "redhat-release", "redhat-release-eula",
 			"rsync", "subscription-manager-cockpit", "tar", "tcpdump", "yum",
 		},
@@ -279,7 +280,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"libertas-usb8388-firmware", "nss", "plymouth", "rng-tools",
 			"udisks2",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
@@ -334,11 +335,12 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core", "authselect-compat", "chrony", "cloud-init", "cloud-utils-growpart",
-			"dhcp-client", "yum-utils", "dracut-config-generic", "dracut-norescue", "gdisk",
-			"grub2", "insights-client", "langpacks-en", "NetworkManager",
-			"NetworkManager-cloud-setup", "redhat-release",
-			"redhat-release-eula", "rsync", "tar", "qemu-guest-agent",
+			"@core", "authselect-compat", "chrony", "cloud-init",
+			"cloud-utils-growpart", "dhcp-client", "yum-utils",
+			"dracut-config-generic", "dracut-norescue", "gdisk", "grub2",
+			"langpacks-en", "NetworkManager", "NetworkManager-cloud-setup",
+			"redhat-release", "redhat-release-eula", "rsync", "tar",
+			"qemu-guest-agent",
 		},
 		Exclude: []string{
 			"aic94xx-firmware", "alsa-firmware",
@@ -352,7 +354,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"libertas-sd8787-firmware", "libertas-usb8388-firmware",
 			"plymouth",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 // rhel-ec2 image package set
@@ -485,7 +487,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"authselect-compat", "chrony", "cockpit-system", "cockpit-ws",
 			"@core", "dhcp-client", "dnf", "dnf-utils", "dosfstools",
-			"dracut-norescue", "insights-client", "iwl1000-firmware",
+			"dracut-norescue", "iwl1000-firmware",
 			"iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
 			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware",
 			"iwl3945-firmware", "iwl4965-firmware", "iwl5000-firmware",
@@ -498,7 +500,17 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"subscription-manager-cockpit", "tar", "tcpdump", "yum",
 		},
 		Exclude: nil,
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(distroBuildPackageSet(t))
+}
+
+// packages that are only in some (sub)-distributions
+func distroSpecificPackageSet(t *imageType) rpmmd.PackageSet {
+	if strings.HasPrefix(t.Arch().Distro().Name(), "rhel") {
+		return rpmmd.PackageSet{
+			Include: []string{"insights-client"},
+		}
+	}
+	return rpmmd.PackageSet{}
 }
 
 // INSTALLER PACKAGE SET
