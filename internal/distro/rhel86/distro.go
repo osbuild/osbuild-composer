@@ -16,12 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const defaultName = "rhel-86"
-const osVersion = "8.6"
-const releaseVersion = "8"
-const modulePlatformID = "platform:el8"
-const ostreeRef = "rhel/8/%s/edge"
-
 const (
 	// package set names
 
@@ -47,9 +41,41 @@ var mountpointAllowList = []string{
 
 type distribution struct {
 	name             string
+	product          string
+	osVersion        string
+	releaseVersion   string
 	modulePlatformID string
-	ostreeRef        string
+	vendor           string
+	ostreeRefTmpl    string
+	isolabelTmpl     string
+	runner           string
 	arches           map[string]distro.Arch
+}
+
+// distribution objects without the arches > image types
+var distroMap = map[string]distribution{
+	"rhel-86": {
+		name:             "rhel-86",
+		product:          "Red Hat Enterprise Linux",
+		osVersion:        "8.6",
+		releaseVersion:   "8",
+		modulePlatformID: "platform:el8",
+		vendor:           "redhat",
+		ostreeRefTmpl:    "rhel/8/%s/edge",
+		isolabelTmpl:     "RHEL-8-6-0-BaseOS-%s",
+		runner:           "org.osbuild.rhel86",
+	},
+	"centos-8": {
+		name:             "centos-8",
+		product:          "CentOS Stream",
+		osVersion:        "8-stream",
+		releaseVersion:   "8",
+		modulePlatformID: "platform:el8",
+		vendor:           "centos",
+		ostreeRefTmpl:    "centos/8/%s/edge",
+		isolabelTmpl:     "CentOS-Stream-8-%s-dvd",
+		runner:           "org.osbuild.centos8",
+	},
 }
 
 func (d *distribution) Name() string {
@@ -57,7 +83,7 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) Releasever() string {
-	return releaseVersion
+	return d.releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -65,7 +91,7 @@ func (d *distribution) ModulePlatformID() string {
 }
 
 func (d *distribution) OSTreeRef() string {
-	return d.ostreeRef
+	return d.ostreeRefTmpl
 }
 
 func (d *distribution) ListArches() []string {
@@ -207,8 +233,9 @@ func (t *imageType) MIMEType() string {
 }
 
 func (t *imageType) OSTreeRef() string {
+	d := t.arch.distro
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(d.ostreeRefTmpl, t.arch.name)
 	}
 	return ""
 }
@@ -458,44 +485,48 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro(defaultName, modulePlatformID, ostreeRef)
+	return newDistro("rhel-86")
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro(name, modulePlatformID, ostreeRef)
+	return newDistro("rhel-86")
 }
 
-func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+func NewCentos() distro.Distro {
+	return newDistro("centos-8")
+}
+
+func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("centos-8")
+}
+
+func newDistro(distroName string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
-	rd := &distribution{
-		name:             name,
-		modulePlatformID: modulePlatformID,
-		ostreeRef:        ostreeRef,
-	}
+	rd := distroMap[distroName]
 
 	// Architecture definitions
 	x86_64 := architecture{
 		name:     distro.X86_64ArchName,
-		distro:   rd,
+		distro:   &rd,
 		legacy:   "i386-pc",
 		bootType: distro.HybridBootType,
 	}
 
 	aarch64 := architecture{
 		name:     distro.Aarch64ArchName,
-		distro:   rd,
+		distro:   &rd,
 		bootType: distro.UEFIBootType,
 	}
 
 	ppc64le := architecture{
-		distro:   rd,
+		distro:   &rd,
 		name:     distro.Ppc64leArchName,
 		legacy:   "powerpc-ieee1275",
 		bootType: distro.LegacyBootType,
 	}
 	s390x := architecture{
-		distro:   rd,
+		distro:   &rd,
 		name:     distro.S390xArchName,
 		bootType: distro.LegacyBootType,
 	}
@@ -836,11 +867,19 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
-	rd.addArches(x86_64, aarch64, ppc64le, s390x)
-	return rd
+	if strings.HasPrefix(distroName, "rhel") {
+		// add ec2 image types to RHEL distro only
+		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
+		aarch64.addImageTypes(ec2ImgTypeAarch64)
+
+		// add s390x to RHEL distro only
+		rd.addArches(s390x)
+	}
+	rd.addArches(x86_64, aarch64, ppc64le)
+	return &rd
 }
