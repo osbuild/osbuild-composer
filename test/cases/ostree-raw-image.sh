@@ -1,10 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+function perflog(){
+    echo "PERFLOG $(date --rfc-3339=seconds) $1"
+}
+
+perflog "provision.sh"
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Get OS data.
+perflog "Get OS data"
 source /etc/os-release
 ARCH=$(uname -m)
 
@@ -14,6 +20,7 @@ function greenprint {
 }
 
 # Start libvirtd and test it.
+perflog "Starting libvirt daemon"
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
 sudo virsh list --all > /dev/null
@@ -228,8 +235,10 @@ check_result () {
 ###########################################################
 ##
 ## Prepare edge prod and stage repo
+perflog "Prepare edge prod and stage repo"
 ##
 ###########################################################
+perflog "Prepare edge prod repo"
 greenprint "🔧 Prepare edge prod repo"
 # Start prod repo web service
 # osbuild-composer-tests have mod_ssl as a dependency. The package installs
@@ -252,6 +261,7 @@ sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create -
 ##########################################################
 ##
 ## Build edge-container image and start it in podman
+perflog "Build edge-container image and start it in podman"
 ##
 ##########################################################
 
@@ -280,22 +290,27 @@ groups = ["wheel"]
 EOF
 
 greenprint "📄 container blueprint"
+perflog "container blueprint"
 cat "$BLUEPRINT_FILE"
 
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing container blueprint"
+perflog "Preparing container blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve container
 
 # Build container image.
+perflog "Build container image."
 build_image container "${CONTAINER_TYPE}"
 
 # Download the image
 greenprint "📥 Downloading the container image"
+perflog "Downloading the container image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 
 # Clear stage repo running env
 greenprint "🧹 Clearing stage repo running env"
+perflog "Clearing stage repo running env"
 # Remove any status containers if exist
 sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
 # Remove all images
@@ -303,11 +318,13 @@ sudo podman rmi -f -a
 
 # Deal with stage repo image
 greenprint "🗜 Starting container"
+perflog "Starting container"
 IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
 sudo podman pull "oci-archive:${IMAGE_FILENAME}"
 sudo podman images
 # Run edge stage repo
 greenprint "🛰 Running edge stage repo"
+perflog "Running edge stage repo"
 # Get image id to run image
 EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
 sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
@@ -321,16 +338,19 @@ done;
 
 # Sync installer edge content
 greenprint "📡 Sync installer content from stage repo"
+perflog "Sync installer content from stage repo"
 sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up container blueprint and compose"
+perflog "Clean up container blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete container > /dev/null
 
 ############################################################
 ##
 ## Build edge-raw-image
+perflog "Build edge-raw-image"
 ##
 ############################################################
 
@@ -348,41 +368,50 @@ cat "$BLUEPRINT_FILE"
 
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing raw image blueprint"
+perflog "Preparing raw image blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve installer
 
 # Build installer image.
 # Test --url arg following by URL with tailling slash for bz#1942029
 build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+perflog "build installer image"
 
 # Download the image
 greenprint "📥 Downloading the raw image"
+perflog "Downloading the raw image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
+perflog "Extracting and converting the raw image to a qcow2 file"
 sudo xz -d "${ISO_FILENAME}"
 sudo qemu-img convert -f raw "${COMPOSE_ID}-image.raw" -O qcow2 "${IMAGE_KEY}.qcow2"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
+perflog "Clean up installer blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete installer > /dev/null
 
 ##################################################################
 ##
 ## Install and test edge vm with edge-raw-image (BIOS)
+perflog "Install and test edge vm with edge-raw-image (BIOS)"
 ##
 ##################################################################
 # Prepare qcow2 file for BIOS
+perflog "Prepare qcow2 file for BIOS"
 sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
+perflog "Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on BIOS VM"
+perflog "Installing raw image on BIOS VM"
 sudo virt-install  --name="${IMAGE_KEY}-bios"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
@@ -398,6 +427,7 @@ sudo virt-install  --name="${IMAGE_KEY}-bios"\
 
 # Start VM.
 greenprint "💻 Start BIOS VM"
+perflog "Start BIOS VM"
 sudo virsh start "${IMAGE_KEY}-bios"
 
 # Check for ssh ready to go.
@@ -415,6 +445,7 @@ done
 check_result
 
 greenprint "🕹 Get ostree install commit value"
+perflog "Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Add instance IP address into /etc/ansible/hosts
@@ -433,11 +464,13 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
+perflog "Test IoT/Edge OS"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
 greenprint "🧹 Clean up BIOS VM"
+perflog "Clean up BIOS VM"
 if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
     sudo virsh destroy "${IMAGE_KEY}-bios"
 fi
@@ -447,15 +480,18 @@ sudo rm -fr LIBVIRT_IMAGE_PATH
 ##################################################################
 ##
 ## Install and test edge vm with edge-raw-image (UEFI)
+perflog "Install and test edge vm with edge-raw-image (UEFI)"
 ##
 ##################################################################
 # Prepare qcow2 file for UEFI
+perflog "Prepare qcow2 file for UEFI"
 sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on UEFI VM"
+perflog "Installing raw image on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
@@ -471,6 +507,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
+perflog "Start UEFI VM"
 sudo virsh start "${IMAGE_KEY}-uefi"
 
 # Check for ssh ready to go.
@@ -488,6 +525,7 @@ done
 check_result
 
 greenprint "🕹 Get ostree install commit value"
+perflog "Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Add instance IP address into /etc/ansible/hosts
@@ -506,12 +544,14 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
+perflog "Test IoT/Edge OS"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ##################################################################
 ##
 ## Upgrade and test edge vm with edge-raw-image (UEFI)
+perflog "Upgrade and test edge vm with edge-raw-image (UEFI)"
 ##
 ##################################################################
 
@@ -548,18 +588,22 @@ cat "$BLUEPRINT_FILE"
 
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing upgrade blueprint"
+perflog "Preparing upgrade blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
+perflog "Build upgrade image."
 build_image upgrade  "${CONTAINER_TYPE}" "$PROD_REPO_URL"
 
 # Download the image
 greenprint "📥 Downloading the upgrade image"
+perflog "Downloading the upgrade image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 
 # Clear stage repo running env
 greenprint "🧹 Clearing stage repo running env"
+perflog "Clearing stage repo running env"
 # Remove any status containers if exist
 sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
 # Remove all images
@@ -567,6 +611,7 @@ sudo podman rmi -f -a
 
 # Deal with stage repo container
 greenprint "🗜 Extracting image"
+perflog "Extracting image"
 IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
 sudo podman pull "oci-archive:${IMAGE_FILENAME}"
 sudo podman images
@@ -575,6 +620,7 @@ sudo rm -f "$IMAGE_FILENAME"
 
 # Run edge stage repo
 greenprint "🛰 Running edge stage repo"
+perflog "Running edge stage repo"
 # Get image id to run image
 EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
 sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
@@ -585,26 +631,31 @@ done;
 
 # Workaround to https://github.com/osbuild/osbuild-composer/issues/1693
 greenprint "🗳 Add external prod edge repo"
+perflog "Add external prod edge repo"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${PROD_REPO_URL}"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree admin switch rhel-edge:${OSTREE_REF}"
 
 # Pull upgrade to prod mirror
 greenprint "⛓ Pull upgrade to prod mirror"
+perflog "Pull upgrade to prod mirror"
 sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
 sudo ostree --repo="$PROD_REPO" static-delta generate "$OSTREE_REF"
 sudo ostree --repo="$PROD_REPO" summary -u
 
 # Get ostree commit value.
 greenprint "🕹 Get ostree upgrade commit value"
+perflog "Get ostree upgrade commit value"
 UPGRADE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up upgrade blueprint and compose"
+perflog "Clean up upgrade blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
+perflog "Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
@@ -613,6 +664,7 @@ sleep 10
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
+perflog "Checking for SSH is ready to go"
 # shellcheck disable=SC2034  # Unused variables left for readability
 for LOOP_COUNTER in $(seq 0 30); do
     RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
@@ -624,6 +676,7 @@ for LOOP_COUNTER in $(seq 0 30); do
 done
 
 # Check ostree upgrade result
+perflog "Check ostree upgrade result"
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
@@ -642,10 +695,12 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
+perflog "Test IoT/Edge OS"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
+perflog "Final success clean up"
 clean_up
 
 exit 0
