@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -49,14 +48,18 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 		return nil, errors.New("failed to append root certificate")
 	}
 
-	cert, err := tls.LoadX509KeyPair(config.ClientCertFile, config.ClientKeyFile)
-	if err != nil {
-		return nil, err
+	var certs []tls.Certificate
+	if config.ClientKeyFile != "" && config.ClientCertFile != "" {
+		cert, err := tls.LoadX509KeyPair(config.ClientCertFile, config.ClientKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		certs = append(certs, cert)
 	}
 
 	return &tls.Config{
 		RootCAs:      roots,
-		Certificates: []tls.Certificate{cert},
+		Certificates: certs,
 	}, nil
 }
 
@@ -156,33 +159,37 @@ func main() {
 	var client *worker.Client
 	if unix {
 		client = worker.NewClientUnix(address, config.BasePath)
-	} else {
-		var token *string
-		var oAuthURL *string
-		if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
-			t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+	} else if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
+		var conf *tls.Config
+		conConf := &connectionConfig{
+			CACertFile: "/etc/osbuild-composer/ca-crt.pem",
+		}
+		if _, err = os.Stat(conConf.CACertFile); err == nil {
+			conf, err = createTLSConfig(conConf)
 			if err != nil {
-				logrus.Fatalf("Could not read offline token: %v", err)
-			}
-			t2 := strings.TrimSpace(string(t))
-			token = &t2
-
-			if config.Authentication.OAuthURL == "" {
-				logrus.Fatal("OAuth URL should be specified together with the offline token")
-			}
-			oAuthURL = &config.Authentication.OAuthURL
-
-			if strings.HasPrefix(address, "http") {
-				out, err := exec.Command("systemd-escape", "-u", address).Output()
-				if err != nil {
-					logrus.Fatalf("Could not escape remote worker address: %v", err)
-				}
-				address = strings.TrimSpace(string(out))
-			} else {
-				address = fmt.Sprintf("https://%s", address)
+				logrus.Fatalf("Error creating TLS config: %v", err)
 			}
 		}
 
+		var token *string
+		var oAuthURL *string
+		t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+		if err != nil {
+			logrus.Fatalf("Could not read offline token: %v", err)
+		}
+		t2 := strings.TrimSpace(string(t))
+		token = &t2
+
+		if config.Authentication.OAuthURL == "" {
+			logrus.Fatal("OAuth URL should be specified together with the offline token")
+		}
+		oAuthURL = &config.Authentication.OAuthURL
+
+		client, err = worker.NewClient(fmt.Sprintf("https://%s", address), conf, token, oAuthURL, config.BasePath)
+		if err != nil {
+			logrus.Fatalf("Error creating worker client: %v", err)
+		}
+	} else {
 		var conf *tls.Config
 		conConf := &connectionConfig{
 			CACertFile:     "/etc/osbuild-composer/ca-crt.pem",
@@ -196,7 +203,7 @@ func main() {
 			}
 		}
 
-		client, err = worker.NewClient(address, conf, token, oAuthURL, config.BasePath)
+		client, err = worker.NewClient(fmt.Sprintf("https://%s", address), conf, nil, nil, config.BasePath)
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)
 		}
