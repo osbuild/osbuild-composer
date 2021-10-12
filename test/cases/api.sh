@@ -1179,7 +1179,7 @@ pg_database = "osbuildcomposer"
 pg_user = "postgres"
 pg_password = "foobar"
 pg_ssl_mode = "disable"
-enable_tls = false
+enable_tls = true
 enable_mtls = false
 enable_jwt = true
 jwt_keys_url = "https://localhost:8080/certs"
@@ -1224,7 +1224,7 @@ TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
         --header "Authorization: Bearer badtoken" \
         http://localhost:443/api/composer/v1/version)" = "401" ]
 
-sudo systemctl start osbuild-remote-worker@http:--localhost:8700.service
-sudo systemctl is-active --quiet osbuild-remote-worker@http:--localhost:8700.service
+sudo systemctl start osbuild-remote-worker@localhost:8700.service
+sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
 
 exit 0
