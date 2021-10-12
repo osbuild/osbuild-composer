@@ -460,7 +460,7 @@ func TestComposeSupportedMountPointV0(t *testing.T) {
 		version="0.0.1"
 		[[customizations.filesystem]]
 		mountpoint = "/"
-		size = 4294967296
+		size = "4294967296"
 		`
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
@@ -526,7 +526,7 @@ func TestComposeUnsupportedMountPointV0(t *testing.T) {
 		version="0.0.1"
 		[[customizations.filesystem]]
 		mountpoint = "/boot"
-		size = 4294967296
+		size = "4294967296"
 		`
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")

@@ -12,7 +12,7 @@ import (
 func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	mountpoints := []blueprint.FilesystemCustomization{
 		{
-			MinSize:    2147483648,
+			MinSize:    "2147483648",
 			Mountpoint: "/usr",
 		},
 	}

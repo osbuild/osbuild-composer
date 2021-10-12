@@ -441,8 +441,8 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if m.Mountpoint == "/usr" && m.MinSize < 2147483648 {
-			m.MinSize = 2147483648
+		if m.Mountpoint == "/usr" && m.GetMinSize() < 2147483648 {
+			m.MinSize = "2147483648"
 		}
 		if !isMountpointAllowed(m.Mountpoint) {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)

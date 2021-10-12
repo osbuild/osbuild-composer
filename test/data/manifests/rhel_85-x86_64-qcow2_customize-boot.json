@@ -105,15 +105,15 @@
         "filesystem": [
           {
             "mountpoint": "/usr",
-            "minsize": 2147483648
+            "minsize": "2147483648"
           },
           {
             "mountpoint": "/var",
-            "minsize": 1073741824
+            "minsize": "1073741824"
           },
           {
             "mountpoint": "/",
-            "minsize": 2147483648
+            "minsize": "2147483648"
           }
         ]
       }

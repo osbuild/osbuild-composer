@@ -38,7 +38,7 @@ func CreatePartitionTable(
 
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
-			partitionSize := m.MinSize / sectorSize
+			partitionSize := m.GetMinSize() / sectorSize
 			partition := basePartitionTable.createPartition(m.Mountpoint, partitionSize, rng)
 			basePartitionTable.Partitions = append(basePartitionTable.Partitions, partition)
 		}

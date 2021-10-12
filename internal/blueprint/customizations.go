@@ -3,6 +3,8 @@ package blueprint
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 type Customizations struct {
@@ -73,7 +75,7 @@ type ServicesCustomization struct {
 
 type FilesystemCustomization struct {
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
-	MinSize    uint64 `json:"minsize,omitempty" toml:"size,omitempty"`
+	MinSize    string `json:"minsize,omitempty" toml:"size,omitempty"`
 }
 
 type CustomizationError struct {
@@ -260,7 +262,7 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 	}
 	var agg uint64
 	for _, m := range c.Filesystem {
-		agg += m.MinSize
+		agg += m.GetMinSize()
 	}
 	// This ensures that file system customization `size` is a multiple of
 	// sector size (512)
@@ -276,4 +278,14 @@ func (c *Customizations) GetInstallationDevice() string {
 		return defaultDevice
 	}
 	return c.InstallationDevice
+}
+
+func (fs *FilesystemCustomization) GetMinSize() uint64 {
+	min_size := common.FsSizeToUint64(fs.MinSize)
+	if min_size != nil {
+		return *min_size
+	}
+
+	// The string must be validated in the Weldr API
+	panic("Invalid filesystem size")
 }

@@ -569,7 +569,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/boot",
 				},
 			},
@@ -597,7 +597,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/",
 				},
 			},
@@ -625,11 +625,11 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/log",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/log/audit",
 				},
 			},
@@ -655,19 +655,19 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/a",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/a/b",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/a/b/c",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var/a/b/c/d",
 				},
 			},
@@ -693,15 +693,15 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "//",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var//",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/var//log/audit/",
 				},
 			},
@@ -727,11 +727,11 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/variable",
 				},
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/variable/log/audit",
 				},
 			},
@@ -759,7 +759,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
-					MinSize:    1024,
+					MinSize:    "1024",
 					Mountpoint: "/usr",
 				},
 			},

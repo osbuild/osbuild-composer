@@ -314,7 +314,7 @@ func TestGetFilesystems(t *testing.T) {
 
 	expectedFilesystems := []FilesystemCustomization{
 		{
-			MinSize:    1024,
+			MinSize:    "1024",
 			Mountpoint: "/",
 		},
 	}
@@ -332,11 +332,11 @@ func TestGetFilesystemsMinSize(t *testing.T) {
 
 	expectedFilesystems := []FilesystemCustomization{
 		{
-			MinSize:    1024,
+			MinSize:    "1024",
 			Mountpoint: "/",
 		},
 		{
-			MinSize:    4096,
+			MinSize:    "4096",
 			Mountpoint: "/var",
 		},
 	}
@@ -354,11 +354,11 @@ func TestGetFilesystemsMinSizeNonSectorSize(t *testing.T) {
 
 	expectedFilesystems := []FilesystemCustomization{
 		{
-			MinSize:    1025,
+			MinSize:    "1025",
 			Mountpoint: "/",
 		},
 		{
-			MinSize:    4097,
+			MinSize:    "4097",
 			Mountpoint: "/var",
 		},
 	}
