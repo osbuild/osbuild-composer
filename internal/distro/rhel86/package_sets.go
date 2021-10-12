@@ -4,7 +4,6 @@ package rhel86
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -505,7 +504,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 
 // packages that are only in some (sub)-distributions
 func distroSpecificPackageSet(t *imageType) rpmmd.PackageSet {
-	if strings.HasPrefix(t.Arch().Distro().Name(), "rhel") {
+	if t.arch.distro.isRHEL() {
 		return rpmmd.PackageSet{
 			Include: []string{"insights-client"},
 		}
