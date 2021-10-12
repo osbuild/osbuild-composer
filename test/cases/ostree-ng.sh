@@ -101,7 +101,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_UPGRADE_BP="true"
         INSTALLER_PATH="/ostree/repo"
         ;;
-    "rhel-8.5" | "rhel-8.6")
+    "rhel-8.5" | "rhel-8.6" | "centos-8")
         CONTAINER_TYPE=edge-container
         CONTAINER_FILENAME=container.tar
         INSTALLER_TYPE=edge-installer
