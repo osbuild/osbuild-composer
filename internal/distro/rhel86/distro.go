@@ -124,6 +124,10 @@ func (d *distribution) addArches(arches ...architecture) {
 	}
 }
 
+func (d *distribution) isRHEL() bool {
+	return strings.HasPrefix(d.name, "rhel")
+}
+
 type architecture struct {
 	distro           *distribution
 	name             string
@@ -872,7 +876,7 @@ func newDistro(distroName string) distro.Distro {
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
-	if strings.HasPrefix(distroName, "rhel") {
+	if rd.isRHEL() {
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
