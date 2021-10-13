@@ -134,7 +134,7 @@ func TestCompose(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "unsupported_distro",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws.ec2",
 			"repositories": [{
@@ -145,7 +145,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1",
 				"share_with_accounts": ["123456789012"]
 			}
-		 }]
+		 }
 	}`, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/4",
@@ -159,7 +159,7 @@ func TestCompose(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "unsupported_arch",
 			"image_type": "aws",
 			"repositories": [{
@@ -169,7 +169,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/5",
@@ -183,7 +183,7 @@ func TestCompose(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "unsupported_image_type",
 			"repositories": [{
@@ -193,7 +193,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/6",
@@ -230,7 +230,7 @@ func TestCompose(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws",
 			"repositories": [{
@@ -240,7 +240,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -258,7 +258,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws",
 			"repositories": [{
@@ -268,7 +268,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -324,7 +324,7 @@ func TestComposeStatusFailure(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws",
 			"repositories": [{
@@ -334,7 +334,7 @@ func TestComposeStatusFailure(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -389,7 +389,7 @@ func TestComposeCustomizations(t *testing.T) {
 				"key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
 			}]
 		},
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws",
 			"repositories": [{
@@ -399,7 +399,7 @@ func TestComposeCustomizations(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -417,7 +417,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -429,7 +429,7 @@ func TestImageTypes(t *testing.T) {
 				"snapshot_name": "name",
 				"share_with_accounts": ["123456789012","234567890123"]
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -438,7 +438,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -448,7 +448,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_aws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -457,7 +457,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -467,7 +467,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_commit)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -476,7 +476,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -486,7 +486,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_edge_installer)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -495,7 +495,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -508,7 +508,7 @@ func TestImageTypes(t *testing.T) {
 				"resource_group": "ToucanResourceGroup",
 				"location": "westeurope"
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_azure)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -517,7 +517,7 @@ func TestImageTypes(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"distribution": "%s",
-		"image_requests":[{
+		"image_request":{
 			"architecture": "%s",
 			"image_type": "%s",
 			"repositories": [{
@@ -529,7 +529,7 @@ func TestImageTypes(t *testing.T) {
 				"bucket": "some-eu-bucket",
 				"share_with_accounts": ["user:alice@example.com"]
 			}
-		 }]
+		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypes_gcp)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",

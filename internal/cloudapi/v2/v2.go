@@ -147,10 +147,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorUnsupportedDistribution)
 	}
 
-	if len(request.ImageRequests) != 1 {
-		return HTTPError(ErrorMultiImageCompose)
-	}
-
 	var bp = blueprint.Blueprint{}
 	err = bp.Initialize()
 	if err != nil {
@@ -164,13 +160,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	type imageRequest struct {
+	var imageRequest struct {
 		manifest distro.Manifest
 		arch     string
 		exports  []string
 		target   *target.Target
 	}
-	imageRequests := make([]imageRequest, len(request.ImageRequests))
 
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
@@ -179,249 +174,248 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 	manifestSeed := bigSeed.Int64()
 
-	for i, ir := range request.ImageRequests {
-		arch, err := distribution.GetArch(ir.Architecture)
-		if err != nil {
-			return HTTPError(ErrorUnsupportedArchitecture)
-		}
-		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType))
-		if err != nil {
-			return HTTPError(ErrorUnsupportedImageType)
-		}
-		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
-		for j, repo := range ir.Repositories {
-			repositories[j].RHSM = repo.Rhsm
+	ir := request.ImageRequest
+	arch, err := distribution.GetArch(ir.Architecture)
+	if err != nil {
+		return HTTPError(ErrorUnsupportedArchitecture)
+	}
+	imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType))
+	if err != nil {
+		return HTTPError(ErrorUnsupportedImageType)
+	}
+	repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
+	for j, repo := range ir.Repositories {
+		repositories[j].RHSM = repo.Rhsm
 
-			if repo.Baseurl != nil {
-				repositories[j].BaseURL = *repo.Baseurl
-			} else if repo.Mirrorlist != nil {
-				repositories[j].MirrorList = *repo.Mirrorlist
-			} else if repo.Metalink != nil {
-				repositories[j].Metalink = *repo.Metalink
-			} else {
-				return HTTPError(ErrorInvalidRepository)
-			}
-		}
-
-		packageSets := imageType.PackageSets(bp)
-		depsolveJobID, err := h.server.workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:      packageSets,
-			Repos:            repositories,
-			ModulePlatformID: distribution.ModulePlatformID(),
-			Arch:             arch.Name(),
-			Releasever:       distribution.Releasever(),
-		})
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-		}
-
-		var depsolveResults worker.DepsolveJobResult
-		for {
-			status, _, err := h.server.workers.JobStatus(depsolveJobID, &depsolveResults)
-			if err != nil {
-				return HTTPErrorWithInternal(ErrorGettingDepsolveJobStatus, err)
-			}
-			if status.Canceled {
-				return HTTPErrorWithInternal(ErrorDepsolveJobCanceled, err)
-			}
-			if !status.Finished.IsZero() {
-				break
-			}
-			time.Sleep(50 * time.Millisecond)
-		}
-
-		if depsolveResults.Error != "" {
-			if depsolveResults.ErrorType == worker.DepsolveErrorType {
-				return HTTPError(ErrorDNFError)
-			}
-			return HTTPErrorWithInternal(ErrorFailedToDepsolve, errors.New(depsolveResults.Error))
-		}
-
-		pkgSpecSets := depsolveResults.PackageSpecs
-
-		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
-		if request.Customizations != nil && request.Customizations.Subscription != nil {
-			imageOptions.Subscription = &distro.SubscriptionImageOptions{
-				Organization:  request.Customizations.Subscription.Organization,
-				ActivationKey: request.Customizations.Subscription.ActivationKey,
-				ServerUrl:     request.Customizations.Subscription.ServerUrl,
-				BaseUrl:       request.Customizations.Subscription.BaseUrl,
-				Insights:      request.Customizations.Subscription.Insights,
-			}
-		}
-
-		// set default ostree ref, if one not provided
-		ostreeOptions := ir.Ostree
-		if ostreeOptions == nil || ostreeOptions.Ref == nil {
-			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
-		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
-			return HTTPError(ErrorInvalidOSTreeRef)
+		if repo.Baseurl != nil {
+			repositories[j].BaseURL = *repo.Baseurl
+		} else if repo.Mirrorlist != nil {
+			repositories[j].MirrorList = *repo.Mirrorlist
+		} else if repo.Metalink != nil {
+			repositories[j].Metalink = *repo.Metalink
 		} else {
-			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
-		}
-
-		var parent string
-		if ostreeOptions != nil && ostreeOptions.Url != nil {
-			imageOptions.OSTree.URL = *ostreeOptions.Url
-			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
-			if err != nil {
-				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, err)
-			}
-			imageOptions.OSTree.Parent = parent
-		}
-
-		// Set the blueprint customisation to take care of the user
-		var blueprintCustoms *blueprint.Customizations
-		if request.Customizations != nil && request.Customizations.Users != nil {
-			var userCustomizations []blueprint.UserCustomization
-			for _, user := range *request.Customizations.Users {
-				var groups []string
-				if user.Groups != nil {
-					groups = *user.Groups
-				} else {
-					groups = nil
-				}
-				userCustomizations = append(userCustomizations,
-					blueprint.UserCustomization{
-						Name:   user.Name,
-						Key:    user.Key,
-						Groups: groups,
-					},
-				)
-			}
-			blueprintCustoms = &blueprint.Customizations{
-				User: userCustomizations,
-			}
-		}
-
-		manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorFailedToMakeManifest, err)
-		}
-
-		imageRequests[i].manifest = manifest
-		imageRequests[i].arch = arch.Name()
-		imageRequests[i].exports = imageType.Exports()
-
-		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
-		switch ir.ImageType {
-		case ImageTypes_aws:
-			var awsUploadOptions AWSEC2UploadOptions
-			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONMarshallingError)
-			}
-			err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
-			}
-
-			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-			t := target.NewAWSTarget(&target.AWSTargetOptions{
-				Filename:          imageType.Filename(),
-				Region:            awsUploadOptions.Region,
-				Bucket:            h.server.awsBucket,
-				Key:               key,
-				ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
-			})
-			if awsUploadOptions.SnapshotName != nil {
-				t.ImageName = *awsUploadOptions.SnapshotName
-			} else {
-				t.ImageName = key
-			}
-
-			imageRequests[i].target = t
-		case ImageTypes_edge_installer:
-			fallthrough
-		case ImageTypes_edge_commit:
-			var awsS3UploadOptions AWSS3UploadOptions
-			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONMarshallingError)
-			}
-			err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
-			}
-
-			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-				Filename: imageType.Filename(),
-				Region:   awsS3UploadOptions.Region,
-				Bucket:   h.server.awsBucket,
-				Key:      key,
-			})
-			t.ImageName = key
-
-			imageRequests[i].target = t
-		case ImageTypes_gcp:
-			var gcpUploadOptions GCPUploadOptions
-			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONMarshallingError)
-			}
-			err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
-			}
-
-			var share []string
-			if gcpUploadOptions.ShareWithAccounts != nil {
-				share = *gcpUploadOptions.ShareWithAccounts
-			}
-
-			object := fmt.Sprintf("composer-api-%s", uuid.New().String())
-			t := target.NewGCPTarget(&target.GCPTargetOptions{
-				Filename:          imageType.Filename(),
-				Region:            gcpUploadOptions.Region,
-				Os:                "", // not exposed in cloudapi for now
-				Bucket:            gcpUploadOptions.Bucket,
-				Object:            object,
-				ShareWithAccounts: share,
-			})
-			// Import will fail if an image with this name already exists
-			if gcpUploadOptions.ImageName != nil {
-				t.ImageName = *gcpUploadOptions.ImageName
-			} else {
-				t.ImageName = object
-			}
-
-			imageRequests[i].target = t
-		case ImageTypes_azure:
-			var azureUploadOptions AzureUploadOptions
-			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONMarshallingError)
-			}
-			err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
-			if err != nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
-			}
-			t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
-				Filename:       imageType.Filename(),
-				TenantID:       azureUploadOptions.TenantId,
-				Location:       azureUploadOptions.Location,
-				SubscriptionID: azureUploadOptions.SubscriptionId,
-				ResourceGroup:  azureUploadOptions.ResourceGroup,
-			})
-
-			if azureUploadOptions.ImageName != nil {
-				t.ImageName = *azureUploadOptions.ImageName
-			} else {
-				// if ImageName wasn't given, generate a random one
-				t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
-			}
-
-			imageRequests[i].target = t
-		default:
-			return HTTPError(ErrorUnsupportedImageType)
+			return HTTPError(ErrorInvalidRepository)
 		}
 	}
 
-	id, err := h.server.workers.EnqueueOSBuild(imageRequests[0].arch, &worker.OSBuildJob{
-		Manifest: imageRequests[0].manifest,
-		Targets:  []*target.Target{imageRequests[0].target},
-		Exports:  imageRequests[0].exports,
+	packageSets := imageType.PackageSets(bp)
+	depsolveJobID, err := h.server.workers.EnqueueDepsolve(&worker.DepsolveJob{
+		PackageSets:      packageSets,
+		Repos:            repositories,
+		ModulePlatformID: distribution.ModulePlatformID(),
+		Arch:             arch.Name(),
+		Releasever:       distribution.Releasever(),
+	})
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	var depsolveResults worker.DepsolveJobResult
+	for {
+		status, _, err := h.server.workers.JobStatus(depsolveJobID, &depsolveResults)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorGettingDepsolveJobStatus, err)
+		}
+		if status.Canceled {
+			return HTTPErrorWithInternal(ErrorDepsolveJobCanceled, err)
+		}
+		if !status.Finished.IsZero() {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	if depsolveResults.Error != "" {
+		if depsolveResults.ErrorType == worker.DepsolveErrorType {
+			return HTTPError(ErrorDNFError)
+		}
+		return HTTPErrorWithInternal(ErrorFailedToDepsolve, errors.New(depsolveResults.Error))
+	}
+
+	pkgSpecSets := depsolveResults.PackageSpecs
+
+	imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
+	if request.Customizations != nil && request.Customizations.Subscription != nil {
+		imageOptions.Subscription = &distro.SubscriptionImageOptions{
+			Organization:  request.Customizations.Subscription.Organization,
+			ActivationKey: request.Customizations.Subscription.ActivationKey,
+			ServerUrl:     request.Customizations.Subscription.ServerUrl,
+			BaseUrl:       request.Customizations.Subscription.BaseUrl,
+			Insights:      request.Customizations.Subscription.Insights,
+		}
+	}
+
+	// set default ostree ref, if one not provided
+	ostreeOptions := ir.Ostree
+	if ostreeOptions == nil || ostreeOptions.Ref == nil {
+		imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
+	} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
+		return HTTPError(ErrorInvalidOSTreeRef)
+	} else {
+		imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
+	}
+
+	var parent string
+	if ostreeOptions != nil && ostreeOptions.Url != nil {
+		imageOptions.OSTree.URL = *ostreeOptions.Url
+		parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, err)
+		}
+		imageOptions.OSTree.Parent = parent
+	}
+
+	// Set the blueprint customisation to take care of the user
+	var blueprintCustoms *blueprint.Customizations
+	if request.Customizations != nil && request.Customizations.Users != nil {
+		var userCustomizations []blueprint.UserCustomization
+		for _, user := range *request.Customizations.Users {
+			var groups []string
+			if user.Groups != nil {
+				groups = *user.Groups
+			} else {
+				groups = nil
+			}
+			userCustomizations = append(userCustomizations,
+				blueprint.UserCustomization{
+					Name:   user.Name,
+					Key:    user.Key,
+					Groups: groups,
+				},
+			)
+		}
+		blueprintCustoms = &blueprint.Customizations{
+			User: userCustomizations,
+		}
+	}
+
+	manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorFailedToMakeManifest, err)
+	}
+
+	imageRequest.manifest = manifest
+	imageRequest.arch = arch.Name()
+	imageRequest.exports = imageType.Exports()
+
+	/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
+	switch ir.ImageType {
+	case ImageTypes_aws:
+		var awsUploadOptions AWSEC2UploadOptions
+		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+
+		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+		t := target.NewAWSTarget(&target.AWSTargetOptions{
+			Filename:          imageType.Filename(),
+			Region:            awsUploadOptions.Region,
+			Bucket:            h.server.awsBucket,
+			Key:               key,
+			ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
+		})
+		if awsUploadOptions.SnapshotName != nil {
+			t.ImageName = *awsUploadOptions.SnapshotName
+		} else {
+			t.ImageName = key
+		}
+
+		imageRequest.target = t
+	case ImageTypes_edge_installer:
+		fallthrough
+	case ImageTypes_edge_commit:
+		var awsS3UploadOptions AWSS3UploadOptions
+		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+
+		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+		t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
+			Filename: imageType.Filename(),
+			Region:   awsS3UploadOptions.Region,
+			Bucket:   h.server.awsBucket,
+			Key:      key,
+		})
+		t.ImageName = key
+
+		imageRequest.target = t
+	case ImageTypes_gcp:
+		var gcpUploadOptions GCPUploadOptions
+		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+
+		var share []string
+		if gcpUploadOptions.ShareWithAccounts != nil {
+			share = *gcpUploadOptions.ShareWithAccounts
+		}
+
+		object := fmt.Sprintf("composer-api-%s", uuid.New().String())
+		t := target.NewGCPTarget(&target.GCPTargetOptions{
+			Filename:          imageType.Filename(),
+			Region:            gcpUploadOptions.Region,
+			Os:                "", // not exposed in cloudapi for now
+			Bucket:            gcpUploadOptions.Bucket,
+			Object:            object,
+			ShareWithAccounts: share,
+		})
+		// Import will fail if an image with this name already exists
+		if gcpUploadOptions.ImageName != nil {
+			t.ImageName = *gcpUploadOptions.ImageName
+		} else {
+			t.ImageName = object
+		}
+
+		imageRequest.target = t
+	case ImageTypes_azure:
+		var azureUploadOptions AzureUploadOptions
+		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
+		if err != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+		t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
+			Filename:       imageType.Filename(),
+			TenantID:       azureUploadOptions.TenantId,
+			Location:       azureUploadOptions.Location,
+			SubscriptionID: azureUploadOptions.SubscriptionId,
+			ResourceGroup:  azureUploadOptions.ResourceGroup,
+		})
+
+		if azureUploadOptions.ImageName != nil {
+			t.ImageName = *azureUploadOptions.ImageName
+		} else {
+			// if ImageName wasn't given, generate a random one
+			t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
+		}
+
+		imageRequest.target = t
+	default:
+		return HTTPError(ErrorUnsupportedImageType)
+	}
+
+	id, err := h.server.workers.EnqueueOSBuild(imageRequest.arch, &worker.OSBuildJob{
+		Manifest: imageRequest.manifest,
+		Targets:  []*target.Target{imageRequest.target},
+		Exports:  imageRequest.exports,
 	})
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
