@@ -168,9 +168,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		manifest distro.Manifest
 		arch     string
 		exports  []string
+		target   *target.Target
 	}
 	imageRequests := make([]imageRequest, len(request.ImageRequests))
-	var targets []*target.Target
 
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
@@ -330,7 +330,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.ImageName = key
 			}
 
-			targets = append(targets, t)
+			imageRequests[i].target = t
 		case ImageTypes_edge_installer:
 			fallthrough
 		case ImageTypes_edge_commit:
@@ -353,7 +353,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			})
 			t.ImageName = key
 
-			targets = append(targets, t)
+			imageRequests[i].target = t
 		case ImageTypes_gcp:
 			var gcpUploadOptions GCPUploadOptions
 			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
@@ -386,7 +386,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.ImageName = object
 			}
 
-			targets = append(targets, t)
+			imageRequests[i].target = t
 		case ImageTypes_azure:
 			var azureUploadOptions AzureUploadOptions
 			jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
@@ -412,7 +412,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
 			}
 
-			targets = append(targets, t)
+			imageRequests[i].target = t
 		default:
 			return HTTPError(ErrorUnsupportedImageType)
 		}
@@ -420,7 +420,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	id, err := h.server.workers.EnqueueOSBuild(imageRequests[0].arch, &worker.OSBuildJob{
 		Manifest: imageRequests[0].manifest,
-		Targets:  targets,
+		Targets:  []*target.Target{imageRequests[0].target},
 		Exports:  imageRequests[0].exports,
 	})
 	if err != nil {
