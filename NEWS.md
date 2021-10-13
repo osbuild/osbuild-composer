@@ -1,3 +1,15 @@
+## CHANGES WITH 36:
+
+  * Add support for official RHEL EC2 SAP image on RHEL-9.0
+  * Add support for official RHEL EC2 SAP image on RHEL-8.6
+  * Add support for RHEL 8.6
+
+Contributions from: Achilleas Koutsou, Diaa Sami, Jakub Rusz, Martin Sehnoutka,
+                    Ondřej Budai, Sanne Raymaekers, Simon Steinbeiss,
+                    Tom Gundersen, Tomas Hozza,
+
+— Berlin, 2021-10-13
+
 ## CHANGES WITH 35:
 
   * Change filesystem minsize from int, which is platform dependent, to uint64
