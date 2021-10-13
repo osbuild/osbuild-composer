@@ -147,6 +147,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorUnsupportedDistribution)
 	}
 
+	if len(request.ImageRequests) != 1 {
+		return HTTPError(ErrorMultiImageCompose)
+	}
+
 	var bp = blueprint.Blueprint{}
 	err = bp.Initialize()
 	if err != nil {
@@ -414,18 +418,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	var ir imageRequest
-	if len(imageRequests) == 1 {
-		// NOTE: the store currently does not support multi-image composes
-		ir = imageRequests[0]
-	} else {
-		return HTTPError(ErrorMultiImageCompose)
-	}
-
-	id, err := h.server.workers.EnqueueOSBuild(ir.arch, &worker.OSBuildJob{
-		Manifest: ir.manifest,
+	id, err := h.server.workers.EnqueueOSBuild(imageRequests[0].arch, &worker.OSBuildJob{
+		Manifest: imageRequests[0].manifest,
 		Targets:  targets,
-		Exports:  ir.exports,
+		Exports:  imageRequests[0].exports,
 	})
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
