@@ -431,7 +431,11 @@ case "$ID-$VERSION_ID" in
     ;;
   "centos-8")
     DISTRO="centos-8"
-    SSH_USER="cloud-user"
+    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
+      SSH_USER="ec2-user"
+    else
+      SSH_USER="cloud-user"
+    fi
     ;;
 esac
 
