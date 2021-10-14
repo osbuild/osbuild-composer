@@ -512,7 +512,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 	return ctx.JSON(http.StatusOK, ComposeStatus{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId),
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
 			Id:   jobId.String(),
 			Kind: "ComposeStatus",
 		},
@@ -545,7 +545,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 	return ImageStatusValue_failure
 }
 
-// ComposeMetadata handles a /compose/{id}/metadata GET request
+// ComposeMetadata handles a /composes/{id}/metadata GET request
 func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
@@ -645,7 +645,7 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 
 	resp := &ComposeMetadata{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/compose/%v/metadata", jobId),
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
 			Id:   jobId.String(),
 			Kind: "ComposeMetadata",
 		},
