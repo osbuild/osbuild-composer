@@ -320,10 +320,10 @@ type ServerInterface interface {
 	// (POST /compose)
 	PostCompose(ctx echo.Context) error
 	// The status of a compose
-	// (GET /compose/{id})
+	// (GET /composes/{id})
 	GetComposeStatus(ctx echo.Context, id string) error
 	// Get the metadata for a compose.
-	// (GET /compose/{id}/metadata)
+	// (GET /composes/{id}/metadata)
 	GetComposeMetadata(ctx echo.Context, id string) error
 	// Get a list of all possible errors
 	// (GET /errors)
@@ -467,8 +467,8 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 	}
 
 	router.POST("/compose", wrapper.PostCompose)
-	router.GET("/compose/:id", wrapper.GetComposeStatus)
-	router.GET("/compose/:id/metadata", wrapper.GetComposeMetadata)
+	router.GET("/composes/:id", wrapper.GetComposeStatus)
+	router.GET("/composes/:id/metadata", wrapper.GetComposeMetadata)
 	router.GET("/errors", wrapper.GetErrorList)
 	router.GET("/errors/:id", wrapper.GetError)
 	router.GET("/openapi", wrapper.GetOpenapi)
@@ -528,15 +528,15 @@ var swaggerSpec = []string{
 	"AMeFLrR6bN9ZP4QzfU/CUQRqie2hVi8zLiNv4n1iQlrRPGMHIORbFq3MTYtOwLRHZVlCTI+0+y97ibJ5",
 	"JbfzHrJ+H7qu25s6eM3Tk4ypvVDUBr3+S3O/jAzjhsrNIIqxQEJiLiFS2zjq9V6Mv72fafO+pKb/a3e6",
 	"eN5k+Pd/f/5nuVRG8hUoIgIRg8ZwH/7+3D9TnMuYcfJkbhIy4CpvQ6VxGiSjPwLJV8qWtNwHo4TxH2EC",
-	"nyk8ZhBKiBCoOYiFYc6VW1RjrT7Giij75W5953siT1OsqqsiaBTBRa0rIk33O4nW+hBz3d29B2nuRfSZ",
-	"rG/xkD37EeOaYAIKmaWm73a0oYRJHoFAyxhkDFxNpszQKlSoMwyIIGqHm/cg65f6fu2l8Rf3K6qSsAEr",
-	"GVro20L9gleF2M0DXvuMqBpeqs95X/xRzV0rdvVeOnaVvbSWAdX18h8LXUXceI1ar1HroKh10wg8W8OX",
-	"7sAUvbedcayYaAjOCSUibkQvQPCIQ4lUvqmcmjCKOMicU4hQBKoGEojR6mPj4iWzuS/dEc3KHuFrPNsb",
-	"zzYP6trGdVPdyuJdhXksXmzla5h7DXN/jjDXik3KoHHFkFW408RFJb61QszmaVkruLgk20zp6lugbY2j",
-	"yjx9TfS7uv5GBpe1m2e6bI6sMl7d7D/jZsbQ/3xOhksDwkmCMiYEmSVQWtPGzfbXRJiaJhMNyz91Mcg2",
-	"L/dmK6SPTrejHpYBlHR/66k//IPP8HIrX3301Uef46NmbZW09suyZbr9/LuyU9xWXQdryWlvRYQipQP7",
-	"wPHPmDnsFGddXjWaOFPvdeOMdNRyERP7t2E4I11dzQS6oQ48KB4edx8GXlOKD/aRIYvy0LyMNbx0PtFm",
-	"JSRewG9iOJV4QeiizeaZdLSuafHW0Vvfrf8/AAD//8f1mrXcPgAA",
+	"nyk8ZhBKiBCoOYiFYc6VW1RjrT7Giij75W5953siT1OsqqsiaBTBRa0rIo3ofifRWp9irsu79yDNxYg+",
+	"lPU1HrKHP2JcU0xAQbPk9OWOtpQwySMQaBmDjIGryZQZWoUOdYoBEUTtePMeZP1W3689Nf7ifkZVEjZg",
+	"JUMLfV2on/CqGLt5wWvfEVXjS/U974u/qrlrBa/eSwevspnWsqC6Xv5jsasIHK9h6zVsHRS2bhqBZ3v8",
+	"0j2Yovu2M5AVEw3FOaFExI3wBQgecSiRyjiVVxNGEQeZcwoRikBVQQIxWn1uXLxlNjemO8JZ2SV8DWh7",
+	"A9rmSV3bum6qW1m8rDDPxYutfI1zr3HuzxHnWrFJGTSuGLKKd5q4qMS3VojZPC5rBReXZJspXX0PtK11",
+	"VJmnL4p+V9ffyOCydvNQl82RVcarm/1n3MwY+p/PyXBpQDhJUMaEILMESmvauNn+oghT02aiYfnHLgbZ",
+	"5u3ebIX00el21MMygJLubz31h3/wGV5u5auPvvroc3zUrK2S1n5ZNk23n39XdorbqutgLTntrYhQpHRg",
+	"nzj+GTOHneKsy8tGE2fq3W6ckY5aLmJi/zoMZ6Srq5lAt9SBB8XT4+7DwGtK8cE+M2RRHpq3sYaXzifa",
+	"rITEC/hNDKcSLwhdtNk8k47WNS1eO3rru/X/BwAA///p3GBJ3j4AAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

@@ -403,7 +403,7 @@ function waitForState() {
                      --cacert /etc/osbuild-composer/ca-crt.pem \
                      --key /etc/osbuild-composer/client-key.pem \
                      --cert /etc/osbuild-composer/client-crt.pem \
-                     https://localhost/api/image-builder-composer/v2/compose/"$COMPOSE_ID")
+                     https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID")
 
         COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
         UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
@@ -615,7 +615,7 @@ function verifyPackageList() {
       --cacert /etc/osbuild-composer/ca-crt.pem \
       --key /etc/osbuild-composer/client-key.pem \
       --cert /etc/osbuild-composer/client-crt.pem \
-      https://localhost/api/image-builder-composer/v2/compose/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
+      https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
   local PACKAGENAMES
   PACKAGENAMES=$(jq -rM '.packages[].name' "${ARTIFACTS}/metadata.json")
 
@@ -720,14 +720,14 @@ TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer $TOKEN" \
-        http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
+        http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")" = "200" ]
 
 [ "$(curl \
         --silent \
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer badtoken" \
-        http://localhost:443/api/image-builder-composer/v2/openapi)" = "401" ]
+        http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")" = "401" ]
 
 sudo systemctl start osbuild-remote-worker@https:--localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@https:--localhost:8700.service

@@ -279,9 +279,9 @@ func TestComposeStatusSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/image-builder-composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "building"}
@@ -295,15 +295,15 @@ func TestComposeStatusSuccess(t *testing.T) {
 
 	err = wrksrv.FinishJob(token, res)
 	require.NoError(t, err)
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/image-builder-composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "success"}
 	}`, jobId, jobId))
 
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v/metadata", jobId), ``, http.StatusInternalServerError, `
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusInternalServerError, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/1012",
 		"id": "1012",
@@ -345,9 +345,9 @@ func TestComposeStatusFailure(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/image-builder-composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "building"}
@@ -355,9 +355,9 @@ func TestComposeStatusFailure(t *testing.T) {
 
 	err = wrksrv.FinishJob(token, nil)
 	require.NoError(t, err)
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/compose/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
-		"href": "/api/image-builder-composer/v2/compose/%v",
+		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
 		"image_status": {"status": "failure"}
