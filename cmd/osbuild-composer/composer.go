@@ -253,6 +253,8 @@ func (c *Composer) Start() error {
 					c.config.Koji.JWTACLFile,
 					[]string{
 						"/metrics/?$",
+						"/api/image-builder-composer/v2/openapi/?$",
+						"/api/image-builder-composer/v2/errors/?$",
 					}, mux)
 				if err != nil {
 					panic(err)
