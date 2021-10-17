@@ -249,7 +249,7 @@ github.com/kolo/xmlrpc
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
-# github.com/labstack/echo/v4 v4.6.0
+# github.com/labstack/echo/v4 v4.6.1
 ## explicit
 github.com/labstack/echo/v4
 github.com/labstack/echo/v4/middleware
