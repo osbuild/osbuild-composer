@@ -34,7 +34,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
-	github.com/labstack/echo/v4 v4.6.0
+	github.com/labstack/echo/v4 v4.6.1
 	github.com/labstack/gommon v0.3.0
 	github.com/openshift-online/ocm-sdk-go v0.1.208
 	github.com/prometheus/client_golang v1.11.0
