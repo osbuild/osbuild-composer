@@ -3,7 +3,6 @@ module github.com/osbuild/osbuild-composer
 go 1.15
 
 require (
-	cloud.google.com/go v0.94.1 // indirect
 	cloud.google.com/go/cloudbuild v0.2.0
 	cloud.google.com/go/storage v1.16.1
 	github.com/Azure/azure-pipeline-go v0.2.3
@@ -47,9 +46,9 @@ require (
 	github.com/vmware/govmomi v0.26.1
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
-	google.golang.org/api v0.56.0
-	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
+	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
+	google.golang.org/api v0.58.0
+	google.golang.org/genproto v0.0.0-20210917145530-b395a37504d4
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/ini.v1 v1.63.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
