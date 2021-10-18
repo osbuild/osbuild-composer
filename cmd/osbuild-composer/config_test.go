@@ -39,10 +39,11 @@ func TestDefaultConfig(t *testing.T) {
 	}, defaultConfig.Koji)
 
 	require.Equal(t, WorkerAPIConfig{
-		BasePath:   "/api/worker/v1",
-		EnableTLS:  true,
-		EnableMTLS: true,
-		EnableJWT:  false,
+		RequestJobTimeout: "0",
+		BasePath:          "/api/worker/v1",
+		EnableTLS:         true,
+		EnableMTLS:        true,
+		EnableJWT:         false,
 	}, defaultConfig.Worker)
 
 	expectedWeldrAPIConfig := WeldrAPIConfig{

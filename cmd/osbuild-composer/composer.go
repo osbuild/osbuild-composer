@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -87,7 +88,12 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		}
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, config.Worker.BasePath)
+	requestJobTimeout, err := time.ParseDuration(config.Worker.RequestJobTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse request job timeout: %v", err)
+	}
+
+	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, requestJobTimeout, config.Worker.BasePath)
 
 	return &c, nil
 }

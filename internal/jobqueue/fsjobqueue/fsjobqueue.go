@@ -178,7 +178,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
-		return uuid.Nil, uuid.Nil, nil, "", nil, err
+		return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 	}
 
 	// Filter q.pending by the `jobTypes`. Ignore those job types that this
@@ -212,6 +212,9 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		}
 
 		if err != nil {
+			if errors.As(err, &context.Canceled) || errors.As(err, &context.DeadlineExceeded) {
+				return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
+			}
 			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
 

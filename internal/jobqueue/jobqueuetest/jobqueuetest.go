@@ -37,6 +37,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("dependencies", wrap(testDependencies))
 	t.Run("multiple-workers", wrap(testMultipleWorkers))
 	t.Run("heartbeats", wrap(testHeartbeats))
+	t.Run("timeout", wrap(testDequeueTimeout))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID) uuid.UUID {
@@ -153,12 +154,24 @@ func testJobTypes(t *testing.T, q jobqueue.JobQueue) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"})
-	require.Equal(t, err, context.Canceled)
+	require.Equal(t, err, jobqueue.ErrDequeueTimeout)
 	require.Equal(t, uuid.Nil, id)
 	require.Equal(t, uuid.Nil, tok)
 	require.Empty(t, deps)
 	require.Equal(t, "", typ)
 	require.Nil(t, args)
+}
+
+func testDequeueTimeout(t *testing.T, q jobqueue.JobQueue) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*20)
+	defer cancel()
+	_, _, _, _, _, err := q.Dequeue(ctx, []string{"octopus"})
+	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
+
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	cancel2()
+	_, _, _, _, _, err = q.Dequeue(ctx2, []string{"octopus"})
+	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
 }
 
 func testDependencies(t *testing.T, q jobqueue.JobQueue) {

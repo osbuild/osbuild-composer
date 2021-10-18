@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -44,6 +45,8 @@ type Job interface {
 	Canceled() (bool, error)
 	UploadArtifact(name string, reader io.Reader) error
 }
+
+var ErrClientRequestJobTimeout = errors.New("Dequeue timed out, retry")
 
 type job struct {
 	client           *Client
@@ -185,6 +188,9 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode == http.StatusNoContent {
+		return nil, ErrClientRequestJobTimeout
+	}
 	if response.StatusCode != http.StatusCreated {
 		return nil, errorFromResponse(response, "error requesting job")
 	}

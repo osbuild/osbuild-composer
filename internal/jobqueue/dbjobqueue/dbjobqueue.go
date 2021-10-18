@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -149,7 +150,7 @@ func (q *dbJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
-		return uuid.Nil, uuid.Nil, nil, "", nil, err
+		return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 	}
 
 	conn, err := q.pool.Acquire(ctx)
@@ -183,6 +184,9 @@ func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		}
 		_, err = conn.Conn().WaitForNotification(ctx)
 		if err != nil {
+			if pgconn.Timeout(err) {
+				return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
+			}
 			return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error waiting for notification on jobs channel: %v", err)
 		}
 	}

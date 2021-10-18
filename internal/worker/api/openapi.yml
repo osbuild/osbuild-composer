@@ -62,6 +62,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestJobResponse'
+        '204':
+          description: No job was available, try again
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectReference'
         '4XX':
           content:
             application/json:

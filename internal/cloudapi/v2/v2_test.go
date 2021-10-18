@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -36,9 +35,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 	depsolveContext, cancel := context.WithCancel(context.Background())
 	go func() {
 		for {
-			ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(50*time.Millisecond))
-			defer cancel()
-			_, token, _, _, _, err := rpmFixture.Workers.RequestJob(ctx, test_distro.TestDistroName, []string{"depsolve"})
+			_, token, _, _, _, err := rpmFixture.Workers.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"})
 			if err != nil {
 				continue
 			}

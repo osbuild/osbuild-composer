@@ -26,9 +26,10 @@ import (
 )
 
 type Server struct {
-	jobs         jobqueue.JobQueue
-	logger       *log.Logger
-	artifactsDir string
+	jobs              jobqueue.JobQueue
+	logger            *log.Logger
+	artifactsDir      string
+	requestJobTimeout time.Duration
 }
 
 type JobStatus struct {
@@ -41,11 +42,12 @@ type JobStatus struct {
 var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, basePath string) *Server {
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, requestJobTimeout time.Duration, basePath string) *Server {
 	s := &Server{
-		jobs:         jobs,
-		logger:       logger,
-		artifactsDir: artifactsDir,
+		jobs:              jobs,
+		logger:            logger,
+		artifactsDir:      artifactsDir,
+		requestJobTimeout: requestJobTimeout,
 	}
 
 	api.BasePath = basePath
@@ -217,7 +219,13 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jts = append(jts, t)
 	}
 
-	jobId, token, depIDs, jobType, args, err := s.jobs.Dequeue(ctx, jts)
+	dequeueCtx := ctx
+	var cancel context.CancelFunc
+	if s.requestJobTimeout != 0 {
+		dequeueCtx, cancel = context.WithTimeout(ctx, s.requestJobTimeout)
+		defer cancel()
+	}
+	jobId, token, depIDs, jobType, args, err := s.jobs.Dequeue(dequeueCtx, jts)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, "", nil, nil, err
 	}
@@ -337,6 +345,13 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
 	if err != nil {
+		if err == jobqueue.ErrDequeueTimeout {
+			return ctx.JSON(http.StatusNoContent, api.ObjectReference{
+				Href: fmt.Sprintf("%s/jobs", api.BasePath),
+				Id:   uuid.Nil.String(),
+				Kind: "RequestJob",
+			})
+		}
 		return api.HTTPErrorWithInternal(api.ErrorRequestingJob, err)
 	}
 

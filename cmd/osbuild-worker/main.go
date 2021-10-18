@@ -89,6 +89,10 @@ func WatchJob(ctx context.Context, job worker.Job) {
 func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls map[string]JobImplementation) error {
 	logrus.Info("Waiting for a new job...")
 	job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
+	if err == worker.ErrClientRequestJobTimeout {
+		logrus.Debugf("Requesting job timed out: %v", err)
+		return nil
+	}
 	if err != nil {
 		logrus.Errorf("Requesting job failed: %v", err)
 		return err

@@ -33,21 +33,22 @@ type AWSConfig struct {
 }
 
 type WorkerAPIConfig struct {
-	AllowedDomains []string `toml:"allowed_domains"`
-	CA             string   `toml:"ca"`
-	BasePath       string   `toml:"base_path"`
-	PGHost         string   `toml:"pg_host" env:"PGHOST"`
-	PGPort         string   `toml:"pg_port" env:"PGPORT"`
-	PGDatabase     string   `toml:"pg_database" env:"PGDATABASE"`
-	PGUser         string   `toml:"pg_user" env:"PGUSER"`
-	PGPassword     string   `toml:"pg_password" env:"PGPASSWORD"`
-	PGSSLMode      string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
-	EnableTLS      bool     `toml:"enable_tls"`
-	EnableMTLS     bool     `toml:"enable_mtls"`
-	EnableJWT      bool     `toml:"enable_jwt"`
-	JWTKeysURL     string   `toml:"jwt_keys_url"`
-	JWTKeysCA      string   `toml:"jwt_ca_file"`
-	JWTACLFile     string   `toml:"jwt_acl_file"`
+	AllowedDomains    []string `toml:"allowed_domains"`
+	CA                string   `toml:"ca"`
+	RequestJobTimeout string   `toml:"request_job_timeout"`
+	BasePath          string   `toml:"base_path"`
+	PGHost            string   `toml:"pg_host" env:"PGHOST"`
+	PGPort            string   `toml:"pg_port" env:"PGPORT"`
+	PGDatabase        string   `toml:"pg_database" env:"PGDATABASE"`
+	PGUser            string   `toml:"pg_user" env:"PGUSER"`
+	PGPassword        string   `toml:"pg_password" env:"PGPASSWORD"`
+	PGSSLMode         string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
+	EnableTLS         bool     `toml:"enable_tls"`
+	EnableMTLS        bool     `toml:"enable_mtls"`
+	EnableJWT         bool     `toml:"enable_jwt"`
+	JWTKeysURL        string   `toml:"jwt_keys_url"`
+	JWTKeysCA         string   `toml:"jwt_ca_file"`
+	JWTACLFile        string   `toml:"jwt_acl_file"`
 }
 
 type WeldrAPIConfig struct {
@@ -86,10 +87,11 @@ func GetDefaultConfig() *ComposerConfigFile {
 			},
 		},
 		Worker: WorkerAPIConfig{
-			BasePath:   "/api/worker/v1",
-			EnableTLS:  true,
-			EnableMTLS: true,
-			EnableJWT:  false,
+			RequestJobTimeout: "0",
+			BasePath:          "/api/worker/v1",
+			EnableTLS:         true,
+			EnableMTLS:        true,
+			EnableJWT:         false,
 		},
 		WeldrAPI: WeldrAPIConfig{
 			map[string]WeldrDistroConfig{
