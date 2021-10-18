@@ -1,6 +1,7 @@
 package blueprint
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -21,6 +22,10 @@ version = "2.4.*"
 [[customizations.filesystem]]
 mountpoint = "/var"
 size = 2147483648
+
+[[customizations.filesystem]]
+mountpoint = "/opt"
+size = "20 GB"
 `
 
 	var bp Blueprint
@@ -29,6 +34,23 @@ size = 2147483648
 	assert.Equal(t, bp.Name, "test")
 	assert.Equal(t, "/var", bp.Customizations.Filesystem[0].Mountpoint)
 	assert.Equal(t, uint64(2147483648), bp.Customizations.Filesystem[0].MinSize)
+	assert.Equal(t, "/opt", bp.Customizations.Filesystem[1].Mountpoint)
+	assert.Equal(t, uint64(20*1000*1000*1000), bp.Customizations.Filesystem[1].MinSize)
+
+	blueprint = `{
+		"name": "test",
+		"customizations": {
+		  "filesystem": [{
+			"mountpoint": "/opt",
+			"minsize": "20 GiB"
+		  }]
+		}
+	  }`
+	err = json.Unmarshal([]byte(blueprint), &bp)
+	require.Nil(t, err)
+	assert.Equal(t, bp.Name, "test")
+	assert.Equal(t, "/opt", bp.Customizations.Filesystem[0].Mountpoint)
+	assert.Equal(t, uint64(20*1024*1024*1024), bp.Customizations.Filesystem[0].MinSize)
 }
 
 func TestDeepCopy(t *testing.T) {
