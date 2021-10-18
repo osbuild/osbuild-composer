@@ -361,6 +361,10 @@ systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 %package dnf-json
 Summary: The dnf-json binary used by osbuild-composer and the workers
 
+# Conflicts with older versions of composer that provide the same files
+# this can be removed when RHEL 8 and Fedora 35 reach EOL
+Conflicts: osbuild-composer <= 35
+
 %description dnf-json
 The dnf-json binary used by osbuild-composer and the workers.
 
