@@ -164,8 +164,8 @@ objects:
     name: composer-config
   data:
     acl.yml: |
-      - claim: email
-        pattern: ^osbuilders@redhat\.com$
+      - claim: user_id
+        pattern: ^(54629121|54629180|54597799)$
     osbuild-composer.toml: |
       log_level = "info"
       [koji]
