@@ -3,9 +3,33 @@ package blueprint
 import (
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBlueprintParse(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[packages]]
+name = "httpd"
+version = "2.4.*"
+
+[[customizations.filesystem]]
+mountpoint = "/var"
+size = 2147483648
+`
+
+	var bp Blueprint
+	err := toml.Unmarshal([]byte(blueprint), &bp)
+	require.Nil(t, err)
+	assert.Equal(t, bp.Name, "test")
+	assert.Equal(t, "/var", bp.Customizations.Filesystem[0].Mountpoint)
+	assert.Equal(t, uint64(2147483648), bp.Customizations.Filesystem[0].MinSize)
+}
 
 func TestDeepCopy(t *testing.T) {
 	bpOrig := Blueprint{
