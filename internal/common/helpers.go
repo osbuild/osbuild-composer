@@ -1,8 +1,12 @@
 package common
 
 import (
+	"fmt"
+	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 var RuntimeGOARCH = runtime.GOARCH
@@ -35,4 +39,52 @@ func IsStringInSortedSlice(slice []string, s string) bool {
 		return true
 	}
 	return false
+}
+
+// DataSizeToUint64 converts a size specified as a string in KB/KiB/MB/etc. to
+// a number of bytes represented by uint64.
+func DataSizeToUint64(size string) (uint64, error) {
+	// Pre-process the input
+	size = strings.TrimSpace(size)
+
+	// Get the number from the string
+	plain_number := regexp.MustCompile(`[[:digit:]]+`)
+	number_as_str := plain_number.FindString(size)
+	if number_as_str == "" {
+		return 0, fmt.Errorf("the size string doesn't contain any number: %s", size)
+	}
+
+	// Parse the number into integer
+	return_size, err := strconv.ParseUint(number_as_str, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse size as integer: %s", number_as_str)
+	}
+
+	// List of all supported units (from kB to TB and KiB to TiB)
+	supported_units := []struct {
+		re       *regexp.Regexp
+		multiple uint64
+	}{
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*kB$`), 1000},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*KiB$`), 1024},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MB$`), 1000 * 1000},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MiB$`), 1024 * 1024},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GB$`), 1000 * 1000 * 1000},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GiB$`), 1024 * 1024 * 1024},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TB$`), 1000 * 1000 * 1000 * 1000},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TiB$`), 1024 * 1024 * 1024 * 1024},
+		{regexp.MustCompile(`^\s*[[:digit:]]+$`), 1},
+	}
+
+	for _, unit := range supported_units {
+		if unit.re.MatchString(size) {
+			return_size *= unit.multiple
+			return return_size, nil
+		}
+	}
+
+	// In case the strign didn't match any of the above regexes, return nil
+	// even if a number was found. This is to prevent users from submitting
+	// unknown units.
+	return 0, fmt.Errorf("unknown data size units in string: %s", size)
 }
