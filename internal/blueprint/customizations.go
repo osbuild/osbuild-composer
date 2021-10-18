@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 type Customizations struct {
@@ -90,8 +92,14 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 	switch d["size"].(type) {
 	case int64:
 		fsc.MinSize = uint64(d["size"].(int64))
+	case string:
+		size, err := common.DataSizeToUint64(d["size"].(string))
+		if err != nil {
+			return fmt.Errorf("TOML unmarshal: size is not valid filesystem size (%w)", err)
+		}
+		fsc.MinSize = size
 	default:
-		return fmt.Errorf("TOML unmarshal: size must be integer, got %v of type %T", d["size"], d["size"])
+		return fmt.Errorf("TOML unmarshal: size must be integer or string, got %v of type %T", d["size"], d["size"])
 	}
 
 	return nil
@@ -116,8 +124,14 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 	case float64:
 		// Note that it uses different key than the TOML version
 		fsc.MinSize = uint64(d["minsize"].(float64))
+	case string:
+		size, err := common.DataSizeToUint64(d["minsize"].(string))
+		if err != nil {
+			return fmt.Errorf("JSON unmarshal: size is not valid filesystem size (%w)", err)
+		}
+		fsc.MinSize = size
 	default:
-		return fmt.Errorf("JSON unmarshal: minsize must be float64 number, got %v of type %T", d["minsize"], d["minsize"])
+		return fmt.Errorf("JSON unmarshal: minsize must be float64 number or string, got %v of type %T", d["minsize"], d["minsize"])
 	}
 
 	return nil
