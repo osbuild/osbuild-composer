@@ -74,7 +74,8 @@ type JobQueue interface {
 }
 
 var (
-	ErrNotExist   = errors.New("job does not exist")
-	ErrNotRunning = errors.New("job is not running")
-	ErrCanceled   = errors.New("job ws canceled")
+	ErrNotExist       = errors.New("job does not exist")
+	ErrNotRunning     = errors.New("job is not running")
+	ErrCanceled       = errors.New("job ws canceled")
+	ErrDequeueTimeout = errors.New("dequeue context timed out or was canceled")
 )
