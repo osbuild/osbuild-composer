@@ -9,13 +9,13 @@ stages:
 .base:
   after_script:
     - schutzbot/update_github_status.sh update
-    - schutzbot/save_journal.sh
+#     - schutzbot/save_journal.sh
     - schutzbot/run_cloud_cleaner.sh
   tags:
     - terraform
   artifacts:
     paths:
-      - journal-log
+      # - journal-log
       - ci-artifacts
     when: always
 
@@ -46,7 +46,7 @@ RPM:
     - sh "schutzbot/mockbuild.sh"
   after_script:
     - schutzbot/update_github_status.sh update
-    - schutzbot/save_journal.sh
+#     - schutzbot/save_journal.sh
   parallel:
     matrix:
       - RUNNER:
