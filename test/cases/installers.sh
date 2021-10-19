@@ -9,7 +9,7 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Colorful output.
 function greenprint {
-    echo -e "\033[1;32m${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
 # modify existing kickstart by prepending and appending commands
