@@ -15,7 +15,7 @@ localectl set-locale LANG=en_US.UTF-8
 
 # Colorful output.
 function greenprint {
-    echo -e "\033[1;32m${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
 function retry {

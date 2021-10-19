@@ -21,7 +21,7 @@ fi
 
 # Colorful output.
 function greenprint {
-    echo -e "\033[1;32m${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
 # Start libvirtd and test it.
