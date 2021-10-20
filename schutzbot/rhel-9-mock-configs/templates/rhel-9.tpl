@@ -30,19 +30,19 @@ user_agent={{ user_agent }}
 
 [rhel9-baseos]
 name=RHEL 9 BaseOS
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/latest-RHEL-9/compose/BaseOS/$basearch/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/RHEL-9.0.0-20211017.6/compose/BaseOS/$basearch/os/
 enabled=1
 gpgcheck=0
 
 [rhel9-appstream]
 name=RHEL 9 AppStream
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/latest-RHEL-9/compose/AppStream/$basearch/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/RHEL-9.0.0-20211017.6/compose/AppStream/$basearch/os/
 enabled=1
 gpgcheck=0
 
 [rhel9-crb]
 name=RHEL 9 CRB
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/latest-RHEL-9/compose/CRB/$basearch/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9-Beta/RHEL-9.0.0-20211017.6/compose/CRB/$basearch/os/
 enabled=1
 gpgcheck=0
 
