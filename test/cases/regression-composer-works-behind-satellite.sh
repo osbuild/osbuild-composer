@@ -36,6 +36,11 @@ function generate_certificates {
 function cleanup {
     # Make the cleanup function best effort
     set +eu
+
+    greenprint "Display httpd logs"
+    cat /var/log/httpd/access_log
+    cat /var/log/httpd/error_log
+
     greenprint "Putting things back to their previous configuration"
     if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ];
     then
@@ -133,11 +138,17 @@ fi
 
 # Configuration of the testing environment
 REPO1_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
+REPO2_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
+
+if ! echo "${REPO1_BASEURL}" | grep "rpmrepo.osbuild.org" || ! echo "${REPO2_BASEURL}" | grep "rpmrepo.osbuild.org";
+then
+    greenprint "This test only works with rpmrepo snapshots. Other RPM repositories are unsupported."
+    exit 0
+fi
+
 # Don't use raw-output, instead cut the surrounding quotes to preserve \n inside the string so that it can be
 # easily written to files using "tee" later in the script.
 REPO1_GPGKEY=$(jq ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .gpgkey" "${REPOSITORY_OVERRIDE}" | cut -d'"' -f2)
-
-REPO2_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
 REPO2_GPGKEY=$(jq ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .gpgkey" "${REPOSITORY_OVERRIDE}" | cut -d'"' -f2)
 
 # RPMrepo tool uses redirects to different AWS S3 buckets, VPCs or in case of PSI a completely different redirect.
@@ -384,6 +395,24 @@ CLIENT_CERT="/etc/pki/entitlement/0.pem"
 sudo cp "${PKI_DIR}/ca1/client.key" "${CLIENT_KEY}"
 sudo cp "${PKI_DIR}/ca1/client.crt" "${CLIENT_CERT}"
 
+update-ca-trust
+
+function cleanup2 {
+    # Put things back to their previous configuration
+    set +eu
+    sudo rm -f "${REDHAT_REPO}"
+    sudo mv "${REDHAT_REPO_BACKUP_2}" "${REDHAT_REPO}"
+    sudo rm -f "${REDHAT_CA_CERT}"
+    sudo mv "${REDHAT_CA_CERT_BACKUP}" "${REDHAT_CA_CERT}"
+    sudo rm -rf "${ENTITLEMENTS_DIR}"
+    sudo mv "${ENTITLEMENTS_DIR_BACKUP}" "${ENTITLEMENTS_DIR}"
+    set -eu
+
+    cleanup
+}
+
+trap cleanup2 EXIT
+
 # Reconfigure the proxies to use only a single CA
 sudo sed -i "s|${PKI_DIR}/ca2|${PKI_DIR}/ca1|" /etc/httpd/conf.d/repo2.conf
 sudo systemctl restart httpd
@@ -398,14 +427,8 @@ then
     exit 1
 fi
 
-try_image_build
+sudo systemctl restart osbuild-composer
+sleep 5
+sudo systemctl status osbuild-composer
 
-# Put things back to their previous configuration
-set +eu
-sudo rm -f "${REDHAT_REPO}"
-sudo mv "${REDHAT_REPO_BACKUP_2}" "${REDHAT_REPO}"
-sudo rm -f "${REDHAT_CA_CERT}"
-sudo mv "${REDHAT_CA_CERT_BACKUP}" "${REDHAT_CA_CERT}"
-sudo rm -rf "${ENTITLEMENTS_DIR}"
-sudo mv "${ENTITLEMENTS_DIR_BACKUP}" "${ENTITLEMENTS_DIR}"
-set -eu
+try_image_build
