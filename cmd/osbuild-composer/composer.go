@@ -215,7 +215,9 @@ func (c *Composer) Start() error {
 					c.config.Worker.JWTKeysURL,
 					c.config.Worker.JWTKeysCA,
 					c.config.Worker.JWTACLFile,
-					[]string{},
+					[]string{
+						"/api/image-builder-worker/v1/openapi/?$",
+					},
 					handler,
 				)
 				if err != nil {
@@ -258,7 +260,6 @@ func (c *Composer) Start() error {
 					c.config.Koji.JWTKeysCA,
 					c.config.Koji.JWTACLFile,
 					[]string{
-						"/metrics/?$",
 						"/api/image-builder-composer/v2/openapi/?$",
 						"/api/image-builder-composer/v2/errors/?$",
 					}, mux)
