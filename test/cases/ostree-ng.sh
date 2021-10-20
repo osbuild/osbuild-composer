@@ -14,7 +14,7 @@ function greenprint {
 
 # Install openshift client
 greenprint "🔧 Installing oenshift client(oc)"
-curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz | sudo tar -xz -C /usr/local/bin/
+curl https://osbuild-storage.s3.amazonaws.com/oc-4.9.0-linux.tar.gz | sudo tar -xz -C /usr/local/bin/
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
