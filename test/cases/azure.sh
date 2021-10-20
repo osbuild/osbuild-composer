@@ -233,8 +233,8 @@ export TF_VAR_TEST_ID="$TEST_ID"
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/image#argument-reference
 export TF_VAR_HYPER_V_GEN="${HYPER_V_GEN}"
 export BLOB_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER_NAME/$IMAGE_KEY.vhd"
-export ARM_CLIENT_ID="$AZURE_CLIENT_ID" > /dev/null
-export ARM_CLIENT_SECRET="$AZURE_CLIENT_SECRET" > /dev/null
+export ARM_CLIENT_ID="$V2_AZURE_CLIENT_ID" > /dev/null
+export ARM_CLIENT_SECRET="$V2_AZURE_CLIENT_SECRET" > /dev/null
 export ARM_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" > /dev/null
 export ARM_TENANT_ID="$AZURE_TENANT_ID" > /dev/null
 

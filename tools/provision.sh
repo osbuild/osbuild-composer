@@ -45,13 +45,13 @@ if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
 fi
 
 # if Azure credentials are defined in the env, create the credentials file
-AZURE_CLIENT_ID="${AZURE_CLIENT_ID:-}"
-AZURE_CLIENT_SECRET="${AZURE_CLIENT_SECRET:-}"
-if [[ -n "$AZURE_CLIENT_ID" && -n "$AZURE_CLIENT_SECRET" ]]; then
+V2_AZURE_CLIENT_ID="${V2_AZURE_CLIENT_ID:-}"
+V2_AZURE_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET:-}"
+if [[ -n "$V2_AZURE_CLIENT_ID" && -n "$V2_AZURE_CLIENT_SECRET" ]]; then
     set +x
     sudo tee /etc/osbuild-worker/azure-credentials.toml > /dev/null << EOF
-client_id =     "$AZURE_CLIENT_ID"
-client_secret = "$AZURE_CLIENT_SECRET"
+client_id =     "$V2_AZURE_CLIENT_ID"
+client_secret = "$V2_AZURE_CLIENT_SECRET"
 EOF
     sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 

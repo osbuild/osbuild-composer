@@ -90,8 +90,8 @@ credentials="$AWS_CREDS_FILE"
 EOF
   cat <<EOF | sudo tee "$AWS_CREDS_FILE"
 [default]
-aws_access_key_id = $AWS_ACCESS_KEY_ID
-aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
+aws_access_key_id = $V2_AWS_ACCESS_KEY_ID
+aws_secret_access_key = $V2_AWS_SECRET_ACCESS_KEY
 EOF
   sudo systemctl restart osbuild-composer osbuild-composer-worker@*.service
 }
@@ -133,7 +133,7 @@ esac
 
 # Check that needed variables are set to access AWS.
 function checkEnvAWS() {
-  printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+  printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
 }
 
 # Check that needed variables are set to register to RHSM (RHEL only)
@@ -218,8 +218,8 @@ function installClientAWS() {
     sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
-      -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-      -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+      -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+      -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
       -v ${WORKDIR}:${WORKDIR}:Z \
       ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
   else
