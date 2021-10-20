@@ -3,7 +3,6 @@ This pull request includes:
 
 - [ ] adequate testing for the new functionality or fixed issue
 - [ ] adequate documentation informing people about the change such as
-  - [ ] create a file in [news/unreleased](https://github.com/osbuild/osbuild-composer/tree/main/docs/news/unreleased) directory if this change should be mentioned in the release news
   - [ ] submit a PR for the [guides](https://github.com/osbuild/guides) repository if this PR changed any behavior described there: https://www.osbuild.org/guides/
 
 <!--
@@ -15,9 +14,6 @@ anything.
 
 If the reason for ticking any of the boxes is ambiguous, please add a short
 note explaining why.
-
-For user-visible changes, "adequate documentation" is an entry describing the
-change for users in docs/news. Please refer to docs/news/README.md for details.
 
 In addition, if this pull request fixes a downstream issue, please refer to
 test/README.md and add these additional items:
