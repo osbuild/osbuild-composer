@@ -236,7 +236,6 @@ EOF
 greenprint "👷🏻 Building instance in AWS"
 $AWS_CMD ec2 run-instances \
     --associate-public-ip-address \
-    --key-name personal_servers \
     --image-id "${AMI_IMAGE_ID}" \
     --instance-type t3a.micro \
     --user-data file://"${SSH_DATA_DIR}"/user-data \
