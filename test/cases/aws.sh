@@ -58,8 +58,8 @@ if ! hash aws; then
     sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
-        -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-        -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+        -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+        -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
         -v ${SSH_DATA_DIR}:${SSH_DATA_DIR}:Z \
         ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
@@ -129,8 +129,8 @@ tee "$AWS_CONFIG" > /dev/null << EOF
 provider = "aws"
 
 [settings]
-accessKeyID = "${AWS_ACCESS_KEY_ID}"
-secretAccessKey = "${AWS_SECRET_ACCESS_KEY}"
+accessKeyID = "${V2_AWS_ACCESS_KEY_ID}"
+secretAccessKey = "${V2_AWS_SECRET_ACCESS_KEY}"
 bucket = "${AWS_BUCKET}"
 region = "${AWS_REGION}"
 key = "${IMAGE_KEY}"

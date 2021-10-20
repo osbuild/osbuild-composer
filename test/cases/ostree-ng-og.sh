@@ -191,7 +191,7 @@ wait_for_ssh_up () {
 clean_up () {
     greenprint "🧼 Cleaning up"
     # Remove tag from quay.io repo
-    skopeo delete --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+    skopeo delete --creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 
     # Clear vm
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
@@ -304,9 +304,9 @@ sudo podman rmi -f -a
 # Deal with stage repo image
 greenprint "🗜 Pushing image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
-skopeo copy --dest-creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+skopeo copy --dest-creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 greenprint "Downloading image from quay.io"
-sudo podman login quay.io --username "${QUAY_USERNAME}" --password "${QUAY_PASSWORD}"
+sudo podman login quay.io --username "${V2_QUAY_USERNAME}" --password "${V2_QUAY_PASSWORD}"
 sudo podman pull "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 sudo podman images
 greenprint "🗜 Running the image"

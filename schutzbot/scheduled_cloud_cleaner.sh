@@ -17,7 +17,7 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.re
   az version
 fi
 
-az login --service-principal --username "${AZURE_CLIENT_ID}" --password "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
+az login --service-principal --username "${V2_AZURE_CLIENT_ID}" --password "${V2_AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
 
 # List all resources from AZURE_RESOURCE_GROUP
 RESOURCE_LIST=$(az resource list -g "$AZURE_RESOURCE_GROUP")

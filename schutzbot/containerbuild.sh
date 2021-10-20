@@ -20,5 +20,5 @@ podman \
 # Push to reuse later in the pipeline (see regression tests)
 BRANCH_NAME="${BRANCH_NAME:-${CI_COMMIT_BRANCH}}"
 podman push \
-       --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" \
+       --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
        "${IMAGE_NAME}:${IMAGE_TAG}"

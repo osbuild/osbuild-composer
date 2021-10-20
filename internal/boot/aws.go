@@ -30,8 +30,8 @@ type awsCredentials struct {
 // If none of the environment variables is set, it returns nil.
 // If some but not all environment variables are set, it returns an error.
 func GetAWSCredentialsFromEnv() (*awsCredentials, error) {
-	accessKeyId, akExists := os.LookupEnv("AWS_ACCESS_KEY_ID")
-	secretAccessKey, sakExists := os.LookupEnv("AWS_SECRET_ACCESS_KEY")
+	accessKeyId, akExists := os.LookupEnv("V2_AWS_ACCESS_KEY_ID")
+	secretAccessKey, sakExists := os.LookupEnv("V2_AWS_SECRET_ACCESS_KEY")
 	region, regionExists := os.LookupEnv("AWS_REGION")
 	bucket, bucketExists := os.LookupEnv("AWS_BUCKET")
 

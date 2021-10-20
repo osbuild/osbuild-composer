@@ -44,7 +44,7 @@ rpm -q "$WORKER_RPM"
 WELDR_DIR="$(mktemp -d)"
 WELDR_SOCK="$WELDR_DIR/api.socket"
 
-sudo podman pull --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" \
+sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
 
 # The host entitlement doesn't get picked up by composer

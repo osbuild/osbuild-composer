@@ -169,8 +169,8 @@ it uploads the image to Azure, boots it and tries to ssh into it.
 - `AZURE_STORAGE_ACCESS_KEY`
 - `AZURE_CONTAINER_NAME`
 - `AZURE_SUBSCRIPTION_ID`
-- `AZURE_CLIENT_ID`
-- `AZURE_CLIENT_SECRET`
+- `V2_AZURE_CLIENT_ID`
+- `V2_AZURE_CLIENT_SECRET`
 - `AZURE_TENANT_ID`
 - `AZURE_LOCATION`
 - `AZURE_RESOURCE_GROUP`
@@ -207,10 +207,10 @@ it uploads the image to Azure, boots it and tries to ssh into it.
 
    When it’s created, open it. In the overview, you can see
    the Application (client) ID and the Directory (tenant) ID. These are your
-   `AZURE_CLIENT_ID` and `AZURE_TENANT_ID`.
+   `V2_AZURE_CLIENT_ID` and `AZURE_TENANT_ID`.
 
    Now, go to *Manage > Certificates & Secrets* under your new application
-   and create a new client secret. The is your `AZURE_CLIENT_SECRET`.
+   and create a new client secret. The is your `V2_AZURE_CLIENT_SECRET`.
 
 5) The last step is to give the new application access to the resource group.
    This step must be done by Azure administrator (@larskarlitski): Go to
@@ -330,8 +330,8 @@ The following environment variables are required
 
 - `AWS_REGION`
 - `AWS_BUCKET`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+- `V2_AWS_ACCESS_KEY_ID`
+- `V2_AWS_SECRET_ACCESS_KEY`
 - `AWS_API_TEST_SHARE_ACCOUNT`
 
 To execute the AWS integration tests, complete steps from *Cloud API integration testing*
