@@ -30,6 +30,7 @@ var supportedDistros = []supportedDistro{
 	{rhel90beta.New, rhel90beta.NewHostDistro},
 	{rhel90beta.NewRHEL90, rhel90beta.NewHostDistro},
 	{rhel90.New, rhel90.NewHostDistro},
+	{rhel90.NewCentos, rhel90.NewCentosHostDistro},
 }
 
 type supportedDistro struct {

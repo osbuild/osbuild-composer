@@ -2,14 +2,17 @@ package rhel90
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -144,12 +147,12 @@ func systemdStageOptions(enabledServices, disabledServices []string, s *blueprin
 	}
 }
 
-func buildStampStageOptions(arch string) *osbuild.BuildstampStageOptions {
+func buildStampStageOptions(arch, product, osVersion, variant string) *osbuild.BuildstampStageOptions {
 	return &osbuild.BuildstampStageOptions{
 		Arch:    arch,
-		Product: "Red Hat Enterprise Linux",
+		Product: product,
 		Version: osVersion,
-		Variant: "edge",
+		Variant: variant,
 		Final:   true,
 	}
 }
@@ -171,7 +174,7 @@ func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
 	}
 }
 
-func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
+func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osbuild.DracutStageOptions {
 	kernel := []string{kernelVer}
 	modules := []string{
 		"bash",
@@ -192,7 +195,6 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"plymouth",
 		"prefixdevname",
 		"prefixdevname-tools",
-		"anaconda",
 		"crypt",
 		"dm",
 		"dmsquash-live",
@@ -214,7 +216,6 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"rootfs-block",
 		"terminfo",
 		"udev-rules",
-		"biosdevname",
 		"dracut-systemd",
 		"pollcdrom",
 		"usrmount",
@@ -224,6 +225,12 @@ func dracutStageOptions(kernelVer string) *osbuild.DracutStageOptions {
 		"shutdown",
 		"uefi-lib",
 	}
+
+	if arch == distro.X86_64ArchName {
+		modules = append(modules, "biosdevname")
+	}
+
+	modules = append(modules, additionalModules...)
 	return &osbuild.DracutStageOptions{
 		Kernel:  kernel,
 		Modules: modules,
@@ -252,29 +259,35 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 	}
 }
 
-func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMonoStageOptions {
+func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
 	comprOptions := new(osbuild.FSCompressionOptions)
 	if bcj := osbuild.BCJOption(arch); bcj != "" {
 		comprOptions.BCJ = bcj
 	}
-	isolabel := fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch)
+	var architectures []string
+
+	if arch == distro.X86_64ArchName {
+		architectures = []string{"IA32", "X64"}
+	} else if arch == distro.Aarch64ArchName {
+		architectures = []string{"AA64"}
+	} else {
+		panic("unsupported architecture")
+	}
+
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
-			Name:    "Red Hat Enterprise Linux",
+			Name:    product,
 			Version: osVersion,
 		},
 		ISOLabel:   isolabel,
 		Kernel:     kernelVer,
 		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
 		EFI: osbuild.EFI{
-			Architectures: []string{
-				"IA32",
-				"X64",
-			},
-			Vendor: "redhat",
+			Architectures: architectures,
+			Vendor:        vendor,
 		},
 		ISOLinux: osbuild.ISOLinux{
-			Enabled: true,
+			Enabled: arch == distro.X86_64ArchName,
 			Debug:   false,
 		},
 		Templates: "80-rhel",
@@ -288,6 +301,40 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 	}
 }
 
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.GrubISOStageOptions {
+	var architectures []string
+
+	if arch == "x86_64" {
+		architectures = []string{"IA32", "X64"}
+	} else if arch == "aarch64" {
+		architectures = []string{"AA64"}
+	} else {
+		panic("unsupported architecture")
+	}
+
+	return &osbuild.GrubISOStageOptions{
+		Product: osbuild.Product{
+			Name:    product,
+			Version: osVersion,
+		},
+		ISOLabel: isolabel,
+		Kernel: osbuild.ISOKernel{
+			Dir: "/images/pxeboot",
+			Opts: []string{"rd.neednet=1",
+				"console=tty0",
+				"console=ttyS0",
+				"systemd.log_target=console",
+				"systemd.journald.forward_to_console=1",
+				"edge.liveiso=" + isolabel,
+				"coreos.inst.install_dev=" + installDevice,
+				"coreos.inst.image_file=/run/media/iso/disk.img.xz",
+				"coreos.inst.insecure"},
+		},
+		Architectures: architectures,
+		Vendor:        vendor,
+	}
+}
+
 func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	return &osbuild.DiscinfoStageOptions{
 		BaseArch: arch,
@@ -295,22 +342,35 @@ func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	}
 }
 
-func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStageOptions {
-	return &osbuild.XorrisofsStageOptions{
+func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbuild.XorrisofsStageOptions {
+	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
-		VolID:    fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch),
+		VolID:    fmt.Sprintf(isolabel, arch),
 		SysID:    "LINUX",
-		Boot: &osbuild.XorrisofsBoot{
+		EFI:      "images/efiboot.img",
+	}
+
+	if isolinux {
+		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
-		},
-		EFI:          "images/efiboot.img",
-		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
+		}
+
+		options.IsohybridMBR = "/usr/share/syslinux/isohdpfx.bin"
 	}
+
+	return options
 }
 
-func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partition, kernelOptions string,
-	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
+func grub2StageOptions(rootPartition *disk.Partition,
+	bootPartition *disk.Partition,
+	kernelOptions string,
+	kernel *blueprint.KernelCustomization,
+	kernelVer string,
+	uefi bool,
+	legacy string,
+	vendor string,
+	install bool) *osbuild.GRUB2StageOptions {
 	if rootPartition == nil {
 		panic("root partition must be defined for grub2 stage, this is a programming error")
 	}
@@ -328,7 +388,8 @@ func grub2StageOptions(rootPartition *disk.Partition, bootPartition *disk.Partit
 
 	if uefi {
 		stageOptions.UEFI = &osbuild.GRUB2UEFI{
-			Vendor:  "redhat",
+			Vendor:  vendor,
+			Install: install,
 			Unified: legacy == "", // force unified grub scheme for pure efi systems
 		}
 	}
@@ -446,6 +507,11 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	if bootPartIndex == -1 {
 		panic("failed to find boot or root partition for grub2.inst stage")
 	}
+	bootPart := pt.Partitions[bootPartIndex]
+	prefixPath := "/boot/grub2"
+	if bootPart.Filesystem.Mountpoint == "/boot" {
+		prefixPath = "/grub2"
+	}
 	core := osbuild.CoreMkImage{
 		Type:       "mkimage",
 		PartLabel:  pt.Type,
@@ -456,7 +522,7 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 		Type:      "partition",
 		PartLabel: pt.Type,
 		Number:    uint(bootPartIndex),
-		Path:      "/boot/grub2",
+		Path:      prefixPath,
 	}
 
 	return &osbuild.Grub2InstStageOptions{
@@ -510,5 +576,50 @@ func kernelCmdlineStageOptions(rootUUID string, kernelOptions string) *osbuild.K
 	return &osbuild.KernelCmdlineStageOptions{
 		RootFsUUID: rootUUID,
 		KernelOpts: kernelOptions,
+	}
+}
+
+func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {
+	// configure nginx to work in an unprivileged container
+	cfg := &osbuild.NginxConfig{
+		Listen: listen,
+		Root:   htmlRoot,
+		Daemon: common.BoolToPtr(false),
+		PID:    "/tmp/nginx.pid",
+	}
+	return &osbuild.NginxConfigStageOptions{
+		Path:   path,
+		Config: cfg,
+	}
+}
+
+func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOptions {
+	return &osbuild.ChmodStageOptions{
+		Items: map[string]osbuild.ChmodStagePathOptions{
+			path: {Mode: mode, Recursive: recursive},
+		},
+	}
+}
+
+func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigStageOptions {
+	return &osbuild.OSTreeConfigStageOptions{
+		Repo: repo,
+		Config: &osbuild.OSTreeConfig{
+			Sysroot: &osbuild.SysrootOptions{
+				ReadOnly:   common.BoolToPtr(readOnly),
+				Bootloader: "none",
+			},
+		},
+	}
+}
+
+func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
+	return &osbuild.MkdirStageOptions{
+		Paths: []osbuild.Path{
+			{
+				Path: "/boot/efi",
+				Mode: os.FileMode(0700),
+			},
+		},
 	}
 }

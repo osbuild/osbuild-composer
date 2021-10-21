@@ -42,16 +42,16 @@ func ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePull
 	return &osbuild.OSTreePullStageInputs{Commits: pullStageInput}
 }
 
-func xorrisofsStageInputs() *osbuild.XorrisofsStageInputs {
+func xorrisofsStageInputs(pipeline string) *osbuild.XorrisofsStageInputs {
 	input := new(osbuild.XorrisofsStageInput)
 	input.Type = "org.osbuild.tree"
 	input.Origin = "org.osbuild.pipeline"
-	input.References = osbuild.XorrisofsStageReferences{"name:bootiso-tree"}
+	input.References = osbuild.XorrisofsStageReferences{"name:" + pipeline}
 	return &osbuild.XorrisofsStageInputs{Tree: input}
 }
 
 func copyPipelineTreeInputs(name, inputPipeline string) *osbuild.CopyStageInputs {
-	inputName := "root-tree"
+	inputName := name
 	treeInput := osbuild.CopyStageInput{}
 	treeInput.Type = "org.osbuild.tree"
 	treeInput.Origin = "org.osbuild.pipeline"
