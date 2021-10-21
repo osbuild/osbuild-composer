@@ -11,7 +11,7 @@ cloud.google.com/go/longrunning/autogen
 # cloud.google.com/go/cloudbuild v0.2.0
 ## explicit
 cloud.google.com/go/cloudbuild/apiv1
-# cloud.google.com/go/storage v1.18.1
+# cloud.google.com/go/storage v1.18.2
 ## explicit
 cloud.google.com/go/storage
 cloud.google.com/go/storage/internal/apiv2
@@ -474,7 +474,7 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
+# google.golang.org/genproto v0.0.0-20211016002631-37fc39342514
 ## explicit
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody

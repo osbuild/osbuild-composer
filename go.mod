@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	cloud.google.com/go/cloudbuild v0.2.0
-	cloud.google.com/go/storage v1.18.1
+	cloud.google.com/go/storage v1.18.2
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v57.4.0+incompatible
 	github.com/Azure/azure-storage-blob-go v0.14.0
@@ -49,7 +49,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
 	google.golang.org/api v0.58.0
-	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
+	google.golang.org/genproto v0.0.0-20211016002631-37fc39342514
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/ini.v1 v1.63.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
