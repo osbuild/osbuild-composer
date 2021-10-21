@@ -22,7 +22,6 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
 )
 
 type ParameterDefinition struct {
@@ -120,7 +119,7 @@ func (pd ParameterDefinition) GoVariableName() string {
 }
 
 func (pd ParameterDefinition) GoName() string {
-	return ToCamelCase(pd.ParamName)
+	return SchemaNameToTypeName(pd.ParamName)
 }
 
 func (pd ParameterDefinition) IndirectOptional() bool {
@@ -163,7 +162,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// If this is a reference to a predefined type, simply use the reference
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
-		if paramOrRef.Ref != "" {
+		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
@@ -185,7 +184,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for k, v := range sr {
+		for _, k := range SortedSecurityRequirementKeys(sr) {
+			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
 	}
@@ -258,8 +258,8 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
-	var tds []TypeDefinition
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
 	sortedResponsesKeys := SortedResponsesKeys(responses)
@@ -275,7 +275,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 				if contentType.Schema != nil {
 					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
 					if err != nil {
-						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
+						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
 
 					var typeName string
@@ -292,15 +292,18 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						continue
 					}
 
-					td := TypeDefinition{
-						TypeName:     typeName,
-						Schema:       responseSchema,
-						ResponseName: responseName,
+					td := ResponseTypeDefinition{
+						TypeDefinition: TypeDefinition{
+							TypeName: typeName,
+							Schema:   responseSchema,
+						},
+						ResponseName:    responseName,
+						ContentTypeName: contentTypeName,
 					}
-					if contentType.Schema.Ref != "" {
+					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
 						if err != nil {
-							return nil, errors.Wrap(err, "error dereferencing response Ref")
+							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
 						td.Schema.RefType = refType
 					}
@@ -333,8 +336,11 @@ type RequestBodyDefinition struct {
 }
 
 // Returns the Go type definition for a request body
-func (r RequestBodyDefinition) TypeDef() string {
-	return r.Schema.TypeDecl()
+func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:   r.Schema,
+	}
 }
 
 // Returns whether the body is a custom inline type, or pre-defined. This is
@@ -368,7 +374,7 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
@@ -385,6 +391,9 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
+			if pathItem.Servers != nil {
+				op.Servers = &pathItem.Servers
+			}
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
@@ -419,7 +428,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
-				return nil, errors.Wrap(err, "error generating body definitions")
+				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
 			opDef := OperationDefinition{
@@ -510,15 +519,15 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "error generating request body definition")
+			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
 		}
 
 		// If the body is a pre-defined type
-		if bodyOrRef.Ref != "" {
+		if IsGoTypeReference(bodyOrRef.Ref) {
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(bodyOrRef.Ref)
 			if err != nil {
-				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", bodyOrRef.Ref, err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -589,14 +598,16 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
-			Description:   param.Spec.Description,
-			JsonFieldName: param.ParamName,
-			Required:      param.Required,
-			Schema:        pSchema,
+			Description:    param.Spec.Description,
+			JsonFieldName:  param.ParamName,
+			Required:       param.Required,
+			Schema:         pSchema,
+			ExtensionProps: &param.Spec.ExtensionProps,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
 
+	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{
@@ -611,14 +622,13 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "param-types.tmpl", ops)
+	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating types for params objects")
+    return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
+	if _, err := w.WriteString(addTypes); err != nil {
+    return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 
-	err = t.ExecuteTemplate(w, "request-bodies.tmpl", ops)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating request bodies for operations")
 	}
 
 	// Generate boiler plate for all additional types.
@@ -629,22 +639,19 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
+	}
+	
+  if _, err := w.WriteString("\n"); err != nil {
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	_, err = w.WriteString("\n")
-	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+	  if _, err := w.WriteString(addProps); err != nil {
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	_, err = w.WriteString(addProps)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
-	}
-
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server interface")
+	if err = w.Flush(); err != nil {
+		return "", fmt.Errorf("error flushing output buffer for server interface: %w", err)
 	}
 
 	return buf.String(), nil
@@ -653,138 +660,42 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server interface")
-	}
-
-	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server middleware")
-	}
-
-	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server http handler")
-	}
-
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server")
-	}
-
-	return buf.String(), nil
+	return GenerateTemplates([]string{"chi-interface.tmpl", "chi-middleware.tmpl", "chi-handler.tmpl"}, t, operations)
 }
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	si, err := GenerateServerInterface(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating server types and interface: %s", err)
-	}
-
-	wrappers, err := GenerateWrappers(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating handler wrappers: %s", err)
-	}
-
-	register, err := GenerateRegistration(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating handler registration: %s", err)
-	}
-	return strings.Join([]string{si, wrappers, register}, "\n"), nil
-}
-
-// Uses the template engine to generate the server interface
-func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "server-interface.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating server interface: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
-	}
-	return buf.String(), nil
-}
-
-// Uses the template engine to generate all the wrappers which wrap our simple
-// interface functions and perform marshallin/unmarshalling from HTTP
-// request objects.
-func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "wrappers.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating server interface: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
-	}
-	return buf.String(), nil
-}
-
-// Uses the template engine to generate the function which registers our wrappers
-// as Echo path handlers.
-func GenerateRegistration(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "register.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating route registration: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for route registration: %s", err)
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"echo-interface.tmpl", "echo-wrappers.tmpl", "echo-register.tmpl"}, t, operations)
 }
 
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "client.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating client bindings: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
 // This generates a client which extends the basic client which does response
 // unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
+	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
+}
 
-	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ops)
+// GenerateTemplates used to generate templates
+func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
+	var generatedTemplates []string
+	for _, tmpl := range templates {
+		var buf bytes.Buffer
+		w := bufio.NewWriter(&buf)
 
-	if err != nil {
-		return "", fmt.Errorf("error generating client bindings: %s", err)
+		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
+			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
+		}
+		if err := w.Flush(); err != nil {
+			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
+		}
+		generatedTemplates = append(generatedTemplates, buf.String())
 	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
-	}
-	return buf.String(), nil
+
+	return strings.Join(generatedTemplates, "\n"), nil
 }

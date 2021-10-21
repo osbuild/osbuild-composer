@@ -14,14 +14,14 @@
 package runtime
 
 import (
+	"encoding"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -29,11 +29,49 @@ import (
 // This function binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
+// It is a backward compatible function to clients generated with codegen
+// up to version v1.5.5. v1.5.6+ calls the function below.
 func BindStyledParameter(style string, explode bool, paramName string,
 	value string, dest interface{}) error {
+	return BindStyledParameterWithLocation(style, explode, paramName, ParamLocationUndefined, value, dest)
+}
+
+// This function binds a parameter as described in the Path Parameters
+// section here to a Go object:
+// https://swagger.io/docs/specification/serialization/
+func BindStyledParameterWithLocation(style string, explode bool, paramName string,
+	paramLocation ParamLocation, value string, dest interface{}) error {
 
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
+	}
+
+	// Based on the location of the parameter, we need to unescape it properly.
+	var err error
+	switch paramLocation {
+	case ParamLocationQuery, ParamLocationUndefined:
+		// We unescape undefined parameter locations here for older generated code,
+		// since prior to this refactoring, they always query unescaped.
+		value, err = url.QueryUnescape(value)
+		if err != nil {
+			return fmt.Errorf("error unescaping query parameter '%s': %v", paramName, err)
+		}
+	case ParamLocationPath:
+		value, err = url.PathUnescape(value)
+		if err != nil {
+			return fmt.Errorf("error unescaping path parameter '%s': %v", paramName, err)
+		}
+	default:
+		// Headers and cookies aren't escaped.
+	}
+
+	// If the destination implements encoding.TextUnmarshaler we use it for binding
+	if tu, ok := dest.(encoding.TextUnmarshaler); ok {
+		if err := tu.UnmarshalText([]byte(value)); err != nil {
+			return fmt.Errorf("error unmarshaling '%s' text as %T: %s", value, dest, err)
+		}
+
+		return nil
 	}
 
 	// Everything comes in by pointer, dereference it
@@ -395,21 +433,14 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 // We don't try to be smart here, if the field exists as a query argument,
 // set its value.
 func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) error {
-	// special handling for custom types
-	switch dest.(type) {
-	case *types.Date:
+	// Dereference pointers to their destination values
+	binder, v, t := indirect(dest)
+	if binder != nil {
 		return BindStringToObject(values.Get(paramName), dest)
-	case *time.Time:
-		return BindStringToObject(values.Get(paramName), dest)
-
 	}
-
-	v := reflect.Indirect(reflect.ValueOf(dest))
-	if v.Type().Kind() != reflect.Struct {
+	if t.Kind() != reflect.Struct {
 		return fmt.Errorf("unmarshaling query arg '%s' into wrong type", paramName)
 	}
-
-	t := v.Type()
 
 	for i := 0; i < t.NumField(); i++ {
 		fieldT := t.Field(i)
@@ -444,4 +475,27 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 		}
 	}
 	return nil
+}
+
+// indirect
+func indirect(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
+	v := reflect.ValueOf(dest)
+	if v.Type().NumMethod() > 0 && v.CanInterface() {
+		if u, ok := v.Interface().(Binder); ok {
+			return u, reflect.Value{}, nil
+		}
+	}
+	v = reflect.Indirect(v)
+	t := v.Type()
+	// special handling for custom types which might look like an object. We
+	// don't want to use object binding on them, but rather treat them as
+	// primitive types. time.Time{} is a unique case since we can't add a Binder
+	// to it without changing the underlying generated code.
+	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+		return dest, reflect.Value{}, nil
+	}
+	if t.ConvertibleTo(reflect.TypeOf(types.Date{})) {
+		return dest, reflect.Value{}, nil
+	}
+	return nil, v, t
 }
