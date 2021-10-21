@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -882,7 +881,7 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	packages = append(packages, bpPackages...)
 
 	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		p.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
 	}
 
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
@@ -1262,7 +1261,7 @@ func ostreeDeployPipeline(
 			Ref:    options.OSTree.Ref,
 		},
 	}
-	p.AddStage(osbuild2.NewFSTabStage(fstabOptions))
+	p.AddStage(osbuild.NewFSTabStage(fstabOptions))
 
 	// TODO: Add users?
 
@@ -1384,8 +1383,8 @@ func xzArchivePipeline(inputPipelineName, inputFilename, outputFilename string) 
 
 // mkfsStages generates a list of org.osbuild.mkfs.* stages based on a
 // partition table description for a single device node
-func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild2.Stage {
-	stages := make([]*osbuild2.Stage, 0, len(pt.Partitions))
+func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0, len(pt.Partitions))
 
 	// assume loopback device for simplicity since it's the only one currently supported
 	// panic if the conversion fails
