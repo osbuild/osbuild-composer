@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel85"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel86"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90beta"
 )
 
@@ -28,6 +29,7 @@ var supportedDistros = []supportedDistro{
 	{rhel86.NewCentos, rhel86.NewCentosHostDistro},
 	{rhel90beta.New, rhel90beta.NewHostDistro},
 	{rhel90beta.NewRHEL90, rhel90beta.NewHostDistro},
+	{rhel90.New, rhel90.NewHostDistro},
 }
 
 type supportedDistro struct {
