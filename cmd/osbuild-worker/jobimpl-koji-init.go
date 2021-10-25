@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
@@ -12,17 +10,10 @@ import (
 )
 
 type KojiInitJobImpl struct {
-	KojiServers map[string]koji.GSSAPICredentials
+	KojiServers map[string]koji.Credentials
 }
 
 func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (string, uint64, error) {
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-	}
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return "", 0, err
@@ -33,7 +24,7 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 		return "", 0, fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	k, err := koji.NewFromGSSAPI(server, &creds, transport)
+	k, err := creds.NewKojiFromCreds(server)
 	if err != nil {
 		return "", 0, err
 	}

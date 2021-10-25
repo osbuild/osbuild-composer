@@ -3,6 +3,8 @@ package koji
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -111,9 +113,19 @@ type CGImportResult struct {
 	BuildID int `xmlrpc:"build_id"`
 }
 
+type Credentials interface {
+	NewKojiFromCreds(server string) (*Koji, error)
+}
+
 type GSSAPICredentials struct {
 	Principal string
 	KeyTab    string
+}
+
+type SSLCredentials struct {
+	CACertFile string
+	CertFile   string
+	KeyFile    string
 }
 
 type loginReply struct {
@@ -165,17 +177,25 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 	return newKoji(server, transport, reply)
 }
 
-// NewFromGSSAPI creates a new Koji session authenticated using GSSAPI.
+// (cre *GSSAPICredentials)NewFromCreds creates a new Koji session authenticated
+// using GSSAPI.
 // Principal and keytab used for the session is passed using credentials
 // parameter.
-func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http.RoundTripper) (*Koji, error) {
+func (cre *GSSAPICredentials) NewKojiFromCreds(server string) (*Koji, error) {
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+	}
+
 	// Create a temporary xmlrpc client with kerberos transport.
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
 	// let's just use the one that the called passed in.
 	loginClient, err := xmlrpc.NewClient(server+"/ssllogin", &khttp.Transport{
-		KeyTab:    credentials.KeyTab,
-		Principal: credentials.Principal,
+		KeyTab:    cre.KeyTab,
+		Principal: cre.Principal,
 		Next:      transport,
 	})
 	if err != nil {
@@ -189,6 +209,55 @@ func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http
 	}
 
 	return newKoji(server, transport, reply)
+}
+
+// (cre *SSLCredentials)NewFromCreds creates a new Koji session authenticated
+// using SSL/TLS.
+// CertFile, CACertFile and KeyFile  used for the ssl/tls layer session.
+func (cre *SSLCredentials) NewKojiFromCreds(server string) (*Koji, error) {
+	var pool *x509.CertPool
+	if cre.CACertFile != "" {
+		caCertPEM, err := ioutil.ReadFile(cre.CACertFile)
+		if err != nil {
+			return nil, err
+		}
+
+		pool = x509.NewCertPool()
+		ok := pool.AppendCertsFromPEM(caCertPEM)
+		if !ok {
+			panic("failed to parse root certificate")
+		}
+	}
+
+	clientCert, err := tls.LoadX509KeyPair(cre.CertFile, cre.KeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	tlsConfig := tls.Config{
+		RootCAs:       pool,
+		Certificates:  []tls.Certificate{clientCert},
+		Renegotiation: tls.RenegotiateOnceAsClient,
+	}
+
+	transport := http.Transport{
+		TLSClientConfig: &tlsConfig,
+	}
+
+	loginClient, err := xmlrpc.NewClient(server+"/ssllogin", &transport)
+	if err != nil {
+		return nil, err
+	}
+
+	var reply loginReply
+	err = loginClient.Call("sslLogin", nil, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	return newKoji(server, &transport, reply)
 }
 
 // GetAPIVersion gets the version of the API of the remote Koji instance

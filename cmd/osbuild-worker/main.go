@@ -128,6 +128,11 @@ func main() {
 				Principal string `toml:"principal"`
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
+			SSL *struct {
+				CACertFile string `toml:"ca"`
+				CertFile   string `toml:"cert"`
+				KeyFile    string `toml:"key"`
+			} `toml:"SSL,omitempty"`
 		} `toml:"koji"`
 		GCP *struct {
 			Credentials string `toml:"credentials"`
@@ -185,15 +190,19 @@ func main() {
 	output := path.Join(cacheDirectory, "output")
 	_ = os.Mkdir(output, os.ModeDir)
 
-	kojiServers := make(map[string]koji.GSSAPICredentials)
+	kojiServers := make(map[string]koji.Credentials)
 	for server, creds := range config.KojiServers {
-		if creds.Kerberos == nil {
-			// For now we only support Kerberos authentication.
-			continue
-		}
-		kojiServers[server] = koji.GSSAPICredentials{
-			Principal: creds.Kerberos.Principal,
-			KeyTab:    creds.Kerberos.KeyTab,
+		if creds.Kerberos != nil {
+			kojiServers[server] = &koji.GSSAPICredentials{
+				Principal: creds.Kerberos.Principal,
+				KeyTab:    creds.Kerberos.KeyTab,
+			}
+		} else if creds.SSL != nil {
+			kojiServers[server] = &koji.SSLCredentials{
+				CACertFile: creds.SSL.CACertFile,
+				CertFile:   creds.SSL.CertFile,
+				KeyFile:    creds.SSL.KeyFile,
+			}
 		}
 	}
 

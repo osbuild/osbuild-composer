@@ -25,7 +25,7 @@ import (
 type OSBuildJobImpl struct {
 	Store       string
 	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
+	KojiServers map[string]koji.Credentials
 	GCPCreds    []byte
 	AzureCreds  *azure.Credentials
 	AWSCreds    string
