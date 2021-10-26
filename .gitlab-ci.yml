@@ -390,6 +390,21 @@ SCHEDULED_CLOUD_CLEANER:
     - schutzbot/deploy.sh
     - schutzbot/scheduled_cloud_cleaner.sh
 
+Test Load Test:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "false" && $CLEANUP == "false"'
+  script:
+    - schutzbot/ci_details.sh
+    - test/cases/load_test.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+
+
 finish:
   stage: finish
   tags:
