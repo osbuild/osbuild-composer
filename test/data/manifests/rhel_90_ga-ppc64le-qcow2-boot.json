@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-ga",
     "arch": "ppc64le",
     "image-type": "qcow2",
     "repositories": [

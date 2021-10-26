@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-ga",
     "arch": "aarch64",
     "image-type": "ami",
     "repositories": [

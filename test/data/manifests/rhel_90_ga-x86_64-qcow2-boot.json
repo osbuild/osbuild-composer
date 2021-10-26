@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-ga",
     "arch": "x86_64",
     "image-type": "qcow2",
     "repositories": [
@@ -402,6 +402,7 @@
                   "sha256:c4a3e68dceb72c04936b6652c8dce738afed5c0fb26c50215ed57131c7d06cfc",
                   "sha256:b183ba8a35b83600f030befc531b313e11bd5b242331743829360cf4db536b1d",
                   "sha256:037bd57cc7a9e6731f4167165e36bdda7da3bb463091e13d4e85e1920082cfba",
+                  "sha256:ce0ab93e31dad26b042244b331bd3bc29fd4db9c9b1e398efe8faa158b7e3c67",
                   "sha256:6668540978359094afd3c3cbabc230a342fe770646ee85f2530fa31f32e85ee6",
                   "sha256:2cab60c429f2f7b977c4afc519b3d81c2193cb10c4cbe462310dac5de423266f",
                   "sha256:cec54e876b9ede35163f2d38e2864add31d157bc585aaa65bbd444d453b59637",
@@ -2239,6 +2240,9 @@
           },
           "sha256:cdb8dc12610fb4a9c2bdd4e2e9c0a18f05935015087bad9ba7852151ae6b90de": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/libbpf-0.4.0-1.el9.x86_64.rpm"
+          },
+          "sha256:ce0ab93e31dad26b042244b331bd3bc29fd4db9c9b1e398efe8faa158b7e3c67": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/efibootmgr-16-12.el9.x86_64.rpm"
           },
           "sha256:ce24fc2e7071ebad6aecbc8e5b22a5a6f7c9b8c018c1b4e9f4a6214ba43d2363": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/gpgme-1.15.1-5.el9.x86_64.rpm"
@@ -6019,6 +6023,15 @@
         "checksum": "sha256:037bd57cc7a9e6731f4167165e36bdda7da3bb463091e13d4e85e1920082cfba"
       },
       {
+        "name": "efibootmgr",
+        "epoch": 0,
+        "version": "16",
+        "release": "12.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/efibootmgr-16-12.el9.x86_64.rpm",
+        "checksum": "sha256:ce0ab93e31dad26b042244b331bd3bc29fd4db9c9b1e398efe8faa158b7e3c67"
+      },
+      {
         "name": "efivar-libs",
         "epoch": 0,
         "version": "37",
@@ -9708,6 +9721,7 @@
       "e2fsprogs-1.46.2-2.el9.x86_64",
       "e2fsprogs-libs-1.46.2-2.el9.x86_64",
       "efi-filesystem-4-8.el9.noarch",
+      "efibootmgr-16-12.el9.x86_64",
       "efivar-libs-37-17.el9.x86_64",
       "elfutils-default-yama-scope-0.185-5.el9.noarch",
       "elfutils-libelf-0.185-5.el9.x86_64",
