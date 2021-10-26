@@ -186,5 +186,69 @@
             "qcow2",
             "tar"
         ]
+    },
+    "rhel-90-beta": {
+        "x86_64": [
+            "ami",
+            "ec2",
+            "ec2-ha",
+            "ec2-sap",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "tar",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "ec2",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
+    },
+    "rhel-90-ga": {
+        "x86_64": [
+            "ami",
+            "ec2",
+            "ec2-ha",
+            "ec2-sap",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "tar",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "ec2",
+            "edge-commit",
+            "edge-container",
+            "openstack",
+            "qcow2",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
     }
 }
