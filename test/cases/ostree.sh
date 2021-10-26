@@ -17,19 +17,13 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora33"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/";;
-    "rhel-8.3")
-        IMAGE_TYPE=rhel-edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8.3"
-        USER_IN_COMMIT="false"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.3.0/BaseOS/x86_64/os/";;
     "rhel-8.4")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8.4"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/";;
-    "rhel-8.5" | "rhel-8.6")
+    "rhel-8.6")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"

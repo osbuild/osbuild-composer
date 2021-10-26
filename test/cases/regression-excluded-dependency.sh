@@ -11,15 +11,14 @@
 #
 # Bug report: https://github.com/osbuild/osbuild-composer/issues/921
 
-# NOTE: ONLY WORKS IN RHEL 8.5 and RHEL 9.0
 # Get OS data.
 source /etc/os-release
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-if [[ "${ID}-${VERSION_ID}" != "rhel-8.5" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
-    echo "$0 is only enabled for rhel-8.5 and rhel-9.0; skipping..."
+if [[ "${ID}-${VERSION_ID}" != "rhel-8.6" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
+    echo "$0 is only enabled for rhel-8.6 and rhel-9.0; skipping..."
     exit 0
 fi
 
