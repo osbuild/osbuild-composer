@@ -8,7 +8,7 @@ if [[ $ID != rhel ]]; then
 fi
 
 if [[ $ID == rhel && ${VERSION_ID%.*} == 8 ]]; then
-  COMPOSE_ID=$(curl -L http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-finished-RHEL-8.5/COMPOSE_ID)
+  COMPOSE_ID=$(curl -L http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-finished-RHEL-8.6/COMPOSE_ID)
 
   # default to a nightly tree but respect values passed from ENV so we can test rel-eng composes as well
   COMPOSE_URL="${COMPOSE_URL:-http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/$COMPOSE_ID}"

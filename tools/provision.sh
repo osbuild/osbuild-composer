@@ -73,12 +73,6 @@ sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
 
 # RHEL nightly repos need to be overridden
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.5")
-        # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.5 test needs nightly repos
-        sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR/rhel-8.json"
-        # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
-        sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json "$REPODIR/rhel-8-beta.json"
-        ;;
     "rhel-8.6")
         # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.6 test needs nightly repos
         sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-86.json "$REPODIR/rhel-8.json"
