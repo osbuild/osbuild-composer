@@ -3,7 +3,7 @@
     "type": "nspawn-extract"
   },
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-ga",
     "arch": "aarch64",
     "image-type": "tar",
     "repositories": [

@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-ga",
     "arch": "s390x",
     "image-type": "qcow2",
     "repositories": [
@@ -10792,7 +10792,7 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20211007122507-5.14.0-4.el9.s390x",
+        "id": "-20211027143700-5.14.0-4.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-4.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-4.el9.s390x",
         "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
