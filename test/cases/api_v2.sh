@@ -289,6 +289,10 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
     DISTRO="centos-8"
     SSH_USER="cloud-user"
     ;;
+  "centos-9")
+    DISTRO="centos-9"
+    SSH_USER="cloud-user"
+    ;;
 esac
 
 # Only RHEL need subscription block.
