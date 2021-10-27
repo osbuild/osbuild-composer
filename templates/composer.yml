@@ -35,6 +35,7 @@ objects:
         labels:
           app: composer
       spec:
+        serviceAccountName: image-builder
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: composer
@@ -124,6 +125,13 @@ objects:
                 key: db.password
           - name: PGSSLMODE
             value: "${PGSSLMODE}"
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: image-builder
+  imagePullSecrets:
+  - name: quay-cloudservices-pull
 
 - apiVersion: v1
   kind: Service
