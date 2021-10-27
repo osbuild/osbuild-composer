@@ -35,6 +35,12 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9.0"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
+    "centos-9")
+        IMAGE_TYPE=edge-commit
+        OSTREE_REF="centos/9/${ARCH}/edge"
+        OS_VARIANT="centos9"
+        USER_IN_COMMIT="true"
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;

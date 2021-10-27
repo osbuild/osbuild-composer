@@ -17,10 +17,15 @@ source /etc/os-release
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-if [[ "${ID}-${VERSION_ID}" != "rhel-8.6" && "${ID}-${VERSION_ID}" != "rhel-9.0" ]]; then
-    echo "$0 is only enabled for rhel-8.6 and rhel-9.0; skipping..."
-    exit 0
-fi
+case "${ID}-${VERSION_ID}" in
+    "rhel-8.6" | "rhel-9.0" | "centos-9")
+        ;;
+    *)
+        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
+        exit 0
+        ;;
+esac
+
 
 set -xeuo pipefail
 

@@ -429,6 +429,14 @@ case "$ID-$VERSION_ID" in
       SSH_USER="cloud-user"
     fi
     ;;
+  "centos-9")
+    DISTRO="centos-9"
+    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
+      SSH_USER="ec2-user"
+    else
+      SSH_USER="cloud-user"
+    fi
+    ;;
 esac
 
 # Only RHEL need subscription block.

@@ -101,20 +101,13 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_UPGRADE_BP="true"
         INSTALLER_PATH="/ostree/repo"
         ;;
-    "rhel-8.6" | "centos-8")
+    "rhel-8.6" | "centos-8" | "rhel-9.0" | "centos-9")
         CONTAINER_TYPE=edge-container
         CONTAINER_FILENAME=container.tar
         INSTALLER_TYPE=edge-installer
         INSTALLER_FILENAME=installer.iso
         USER_IN_UPGRADE_BP="false"
         INSTALLER_PATH="/run/install/repo/ostree/repo"
-        ;;
-    "rhel-9.0")
-        CONTAINER_TYPE=edge-container
-        CONTAINER_FILENAME=container.tar
-        INSTALLER_TYPE=edge-installer
-        INSTALLER_FILENAME=installer.iso
-        USER_IN_UPGRADE_BP="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
