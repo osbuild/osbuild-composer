@@ -39,6 +39,31 @@ objects:
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: composer
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: ${LIVENESS_URI}
+              port: ${{COMPOSER_API_PORT}}
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: ${READINESS_URI}
+              port: ${{COMPOSER_API_PORT}}
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
           env:
           - name: PGHOST
             valueFrom:
@@ -218,3 +243,21 @@ parameters:
     name: WORKER_API_PORT
     required: true
     value: "8700"
+  - name: LIVENESS_URI
+    description: URI to query for the liveness check
+    value: "/openapi"
+  - name: READINESS_URI
+    description: URI to query for the readiness check
+    value: "/openapi"
+  - name: CPU_REQUEST
+    description: CPU request per container
+    value: "200m"
+  - name: CPU_LIMIT
+    description: CPU limit per container
+    value: "1"
+  - name: MEMORY_REQUEST
+    description: Memory request per container
+    value: "256Mi"
+  - name: MEMORY_LIMIT
+    description: Memory limit per container
+    value: "512Mi"
