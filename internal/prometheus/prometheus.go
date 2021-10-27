@@ -7,7 +7,7 @@ import (
 
 var (
 	TotalRequests = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "total_http_requests",
+		Name: "composer_total_http_requests",
 		Help: "total number of http requests made to osbuild-composer",
 	})
 )
@@ -23,5 +23,12 @@ var (
 	ComposeSuccesses = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "total_successful_compose_requests",
 		Help: "total number of successful compose requests",
+	})
+)
+
+var (
+	ComposeFailures = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "total_failed_compose_requests",
+		Help: "total number of failed compose requests",
 	})
 )
