@@ -250,5 +250,30 @@
             "qcow2",
             "tar"
         ]
+    },
+    "centos-9": {
+        "x86_64": [
+            "ami",
+            "openstack",
+            "tar",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "image-installer",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "openstack",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ]
     }
 }
