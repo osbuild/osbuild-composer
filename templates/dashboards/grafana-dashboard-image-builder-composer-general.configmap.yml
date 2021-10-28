@@ -5,7 +5,7 @@ metadata:
   labels:
     grafana_dashboard: "true"
   annotations:
-    grafana-folder: /grafana-dashboard-definitions/image-builder
+    grafana-folder: /grafana-dashboard-definitions/Image-Builder
 data:
   grafana.json: |-
     {
