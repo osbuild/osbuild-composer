@@ -14,7 +14,7 @@ TEST_CASES=(
     "regression-excluded-dependency.sh"
     "regression-include-excluded-packages.sh"
 # see https://github.com/osbuild/osbuild-composer/issues/1834
-#    "regression-composer-works-behind-satellite.sh"
+    "regression-composer-works-behind-satellite.sh"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
