@@ -247,10 +247,10 @@ parameters:
     value: "8700"
   - name: LIVENESS_URI
     description: URI to query for the liveness check
-    value: "/openapi"
+    value: "/api/image-builder-composer/v2/openapi"
   - name: READINESS_URI
     description: URI to query for the readiness check
-    value: "/openapi"
+    value: "/api/image-builder-composer/v2/openapi"
   - name: CPU_REQUEST
     description: CPU request per container
     value: "200m"
