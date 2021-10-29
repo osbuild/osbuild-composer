@@ -58,8 +58,7 @@ func (server *Server) Handler(path string) http.Handler {
 	handler := apiHandlers{
 		server: server,
 	}
-	RegisterHandlers(e.Group(path, server.IncRequests), &handler)
-
+	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware), &handler)
 	return e
 }
 
@@ -74,16 +73,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Cannot parse request body: %v", err))
 	}
 	return nil
-}
-
-func (s *Server) IncRequests(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		prometheus.TotalRequests.Inc()
-		if strings.HasSuffix(c.Path(), "/compose") {
-			prometheus.ComposeRequests.Inc()
-		}
-		return next(c)
-	}
 }
 
 // Compose handles a new /compose POST request
