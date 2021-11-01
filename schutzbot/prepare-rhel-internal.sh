@@ -126,10 +126,14 @@ if [ -z "${REPO_URL+x}" ]; then
 
     # Remove the previous latest repo for this job.
     # Don't fail if the path is missing.
+    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+    AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
     s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
 
     # Upload repository to S3.
     greenprint "☁ Uploading RPMs to S3"
+    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+    AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
     s3cmd --acl-public put --recursive repo/ s3://${REPO_BUCKET}/repo/
 
     # Public URL for the S3 bucket with our artifacts.
