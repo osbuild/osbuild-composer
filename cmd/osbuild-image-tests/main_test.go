@@ -389,9 +389,13 @@ func testBootUsingAzure(t *testing.T, imagePath string) {
 
 func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	creds, err := openstack.AuthOptionsFromEnv()
+	currentArch := common.CurrentArch()
 
-	// if no credentials are given, fall back to qemu
-	if (creds == gophercloud.AuthOptions{}) {
+	// skip on aarch64 because we don't have aarch64 openstack or kvm machines
+	if currentArch == "aarch64" {
+		t.Skip("Openstack boot test is skipped on aarch64.")
+		// if no credentials are given, fall back to qemu
+	} else if (creds == gophercloud.AuthOptions{}) {
 		log.Print("No OpenStack credentials given, falling back to booting using qemu")
 		testBootUsingQemu(t, imagePath)
 		return
