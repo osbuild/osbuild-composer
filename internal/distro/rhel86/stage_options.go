@@ -339,7 +339,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 				"console=ttyS0",
 				"systemd.log_target=console",
 				"systemd.journald.forward_to_console=1",
-				"edge.liveiso=" + isolabel,
+				"coreos.inst.isoroot=" + isolabel,
 				"coreos.inst.install_dev=" + installDevice,
 				"coreos.inst.image_file=/run/media/iso/disk.img.xz",
 				"coreos.inst.insecure"},
