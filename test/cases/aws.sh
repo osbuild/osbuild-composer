@@ -39,8 +39,18 @@ function cleanup() {
 }
 trap cleanup EXIT
 
-TEST_UUID=$(uuidgen)
-IMAGE_KEY=osbuild-composer-aws-test-${TEST_UUID}
+# Generate a string, which can be used as a predictable resource name,
+# especially when running the test in CI where we may need to clean up
+# resources in case the test unexpectedly fails or is canceled
+CI="${CI:-false}"
+if [[ "$CI" == true ]]; then
+  # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+else
+  # if not running in Jenkins, generate ID not relying on specific env variables
+  TEST_ID=$(uuidgen);
+fi
+
 
 # Jenkins sets WORKSPACE to the job workspace, but if this script runs
 # outside of Jenkins, we can set up a temporary directory instead.
@@ -52,11 +62,11 @@ fi
 AWS_CONFIG=${TEMPDIR}/aws.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 AWS_INSTANCE_JSON=${TEMPDIR}/aws-instance.json
-COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
-AMI_DATA=${TEMPDIR}/ami-data-${IMAGE_KEY}.json
-INSTANCE_DATA=${TEMPDIR}/instance-data-${IMAGE_KEY}.json
-INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${IMAGE_KEY}.json
+COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
+COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
+AMI_DATA=${TEMPDIR}/ami-data-${TEST_ID}.json
+INSTANCE_DATA=${TEMPDIR}/instance-data-${TEST_ID}.json
+INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${TEST_ID}.json
 
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
@@ -142,7 +152,7 @@ accessKeyID = "${V2_AWS_ACCESS_KEY_ID}"
 secretAccessKey = "${V2_AWS_SECRET_ACCESS_KEY}"
 bucket = "${AWS_BUCKET}"
 region = "${AWS_REGION}"
-key = "${IMAGE_KEY}"
+key = "${TEST_ID}"
 EOF
 
 # Write a basic blueprint for our image.
@@ -172,7 +182,7 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to AWS.
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash ami "$IMAGE_KEY" "$AWS_CONFIG" | tee "$COMPOSE_START"
+sudo composer-cli --json compose start bash ami "$TEST_ID" "$AWS_CONFIG" | tee "$COMPOSE_START"
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
 # Wait for the compose to finish.
@@ -209,10 +219,16 @@ fi
 greenprint "🔍 Search for created AMI"
 $AWS_CMD ec2 describe-images \
     --owners self \
-    --filters Name=name,Values="${IMAGE_KEY}" \
+    --filters Name=name,Values="${TEST_ID}" \
     | tee "$AMI_DATA" > /dev/null
 
 AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$AMI_DATA")
+SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$AMI_DATA")
+
+# Tag image and snapshot with "gitlab-ci-test" tag
+$AWS_CMD ec2 create-tags \
+    --resources "${SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
+    --tags Key=gitlab-ci-test,Value=true
 
 # NOTE(mhayden): Getting TagSpecifications to play along with bash's
 # parsing of curly braces and square brackets is nuts, so we just write some
@@ -225,7 +241,11 @@ tee "$AWS_INSTANCE_JSON" > /dev/null << EOF
             "Tags": [
                 {
                     "Key": "Name",
-                    "Value": "${IMAGE_KEY}"
+                    "Value": "${TEST_ID}"
+                },
+                {
+                    "Key": "gitlab-ci-test",
+                    "Value": "true"
                 }
             ]
         }
@@ -297,13 +317,12 @@ done
 
 # Ensure the image was properly tagged.
 IMAGE_TAG=$($AWS_CMD ec2 describe-images --image-ids "${AMI_IMAGE_ID}" | jq -r '.Images[0].Tags[] | select(.Key=="Name") | .Value')
-if [[ ! $IMAGE_TAG == "${IMAGE_KEY}" ]]; then
+if [[ ! $IMAGE_TAG == "${TEST_ID}" ]]; then
     RESULTS=0
 fi
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
-SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$AMI_DATA")
 $AWS_CMD ec2 terminate-instances --instance-id "${INSTANCE_ID}"
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
