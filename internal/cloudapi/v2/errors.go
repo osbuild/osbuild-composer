@@ -251,7 +251,8 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 		return
 	}
 
-	if he.Code == http.StatusInternalServerError {
+	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
+	if internalError {
 		if strings.HasSuffix(c.Path(), "/compose") {
 			prometheus.ComposeFailures.Inc()
 		}
