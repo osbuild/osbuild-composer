@@ -84,3 +84,106 @@ for i in $(seq 0 $(("$STORAGE_ACCOUNT_COUNT"-1))); do
 done
 
 echo "Azure cleanup complete!"
+
+
+#---------------------------------------------------------------
+# 			AWS cleanup
+#---------------------------------------------------------------
+
+greenprint "Starting aws cleanup"
+
+TEMPDIR=$(mktemp -d)
+function cleanup() {
+    sudo rm -rf "$TEMPDIR"
+}
+trap cleanup EXIT
+
+# Check available container runtime
+if which podman 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+    CONTAINER_RUNTIME=docker
+else
+    echo No container runtime found, install podman or docker.
+    exit 2
+fi
+
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+
+# We need awscli to talk to AWS.
+if ! hash aws; then
+    echo "Using 'awscli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+
+    AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+        -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
+        -v ${TEMPDIR}:${TEMPDIR}:Z \
+        -v ${SSH_DATA_DIR}:${SSH_DATA_DIR}:Z \
+        ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
+else
+    echo "Using pre-installed 'aws' from the system"
+    AWS_CMD="aws --region $AWS_REGION --output json --color on"
+fi
+$AWS_CMD --version
+
+
+# Remove tagged and old enough instances
+INSTANCES=$(${AWS_CMD} ec2 describe-instances | jq -c '.Reservations[].Instances[]|try {"Tag": .Tags[],"InstanceId": .InstanceId,"LaunchTime": .LaunchTime}')
+
+for instance in ${INSTANCES}; do
+	TAG=$(echo "${instance}" | jq '.Tag.Key' | tr -d '"')
+	TAG_VALUE=$(echo "${instance}" | jq '.Tag.Value' | tr -d '"')
+	INSTANCE_ID=$(echo "${instance}" | jq '.InstanceId' | tr -d '"')
+	LAUNCH_TIME=$(echo "${instance}" | jq '.LaunchTime' | tr -d '"')
+
+	if [[ ${TAG} == "gitlab-ci-test" && ${TAG_VALUE} == "true" ]]; then	
+		if [[ $(date -d "${LAUNCH_TIME}" +%s) -lt "${DELETE_TIME}" ]]; then
+			$AWS_CMD ec2 terminate-instances --instance-id "${INSTANCE_ID}"
+			echo "The instance with id ${INSTANCE_ID} was terminated"
+        	else
+        		echo "The instance with id ${INSTANCE_ID} was launched less than ${HOURS_BACK} hours ago"
+		fi
+	fi
+done
+
+
+# Remove tagged and old enough images
+IMAGES=$($AWS_CMD ec2 describe-images --owner self | jq -c '.Images[] | try {"Tag": .Tags[], "ImageId": .ImageId, "CreationDate": .CreationDate}')
+
+for image in ${IMAGES}; do
+	TAG=$(echo "${image}" | jq '.Tag.Key' | tr -d '"')
+	TAG_VALUE=$(echo "${image}" | jq '.Tag.Value' | tr -d '"')
+	IMAGE_ID=$(echo "${image}" | jq '.ImageId' | tr -d '"')
+	CREATION_DATE=$(echo "${image}" | jq '.CreationDate' | tr -d '"')
+
+	if [[ ${TAG} == "gitlab-ci-test" && ${TAG_VALUE} == "true" ]]; then
+		if [[ $(date -d "${CREATION_DATE}" +%s) -lt "${DELETE_TIME}" ]]; then
+			$AWS_CMD ec2 deregister-image --image-id "${IMAGE_ID}"
+			echo "The image with id ${IMAGE_ID} was deregistered"
+		else
+			echo "The image with id ${IMAGE_ID} was created less than ${HOURS_BACK} hours ago"
+		fi
+	fi
+done
+
+# Remove tagged and old enough snapshots
+SNAPSHOTS=$($AWS_CMD --color on ec2 describe-snapshots --owner self | jq -c '.Snapshots[] | try {"Tag": .Tags[], "SnapshotId": .SnapshotId, "StartTime": .StartTime}')
+
+for snapshot in ${SNAPSHOTS}; do
+	TAG=$(echo "${snapshot}" | jq '.Tag.Key' | tr -d '"')
+	TAG_VALUE=$(echo "${snapshot}" | jq '.Tag.Value' | tr -d '"')
+	SNAPSHOT_ID=$(echo "${snapshot}" | jq '.SnapshotId' | tr -d '"')
+	START_TIME=$(echo "${snapshot}" | jq '.StartTime' | tr -d '"')
+
+	if [[ ${TAG} == "gitlab-ci-test" && ${TAG_VALUE} == "true" ]]; then
+		if [[ $(date -d "${START_TIME}" +%s) -lt $(date -d "- 2 minutes" +%s) ]]; then
+			$AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
+			echo "The snapshot with id ${SNAPSHOT_ID} was deleted"
+		else
+			echo "The snapshot with id ${SNAPSHOT_ID} was created less than ${HOURS_BACK} hours ago"
+		fi
+	fi
+done
