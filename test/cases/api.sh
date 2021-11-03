@@ -460,7 +460,7 @@ fi
 ssh-keygen -t rsa-sha2-512 -f /tmp/usertest -C "usertest" -N ""
 
 function createReqFileAWS() {
-  AWS_SNAPSHOT_NAME=$(uuidgen)
+  AWS_SNAPSHOT_NAME=${TEST_ID}
 
   cat > "$REQUEST_FILE" << EOF
 {
@@ -860,6 +860,13 @@ function verifyInAWS() {
 
   AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
   AWS_SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
+  
+  # Tag image and snapshot with "gitlab-ci-test" tag
+  $AWS_CMD ec2 create-tags \
+    --resources "${AWS_SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
+    --tags Key=gitlab-ci-test,Value=true
+
+  
   SHARE_OK=1
 
   # Verify that the ec2 snapshot was shared
@@ -888,7 +895,7 @@ function verifyInAWS() {
   chmod 400 ./keypair.pem
 
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"
