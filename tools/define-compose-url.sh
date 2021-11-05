@@ -4,7 +4,7 @@ source /etc/os-release
 
 # This isn't needed when not running on RHEL
 if [[ $ID != rhel ]]; then
-  exit 0
+  return 0
 fi
 
 if [[ $ID == rhel && ${VERSION_ID%.*} == 8 ]]; then

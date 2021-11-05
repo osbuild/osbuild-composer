@@ -1,10 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-source /usr/libexec/osbuild-composer-test/define-compose-url.sh
-
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+
+# Get compose url if it's running on unsubscried RHEL
+if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
+    source /usr/libexec/osbuild-composer-test/define-compose-url.sh
+fi
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -30,28 +33,29 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         ;;
     "rhel-9.0")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9.0"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         ;;
     "centos-8")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
         ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos9"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        # This should be changed once we get centos-9 runners
+        BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
