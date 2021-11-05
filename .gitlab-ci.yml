@@ -9,13 +9,13 @@ stages:
 .base:
   after_script:
     - schutzbot/update_github_status.sh update
-#     - schutzbot/save_journal.sh
+    - schutzbot/save_journal.sh
     - schutzbot/run_cloud_cleaner.sh
   tags:
     - terraform
   artifacts:
     paths:
-      # - journal-log
+      - journal-log.gpg
       - ci-artifacts
     when: always
 
@@ -46,7 +46,10 @@ RPM:
     - sh "schutzbot/mockbuild.sh"
   after_script:
     - schutzbot/update_github_status.sh update
-#     - schutzbot/save_journal.sh
+    - schutzbot/save_journal.sh
+  artifacts:
+    paths:
+      - journal-log.gpg
   parallel:
     matrix:
       - RUNNER:
@@ -123,7 +126,7 @@ Base:
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
-      - journal-log
+      - journal-log.gpg
       - "*.repo"
     when: always
 
@@ -152,7 +155,7 @@ Regression:
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
-      - journal-log
+      - journal-log.gpg
       - "*.repo"
     when: always
 
