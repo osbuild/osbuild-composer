@@ -285,7 +285,7 @@ modules = []
 groups = []
 
 [[packages]]
-name = "python36"
+name = "python3"
 version = "*"
 
 [[customizations.user]]
@@ -559,7 +559,7 @@ modules = []
 groups = []
 
 [[packages]]
-name = "python36"
+name = "python3"
 version = "*"
 
 [[packages]]

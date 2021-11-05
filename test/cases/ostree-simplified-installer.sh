@@ -273,7 +273,7 @@ modules = []
 groups = []
 
 [[packages]]
-name = "python36"
+name = "python3"
 version = "*"
 
 [customizations.kernel]
@@ -553,7 +553,7 @@ modules = []
 groups = []
 
 [[packages]]
-name = "python36"
+name = "python3"
 version = "*"
 
 [[packages]]
