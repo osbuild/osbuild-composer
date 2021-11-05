@@ -206,6 +206,7 @@ OSTree simplified installer:
       - RUNNER:
           - openstack/rhel-8.6-nightly-x86_64-large
           - openstack/centos-stream-8-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
 
 OSTree raw image:
   stage: test
@@ -218,6 +219,7 @@ OSTree raw image:
       - RUNNER:
           - openstack/rhel-8.6-nightly-x86_64
           - openstack/centos-stream-8-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
