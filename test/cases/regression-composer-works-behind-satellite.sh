@@ -6,6 +6,15 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
+function get_build_info() {
+    key="$1"
+    fname="$2"
+    if rpm -q --quiet weldr-client; then
+        key=".body${key}"
+    fi
+    jq -r "${key}" "${fname}"
+}
+
 function generate_certificates {
     # Generate CA root key
     sudo openssl genrsa -out ca.key
@@ -311,21 +320,13 @@ function try_image_build {
     sudo journalctl -xe --unit osbuild-worker
     exit 1
     fi
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-    else
-        COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-    fi
+    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
-        if rpm -q --quiet weldr-client; then
-            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-        else
-            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-        fi
+        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
