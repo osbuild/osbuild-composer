@@ -7,6 +7,15 @@
 
 set -exuo pipefail
 
+function get_build_info() {
+    key="$1"
+    fname="$2"
+    if rpm -q --quiet weldr-client; then
+        key=".body${key}"
+    fi
+    jq -r "${key}" "${fname}"
+}
+
 WORKER_VERSION=8f21f0b873420a38a261d78a7df130f28b8e2867
 WORKER_RPM=osbuild-composer-worker-33-1.20210830git8f21f0b.el8.x86_64
 
@@ -92,21 +101,13 @@ EOF2
 sudo composer-cli -s "$WELDR_SOCK" blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli -s "$WELDR_SOCK" blueprints depsolve simple
 sudo composer-cli -s "$WELDR_SOCK" --json compose start simple qcow2 | tee "${COMPOSE_START}"
-if rpm -q --quiet weldr-client; then
-    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-else
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-fi
+COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli -s "$WELDR_SOCK" --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-    else
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-    fi
+    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then

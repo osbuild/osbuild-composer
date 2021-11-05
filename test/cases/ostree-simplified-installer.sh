@@ -13,6 +13,15 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
+function get_build_info() {
+    key="$1"
+    fname="$2"
+    if rpm -q --quiet weldr-client; then
+        key=".body${key}"
+    fi
+    jq -r "${key}" "${fname}"
+}
+
 # Start firewalld
 sudo systemctl enable --now firewalld
 
@@ -152,13 +161,13 @@ build_image() {
     else
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
