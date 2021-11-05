@@ -457,7 +457,7 @@ else
 fi
 
 # generate a temp key for user tests
-ssh-keygen -t rsa -f /tmp/usertest -C "usertest" -N ""
+ssh-keygen -t rsa-sha2-512 -f /tmp/usertest -C "usertest" -N ""
 
 function createReqFileAWS() {
   AWS_SNAPSHOT_NAME=$(uuidgen)
@@ -813,7 +813,7 @@ function _instanceWaitSSH() {
   for LOOP_COUNTER in {0..30}; do
       if ssh-keyscan "$HOST" > /dev/null 2>&1; then
           echo "SSH is up!"
-          # ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
+          ssh-keyscan "$HOST" | sudo tee -a /root/.ssh/known_hosts
           break
       fi
       echo "Retrying in 5 seconds... $LOOP_COUNTER"
@@ -904,14 +904,14 @@ function verifyInAWS() {
   _instanceCheck "$_ssh"
 
   # Check access to user1 and user2
-  check_groups=$(ssh -i /tmp/usertest "user1@$HOST" -t 'groups')
+  check_groups=$(ssh -oStrictHostKeyChecking=no -i /tmp/usertest "user1@$HOST" -t 'groups')
   if [[ $check_groups =~ "wheel" ]]; then
    echo "✔️  user1 has the group wheel"
   else
     echo 'user1 should have the group wheel 😢'
     exit 1
   fi
-  check_groups=$(ssh -i /tmp/usertest "user2@$HOST" -t 'groups')
+  check_groups=$(ssh -oStrictHostKeyChecking=no -i /tmp/usertest "user2@$HOST" -t 'groups')
   if [[ $check_groups =~ "wheel" ]]; then
     echo 'user2 should not have group wheel 😢'
     exit 1
@@ -1003,7 +1003,7 @@ function verifyInGCP() {
   # Verify that the image boots and have customizations applied
   # Create SSH keys to use
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
-  ssh-keygen -t rsa -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
+  ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
   GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
 
   echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
@@ -1045,7 +1045,7 @@ function verifyInAzure() {
   # Verify that the image boots and have customizations applied
   # Create SSH keys to use
   AZURE_SSH_KEY="$WORKDIR/id_azure"
-  ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
+  ssh-keygen -t rsa-sha2-512 -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
 
   # Create network resources with predictable names
   $AZURE_CMD network nsg create --resource-group "$AZURE_RESOURCE_GROUP" --name "nsg-$TEST_ID" --location "$AZURE_LOCATION"
