@@ -130,7 +130,6 @@ func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{
-				"genisoimage",
 				"isomd5sum",
 				"xorriso",
 			},
