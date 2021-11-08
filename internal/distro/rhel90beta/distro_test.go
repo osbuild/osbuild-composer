@@ -557,11 +557,6 @@ func TestRhel90_Name(t *testing.T) {
 	assert.Equal(t, "rhel-90-beta", distro.Name())
 }
 
-func TestRhel90Base_Name(t *testing.T) {
-	distro := rhel90.NewRHEL90()
-	assert.Equal(t, "rhel-90", distro.Name())
-}
-
 func TestRhel90_ModulePlatformID(t *testing.T) {
 	distro := rhel90.New()
 	assert.Equal(t, "platform:el9", distro.ModulePlatformID())
