@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-beta",
     "arch": "x86_64",
     "image-type": "vhd",
     "repositories": [
