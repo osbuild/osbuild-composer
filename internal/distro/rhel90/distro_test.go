@@ -11,7 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	rhel90 "github.com/osbuild/osbuild-composer/internal/distro/rhel90beta"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
 )
 
 type rhelFamilyDistro struct {
@@ -427,8 +427,10 @@ func TestDistro_ManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
-				assert.EqualError(t, err, "boot ISO image type \"edge-installer\" requires specifying a URL from which to retrieve the OSTree commit")
+			} else if imgTypeName == "edge-raw-image" {
+				assert.EqualError(t, err, "edge raw images require specifying a URL from which to retrieve the OSTree commit")
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
+				assert.EqualError(t, err, fmt.Sprintf("boot ISO image type \"%s\" requires specifying a URL from which to retrieve the OSTree commit", imgTypeName))
 			} else {
 				assert.NoError(t, err)
 			}
@@ -456,6 +458,8 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-commit",
 				"edge-container",
 				"edge-installer",
+				"edge-raw-image",
+				"edge-simplified-installer",
 				"tar",
 				"image-installer",
 			},
@@ -469,6 +473,9 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ec2",
 				"edge-commit",
 				"edge-container",
+				"edge-installer",
+				"edge-simplified-installer",
+				"edge-raw-image",
 				"tar",
 			},
 		},
@@ -554,11 +561,6 @@ func TestRhel90_GetArch(t *testing.T) {
 
 func TestRhel90_Name(t *testing.T) {
 	distro := rhel90.New()
-	assert.Equal(t, "rhel-90-beta", distro.Name())
-}
-
-func TestRhel90Base_Name(t *testing.T) {
-	distro := rhel90.NewRHEL90()
 	assert.Equal(t, "rhel-90", distro.Name())
 }
 
@@ -590,7 +592,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
@@ -618,7 +620,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
 				assert.NoError(t, err)
@@ -752,7 +754,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
@@ -780,7 +782,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
 				assert.NoError(t, err)
