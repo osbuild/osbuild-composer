@@ -54,8 +54,8 @@ type distribution struct {
 
 // distribution objects without the arches > image types
 var distroMap = map[string]distribution{
-	"rhel-90-ga": {
-		name:             "rhel-90-ga",
+	"rhel-90": {
+		name:             "rhel-90",
 		product:          "Red Hat Enterprise Linux",
 		osVersion:        "9.0",
 		releaseVersion:   "9",
@@ -489,11 +489,11 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro("rhel-90-ga")
+	return newDistro("rhel-90")
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-90-ga")
+	return newDistro("rhel-90")
 }
 
 func NewCentos() distro.Distro {
