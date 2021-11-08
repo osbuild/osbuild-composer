@@ -61,8 +61,6 @@ RPM:
       - RUNNER:
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Container:
@@ -122,8 +120,6 @@ Base:
       - RUNNER:
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -153,8 +149,6 @@ Regression:
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -179,7 +173,6 @@ OSTree:
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8.4-ga-x86_64
           - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
           - openstack/centos-stream-8-x86_64
 
 New OSTree:
@@ -193,17 +186,6 @@ New OSTree:
       - RUNNER:
           - openstack/rhel-8.6-nightly-x86_64-large
           - openstack/centos-stream-8-x86_64
-
-New OSTree (RHEL9-BETA):
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-ng-og.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - openstack/rhel-9.0-beta-nightly-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -265,7 +247,6 @@ Integration:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
@@ -308,7 +289,6 @@ API:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 libvirt:
@@ -328,7 +308,6 @@ libvirt:
       - RUNNER:
           - openstack/rhel-8.4-ga-x86_64
           - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 RHEL 9 on 8:
@@ -376,7 +355,6 @@ Installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
