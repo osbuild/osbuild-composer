@@ -618,7 +618,8 @@ func newDistro(distroName string) distro.Distro {
 		exports:         []string{"bootiso"},
 	}
 
-	edgeSimplifiedInstallerImgType := imageType{
+	// edgeSimplifiedInstallerImgType := imageType{
+	_ = imageType{
 		name:        "edge-simplified-installer",
 		nameAliases: []string{"rhel-edge-simplified-installer"},
 		filename:    "simplified-installer.iso",
@@ -871,8 +872,9 @@ func newDistro(distroName string) distro.Distro {
 		exports:   []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	// NOTE: Edge simplified installer requires coreos-installer which isn't yet available in RHEL 9.0
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType) //, edgeSimplifiedInstallerImgType)
+	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType)                                                   // , edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
