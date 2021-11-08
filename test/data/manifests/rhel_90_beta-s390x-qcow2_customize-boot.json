@@ -1,6 +1,6 @@
 {
   "compose-request": {
-    "distro": "rhel-90",
+    "distro": "rhel-90-beta",
     "arch": "s390x",
     "image-type": "qcow2",
     "repositories": [
