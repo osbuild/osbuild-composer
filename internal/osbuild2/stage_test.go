@@ -667,6 +667,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"type":"org.osbuild.pwquality.conf","options":{"config":{}}}`),
 			},
 		},
+		{
+			name: "yum.config",
+			fields: fields{
+				Type:    "org.osbuild.yum.config",
+				Options: &YumConfigStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.yum.config","options":{}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

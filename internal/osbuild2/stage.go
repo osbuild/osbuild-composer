@@ -152,6 +152,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(AuthconfigStageOptions)
 	case "org.osbuild.pwquality.conf":
 		options = new(PwqualityConfStageOptions)
+	case "org.osbuild.yum.config":
+		options = new(YumConfigStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
