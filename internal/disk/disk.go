@@ -49,7 +49,7 @@ type Filesystem struct {
 
 // Converts PartitionTable to osbuild.QEMUAssemblerOptions that encode
 // the same partition table.
-func (pt PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
+func (pt *PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
 	var partitions []osbuild.QEMUPartition
 	for _, p := range pt.Partitions {
 		partitions = append(partitions, p.QEMUPartition())
@@ -64,7 +64,7 @@ func (pt PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
 }
 
 // Generates org.osbuild.fstab stage options from this partition table.
-func (pt PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
+func (pt *PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 	var options osbuild.FSTabStageOptions
 	for _, p := range pt.Partitions {
 		fs := p.Filesystem
@@ -84,7 +84,7 @@ func (pt PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 }
 
 // Generates org.osbuild.fstab stage options from this partition table.
-func (pt PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
+func (pt *PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 	var options osbuild2.FSTabStageOptions
 	for _, p := range pt.Partitions {
 		fs := p.Filesystem
@@ -106,7 +106,7 @@ func (pt PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 // Returns the root partition (the partition whose filesystem has / as
 // a mountpoint) of the partition table. Nil is returned if there's no such
 // partition.
-func (pt PartitionTable) RootPartition() *Partition {
+func (pt *PartitionTable) RootPartition() *Partition {
 	for idx, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			continue
@@ -123,7 +123,7 @@ func (pt PartitionTable) RootPartition() *Partition {
 // Returns the /boot partition (the partition whose filesystem has /boot as
 // a mountpoint) of the partition table. Nil is returned if there's no such
 // partition.
-func (pt PartitionTable) BootPartition() *Partition {
+func (pt *PartitionTable) BootPartition() *Partition {
 	for _, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			continue
@@ -141,7 +141,7 @@ func (pt PartitionTable) BootPartition() *Partition {
 // /boot as a mountpoint.  If there is no explicit boot partition, the root
 // partition is returned.
 // If neither boot nor root partitions are found, returns -1.
-func (pt PartitionTable) BootPartitionIndex() int {
+func (pt *PartitionTable) BootPartitionIndex() int {
 	// find partition with '/boot' mountpoint and fallback to '/'
 	rootIdx := -1
 	for idx, part := range pt.Partitions {
@@ -157,7 +157,7 @@ func (pt PartitionTable) BootPartitionIndex() int {
 	return rootIdx
 }
 
-func (pt PartitionTable) RootPartitionIndex() int {
+func (pt *PartitionTable) RootPartitionIndex() int {
 	rootIdx := -1
 	for idx, part := range pt.Partitions {
 		if part.Filesystem == nil {
@@ -171,7 +171,7 @@ func (pt PartitionTable) RootPartitionIndex() int {
 }
 
 // Returns the Filesystem instance for a given mountpoint, if it exists.
-func (pt PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
+func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
 	for _, part := range pt.Partitions {
 		if part.Filesystem == nil {
 			continue
@@ -185,14 +185,14 @@ func (pt PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesys
 
 // Returns the Filesystem instance that corresponds to the root
 // filesystem, i.e. the filesystem whose mountpoint is '/'.
-func (pt PartitionTable) RootFilesystem() *Filesystem {
+func (pt *PartitionTable) RootFilesystem() *Filesystem {
 	return pt.FindFilesystemForMountpoint("/")
 }
 
 // Returns the Filesystem instance that corresponds to the boot
 // filesystem, i.e. the filesystem whose mountpoint is '/boot',
 // if /boot is on a separate partition, otherwise nil
-func (pt PartitionTable) BootFilesystem() *Filesystem {
+func (pt *PartitionTable) BootFilesystem() *Filesystem {
 	return pt.FindFilesystemForMountpoint("/boot")
 }
 
@@ -223,7 +223,7 @@ func (pt *PartitionTable) getPartitionTableSize() uint64 {
 }
 
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
-func (p Partition) QEMUPartition() osbuild.QEMUPartition {
+func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
 	if p.Filesystem != nil {
 		f := p.Filesystem.QEMUFilesystem()
