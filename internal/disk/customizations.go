@@ -40,7 +40,7 @@ func CreatePartitionTable(
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			partitionSize := m.MinSize / sectorSize
-			basePartitionTable.createPartition(m.Mountpoint, partitionSize, rng)
+			basePartitionTable.createFilesystem(m.Mountpoint, partitionSize, rng)
 		}
 	}
 
@@ -63,7 +63,7 @@ func CreatePartitionTable(
 	return basePartitionTable
 }
 
-func (pt *PartitionTable) createPartition(mountpoint string, size uint64, rng *rand.Rand) {
+func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64, rng *rand.Rand) {
 	filesystem := Filesystem{
 		Type:         "xfs",
 		UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
