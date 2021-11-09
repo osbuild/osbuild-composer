@@ -240,7 +240,7 @@ func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 }
 
 // Converts Filesystem to osbuild.QEMUFilesystem that encodes the same fs.
-func (fs Filesystem) QEMUFilesystem() osbuild.QEMUFilesystem {
+func (fs *Filesystem) QEMUFilesystem() osbuild.QEMUFilesystem {
 	return osbuild.QEMUFilesystem{
 		Type:       fs.Type,
 		UUID:       fs.UUID,
