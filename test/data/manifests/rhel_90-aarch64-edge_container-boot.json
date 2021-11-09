@@ -998,7 +998,18 @@
             "options": {
               "items": {
                 "/var/log/nginx": {
-                  "mode": "o+w",
+                  "mode": "a+rwX",
+                  "recursive": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.chmod",
+            "options": {
+              "items": {
+                "/var/lib/nginx": {
+                  "mode": "a+rwX",
                   "recursive": true
                 }
               }
@@ -9266,6 +9277,5 @@
         "checksum": "sha256:a298149ec0c9981361629b1caa1c25482dbeeb4de5456d8980064a7ea8f05b48"
       }
     ]
-  },
-  "image-info": {}
+  }
 }
