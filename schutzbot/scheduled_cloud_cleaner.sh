@@ -28,8 +28,8 @@ HOURS_BACK="${HOURS_BACK:-6}"
 DELETE_TIME=$(date -d "- $HOURS_BACK hours" +%s)
 OLD_RESOURCE_LIST_NAMES=()
 for i in $(seq 0 $(("$RESOURCE_COUNT"-1))); do
-    RESOURCE_TIME=$(echo "$RESOURCE_LIST" | jq .[$i].createdTime | tr -d '"')
-    RESOURCE_TYPE=$(echo "$RESOURCE_LIST" | jq .[$i].type | tr -d '"')
+    RESOURCE_TIME=$(echo "$RESOURCE_LIST" | jq ".[$i].createdTime" | tr -d '"')
+    RESOURCE_TYPE=$(echo "$RESOURCE_LIST" | jq ".[$i].type" | tr -d '"')
     RESOURCE_TIME_SECONDS=$(date -d "$RESOURCE_TIME" +%s)
     if [[ "$RESOURCE_TIME_SECONDS" -lt "$DELETE_TIME" && "$RESOURCE_TYPE" != Microsoft.Storage/storageAccounts ]]; then
         OLD_RESOURCE_LIST_NAMES+=("$(echo "$RESOURCE_LIST" | jq .["$i"].name | sed -e 's/^[^-]*-//' | tr -d '"')")
