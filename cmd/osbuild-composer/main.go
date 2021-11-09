@@ -36,6 +36,8 @@ func main() {
 	logrus.SetOutput(os.Stdout)
 	logLevel, err := logrus.ParseLevel(config.LogLevel)
 
+	logrus.SetReportCaller(true)
+
 	if err == nil {
 		logrus.SetLevel(logLevel)
 	} else {
