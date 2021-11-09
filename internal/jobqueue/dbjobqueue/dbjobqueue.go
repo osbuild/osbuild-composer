@@ -157,7 +157,7 @@ func (q *dbJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		return uuid.Nil, fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	logrus.Infof("Enqueued job of type %s with ID %s", jobType, id)
+	logrus.Infof("Enqueued job of type %s with ID %s(dependencies %v)", jobType, id, dependencies)
 
 	return id, nil
 }
