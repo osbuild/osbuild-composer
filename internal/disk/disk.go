@@ -107,13 +107,13 @@ func (pt PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 // a mountpoint) of the partition table. Nil is returned if there's no such
 // partition.
 func (pt PartitionTable) RootPartition() *Partition {
-	for _, p := range pt.Partitions {
+	for idx, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			continue
 		}
 
 		if p.Filesystem.Mountpoint == "/" {
-			return &p
+			return &pt.Partitions[idx]
 		}
 	}
 
