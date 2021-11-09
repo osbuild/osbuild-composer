@@ -3,7 +3,10 @@ package osbuild2
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 )
+
+const modprobeCfgFilenameRegex = "^[\\w.-]{1,250}\\.conf$"
 
 type ModprobeStageOptions struct {
 	Filename string                `json:"filename"`
@@ -12,7 +15,24 @@ type ModprobeStageOptions struct {
 
 func (ModprobeStageOptions) isStageOptions() {}
 
+func (o ModprobeStageOptions) validate() error {
+	if len(o.Commands) == 0 {
+		return fmt.Errorf("at least one command is required")
+	}
+
+	nameRegex := regexp.MustCompile(modprobeCfgFilenameRegex)
+	if !nameRegex.MatchString(o.Filename) {
+		return fmt.Errorf("modprobe configuration filename %q doesn't conform to schema (%s)", o.Filename, nameRegex.String())
+	}
+
+	return nil
+}
+
 func NewModprobeStage(options *ModprobeStageOptions) *Stage {
+	if err := options.validate(); err != nil {
+		panic(err)
+	}
+
 	return &Stage{
 		Type:    "org.osbuild.modprobe",
 		Options: options,
@@ -75,14 +95,6 @@ func (configFile *ModprobeConfigCmdList) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (o ModprobeConfigCmdList) MarshalJSON() ([]byte, error) {
-	if len(o) == 0 {
-		return nil, fmt.Errorf("at least one modprobe command must be specified for a configuration file")
-	}
-	var configList []ModprobeConfigCmd = o
-	return json.Marshal(configList)
-}
-
 // ModprobeConfigCmdBlacklist represents the 'blacklist' command in the
 // modprobe configuration.
 type ModprobeConfigCmdBlacklist struct {
@@ -92,13 +104,27 @@ type ModprobeConfigCmdBlacklist struct {
 
 func (ModprobeConfigCmdBlacklist) isModprobeConfigCmd() {}
 
+func (c ModprobeConfigCmdBlacklist) validate() error {
+	if c.Command != "blacklist" {
+		return fmt.Errorf("'command' must have 'blacklist' value set")
+	}
+	if c.Modulename == "" {
+		return fmt.Errorf("'modulename' must not be empty")
+	}
+	return nil
+}
+
 // NewModprobeConfigCmdBlacklist creates a new instance of ModprobeConfigCmdBlacklist
 // for the provided modulename.
 func NewModprobeConfigCmdBlacklist(modulename string) *ModprobeConfigCmdBlacklist {
-	return &ModprobeConfigCmdBlacklist{
+	cmd := &ModprobeConfigCmdBlacklist{
 		Command:    "blacklist",
 		Modulename: modulename,
 	}
+	if err := cmd.validate(); err != nil {
+		panic(err)
+	}
+	return cmd
 }
 
 // ModprobeConfigCmdInstall represents the 'install' command in the
@@ -111,12 +137,29 @@ type ModprobeConfigCmdInstall struct {
 
 func (ModprobeConfigCmdInstall) isModprobeConfigCmd() {}
 
+func (c ModprobeConfigCmdInstall) validate() error {
+	if c.Command != "install" {
+		return fmt.Errorf("'command' must have 'install' value set")
+	}
+	if c.Modulename == "" {
+		return fmt.Errorf("'modulename' must not be empty")
+	}
+	if c.Cmdline == "" {
+		return fmt.Errorf("'cmdline' must not be empty")
+	}
+	return nil
+}
+
 // NewModprobeConfigCmdInstall creates a new instance of ModprobeConfigCmdInstall
 // for the provided modulename.
 func NewModprobeConfigCmdInstall(modulename, cmdline string) *ModprobeConfigCmdInstall {
-	return &ModprobeConfigCmdInstall{
+	cmd := &ModprobeConfigCmdInstall{
 		Command:    "install",
 		Modulename: modulename,
 		Cmdline:    cmdline,
 	}
+	if err := cmd.validate(); err != nil {
+		panic(err)
+	}
+	return cmd
 }
