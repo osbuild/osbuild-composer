@@ -176,19 +176,6 @@ func (pt *PartitionTable) BootPartitionIndex() int {
 	return rootIdx
 }
 
-func (pt *PartitionTable) RootPartitionIndex() int {
-	rootIdx := -1
-	for idx, part := range pt.Partitions {
-		if part.Filesystem == nil {
-			continue
-		}
-		if part.Filesystem.Mountpoint == "/" {
-			rootIdx = idx
-		}
-	}
-	return rootIdx
-}
-
 // Returns the Filesystem instance for a given mountpoint, if it exists.
 func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
 	for _, part := range pt.Partitions {
