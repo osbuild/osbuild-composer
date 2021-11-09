@@ -60,7 +60,6 @@ func CreatePartitionTable(
 	rootPartition := basePartitionTable.RootPartition()
 	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
 	rootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
-	basePartitionTable.updateRootPartition(*rootPartition)
 
 	return basePartitionTable
 }
