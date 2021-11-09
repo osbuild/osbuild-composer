@@ -1058,7 +1058,18 @@
             "options": {
               "items": {
                 "/var/log/nginx": {
-                  "mode": "o+w",
+                  "mode": "a+rwX",
+                  "recursive": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.chmod",
+            "options": {
+              "items": {
+                "/var/lib/nginx": {
+                  "mode": "a+rwX",
                   "recursive": true
                 }
               }
