@@ -214,10 +214,6 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start uint64) uint64 
 	return start
 }
 
-func (pt *PartitionTable) updateRootPartition(rootPartition Partition) {
-	pt.Partitions[pt.RootPartitionIndex()] = rootPartition
-}
-
 func (pt *PartitionTable) getPartitionTableSize() uint64 {
 	var size uint64
 	for _, p := range pt.Partitions {
