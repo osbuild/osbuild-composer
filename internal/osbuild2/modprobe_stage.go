@@ -55,6 +55,16 @@ func (configFile *ModprobeConfigCmdList) UnmarshalJSON(data []byte) error {
 				return fmt.Errorf("'modulename' item should be string, not %T", configCmdMap["modulename"])
 			}
 			modprobeCmd = NewModprobeConfigCmdBlacklist(modulename)
+		case "install":
+			modulename, ok := configCmdMap["modulename"].(string)
+			if !ok {
+				return fmt.Errorf("'modulename' item should be string, not %T", configCmdMap["modulename"])
+			}
+			cmdline, ok := configCmdMap["cmdline"].(string)
+			if !ok {
+				return fmt.Errorf("'cmdline' item should be string, not %T", configCmdMap["cmdline"])
+			}
+			modprobeCmd = NewModprobeConfigCmdInstall(modulename, cmdline)
 		default:
 			return fmt.Errorf("unexpected modprobe command: %s", command)
 		}
@@ -88,5 +98,25 @@ func NewModprobeConfigCmdBlacklist(modulename string) *ModprobeConfigCmdBlacklis
 	return &ModprobeConfigCmdBlacklist{
 		Command:    "blacklist",
 		Modulename: modulename,
+	}
+}
+
+// ModprobeConfigCmdInstall represents the 'install' command in the
+// modprobe configuration.
+type ModprobeConfigCmdInstall struct {
+	Command    string `json:"command"`
+	Modulename string `json:"modulename"`
+	Cmdline    string `json:"cmdline"`
+}
+
+func (ModprobeConfigCmdInstall) isModprobeConfigCmd() {}
+
+// NewModprobeConfigCmdInstall creates a new instance of ModprobeConfigCmdInstall
+// for the provided modulename.
+func NewModprobeConfigCmdInstall(modulename, cmdline string) *ModprobeConfigCmdInstall {
+	return &ModprobeConfigCmdInstall{
+		Command:    "install",
+		Modulename: modulename,
+		Cmdline:    cmdline,
 	}
 }

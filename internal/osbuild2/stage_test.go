@@ -321,11 +321,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 							Command:    "blacklist",
 							Modulename: "floppy",
 						},
+						&ModprobeConfigCmdInstall{
+							Command:    "install",
+							Modulename: "nf_conntrack",
+							Cmdline:    "/usr/sbin/modprobe --ignore-install nf_conntrack $CMDLINE_OPTS && /usr/sbin/sysctl --quiet --pattern 'net[.]netfilter[.]nf_conntrack.*' --system",
+						},
 					},
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.modprobe","options":{"filename":"disallow-modules.conf","commands":[{"command":"blacklist","modulename":"nouveau"},{"command":"blacklist","modulename":"floppy"}]}}`),
+				data: []byte(`{"type":"org.osbuild.modprobe","options":{"filename":"disallow-modules.conf","commands":[{"command":"blacklist","modulename":"nouveau"},{"command":"blacklist","modulename":"floppy"},{"command":"install","modulename":"nf_conntrack","cmdline":"/usr/sbin/modprobe --ignore-install nf_conntrack $CMDLINE_OPTS \u0026\u0026 /usr/sbin/sysctl --quiet --pattern 'net[.]netfilter[.]nf_conntrack.*' --system"}]}}`),
 			},
 		},
 		{
