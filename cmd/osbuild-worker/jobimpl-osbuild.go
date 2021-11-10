@@ -84,6 +84,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		return err
 	}
+
+	// In case the manifest is empty, try to get it from dynamic args
+	if len(args.Manifest) == 0 && job.NDynamicArgs() > 0 {
+		var manifestJR worker.ManifestJobByIDResult
+		err = job.DynamicArgs(0, &manifestJR)
+		if err != nil {
+			return err
+		}
+		args.Manifest = manifestJR.Manifest
+	}
+
 	// The specification allows multiple upload targets because it is an array, but we don't support it.
 	// Return an error to osbuild-composer.
 	if len(args.Targets) > 1 {
