@@ -6,6 +6,7 @@ package jobqueuetest
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 
@@ -36,6 +37,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("job-types", wrap(testJobTypes))
 	t.Run("dependencies", wrap(testDependencies))
 	t.Run("multiple-workers", wrap(testMultipleWorkers))
+	t.Run("multiple-workers-single-job-type", wrap(testMultipleWorkersSingleJobType))
 	t.Run("heartbeats", wrap(testHeartbeats))
 	t.Run("timeout", wrap(testDequeueTimeout))
 }
@@ -274,6 +276,42 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 	// Now wake up the Dequeue() in the goroutine and wait for it to finish.
 	_ = pushTestJob(t, q, "octopus", nil, nil)
 	<-done
+}
+
+func testMultipleWorkersSingleJobType(t *testing.T, q jobqueue.JobQueue) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Start two listeners
+	for i := 0; i < 2; i += 1 {
+		go func() {
+			defer wg.Add(-1)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"clownfish"})
+			require.NoError(t, err)
+			require.NotEmpty(t, id)
+			require.NotEmpty(t, tok)
+			require.Empty(t, deps)
+			require.Equal(t, "clownfish", typ)
+			require.Equal(t, json.RawMessage("null"), args)
+		}()
+	}
+
+	// Increase the likelihood that the above goroutines were scheduled and
+	// is waiting in Dequeue().
+	time.Sleep(10 * time.Millisecond)
+
+	// Satisfy the first listener
+	_ = pushTestJob(t, q, "clownfish", nil, nil)
+
+	// Wait a bit for the listener to process the job
+	time.Sleep(10 * time.Millisecond)
+
+	// Satisfy the second listener
+	_ = pushTestJob(t, q, "clownfish", nil, nil)
+
+	wg.Wait()
 }
 
 func testCancel(t *testing.T, q jobqueue.JobQueue) {
