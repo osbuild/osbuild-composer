@@ -407,3 +407,47 @@ func TestTimeout(t *testing.T) {
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/image-builder-worker/v1/jobs", `{"arch":"arch","types":["types"]}`, http.StatusNoContent,
 		`{"href":"/api/image-builder-worker/v1/jobs","id":"00000000-0000-0000-0000-000000000000","kind":"RequestJob"}`)
 }
+
+func TestRequestJobById(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
+	handler := server.Handler()
+
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{})
+	require.NoError(t, err)
+
+	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobId)
+	require.NoError(t, err)
+
+	test.TestRoute(t, server.Handler(), false, "POST", "/api/worker/v1/jobs", `{"arch":"arch","types":["manifest-id-only"]}`, http.StatusBadRequest,
+		`{"href":"/api/worker/v1/errors/15","kind":"Error","id": "15","code":"IMAGE-BUILDER-WORKER-15"}`, "operation_id", "reason", "message")
+
+	_, _, _, _, _, err = server.RequestJobById(context.Background(), arch.Name(), jobId)
+	require.Error(t, jobqueue.ErrNotPending, err)
+
+	_, token, _, _, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"})
+	require.NoError(t, err)
+
+	depsolveJR, err := json.Marshal(worker.DepsolveJobResult{})
+	require.NoError(t, err)
+	err = server.FinishJob(token, depsolveJR)
+	require.NoError(t, err)
+
+	j, token, typ, args, dynamicArgs, err := server.RequestJobById(context.Background(), arch.Name(), jobId)
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+	require.Equal(t, "manifest-id-only", typ)
+	require.NotNil(t, args)
+	require.NotNil(t, dynamicArgs)
+
+	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+		fmt.Sprintf(`{"canceled":false,"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"JobStatus"}`, token, token))
+}

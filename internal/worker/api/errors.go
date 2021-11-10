@@ -21,6 +21,7 @@ const (
 	ErrorMethodNotAllowed     ServiceErrorCode = 12
 	ErrorNotAcceptable        ServiceErrorCode = 13
 	ErrorErrorNotFound        ServiceErrorCode = 14
+	ErrorInvalidJobType       ServiceErrorCode = 15
 	// ErrorTokenNotFound ServiceErrorCode = 6
 
 	// internal errors
@@ -59,7 +60,6 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorJobNotRunning, http.StatusBadRequest, "Job is not running"},
 		serviceError{ErrorMalformedJobId, http.StatusBadRequest, "Given job id is not a uuidv4"},
 		serviceError{ErrorMalformedJobToken, http.StatusBadRequest, "Given job id is not a uuidv4"},
-
 		serviceError{ErrorDiscardingArtifact, http.StatusInternalServerError, "Error discarding artifact"},
 		serviceError{ErrorCreatingArtifact, http.StatusInternalServerError, "Error creating artifact"},
 		serviceError{ErrorWritingArtifact, http.StatusInternalServerError, "Error writing artifact"},
@@ -73,6 +73,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
 		serviceError{ErrorErrorNotFound, http.StatusNotFound, "Error with given id not found"},
+		serviceError{ErrorInvalidJobType, http.StatusBadRequest, "Requested job type cannot be dequeued"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},

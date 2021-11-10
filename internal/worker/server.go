@@ -41,6 +41,7 @@ type JobStatus struct {
 
 var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
+var ErrInvalidJobType = errors.New("job has invalid type")
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, requestJobTimeout time.Duration, basePath string) *Server {
 	s := &Server{
@@ -94,6 +95,10 @@ func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error)
 	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
 }
 
+func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, manifestID uuid.UUID) (uuid.UUID, error) {
+	return s.jobs.Enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID})
+}
+
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
 	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
 }
@@ -108,6 +113,10 @@ func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, bui
 
 func (s *Server) EnqueueDepsolve(job *DepsolveJob) (uuid.UUID, error) {
 	return s.jobs.Enqueue("depsolve", job, nil)
+}
+
+func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID) (uuid.UUID, error) {
+	return s.jobs.Enqueue("manifest-id-only", job, []uuid.UUID{parent})
 }
 
 func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid.UUID, error) {
@@ -208,6 +217,15 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 }
 
 func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+	return s.requestJob(ctx, arch, jobTypes, uuid.Nil)
+}
+
+func (s *Server) RequestJobById(ctx context.Context, arch string, requestedJobId uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+	return s.requestJob(ctx, arch, []string{}, requestedJobId)
+}
+
+func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID) (
+	jobId uuid.UUID, token uuid.UUID, jobType string, args json.RawMessage, dynamicArgs []json.RawMessage, err error) {
 	// treat osbuild jobs specially until we have found a generic way to
 	// specify dequeuing restrictions. For now, we only have one
 	// restriction: arch for osbuild jobs.
@@ -215,6 +233,9 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 	for _, t := range jobTypes {
 		if t == "osbuild" || t == "osbuild-koji" {
 			t = t + ":" + arch
+		}
+		if t == "manifest-id-only" {
+			return uuid.Nil, uuid.Nil, "", nil, nil, ErrInvalidJobType
 		}
 		jts = append(jts, t)
 	}
@@ -225,21 +246,27 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		dequeueCtx, cancel = context.WithTimeout(ctx, s.requestJobTimeout)
 		defer cancel()
 	}
-	jobId, token, depIDs, jobType, args, err := s.jobs.Dequeue(dequeueCtx, jts)
+
+	var depIDs []uuid.UUID
+	if requestedJobId != uuid.Nil {
+		jobId = requestedJobId
+		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId)
+	} else {
+		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts)
+	}
 	if err != nil {
-		return uuid.Nil, uuid.Nil, "", nil, nil, err
+		return
 	}
 
-	var dynamicArgs []json.RawMessage
 	for _, depID := range depIDs {
 		result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
 		dynamicArgs = append(dynamicArgs, result)
 	}
 
 	if s.artifactsDir != "" {
-		err := os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
+		err = os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
 		if err != nil {
-			return uuid.Nil, uuid.Nil, "", nil, nil, fmt.Errorf("cannot create artifact directory: %v", err)
+			return
 		}
 	}
 
@@ -249,7 +276,7 @@ func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string)
 		jobType = "osbuild-koji"
 	}
 
-	return jobId, token, jobType, args, dynamicArgs, nil
+	return
 }
 
 func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
@@ -351,6 +378,9 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 				Id:   uuid.Nil.String(),
 				Kind: "RequestJob",
 			})
+		}
+		if err == ErrInvalidJobType {
+			return api.HTTPError(api.ErrorInvalidJobType)
 		}
 		return api.HTTPErrorWithInternal(api.ErrorRequestingJob, err)
 	}

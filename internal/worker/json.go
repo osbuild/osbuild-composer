@@ -94,6 +94,13 @@ type DepsolveJobResult struct {
 	ErrorType    ErrorType                      `json:"error_type"`
 }
 
+type ManifestJobByID struct{}
+
+type ManifestJobByIDResult struct {
+	Manifest distro.Manifest `json:"data,omitempty"`
+	Error    string          `json:"error"`
+}
+
 //
 // JSON-serializable types for the client
 //
