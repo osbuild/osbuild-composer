@@ -31,7 +31,12 @@ func CreatePartitionTable(
 	rng *rand.Rand,
 ) PartitionTable {
 
-	if bootPartition := basePartitionTable.BootPartition(); bootPartition != nil {
+	// we are modifying the contents of the base partition table,
+	// including the file systems, which are shared among shallow
+	// copies of the partition table, so make a copy first
+	table := basePartitionTable.Clone()
+
+	if bootPartition := table.BootPartition(); bootPartition != nil {
 		// the boot partition UUID needs to be set since this
 		// needs to be randomly generated
 		bootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
@@ -40,27 +45,27 @@ func CreatePartitionTable(
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			partitionSize := m.MinSize / sectorSize
-			basePartitionTable.createFilesystem(m.Mountpoint, partitionSize, rng)
+			table.createFilesystem(m.Mountpoint, partitionSize, rng)
 		}
 	}
 
-	if tableSize := basePartitionTable.getPartitionTableSize(); imageSize < tableSize {
+	if tableSize := table.getPartitionTableSize(); imageSize < tableSize {
 		imageSize = tableSize
 	}
 
-	basePartitionTable.Size = imageSize
+	table.Size = imageSize
 
 	// start point for all of the arches is
 	// 2048 sectors.
-	var start uint64 = basePartitionTable.updatePartitionStartPointOffsets(2048)
+	var start uint64 = table.updatePartitionStartPointOffsets(2048)
 
 	// treat the root partition as a special case
 	// by setting the size dynamically
-	rootPartition := basePartitionTable.RootPartition()
+	rootPartition := table.RootPartition()
 	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
 	rootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 
-	return basePartitionTable
+	return *table
 }
 
 func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64, rng *rand.Rand) {
