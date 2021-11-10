@@ -59,7 +59,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 }
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
-	rootFsUUID := pt.RootPartition().Filesystem.UUID
+	rootFsUUID := pt.RootFilesystem().UUID
 	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
@@ -1139,7 +1139,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	kernelOptions := t.kernelOptions
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
-	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootPartition(), partitionTable.BootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy))
+	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootFilesystem(), partitionTable.BootFilesystem(), kernelOptions, kernel, kernelVer, uefi, legacy))
 }
 
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {

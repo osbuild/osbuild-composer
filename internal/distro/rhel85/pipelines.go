@@ -64,11 +64,11 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
 	if t.arch.name == distro.S390xArchName {
-		rootPartition := pt.RootPartition()
-		if rootPartition == nil {
-			panic("s390x image must have a root partition, this is a programming error")
+		rootFs := pt.RootFilesystem()
+		if rootFs == nil {
+			panic("s390x image must have a root filesystem, this is a programming error")
 		}
-		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootPartition.Filesystem.UUID, t.kernelOptions))
+		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFs.UUID, t.kernelOptions))
 		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	}
 	return pipeline
@@ -1330,7 +1330,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
 
-	options := grub2StageOptions(partitionTable.RootPartition(), partitionTable.BootPartition(), kernelOptions, kernel, kernelVer, uefi, legacy, install)
+	options := grub2StageOptions(partitionTable.RootFilesystem(), partitionTable.BootFilesystem(), kernelOptions, kernel, kernelVer, uefi, legacy, install)
 	options.Greenboot = greenboot
 
 	return osbuild.NewGRUB2Stage(options)

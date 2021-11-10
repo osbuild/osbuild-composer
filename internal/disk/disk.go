@@ -170,6 +170,32 @@ func (pt PartitionTable) RootPartitionIndex() int {
 	return rootIdx
 }
 
+// Returns the Filesystem instance for a given mountpoint, if it exists.
+func (pt PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
+	for _, part := range pt.Partitions {
+		if part.Filesystem == nil {
+			continue
+		}
+		if part.Filesystem.Mountpoint == mountpoint {
+			return part.Filesystem
+		}
+	}
+	return nil
+}
+
+// Returns the Filesystem instance that corresponds to the root
+// filesystem, i.e. the filesystem whose mountpoint is '/'.
+func (pt PartitionTable) RootFilesystem() *Filesystem {
+	return pt.FindFilesystemForMountpoint("/")
+}
+
+// Returns the Filesystem instance that corresponds to the boot
+// filesystem, i.e. the filesystem whose mountpoint is '/boot',
+// if /boot is on a separate partition, otherwise nil
+func (pt PartitionTable) BootFilesystem() *Filesystem {
+	return pt.FindFilesystemForMountpoint("/boot")
+}
+
 // dynamically calculate and update the start point
 // for each of the existing partitions
 // return the updated start point

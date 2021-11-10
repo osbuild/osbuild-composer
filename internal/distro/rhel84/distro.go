@@ -392,13 +392,13 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 			panic("s390x image must have a partition table, this is a programming error")
 		}
 
-		rootPartition := pt.RootPartition()
-		if rootPartition == nil {
-			panic("s390x image must have a root partition, this is a programming error")
+		rootFs := pt.RootFilesystem()
+		if rootFs == nil {
+			panic("s390x image must have a root filesystem, this is a programming error")
 		}
 
 		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{
-			RootFsUUID: rootPartition.Filesystem.UUID,
+			RootFsUUID: rootFs.UUID,
 			KernelOpts: t.kernelOptions,
 		}))
 	}
@@ -636,13 +636,13 @@ func (t *imageType) grub2StageOptions(pt *disk.PartitionTable, kernelOptions str
 	if pt == nil {
 		panic("partition table must be defined for grub2 stage, this is a programming error")
 	}
-	rootPartition := pt.RootPartition()
-	if rootPartition == nil {
-		panic("root partition must be defined for grub2 stage, this is a programming error")
+	rootFs := pt.RootFilesystem()
+	if rootFs == nil {
+		panic("root filesystem must be defined for grub2 stage, this is a programming error")
 	}
 
 	stageOptions := osbuild.GRUB2StageOptions{
-		RootFilesystemUUID: uuid.MustParse(rootPartition.Filesystem.UUID),
+		RootFilesystemUUID: uuid.MustParse(rootFs.UUID),
 		KernelOptions:      kernelOptions,
 		Legacy:             legacy,
 	}

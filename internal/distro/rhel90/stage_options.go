@@ -364,8 +364,8 @@ func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbu
 	return options
 }
 
-func grub2StageOptions(rootPartition *disk.Partition,
-	bootPartition *disk.Partition,
+func grub2StageOptions(rootFs *disk.Filesystem,
+	bootFs *disk.Filesystem,
 	kernelOptions string,
 	kernel *blueprint.KernelCustomization,
 	kernelVer string,
@@ -373,18 +373,18 @@ func grub2StageOptions(rootPartition *disk.Partition,
 	legacy string,
 	vendor string,
 	install bool) *osbuild.GRUB2StageOptions {
-	if rootPartition == nil {
-		panic("root partition must be defined for grub2 stage, this is a programming error")
+	if rootFs == nil {
+		panic("root filesystem must be defined for grub2 stage, this is a programming error")
 	}
 
 	stageOptions := osbuild.GRUB2StageOptions{
-		RootFilesystemUUID: uuid.MustParse(rootPartition.Filesystem.UUID),
+		RootFilesystemUUID: uuid.MustParse(rootFs.UUID),
 		KernelOptions:      kernelOptions,
 		Legacy:             legacy,
 	}
 
-	if bootPartition != nil {
-		bootFsUUID := uuid.MustParse(bootPartition.Filesystem.UUID)
+	if bootFs != nil {
+		bootFsUUID := uuid.MustParse(bootFs.UUID)
 		stageOptions.BootFilesystemUUID = &bootFsUUID
 	}
 
