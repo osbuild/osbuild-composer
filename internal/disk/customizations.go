@@ -27,7 +27,7 @@ const (
 func CreatePartitionTable(
 	mountpoints []blueprint.FilesystemCustomization,
 	imageSize uint64,
-	basePartitionTable PartitionTable,
+	basePartitionTable *PartitionTable,
 	rng *rand.Rand,
 ) PartitionTable {
 
