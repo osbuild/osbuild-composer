@@ -657,6 +657,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"type":"org.osbuild.authconfig","options":{}}`),
 			},
 		},
+		{
+			name: "pwquality.conf",
+			fields: fields{
+				Type:    "org.osbuild.pwquality.conf",
+				Options: &PwqualityConfStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.pwquality.conf","options":{"config":{}}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
