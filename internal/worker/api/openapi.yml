@@ -4,8 +4,12 @@ info:
   version: '1'
   description: This is an API for workers to request and handle jobs.
 servers:
-  - url: /api/worker/v1
-  - url: /api/composer-worker/v1
+- url: https://api.openshift.com/api/image-builder-worker/v1
+  description: Main (production) server
+- url: https://api.stage.openshift.com/api/image-builder-worker/v1
+  description: Staging server
+- url: /api/image-builder-worker/v1
+- url: /api/worker/v1
 
 paths:
   /openapi:
