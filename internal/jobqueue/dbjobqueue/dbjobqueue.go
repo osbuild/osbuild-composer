@@ -274,7 +274,7 @@ func (q *dbJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	defer func() {
 		err = tx.Rollback(context.Background())
 		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
-			logrus.Error("error rolling back finish job transaction: ", err)
+			logrus.Errorf("error rolling back finish job transaction for job %s: %v", id, err)
 		}
 
 	}()
