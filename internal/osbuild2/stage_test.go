@@ -637,6 +637,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"type":"org.osbuild.users","options":{"users":null}}`),
 			},
 		},
+		{
+			name: "sshd.config",
+			fields: fields{
+				Type:    "org.osbuild.sshd.config",
+				Options: &SshdConfigStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sshd.config","options":{"config":{}}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
