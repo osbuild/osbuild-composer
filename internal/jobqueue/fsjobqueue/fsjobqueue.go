@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
 )
@@ -201,15 +202,6 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		q.mu.Unlock()
 		id, err := selectUUIDChannel(ctx, chans)
 		q.mu.Lock()
-
-		// Delete empty channels
-		for _, jt := range jobTypes {
-			c, exists := q.pending[jt]
-			if exists && len(c) == 0 {
-				close(c)
-				delete(q.pending, jt)
-			}
-		}
 
 		if err != nil {
 			if errors.As(err, &context.Canceled) || errors.As(err, &context.DeadlineExceeded) {
