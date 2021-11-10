@@ -146,6 +146,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		// The stage accepts also source input, but we need to rework all inputs first to handle this nicely here.
 		// Only files input is used by the XZ stage at this moment.
 		inputs = new(FilesInputs)
+	case "org.osbuild.sshd.config":
+		options = new(SshdConfigStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
