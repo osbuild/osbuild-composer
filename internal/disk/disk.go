@@ -5,6 +5,7 @@
 package disk
 
 import (
+	"errors"
 	"sort"
 
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
@@ -176,17 +177,50 @@ func (pt *PartitionTable) BootPartitionIndex() int {
 	return rootIdx
 }
 
-// Returns the Filesystem instance for a given mountpoint, if it exists.
-func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
+// StopIter is used as a return value from iterator function to indicate
+// the iteration should not continue. Not an actual error and thus not
+// returned by iterator function.
+var StopIter = errors.New("stop the iteration")
+
+// ForEachFileSystemFunc is a type of function called by ForEachFilesystem
+// to iterate over every filesystem in the partition table.
+//
+// If the function returns an error, the iteration stops.
+type ForEachFileSystemFunc func(fs *Filesystem) error
+
+// Iterates over all filesystems in the partition table and calls the
+// callback on each one. The iteration continues as long as the callback
+// does not return an error.
+func (pt *PartitionTable) ForEachFilesystem(cb ForEachFileSystemFunc) error {
 	for _, part := range pt.Partitions {
 		if part.Filesystem == nil {
 			continue
 		}
-		if part.Filesystem.Mountpoint == mountpoint {
-			return part.Filesystem
+
+		if err := cb(part.Filesystem); err != nil {
+			if err == StopIter {
+				return nil
+			}
+			return err
 		}
 	}
+
 	return nil
+}
+
+// Returns the Filesystem instance for a given mountpoint, if it exists.
+func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
+	var res *Filesystem
+	_ = pt.ForEachFilesystem(func(fs *Filesystem) error {
+		if fs.Mountpoint == mountpoint {
+			res = fs
+			return StopIter
+		}
+
+		return nil
+	})
+
+	return res
 }
 
 // Returns the Filesystem instance that corresponds to the root
