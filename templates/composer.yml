@@ -165,9 +165,6 @@ objects:
     labels:
       app: composer
       port: composer-api
-    annotations:
-      prometheus.io/path: /metrics
-      prometheus.io/scrape: 'true'
   spec:
     ports:
       - name: composer-api
