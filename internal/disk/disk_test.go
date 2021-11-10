@@ -47,3 +47,87 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	pt = disk.CreatePartitionTable(mountpoints, 1024, pt, rng)
 	assert.GreaterOrEqual(t, expectedSize, pt.Size)
 }
+
+// common partition table that use used by tests
+var canonicalPartitionTable = disk.PartitionTable{
+	UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+	Type: "gpt",
+	Partitions: []disk.Partition{
+		{
+			Size:     2048,
+			Bootable: true,
+			Type:     disk.BIOSBootPartitionGUID,
+			UUID:     disk.BIOSBootPartitionUUID,
+		},
+		{
+			Size: 204800,
+			Type: disk.EFISystemPartitionGUID,
+			UUID: disk.EFISystemPartitionUUID,
+			Filesystem: &disk.Filesystem{
+				Type:         "vfat",
+				UUID:         disk.EFIFilesystemUUID,
+				Mountpoint:   "/boot/efi",
+				FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+				FSTabFreq:    0,
+				FSTabPassNo:  2,
+			},
+		},
+		{
+			Size: 1048576,
+			Type: disk.FilesystemDataGUID,
+			UUID: disk.FilesystemDataUUID,
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				Mountpoint:   "/boot",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		},
+		{
+			Type: disk.FilesystemDataGUID,
+			UUID: disk.RootPartitionUUID,
+			Filesystem: &disk.Filesystem{
+				Type:         "xfs",
+				Label:        "root",
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    0,
+				FSTabPassNo:  0,
+			},
+		},
+	},
+}
+
+func TestDisk_ForEachFilesystem(t *testing.T) {
+	rootFs := canonicalPartitionTable.Partitions[3].Filesystem
+	bootFs := canonicalPartitionTable.Partitions[2].Filesystem
+	efiFs := canonicalPartitionTable.Partitions[1].Filesystem
+
+	// check we iterate in the correct order and throughout the whole array
+	var expectedFilesystems []*disk.Filesystem
+	err := canonicalPartitionTable.ForEachFilesystem(func(fs *disk.Filesystem) error {
+		expectedFilesystems = append(expectedFilesystems, fs)
+		return nil
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []*disk.Filesystem{efiFs, bootFs, rootFs}, expectedFilesystems)
+
+	// check we stop iterating when the callback returns false
+	expectedFilesystems = make([]*disk.Filesystem, 0)
+	err = canonicalPartitionTable.ForEachFilesystem(func(fs *disk.Filesystem) error {
+		if fs.Mountpoint != "/boot" {
+			return nil
+		}
+
+		// we should stop at boot, never reaching root
+		assert.NotEqual(t, fs.Mountpoint, "/")
+
+		expectedFilesystems = append(expectedFilesystems, fs)
+		return disk.StopIter
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []*disk.Filesystem{bootFs}, expectedFilesystems)
+}
