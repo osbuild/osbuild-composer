@@ -223,6 +223,12 @@ func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesy
 	return res
 }
 
+// Returns if the partition table contains a filesystem with the given
+// mount point.
+func (pt *PartitionTable) ContainsMountpoint(mountpoint string) bool {
+	return pt.FindFilesystemForMountpoint(mountpoint) != nil
+}
+
 // Returns the Filesystem instance that corresponds to the root
 // filesystem, i.e. the filesystem whose mountpoint is '/'.
 func (pt *PartitionTable) RootFilesystem() *Filesystem {
