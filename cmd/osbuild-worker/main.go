@@ -87,7 +87,7 @@ func WatchJob(ctx context.Context, job worker.Job) {
 // Requests and runs 1 job of specified type(s)
 // Returning an error here will result in the worker backing off for a while and retrying
 func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls map[string]JobImplementation) error {
-	logrus.Info("Waiting for a new job...")
+	logrus.Debug("Waiting for a new job...")
 	job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
 	if err == worker.ErrClientRequestJobTimeout {
 		logrus.Debugf("Requesting job timed out: %v", err)
