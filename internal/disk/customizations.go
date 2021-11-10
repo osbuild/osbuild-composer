@@ -29,7 +29,7 @@ func CreatePartitionTable(
 	imageSize uint64,
 	basePartitionTable *PartitionTable,
 	rng *rand.Rand,
-) PartitionTable {
+) (PartitionTable, error) {
 
 	// we are modifying the contents of the base partition table,
 	// including the file systems, which are shared among shallow
@@ -61,7 +61,7 @@ func CreatePartitionTable(
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
 
-	return *table
+	return *table, nil
 }
 
 func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) {
