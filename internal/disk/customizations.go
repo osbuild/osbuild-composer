@@ -40,8 +40,7 @@ func CreatePartitionTable(
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			partitionSize := m.MinSize / sectorSize
-			partition := basePartitionTable.createPartition(m.Mountpoint, partitionSize, rng)
-			basePartitionTable.Partitions = append(basePartitionTable.Partitions, partition)
+			basePartitionTable.createPartition(m.Mountpoint, partitionSize, rng)
 		}
 	}
 
@@ -64,7 +63,7 @@ func CreatePartitionTable(
 	return basePartitionTable
 }
 
-func (pt *PartitionTable) createPartition(mountpoint string, size uint64, rng *rand.Rand) Partition {
+func (pt *PartitionTable) createPartition(mountpoint string, size uint64, rng *rand.Rand) {
 	filesystem := Filesystem{
 		Type:         "xfs",
 		UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
@@ -73,18 +72,18 @@ func (pt *PartitionTable) createPartition(mountpoint string, size uint64, rng *r
 		FSTabFreq:    0,
 		FSTabPassNo:  0,
 	}
-	if pt.Type != "gpt" {
-		return Partition{
-			Size:       size,
-			Filesystem: &filesystem,
-		}
-	}
-	return Partition{
+
+	partition := Partition{
 		Size:       size,
-		Type:       FilesystemDataGUID,
-		UUID:       uuid.Must(newRandomUUIDFromReader(rng)).String(),
 		Filesystem: &filesystem,
 	}
+
+	if pt.Type == "gpt" {
+		partition.Type = FilesystemDataGUID
+		partition.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+	}
+
+	pt.Partitions = append(pt.Partitions, partition)
 }
 
 func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
