@@ -1,0 +1,38 @@
+name: Coverity Scan
+
+on:
+  # https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#scheduled-events
+  schedule:
+    - cron: '0 7 * * *' # Daily at 07:00 UTC
+
+jobs:
+  coverity_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2.3.4
+
+      # https://scan.coverity.com/projects/osbuild-osbuild-composer
+      - name: Run coverity scan script
+        env:
+          COVERITY_SCAN_PROJECT_NAME: "osbuild%2Fosbuild-composer"
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+        run: |
+          echo "Downloading coverity scan package."
+          curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64 \
+            --form project="$COVERITY_SCAN_PROJECT_NAME" \
+            --form token="$COVERITY_SCAN_TOKEN"
+          pushd /tmp && tar xzvf cov-analysis-linux64.tgz && popd
+
+          mkdir bin
+          /tmp/cov-analysis-linux64-*/bin/cov-build --dir cov-int go build -o bin/ ./...
+          tar czvf cov-int.tar.gz cov-int
+
+          echo "Uploading coverity scan result to http://scan.coverity.com"
+          curl https://scan.coverity.com/builds?project="$COVERITY_SCAN_PROJECT_NAME" \
+            --form token="$COVERITY_SCAN_TOKEN" \
+            --form email="$COVERITY_SCAN_EMAIL" \
+            --form file=@cov-int.tar.gz \
+            --form version="$(git rev-parse HEAD)" \
+            --form description="$GITHUB_REF / $GITHUB_SHA"
