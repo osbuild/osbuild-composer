@@ -44,7 +44,8 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
-	pt = disk.CreatePartitionTable(mountpoints, 1024, &pt, rng)
+	pt, err := disk.CreatePartitionTable(mountpoints, 1024, &pt, rng)
+	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, expectedSize, pt.Size)
 }
 
