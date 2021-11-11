@@ -16,31 +16,43 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/33/${ARCH}/iot"
         OS_VARIANT="fedora33"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/";;
+        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/"
+        ;;
     "rhel-8.4")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8.4"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/";;
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
+        ;;
     "rhel-8.6")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        ;;
     "rhel-9.0")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9.0"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        ;;
+    "centos-8")
+        IMAGE_TYPE=edge-commit
+        OSTREE_REF="centos/8/${ARCH}/edge"
+        OS_VARIANT="centos8"
+        USER_IN_COMMIT="true"
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos9"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/";;
+        BOOT_LOCATION="$COMPOSE_URL/compose/BaseOS/x86_64/os/"
+        ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
