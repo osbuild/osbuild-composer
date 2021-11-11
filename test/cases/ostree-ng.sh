@@ -72,8 +72,6 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Set up variables.
-OSTREE_REF="test/rhel/8/${ARCH}/edge"
-OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
 BIOS_GUEST_ADDRESS=192.168.100.50
@@ -87,6 +85,11 @@ QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 STAGE_OCP4_SERVER_NAME="edge-stage-server"
 STAGE_OCP4_REPO_URL="http://${STAGE_OCP4_SERVER_NAME}-${QUAY_REPO_TAG}-frontdoor.apps.ocp.ci.centos.org/repo/"
 ARTIFACTS="ci-artifacts"
+# For CS8, CS9, RHEL 8.5 and above
+CONTAINER_TYPE=edge-container
+CONTAINER_FILENAME=container.tar
+INSTALLER_TYPE=edge-installer
+INSTALLER_FILENAME=installer.iso
 mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
@@ -104,6 +107,8 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8.4")
+        OSTREE_REF="test/rhel/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
         CONTAINER_TYPE=rhel-edge-container
         CONTAINER_FILENAME=rhel84-container.tar
         INSTALLER_TYPE=rhel-edge-installer
@@ -111,11 +116,27 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_UPGRADE_BP="true"
         INSTALLER_PATH="/ostree/repo"
         ;;
-    "rhel-8.6" | "centos-8" | "rhel-9.0" | "centos-9")
-        CONTAINER_TYPE=edge-container
-        CONTAINER_FILENAME=container.tar
-        INSTALLER_TYPE=edge-installer
-        INSTALLER_FILENAME=installer.iso
+    "rhel-8.6")
+        OSTREE_REF="test/rhel/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
+        USER_IN_UPGRADE_BP="false"
+        INSTALLER_PATH="/run/install/repo/ostree/repo"
+        ;;
+    "rhel-9.0")
+        OSTREE_REF="test/rhel/9/${ARCH}/edge"
+        OS_VARIANT="rhel9-unknown"
+        USER_IN_UPGRADE_BP="false"
+        INSTALLER_PATH="/run/install/repo/ostree/repo"
+        ;;
+    "centos-8")
+        OSTREE_REF="test/centos/8/${ARCH}/edge"
+        OS_VARIANT="centos8"
+        USER_IN_UPGRADE_BP="false"
+        INSTALLER_PATH="/run/install/repo/ostree/repo"
+        ;;
+    "centos-9")
+        OSTREE_REF="test/centos/9/${ARCH}/edge"
+        OS_VARIANT="centos9"
         USER_IN_UPGRADE_BP="false"
         INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;

@@ -68,8 +68,6 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Set up variables.
-OSTREE_REF="rhel/8/${ARCH}/edge"
-OS_VARIANT="rhel8-unknown"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
 BIOS_GUEST_ADDRESS=192.168.100.50
@@ -79,6 +77,10 @@ PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
 ARTIFACTS="ci-artifacts"
+CONTAINER_TYPE=edge-container
+CONTAINER_FILENAME=container.tar
+INSTALLER_TYPE=edge-raw-image
+INSTALLER_FILENAME=image.raw.xz
 mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
@@ -94,11 +96,21 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "centos-8" | "rhel-9.0" | "centos-9")
-        CONTAINER_TYPE=edge-container
-        CONTAINER_FILENAME=container.tar
-        INSTALLER_TYPE=edge-raw-image
-        INSTALLER_FILENAME=image.raw.xz
+    "rhel-8.6")
+        OSTREE_REF="rhel/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
+        ;;
+    "rhel-9.0")
+        OSTREE_REF="rhel/9/${ARCH}/edge"
+        OS_VARIANT="rhel9-unknown"
+        ;;
+    "centos-8")
+        OSTREE_REF="centos/8/${ARCH}/edge"
+        OS_VARIANT="centos8"
+        ;;
+    "centos-9")
+        OSTREE_REF="centos/9/${ARCH}/edge"
+        OS_VARIANT="centos9"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
