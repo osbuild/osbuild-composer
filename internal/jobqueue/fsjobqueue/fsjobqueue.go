@@ -393,16 +393,9 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 		return nil
 	}
 
-	depsFinished := true
-	for _, id := range j.Dependencies {
-		j, err := q.readJob(id)
-		if err != nil {
-			return err
-		}
-		if j.FinishedAt.IsZero() {
-			depsFinished = false
-			break
-		}
+	depsFinished, err := q.hasAllFinishedDependencies(j)
+	if err != nil {
+		return err
 	}
 
 	if depsFinished {
@@ -419,6 +412,23 @@ func (q *fsJobQueue) maybeEnqueue(j *job, updateDependants bool) error {
 	}
 
 	return nil
+}
+
+// hasAllFinishedDependencies returns true if all dependencies of `j`
+// are finished. Otherwise, false is returned. If one of the jobs cannot
+// be read, an error is returned.
+func (q *fsJobQueue) hasAllFinishedDependencies(j *job) (bool, error) {
+	for _, id := range j.Dependencies {
+		j, err := q.readJob(id)
+		if err != nil {
+			return false, err
+		}
+		if j.FinishedAt.IsZero() {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // Select on a list of `chan uuid.UUID`s. Returns an error if one of the
