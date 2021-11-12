@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Colorful output.
+function greenprint {
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+}
+
 # Azure cleanup
 if ! hash az; then
     # this installation method is taken from the official docs:
@@ -179,7 +184,7 @@ for snapshot in ${SNAPSHOTS}; do
 	START_TIME=$(echo "${snapshot}" | jq '.StartTime' | tr -d '"')
 
 	if [[ ${TAG} == "gitlab-ci-test" && ${TAG_VALUE} == "true" ]]; then
-		if [[ $(date -d "${START_TIME}" +%s) -lt $(date -d "- 2 minutes" +%s) ]]; then
+		if [[ $(date -d "${START_TIME}" +%s) -lt "${DELETE_TIME}" ]]; then
 			$AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 			echo "The snapshot with id ${SNAPSHOT_ID} was deleted"
 		else
@@ -187,3 +192,22 @@ for snapshot in ${SNAPSHOTS}; do
 		fi
 	fi
 done
+
+# Remove tagged and old enough s3 objects
+OBJECTS=$($AWS_CMD s3api list-objects --bucket "${AWS_BUCKET}" | jq -c .Contents[])
+
+for object in ${OBJECTS}; do
+        LAST_MODIFIED=$(echo "${object}" | jq '.LastModified' | tr -d '"')
+        OBJECT_KEY=$(echo "${object}" | jq '.Key' | tr -d '"')
+
+        if [[ $(date -d "${LAST_MODIFIED}" +%s) -lt ${DELETE_TIME} ]]; then
+                TAG=$($AWS_CMD s3api get-object-tagging --bucket "${AWS_BUCKET}" --key "${OBJECT_KEY}" | jq .TagSet[0].Key | tr -d '"')
+                TAG_VALUE=$($AWS_CMD s3api get-object-tagging --bucket "${AWS_BUCKET}" --key "${OBJECT_KEY}" | jq .TagSet[0].Value | tr -d '"')
+
+                if [[ ${TAG} == "gitlab-ci-test" && ${TAG_VALUE} == "true" ]]; then
+                        $AWS_CMD s3 rm "s3://${AWS_BUCKET}/${OBJECT_KEY}"
+                        echo "The object with key ${OBJECT_KEY} was removed"
+                fi
+        fi
+done
+
