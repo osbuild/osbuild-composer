@@ -18,8 +18,9 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	logrus "github.com/sirupsen/logrus"
+
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
 const (
@@ -41,6 +42,18 @@ const (
 		  FOR UPDATE SKIP LOCKED
 		)
 		RETURNING id, token, type, args`
+
+	sqlDequeueByID = `
+		UPDATE jobs
+		SET token = $1, started_at = now()
+		WHERE id = (
+		  SELECT id
+		  FROM ready_jobs
+		  WHERE id = $2
+		  LIMIT 1
+		  FOR UPDATE SKIP LOCKED
+		)
+		RETURNING token, type, args`
 
 	sqlInsertDependency  = `INSERT INTO job_dependencies VALUES ($1, $2)`
 	sqlQueryDependencies = `
@@ -207,6 +220,44 @@ func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	logrus.Infof("Dequeued job of type %v with ID %s", jobType, id)
 
 	return id, token, dependencies, jobType, args, nil
+}
+func (q *dbJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	// Return early if the context is already canceled.
+	if err := ctx.Err(); err != nil {
+		return uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
+	}
+
+	conn, err := q.pool.Acquire(ctx)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Release()
+
+	var jobType string
+	var args json.RawMessage
+	token := uuid.New()
+
+	err = conn.QueryRow(ctx, sqlDequeueByID, token, id).Scan(&token, &jobType, &args)
+	if err == pgx.ErrNoRows {
+		return uuid.Nil, nil, "", nil, jobqueue.ErrNotPending
+	} else if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error dequeuing job: %v", err)
+	}
+
+	// insert heartbeat
+	_, err = conn.Exec(ctx, sqlInsertHeartbeat, token, id)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error inserting the job's heartbeat: %v", err)
+	}
+
+	dependencies, err := q.jobDependencies(ctx, conn, id)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error querying the job's dependencies: %v", err)
+	}
+
+	logrus.Infof("Dequeued job of type %v with ID %s", jobType, id)
+
+	return token, dependencies, jobType, args, nil
 }
 
 func (q *dbJobQueue) FinishJob(id uuid.UUID, result interface{}) error {

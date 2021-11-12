@@ -194,7 +194,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		chans = append(chans, c)
 	}
 
-	// Loop until finding a non-canceled job.
+	// Loop until finding a non-canceled job and pending.
 	var j *job
 	for {
 		// Unlock the mutex while polling channels, so that multiple goroutines
@@ -215,7 +215,8 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
 
-		if !j.Canceled {
+		// jobs must be non-cancelled and pending
+		if !j.Canceled && j.StartedAt.IsZero() {
 			break
 		}
 	}
@@ -232,6 +233,41 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	}
 
 	return j.Id, j.Token, j.Dependencies, j.Type, j.Args, nil
+}
+
+func (q *fsJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	j, err := q.readJob(id)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, err
+	}
+
+	if !j.StartedAt.IsZero() {
+		return uuid.Nil, nil, "", nil, jobqueue.ErrNotPending
+	}
+
+	depsFinished, err := q.hasAllFinishedDependencies(j)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, err
+	}
+	if !depsFinished {
+		return uuid.Nil, nil, "", nil, jobqueue.ErrNotPending
+	}
+
+	j.StartedAt = time.Now()
+
+	j.Token = uuid.New()
+	q.jobIdByToken[j.Token] = j.Id
+	q.heartbeats[j.Token] = time.Now()
+
+	err = q.db.Write(j.Id.String(), j)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error writing job %s: %v", j.Id, err)
+	}
+
+	return j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
 func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
