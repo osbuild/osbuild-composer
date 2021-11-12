@@ -91,9 +91,6 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	diskfile := "disk.img"
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
-	if err != nil {
-		return nil, err
-	}
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "vpc", "")
 	pipelines = append(pipelines, *qemuPipeline)
@@ -123,9 +120,6 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	diskfile := "disk.img"
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
-	if err != nil {
-		return nil, err
-	}
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "vmdk", "")
 	pipelines = append(pipelines, *qemuPipeline)
@@ -155,9 +149,6 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	diskfile := "disk.img"
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
-	if err != nil {
-		return nil, err
-	}
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "")
 	pipelines = append(pipelines, *qemuPipeline)
