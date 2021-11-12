@@ -895,6 +895,15 @@ function verifyInAWSS3() {
   local S3_URL
   S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
 
+  # Tag the resource as a test file
+  local S3_FILENAME
+  S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+
+  $AWS_CMD s3api put-object-tagging \
+	  --bucket "${AWS_BUCKET}" \
+	  --key "${S3_FILENAME}" \
+	  --tagging '{"TagSet": [{ "Key": "gitlab-ci-test", "Value": "true" }]}'	  
+
   # Download the commit using the Presigned URL
   curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
 
