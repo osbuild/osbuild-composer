@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -363,6 +363,36 @@ sudo composer-cli blueprints delete container > /dev/null
 ## Build edge-simplified-installer image
 ##
 ############################################################
+
+# Verify that composer can report proper error message if no installation device is specified in blueprint
+# https://github.com/osbuild/osbuild-composer/pull/1755
+greenprint "Negative test: checking error message when no installation device specified"
+
+greenprint "📋 Preparing installer blueprint with no installation device"
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "simplenodevice"
+description = "A rhel-edge simplified-installer image without installation device specified"
+version = "0.0.1"
+modules = []
+groups = []
+EOF
+
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve simplenodevice
+
+result=$(sudo composer-cli compose start-ostree simplenodevice "$INSTALLER_TYPE" --ref "$OSTREE_REF" --url "$PROD_REPO_URL" 2>&1)
+expected='boot ISO image type "edge-simplified-installer" requires specifying an installation device to install to'
+
+echo "Command output is: $result"
+
+greenprint "🎏 Checking if command result contains expected error message."
+if [[ "$result" == *"$expected"* ]]; then
+    greenprint "Success: osbuild-composer can report proper error messages when no installation device specified for simplified installer image"
+else
+    greenprint "Failed: expected error message not found."
+    clean_up
+    exit 1
+fi
 
 # Write a blueprint for installer image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
