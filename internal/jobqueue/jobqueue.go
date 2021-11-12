@@ -39,9 +39,15 @@ type JobQueue interface {
 	// Waits until a job with a type of any of `jobTypes` is available, or `ctx` is
 	// canceled.
 	//
-	// Returns the job's id, dependencies, type, and arguments, or an error. Arguments
+	// Returns the job's id, token, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
 	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+
+	// Dequeues a pending job by its ID in a non-blocking way.
+	//
+	// Returns the job's token, dependencies, type, and arguments, or an error. Arguments
+	// can be unmarshaled to the type given in Enqueue().
+	DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Mark the job with `id` as finished. `result` must fit the associated
 	// job type and must be serializable to JSON.
@@ -75,6 +81,7 @@ type JobQueue interface {
 
 var (
 	ErrNotExist       = errors.New("job does not exist")
+	ErrNotPending     = errors.New("job is not pending")
 	ErrNotRunning     = errors.New("job is not running")
 	ErrCanceled       = errors.New("job ws canceled")
 	ErrDequeueTimeout = errors.New("dequeue context timed out or was canceled")

@@ -40,6 +40,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("multiple-workers-single-job-type", wrap(testMultipleWorkersSingleJobType))
 	t.Run("heartbeats", wrap(testHeartbeats))
 	t.Run("timeout", wrap(testDequeueTimeout))
+	t.Run("dequeue-by-id", wrap(testDequeueByID))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID) uuid.UUID {
@@ -405,4 +406,50 @@ func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
 	require.NotContains(t, q.Heartbeats(time.Second*0), tok)
 	_, err = q.IdFromToken(tok)
 	require.Equal(t, err, jobqueue.ErrNotExist)
+}
+
+func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
+	t.Run("basic", func(t *testing.T) {
+		one := pushTestJob(t, q, "octopus", nil, nil)
+		two := pushTestJob(t, q, "octopus", nil, nil)
+
+		tok, d, typ, args, err := q.DequeueByID(context.Background(), one)
+		require.NoError(t, err)
+		require.NotEmpty(t, tok)
+		require.Empty(t, d)
+		require.Equal(t, "octopus", typ)
+		require.NotNil(t, args)
+
+		err = q.FinishJob(one, nil)
+		require.NoError(t, err)
+
+		require.Equal(t, two, finishNextTestJob(t, q, "octopus", testResult{}, nil))
+	})
+
+	t.Run("cannot dequeue a job without finished deps", func(t *testing.T) {
+		one := pushTestJob(t, q, "octopus", nil, nil)
+		two := pushTestJob(t, q, "octopus", nil, []uuid.UUID{one})
+
+		_, _, _, _, err := q.DequeueByID(context.Background(), two)
+		require.Equal(t, jobqueue.ErrNotPending, err)
+
+		require.Equal(t, one, finishNextTestJob(t, q, "octopus", testResult{}, nil))
+		require.Equal(t, two, finishNextTestJob(t, q, "octopus", testResult{}, []uuid.UUID{one}))
+	})
+
+	t.Run("cannot dequeue a non-pending job", func(t *testing.T) {
+		one := pushTestJob(t, q, "octopus", nil, nil)
+
+		_, _, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"})
+		require.NoError(t, err)
+
+		_, _, _, _, err = q.DequeueByID(context.Background(), one)
+		require.Equal(t, jobqueue.ErrNotPending, err)
+
+		err = q.FinishJob(one, nil)
+		require.NoError(t, err)
+
+		_, _, _, _, err = q.DequeueByID(context.Background(), one)
+		require.Equal(t, jobqueue.ErrNotPending, err)
+	})
 }
