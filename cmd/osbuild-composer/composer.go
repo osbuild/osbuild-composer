@@ -250,6 +250,9 @@ func (c *Composer) Start() error {
 			mux.Handle(apiRoute+"/", c.api.V1(apiRoute))
 			mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
+
+			// Metrics handler attached to api mux to avoid a
+			// separate listener/socket
 			mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
 
 			handler := http.Handler(mux)
@@ -262,6 +265,7 @@ func (c *Composer) Start() error {
 					[]string{
 						"/api/image-builder-composer/v2/openapi/?$",
 						"/api/image-builder-composer/v2/errors/?$",
+						"/metrics/?$",
 					}, mux)
 				if err != nil {
 					panic(err)
