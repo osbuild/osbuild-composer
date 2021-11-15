@@ -1,11 +1,8 @@
 package disk
 
 import (
-	"encoding/hex"
-	"io"
 	"math/rand"
 
-	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
@@ -38,7 +35,7 @@ func CreatePartitionTable(
 	for _, m := range mountpoints {
 		sectors := table.BytesToSectors(m.MinSize)
 		if m.Mountpoint != "/" {
-			table.createFilesystem(m.Mountpoint, sectors)
+			table.CreateFilesystem(m.Mountpoint, sectors)
 		}
 	}
 
@@ -61,44 +58,4 @@ func CreatePartitionTable(
 	table.GenerateUUIDs(rng)
 
 	return *table, nil
-}
-
-func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) {
-	filesystem := Filesystem{
-		Type:         "xfs",
-		Mountpoint:   mountpoint,
-		FSTabOptions: "defaults",
-		FSTabFreq:    0,
-		FSTabPassNo:  0,
-	}
-
-	partition := Partition{
-		Size:       size,
-		Filesystem: &filesystem,
-	}
-
-	if pt.Type == "gpt" {
-		partition.Type = FilesystemDataGUID
-	}
-
-	pt.Partitions = append(pt.Partitions, partition)
-}
-
-func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
-	var id uuid.UUID
-	_, err := io.ReadFull(r, id[:])
-	if err != nil {
-		return uuid.Nil, err
-	}
-	id[6] = (id[6] & 0x0f) | 0x40 // Version 4
-	id[8] = (id[8] & 0x3f) | 0x80 // Variant is 10
-	return id, nil
-}
-
-// NewRandomVolIDFromReader creates a random 32 bit hex string to use as a
-// volume ID for FAT filesystems
-func NewRandomVolIDFromReader(r io.Reader) (string, error) {
-	volid := make([]byte, 4)
-	_, err := r.Read(volid)
-	return hex.EncodeToString(volid), err
 }
