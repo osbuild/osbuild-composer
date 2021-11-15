@@ -6,6 +6,7 @@ package osbuild2
 // related components. Currently it allows only configuration of the enablement
 // state of DNF plugins used by the Subscription Manager.
 type RHSMStageOptions struct {
+	YumPlugins *RHSMStageOptionsDnfPlugins `json:"yum-plugins,omitempty"`
 	DnfPlugins *RHSMStageOptionsDnfPlugins `json:"dnf-plugins,omitempty"`
 	SubMan     *RHSMStageOptionsSubMan     `json:"subscription-manager,omitempty"`
 }
