@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       # https://scan.coverity.com/projects/osbuild-osbuild-composer
       - name: Run coverity scan script
