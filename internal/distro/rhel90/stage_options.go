@@ -313,7 +313,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		Kernel: osbuild.ISOKernel{
 			Dir: "/images/pxeboot",
 			Opts: []string{"rd.neednet=1",
-				"edge.liveiso=" + isolabel,
+				"coreos.inst.isoroot=" + isolabel,
 				"coreos.inst.install_dev=" + installDevice,
 				"coreos.inst.image_file=/run/media/iso/disk.img.xz",
 				"coreos.inst.insecure"},

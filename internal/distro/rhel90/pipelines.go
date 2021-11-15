@@ -1189,8 +1189,7 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch, product, osVersion, variant)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
-	p.AddStage(osbuild.NewSystemdStage(systemdStageOptions([]string{"coreos-installer"}, nil, nil, "")))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{"rdcore"})))
+	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{"coreos-installer"})))
 
 	return p
 }
