@@ -6,8 +6,10 @@ package disk
 
 import (
 	"errors"
+	"math/rand"
 	"sort"
 
+	"github.com/google/uuid"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
@@ -240,6 +242,31 @@ func (pt *PartitionTable) RootFilesystem() *Filesystem {
 // if /boot is on a separate partition, otherwise nil
 func (pt *PartitionTable) BootFilesystem() *Filesystem {
 	return pt.FindFilesystemForMountpoint("/boot")
+}
+
+// Generate all needed UUIDs for all the partiton and filesystems
+//
+// Will not overwrite existing UUIDs and only generate UUIDs for
+// partitions if the layout is GPT.
+func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
+	_ = pt.ForEachFilesystem(func(fs *Filesystem) error {
+		if fs.UUID == "" {
+			fs.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+		}
+		return nil
+	})
+
+	// if this is a MBR partition table, there is no need to generate
+	// uuids for the partitions themselves
+	if pt.Type != "gpt" {
+		return
+	}
+
+	for idx, part := range pt.Partitions {
+		if part.UUID == "" {
+			pt.Partitions[idx].UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+		}
+	}
 }
 
 // dynamically calculate and update the start point
