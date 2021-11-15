@@ -695,15 +695,15 @@ test "$UPLOAD_STATUS" = "success"
 test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
-# Make sure we get 2 job entries in the db per compose (depsolve + build)
-sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "4 rows"
+# Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
+sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
 
 #
 # Save the Manifest from the osbuild-composer store
 # NOTE: The rest of the job data can contain sensitive information
 #
 # Suppressing shellcheck.  See https://github.com/koalaman/shellcheck/wiki/SC2024#exceptions
-sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT args->>'Manifest' FROM jobs" | sudo tee "${ARTIFACTS}/manifest.json"
+sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result->>'Manifest' FROM jobs" | sudo tee "${ARTIFACTS}/manifest.json"
 
 #
 # Verify the Cloud-provider specific upload_status options

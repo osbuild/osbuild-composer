@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -39,9 +40,12 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 			if err != nil {
 				continue
 			}
-			rawMsg, err := json.Marshal(&worker.DepsolveJobResult{PackageSpecs: nil, Error: "", ErrorType: worker.ErrorType("")})
+			rawMsg, err := json.Marshal(&worker.DepsolveJobResult{PackageSpecs: map[string][]rpmmd.PackageSpec{"build": []rpmmd.PackageSpec{rpmmd.PackageSpec{Name: "pkg1"}}}, Error: "", ErrorType: worker.ErrorType("")})
 			require.NoError(t, err)
-			require.NoError(t, rpmFixture.Workers.FinishJob(token, rawMsg))
+			err = rpmFixture.Workers.FinishJob(token, rawMsg)
+			if err != nil {
+				return
+			}
 
 			select {
 			case <-depsolveContext.Done():
@@ -272,9 +276,15 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
+
+	var osbuildJob worker.OSBuildJob
+	err = json.Unmarshal(args, &osbuildJob)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(osbuildJob.Manifest))
+	require.NotEqual(t, 0, len(dynArgs[0]))
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
@@ -284,7 +294,6 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"image_status": {"status": "building"}
 	}`, jobId, jobId))
 
-	// todo make it an osbuildjobresult
 	res, err := json.Marshal(&worker.OSBuildJobResult{
 		Success: true,
 	})
@@ -308,7 +317,6 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"code": "IMAGE-BUILDER-COMPOSER-1012",
 		"reason": "OSBuildJobResult does not have expected fields set"
 	}`, "operation_id")
-
 }
 
 func TestComposeStatusFailure(t *testing.T) {
