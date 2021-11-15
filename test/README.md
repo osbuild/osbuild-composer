@@ -74,6 +74,8 @@ the same architecture, as the one intended for the generated test
 cases. In other words, you need to generate e.g test cases for `aarch64`
 images on an `aarch64` host.
 
+These tests are executed from the `osbuild` repository in GitHub CI.
+
 **Important Note:** `image-info` by default won't be able to read SELinux
 labels used in the image, which are unknown to the host's policy. If you are
 generating the image test case using
@@ -395,16 +397,17 @@ is is missing lots of details!
 - [@jrusz](https://github.com/jrusz) - testing across the board; backup for @atodorov;
   osbuild, osbuild-composer, weldr-client, composer-cli, image-builder, image-builder-frontend,
   bug testing & verification, anything else
+- [@jabia99](https://github.com/jabia99) - focus on image-builder and image-builder-frontend;
+  anything else; backup for @jrusz
 - [@henrywang](https://github.com/henrywang) - everything related to testing RHEL for Edge images
 - [@yih-redhat](https://github.com/yih-redhat) - everything related to testing RHEL for Edge images;
   backup for @henrywang
-- [@yuxisun1217](https://github.com/yuxisun1217) - QE for testing image-builder and image-builder-frontend
 
 
 ## Internal build testing in Gitlab CI
 
 In Gitlab CI we're using rules to define which stages and jobs are ran when. For running the test
-suite on internal rhel builds we're using schedules that run the test suite on latest nightly using
+suite on internal RHEL builds we're using schedules that run the test suite on latest nightly using
 the rpms that are shipped with it.
 
 We're using a link to latest nightly build. It's possible to manually override it with `COMPOSE_URL` 
