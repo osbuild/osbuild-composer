@@ -83,6 +83,16 @@ Container:
       - RUNNER:
           - aws/fedora-33-x86_64
 
+Packer:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/packer.sh
+  variables:
+    RUNNER: aws/centos-stream-8-x86_64
+
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
   extends: .terraform
