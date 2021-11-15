@@ -1,0 +1,25 @@
+---
+
+- name: Deploy monit configuration
+  template:
+    src: monitrc.j2
+    dest: /etc/monitrc
+    mode: "0600"
+    owner: root
+    group: root
+
+- name: Create directory for monit scripts
+  file:
+    path: /opt/monit
+    state: directory
+
+- name: Deploy monit scripts
+  copy:
+    src: "monit_scripts/{{ item }}"
+    dest: /opt/monit/
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - pozorbot_alert
+    - verify_worker_connection

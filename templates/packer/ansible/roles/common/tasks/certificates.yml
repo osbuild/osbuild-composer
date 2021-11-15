@@ -1,0 +1,9 @@
+---
+
+- name: Deploy Red Hat Root CA certificate.
+  copy:
+    src: RH-IT-Root-CA.crt
+    dest: /etc/pki/ca-trust/source/anchors/RH-IT-Root-CA.crt
+
+- name: Update trusted CA certificate bundle
+  command: update-ca-trust

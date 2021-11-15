@@ -1,0 +1,82 @@
+---
+
+- name: Add osbuild-composer repository
+  yum_repository:
+    name: "composer"
+    description: "osbuild-composer commit {{ COMPOSER_COMMIT }}"
+    baseurl: "http://osbuild-composer-repos.s3.amazonaws.com/osbuild-composer/rhel-8-cdn/x86_64/{{ COMPOSER_COMMIT }}"
+    enabled: yes
+    gpgcheck: no
+    priority: "5"
+
+- name: Add osbuild repository
+  yum_repository:
+    name: "osbuild"
+    description: "osbuild commit {{ OSBUILD_COMMIT }}"
+    baseurl: "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/rhel-8-cdn/x86_64/{{ OSBUILD_COMMIT }}"
+    enabled: yes
+    gpgcheck: no
+    priority: "5"
+
+- name: Upgrade all packages
+  package:
+    name: "*"
+    state: latest
+  register: result
+  retries: 5
+  until: result is success
+
+- name: Install required packages
+  package:
+    name:
+      - jq
+      - osbuild-composer
+      - unzip
+  register: result
+  retries: 5
+  until: result is success
+
+- name: Upload customized RPMs
+  copy:
+    src: "{{ item }}"
+    dest: /tmp
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/common/files/*.rpm"
+  register: copied_rpms
+
+- name: Install copied RPMs
+  package:
+    name: "{{ copied_rpms.results | map(attribute='dest') | list }}"
+    disable_gpg_check: yes
+    state: present
+
+- name: Remove copied RPMs
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ copied_rpms.results | map(attribute='dest') | list }}"
+
+- name: Download AWS CLI installer
+  get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/awscli.zip
+  register: result
+  retries: 5
+  until: result is success
+
+- name: Unpack AWS CLI installer
+  unarchive:
+    src: /tmp/awscli.zip
+    dest: /tmp
+    remote_src: yes
+
+- name: Run AWS installer
+  command: /tmp/aws/install
+
+- name: Cleanup AWS installer
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/awscli.zip
+    - /tmp/aws

@@ -1,0 +1,28 @@
+#!/bin/bash
+# Verifies that a composer worker can reach its composer server.
+
+# Get the hostname of the composer instance.
+COMPOSER_HOST=$(grep -Eo "[a-z0-9\.]+.composer.[a-z0-9\.]+" /etc/hosts)
+
+# Exit now if this is not a worker.
+if [[ -z "${COMPOSER_HOST}" ]]; then
+  echo "Not a worker. Skipping check."
+  exit 2
+fi
+
+# Test a connection to composer.
+CONNECTION_TEST=$(
+  curl -s --connect-timeout 5 \
+    --cert /etc/osbuild-composer/worker-crt.pem \
+    --key /etc/osbuild-composer/worker-key.pem \
+    --cacert /etc/osbuild-composer/ca-crt.pem \
+    https://${COMPOSER_HOST}:8700/api/worker/v1/status
+)
+
+if [[ $CONNECTION_TEST =~ OK ]]; then
+  echo "Connection to ${COMPOSER_HOST} succeeded."
+  exit 0
+fi
+
+echo "Connection to ${COMPOSER_HOST} failed."
+exit 1

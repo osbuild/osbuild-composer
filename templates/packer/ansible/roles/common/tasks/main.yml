@@ -1,0 +1,16 @@
+---
+
+# Install various software packages.
+- include_tasks: packages.yml
+
+# Set systemd/journald overrides
+- include_tasks: systemd.yml
+
+# Deploy certificates.
+- include_tasks: certificates.yml
+
+# Configure monitoring.
+- include_tasks: monitoring.yml
+
+- name: Ensure SELinux contexts are updated
+  command: restorecon -Rv /etc
