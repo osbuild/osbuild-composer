@@ -21,7 +21,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
@@ -304,10 +303,6 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	_, _, err = s.JobStatus(jobId, &jobResult)
 	if err != nil {
 		return fmt.Errorf("error finding job status: %v", err)
-	}
-
-	if jobResult.Success {
-		prometheus.ComposeSuccesses.Inc()
 	}
 
 	// Move artifacts from the temporary location to the final job
