@@ -1,0 +1,21 @@
+---
+
+- name: Create systemd override directory for osbuild-composer
+  file:
+    path: /etc/systemd/system/osbuild-composer.service.d/
+    state: directory
+
+- name: Override osbuild-composer to enable access logging
+  copy:
+    src: osbuild-composer-override.conf
+    dest: /etc/systemd/system/osbuild-composer.service.d/override.conf
+
+- name: Create journald override directory
+  file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+
+- name: Add journald override to forward messages to the console
+  copy:
+    src: forward-to-console.conf
+    dest: /etc/systemd/journald.conf.d/forward-to-console.conf

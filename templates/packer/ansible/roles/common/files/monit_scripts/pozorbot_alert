@@ -1,0 +1,18 @@
+#!/bin/bash
+# Send alerts to pozorbot.
+# Monit's environment variables are documented here:
+# https://mmonit.com/monit/documentation/monit.html#ENVIRONMENT
+
+# Get AWS instance profile name.
+INSTANCE_PROFILE=$(curl -Ls http://169.254.169.254/latest/meta-data/iam/security-credentials)
+
+# Determine if we should use staging/stable SQS endpoint.
+SQS_ENDPOINT=staging
+if [[ $INSTANCE_PROFILE =~ stable ]]; then
+  SQS_ENDPOINT=stable
+fi
+
+QUEUE_URL=https://queue.amazonaws.com/933752197999/image-builder-pozorbot-${SQS_ENDPOINT}
+MESSAGE="${MONIT_EVENT} for ${MONIT_SERVICE} on ${MONIT_HOST} at ${MONIT_DATE}"
+RESULT=$(aws sqs send-message --queue-url $QUEUE_URL --message-body "${MESSAGE}")
+echo $RESULT

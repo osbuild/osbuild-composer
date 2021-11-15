@@ -1,0 +1,60 @@
+{% set pozorbot_script = "/opt/monit/pozorbot_alert" -%}
+# Monit configuration for Image Builder in AWS.
+# Docs: https://mmonit.com/monit/documentation/monit.html
+
+# Check every 30 seconds and log to syslog.
+set daemon 30
+set log syslog
+
+# Allow access via ssh tunnel to see the monit console.
+set httpd port 2812 and
+    use address localhost
+    allow admin:monit
+
+# Verify that we're not eating all the memory on the instance.
+CHECK SYSTEM $HOST
+  if memory usage > 75%
+    for 5 cycles
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+
+# Ensure the root filesystem isn't full.
+CHECK FILESYSTEM root PATH /
+  if space usage > 80%
+    for 5 times
+    within 15 cycles
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+
+# Ensure the osbuild-composer filesystem isn't full.
+CHECK FILESYSTEM composer_persistent PATH /var/lib/osbuild-composer
+  if space usage > 80%
+    for 5 times
+    within 15 cycles
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+
+# Check to see if we can reach cdn.redhat.com.
+# NOTE(mhayden): We will always get a 403 here because of client certs.
+CHECK HOST rhel_cdn WITH ADDRESS cdn.redhat.com
+  if failed
+    ping
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+  if failed
+    port 443
+    protocol https
+    status = 403
+    with ssl options { CACERTIFICATEFILE: /etc/rhsm/ca/redhat-uep.pem }
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+
+# Check for a valid connection to a composer server (valid for workers only).
+CHECK PROGRAM verify_worker_connection WITH PATH /opt/monit/verify_worker_connection
+  # A worker can't talk to its composer.
+  if status == 1
+    then exec {{ pozorbot_script }}
+    else if succeeded then exec {{ pozorbot_script }}
+  # This is not a worker.
+  if status == 2
+    then UNMONITOR
