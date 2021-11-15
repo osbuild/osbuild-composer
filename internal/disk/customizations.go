@@ -36,16 +36,10 @@ func CreatePartitionTable(
 	// copies of the partition table, so make a copy first
 	table := basePartitionTable.Clone()
 
-	if bootPartition := table.BootPartition(); bootPartition != nil {
-		// the boot partition UUID needs to be set since this
-		// needs to be randomly generated
-		bootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
-	}
-
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			partitionSize := m.MinSize / sectorSize
-			table.createFilesystem(m.Mountpoint, partitionSize, rng)
+			table.createFilesystem(m.Mountpoint, partitionSize)
 		}
 	}
 
@@ -63,15 +57,16 @@ func CreatePartitionTable(
 	// by setting the size dynamically
 	rootPartition := table.RootPartition()
 	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
-	rootPartition.Filesystem.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+
+	// Generate new UUIDs for filesystems and partitions
+	table.GenerateUUIDs(rng)
 
 	return *table
 }
 
-func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64, rng *rand.Rand) {
+func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) {
 	filesystem := Filesystem{
 		Type:         "xfs",
-		UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,
@@ -85,7 +80,6 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64, rng *
 
 	if pt.Type == "gpt" {
 		partition.Type = FilesystemDataGUID
-		partition.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
 
 	pt.Partitions = append(pt.Partitions, partition)
