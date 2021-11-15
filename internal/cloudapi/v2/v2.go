@@ -2,9 +2,9 @@
 package v2
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -15,11 +15,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
@@ -149,14 +151,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	var imageRequest struct {
-		manifest      distro.Manifest
-		arch          string
-		exports       []string
-		target        *target.Target
-		pipelineNames worker.PipelineNames
-	}
-
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
@@ -199,30 +193,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
-
-	var depsolveResults worker.DepsolveJobResult
-	for {
-		status, _, err := h.server.workers.JobStatus(depsolveJobID, &depsolveResults)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorGettingDepsolveJobStatus, err)
-		}
-		if status.Canceled {
-			return HTTPErrorWithInternal(ErrorDepsolveJobCanceled, err)
-		}
-		if !status.Finished.IsZero() {
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-
-	if depsolveResults.Error != "" {
-		if depsolveResults.ErrorType == worker.DepsolveErrorType {
-			return HTTPError(ErrorDNFError)
-		}
-		return HTTPErrorWithInternal(ErrorFailedToDepsolve, errors.New(depsolveResults.Error))
-	}
-
-	pkgSpecSets := depsolveResults.PackageSpecs
 
 	imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 	if request.Customizations != nil && request.Customizations.Subscription != nil {
@@ -279,19 +249,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	manifest, err := imageType.Manifest(blueprintCustoms, imageOptions, repositories, pkgSpecSets, manifestSeed)
-	if err != nil {
-		return HTTPErrorWithInternal(ErrorFailedToMakeManifest, err)
-	}
-
-	imageRequest.manifest = manifest
-	imageRequest.arch = arch.Name()
-	imageRequest.exports = imageType.Exports()
-	imageRequest.pipelineNames = worker.PipelineNames{
-		Build:   imageType.BuildPipelines(),
-		Payload: imageType.PayloadPipelines(),
-	}
-
+	var irTarget *target.Target
 	/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 	switch ir.ImageType {
 	case ImageTypes_aws:
@@ -319,7 +277,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			t.ImageName = key
 		}
 
-		imageRequest.target = t
+		irTarget = t
 	case ImageTypes_edge_installer:
 		fallthrough
 	case ImageTypes_edge_commit:
@@ -342,7 +300,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		})
 		t.ImageName = key
 
-		imageRequest.target = t
+		irTarget = t
 	case ImageTypes_gcp:
 		var gcpUploadOptions GCPUploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
@@ -375,7 +333,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			t.ImageName = object
 		}
 
-		imageRequest.target = t
+		irTarget = t
 	case ImageTypes_azure:
 		var azureUploadOptions AzureUploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
@@ -401,22 +359,96 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
 		}
 
-		imageRequest.target = t
+		irTarget = t
 	default:
 		return HTTPError(ErrorUnsupportedImageType)
 	}
 
-	id, err := h.server.workers.EnqueueOSBuild(imageRequest.arch, &worker.OSBuildJob{
-		Manifest:      imageRequest.manifest,
-		Targets:       []*target.Target{imageRequest.target},
-		Exports:       imageRequest.exports,
-		PipelineNames: &imageRequest.pipelineNames,
-	})
+	manifestJobID, err := h.server.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobID)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	id, err := h.server.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
+		Targets: []*target.Target{irTarget},
+		Exports: imageType.Exports(),
+	}, manifestJobID)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
 	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get("operationID"))
+
+	// start 1 goroutine which requests datajob type
+	go func(workers *worker.Server, manifestJobID uuid.UUID, b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64) {
+		// wait until job is in a pending state
+		var token uuid.UUID
+		var dynArgs []json.RawMessage
+		var err error
+		for {
+			_, token, _, _, dynArgs, err = workers.RequestJobById(context.Background(), "", manifestJobID)
+			if err == jobqueue.ErrNotPending {
+				logrus.Debugf("Manifest job %v not pending, waiting for depsolve job to finish", manifestJobID)
+				time.Sleep(time.Millisecond * 50)
+				continue
+			}
+			if err != nil {
+				logrus.Errorf("Error requesting manifest job: %v", err)
+				return
+			}
+			break
+		}
+
+		var jobResult *worker.ManifestJobByIDResult = &worker.ManifestJobByIDResult{
+			Manifest: nil,
+			Error:    "",
+		}
+
+		defer func() {
+			if jobResult.Error != "" {
+				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.Error)
+			}
+
+			result, err := json.Marshal(jobResult)
+			if err != nil {
+				logrus.Errorf("Error marshalling manifest job %v results: %v", manifestJobID, err)
+			}
+
+			err = workers.FinishJob(token, result)
+			if err != nil {
+				logrus.Errorf("Error finishing manifest job: %v", err)
+			}
+		}()
+
+		if len(dynArgs) == 0 {
+			jobResult.Error = "No dynamic arguments"
+			return
+		}
+
+		var depsolveResults worker.DepsolveJobResult
+		err = json.Unmarshal(dynArgs[0], &depsolveResults)
+		if err != nil {
+			jobResult.Error = "Error parsing dynamic arguments"
+			return
+		}
+
+		if depsolveResults.Error != "" {
+			if depsolveResults.ErrorType == worker.DepsolveErrorType {
+				jobResult.Error = "Error in depsolve job dependency input, bad request"
+				return
+			}
+			jobResult.Error = "Error in depsolve job dependency"
+			return
+		}
+
+		manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, seed)
+		if err != nil {
+			jobResult.Error = "Error generating manifest"
+			return
+		}
+
+		jobResult.Manifest = manifest
+	}(h.server.workers, manifestJobID, blueprintCustoms, imageOptions, repositories, manifestSeed)
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{

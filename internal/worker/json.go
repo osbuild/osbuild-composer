@@ -14,7 +14,7 @@ import (
 //
 
 type OSBuildJob struct {
-	Manifest        distro.Manifest  `json:"manifest"`
+	Manifest        distro.Manifest  `json:"manifest,omitempty"`
 	Targets         []*target.Target `json:"targets,omitempty"`
 	ImageName       string           `json:"image_name,omitempty"`
 	StreamOptimized bool             `json:"stream_optimized,omitempty"`
