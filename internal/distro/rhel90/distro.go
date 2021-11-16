@@ -757,6 +757,7 @@ func newDistro(distroName string) distro.Distro {
 		"cloud-config",
 		"cloud-final",
 		"reboot.target",
+		"tuned",
 	}
 
 	amiImgTypeX86_64 := imageType{
