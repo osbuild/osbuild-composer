@@ -17,13 +17,14 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 204800,
+				Size: 409600, // 200 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
 					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 					FSTabFreq:    0,
 					FSTabPassNo:  2,
@@ -61,13 +62,14 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 204800,
+				Size: 409600, // 200 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
 					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 					FSTabFreq:    0,
 					FSTabPassNo:  2,
