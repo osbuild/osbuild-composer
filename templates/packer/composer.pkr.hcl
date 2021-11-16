@@ -49,7 +49,7 @@ build {
   sources = ["source.amazon-ebs.image_builder"]
 
   provisioner "ansible" {
-    playbook_file = "ansible/playbook.yml"
+    playbook_file = "${path.root}/ansible/playbook.yml"
     extra_arguments = [
       "-e", "COMPOSER_COMMIT=${var.composer_commit}",
       "-e", "OSBUILD_COMMIT=${var.osbuild_commit}",
