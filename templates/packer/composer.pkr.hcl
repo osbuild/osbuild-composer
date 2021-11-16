@@ -23,23 +23,19 @@ source "amazon-ebs" "image_builder" {
   # Apply tags to the instance that is building our image.
   run_tags = {
     AppCode = "IMGB-001"
-    Name = "packer-builder-for-${local.ami_full_name}"
-    composer_commit = "${var.composer_commit}"
-    osbuild_commit = "${var.osbuild_commit}"
-    imagebuilder_packer_commit = "${var.imagebuilder_packer_sha}"
+    Name = "packer-builder-for-${var.image_name}"
   }
 
   # Apply tags to the resulting AMI/EBS snapshot.
   tags = {
     AppCode = "IMGB-001"
-    Name = "${local.ami_full_name}"
+    Name = "${var.image_name}"
     composer_commit = "${var.composer_commit}"
     osbuild_commit = "${var.osbuild_commit}"
-    imagebuilder_packer_commit = "${var.imagebuilder_packer_sha}"
   }
 
   # Set a name for the resulting AMI.
-  ami_name = "${local.ami_full_name}"
+  ami_name = "${var.image_name}"
 
   # Network configuration for the instance building our image.
   associate_public_ip_address = true
