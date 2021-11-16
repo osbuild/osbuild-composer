@@ -779,7 +779,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	amiImgTypeAarch64 := imageType{
@@ -799,7 +799,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2ImgTypeX86_64 := imageType{
@@ -820,7 +820,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2ImgTypeAarch64 := imageType{
@@ -840,7 +840,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2HaImgTypeX86_64 := imageType{
@@ -861,7 +861,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2SapImgTypeX86_64 := imageType{
@@ -882,7 +882,7 @@ func newDistro(distroName string) distro.Distro {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	tarImgType := imageType{
