@@ -92,6 +92,11 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if err != nil {
 			return err
 		}
+
+		// skip the job if the manifest generation failed
+		if manifestJR.Error != "" {
+			return nil
+		}
 		args.Manifest = manifestJR.Manifest
 	}
 	// copy pipeline info to the result
