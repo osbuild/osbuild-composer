@@ -335,7 +335,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"cloud-utils-growpart", "dhcp-client", "yum-utils",
 			"dracut-config-generic", "gdisk", "grub2",
 			"langpacks-en", "NetworkManager", "NetworkManager-cloud-setup",
-			"redhat-release", "redhat-release-eula", "rsync", "tar",
+			"redhat-release", "redhat-release-eula", "rsync", "tar", "tuned",
 			"qemu-guest-agent",
 		},
 		Exclude: []string{
