@@ -61,6 +61,24 @@ EOF
     set -x
 fi
 
+# if AWS credentials are defined in the ENV, add them to the worker's configuration
+V2_AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID:-}"
+V2_AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY:-}"
+if [[ -n "$V2_AWS_ACCESS_KEY_ID" && -n "$V2_AWS_SECRET_ACCESS_KEY" ]]; then
+    set +x
+    sudo tee /etc/osbuild-worker/aws-credentials.toml > /dev/null << EOF
+[default]
+aws_access_key_id = "$V2_AWS_ACCESS_KEY_ID"
+aws_secret_access_key = "$V2_AWS_SECRET_ACCESS_KEY"
+EOF
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
+[aws]
+credentials = "/etc/osbuild-worker/aws-credentials.toml"
+EOF
+    set -x
+fi
+
 # Copy rpmrepo snapshots for use in weldr tests
 REPODIR=/etc/osbuild-composer/repositories
 sudo mkdir -p $REPODIR

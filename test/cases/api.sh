@@ -64,10 +64,12 @@ PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PG
 popd
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+log_level = "debug"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
-
+[koji.aws_config]
+bucket = "${AWS_BUCKET}"
 [worker]
 allowed_domains = [ "localhost", "worker.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
@@ -353,7 +355,7 @@ case $CLOUD_PROVIDER in
 esac
 
 #
-# Make sure /openapi.json and /version endpoints return success
+# Make sure /openapi and endpoints return success
 #
 
 curl \
@@ -362,15 +364,7 @@ curl \
     --cacert /etc/osbuild-composer/ca-crt.pem \
     --key /etc/osbuild-composer/client-key.pem \
     --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v1/version | jq .
-
-curl \
-    --silent \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v1/openapi.json | jq .
+    https://localhost/api/image-builder-composer/v2/openapi | jq .
 
 #
 # Prepare a request to be sent to the composer API.
@@ -444,10 +438,10 @@ if [[ "$ID" == "rhel" ]]; then
   SUBSCRIPTION_BLOCK=$(cat <<EndOfMessage
 ,
     "subscription": {
-      "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
-      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
-      "base-url": "https://cdn.redhat.com/",
-      "server-url": "subscription.rhsm.redhat.com",
+      "organization": "${API_TEST_SUBSCRIPTION_ORG_ID:-}",
+      "activation_key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "base_url": "https://cdn.redhat.com/",
+      "server_url": "subscription.rhsm.redhat.com",
       "insights": true
     }
 EndOfMessage
@@ -481,30 +475,16 @@ function createReqFileAWS() {
       }
     ]
   },
-  "image_requests": [
-    {
+  "image_request": {
       "architecture": "$ARCH",
-      "image_type": "ami",
+      "image_type": "aws",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_request": {
-          "type": "aws",
-          "options": {
-            "region": "${AWS_REGION}",
-            "s3": {
-              "access_key_id": "${V2_AWS_ACCESS_KEY_ID}",
-              "secret_access_key": "${V2_AWS_SECRET_ACCESS_KEY}",
-              "bucket": "${AWS_BUCKET}"
-            },
-            "ec2": {
-              "access_key_id": "${V2_AWS_ACCESS_KEY_ID}",
-              "secret_access_key": "${V2_AWS_SECRET_ACCESS_KEY}",
-              "snapshot_name": "${AWS_SNAPSHOT_NAME}",
-              "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
-            }
-          }
-      }
+      "upload_options": {
+        "region": "${AWS_REGION}",
+        "snapshot_name": "${AWS_SNAPSHOT_NAME}",
+        "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
     }
-  ]
+  }
 }
 EOF
 }
@@ -523,27 +503,17 @@ function createReqFileAWSS3() {
       "postgresql"
     ]
   },
-  "image_requests": [
-    {
-      "architecture": "$ARCH",
-      "image_type": "rhel-edge-commit",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "ostree": {
-        "ref": "${OSTREE_REF}"
-      },
-      "upload_request": {
-          "type": "aws.s3",
-          "options": {
-            "region": "${AWS_REGION}",
-            "s3": {
-              "access_key_id": "${V2_AWS_ACCESS_KEY_ID}",
-              "secret_access_key": "${V2_AWS_SECRET_ACCESS_KEY}",
-              "bucket": "${AWS_BUCKET}"
-            }
-          }
-      }
+  "image_request": {
+    "architecture": "$ARCH",
+    "image_type": "edge-commit",
+    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "ostree": {
+      "ref": "${OSTREE_REF}"
+    },
+    "upload_options": {
+      "region": "${AWS_REGION}"
     }
-  ]
+  }
 }
 EOF
 }
@@ -566,22 +536,17 @@ function createReqFileGCP() {
       "postgresql"
     ]${SUBSCRIPTION_BLOCK}
   },
-  "image_requests": [
-    {
-      "architecture": "$ARCH",
-      "image_type": "vhd",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_request": {
-          "type": "gcp",
-          "options": {
-            "bucket": "${GCP_BUCKET}",
-            "region": "${GCP_REGION}",
-            "image_name": "${GCP_IMAGE_NAME}",
-            "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
-          }
-      }
+  "image_request": {
+    "architecture": "$ARCH",
+    "image_type": "gcp",
+    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "upload_options": {
+      "bucket": "${GCP_BUCKET}",
+      "region": "${GCP_REGION}",
+      "image_name": "${GCP_IMAGE_NAME}",
+      "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
     }
-  ]
+  }
 }
 EOF
 }
@@ -597,23 +562,18 @@ function createReqFileAzure() {
       "postgresql"
     ]${SUBSCRIPTION_BLOCK}
   },
-  "image_requests": [
-    {
-      "architecture": "$ARCH",
-      "image_type": "vhd",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-      "upload_request": {
-          "type": "azure",
-          "options": {
-            "tenant_id": "${AZURE_TENANT_ID}",
-            "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
-            "resource_group": "${AZURE_RESOURCE_GROUP}",
-            "location": "${AZURE_LOCATION}",
-            "image_name": "${AZURE_IMAGE_NAME}"
-          }
-      }
+  "image_request": {
+    "architecture": "$ARCH",
+    "image_type": "azure",
+    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "upload_options": {
+      "tenant_id": "${AZURE_TENANT_ID}",
+      "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+      "resource_group": "${AZURE_RESOURCE_GROUP}",
+      "location": "${AZURE_LOCATION}",
+      "image_name": "${AZURE_IMAGE_NAME}"
     }
-  ]
+  }
 }
 EOF
 }
@@ -660,10 +620,10 @@ function sendCompose() {
                  --cert /etc/osbuild-composer/client-crt.pem \
                  --header 'Content-Type: application/json' \
                  --request POST \
-                 --data @"$REQUEST_FILE" \
+                 --data @"$1" \
                  --write-out '%{http_code}' \
                  --output "$OUTPUT" \
-                 https://localhost/api/composer/v1/compose)
+                 https://localhost/api/image-builder-composer/v2/compose)
 
     test "$HTTPSTATUS" = "201"
     COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
@@ -671,11 +631,6 @@ function sendCompose() {
 
 function waitForState() {
     local DESIRED_STATE="${1:-success}"
-    local VERSION="${2:-v1}"
-    local URL=https://localhost/api/composer/v1/compose/"$COMPOSE_ID"
-    if [ "$VERSION" = "v2" ]; then
-        URL=https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"
-    fi
 
     while true
     do
@@ -685,7 +640,7 @@ function waitForState() {
                      --cacert /etc/osbuild-composer/ca-crt.pem \
                      --key /etc/osbuild-composer/client-key.pem \
                      --cert /etc/osbuild-composer/client-crt.pem \
-                     "$URL")
+                     "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID")
 
         COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
         UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
@@ -714,9 +669,17 @@ function waitForState() {
     done
 }
 
-sendCompose
+#
+# Make sure that requesting a non existing paquet results in failure
+#
+REQUEST_FILE2="${WORKDIR}/request2.json"
+jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
+
+sendCompose "$REQUEST_FILE2"
+waitForState "failure"
 
 # crashed/stopped/killed worker should result in a failed state
+sendCompose "$REQUEST_FILE"
 waitForState "building"
 sudo systemctl stop "osbuild-worker@*"
 waitForState "failure"
@@ -724,10 +687,8 @@ sudo systemctl start "osbuild-worker@1"
 
 # full integration case
 INIT_COMPOSES="$(collectMetrics)"
-sendCompose
+sendCompose "$REQUEST_FILE"
 waitForState
-# Same state with v2
-waitForState "success" "v2"
 SUBS_COMPOSES="$(collectMetrics)"
 
 test "$UPLOAD_STATUS" = "success"
@@ -951,26 +912,8 @@ function verifyInAWSS3() {
       exit 1
   fi
 
-  # verify that the commit hash matches the metadata
-  local API_COMMIT_ID
-  API_COMMIT_ID=$(curl \
-    --silent \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
-
-
   local TAR_COMMIT_ID
   TAR_COMMIT_ID=$(ostree rev-parse --repo "${COMMIT_DIR}/repo" "${OSTREE_REF}")
-
-  if [[ "${API_COMMIT_ID}" != "${TAR_COMMIT_ID}" ]]; then
-      echo "Commit ID returned from API does not match Commit ID in archive 😠"
-      exit 1
-  fi
-
-  # v2 has the same result
   API_COMMIT_ID_V2=$(curl \
     --silent \
     --show-error \
@@ -980,7 +923,7 @@ function verifyInAWSS3() {
     https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
 
   if [[ "${API_COMMIT_ID_V2}" != "${TAR_COMMIT_ID}" ]]; then
-      echo "Commit ID returned from API v2 does not match Commit ID in archive 😠"
+      echo "Commit ID returned from API does not match Commit ID in archive 😠"
       exit 1
   fi
 }
@@ -1122,7 +1065,7 @@ function verifyPackageList() {
       --cacert /etc/osbuild-composer/ca-crt.pem \
       --key /etc/osbuild-composer/client-key.pem \
       --cert /etc/osbuild-composer/client-crt.pem \
-      https://localhost/api/composer/v1/compose/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
+      https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
   local PACKAGENAMES
   PACKAGENAMES=$(jq -rM '.packages[].name' "${ARTIFACTS}/metadata.json")
 
@@ -1133,44 +1076,6 @@ function verifyPackageList() {
 }
 
 verifyPackageList
-
-#
-# Make sure that requesting a non existing paquet returns a 400 error
-#
-REQUEST_FILE2="${WORKDIR}/request2.json"
-jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
-
-[ "$(curl \
-    --silent \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    --output /dev/null \
-    --write-out '%{http_code}' \
-    -H "Content-Type: application/json" \
-    --data @"$REQUEST_FILE2" \
-    https://localhost/api/composer/v1/compose)" = "400" ]
-
-#
-# Make sure that a request that makes the dnf-json crash returns a 500 error
-#
-sudo cp -f /usr/libexec/osbuild-composer/dnf-json /usr/libexec/osbuild-composer/dnf-json.bak
-sudo cat << EOF | sudo tee /usr/libexec/osbuild-composer/dnf-json
-#!/usr/bin/python3
-raise Exception()
-EOF
-[ "$(curl \
-    --silent \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    --output /dev/null \
-    --write-out '%{http_code}' \
-    -H "Content-Type: application/json" \
-    --data @"$REQUEST_FILE2" \
-    https://localhost/api/composer/v1/compose)" = "500" ]
-
-sudo mv -f /usr/libexec/osbuild-composer/dnf-json.bak /usr/libexec/osbuild-composer/dnf-json
 
 #
 # Verify oauth2
@@ -1226,14 +1131,25 @@ TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer $TOKEN" \
-        http://localhost:443/api/composer/v1/version)" = "200" ]
+        http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
 
+# /openapi doesn't need auth
 [ "$(curl \
         --silent \
         --output /dev/null \
         --write-out '%{http_code}' \
         --header "Authorization: Bearer badtoken" \
-        http://localhost:443/api/composer/v1/version)" = "401" ]
+        http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
+
+
+# /composes/$ID does doesn't need auth
+[ "$(curl \
+        --silent \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        --header "Authorization: Bearer badtoken" \
+        http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")" = "401" ]
+
 
 sudo systemctl start osbuild-remote-worker@localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
