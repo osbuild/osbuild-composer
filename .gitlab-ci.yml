@@ -186,7 +186,7 @@ OSTree:
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
           # - openstack/rhel-8.4-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64-xlarge
           # - openstack/rhel-9.0-nightly-x86_64
           # - openstack/centos-stream-8-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -200,7 +200,7 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64-xlarge
           # - openstack/rhel-9.0-nightly-x86_64-large
           # - openstack/centos-stream-8-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -214,7 +214,7 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64-xlarge
           # - openstack/centos-stream-8-x86_64
           # NOTE: coreos-installer not yet available in RHEL 9.0
           # - openstack/rhel-9.0-nightly-x86_64
@@ -229,7 +229,7 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64-xlarge
           # - openstack/centos-stream-8-x86_64
           # - openstack/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -384,7 +384,7 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-x86_64-xlarge
           # - openstack/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
