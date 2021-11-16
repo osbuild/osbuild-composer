@@ -11,7 +11,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     2048,
+				Size:     2048, // 1MB
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
@@ -241,7 +241,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     2048, // 2MB
+				Size:     2048, // 1MB
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
