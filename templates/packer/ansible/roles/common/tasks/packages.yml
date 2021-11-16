@@ -18,6 +18,13 @@
     gpgcheck: no
     priority: "5"
 
+# We need EPEL for monit
+- name: Add EPEL
+  dnf:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+
 - name: Upgrade all packages
   package:
     name: "*"
@@ -26,35 +33,22 @@
   retries: 5
   until: result is success
 
+- name: Add Vector repo
+  copy:
+    src: "{{ playbook_dir }}/roles/common/files/timber-vector.repo"
+    dest: /etc/yum.repos.d/
+
 - name: Install required packages
   package:
     name:
       - jq
       - osbuild-composer
       - unzip
+      - monit
+      - vector
   register: result
   retries: 5
   until: result is success
-
-- name: Upload customized RPMs
-  copy:
-    src: "{{ item }}"
-    dest: /tmp
-  with_fileglob:
-    - "{{ playbook_dir }}/roles/common/files/*.rpm"
-  register: copied_rpms
-
-- name: Install copied RPMs
-  package:
-    name: "{{ copied_rpms.results | map(attribute='dest') | list }}"
-    disable_gpg_check: yes
-    state: present
-
-- name: Remove copied RPMs
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop: "{{ copied_rpms.results | map(attribute='dest') | list }}"
 
 - name: Download AWS CLI installer
   get_url:
