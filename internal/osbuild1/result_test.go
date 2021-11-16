@@ -153,10 +153,15 @@ Done
 }
 
 func TestWriteEmpty(t *testing.T) {
+	var b bytes.Buffer
+
+	var testNilResult *Result
+	assert.NoError(t, testNilResult.Write(&b))
+	assert.Equal(t, "The compose result is empty.\n", b.String())
 
 	testComposeResult := Result{}
 
-	var b bytes.Buffer
+	b.Reset()
 	assert.NoError(t, testComposeResult.Write(&b))
 	assert.Equal(t, "The compose result is empty.\n", b.String())
 

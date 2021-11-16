@@ -323,9 +323,14 @@ Metadata:
 
 func TestWriteEmpty(t *testing.T) {
 	assert := assert.New(t)
-	result := Result{}
-
 	var b bytes.Buffer
+
+	var testNilResult *Result
+	assert.NoError(testNilResult.Write(&b))
+	assert.Equal("The compose result is empty.\n", b.String())
+
+	b.Reset()
+	result := Result{}
 	assert.NoError(result.Write(&b))
 	assert.Equal("The compose result is empty.\n", b.String())
 }
