@@ -201,8 +201,9 @@ func (res *Result) fromV1(resv1 osbuild1.Result) {
 }
 
 func (res *Result) Write(writer io.Writer) error {
-	if res.Log == nil {
+	if res == nil || res.Log == nil {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
+		return nil
 	}
 
 	// The pipeline results don't have a stable order
