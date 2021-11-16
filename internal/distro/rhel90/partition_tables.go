@@ -30,6 +30,19 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 1024000, // 500 MB
+				Type: disk.FilesystemDataGUID,
+				UUID: disk.FilesystemDataUUID,
+				Filesystem: &disk.Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -61,6 +74,19 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 1024000, // 500 MB
+				Type: disk.FilesystemDataGUID,
+				UUID: disk.FilesystemDataUUID,
+				Filesystem: &disk.Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -84,6 +110,19 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Bootable: true,
 			},
 			{
+				Size: 1024000, // 500 MB
+				Type: disk.FilesystemDataGUID,
+				UUID: disk.FilesystemDataUUID,
+				Filesystem: &disk.Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
 				Filesystem: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
@@ -98,6 +137,19 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
+			{
+				Size: 1024000, // 500 MB
+				Type: disk.FilesystemDataGUID,
+				UUID: disk.FilesystemDataUUID,
+				Filesystem: &disk.Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
 			{
 				Bootable: true,
 				Filesystem: &disk.Filesystem{
