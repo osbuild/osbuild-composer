@@ -84,8 +84,9 @@ func (result *StageResult) UnmarshalJSON(data []byte) error {
 }
 
 func (cr *Result) Write(writer io.Writer) error {
-	if cr.Build == nil && len(cr.Stages) == 0 && cr.Assembler == nil {
+	if cr == nil || (cr.Build == nil && len(cr.Stages) == 0 && cr.Assembler == nil) {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
+		return nil
 	}
 
 	if cr.Build != nil {
