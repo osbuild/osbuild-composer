@@ -214,6 +214,8 @@ github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
 # github.com/gorilla/css v1.0.0
 github.com/gorilla/css/scanner
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
 # github.com/jackc/chunkreader/v2 v2.0.1
 github.com/jackc/chunkreader/v2
 # github.com/jackc/pgconn v1.10.0
@@ -291,6 +293,15 @@ github.com/openshift-online/ocm-sdk-go/errors
 github.com/openshift-online/ocm-sdk-go/helpers
 github.com/openshift-online/ocm-sdk-go/internal
 github.com/openshift-online/ocm-sdk-go/logging
+# github.com/oracle/oci-go-sdk/v54 v54.0.0
+## explicit
+github.com/oracle/oci-go-sdk/v54/common
+github.com/oracle/oci-go-sdk/v54/common/auth
+github.com/oracle/oci-go-sdk/v54/core
+github.com/oracle/oci-go-sdk/v54/identity
+github.com/oracle/oci-go-sdk/v54/objectstorage
+github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
+github.com/oracle/oci-go-sdk/v54/workrequests
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -319,6 +330,13 @@ github.com/segmentio/ksuid
 # github.com/sirupsen/logrus v1.8.1
 ## explicit
 github.com/sirupsen/logrus
+# github.com/sony/gobreaker v0.4.2-0.20210216022020-dd874f9dd33b
+github.com/sony/gobreaker
+# github.com/spf13/cobra v0.0.3
+## explicit
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.1
+github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
