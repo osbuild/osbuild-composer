@@ -522,7 +522,7 @@ func (h *apiHandlers) ComposeMetadata(ctx echo.Context, id string) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Job %s not found: %s", id, err)
 	}
 
-	if result.OSBuildOutput == nil || result.OSBuildOutput.Stages == nil {
+	if result.OSBuildOutput == nil || len(result.OSBuildOutput.Log) == 0 {
 		// no data to work with; parse error
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read metadata for job %s", id)
 	}
