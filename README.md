@@ -58,6 +58,7 @@ At build-time, the following software is required:
 
  * `go >= 1.16`
  * `python-docutils >= 0.13`
+ * `krb5-devel` for fedora/rhel or `libkrb5-dev` for debian/ubuntu`
 
 ### Build
 
