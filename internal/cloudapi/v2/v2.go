@@ -378,9 +378,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get("operationID"))
+	manifestJobContext, manifestCancel := context.WithTimeout(context.Background(), time.Minute*5)
 
 	// start 1 goroutine which requests datajob type
 	go func(workers *worker.Server, manifestJobID uuid.UUID, b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64) {
+		defer manifestCancel()
 		// wait until job is in a pending state
 		var token uuid.UUID
 		var dynArgs []json.RawMessage
@@ -390,7 +392,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if err == jobqueue.ErrNotPending {
 				logrus.Debugf("Manifest job %v not pending, waiting for depsolve job to finish", manifestJobID)
 				time.Sleep(time.Millisecond * 50)
-				continue
+				select {
+				case <-manifestJobContext.Done():
+					logrus.Warnf("Manifest job %v's dependencies took longer than 5 minutes to finish, returning to avoid dangling routines", manifestJobID)
+					return
+				default:
+					continue
+				}
 			}
 			if err != nil {
 				logrus.Errorf("Error requesting manifest job: %v", err)
