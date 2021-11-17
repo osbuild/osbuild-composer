@@ -61,6 +61,7 @@ BuildRequires:  golang(github.com/segmentio/ksuid)
 BuildRequires:  golang(github.com/stretchr/testify/assert)
 BuildRequires:  golang(github.com/ubccr/kerby)
 BuildRequires:  golang(github.com/vmware/govmomi)
+BuildRequires:  golang(github.com/oracle/oci-go-sdk/v54)
 BuildRequires:  golang(cloud.google.com/go)
 BuildRequires:  golang(gopkg.in/ini.v1)
 %endif
