@@ -1,6 +1,7 @@
 package rpmmd
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -395,10 +395,22 @@ func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever string) (dnfRepoConfig, error) {
-	id := strconv.Itoa(i)
+func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, arch, releasever string) (string, dnfRepoConfig, error) {
+	/*
+		Generates an Id based on the content of the repo instead of using an arbitrary number. Because libdnf will use
+		this ID in the name of the folder cache, using an arbitrary number can lead to disk usage leaks.
+	*/
+	var data string
+	if repo.BaseURL != "" {
+		data = repo.BaseURL
+	} else if repo.Metalink != "" {
+		data = repo.Metalink
+	} else {
+		data = repo.MirrorList
+	}
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
 	dnfRepo := dnfRepoConfig{
-		ID:             id,
+		ID:             hash,
 		BaseURL:        repo.BaseURL,
 		Metalink:       repo.Metalink,
 		MirrorList:     repo.MirrorList,
@@ -408,27 +420,29 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever
 	}
 	if repo.RHSM {
 		if rpmmd.subscriptions == nil {
-			return dnfRepoConfig{}, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
+			return hash, dnfRepoConfig{}, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
 		}
 		secrets, err := rpmmd.subscriptions.GetSecretsForBaseurl(repo.BaseURL, arch, releasever)
 		if err != nil {
-			return dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on the host for this baseurl: %s", repo.BaseURL)
+			return hash, dnfRepoConfig{}, fmt.Errorf("RHSM secrets not found on the host for this baseurl: %s", repo.BaseURL)
 		}
 		dnfRepo.SSLCACert = secrets.SSLCACert
 		dnfRepo.SSLClientKey = secrets.SSLClientKey
 		dnfRepo.SSLClientCert = secrets.SSLClientCert
 	}
-	return dnfRepo, nil
+	return hash, dnfRepo, nil
 }
 
 func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, releasever string) (PackageList, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
+	mapDnfRepoConfigs := make(map[int]string)
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
+		hash, dnfRepo, err := repo.toDNFRepoConfig(r, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
 		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+		mapDnfRepoConfigs[i] = hash
 	}
 
 	var arguments = struct {
@@ -449,20 +463,22 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, re
 	})
 	checksums := make(map[string]string)
 	for i, repo := range repos {
-		checksums[repo.Name] = reply.Checksums[strconv.Itoa(i)]
+		checksums[repo.Name] = reply.Checksums[mapDnfRepoConfigs[i]]
 	}
 	return reply.Packages, checksums, err
 }
 
 func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error) {
 	var dnfRepoConfigs []dnfRepoConfig
+	mapDnfRepoConfigs := make(map[string]int)
 
 	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
+		hash, dnfRepo, err := repo.toDNFRepoConfig(r, arch, releasever)
 		if err != nil {
 			return nil, nil, err
 		}
 		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+		mapDnfRepoConfigs[hash] = i
 	}
 
 	var arguments = struct {
@@ -481,11 +497,10 @@ func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePl
 
 	dependencies := make([]PackageSpec, len(reply.Dependencies))
 	for i, pack := range reply.Dependencies {
-		id, err := strconv.Atoi(pack.RepoID)
 		if err != nil {
 			panic(err)
 		}
-		repo := repos[id]
+		repo := repos[mapDnfRepoConfigs[pack.RepoID]]
 		dep := reply.Dependencies[i]
 		dependencies[i].Name = dep.Name
 		dependencies[i].Epoch = dep.Epoch
