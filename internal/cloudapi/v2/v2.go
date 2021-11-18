@@ -280,6 +280,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		irTarget = t
 	case ImageTypes_edge_installer:
 		fallthrough
+	case ImageTypes_edge_container:
+		fallthrough
 	case ImageTypes_edge_commit:
 		var awsS3UploadOptions AWSS3UploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
@@ -478,6 +480,8 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 		return "vhd"
 	case ImageTypes_edge_commit:
 		return "rhel-edge-commit"
+	case ImageTypes_edge_container:
+		return "rhel-edge-container"
 	case ImageTypes_edge_installer:
 		return "rhel-edge-installer"
 	}

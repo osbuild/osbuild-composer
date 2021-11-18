@@ -510,6 +510,7 @@ components:
         - gcp
         - azure
         - edge-commit
+        - edge-container
         - edge-installer
     Repository:
       type: object
