@@ -20,7 +20,7 @@ import (
 
 const RandomTestSeed = 0
 
-func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, registry *distroregistry.Registry) {
+func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, registry *distroregistry.Registry, depsolvePkgSets bool, dnfCacheDir, dnfJsonPath string) {
 	assert := assert.New(t)
 	fileNames, err := filepath.Glob(filepath.Join(pipelinePath, prefix))
 	assert.NoErrorf(err, "Could not read pipelines directory '%s': %v", pipelinePath, err)
@@ -41,9 +41,9 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
 		}
 		var tt struct {
-			ComposeRequest *composeRequest                `json:"compose-request"`
-			PackageSets    map[string][]rpmmd.PackageSpec `json:"rpmmd"`
-			Manifest       distro.Manifest                `json:"manifest,omitempty"`
+			ComposeRequest  *composeRequest                `json:"compose-request"`
+			PackageSpecSets map[string][]rpmmd.PackageSpec `json:"rpmmd"`
+			Manifest        distro.Manifest                `json:"manifest,omitempty"`
 		}
 		file, err := ioutil.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -82,6 +82,24 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				t.Errorf("unknown image type: %v", tt.ComposeRequest.ImageType)
 				return
 			}
+
+			var imgPackageSpecSets map[string][]rpmmd.PackageSpec
+			// depsolve the image's package set to catch changes in the image's default package set.
+			// downside is that this takes long time
+			if depsolvePkgSets {
+				require.NotEmptyf(t, dnfCacheDir, "DNF cache directory path must be provided when chosen to depsolve image package sets")
+				require.NotEmptyf(t, dnfJsonPath, "path to 'dnf-json' must be provided when chosen to depsolve image package sets")
+				imgPackageSpecSets = getImageTypePkgSpecSets(
+					imageType,
+					*tt.ComposeRequest.Blueprint,
+					repos,
+					dnfCacheDir,
+					dnfJsonPath,
+				)
+			} else {
+				imgPackageSpecSets = tt.PackageSpecSets
+			}
+
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				distro.ImageOptions{
 					Size: imageType.Size(0),
@@ -90,7 +108,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 					},
 				},
 				repos,
-				tt.PackageSets,
+				imgPackageSpecSets,
 				RandomTestSeed)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
@@ -109,6 +127,23 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			}
 		})
 	}
+}
+
+func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
+	imgPackageSets := imageType.PackageSets(bp)
+
+	rpm_md := rpmmd.NewRPMMD(cacheDir, dnfJsonPath)
+
+	imgPackageSpecSets := make(map[string][]rpmmd.PackageSpec)
+	for name, packages := range imgPackageSets {
+		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Name(), imageType.Arch().Distro().Releasever())
+		if err != nil {
+			panic("Could not depsolve: " + err.Error())
+		}
+		imgPackageSpecSets[name] = packageSpecs
+	}
+
+	return imgPackageSpecSets
 }
 
 func isOSTree(imgType distro.ImageType) bool {

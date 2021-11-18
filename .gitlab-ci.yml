@@ -137,6 +137,27 @@ Base:
       - "*.repo"
     when: always
 
+Manifests:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-9.0-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log.gpg
+      - "*.repo"
+    when: always
+
 Regression:
   stage: test
   extends: .terraform
