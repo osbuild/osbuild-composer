@@ -16,6 +16,9 @@ func TestDistro_Manifest(t *testing.T) {
 		"../../test/data/manifests/",
 		"*",
 		distroregistry.NewDefault(),
+		false, // This test case does not check for changes in the imageType package sets!
+		"",
+		"",
 	)
 }
 
