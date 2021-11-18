@@ -55,6 +55,19 @@ type vmwareUploadSettings struct {
 
 func (vmwareUploadSettings) isUploadSettings() {}
 
+type ociUploadSettings struct {
+	Tenancy     string `json:"tenancy"`
+	Region      string `json:"region"`
+	User        string `json:"user"`
+	Bucket      string `json:"bucket"`
+	Namespace   string `json:"namespace"`
+	PrivateKey  string `json:"private_key"`
+	Fingerprint string `json:"fingerprint"`
+	Compartment string `json:"compartment"`
+}
+
+func (ociUploadSettings) isUploadSettings() {}
+
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -82,6 +95,8 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(awsUploadSettings)
 	case "vmware":
 		settings = new(vmwareUploadSettings)
+	case "oci":
+		settings = new(ociUploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -196,6 +211,19 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Cluster:    options.Cluster,
 			Datacenter: options.Datacenter,
 			Datastore:  options.Datastore,
+		}
+	case *ociUploadSettings:
+		t.Name = "org.osbuild.oci"
+		t.Options = &target.OCITargetOptions{
+			User:        options.User,
+			Tenancy:     options.Tenancy,
+			Region:      options.Region,
+			FileName:    imageType.Filename(),
+			PrivateKey:  options.PrivateKey,
+			Fingerprint: options.Fingerprint,
+			Bucket:      options.Bucket,
+			Namespace:   options.Namespace,
+			Compartment: options.Compartment,
 		}
 	}
 

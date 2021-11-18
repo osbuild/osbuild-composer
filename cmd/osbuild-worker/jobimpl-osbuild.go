@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"math"
+	"math/big"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -517,6 +523,49 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				ImageName: args.Targets[0].ImageName,
 			}))
 
+			osbuildJobResult.Success = true
+			osbuildJobResult.UploadStatus = "success"
+		case *target.OCITargetOptions:
+			// create an ociClient uploader with a valid storage client
+			var ociClient oci.Client
+			ociClient, err = oci.NewClient(&oci.ClientParams{
+				User:        options.User,
+				Region:      options.Region,
+				Tenancy:     options.Tenancy,
+				Fingerprint: options.Fingerprint,
+				PrivateKey:  options.PrivateKey,
+			})
+			if err != nil {
+				appendTargetError(osbuildJobResult, fmt.Errorf("failed to create an OCI uploder: %w", err))
+				return nil
+			}
+			log.Print("[OCI] 🔑 Logged in OCI")
+			log.Print("[OCI] ⬆ Uploading the image")
+			file, err := os.Open(path.Join(outputDirectory, exportPath, options.FileName))
+			if err != nil {
+				appendTargetError(osbuildJobResult, fmt.Errorf("failed to create an OCI uploder: %w", err))
+				return nil
+			}
+			defer file.Close()
+			i, _ := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+			imageID, err := ociClient.Upload(
+				fmt.Sprintf("osbuild-upload-%d", i),
+				options.Bucket,
+				options.Namespace,
+				file,
+				options.Compartment,
+				args.Targets[0].ImageName,
+			)
+			if err != nil {
+				appendTargetError(osbuildJobResult, fmt.Errorf("failed to upload the image: %w", err))
+				return nil
+			}
+			log.Print("[OCI] 🎉 Image uploaded and registered!")
+
+			osbuildJobResult.TargetResults = append(
+				osbuildJobResult.TargetResults,
+				target.NewOCITargetResult(&target.OCITargetResultOptions{ImageID: imageID}),
+			)
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		default:

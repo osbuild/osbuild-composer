@@ -366,6 +366,7 @@ var imageTypeCompatMapping = map[string]string{
 	"test_type_invalid":              "test_type_invalid", // used only in json_test.go
 	"ec2":                            "ec2",
 	"ec2-ha":                         "ec2-ha",
+	"oci":                            "oci",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
