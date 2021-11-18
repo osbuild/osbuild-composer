@@ -458,6 +458,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-installer",
 				"tar",
 				"image-installer",
+				"oci",
 			},
 		},
 		{

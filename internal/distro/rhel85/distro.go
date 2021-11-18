@@ -710,6 +710,25 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	ociImageType := imageType{
+		name:          "oci",
+		filename:      "disk.qcow2",
+		mimeType:      "application/x-qemu-disk",
+		defaultTarget: "multi-user.target",
+		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    qcow2CommonPackageSet,
+		},
+		bootable:            true,
+		defaultSize:         10 * GigaByte,
+		pipelines:           qcow2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "qcow2"},
+		exports:             []string{"qcow2"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	// EC2 services
 	ec2EnabledServices := []string{
 		"sshd",
@@ -862,7 +881,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:          []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImageType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)

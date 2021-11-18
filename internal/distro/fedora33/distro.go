@@ -900,6 +900,40 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 	}
 
+	ociImageType := imageType{
+		name:     "oci",
+		filename: "disk.qcow2",
+		mimeType: "application/x-qemu-disk",
+		packages: []string{
+			"@Fedora Cloud Server",
+			"chrony",
+			"systemd-udev",
+			"selinux-policy-targeted",
+			"langpacks-en",
+		},
+		excludedPackages: []string{
+			"dracut-config-rescue",
+			"etables",
+			"firewalld",
+			"geolite2-city",
+			"geolite2-country",
+			"gobject-introspection",
+			"plymouth",
+			"zram-generator-defaults",
+		},
+		enabledServices: []string{
+			"cloud-init.service",
+			"cloud-config.service",
+			"cloud-final.service",
+			"cloud-init-local.service",
+		},
+		bootable:    true,
+		defaultSize: 2 * GigaByte,
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+		},
+	}
+
 	r := distribution{
 		buildPackages: []string{
 			"dnf",
@@ -935,6 +969,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		openstackImgType,
 		vhdImgType,
 		vmdkImgType,
+		ociImageType,
 	)
 
 	aarch64 := architecture{
@@ -953,6 +988,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		amiImgType,
 		qcow2ImageType,
 		openstackImgType,
+		ociImageType,
 	)
 
 	r.setArches(x8664, aarch64)
