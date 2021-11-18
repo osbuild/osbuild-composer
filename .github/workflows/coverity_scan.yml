@@ -15,7 +15,7 @@ jobs:
       # https://scan.coverity.com/projects/osbuild-osbuild-composer
       - name: Run coverity scan script
         env:
-          COVERITY_SCAN_PROJECT_NAME: "osbuild%2Fosbuild-composer"
+          COVERITY_SCAN_PROJECT_NAME: "osbuild/osbuild-composer"
           COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
           COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
         run: |
