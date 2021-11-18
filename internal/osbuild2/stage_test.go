@@ -453,6 +453,18 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "selinux-force_autorelabel",
+			fields: fields{
+				Type: "org.osbuild.selinux",
+				Options: &SELinuxStageOptions{
+					ForceAutorelabel: common.BoolToPtr(true),
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.selinux","options":{"file_contexts":"","force_autorelabel":true}}`),
+			},
+		},
+		{
 			name: "selinux.config-empty",
 			fields: fields{
 				Type:    "org.osbuild.selinux.config",
