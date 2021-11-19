@@ -469,20 +469,17 @@ components:
           type: string
 
     ComposeRequest:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - type: object
-        required:
-          - distribution
-          - image_request
-        properties:
-          distribution:
-            type: string
-            example: 'rhel-8'
-          image_request:
-            $ref: '#/components/schemas/ImageRequest'
-          customizations:
-            $ref: '#/components/schemas/Customizations'
+      required:
+        - distribution
+        - image_request
+      properties:
+        distribution:
+          type: string
+          example: 'rhel-8'
+        image_request:
+          $ref: '#/components/schemas/ImageRequest'
+        customizations:
+          $ref: '#/components/schemas/Customizations'
     ImageRequest:
       required:
         - architecture
