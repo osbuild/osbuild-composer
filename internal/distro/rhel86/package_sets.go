@@ -498,7 +498,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"subscription-manager-cockpit", "tar", "tcpdump", "yum",
 		},
 		Exclude: nil,
-	}.Append(bootPackageSet(t)).Append(distroBuildPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 // packages that are only in some (sub)-distributions
