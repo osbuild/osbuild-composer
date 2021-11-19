@@ -1,4 +1,4 @@
-package awsupload
+package awscloud
 
 import (
 	"fmt"
@@ -299,6 +299,56 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	}
 
 	return registerOutput.ImageId, nil
+}
+
+func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
+	if image == nil {
+		return fmt.Errorf("image is nil")
+	}
+
+	var snapshots []*string
+	for _, bdm := range image.BlockDeviceMappings {
+		snapshots = append(snapshots, bdm.Ebs.SnapshotId)
+	}
+
+	_, err := a.ec2.DeregisterImage(
+		&ec2.DeregisterImageInput{
+			ImageId: image.ImageId,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range snapshots {
+		_, err = a.ec2.DeleteSnapshot(
+			&ec2.DeleteSnapshotInput{
+				SnapshotId: s,
+			},
+		)
+		if err != nil {
+			// TODO return err?
+			log.Println("Unable to remove snapshot", s)
+		}
+	}
+	return err
+}
+
+// For service maintenance images are discovered by the "Name:composer-api-*" tag filter. Currently
+// all image names in the service are generated, so they're guaranteed to be unique as well. If
+// users are ever allowed to name their images, an extra tag should be added.
+func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]*ec2.Image, error) {
+	imgs, err := a.ec2.DescribeImages(
+		&ec2.DescribeImagesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
+					Values: []*string{aws.String(tagValue)},
+				},
+			},
+		},
+	)
+	return imgs.Images, err
 }
 
 func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {

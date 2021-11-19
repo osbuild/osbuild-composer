@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
 	flag.Parse()
 
-	a, err := awsupload.New(region, accessKeyID, secretAccessKey, sessionToken)
+	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
 	if err != nil {
 		println(err.Error())
 		return

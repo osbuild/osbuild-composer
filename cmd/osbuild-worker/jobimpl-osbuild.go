@@ -11,11 +11,11 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/target"
-	"github.com/osbuild/osbuild-composer/internal/upload/awsupload"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
@@ -37,14 +37,14 @@ func appendTargetError(res *worker.OSBuildJobResult, err error) {
 	res.TargetErrors = append(res.TargetErrors, errStr)
 }
 
-// Returns an *awsupload.AWS object with the credentials of the request. If they
+// Returns an *awscloud.AWS object with the credentials of the request. If they
 // are not accessible, then try to use the one obtained in the worker
 // configuration.
-func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awsupload.AWS, error) {
+func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awscloud.AWS, error) {
 	if accessId != "" && secret != "" {
-		return awsupload.New(region, accessId, secret, token)
+		return awscloud.New(region, accessId, secret, token)
 	} else {
-		return awsupload.NewFromFile(impl.AWSCreds, region)
+		return awscloud.NewFromFile(impl.AWSCreds, region)
 	}
 }
 
