@@ -55,3 +55,5 @@ CREATE VIEW ready_jobs AS
       WHERE finished_at IS NULL
     )
   ORDER BY queued_at ASC
+
+CREATE TRIGGER no_circular_dependecies

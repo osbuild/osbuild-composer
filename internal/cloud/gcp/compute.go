@@ -265,15 +265,28 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeImageDelete(ctx context.Context, image string) error {
+func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine client: %v", err)
 	}
 
-	_, err = computeService.Images.Delete(g.creds.ProjectID, image).Context(ctx).Do()
+	_, err = computeService.Images.Delete(g.creds.ProjectID, resourceId).Context(ctx).Do()
 
 	return err
+}
+
+func (g *GCP) ComputeExecuteForImage(ctx context.Context, f func(*compute.ImageList) error) error {
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	imagesService := compute.NewImagesService(computeService)
+	//  filters are borked https://issuetracker.google.com/issues/132676194
+	// list images older than 14 days
+	// "creationTimestamp <= %s" time.Now().Add(-(time.Hour * 24 * 14)) ?
+	return imagesService.List(g.creds.ProjectID).Pages(ctx, f)
 }
 
 // ComputeInstanceDelete deletes a Compute Engine instance with the given name and

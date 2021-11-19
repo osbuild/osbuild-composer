@@ -70,9 +70,9 @@ const (
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryRunningId = `
-                SELECT id
-                FROM jobs
-                WHERE token = $1 AND finished_at IS NULL AND canceled = FALSE`
+		SELECT id
+		FROM jobs
+		WHERE token = $1 AND finished_at IS NULL AND canceled = FALSE`
 	sqlFinishJob = `
 		UPDATE jobs
 		SET finished_at = now(), result = $1
@@ -83,40 +83,61 @@ const (
 		WHERE id = $1 AND finished_at IS NULL`
 
 	sqlInsertHeartbeat = `
-                INSERT INTO heartbeats(token, id, heartbeat)
-                VALUES ($1, $2, now())`
+		INSERT INTO heartbeats(token, id, heartbeat)
+		VALUES ($1, $2, now())`
 	sqlQueryHeartbeats = `
-                SELECT token
-                FROM heartbeats
-                WHERE age(now(), heartbeat) > $1`
+		SELECT token
+		FROM heartbeats
+		WHERE age(now(), heartbeat) > $1`
 	sqlRefreshHeartbeat = `
-                UPDATE heartbeats
-                SET heartbeat = now()
-                WHERE token = $1`
+		UPDATE heartbeats
+		SET heartbeat = now()
+		WHERE token = $1`
 	sqlDeleteHeartbeat = `
-                DELETE FROM heartbeats
-                WHERE id = $1`
+		DELETE FROM heartbeats
+		WHERE id = $1`
+
+	// Maintenance queries
+	sqlQueryJobsUptoByType = `
+		SELECT array_agg(id), type
+		FROM jobs
+		WHERE type = ANY($1) AND finished_at < $2
+		GROUP BY type`
+	sqlQueryRecursive = `
+		WITH RECURSIVE dependencies(d) AS (
+				SELECT dependency_id
+				FROM job_dependencies
+				WHERE job_id = $1
+				UNION ALL
+				SELECT dependency_id
+				FROM dependencies, job_dependencies
+				WHERE job_dependencies.job_id = d  )
+		SELECT * FROM dependencies`
+	sqlDeleteJobDependencies = `
+		DELETE FROM job_dependencies
+		WHERE dependency_id = ANY($1)`  // IN dependencies of build job
+	sqlDeleteJobs = `DELETE FROM jobs WHERE id = ANY($1)`
 )
 
-type dbJobQueue struct {
+type DBJobQueue struct {
 	pool *pgxpool.Pool
 }
 
-// Create a new dbJobQueue object for `url`.
-func New(url string) (*dbJobQueue, error) {
+// Create a new DBJobQueue object for `url`.
+func New(url string) (*DBJobQueue, error) {
 	pool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("error establishing connection: %v", err)
 	}
 
-	return &dbJobQueue{pool}, nil
+	return &DBJobQueue{pool}, nil
 }
 
-func (q *dbJobQueue) Close() {
+func (q *DBJobQueue) Close() {
 	q.pool.Close()
 }
 
-func (q *dbJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error connecting to database: %v", err)
@@ -162,7 +183,7 @@ func (q *dbJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return id, nil
 }
 
-func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
 		return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
@@ -221,7 +242,7 @@ func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 
 	return id, token, dependencies, jobType, args, nil
 }
-func (q *dbJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
 		return uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
@@ -260,7 +281,7 @@ func (q *dbJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	return token, dependencies, jobType, args, nil
 }
 
-func (q *dbJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
+func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
@@ -327,7 +348,7 @@ func (q *dbJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	return nil
 }
 
-func (q *dbJobQueue) CancelJob(id uuid.UUID) error {
+func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
@@ -348,7 +369,7 @@ func (q *dbJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *dbJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
+func (q *DBJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -380,7 +401,7 @@ func (q *dbJobQueue) JobStatus(id uuid.UUID) (result json.RawMessage, queued, st
 }
 
 // Job returns all the parameters that define a job (everything provided during Enqueue).
-func (q *dbJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error) {
+func (q *DBJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -400,7 +421,7 @@ func (q *dbJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, de
 }
 
 // Find job by token, this will return an error if the job hasn't been dequeued
-func (q *dbJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {
+func (q *DBJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error establishing connection: %v", err)
@@ -418,7 +439,7 @@ func (q *dbJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {
 }
 
 // Get a list of tokens which haven't been updated in the specified time frame
-func (q *dbJobQueue) Heartbeats(olderThan time.Duration) (tokens []uuid.UUID) {
+func (q *DBJobQueue) Heartbeats(olderThan time.Duration) (tokens []uuid.UUID) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -449,7 +470,7 @@ func (q *dbJobQueue) Heartbeats(olderThan time.Duration) (tokens []uuid.UUID) {
 }
 
 // Reset the last heartbeat time to time.Now()
-func (q *dbJobQueue) RefreshHeartbeat(token uuid.UUID) {
+func (q *DBJobQueue) RefreshHeartbeat(token uuid.UUID) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -465,7 +486,7 @@ func (q *dbJobQueue) RefreshHeartbeat(token uuid.UUID) {
 	}
 }
 
-func (q *dbJobQueue) jobDependencies(ctx context.Context, conn *pgxpool.Conn, id uuid.UUID) ([]uuid.UUID, error) {
+func (q *DBJobQueue) jobDependencies(ctx context.Context, conn *pgxpool.Conn, id uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := conn.Query(ctx, sqlQueryDependencies, id)
 	if err != nil {
 		return nil, err
@@ -487,4 +508,92 @@ func (q *dbJobQueue) jobDependencies(ctx context.Context, conn *pgxpool.Conn, id
 	}
 
 	return dependencies, nil
+}
+
+// return map id -> jobtype ?
+func (q *DBJobQueue) JobsUptoByType(jobTypes []string, upto time.Time) (result map[string][]uuid.UUID, err error) {
+	result = make(map[string][]uuid.UUID)
+
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		err = fmt.Errorf("error connecting to database: %v", err)
+		return
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(context.Background(), sqlQueryJobsUptoByType, jobTypes, upto)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var ids []uuid.UUID
+		var jt string
+		err = rows.Scan(&ids, &jt)
+		if err != nil {
+			return
+		}
+
+		result[jt] = ids
+	}
+	err = rows.Err()
+	return
+}
+
+// Deletes single job and dependencies (recursively)
+func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(context.Background(), sqlQueryRecursive, jobId)
+	if err != nil {
+		return fmt.Errorf("error querying the job's dependencies: %v", err)
+	}
+
+	var dependencies []uuid.UUID
+	for rows.Next() {
+		var dep uuid.UUID
+		err = rows.Scan(&dep)
+		if err != nil {
+			return err
+		}
+
+		dependencies = append(dependencies, dep)
+	}
+	fmt.Println("DEPS", len(dependencies))
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("error starting database transaction: %v", err)
+	}
+	defer func() {
+		err := tx.Rollback(context.Background())
+		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
+			logrus.Error("error rolling back enqueue transaction: ", err)
+		}
+	}()
+
+	depTag, err := conn.Exec(context.Background(), sqlDeleteJobDependencies, dependencies)
+	if err != nil {
+		return fmt.Errorf("Error removing dependencies recursively for job %v: %v", jobId, err)
+	}
+
+	jobAndDependencies := append(dependencies, jobId)
+	jobsTag, err := conn.Exec(context.Background(), sqlDeleteJobs, jobAndDependencies)
+	if err != nil {
+		return fmt.Errorf("Error removing dependencies recursively for job %v: %v", jobId, err)
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to commit database transaction: %v", err)
+	}
+
+	logrus.Infof("Removed %d rows from dependencies for job %v", depTag.RowsAffected(), jobId)
+	logrus.Infof("Removed %d rows from jobs for job %v, this includes dependencies", jobsTag.RowsAffected(), jobId)
+	return nil
 }
