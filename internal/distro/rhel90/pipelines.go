@@ -1306,6 +1306,14 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",
+		"rdma",
+		"rngd",
+		"multipath",
+		"fcoe",
+		"fcoe-uefi",
+		"iscsi",
+		"lunmask",
+		"nfs",
 	})))
 
 	return p
