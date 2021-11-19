@@ -265,15 +265,29 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeImageDelete(ctx context.Context, image string) error {
+func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
 	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine client: %v", err)
 	}
 
-	_, err = computeService.Images.Delete(g.creds.ProjectID, image).Context(ctx).Do()
+	_, err = computeService.Images.Delete(g.creds.ProjectID, resourceId).Context(ctx).Do()
 
 	return err
+}
+
+// ComputeExecuteFunctionForImages will pass all the compute images in the account to a function,
+// which is able to iterate over the images. Useful if something needs to be execute for each image.
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeExecuteFunctionForImages(ctx context.Context, f func(*compute.ImageList) error) error {
+	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+	}
+
+	imagesService := compute.NewImagesService(computeService)
+	return imagesService.List(g.creds.ProjectID).Pages(ctx, f)
 }
 
 // ComputeInstanceDelete deletes a Compute Engine instance with the given name and

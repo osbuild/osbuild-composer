@@ -263,6 +263,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return HTTPError(ErrorJSONUnMarshallingError)
 		}
 
+		// For service maintenance, images are discovered by the "Name:composer-api-*"
+		// tag filter. Currently all image names in the service are generated, so they're
+		// guaranteed to be unique as well. If users are ever allowed to name their images,
+		// an extra tag should be added.
 		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 		t := target.NewAWSTarget(&target.AWSTargetOptions{
 			Filename:          imageType.Filename(),
