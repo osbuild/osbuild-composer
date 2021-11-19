@@ -381,7 +381,6 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 		"rhel-system-roles-sap",
 		// RHBZ#1959813
 		"bind-utils",
-		"compat-sap-c++-9",
 		"nfs-utils",
 		"tcsh",
 		// RHBZ#1959955
