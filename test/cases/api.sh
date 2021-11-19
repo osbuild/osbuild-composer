@@ -607,7 +607,7 @@ function collectMetrics(){
                           --cert /etc/osbuild-composer/client-crt.pem \
                           https://localhost/metrics)
 
-    echo "$METRICS_OUTPUT" | grep "^total_compose_requests" | cut -f2 -d' '
+    echo "$METRICS_OUTPUT" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' '
 }
 
 function sendCompose() {
