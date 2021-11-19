@@ -233,7 +233,7 @@ parameters:
     value: "require"
   - description: postgres maximum connections per pod
     name: PGMAXCONNS
-    value: "10"
+    value: "20"
   - description: base sso url
     name: SSO_BASE_URL
     required: true
