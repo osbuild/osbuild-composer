@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strconv"
 
 	"github.com/BurntSushi/toml"
 )
@@ -44,6 +45,7 @@ type WorkerAPIConfig struct {
 	PGUser            string   `toml:"pg_user" env:"PGUSER"`
 	PGPassword        string   `toml:"pg_password" env:"PGPASSWORD"`
 	PGSSLMode         string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
+	PGMaxConns        int      `toml:"pg_max_conns" env:"PGMAXCONNS"`
 	EnableTLS         bool     `toml:"enable_tls"`
 	EnableMTLS        bool     `toml:"enable_mtls"`
 	EnableJWT         bool     `toml:"enable_jwt"`
@@ -143,6 +145,20 @@ func loadConfigFromEnv(intf interface{}) error {
 				continue
 			}
 			fieldV.SetString(confV)
+		case reflect.Int:
+			key, ok := fieldT.Tag.Lookup("env")
+			if !ok {
+				continue
+			}
+			confV, ok := os.LookupEnv(key)
+			if !ok {
+				continue
+			}
+			value, err := strconv.ParseInt(confV, 10, 64)
+			if err != nil {
+				return err
+			}
+			fieldV.SetInt(value)
 		case reflect.Bool:
 			// no-op
 			continue
