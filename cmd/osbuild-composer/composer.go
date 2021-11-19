@@ -15,6 +15,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	logrus "github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -25,7 +27,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
-	logrus "github.com/sirupsen/logrus"
 )
 
 type Composer struct {
@@ -77,6 +78,11 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 			config.Worker.PGDatabase,
 			config.Worker.PGSSLMode,
 		)
+
+		if config.Worker.PGMaxConns > 0 {
+			dbURL += fmt.Sprintf("&pool_max_conns=%d", config.Worker.PGMaxConns)
+		}
+
 		jobs, err = dbjobqueue.New(dbURL)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
