@@ -296,8 +296,23 @@ API:
     matrix:
       - <<: *API_TESTS
         RUNNER:
+          - aws/fedora-33-x86_64
+          # See COMPOSER-919
+          # - aws/fedora-34-x86_64
+          # See COMPOSER-1118
+          # - aws/centos-stream-8-x86_64
+      - TARGET:
+          - aws
+          - gcp
+          - aws.s3
+        RUNNER:
           - aws/centos-stream-8-x86_64
+      - <<: *API_TESTS
+        RUNNER:
           - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-9.0-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 libvirt:
   stage: test
