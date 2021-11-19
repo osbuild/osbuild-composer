@@ -79,6 +79,7 @@ pg_database = "osbuildcomposer"
 pg_user = "postgres"
 pg_password = "foobar"
 pg_ssl_mode = "disable"
+pg_max_conns = 10
 EOF
 
 sudo systemctl restart osbuild-composer

@@ -92,6 +92,8 @@ objects:
                 key: db.password
           - name: PGSSLMODE
             value: "${PGSSLMODE}"
+          - name: PGMAXCONNS
+            value: "${PGMAXCONNS}"
           ports:
           - name: composer-api
             protocol: TCP
@@ -229,6 +231,9 @@ parameters:
   - description: postgres sslmode to use when connecting to the db
     name: PGSSLMODE
     value: "require"
+  - description: postgres maximum connections per pod
+    name: PGMAXCONNS
+    value: "10"
   - description: base sso url
     name: SSO_BASE_URL
     required: true
