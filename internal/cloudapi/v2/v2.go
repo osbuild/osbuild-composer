@@ -372,6 +372,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	id, err := h.server.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 		Targets: []*target.Target{irTarget},
 		Exports: imageType.Exports(),
+		PipelineNames: &worker.PipelineNames{
+			Build:   imageType.BuildPipelines(),
+			Payload: imageType.PayloadPipelines(),
+		},
 	}, manifestJobID)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
