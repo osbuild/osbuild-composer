@@ -405,7 +405,7 @@
           {
             "type": "org.osbuild.kernel-cmdline",
             "options": {
-              "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto"
             }
           },
@@ -994,7 +994,9 @@
           },
           {
             "type": "org.osbuild.fix-bls",
-            "options": {}
+            "options": {
+              "prefix": ""
+            }
           },
           {
             "type": "org.osbuild.locale",
@@ -1057,6 +1059,12 @@
                 {
                   "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
                   "vfs_type": "xfs",
+                  "path": "/boot",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                  "vfs_type": "xfs",
                   "path": "/",
                   "options": "defaults"
                 }
@@ -1093,9 +1101,15 @@
               "uuid": "0x14fc63d2",
               "partitions": [
                 {
+                  "size": 1024000,
+                  "start": 2048,
+                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                  "uuid": "CB07C243-BC44-4717-853E-28852021225B"
+                },
+                {
                   "bootable": true,
-                  "size": 20969372,
-                  "start": 2048
+                  "size": 19945372,
+                  "start": 1026048
                 }
               ]
             },
@@ -1111,7 +1125,8 @@
           {
             "type": "org.osbuild.mkfs.xfs",
             "options": {
-              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "label": "boot"
             },
             "devices": {
               "device": {
@@ -1119,7 +1134,23 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 20969372
+                  "size": 1024000
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1026048,
+                  "size": 19945372
                 }
               }
             }
@@ -1144,6 +1175,14 @@
               ]
             },
             "devices": {
+              "boot": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1024000
+                }
+              },
               "disk": {
                 "type": "org.osbuild.loopback",
                 "options": {
@@ -1154,8 +1193,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
-                  "size": 20969372
+                  "start": 1026048,
+                  "size": 19945372
                 }
               }
             },
@@ -1165,6 +1204,12 @@
                 "type": "org.osbuild.xfs",
                 "source": "root",
                 "target": "/"
+              },
+              {
+                "name": "boot",
+                "type": "org.osbuild.xfs",
+                "source": "boot",
+                "target": "/boot"
               }
             ]
           },
@@ -1175,6 +1220,14 @@
               "location": 2048
             },
             "devices": {
+              "boot": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1024000
+                }
+              },
               "disk": {
                 "type": "org.osbuild.loopback",
                 "options": {
@@ -1185,8 +1238,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
-                  "size": 20969372
+                  "start": 1026048,
+                  "size": 19945372
                 }
               }
             },
@@ -1196,6 +1249,12 @@
                 "type": "org.osbuild.xfs",
                 "source": "root",
                 "target": "/"
+              },
+              {
+                "name": "boot",
+                "type": "org.osbuild.xfs",
+                "source": "boot",
+                "target": "/boot"
               }
             ]
           }
@@ -10870,10 +10929,10 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20211126121109-5.14.0-4.el9.s390x",
+        "id": "-20211207101433-5.14.0-4.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-4.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-4.el9.s390x",
-        "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
         "title": " (5.14.0-4.el9.s390x)",
         "version": "5.14.0-4.el9.s390x"
       }
@@ -11047,6 +11106,14 @@
     "fstab": [
       [
         "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+        "/boot",
+        "xfs",
+        "defaults",
+        "0",
+        "0"
+      ],
+      [
+        "UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
         "/",
         "xfs",
         "defaults",
@@ -11613,14 +11680,24 @@
     "partition-table-id": "0x14fc63d2",
     "partitions": [
       {
+        "bootable": false,
+        "fstype": "xfs",
+        "label": "boot",
+        "partuuid": "14fc63d2-01",
+        "size": 524288000,
+        "start": 1048576,
+        "type": "0",
+        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+      },
+      {
         "bootable": true,
         "fstype": "xfs",
         "label": null,
-        "partuuid": "14fc63d2-01",
-        "size": 10736318464,
-        "start": 1048576,
+        "partuuid": "14fc63d2-02",
+        "size": 10212030464,
+        "start": 525336576,
         "type": "83",
-        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+        "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
       }
     ],
     "passwd": [
@@ -11722,13 +11799,6 @@
       "missing": []
     },
     "selinux": {
-      "context-mismatch": [
-        {
-          "actual": "unconfined_u:object_r:boot_t:s0",
-          "expected": "system_u:object_r:boot_t:s0",
-          "filename": "/boot/bootmap"
-        }
-      ],
       "policy": {
         "SELINUX": "enforcing",
         "SELINUXTYPE": "targeted"
