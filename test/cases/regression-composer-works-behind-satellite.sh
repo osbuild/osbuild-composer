@@ -140,12 +140,6 @@ fi
 REPO1_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
 REPO2_BASEURL=$(jq --raw-output ".${ARCH}[] | select(.name==\"${REPO2_NAME}\") | .baseurl" "${REPOSITORY_OVERRIDE}")
 
-if ! echo "${REPO1_BASEURL}" | grep "rpmrepo.osbuild.org" || ! echo "${REPO2_BASEURL}" | grep "rpmrepo.osbuild.org";
-then
-    greenprint "This test only works with rpmrepo snapshots. Other RPM repositories are unsupported."
-    exit 0
-fi
-
 # Don't use raw-output, instead cut the surrounding quotes to preserve \n inside the string so that it can be
 # easily written to files using "tee" later in the script.
 REPO1_GPGKEY=$(jq ".${ARCH}[] | select(.name==\"${REPO1_NAME}\") | .gpgkey" "${REPOSITORY_OVERRIDE}" | cut -d'"' -f2)
