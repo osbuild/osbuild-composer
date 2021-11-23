@@ -132,7 +132,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
 	imgPackageSets := imageType.PackageSets(bp)
 
-	rpm_md := rpmmd.NewRPMMD(cacheDir, dnfJsonPath)
+	rpm_md := rpmmd.NewRPMMD(cacheDir)
 
 	imgPackageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range imgPackageSets {
