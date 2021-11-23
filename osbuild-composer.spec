@@ -307,6 +307,7 @@ cd $PWD/_build/src/%{goipath}
 %doc README.md
 %{_mandir}/man7/%{name}.7*
 %{_unitdir}/osbuild-composer.service
+%{_unitdir}/osbuild-dnf-json.socket
 %{_unitdir}/osbuild-composer.socket
 %{_unitdir}/osbuild-composer-api.socket
 %{_unitdir}/osbuild-local-worker.socket
@@ -373,6 +374,7 @@ The dnf-json binary used by osbuild-composer and the workers.
 
 %files dnf-json
 %{_libexecdir}/osbuild-composer/dnf-json
+%{_unitdir}/osbuild-dnf-json.service
 
 %if %{with tests} || 0%{?rhel}
 

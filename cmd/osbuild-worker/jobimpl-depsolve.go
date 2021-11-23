@@ -12,7 +12,7 @@ type DepsolveJobImpl struct {
 }
 
 func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
-	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache, "/usr/libexec/osbuild-composer/dnf-json")
+	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache)
 
 	packageSpecs := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {

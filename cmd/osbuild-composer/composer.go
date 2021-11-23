@@ -66,7 +66,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	c.distros = distroregistry.NewDefault()
 	logrus.Infof("Loaded %d distros", len(c.distros.List()))
 
-	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
+	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"))
 
 	var jobs jobqueue.JobQueue
 	if config.Worker.PGDatabase != "" {

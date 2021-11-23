@@ -1,20 +1,29 @@
 #!/usr/bin/python3
 
 import datetime
-import dnf
 import hashlib
-import hawkey
 import json
-import sys
 import tempfile
+import os
+import socket
+import socketserver
+import logging
+from http.server import BaseHTTPRequestHandler
+
+import dnf
+import hawkey
+from systemd.journal import JournalHandler
+
+
+log = logging.getLogger('dnf-json')
+log.addHandler(JournalHandler())
+log.setLevel(logging.INFO)
 
 DNF_ERROR_EXIT_CODE = 10
 
-
-def timestamp_to_rfc3339(timestamp):
+def timestamp_to_rfc3339(timestamp, package):
     d = datetime.datetime.utcfromtimestamp(package.buildtime)
     return d.strftime('%Y-%m-%dT%H:%M:%SZ')
-
 
 def dnfrepo(desc, parent_conf=None):
     """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -93,12 +102,6 @@ def create_base(repos, module_platform_id, persistdir, cachedir, arch):
     base.fill_sack(load_system_repo=False)
     return base
 
-
-def exit_with_dnf_error(kind: str, reason: str):
-    json.dump({"kind": kind, "reason": reason}, sys.stdout)
-    sys.exit(DNF_ERROR_EXIT_CODE)
-
-
 def repo_checksums(base):
     checksums = {}
     for repo in base.repos.iter_enabled():
@@ -123,98 +126,147 @@ def repo_checksums(base):
 
     return checksums
 
+class DnfJsonRequestHandler(BaseHTTPRequestHandler):
 
-call = json.load(sys.stdin)
-command = call["command"]
-arguments = call["arguments"]
-repos = arguments.get("repos", {})
-arch = arguments["arch"]
-cachedir = arguments["cachedir"]
-module_platform_id = arguments["module_platform_id"]
+    def _send(self):
+        self.client_address=('',)
 
-with tempfile.TemporaryDirectory() as persistdir:
-    try:
-        base = create_base(
-            repos,
-            module_platform_id,
-            persistdir,
-            cachedir,
-            arch
-        )
-    except dnf.exceptions.Error as e:
-        exit_with_dnf_error(
-            type(e).__name__,
-            f"Error occurred when setting up repo: {e}"
-        )
+    def exit_with_dnf_error(self, kind: str, reason: str):
+        self._send()
+        self.send_response(500)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"kind": kind, "reason":
+            reason}).encode("utf-8"))
 
-    if command == "dump":
-        packages = []
-        for package in base.sack.query().available():
-            packages.append({
-                "name": package.name,
-                "summary": package.summary,
-                "description": package.description,
-                "url": package.url,
-                "epoch": package.epoch,
-                "version": package.version,
-                "release": package.release,
-                "arch": package.arch,
-                "buildtime": timestamp_to_rfc3339(package.buildtime),
-                "license": package.license
-            })
-        json.dump({
-            "checksums": repo_checksums(base),
-            "packages": packages
-        }, sys.stdout)
+    def exit_with_success(self, json_object):
+        self._send()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(json_object).encode("utf-8"))
 
-    elif command == "depsolve":
-        errors = []
+    def do_POST(self):
+        content_len = int(self.headers.get('Content-Length'))
+        data = self.rfile.read(content_len)
+        call = json.loads(data.decode("utf-8"))
+        command = call["command"]
+        arguments = call["arguments"]
+        repos = arguments.get("repos", {})
+        arch = arguments["arch"]
+        cachedir = arguments["cachedir"]
+        module_platform_id = arguments["module_platform_id"]
 
-        try:
-            base.install_specs(
-                arguments["package-specs"],
-                exclude=arguments.get("exclude-specs", [])
-            )
-        except dnf.exceptions.MarkingErrors as e:
-            exit_with_dnf_error(
-                "MarkingErrors",
-                f"Error occurred when marking packages for installation: {e}"
-            )
-
-        try:
-            base.resolve()
-        except dnf.exceptions.DepsolveError as e:
-            exit_with_dnf_error(
-                "DepsolveError",
-                (
-                    "There was a problem depsolving "
-                    f"{arguments['package-specs']}: {e}"
+        with tempfile.TemporaryDirectory() as persistdir:
+            try:
+                base = create_base(
+                    repos,
+                    module_platform_id,
+                    persistdir,
+                    cachedir,
+                    arch
                 )
-            )
-
-        dependencies = []
-        for tsi in base.transaction:
-            # Avoid using the install_set() helper, as it does not guarantee
-            # a stable order
-            if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
-                continue
-            package = tsi.pkg
-
-            dependencies.append({
-                "name": package.name,
-                "epoch": package.epoch,
-                "version": package.version,
-                "release": package.release,
-                "arch": package.arch,
-                "repo_id": package.reponame,
-                "path": package.relativepath,
-                "remote_location": package.remote_location(),
-                "checksum": (
-                    f"{hawkey.chksum_name(package.chksum[0])}:"
-                    f"{package.chksum[1].hex()}"
+            except dnf.exceptions.Error as e:
+                return self.exit_with_dnf_error(
+                    type(e).__name__,
+                    f"Error occurred when setting up repo: {e}"
                 )
-            })
-        json.dump({
-            "checksums": repo_checksums(base),
-            "dependencies": dependencies
-        }, sys.stdout)
+
+            if command == "dump":
+                packages = []
+                for package in base.sack.query().available():
+                    packages.append({
+                        "name": package.name,
+                        "summary": package.summary,
+                        "description": package.description,
+                        "url": package.url,
+                        "epoch": package.epoch,
+                        "version": package.version,
+                        "release": package.release,
+                        "arch": package.arch,
+                        "buildtime": timestamp_to_rfc3339(package.buildtime, package),
+                        "license": package.license
+                    })
+                self.exit_with_success({
+                    "checksums": repo_checksums(base),
+                    "packages": packages
+                })
+
+            elif command == "depsolve":
+                log.info("start depsolve")
+                errors = []
+
+                try:
+                    base.install_specs(
+                        arguments["package-specs"],
+                        exclude=arguments.get("exclude-specs", [])
+                    )
+                except dnf.exceptions.MarkingErrors as e:
+                    log.info("error install_specs")
+                    return self.exit_with_dnf_error(
+                        "MarkingErrors",
+                        f"Error occurred when marking packages for installation: {e}"
+                    )
+
+                try:
+                    base.resolve()
+                except dnf.exceptions.DepsolveError as e:
+                    log.info("error depsolve")
+                    return self.exit_with_dnf_error(
+                        "DepsolveError",
+                        (
+                            "There was a problem depsolving "
+                            f"{arguments['package-specs']}: {e}"
+                        )
+                    )
+
+                dependencies = []
+                for tsi in base.transaction:
+                    # Avoid using the install_set() helper, as it does not guarantee
+                    # a stable order
+                    if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
+                        continue
+                    package = tsi.pkg
+
+                    dependencies.append({
+                        "name": package.name,
+                        "epoch": package.epoch,
+                        "version": package.version,
+                        "release": package.release,
+                        "arch": package.arch,
+                        "repo_id": package.reponame,
+                        "path": package.relativepath,
+                        "remote_location": package.remote_location(),
+                        "checksum": (
+                            f"{hawkey.chksum_name(package.chksum[0])}:"
+                            f"{package.chksum[1].hex()}"
+                        )
+                    })
+                self.exit_with_success({
+                    "checksums": repo_checksums(base),
+                    "dependencies": dependencies
+                })
+
+log.info("Starting the dnf-json server")
+
+SOCKET_FILE_PATH = "/run/osbuild-dnf-json/api.sock"
+
+LISTEN_FDS = int(os.environ.get("LISTEN_FDS", 0))
+LISTEN_PID = os.environ.get("LISTEN_PID", None) or os.getpid()
+
+log.debug("env %d and %d", LISTEN_FDS, LISTEN_PID)
+
+class SystemDActivationSocketServer(socketserver.UnixStreamServer):
+    def server_bind(self):
+        log.debug("service bind")
+        if LISTEN_FDS == 0:
+            log.debug("create new socket")
+            socketserver.UnixStreamServer.server_bind(self)
+        else:
+            log.debug("rebind socket")
+            log.debug("address_family: %d ", self.address_family)
+            log.debug("socket_type: %d ", self.socket_type)
+            self.socket = socket.fromfd(3, self.address_family, self.socket_type)
+
+server = SystemDActivationSocketServer(SOCKET_FILE_PATH, DnfJsonRequestHandler)
+server.serve_forever()

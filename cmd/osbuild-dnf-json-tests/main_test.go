@@ -5,8 +5,8 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"testing"
@@ -23,6 +23,11 @@ import (
 
 func TestFetchChecksum(t *testing.T) {
 	dir, err := test.SetUpTemporaryRepository()
+	fs := http.FileServer(http.Dir(dir))
+	go func() {
+		err := http.ListenAndServe(":9000", fs)
+		assert.Nilf(t, err, "Could not start the http server: %v", err)
+	}()
 	defer func(dir string) {
 		err := test.TearDownTemporaryRepository(dir)
 		assert.Nil(t, err, "Failed to clean up temporary repository.")
@@ -31,13 +36,13 @@ func TestFetchChecksum(t *testing.T) {
 
 	repoCfg := rpmmd.RepoConfig{
 		Name:      "repo",
-		BaseURL:   fmt.Sprintf("file://%s", dir),
+		BaseURL:   "http://localhost:9000",
 		IgnoreSSL: true,
 	}
 
 	// use a fullpath to dnf-json, this allows this test to have an arbitrary
 	// working directory
-	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
+	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
 	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64", "31")
 	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
 	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
@@ -64,7 +69,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 			// use a fullpath to dnf-json, this allows this test to have an arbitrary
 			// working directory
-			rpm := rpmmd.NewRPMMD(dir, "/usr/libexec/osbuild-composer/dnf-json")
+			rpm := rpmmd.NewRPMMD(dir)
 
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())

@@ -1,5 +1,6 @@
 [Unit]
 Description=OSBuild Composer Remote Worker (%i)
+Requires=osbuild-dnf-json.socket
 After=network.target
 
 [Service]
