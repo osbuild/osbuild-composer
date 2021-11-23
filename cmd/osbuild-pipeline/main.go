@@ -118,7 +118,7 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	rpm_md := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"), "/usr/libexec/osbuild-composer/dnf-json")
+	rpm_md := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
 
 	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range packageSets {

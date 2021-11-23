@@ -1,12 +1,15 @@
 package rpmmd
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -313,7 +316,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	return repoConfigs, nil
 }
 
-func runDNF(dnfJsonPath string, command string, arguments interface{}, result interface{}) error {
+func runDNF(command string, arguments interface{}, result interface{}) error {
 	var call = struct {
 		Command   string      `json:"command"`
 		Arguments interface{} `json:"arguments,omitempty"`
@@ -322,39 +325,31 @@ func runDNF(dnfJsonPath string, command string, arguments interface{}, result in
 		arguments,
 	}
 
-	cmd := exec.Command(dnfJsonPath)
+	httpc := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/run/osbuild-dnf-json/api.sock")
+			},
+		},
+	}
 
-	stdin, err := cmd.StdinPipe()
+	bpost, err := json.Marshal(call)
 	if err != nil {
 		return err
 	}
 
-	cmd.Stderr = os.Stderr
-	stdout, err := cmd.StdoutPipe()
+	response, err := httpc.Post("http://unix", "application/json", bytes.NewReader(bpost))
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	output, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	err = json.NewEncoder(stdin).Encode(call)
-	if err != nil {
-		return err
-	}
-	stdin.Close()
-
-	output, err := ioutil.ReadAll(stdout)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.Wait()
-
-	const DnfErrorExitCode = 10
-	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() == DnfErrorExitCode {
+	if response.StatusCode != http.StatusOK {
 		var dnfError DNFError
 		err = json.Unmarshal(output, &dnfError)
 		if err != nil {
@@ -376,10 +371,9 @@ func runDNF(dnfJsonPath string, command string, arguments interface{}, result in
 type rpmmdImpl struct {
 	CacheDir      string
 	subscriptions *rhsm.Subscriptions
-	dnfJsonPath   string
 }
 
-func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
+func NewRPMMD(cacheDir string) RPMMD {
 	subscriptions, err := rhsm.LoadSystemSubscriptions()
 	if err != nil {
 		log.Println("Failed to load subscriptions. osbuild-composer will fail to build images if the "+
@@ -391,7 +385,6 @@ func NewRPMMD(cacheDir, dnfJsonPath string) RPMMD {
 	return &rpmmdImpl{
 		CacheDir:      cacheDir,
 		subscriptions: subscriptions,
-		dnfJsonPath:   dnfJsonPath,
 	}
 }
 
@@ -442,7 +435,7 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, re
 		Packages  PackageList       `json:"packages"`
 	}
 
-	err := runDNF(r.dnfJsonPath, "dump", arguments, &reply)
+	err := runDNF("dump", arguments, &reply)
 
 	sort.Slice(reply.Packages, func(i, j int) bool {
 		return reply.Packages[i].Name < reply.Packages[j].Name
@@ -477,7 +470,7 @@ func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePl
 		Checksums    map[string]string `json:"checksums"`
 		Dependencies []dnfPackageSpec  `json:"dependencies"`
 	}
-	err := runDNF(r.dnfJsonPath, "depsolve", arguments, &reply)
+	err := runDNF("depsolve", arguments, &reply)
 
 	dependencies := make([]PackageSpec, len(reply.Dependencies))
 	for i, pack := range reply.Dependencies {
