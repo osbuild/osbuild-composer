@@ -409,7 +409,7 @@ SCHEDULED_CLOUD_CLEANER:
   tags:
     - terraform
   variables:
-    RUNNER: aws/fedora-33-x86_64
+    RUNNER: aws/centos-stream-8-x86_64
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
   script:
