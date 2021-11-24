@@ -104,7 +104,7 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 		return err
 	}
 
-	logrus.Infof("Running '%s' job %v\n", job.Type(), job.Id())
+	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
 
 	ctx, cancelWatcher := context.WithCancel(context.Background())
 	go WatchJob(ctx, job)
@@ -112,12 +112,12 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 	err = impl.Run(job)
 	cancelWatcher()
 	if err != nil {
-		logrus.Warnf("Job %s failed: %v", job.Id(), err)
+		logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
 		// Don't return this error so the worker picks up the next job immediately
 		return nil
 	}
 
-	logrus.Infof("Job %s finished", job.Id())
+	logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
 	return nil
 }
 
