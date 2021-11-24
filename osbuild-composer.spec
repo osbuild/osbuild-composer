@@ -130,7 +130,7 @@ export GOFLAGS=-mod=vendor
 %if %{?commit:1}0
 export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.GitRev=%{commit}'"
 %endif
-export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.RpmVersion=%{name}-%{epoch}:%{version}-%{release}.%{_arch}'"
+export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.RpmVersion=%{name}-%{?epoch:%epoch:}%{version}-%{release}.%{_arch}'"
 
 %gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
