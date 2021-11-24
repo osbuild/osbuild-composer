@@ -174,7 +174,7 @@ func (q *dbJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	}
 	defer func() {
 		_, err := conn.Exec(ctx, sqlUnlisten)
-		if err != nil {
+		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 			logrus.Error("Error unlistening for jobs in dequeue: ", err)
 		}
 		conn.Release()
