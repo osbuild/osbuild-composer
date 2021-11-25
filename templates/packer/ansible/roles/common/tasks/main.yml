@@ -6,9 +6,6 @@
 # Set systemd/journald overrides
 - include_tasks: systemd.yml
 
-# Deploy certificates.
-- include_tasks: certificates.yml
-
 # Configure monitoring.
 - include_tasks: monitoring.yml
 
