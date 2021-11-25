@@ -404,6 +404,7 @@
                   "sha256:017b5c1b87d13e28982536ebd9ccc4338ee1bbcac547b473b640b710751fd72c",
                   "sha256:645bc4fb616a0efc4d7726269b04fc5ae3cd29fbdf8b397b9f3feb74c9b6d59d",
                   "sha256:199ba1d662c5425b4b3b46a27f20a97ef0855670b38ca73edca19d6f9e0bd2c5",
+                  "sha256:0ad35137e659876ea9ef495828a3555355bbbbce14af8cf22aa51d14f70bc7b6",
                   "sha256:9fc539c202ce82bb118ccc58700cf4d0c63b7bb0abe3cae90c3bfeaa0a8504dd",
                   "sha256:6e034e0a91e8c18ac7b1f6ea04d968411c8baa2d44810ce6c11f7017198054b2",
                   "sha256:61cc95bf9374eead5aab5b350da6fab499ec9010ac39a348f109711cb1c342c6",
@@ -602,9 +603,12 @@
                   "sha256:1a4c86dbeee3c3a89a455185431a67d42a8209769070af983696dca54066fad2",
                   "sha256:0ead7d0cb1b8dc3bf141c9bad65740b859a3c6a4ea7c8d8c57cc5e7b25e5f402",
                   "sha256:197d9d41ec31972a450bfdcc5690c2c477a90ddfb81fa2b226dcabd105410979",
+                  "sha256:dc2367cc223ec0bb0d01e9a081adc88ca0de5d8cc73dbc9dc77fc49c6a36c93b",
+                  "sha256:6719c4688095bbd20bab275e0a1e0f858919182f50cdb6bab81ce92af5df896a",
                   "sha256:79c7910846847854327267392fb69f14a37532ccb18feebe8ca061f2f135c6f6",
                   "sha256:a24f57b6cc0892a7910589fd0e3be6a3500c920641076acf0a66ceda5d0f79f0",
                   "sha256:86445c0378ebb8b2887bd3a7327da62762a165b74ee77d38d083365f63fb1b96",
+                  "sha256:f18f9e1547912e9b490db2499982ec339b3d7fbcef089b6fcd603c1a4b784fe6",
                   "sha256:678d9e12035aab389550895f65fdd1bbc1fc15552a781c09bd658a4cdaed1955",
                   "sha256:bc2135331da61c95c795c0c739044e9d46c34dc5662f5c011b4c99ac21a0737a",
                   "sha256:9c136cde38c61bafce2486ec496b398f2554b2e5388f2599e3d443004ef1e372",
@@ -657,6 +661,7 @@
                   "sha256:de53cef42b96749ae0c808179acb888b00aed8a4a76016451fdce86e5a6c334f",
                   "sha256:b228800c6a6dde2e65fa06e1d64be1f095171cdb5b208e0164d8d4f01d168647",
                   "sha256:b13172f759c04acd4f69c7a5edb8d55f7ff6337cfdd423894d56f0377000fa28",
+                  "sha256:90827ff90e161df4b72b3fecd62fdc5bbe9aab633c8141a874569612ac4b5aea",
                   "sha256:2d66819cc8adc7a0cbb7b9d12dc0a73ac86551e3b7c3929cc49dddad6d3a884b",
                   "sha256:61b6ecd6b72dd21a865a6ed3792b796e30ff7bd68825236a215fa009607a2188",
                   "sha256:0947e9c1f9d5cae2803ad1d6529095c8245cd5cc2dee5747fc6efa45a647b55e",
@@ -1195,6 +1200,9 @@
           "sha256:0947e9c1f9d5cae2803ad1d6529095c8245cd5cc2dee5747fc6efa45a647b55e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/util-linux-2.37.2-1.el9.ppc64le.rpm"
           },
+          "sha256:0ad35137e659876ea9ef495828a3555355bbbbce14af8cf22aa51d14f70bc7b6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/hdparm-9.62-2.el9.ppc64le.rpm"
+          },
           "sha256:0bfccb5948093b75fe69a3538c29d3eb1b8dab25d5e200f280d6a59582019268": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ipcalc-1.0.0-5.el9.ppc64le.rpm"
           },
@@ -1717,6 +1725,9 @@
           "sha256:6713a0d307a853835524ddaade7f649d07ff81eb084bd6ab153b1835ddce70fc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libuuid-2.37.2-1.el9.ppc64le.rpm"
           },
+          "sha256:6719c4688095bbd20bab275e0a1e0f858919182f50cdb6bab81ce92af5df896a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-perf-5.14.0-4.el9.ppc64le.rpm"
+          },
           "sha256:678d9e12035aab389550895f65fdd1bbc1fc15552a781c09bd658a4cdaed1955": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-pyyaml-5.4.1-4.el9.ppc64le.rpm"
           },
@@ -1971,6 +1982,9 @@
           },
           "sha256:901d146cb637bf3fa395c788c5a2cd0ac95ad4b63bf51fc2679b93421747ccc6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-Getopt-Std-1.12-479.el9.noarch.rpm"
+          },
+          "sha256:90827ff90e161df4b72b3fecd62fdc5bbe9aab633c8141a874569612ac4b5aea": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/tuned-2.16.0-3.el9.noarch.rpm"
           },
           "sha256:90d1d28814f7a74dfbfea7b6f41ab7f975841e2ccd5c1f7375ee8535b4576b63": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/shared-mime-info-2.1-4.el9.ppc64le.rpm"
@@ -2416,6 +2430,9 @@
           "sha256:db324737a4f78cb19dac028ecd609a1f514686915079b8fa82b40eaf1a73820a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-Pod-Usage-2.01-4.el9.noarch.rpm"
           },
+          "sha256:dc2367cc223ec0bb0d01e9a081adc88ca0de5d8cc73dbc9dc77fc49c6a36c93b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-linux-procfs-0.6.3-2.el9.noarch.rpm"
+          },
           "sha256:dc7f764658f115feaf199996018c05f67fc01ce3a9522582373be290402af018": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/pcre2-syntax-10.37-3.el9.1.noarch.rpm"
           },
@@ -2535,6 +2552,9 @@
           },
           "sha256:f18d70182997957a981d459b4ce3c14a36ec427dd1d39b63188d9ffce29bc749": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libini_config-1.3.1-51.el9.ppc64le.rpm"
+          },
+          "sha256:f18f9e1547912e9b490db2499982ec339b3d7fbcef089b6fcd603c1a4b784fe6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-pyudev-0.22.0-6.el9.noarch.rpm"
           },
           "sha256:f19ca75d9601a9db2719c3df9edbef2ff57c5ca73943600f497ba390b3a73241": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/redhat-release-eula-9.0-2.8.el9.ppc64le.rpm"
@@ -6408,6 +6428,15 @@
         "checksum": "sha256:199ba1d662c5425b4b3b46a27f20a97ef0855670b38ca73edca19d6f9e0bd2c5"
       },
       {
+        "name": "hdparm",
+        "epoch": 0,
+        "version": "9.62",
+        "release": "2.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/hdparm-9.62-2.el9.ppc64le.rpm",
+        "checksum": "sha256:0ad35137e659876ea9ef495828a3555355bbbbce14af8cf22aa51d14f70bc7b6"
+      },
+      {
         "name": "hostname",
         "epoch": 0,
         "version": "3.23",
@@ -8190,6 +8219,24 @@
         "checksum": "sha256:197d9d41ec31972a450bfdcc5690c2c477a90ddfb81fa2b226dcabd105410979"
       },
       {
+        "name": "python3-linux-procfs",
+        "epoch": 0,
+        "version": "0.6.3",
+        "release": "2.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-linux-procfs-0.6.3-2.el9.noarch.rpm",
+        "checksum": "sha256:dc2367cc223ec0bb0d01e9a081adc88ca0de5d8cc73dbc9dc77fc49c6a36c93b"
+      },
+      {
+        "name": "python3-perf",
+        "epoch": 0,
+        "version": "5.14.0",
+        "release": "4.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-perf-5.14.0-4.el9.ppc64le.rpm",
+        "checksum": "sha256:6719c4688095bbd20bab275e0a1e0f858919182f50cdb6bab81ce92af5df896a"
+      },
+      {
         "name": "python3-pexpect",
         "epoch": 0,
         "version": "4.8.0",
@@ -8215,6 +8262,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-pysocks-1.7.1-10.el9.noarch.rpm",
         "checksum": "sha256:86445c0378ebb8b2887bd3a7327da62762a165b74ee77d38d083365f63fb1b96"
+      },
+      {
+        "name": "python3-pyudev",
+        "epoch": 0,
+        "version": "0.22.0",
+        "release": "6.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-pyudev-0.22.0-6.el9.noarch.rpm",
+        "checksum": "sha256:f18f9e1547912e9b490db2499982ec339b3d7fbcef089b6fcd603c1a4b784fe6"
       },
       {
         "name": "python3-pyyaml",
@@ -8683,6 +8739,15 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/tpm2-tss-3.0.3-6.el9.ppc64le.rpm",
         "checksum": "sha256:b13172f759c04acd4f69c7a5edb8d55f7ff6337cfdd423894d56f0377000fa28"
+      },
+      {
+        "name": "tuned",
+        "epoch": 0,
+        "version": "2.16.0",
+        "release": "3.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/tuned-2.16.0-3.el9.noarch.rpm",
+        "checksum": "sha256:90827ff90e161df4b72b3fecd62fdc5bbe9aab633c8141a874569612ac4b5aea"
       },
       {
         "name": "tzdata",
@@ -9885,9 +9950,9 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "initrd": "/boot/initramfs-5.14.0-4.el9.ppc64le.img",
+        "initrd": "/boot/initramfs-5.14.0-4.el9.ppc64le.img $tuned_initrd",
         "linux": "/boot/vmlinuz-5.14.0-4.el9.ppc64le",
-        "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto $tuned_params",
         "title": "Red Hat Enterprise Linux (5.14.0-4.el9.ppc64le) 9.0 (Plow)",
         "version": "5.14.0-4.el9.ppc64le"
       }
@@ -10262,6 +10327,7 @@
       "gsettings-desktop-schemas-40.0-4.el9.ppc64le",
       "gssproxy-0.8.4-4.el9.ppc64le",
       "gzip-1.10-8.el9.ppc64le",
+      "hdparm-9.62-2.el9.ppc64le",
       "hostname-3.23-6.el9.ppc64le",
       "hwdata-0.348-9.1.el9.noarch",
       "ima-evm-utils-1.3.2-7.el9.ppc64le",
@@ -10546,8 +10612,10 @@
       "python3-libselinux-3.2-6.el9.ppc64le",
       "python3-libsemanage-3.2-4.el9.ppc64le",
       "python3-libxml2-2.9.12-4.el9.ppc64le",
+      "python3-linux-procfs-0.6.3-2.el9.noarch",
       "python3-markupsafe-1.1.1-12.el9.ppc64le",
       "python3-oauthlib-3.1.1-2.el9.noarch",
+      "python3-perf-5.14.0-4.el9.ppc64le",
       "python3-pexpect-4.8.0-7.el9.noarch",
       "python3-policycoreutils-3.2-7.el9.noarch",
       "python3-prettytable-0.7.2-27.el9.noarch",
@@ -10556,6 +10624,7 @@
       "python3-pyserial-3.4-12.el9.noarch",
       "python3-pysocks-1.7.1-10.el9.noarch",
       "python3-pytz-2021.1-4.el9.noarch",
+      "python3-pyudev-0.22.0-6.el9.noarch",
       "python3-pyyaml-5.4.1-4.el9.ppc64le",
       "python3-requests-2.25.1-5.el9.noarch",
       "python3-rpm-4.16.1.3-7.el9.ppc64le",
@@ -10618,6 +10687,7 @@
       "tcpdump-4.99.0-6.el9.ppc64le",
       "teamd-1.31-10.el9.ppc64le",
       "tpm2-tss-3.0.3-6.el9.ppc64le",
+      "tuned-2.16.0-3.el9.noarch",
       "tzdata-2021a-3.el9.noarch",
       "unbound-libs-1.13.1-9.el9.ppc64le",
       "usermode-1.114-2.el9.ppc64le",
@@ -10849,6 +10919,7 @@
       "sshd.service",
       "sssd-kcm.socket",
       "sssd.service",
+      "tuned.service",
       "unbound-anchor.timer"
     ],
     "sudoers": {
@@ -11083,6 +11154,9 @@
           "a+      /var/lib/tpm2-tss/system/keystore   -    -    -     -           default:group:tss:rwx",
           "d       /run/tpm2-tss/eventlog                2775 tss  tss   -           -",
           "a+      /run/tpm2-tss/eventlog                -    -    -     -           default:group:tss:rwx"
+        ],
+        "tuned.conf": [
+          "d /run/tuned 0755 root root -"
         ],
         "var.conf": [
           "q /var 0755 - - -",
