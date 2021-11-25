@@ -278,6 +278,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		irTarget = t
+	case ImageTypes_guest_image:
+		fallthrough
+	case ImageTypes_vsphere:
+		fallthrough
+	case ImageTypes_image_installer:
+		fallthrough
 	case ImageTypes_edge_installer:
 		fallthrough
 	case ImageTypes_edge_container:
@@ -482,6 +488,12 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 		return "vhd"
 	case ImageTypes_azure:
 		return "vhd"
+	case ImageTypes_guest_image:
+		return "qcow2"
+	case ImageTypes_vsphere:
+		return "vmdk"
+	case ImageTypes_image_installer:
+		return "image-installer"
 	case ImageTypes_edge_commit:
 		return "rhel-edge-commit"
 	case ImageTypes_edge_container:
