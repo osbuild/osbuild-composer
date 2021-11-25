@@ -17,7 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -287,7 +286,7 @@ func main() {
 	go func() {
 		jobImpls := map[string]JobImplementation{
 			"depsolve": &DepsolveJobImpl{
-				RPMMD: rpmmd.NewRPMMD(rpmmd_cache, "/usr/libexec/osbuild-composer/dnf-json"),
+				RPMMDCache: rpmmd_cache,
 			},
 		}
 		acceptedJobTypes := []string{}
