@@ -42,7 +42,7 @@
   package:
     name:
       - jq
-      - osbuild-composer
+      - osbuild-composer-worker
       - unzip
       - monit
       - vector
