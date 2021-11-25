@@ -60,11 +60,17 @@ function cleanup {
     sudo systemctl stop httpd || echo "failed to stop httpd"
 }
 
-# Provision the software under tet.
-/usr/libexec/osbuild-composer-test/provision.sh
-
 source /etc/os-release
 ARCH=$(uname -m)
+
+# Skip if running on subscribed RHEL
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+    echo "This test is skipped on subscribed RHEL machines."
+    exit 0
+fi
+
+# Provision the software under tet.
+/usr/libexec/osbuild-composer-test/provision.sh
 
 # Discover what system is installed on the runner
 case "${ID}" in
