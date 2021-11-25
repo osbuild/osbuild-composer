@@ -47,10 +47,13 @@ const (
 	TestImageType2Name = "test_type2"
 
 	// added for cloudapi tests
-	TestImageTypeAmi           = "ami"
-	TestImageTypeVhd           = "vhd"
-	TestImageTypeEdgeCommit    = "rhel-edge-commit"
-	TestImageTypeEdgeInstaller = "rhel-edge-installer"
+	TestImageTypeAmi            = "ami"
+	TestImageTypeVhd            = "vhd"
+	TestImageTypeEdgeCommit     = "rhel-edge-commit"
+	TestImageTypeEdgeInstaller  = "rhel-edge-installer"
+	TestImageTypeImageInstaller = "image-installer"
+	TestImageTypeQcow2          = "qcow2"
+	TestImageTypeVmdk           = "vmdk"
 )
 
 // TestDistro
@@ -259,9 +262,21 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 		name: TestImageTypeEdgeInstaller,
 	}
 
+	it7 := TestImageType{
+		name: TestImageTypeImageInstaller,
+	}
+
+	it8 := TestImageType{
+		name: TestImageTypeQcow2,
+	}
+
+	it9 := TestImageType{
+		name: TestImageTypeVmdk,
+	}
+
 	ta1.addImageTypes(it1)
 	ta2.addImageTypes(it1, it2)
-	ta3.addImageTypes(it3, it4, it5, it6)
+	ta3.addImageTypes(it3, it4, it5, it6, it7, it8, it9)
 
 	td.addArches(&ta1, &ta2, &ta3)
 
