@@ -261,7 +261,8 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"NetworkManager", "nfs-utils", "oddjob",
 			"oddjob-mkhomedir", "psmisc", "python3-jsonschema",
 			"qemu-guest-agent", "redhat-release", "redhat-release-eula",
-			"rsync", "subscription-manager-cockpit", "tar", "tcpdump", "yum",
+			"rsync", "subscription-manager-cockpit", "tar", "tcpdump",
+			"tuned", "yum",
 		},
 		Exclude: []string{
 			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
@@ -283,7 +284,7 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			"@Core", "langpacks-en",
+			"@Core", "langpacks-en", "tuned",
 
 			// From the lorax kickstart
 			"selinux-policy-targeted", "chrony", "WALinuxAgent", "python3",
@@ -302,7 +303,7 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@core", "chrony", "firewalld", "langpacks-en", "open-vm-tools",
-			"selinux-policy-targeted",
+			"selinux-policy-targeted", "tuned",
 		},
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
@@ -315,7 +316,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			"@Core", "langpacks-en",
+			"@Core", "langpacks-en", "tuned",
 
 			// From the lorax kickstart
 			"selinux-policy-targeted", "cloud-init", "qemu-guest-agent",
@@ -487,7 +488,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"psmisc", "python3-jsonschema", "qemu-guest-agent",
 			"redhat-release", "redhat-release-eula", "rsync",
 			"selinux-policy-targeted", "subscription-manager-cockpit", "tar",
-			"tcpdump", "yum",
+			"tcpdump", "tuned", "yum",
 		},
 		Exclude: nil,
 	}.Append(bootPackageSet(t)).Append(distroBuildPackageSet(t))
