@@ -504,11 +504,14 @@ components:
       type: string
       enum:
         - aws
-        - gcp
         - azure
         - edge-commit
         - edge-container
         - edge-installer
+        - gcp
+        - guest-image
+        - image-installer
+        - vsphere
     Repository:
       type: object
       required:
