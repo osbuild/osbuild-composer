@@ -48,13 +48,3 @@ CHECK HOST rhel_cdn WITH ADDRESS cdn.redhat.com
     with ssl options { CACERTIFICATEFILE: /etc/rhsm/ca/redhat-uep.pem }
     then exec {{ pozorbot_script }}
     else if succeeded then exec {{ pozorbot_script }}
-
-# Check for a valid connection to a composer server (valid for workers only).
-CHECK PROGRAM verify_worker_connection WITH PATH /opt/monit/verify_worker_connection
-  # A worker can't talk to its composer.
-  if status == 1
-    then exec {{ pozorbot_script }}
-    else if succeeded then exec {{ pozorbot_script }}
-  # This is not a worker.
-  if status == 2
-    then UNMONITOR

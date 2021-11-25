@@ -15,11 +15,8 @@
 
 - name: Deploy monit scripts
   copy:
-    src: "monit_scripts/{{ item }}"
+    src: monit_scripts/pozorbot_alert
     dest: /opt/monit/
     mode: "0755"
     owner: root
     group: root
-  loop:
-    - pozorbot_alert
-    - verify_worker_connection
