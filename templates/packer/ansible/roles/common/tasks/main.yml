@@ -3,7 +3,7 @@
 # Install various software packages.
 - include_tasks: packages.yml
 
-# Set systemd/journald overrides
+# Set systemd overrides
 - include_tasks: systemd.yml
 
 # Configure monitoring.
