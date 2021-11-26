@@ -1073,7 +1073,10 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge")
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel)
-	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer)
+	bootISOTreePipeline, err := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer, rng)
+	if err != nil {
+		return nil, err
+	}
 
 	pipelines = append(pipelines, *installerTreePipeline, *efibootTreePipeline, *bootISOTreePipeline)
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, t.Arch().Name(), false))
@@ -1081,7 +1084,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	return pipelines, nil
 }
 
-func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *osbuild.Pipeline {
+func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rng *rand.Rand) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "bootiso-tree"
 	p.Build = "name:build"
@@ -1112,6 +1115,11 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 	))
 
 	var sectorSize uint64 = 512
+	// TODO: handle error
+	volid, err := disk.NewRandomVolIDFromReader(rng)
+	if err != nil {
+		return nil, err
+	}
 	pt := disk.PartitionTable{
 		Size: 20971520,
 		Partitions: []disk.Partition{
@@ -1121,6 +1129,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 				Filesystem: &disk.Filesystem{
 					Type:       "vfat",
 					Mountpoint: "/",
+					UUID:       volid,
 				},
 			},
 		},
@@ -1171,7 +1180,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 		copyInputs,
 	))
 
-	return p
+	return p, nil
 }
 
 func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.Pipeline {
