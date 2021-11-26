@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"encoding/hex"
 	"io"
 	"math/rand"
 
@@ -96,4 +97,12 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 	id[6] = (id[6] & 0x0f) | 0x40 // Version 4
 	id[8] = (id[8] & 0x3f) | 0x80 // Variant is 10
 	return id, nil
+}
+
+// NewRandomVolIDFromReader creates a random 32 bit hex string to use as a
+// volume ID for FAT filesystems
+func NewRandomVolIDFromReader(r io.Reader) (string, error) {
+	volid := make([]byte, 4)
+	_, err := r.Read(volid)
+	return hex.EncodeToString(volid), err
 }
