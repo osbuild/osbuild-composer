@@ -753,6 +753,7 @@
                   "sha256:f27279ad4284843cc7d3c81ccf9eb11dbac4826a20d65e643b2f4404ef76fff1",
                   "sha256:9430eea24431470fa135cb08ea1be9731794445c3a1ed7e178aa8aa81a91a717",
                   "sha256:1fc66abab29fa0c42939862b41b98e4d90165985dfd4c2c0c78330e350879758",
+                  "sha256:3beca4e8341b55f857ec0ff5ffd985bdb77879fae48e687a56811b8ac500e558",
                   "sha256:e944eb6ecda4b121fa4cb62b08264665e34c3f9079644a0bd5fe6f470d6ca53b",
                   "sha256:2642e4623fcf504cfaaeac1bfec8d5dab0de93b2f038931e7789461cf3107c59",
                   "sha256:9092b0ad7e9d343d446ae0030763c2e526ff922e7680df4c29d507e38c858d7d",
@@ -9123,6 +9124,15 @@
         "checksum": "sha256:1fc66abab29fa0c42939862b41b98e4d90165985dfd4c2c0c78330e350879758"
       },
       {
+        "name": "python3-libselinux",
+        "epoch": 0,
+        "version": "3.2",
+        "release": "6.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210930/Packages/python3-libselinux-3.2-6.el9.x86_64.rpm",
+        "checksum": "sha256:3beca4e8341b55f857ec0ff5ffd985bdb77879fae48e687a56811b8ac500e558"
+      },
+      {
         "name": "python3-unbound",
         "epoch": 0,
         "version": "1.13.1",
@@ -9730,6 +9740,7 @@
       "python3-libdnf-0.63.0-4.el9.x86_64",
       "python3-librepo-1.14.0-6.el9.x86_64",
       "python3-libs-3.9.7-1.el9.x86_64",
+      "python3-libselinux-3.2-6.el9.x86_64",
       "python3-libxml2-2.9.12-4.el9.x86_64",
       "python3-linux-procfs-0.6.3-2.el9.noarch",
       "python3-nftables-0.9.8-7.el9.x86_64",

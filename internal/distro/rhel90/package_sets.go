@@ -281,20 +281,141 @@ func s390xLegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 
 // OS package sets
 
+// Replacement of the previously used @core package group
+func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{
+		Include: []string{
+			"audit",
+			"basesystem",
+			"bash",
+			"coreutils",
+			"cronie",
+			"crypto-policies",
+			"crypto-policies-scripts",
+			"curl",
+			"dnf",
+			"yum",
+			"e2fsprogs",
+			"filesystem",
+			//"firewalld", // excluded by some images using the @core
+			"glibc",
+			"grubby",
+			"hostname",
+			"iproute",
+			"iproute-tc",
+			"iputils",
+			"kbd",
+			"kexec-tools",
+			"less",
+			"logrotate",
+			"man-db",
+			"ncurses",
+			"openssh-clients",
+			"openssh-server",
+			"p11-kit",
+			"parted",
+			"passwd",
+			"policycoreutils",
+			"procps-ng",
+			"rootfiles",
+			"rpm",
+			"rpm-plugin-audit",
+			"rsyslog",
+			"selinux-policy-targeted",
+			"setup",
+			"shadow-utils",
+			"subscription-manager", // should be included only if 'redhat-release' is in the package set, which it always is
+			"sssd-common",
+			"sssd-kcm",
+			"sudo",
+			"systemd",
+			"tuned",
+			"util-linux",
+			"vim-minimal",
+			"xfsprogs",
+			"authselect",
+			"prefixdevname",
+			"dnf-plugins-core",
+			//"dracut-config-rescue", // excluded by most of the images using @core group
+			"NetworkManager",
+			"NetworkManager-team",
+			"NetworkManager-tui",
+			"libsysfs",
+			"linux-firmware",
+			"lshw",
+			"lsscsi",
+			"kernel-tools",
+			"sg3_utils",
+			"sg3_utils-libs",
+			"python3-libselinux",
+		},
+	}
+
+	switch t.arch.Name() {
+	case distro.X86_64ArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+				"microcode_ctl",
+				// the ones below are excluded most of the time
+				// "iwl100-firmware",
+				// "iwl105-firmware",
+				// "iwl135-firmware",
+				// "iwl1000-firmware",
+				// "iwl2000-firmware",
+				// "iwl2030-firmware",
+				// "iwl3160-firmware",
+				// "iwl5000-firmware",
+				// "iwl5150-firmware",
+				// "iwl6000g2a-firmware",
+				// "iwl6050-firmware",
+				// "iwl7260-firmware",
+			},
+		})
+
+	case distro.Aarch64ArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+			},
+		})
+
+	case distro.Ppc64leArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+				"opal-prd",
+				"ppc64-diag-rtas",
+				"powerpc-utils-core",
+				"lsvpd",
+			},
+		})
+
+	case distro.S390xArchName:
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"s390utils-core",
+			},
+		})
+	}
+
+	return ps
+}
+
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core",
+			//"@core", // replaced by coreOsCommonPackageSet package set
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
 			"cockpit-system",
 			"cockpit-ws",
-			"dnf",
+			//"dnf", // part of coreOsCommonPackageSet package set
 			"dnf-utils",
 			"dosfstools",
-			"NetworkManager",
+			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"nfs-utils",
 			"oddjob",
 			"oddjob-mkhomedir",
@@ -307,8 +428,8 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
-			"tuned",
-			"yum",
+			//"tuned", // part of coreOsCommonPackageSet package set
+			//"yum", // part of coreOsCommonPackageSet package set
 		},
 		Exclude: []string{
 			"aic94xx-firmware",
@@ -317,47 +438,48 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-tools-firmware",
 			"biosdevname",
 			"dnf-plugin-spacewalk",
-			"dracut-config-rescue",
+			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"fedora-release",
 			"fedora-repos",
-			"firewalld",
+			//"firewalld", // removed from the coreOsCommonPackageSet package set
 			"iprutils",
 			"ivtv-firmware",
-			"iwl100-firmware",
-			"iwl1000-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
+			// "iwl100-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl1000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl105-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl135-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl2000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl2030-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl3160-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl5000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl5150-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6000g2a-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6000g2b-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6050-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl7260-firmware", // removed from the coreOsCommonPackageSet package set
 			"langpacks-*",
 			"langpacks-en",
-			"langpacks-en",
+			//"langpacks-en", // duplicate entry
 			"libertas-sd8787-firmware",
 			"nss",
 			"plymouth",
 			"rng-tools",
 			"udisks2",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			"@Core",
+			//"@Core", // replaced by coreOsCommonPackageSet package set
 			"langpacks-en",
-			"tuned",
+			//"tuned", // part of coreOsCommonPackageSet package set
 			// From the lorax kickstart
-			"selinux-policy-targeted",
+			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"chrony",
+			"firewalld", // used to be part of coreOsCommonPackageSet package set
 			"WALinuxAgent",
 			"python3",
 			"net-tools",
@@ -369,74 +491,146 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"dhcp-client",
 		},
 		Exclude: []string{
-			"dracut-config-rescue",
+			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
+
+	if t.arch.Name() == distro.X86_64ArchName {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				// packages below used to come from @core group and were not excluded
+				// they may not be needed at all, but kept them here to not need
+				// to exclude them instead in all other images
+				"iwl100-firmware",
+				"iwl105-firmware",
+				"iwl135-firmware",
+				"iwl1000-firmware",
+				"iwl2000-firmware",
+				"iwl2030-firmware",
+				"iwl3160-firmware",
+				"iwl5000-firmware",
+				"iwl5150-firmware",
+				"iwl6000g2a-firmware",
+				"iwl6050-firmware",
+				"iwl7260-firmware",
+			},
+		})
+	}
+
+	return ps
 }
 
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
-			"@core",
+			//"@core", // replaced by coreOsCommonPackageSet package set
 			"chrony",
 			"firewalld",
 			"langpacks-en",
 			"open-vm-tools",
-			"selinux-policy-targeted",
-			"tuned",
+			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
+			//"tuned", // part of coreOsCommonPackageSet package set
 		},
 		Exclude: []string{
-			"dracut-config-rescue",
+			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
 
+	if t.arch.Name() == distro.X86_64ArchName {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				// packages below used to come from @core group and were not excluded
+				// they may not be needed at all, but kept them here to not need
+				// to exclude them instead in all other images
+				"iwl100-firmware",
+				"iwl105-firmware",
+				"iwl135-firmware",
+				"iwl1000-firmware",
+				"iwl2000-firmware",
+				"iwl2030-firmware",
+				"iwl3160-firmware",
+				"iwl5000-firmware",
+				"iwl5150-firmware",
+				"iwl6000g2a-firmware",
+				"iwl6050-firmware",
+				"iwl7260-firmware",
+			},
+		})
+	}
+
+	return ps
 }
 
 func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			"@Core",
+			//"@Core", // replaced by coreOsCommonPackageSet package set
 			"langpacks-en",
-			"tuned",
+			//"tuned", // part of coreOsCommonPackageSet package set
+			"firewalld", // used to be part of coreOsCommonPackageSet package set
 
 			// From the lorax kickstart
-			"selinux-policy-targeted",
+			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"cloud-init",
 			"qemu-guest-agent",
 			"spice-vdagent",
 		},
 		Exclude: []string{
-			"dracut-config-rescue",
+			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
 
+	if t.arch.Name() == distro.X86_64ArchName {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				// packages below used to come from @core group and were not excluded
+				// they may not be needed at all, but kept them here to not need
+				// to exclude them instead in all other images
+				"iwl100-firmware",
+				"iwl105-firmware",
+				"iwl135-firmware",
+				"iwl1000-firmware",
+				"iwl2000-firmware",
+				"iwl2030-firmware",
+				"iwl3160-firmware",
+				"iwl5000-firmware",
+				"iwl5150-firmware",
+				"iwl6000g2a-firmware",
+				"iwl6050-firmware",
+				"iwl7260-firmware",
+			},
+		})
+	}
+
+	return ps
 }
 
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core",
+			//"@core", // replaced by coreOsCommonPackageSet package set
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
 			"dhcp-client",
+			"dracut-config-rescue", // used to be part of @core group but excluded by most images
 			"yum-utils",
 			"dracut-config-generic",
 			"gdisk",
 			"grub2",
 			"langpacks-en",
-			"NetworkManager",
+			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"NetworkManager-cloud-setup",
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
 			"tar",
-			"tuned",
+			//"tuned", // part of coreOsCommonPackageSet package set
 			"qemu-guest-agent",
 		},
 		Exclude: []string{
@@ -444,26 +638,26 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-firmware",
 			"alsa-tools-firmware",
 			"biosdevname",
-			"firewalld",
+			//"firewalld", // not part of coreOsCommonPackageSet package set any more
 			"iprutils",
 			"ivtv-firmware",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
+			// "iwl1000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl100-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl105-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl135-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl2000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl2030-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl3160-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl5000-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl5150-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6000g2a-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6000g2b-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl6050-firmware", // removed from the coreOsCommonPackageSet package set
+			// "iwl7260-firmware", // removed from the coreOsCommonPackageSet package set
 			"libertas-sd8787-firmware",
 			"plymouth",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 // rhel-ec2 image package set
@@ -679,11 +873,12 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"chrony",
 			"cockpit-system",
 			"cockpit-ws",
-			"@core",
+			//"@core", // replaced by coreOsCommonPackageSet package set
 			"dhcp-client",
-			"dnf",
+			//"dnf", // part of coreOsCommonPackageSet package set
 			"dnf-utils",
 			"dosfstools",
+			"firewalld", // used to be part of coreOsCommonPackageSet package set
 			"iwl1000-firmware",
 			"iwl100-firmware",
 			"iwl105-firmware",
@@ -699,7 +894,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"iwl7260-firmware",
 			"lvm2",
 			"net-tools",
-			"NetworkManager",
+			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"nfs-utils",
 			"oddjob",
 			"oddjob-mkhomedir",
@@ -710,14 +905,14 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
-			"selinux-policy-targeted",
+			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
-			"tuned",
-			"yum",
+			//"tuned", // part of coreOsCommonPackageSet package set
+			//"yum", // part of coreOsCommonPackageSet package set
 		},
-	}.Append(bootPackageSet(t)).Append(distroBuildPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroBuildPackageSet(t))
 }
 
 // packages that are only in some (sub)-distributions
