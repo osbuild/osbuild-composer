@@ -3,9 +3,6 @@
 # Install various software packages.
 - include_tasks: packages.yml
 
-# Set systemd overrides
-- include_tasks: systemd.yml
-
 # Configure monitoring.
 - include_tasks: monitoring.yml
 
