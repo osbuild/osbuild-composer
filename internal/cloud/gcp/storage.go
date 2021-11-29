@@ -2,6 +2,8 @@ package gcp
 
 import (
 	"context"
+	// gcp uses MD5 hashes
+	/* #nosec G501 */
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -46,6 +48,8 @@ func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object 
 	defer imageFile.Close()
 
 	// Compute MD5 checksum of the image file for later verification
+	// gcp uses MD5 hashes
+	/* #nosec G401 */
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
 		return nil, fmt.Errorf("cannot create md5 of the image: %v", err)

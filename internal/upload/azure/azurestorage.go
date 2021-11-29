@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	// azure uses MD5 hashes
+	/* #nosec G501 */
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -88,6 +90,8 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	}
 
 	// Hash the imageFile
+	// azure uses MD5 hashes
+	/* #nosec G401 */
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
 		return fmt.Errorf("cannot create md5 of the image: %v", err)
