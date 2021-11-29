@@ -28,6 +28,7 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
 	}
 
 	serverURL, err := url.Parse(server)

@@ -28,6 +28,7 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
 	}
 
 	serverURL, err := url.Parse(server)
@@ -65,6 +66,7 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
 	}
 
 	serverURL, err := url.Parse(server)

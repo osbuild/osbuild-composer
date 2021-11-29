@@ -21,6 +21,7 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
 	}
 
 	serverURL, err := url.Parse(server)
