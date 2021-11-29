@@ -3,10 +3,15 @@ linters-settings:
     disable:
       - shadow # default value recommended by golangci
       - composites
+  
+linters:
+  enable:
+    - gosec
 
 run:
   build-tags:
     - integration
+  timeout: 5m
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
