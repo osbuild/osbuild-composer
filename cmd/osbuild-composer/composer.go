@@ -348,6 +348,7 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 		Certificates: []tls.Certificate{cert},
 		ClientAuth:   c.ClientAuth,
 		ClientCAs:    roots,
+		MinVersion:   tls.VersionTLS12,
 		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 			for _, chain := range verifiedChains {
 				for _, domain := range c.AllowedDomains {
