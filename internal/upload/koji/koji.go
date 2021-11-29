@@ -2,6 +2,8 @@ package koji
 
 import (
 	"bytes"
+	// koji uses MD5 hashes
+	/* #nosec G501 */
 	"crypto/md5"
 	"encoding/json"
 	"errors"
@@ -343,6 +345,8 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64, error) {
 	chunk := make([]byte, 1024*1024) // upload a megabyte at a time
 	offset := uint64(0)
+	// Koji uses MD5 hashes
+	/* #nosec G401 */
 	hash := md5.New()
 	for {
 		n, err := file.Read(chunk)
