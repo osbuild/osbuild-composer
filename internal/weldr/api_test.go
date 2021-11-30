@@ -941,6 +941,8 @@ func TestComposeLogs(t *testing.T) {
 
 		var buffer bytes.Buffer
 
+		// vulnerability already tested
+		/* #nosec G110 */
 		_, err = io.Copy(&buffer, tr)
 		require.NoErrorf(t, err, "cannot copy untar result")
 		require.Equalf(t, c.ExpectedFileContent, buffer.String(), "%s: unexpected log content", c.Path)
