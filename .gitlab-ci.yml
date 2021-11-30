@@ -313,11 +313,11 @@ Integration:
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
-  TARGET:
-    - azure
+  IMAGE_TYPE:
     - aws
+    - azure
+    - edge-commit
     - gcp
-    - aws.s3
 
 API:
   stage: test
@@ -328,22 +328,9 @@ API:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${TARGET}
+    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
   parallel:
     matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          # See COMPOSER-1118
-          # - aws/centos-stream-8-x86_64
-      - TARGET:
-          - aws
-          - gcp
-          - aws.s3
-        RUNNER:
-          - aws/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.5-ga-x86_64
