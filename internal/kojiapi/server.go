@@ -400,7 +400,7 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 		if _, _, err := h.getBuildJob(deps[i]); err != nil {
 			panic(err)
 		}
-		var buildResult worker.OSBuildJobResult
+		var buildResult worker.OSBuildKojiJobResult
 		_, _, err = h.server.workers.JobStatus(deps[i], &buildResult)
 		if err != nil {
 			// This is a programming error.
