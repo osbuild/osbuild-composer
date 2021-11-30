@@ -12,7 +12,20 @@
 # from a run on a remote continuous integration system.
 #
 
+if (( $# != 1 )); then
+    echo "$0 requires exactly one argument"
+    echo "Please specify an image type to build"
+    exit 1
+fi
+
 set -euxo pipefail
+
+IMAGE_TYPE="$1"
+
+# Colorful timestamped output.
+function greenprint {
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+}
 
 ARTIFACTS=ci-artifacts
 mkdir -p "${ARTIFACTS}"
@@ -85,7 +98,7 @@ EOF
 sudo systemctl restart osbuild-composer
 
 #
-# Which cloud provider are we testing?
+# Cloud provider / target names
 #
 
 CLOUD_PROVIDER_AWS="aws"
@@ -93,34 +106,43 @@ CLOUD_PROVIDER_GCP="gcp"
 CLOUD_PROVIDER_AZURE="azure"
 CLOUD_PROVIDER_AWS_S3="aws.s3"
 
-CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
+#
+# Supported Image type names
+#
+IMAGE_TYPE_AWS="aws"
+IMAGE_TYPE_AZURE="azure"
+IMAGE_TYPE_EDGE_COMMIT="edge-commit"
+IMAGE_TYPE_EDGE_CONTAINER="edge-container"
+IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
+IMAGE_TYPE_GCP="gcp"
+IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
+IMAGE_TYPE_GUEST="guest-image"
+IMAGE_TYPE_VSPHERE="vsphere"
 
-case $CLOUD_PROVIDER in
-  "$CLOUD_PROVIDER_AWS")
-    echo "Testing AWS"
-    ;;
-  "$CLOUD_PROVIDER_GCP")
-    echo "Testing Google Cloud Platform"
-    if [[ $ID == fedora ]]; then
-        echo "Skipped, Fedora isn't supported by GCP"
-        exit 0
-    fi
-    ;;
-  "$CLOUD_PROVIDER_AZURE")
-    echo "Testing Azure"
-    ;;
-  "$CLOUD_PROVIDER_AWS_S3")
-    echo "Testing S3 bucket upload"
-    if [[ $ID != "rhel" ]]; then
-        echo "Skipped. S3 upload test is only tested on RHEL (testing only image type: rhel-edge-commit)."
-        exit 0
-    fi
-    ;;
-  *)
-    echo "Unknown cloud provider '$CLOUD_PROVIDER'. Supported are '$CLOUD_PROVIDER_AWS', '$CLOUD_PROVIDER_AWS_S3', '$CLOUD_PROVIDER_GCP', '$CLOUD_PROVIDER_AZURE'"
-    exit 1
-    ;;
+# select cloud provider based on image type
+#
+# the supported image types are listed in the api spec (internal/cloudapi/v2/openapi.v2.yml)
+
+case ${IMAGE_TYPE} in
+    "$IMAGE_TYPE_AWS")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS}"
+        ;;
+    "$IMAGE_TYPE_AZURE")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_AZURE}"
+        ;;
+    "$IMAGE_TYPE_GCP")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_GCP}"
+        ;;
+    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
+        # blobby image types: upload to s3 and provide download link
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS_S3}"
+        ;;
+    *)
+        echo "Unknown image type: ${IMAGE_TYPE}"
+        exit 1
 esac
+
+greenprint "Using Cloud Provider / Target ${CLOUD_PROVIDER} for Image Type ${IMAGE_TYPE}"
 
 #
 # Verify that this script is running in the right environment.
@@ -478,7 +500,7 @@ function createReqFileAWS() {
   },
   "image_request": {
       "architecture": "$ARCH",
-      "image_type": "aws",
+      "image_type": "${IMAGE_TYPE}",
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
       "upload_options": {
         "region": "${AWS_REGION}",
@@ -502,11 +524,22 @@ function createReqFileAWSS3() {
   "customizations": {
     "packages": [
       "postgresql"
+    ],
+    "users":[
+      {
+        "name": "user1",
+        "groups": ["wheel"],
+        "key": "$(cat /tmp/usertest.pub)"
+      },
+      {
+        "name": "user2",
+        "key": "$(cat /tmp/usertest.pub)"
+      }
     ]
   },
   "image_request": {
     "architecture": "$ARCH",
-    "image_type": "edge-commit",
+    "image_type": "${IMAGE_TYPE}",
     "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
     "ostree": {
       "ref": "${OSTREE_REF}"
@@ -539,7 +572,7 @@ function createReqFileGCP() {
   },
   "image_request": {
     "architecture": "$ARCH",
-    "image_type": "gcp",
+    "image_type": "${IMAGE_TYPE}",
     "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
     "upload_options": {
       "bucket": "${GCP_BUCKET}",
@@ -565,7 +598,7 @@ function createReqFileAzure() {
   },
   "image_request": {
     "architecture": "$ARCH",
-    "image_type": "azure",
+    "image_type": "${IMAGE_TYPE}",
     "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
     "upload_options": {
       "tenant_id": "${AZURE_TENANT_ID}",
@@ -822,13 +855,13 @@ function verifyInAWS() {
 
   AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
   AWS_SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
-  
+
   # Tag image and snapshot with "gitlab-ci-test" tag
   $AWS_CMD ec2 create-tags \
     --resources "${AWS_SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
     --tags Key=gitlab-ci-test,Value=true
 
-  
+
   SHARE_OK=1
 
   # Verify that the ec2 snapshot was shared
@@ -889,53 +922,112 @@ function verifyInAWS() {
   fi
 }
 
+# verify edge commit content
+function verifyEdgeCommit() {
+    filename="$1"
+    greenprint "Verifying contents of ${filename}"
 
-# Verify tarball in AWS S3
+    # extract tarball and save file list to artifacts directroy
+    local COMMIT_DIR
+    COMMIT_DIR="${WORKDIR}/edge-commit"
+    mkdir -p "${COMMIT_DIR}"
+    tar xvf "${filename}" -C "${COMMIT_DIR}" > "${ARTIFACTS}/edge-commit-filelist.txt"
+
+    # Verify that the commit contains the ref we defined in the request
+    sudo dnf install -y ostree
+    local COMMIT_REF
+    COMMIT_REF=$(ostree refs --repo "${COMMIT_DIR}/repo")
+    if [[ "${COMMIT_REF}" !=  "${OSTREE_REF}" ]]; then
+        echo "Commit ref in archive does not match request 😠"
+        exit 1
+    fi
+
+    local TAR_COMMIT_ID
+    TAR_COMMIT_ID=$(ostree rev-parse --repo "${COMMIT_DIR}/repo" "${OSTREE_REF}")
+    API_COMMIT_ID_V2=$(curl \
+        --silent \
+        --show-error \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --key /etc/osbuild-composer/client-key.pem \
+        --cert /etc/osbuild-composer/client-crt.pem \
+        https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
+
+    if [[ "${API_COMMIT_ID_V2}" != "${TAR_COMMIT_ID}" ]]; then
+        echo "Commit ID returned from API does not match Commit ID in archive 😠"
+        exit 1
+    fi
+
+}
+
+# Verify image blobs from s3
+function verifyDisk() {
+    filename="$1"
+    greenprint "Verifying contents of ${filename}"
+
+    infofile="${filename}-info.json"
+    sudo /usr/libexec/osbuild-composer-test/image-info "${filename}" | tee "${infofile}" > /dev/null
+    
+    # save image info to artifacts
+    cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
+
+    # check compose request users in passwd
+    if ! jq .passwd "${infofile}" | grep -q "user1"; then
+        greenprint "❌ user1 not found in passwd file"
+        exit 1
+    fi
+    if ! jq .passwd "${infofile}" | grep -q "user2"; then
+        greenprint "❌ user2 not found in passwd file"
+        exit 1
+    fi
+    # check packages for postgresql
+    if ! jq .packages "${infofile}" | grep -q "postgresql"; then
+        greenprint "❌ postgresql not found in packages"
+        exit 1
+    fi
+
+    greenprint "✅ ${filename} image info verified"
+}
+
+
+# Verify s3 blobs
 function verifyInAWSS3() {
-  local S3_URL
-  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+    local S3_URL
+    S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+    greenprint "Verifying S3 object at ${S3_URL}"
 
-  # Tag the resource as a test file
-  local S3_FILENAME
-  S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+    # Tag the resource as a test file
+    local S3_FILENAME
+    S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
 
-  $AWS_CMD s3api put-object-tagging \
-	  --bucket "${AWS_BUCKET}" \
-	  --key "${S3_FILENAME}" \
-	  --tagging '{"TagSet": [{ "Key": "gitlab-ci-test", "Value": "true" }]}'	  
+    # tag the object, also verifying that it exists in the bucket as expected
+    $AWS_CMD s3api put-object-tagging \
+        --bucket "${AWS_BUCKET}" \
+        --key "${S3_FILENAME}" \
+        --tagging '{"TagSet": [{ "Key": "gitlab-ci-test", "Value": "true" }]}'
 
-  # Download the commit using the Presigned URL
-  curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
+    greenprint "✅ Successfully tagged S3 object"
 
-  # extract tarball and save file list to artifacts directroy
-  local COMMIT_DIR
-  COMMIT_DIR="${WORKDIR}/edge-commit"
-  mkdir -p "${COMMIT_DIR}"
-  tar xvf "${WORKDIR}/edge-commit.tar" -C "${COMMIT_DIR}" > "${ARTIFACTS}/edge-commit-filelist.txt"
+    # Download the object using the Presigned URL and inspect
+    case ${IMAGE_TYPE} in
+        "$IMAGE_TYPE_EDGE_COMMIT")
+            curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
+            verifyEdgeCommit "${WORKDIR}/edge-commit.tar"
+            ;;
+        "${IMAGE_TYPE_GUEST}")
+            curl "${S3_URL}" --output "${WORKDIR}/disk.qcow2"
+            verifyDisk "${WORKDIR}/disk.qcow2"
+            ;;
 
-  # Verify that the commit contains the ref we defined in the request
-  sudo dnf install -y ostree
-  local COMMIT_REF
-  COMMIT_REF=$(ostree refs --repo "${COMMIT_DIR}/repo")
-  if [[ "${COMMIT_REF}" !=  "${OSTREE_REF}" ]]; then
-      echo "Commit ref in archive does not match request 😠"
-      exit 1
-  fi
+        "${IMAGE_TYPE_VSPHERE}")
+            curl "${S3_URL}" --output "${WORKDIR}/disk.vmdk"
+            verifyDisk "${WORKDIR}/disk.vmdk"
+            ;;
+        *)
+            greenprint "No validation method for image type ${IMAGE_TYPE}"
+            ;;
+    esac
 
-  local TAR_COMMIT_ID
-  TAR_COMMIT_ID=$(ostree rev-parse --repo "${COMMIT_DIR}/repo" "${OSTREE_REF}")
-  API_COMMIT_ID_V2=$(curl \
-    --silent \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata | jq -r '.ostree_commit')
-
-  if [[ "${API_COMMIT_ID_V2}" != "${TAR_COMMIT_ID}" ]]; then
-      echo "Commit ID returned from API does not match Commit ID in archive 😠"
-      exit 1
-  fi
+    greenprint "✅ Successfully verified S3 object"
 }
 
 # Verify image in Compute Engine on GCP
@@ -1027,7 +1119,7 @@ function verifyInAzure() {
       --vnet-name "vnet-$TEST_ID" \
       --network-security-group "nsg-$TEST_ID" \
       --public-ip-address "ip-$TEST_ID" \
-      --location "$AZURE_LOCATION" 
+      --location "$AZURE_LOCATION"
 
   # create the instance
   AZURE_INSTANCE_NAME="vm-$TEST_ID"
