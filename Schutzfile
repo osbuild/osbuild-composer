@@ -25,6 +25,13 @@
       }
     }
   },
+  "rhel-8.5": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+      }
+    }
+  },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
