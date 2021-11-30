@@ -24,6 +24,9 @@ REPOS=$(mktemp -d)
 sudo dnf -y install osbuild-composer-tests
 sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
 
+# disbale dnf-json before removing the packages
+sudo systemctl disable --now osbuild-dnf-json.socket
+
 # Remove the "new" worker
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
 
@@ -45,6 +48,10 @@ EOF
 # Composer v33
 setup_repo osbuild-composer "$WORKER_VERSION" 20
 sudo dnf install -y osbuild-composer-worker podman composer-cli
+
+# enable dnf-json
+sudo cat /usr/libexec/osbuild-composer/dnf-json
+sudo systemctl enable --now osbuild-dnf-json.socket
 
 # verify the right worker is installed just to be sure
 rpm -q "$WORKER_RPM"
