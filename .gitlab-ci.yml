@@ -59,8 +59,8 @@ RPM:
           - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.5-ga-x86_64
+          - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -136,8 +136,8 @@ Base:
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
           # - aws/fedora-34-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.5-ga-x86_64
+          - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -193,8 +193,8 @@ Regression:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.5-ga-x86_64
+          - aws/rhel-8.5-ga-aarch64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-nightly-x86_64
@@ -223,7 +223,7 @@ OSTree:
           - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
-          - openstack/rhel-8.4-ga-x86_64
+          - openstack/rhel-8.5-ga-x86_64
           - openstack/rhel-8.6-nightly-x86_64
           - openstack/rhel-9.0-nightly-x86_64
           - openstack/centos-stream-8-x86_64
@@ -303,7 +303,7 @@ Integration:
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
-          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -347,7 +347,7 @@ API:
           - aws/centos-stream-8-x86_64
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -369,7 +369,7 @@ libvirt:
           - openstack/fedora-33-x86_64
           - openstack/centos-stream-8-x86_64
       - RUNNER:
-          - openstack/rhel-8.4-ga-x86_64
+          - openstack/rhel-8.5-ga-x86_64
           - openstack/rhel-8.6-nightly-x86_64
           - openstack/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -384,7 +384,7 @@ RHEL 9 on 8:
     - /usr/libexec/tests/osbuild-composer/koji.sh
   interruptible: true
   variables:
-    RUNNER: aws/rhel-8.4-ga-x86_64
+    RUNNER: aws/rhel-8.5-ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-90
 
