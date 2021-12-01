@@ -49,16 +49,13 @@ EOF
 setup_repo osbuild-composer "$WORKER_VERSION" 20
 sudo dnf install -y osbuild-composer-worker podman composer-cli
 
-# enable dnf-json
-sudo cat /usr/libexec/osbuild-composer/dnf-json
-sudo systemctl enable --now osbuild-dnf-json.socket
-
 # verify the right worker is installed just to be sure
 rpm -q "$WORKER_RPM"
 
 # run container
 WELDR_DIR="$(mktemp -d)"
 WELDR_SOCK="$WELDR_DIR/api.socket"
+COMPOSER_DIR="$(mktemp -d)"
 
 sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
@@ -73,9 +70,10 @@ sudo podman run  \
      -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
      -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
      -v "$WELDR_DIR:/run/weldr/":Z \
+     -v "$COMPOSER_DIR:/run/osbuild-dnf-json/":Z \
      -p 8700:8700 \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
-     --weldr-api --remote-worker-api \
+     --weldr-api --dnf-json --remote-worker-api \
      --no-local-worker-api --no-composer-api
 
 # try starting a worker

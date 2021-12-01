@@ -95,12 +95,27 @@ class Cli(contextlib.AbstractContextManager):
             help="Disable the weldr-API",
         )
 
+        # --[no-]dnf-json
+        self._parser.add_argument(
+            "--dnf-json",
+            action="store_true",
+            dest="dnf_json",
+            help="Enable  dnf-json",
+        )
+        self._parser.add_argument(
+            "--no-dnf-json",
+            action="store_false",
+            dest="dnf_json",
+            help="Disable dnf-json",
+        )
+
         self._parser.set_defaults(
             builtin_worker=False,
             composer_api=False,
             local_worker_api=False,
             remote_worker_api=False,
             weldr_api=False,
+            dnf_json=False,
         )
 
         return self._parser.parse_args(self._argv[1:])
@@ -189,6 +204,17 @@ class Cli(contextlib.AbstractContextManager):
 
         return sockets
 
+    # dnf-json.socket
+    def _prepare_dnf_json_socket(self):
+        # dnf-json.socket
+        print("Create dnf-json socket", file=sys.stderr)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._exitstack.enter_context(contextlib.closing(sock))
+        sock.bind("/run/osbuild-dnf-json/api.sock")
+        sock.listen()
+        return sock
+
+
     @staticmethod
     def _spawn_worker():
         cmd = [
@@ -238,11 +264,40 @@ class Cli(contextlib.AbstractContextManager):
             preexec_fn=preexec_setenv,
         )
 
+    @staticmethod
+    def _spawn_dnf_json(dnf_sock):
+        cmd = [
+            "/usr/libexec/osbuild-composer/dnf-json",
+        ]
+
+        # We need to set `LISTEN_PID=` to the target PID. The only way python
+        # allows us to do this is to hook into `preexec_fn=`, which is executed
+        # by `subprocess.Popen()` after forking, but before executing the new
+        # executable.
+        preexec_setenv = lambda: os.putenv("LISTEN_PID", str(os.getpid()))
+
+        dnfenv = os.environ.copy()
+        dnfenv["CACHE_DIRECTORY"] = "/var/cache/osbuild-dnf-json"
+        dnfenv["LISTEN_FDS"] = "1"
+        dnfenv["LISTEN_FDNAMES"] = "osbuild-dnf-json.socket"
+        dnfenv["FD_FILENO_HACK"] = str(dnf_sock.fileno())
+
+        return subprocess.Popen(
+            cmd,
+            cwd="/usr/libexec/osbuild-composer",
+            stdin=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            env=dnfenv,
+            pass_fds=[dnf_sock.fileno()],
+            preexec_fn=preexec_setenv,
+        )
+
     def run(self):
         """Program Runtime"""
 
         proc_composer = None
         proc_worker = None
+        proc_dnf_json = None
         res = 0
         sockets = self._prepare_sockets()
 
@@ -250,24 +305,36 @@ class Cli(contextlib.AbstractContextManager):
             if self.args.builtin_worker:
                 proc_worker = self._spawn_worker()
 
+            if self.args.dnf_json:
+                dnf_sock = self._prepare_dnf_json_socket()
+                proc_dnf_json = self._spawn_dnf_json(dnf_sock)
+
             proc_composer = self._spawn_composer(sockets)
 
             res = proc_composer.wait()
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
+            if proc_dnf_json:
+                proc_dnf_json.terminate()
+                proc_dnf_json.wait()
 
             return res
         except KeyboardInterrupt:
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
+            if proc_dnf_json:
+                proc_dnf_json.terminate()
+                proc_dnf_json.wait()
             if proc_composer:
                 proc_composer.terminate()
                 res = proc_composer.wait()
         except:
             if proc_worker:
                 proc_worker.kill()
+            if proc_dnf_json:
+                proc_dnf_json.kill()
             if proc_composer:
                 proc_composer.kill()
             raise

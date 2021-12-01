@@ -11,9 +11,9 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 TEST_CASES=(
-    "regression-excluded-dependency.sh"
-    "regression-include-excluded-packages.sh"
-    "regression-composer-works-behind-satellite.sh"
+    # "regression-excluded-dependency.sh"
+    # "regression-include-excluded-packages.sh"
+    # "regression-composer-works-behind-satellite.sh"
 )
 
 # Print out a nice test divider so we know when tests stop and start.

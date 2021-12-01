@@ -254,15 +254,16 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
 log.info("Starting the dnf-json server")
 
 LISTEN_FDS = int(os.environ.get("LISTEN_FDS", 0))
+FD_FILENO_HACK = int(os.environ.get("FD_FILENO_HACK", 3))
 
 class SystemDActivationSocketServer(socketserver.ForkingMixIn, socketserver.UnixStreamServer):
     def server_bind(self):
-        log.debug("service bind")
+        log.info("service bind")
         assert LISTEN_FDS == 1
-        log.debug("rebind socket")
-        log.debug("address_family: %d ", self.address_family)
-        log.debug("socket_type: %d ", self.socket_type)
-        self.socket = socket.fromfd(3, self.address_family, self.socket_type)
+        log.info("rebind socket")
+        log.info("address_family: %d ", self.address_family)
+        log.info("socket_type: %d ", self.socket_type)
+        self.socket = socket.fromfd(FD_FILENO_HACK, self.address_family, self.socket_type)
 
 server = SystemDActivationSocketServer('', DnfJsonRequestHandler)
 server.serve_forever()
