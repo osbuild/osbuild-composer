@@ -196,6 +196,8 @@ func TestKojiImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// check if the build is really there:
+	// There's no potential command injection vector here
+	/* #nosec G204 */
 	cmd := exec.Command(
 		"koji",
 		"--server", server,

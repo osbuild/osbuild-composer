@@ -270,6 +270,8 @@ func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
 }
 
 func getLogs(t *testing.T, uuid uuid.UUID) string {
+	// There's no potential command injection vector here
+	/* #nosec G204 */
 	cmd := exec.Command("composer-cli", "compose", "log", uuid.String())
 	cmd.Stderr = os.Stderr
 	stdoutReader, err := cmd.StdoutPipe()
