@@ -49,7 +49,7 @@ func TestDegenerate(t *testing.T) {
 		db := jsondb.New(dir, 0755)
 
 		// write-only file
-		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0644)
+		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
 		require.NoError(t, err)
 
 		var d document
@@ -63,7 +63,7 @@ func TestCorrupt(t *testing.T) {
 	require.NoError(t, err)
 	defer cleanupTempDir(t, dir)
 
-	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0755)
+	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
 	require.NoError(t, err)
 
 	db := jsondb.New(dir, 0755)
@@ -77,7 +77,7 @@ func TestRead(t *testing.T) {
 	require.NoError(t, err)
 	defer cleanupTempDir(t, dir)
 
-	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("true"), 0755)
+	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("true"), 0600)
 	require.NoError(t, err)
 
 	db := jsondb.New(dir, 0755)
