@@ -68,7 +68,7 @@ sudo podman run  \
      -v "$WELDR_DIR:/run/weldr/":Z \
      -p 8700:8700 \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
-     --weldr-api --remote-worker-api \
+     --weldr-api --dnf-json --remote-worker-api \
      --no-local-worker-api --no-composer-api
 
 # try starting a worker
