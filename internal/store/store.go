@@ -4,6 +4,8 @@ package store
 
 import (
 	"crypto/rand"
+	// The use of SHA1 is valid here
+	/* #nosec G505 */
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
@@ -90,6 +92,8 @@ func New(stateDir *string, arch distro.Arch, log *log.Logger) *Store {
 }
 
 func randomSHA1String() (string, error) {
+	// The use of SHA1 is accepted here
+	/* #nosec G401 */
 	hash := sha1.New()
 	data := make([]byte, 20)
 	n, err := rand.Read(data)
