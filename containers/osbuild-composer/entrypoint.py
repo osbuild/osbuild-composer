@@ -95,12 +95,27 @@ class Cli(contextlib.AbstractContextManager):
             help="Disable the weldr-API",
         )
 
+        # --[no-]dnf-json
+        self._parser.add_argument(
+            "--dnf-json",
+            action="store_true",
+            dest="dnf_json",
+            help="Enable  dnf-json",
+        )
+        self._parser.add_argument(
+            "--no-dnf-json",
+            action="store_false",
+            dest="dnf_json",
+            help="Disable dnf-json",
+        )
+
         self._parser.set_defaults(
             builtin_worker=False,
             composer_api=False,
             local_worker_api=False,
             remote_worker_api=False,
             weldr_api=False,
+            dnf_json=False,
         )
 
         return self._parser.parse_args(self._argv[1:])
@@ -238,11 +253,29 @@ class Cli(contextlib.AbstractContextManager):
             preexec_fn=preexec_setenv,
         )
 
+    def _spawn_dnf_json(self):
+        cmd = [
+            "/usr/libexec/osbuild-composer/dnf-json",
+        ]
+
+        dnfenv = os.environ.copy()
+        dnfenv["LISTEN_FDS"] = "0"
+        dnfenv["LISTEN_FDNAMES"] = ""
+
+        return subprocess.Popen(
+            cmd,
+            cwd="/usr/libexec/osbuild-composer",
+            stdin=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            env=dnfenv,
+        )
+
     def run(self):
         """Program Runtime"""
 
         proc_composer = None
         proc_worker = None
+        proc_dnf_json = None
         res = 0
         sockets = self._prepare_sockets()
 
@@ -250,24 +283,35 @@ class Cli(contextlib.AbstractContextManager):
             if self.args.builtin_worker:
                 proc_worker = self._spawn_worker()
 
+            if self.args.dnf_json:
+                proc_dnf_json = self._spawn_dnf_json()
+
             proc_composer = self._spawn_composer(sockets)
 
             res = proc_composer.wait()
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
+            if proc_dnf_json:
+                proc_dnf_json.terminate()
+                proc_dnf_json.wait()
 
             return res
         except KeyboardInterrupt:
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
+            if proc_dnf_json:
+                proc_dnf_json.terminate()
+                proc_dnf_json.wait()
             if proc_composer:
                 proc_composer.terminate()
                 res = proc_composer.wait()
         except:
             if proc_worker:
                 proc_worker.kill()
+            if proc_dnf_json:
+                proc_dnf_json.kill()
             if proc_composer:
                 proc_composer.kill()
             raise

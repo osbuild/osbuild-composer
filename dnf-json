@@ -10,6 +10,7 @@ import socketserver
 import logging
 import sys
 from http.server import BaseHTTPRequestHandler
+import pathlib
 
 import dnf
 import hawkey
@@ -254,15 +255,21 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
 log.info("Starting the dnf-json server")
 
 LISTEN_FDS = int(os.environ.get("LISTEN_FDS", 0))
+SOCK_PATH = "/run/osbuild-dnf-json/"
+SOCK_NAME = "api.sock"
 
 class SystemDActivationSocketServer(socketserver.ForkingMixIn, socketserver.UnixStreamServer):
     def server_bind(self):
         log.debug("service bind")
-        assert LISTEN_FDS == 1
-        log.debug("rebind socket")
-        log.debug("address_family: %d ", self.address_family)
-        log.debug("socket_type: %d ", self.socket_type)
-        self.socket = socket.fromfd(3, self.address_family, self.socket_type)
+        if LISTEN_FDS == 0:
+            log.debug("create new socket")
+            socketserver.UnixStreamServer.server_bind(self)
+        else:
+            log.debug("rebind socket")
+            log.debug("address_family: %d ", self.address_family)
+            log.debug("socket_type: %d ", self.socket_type)
+            self.socket = socket.fromfd(3, self.address_family, self.socket_type)
 
-server = SystemDActivationSocketServer('', DnfJsonRequestHandler)
+pathlib.Path(SOCK_PATH).mkdir(parents=True, exist_ok=True)
+server = SystemDActivationSocketServer(f"{SOCK_PATH}{SOCK_NAME}", DnfJsonRequestHandler)
 server.serve_forever()
