@@ -297,7 +297,6 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"yum",
 			"e2fsprogs",
 			"filesystem",
-			//"firewalld", // excluded by some images using the @core
 			"glibc",
 			"grubby",
 			"hostname",
@@ -336,7 +335,6 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"authselect",
 			"prefixdevname",
 			"dnf-plugins-core",
-			//"dracut-config-rescue", // excluded by most of the images using @core group
 			"NetworkManager",
 			"NetworkManager-team",
 			"NetworkManager-tui",
@@ -357,19 +355,6 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			Include: []string{
 				"irqbalance",
 				"microcode_ctl",
-				// the ones below are excluded most of the time
-				// "iwl100-firmware",
-				// "iwl105-firmware",
-				// "iwl135-firmware",
-				// "iwl1000-firmware",
-				// "iwl2000-firmware",
-				// "iwl2030-firmware",
-				// "iwl3160-firmware",
-				// "iwl5000-firmware",
-				// "iwl5150-firmware",
-				// "iwl6000g2a-firmware",
-				// "iwl6050-firmware",
-				// "iwl7260-firmware",
 			},
 		})
 
@@ -405,17 +390,14 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			//"@core", // replaced by coreOsCommonPackageSet package set
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
 			"cockpit-system",
 			"cockpit-ws",
-			//"dnf", // part of coreOsCommonPackageSet package set
 			"dnf-utils",
 			"dosfstools",
-			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"nfs-utils",
 			"oddjob",
 			"oddjob-mkhomedir",
@@ -428,8 +410,6 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
-			//"tuned", // part of coreOsCommonPackageSet package set
-			//"yum", // part of coreOsCommonPackageSet package set
 		},
 		Exclude: []string{
 			"aic94xx-firmware",
@@ -438,28 +418,12 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-tools-firmware",
 			"biosdevname",
 			"dnf-plugin-spacewalk",
-			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"fedora-release",
 			"fedora-repos",
-			//"firewalld", // removed from the coreOsCommonPackageSet package set
 			"iprutils",
 			"ivtv-firmware",
-			// "iwl100-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl1000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl105-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl135-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl2000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl2030-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl3160-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl5000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl5150-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6000g2a-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6000g2b-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6050-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl7260-firmware", // removed from the coreOsCommonPackageSet package set
 			"langpacks-*",
 			"langpacks-en",
-			//"langpacks-en", // duplicate entry
 			"libertas-sd8787-firmware",
 			"nss",
 			"plymouth",
@@ -473,13 +437,10 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			//"@Core", // replaced by coreOsCommonPackageSet package set
 			"langpacks-en",
-			//"tuned", // part of coreOsCommonPackageSet package set
 			// From the lorax kickstart
-			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"chrony",
-			"firewalld", // used to be part of coreOsCommonPackageSet package set
+			"firewalld",
 			"WALinuxAgent",
 			"python3",
 			"net-tools",
@@ -491,7 +452,6 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"dhcp-client",
 		},
 		Exclude: []string{
-			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
@@ -524,16 +484,12 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
-			//"@core", // replaced by coreOsCommonPackageSet package set
 			"chrony",
 			"firewalld",
 			"langpacks-en",
 			"open-vm-tools",
-			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
-			//"tuned", // part of coreOsCommonPackageSet package set
 		},
 		Exclude: []string{
-			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
@@ -567,19 +523,15 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			//"@Core", // replaced by coreOsCommonPackageSet package set
 			"langpacks-en",
-			//"tuned", // part of coreOsCommonPackageSet package set
-			"firewalld", // used to be part of coreOsCommonPackageSet package set
+			"firewalld",
 
 			// From the lorax kickstart
-			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"cloud-init",
 			"qemu-guest-agent",
 			"spice-vdagent",
 		},
 		Exclude: []string{
-			//"dracut-config-rescue", // removed from the coreOsCommonPackageSet package set
 			"rng-tools",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
@@ -612,25 +564,22 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			//"@core", // replaced by coreOsCommonPackageSet package set
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
 			"dhcp-client",
-			"dracut-config-rescue", // used to be part of @core group but excluded by most images
+			"dracut-config-rescue",
 			"yum-utils",
 			"dracut-config-generic",
 			"gdisk",
 			"grub2",
 			"langpacks-en",
-			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"NetworkManager-cloud-setup",
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
 			"tar",
-			//"tuned", // part of coreOsCommonPackageSet package set
 			"qemu-guest-agent",
 		},
 		Exclude: []string{
@@ -638,22 +587,8 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-firmware",
 			"alsa-tools-firmware",
 			"biosdevname",
-			//"firewalld", // not part of coreOsCommonPackageSet package set any more
 			"iprutils",
 			"ivtv-firmware",
-			// "iwl1000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl100-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl105-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl135-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl2000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl2030-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl3160-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl5000-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl5150-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6000g2a-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6000g2b-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl6050-firmware", // removed from the coreOsCommonPackageSet package set
-			// "iwl7260-firmware", // removed from the coreOsCommonPackageSet package set
 			"libertas-sd8787-firmware",
 			"plymouth",
 		},
@@ -873,12 +808,10 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"chrony",
 			"cockpit-system",
 			"cockpit-ws",
-			//"@core", // replaced by coreOsCommonPackageSet package set
 			"dhcp-client",
-			//"dnf", // part of coreOsCommonPackageSet package set
 			"dnf-utils",
 			"dosfstools",
-			"firewalld", // used to be part of coreOsCommonPackageSet package set
+			"firewalld",
 			"iwl1000-firmware",
 			"iwl100-firmware",
 			"iwl105-firmware",
@@ -894,7 +827,6 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"iwl7260-firmware",
 			"lvm2",
 			"net-tools",
-			//"NetworkManager", // part of coreOsCommonPackageSet package set
 			"nfs-utils",
 			"oddjob",
 			"oddjob-mkhomedir",
@@ -905,12 +837,9 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
-			//"selinux-policy-targeted", // part of coreOsCommonPackageSet package set
 			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
-			//"tuned", // part of coreOsCommonPackageSet package set
-			//"yum", // part of coreOsCommonPackageSet package set
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroBuildPackageSet(t))
 }
