@@ -212,6 +212,9 @@ func SetUpTemporaryRepository() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// There's no potential command injection vector here
+	/* #nosec G204 */
 	cmd := exec.Command("createrepo_c", path.Join(dir))
 	err = cmd.Start()
 	if err != nil {

@@ -90,7 +90,9 @@ func newNetworkNamespace() (NetNS, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot set up a loopback device in the new namespace: %v", err)
 	}
-
+	
+	// There's no potential command injection vector here
+	/* #nosec G204 */
 	cmd = exec.Command("mount", "-o", "bind", "/proc/self/ns/net", f.Name())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stderr
@@ -131,6 +133,8 @@ func (n NetNS) Path() string {
 
 // Delete deletes the namespaces
 func (n NetNS) Delete() error {
+	// There's no potential command injection vector here
+        /* #nosec G204 */
 	cmd := exec.Command("umount", n.Path())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
