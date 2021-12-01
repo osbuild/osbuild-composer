@@ -21,12 +21,12 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/"
         ;;
-    "rhel-8.4")
+    "rhel-8.5")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8.4"
-        USER_IN_COMMIT="false"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
+        OS_VARIANT="rhel8.5"
+        USER_IN_COMMIT="true"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.5.0/BaseOS/x86_64/os/"
         ;;
     "rhel-8.6")
         IMAGE_TYPE=edge-commit
