@@ -1276,7 +1276,7 @@ data:
             "hide": 2,
             "label": null,
             "name": "stability_slo",
-            "query": "0.9",
+            "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
           },
@@ -1286,7 +1286,7 @@ data:
             "hide": 2,
             "label": null,
             "name": "latency_slo",
-            "query": "0.9",
+            "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
           }
