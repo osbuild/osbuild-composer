@@ -373,6 +373,8 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 
 	source := rand.NewSource(seed)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
 	rng := rand.New(source)
 
 	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, rng)

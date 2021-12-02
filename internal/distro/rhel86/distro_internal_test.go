@@ -28,6 +28,8 @@ var mountpoints = []blueprint.FilesystemCustomization{
 	},
 }
 
+// math/rand is good enough in this case
+/* #nosec G404 */
 var rng = rand.New(rand.NewSource(0))
 
 func containsMountpoint(expected []disk.Partition, mountpoint string) bool {
