@@ -32,8 +32,8 @@ data:
       "fiscalYearStartMonth": 0,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 207,
-      "iteration": 1635760556540,
+      "id": 32,
+      "iteration": 1638482859191,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -163,7 +163,7 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 5,
+            "w": 3,
             "x": 5,
             "y": 1
           },
@@ -195,6 +195,110 @@ data:
           ],
           "title": "Compose Requests",
           "type": "stat"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The throughput rate of Compose errors and non-errors over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 11,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success/sec"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 1
+          },
+          "id": 202,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "sum(rate(image_builder_composer_total_compose_requests[$interval])) - sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "success/sec",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "errors/sec",
+              "refId": "B"
+            }
+          ],
+          "title": "Compose Throughput Rate",
+          "type": "timeseries"
         },
         {
           "datasource": "${datasource}",
@@ -249,8 +353,8 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 14,
-            "x": 10,
+            "w": 8,
+            "x": 16,
             "y": 1
           },
           "id": 194,
@@ -273,7 +377,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Compose Errors",
+          "title": "Compose Error Rate",
           "type": "timeseries"
         },
         {
@@ -630,9 +734,115 @@ data:
                   }
                 ]
               },
-              "unit": "ms"
+              "unit": "s"
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "99p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "95p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "90p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "50p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p90"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p99"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p50"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -644,7 +854,7 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
+              "displayMode": "list",
               "placement": "bottom"
             },
             "tooltip": {
@@ -654,10 +864,26 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le)) * 1000",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
               "interval": "",
-              "legendFormat": "",
+              "legendFormat": "p50",
               "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p99",
+              "refId": "C"
             }
           ],
           "title": "Compose Request Latency",
@@ -868,7 +1094,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "app-sre-prod-04-prometheus",
               "value": "app-sre-prod-04-prometheus"
             },
@@ -892,9 +1118,9 @@ data:
             "auto_count": 30,
             "auto_min": "10s",
             "current": {
-              "selected": false,
-              "text": "28d",
-              "value": "28d"
+              "selected": true,
+              "text": "5m",
+              "value": "5m"
             },
             "description": null,
             "error": null,
@@ -903,7 +1129,7 @@ data:
             "name": "interval",
             "options": [
               {
-                "selected": false,
+                "selected": true,
                 "text": "5m",
                 "value": "5m"
               },
@@ -948,7 +1174,7 @@ data:
                 "value": "14d"
               },
               {
-                "selected": true,
+                "selected": false,
                 "text": "28d",
                 "value": "28d"
               }
@@ -965,7 +1191,7 @@ data:
             "hide": 2,
             "label": null,
             "name": "stability_slo",
-            "query": "0.95",
+            "query": "0.9",
             "skipUrlSync": false,
             "type": "constant"
           },
@@ -982,7 +1208,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-28d",
+        "from": "now-7d",
         "to": "now"
       },
       "timepicker": {
@@ -1013,5 +1239,5 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "cNGfs4Knz",
-      "version": 2
+      "version": 1
     }
