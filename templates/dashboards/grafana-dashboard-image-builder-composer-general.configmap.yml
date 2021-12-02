@@ -187,7 +187,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_total_compose_requests[$interval]))",
+              "expr": "sum(increase(image_builder_composer_total_compose_requests[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -233,7 +233,6 @@ data:
                 }
               },
               "mappings": [],
-              "max": 1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -243,7 +242,7 @@ data:
                   }
                 ]
               },
-              "unit": "percentunit"
+              "unit": "none"
             },
             "overrides": [
               {
@@ -372,7 +371,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_total_failed_compose_requests[$interval]))/sum(increase(image_builder_composer_total_compose_requests[$interval]))",
+              "expr": "sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))/sum(rate(image_builder_composer_total_compose_requests[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1204,7 +1203,7 @@ data:
             "auto_count": 30,
             "auto_min": "10s",
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "5m",
               "value": "5m"
             },
@@ -1294,7 +1293,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-1h",
+        "from": "now-30d",
         "to": "now"
       },
       "timepicker": {
