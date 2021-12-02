@@ -33,7 +33,7 @@ data:
       "gnetId": null,
       "graphTooltip": 0,
       "id": 32,
-      "iteration": 1638482859191,
+      "iteration": 1638482859201,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -233,6 +233,7 @@ data:
                 }
               },
               "mappings": [],
+              "max": 1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -242,7 +243,7 @@ data:
                   }
                 ]
               },
-              "unit": "none"
+              "unit": "percentunit"
             },
             "overrides": [
               {
@@ -846,7 +847,7 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 19,
+            "w": 11,
             "x": 5,
             "y": 18
           },
@@ -887,6 +888,91 @@ data:
             }
           ],
           "title": "Compose Request Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "Percent of requests exceeding latency allowed by SLO",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 18
+          },
+          "id": 204,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$interval]))/sum(rate(image_builder_composer_http_duration_seconds_count[$interval]))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Slow Request Rate",
           "type": "timeseries"
         },
         {
@@ -1208,7 +1294,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-7d",
+        "from": "now-1h",
         "to": "now"
       },
       "timepicker": {
