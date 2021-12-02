@@ -41,6 +41,8 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 		},
 	}
 	var expectedSize uint64 = 2147483648
+	// math/rand is good enough in this case
+	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
 	pt = disk.CreatePartitionTable(mountpoints, 1024, pt, rng)
 	assert.GreaterOrEqual(t, expectedSize, pt.Size)

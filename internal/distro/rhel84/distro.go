@@ -295,6 +295,8 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 	source := rand.NewSource(seed)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
 	rng := rand.New(source)
 	pipeline, err := t.pipeline(c, options, repos, packageSpecSets["packages"], packageSpecSets["build-packages"], rng)
 	if err != nil {

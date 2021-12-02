@@ -564,6 +564,8 @@ func TestBlueprintsChanges(t *testing.T) {
 
 	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
+	// math/rand is good enough in this case
+	/* #nosec G404 */
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
 
@@ -606,6 +608,8 @@ func TestBlueprintsUndo(t *testing.T) {
 
 	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
+	// math/rand is good enough in this case
+	/* #nosec G404 */
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
 
