@@ -130,7 +130,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))/sum(increase(image_builder_composer_total_compose_requests[$__range]))",
+              "expr": "1 - sum(increase(image_builder_composer_total_failed_compose_requests[$interval]))/sum(increase(image_builder_composer_total_compose_requests[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -187,7 +187,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_total_compose_requests[$__range]))",
+              "expr": "sum(increase(image_builder_composer_total_compose_requests[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -371,7 +371,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))/sum(increase(image_builder_composer_total_compose_requests[$__range]))",
+              "expr": "sum(increase(image_builder_composer_total_failed_compose_requests[$interval]))/sum(increase(image_builder_composer_total_compose_requests[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -465,7 +465,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_total_failed_compose_requests[$__range]))/ sum(rate(image_builder_composer_total_compose_requests[$__range]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))/ sum(rate(image_builder_composer_total_compose_requests[$interval]))) + 0.001)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -564,7 +564,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((1 - sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))/sum(increase(image_builder_composer_total_compose_requests[$__range]))) - $stability_slo)/ (1 - $stability_slo)",
+              "expr": "1 - ((1 - sum(increase(image_builder_composer_total_failed_compose_requests[$interval]))/sum(increase(image_builder_composer_total_compose_requests[$interval]))) - $stability_slo)/ (1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -670,7 +670,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le)) * 1000",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le)) * 1000",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -864,14 +864,14 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p90",
@@ -879,7 +879,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -974,7 +974,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$__range]))/sum(rate(image_builder_composer_http_duration_seconds_count[$__range])))",
+              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$interval]))/sum(rate(image_builder_composer_http_duration_seconds_count[$interval])))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1072,7 +1072,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$__range]))/sum(increase(image_builder_composer_http_duration_seconds_count[$__range]))) - $latency_slo)/ (1 - $latency_slo)",
+              "expr": "1 - ((sum(increase(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$interval]))/sum(increase(image_builder_composer_http_duration_seconds_count[$interval]))) - $latency_slo)/ (1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
