@@ -38,6 +38,15 @@ init:
   script:
     - schutzbot/update_github_status.sh start
 
+
+.RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
+  RUNNER:
+    - aws/rhel-8.6-nightly-x86_64
+    - aws/rhel-8.6-nightly-aarch64
+    - aws/rhel-9.0-nightly-x86_64
+    - aws/rhel-9.0-nightly-aarch64
+  INTERNAL_NETWORK: ["true"]
+
 RPM:
   stage: rpmbuild
   extends: .terraform
@@ -63,12 +72,26 @@ RPM:
           - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/rhel-9.0-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
+
+Build -tests RPM for RHEL:
+  stage: rpmbuild
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+  script:
+    - sh "schutzbot/mockbuild.sh"
+  interruptible: true
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
+  artifacts:
+    paths:
+      - journal-log.gpg
+  parallel:
+    matrix:
+      - <<: *RPM_RUNNERS_RHEL
 
 Container:
   stage: rpmbuild
