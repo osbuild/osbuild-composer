@@ -41,6 +41,7 @@ func TestDefaultConfig(t *testing.T) {
 	require.Equal(t, WorkerAPIConfig{
 		RequestJobTimeout: "0",
 		BasePath:          "/api/worker/v1",
+		EnableArtifacts:   true,
 		EnableTLS:         true,
 		EnableMTLS:        true,
 		EnableJWT:         false,

@@ -214,6 +214,7 @@ objects:
       [worker]
       request_job_timeout = "20s"
       base_path = "/api/image-builder-worker/v1"
+      enable_artifacts = false
       enable_tls = false
       enable_mtls = false
       enable_jwt = true

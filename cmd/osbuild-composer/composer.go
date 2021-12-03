@@ -53,14 +53,13 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		cacheDir: cacheDir,
 	}
 
-	queueDir, err := c.ensureStateDirectory("jobs", 0700)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactsDir, err := c.ensureStateDirectory("artifacts", 0755)
-	if err != nil {
-		return nil, err
+	var err error
+	artifactsDir := ""
+	if config.Worker.EnableArtifacts {
+		artifactsDir, err = c.ensureStateDirectory("artifacts", 0755)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	c.distros = distroregistry.NewDefault()
@@ -88,6 +87,10 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 			return nil, fmt.Errorf("cannot create jobqueue: %v", err)
 		}
 	} else {
+		queueDir, err := c.ensureStateDirectory("jobs", 0700)
+		if err != nil {
+			return nil, err
+		}
 		jobs, err = fsjobqueue.New(queueDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create jobqueue: %v", err)

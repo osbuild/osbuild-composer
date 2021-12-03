@@ -39,6 +39,7 @@ type WorkerAPIConfig struct {
 	CA                string   `toml:"ca"`
 	RequestJobTimeout string   `toml:"request_job_timeout"`
 	BasePath          string   `toml:"base_path"`
+	EnableArtifacts   bool     `toml:"enable_artifacts"`
 	PGHost            string   `toml:"pg_host" env:"PGHOST"`
 	PGPort            string   `toml:"pg_port" env:"PGPORT"`
 	PGDatabase        string   `toml:"pg_database" env:"PGDATABASE"`
@@ -92,6 +93,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 		Worker: WorkerAPIConfig{
 			RequestJobTimeout: "0",
 			BasePath:          "/api/worker/v1",
+			EnableArtifacts:   true,
 			EnableTLS:         true,
 			EnableMTLS:        true,
 			EnableJWT:         false,

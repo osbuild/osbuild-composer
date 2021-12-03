@@ -1197,6 +1197,7 @@ jwt_acl_file = ""
 [worker]
 pg_host = "localhost"
 pg_port = "5432"
+enable_artifacts = false
 pg_database = "osbuildcomposer"
 pg_user = "postgres"
 pg_password = "foobar"
