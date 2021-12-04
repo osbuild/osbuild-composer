@@ -512,6 +512,8 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	for _, pkg := range installerPackages {
 		if pkg.Name == "kernel" {
+			// Implicit memory alasing doesn't couse any bug in this case
+			/* #nosec G601 */
 			kernelPkg = &pkg
 			break
 		}
@@ -1345,6 +1347,8 @@ func kernelVerStr(pkgs []rpmmd.PackageSpec, kernelName, arch string) string {
 	kernelPkg := new(rpmmd.PackageSpec)
 	for _, pkg := range pkgs {
 		if pkg.Name == kernelName {
+			// Implicit memory alasing doesn't couse any bug in this case
+			/* #nosec G601 */
 			kernelPkg = &pkg
 			break
 		}

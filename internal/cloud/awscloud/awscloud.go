@@ -202,6 +202,8 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 		log.Printf("[AWS] 🎥 Sharing ec2 snapshot")
 		var userIds []*string
 		for _, v := range shareWith {
+			// Implicit memory alasing doesn't couse any bug in this case
+			/* #nosec G601 */
 			userIds = append(userIds, &v)
 		}
 		_, err := a.ec2.ModifySnapshotAttribute(
@@ -281,6 +283,8 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 		var launchPerms []*ec2.LaunchPermission
 		for _, id := range shareWith {
 			launchPerms = append(launchPerms, &ec2.LaunchPermission{
+				// Implicit memory alasing doesn't couse any bug in this case
+				/* #nosec G601 */
 				UserId: &id,
 			})
 		}

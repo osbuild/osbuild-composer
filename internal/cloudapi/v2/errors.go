@@ -193,6 +193,8 @@ func APIErrorList(page int, pageSize int, c echo.Context) *ErrorList {
 
 	errs := getServiceErrors()[min(page*pageSize, len(getServiceErrors())):min(((page+1)*pageSize), len(getServiceErrors()))]
 	for _, e := range errs {
+		// Implicit memory alasing doesn't couse any bug in this case
+		/* #nosec G601 */
 		list.Items = append(list.Items, *APIError(e.code, &e, c))
 	}
 	list.Size = len(list.Items)
