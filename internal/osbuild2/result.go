@@ -151,6 +151,8 @@ func convertStageResults(v1Stages []osbuild1.StageResult) (PipelineResult, Pipel
 	result := make([]StageResult, len(v1Stages))
 	metadata := make(map[string]StageMetadata)
 	for idx, srv1 := range v1Stages {
+		// Implicit memory alasing doesn't couse any bug in this case
+		/* #nosec G601 */
 		stageResult, stageMetadata := convertStageResult(&srv1)
 		result[idx] = *stageResult
 		if stageMetadata != nil {
