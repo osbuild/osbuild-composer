@@ -392,6 +392,12 @@ func TestComposeCustomizations(t *testing.T) {
 				"name": "user1",
 				"groups": [ "wheel" ],
 				"key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
+			}],
+			"payload_repositories": [{
+				"baseurl": "some-custom-repo.org",
+				"check_gpg": false,
+				"ignore_ssl": false,
+				"gpg_key": "some-gpg-key"
 			}]
 		},
 		"image_request":{

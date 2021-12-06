@@ -108,6 +108,9 @@ type ImageType interface {
 	// Returns the names of the pipelines that create the image.
 	PayloadPipelines() []string
 
+	// Returns the package set names safe to install custom packages via custom repositories.
+	PayloadPackageSets() []string
+
 	// Returns the names of the stages that will produce the build output.
 	Exports() []string
 
@@ -266,4 +269,8 @@ func PayloadPipelinesFallback() []string {
 
 func ExportsFallback() []string {
 	return []string{"assembler"}
+}
+
+func PayloadPackageSets() []string {
+	return []string{}
 }

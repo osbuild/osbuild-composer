@@ -151,6 +151,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	var payloadRepositories []Repository
+	if request.Customizations != nil && request.Customizations.PayloadRepositories != nil {
+		payloadRepositories = *request.Customizations.PayloadRepositories
+	}
+
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
@@ -182,13 +187,37 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	payloadPackageSets := imageType.PayloadPackageSets()
+	packageSetsRepositories := make(map[string][]rpmmd.RepoConfig, len(payloadPackageSets))
+
+	for _, packageSetKey := range payloadPackageSets {
+		packageSetsRepositories[packageSetKey] = make([]rpmmd.RepoConfig, len(payloadRepositories))
+		for j, repo := range payloadRepositories {
+			if repo.Baseurl != nil {
+				packageSetsRepositories[packageSetKey][j].BaseURL = *repo.Baseurl
+			} else {
+				return HTTPError(ErrorNoBaseURLInPayloadRepository)
+			}
+			if repo.GpgKey != nil {
+				packageSetsRepositories[packageSetKey][j].GPGKey = *repo.GpgKey
+			}
+			if repo.CheckGpg != nil {
+				packageSetsRepositories[packageSetKey][j].CheckGPG = *repo.CheckGpg
+			}
+			if repo.IgnoreSsl != nil {
+				packageSetsRepositories[packageSetKey][j].IgnoreSSL = *repo.IgnoreSsl
+			}
+		}
+	}
+
 	packageSets := imageType.PackageSets(bp)
 	depsolveJobID, err := h.server.workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSets:      packageSets,
-		Repos:            repositories,
-		ModulePlatformID: distribution.ModulePlatformID(),
-		Arch:             arch.Name(),
-		Releasever:       distribution.Releasever(),
+		PackageSets:             packageSets,
+		Repos:                   repositories,
+		ModulePlatformID:        distribution.ModulePlatformID(),
+		Arch:                    arch.Name(),
+		Releasever:              distribution.Releasever(),
+		PackageSetsRepositories: packageSetsRepositories,
 	})
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)

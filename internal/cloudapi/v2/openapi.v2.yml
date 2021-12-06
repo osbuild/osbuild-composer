@@ -531,6 +531,12 @@ components:
           type: string
           format: url
           example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
+        gpg_key:
+          type: string
+        check_gpg:
+          type: boolean
+        ignore_ssl:
+          type: boolean
     UploadOptions:
       oneOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
@@ -669,6 +675,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+        payload_repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
     OSTree:
       type: object
       properties:
