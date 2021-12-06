@@ -127,6 +127,10 @@ func (t *imageTypeS2) PayloadPipelines() []string {
 	return t.payloadPipelines
 }
 
+func (t *imageTypeS2) PayloadPackageSets() []string {
+	return []string{"packages"}
+}
+
 func (t *imageTypeS2) Exports() []string {
 	return t.exports
 }

@@ -94,11 +94,12 @@ func (pn *PipelineNames) All() []string {
 }
 
 type DepsolveJob struct {
-	PackageSets      map[string]rpmmd.PackageSet `json:"package_sets"`
-	Repos            []rpmmd.RepoConfig          `json:"repos"`
-	ModulePlatformID string                      `json:"module_platform_id"`
-	Arch             string                      `json:"arch"`
-	Releasever       string                      `json:"releasever"`
+	PackageSets             map[string]rpmmd.PackageSet   `json:"package_sets"`
+	Repos                   []rpmmd.RepoConfig            `json:"repos"`
+	ModulePlatformID        string                        `json:"module_platform_id"`
+	Arch                    string                        `json:"arch"`
+	Releasever              string                        `json:"releasever"`
+	PackageSetsRepositories map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
 }
 
 type ErrorType string

@@ -283,6 +283,10 @@ func (t *imageType) PayloadPipelines() []string {
 	return t.payloadPipelines
 }
 
+func (t *imageType) PayloadPackageSets() []string {
+	return []string{blueprintPkgsKey}
+}
+
 func (t *imageType) Exports() []string {
 	return t.exports
 }

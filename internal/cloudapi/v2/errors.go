@@ -16,26 +16,27 @@ const (
 	// ocm-sdk sends ErrorUnauthenticated with id 401 & code COMPOSER-401
 	ErrorUnauthenticated ServiceErrorCode = 401
 
-	ErrorUnauthorized            ServiceErrorCode = 2
-	ErrorUnsupportedMediaType    ServiceErrorCode = 3
-	ErrorUnsupportedDistribution ServiceErrorCode = 4
-	ErrorUnsupportedArchitecture ServiceErrorCode = 5
-	ErrorUnsupportedImageType    ServiceErrorCode = 6
-	ErrorInvalidRepository       ServiceErrorCode = 7
-	ErrorDNFError                ServiceErrorCode = 8
-	ErrorInvalidOSTreeRef        ServiceErrorCode = 9
-	ErrorInvalidOSTreeRepo       ServiceErrorCode = 10
-	ErrorFailedToMakeManifest    ServiceErrorCode = 11
-	ErrorInvalidComposeId        ServiceErrorCode = 14
-	ErrorComposeNotFound         ServiceErrorCode = 15
-	ErrorInvalidErrorId          ServiceErrorCode = 16
-	ErrorErrorNotFound           ServiceErrorCode = 17
-	ErrorInvalidPageParam        ServiceErrorCode = 18
-	ErrorInvalidSizeParam        ServiceErrorCode = 19
-	ErrorBodyDecodingError       ServiceErrorCode = 20
-	ErrorResourceNotFound        ServiceErrorCode = 21
-	ErrorMethodNotAllowed        ServiceErrorCode = 22
-	ErrorNotAcceptable           ServiceErrorCode = 23
+	ErrorUnauthorized                 ServiceErrorCode = 2
+	ErrorUnsupportedMediaType         ServiceErrorCode = 3
+	ErrorUnsupportedDistribution      ServiceErrorCode = 4
+	ErrorUnsupportedArchitecture      ServiceErrorCode = 5
+	ErrorUnsupportedImageType         ServiceErrorCode = 6
+	ErrorInvalidRepository            ServiceErrorCode = 7
+	ErrorDNFError                     ServiceErrorCode = 8
+	ErrorInvalidOSTreeRef             ServiceErrorCode = 9
+	ErrorInvalidOSTreeRepo            ServiceErrorCode = 10
+	ErrorFailedToMakeManifest         ServiceErrorCode = 11
+	ErrorInvalidComposeId             ServiceErrorCode = 14
+	ErrorComposeNotFound              ServiceErrorCode = 15
+	ErrorInvalidErrorId               ServiceErrorCode = 16
+	ErrorErrorNotFound                ServiceErrorCode = 17
+	ErrorInvalidPageParam             ServiceErrorCode = 18
+	ErrorInvalidSizeParam             ServiceErrorCode = 19
+	ErrorBodyDecodingError            ServiceErrorCode = 20
+	ErrorResourceNotFound             ServiceErrorCode = 21
+	ErrorMethodNotAllowed             ServiceErrorCode = 22
+	ErrorNotAcceptable                ServiceErrorCode = 23
+	ErrorNoBaseURLInPayloadRepository ServiceErrorCode = 24
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -95,6 +96,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorResourceNotFound, http.StatusNotFound, "Requested resource doesn't exist"},
 		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
+		serviceError{ErrorNoBaseURLInPayloadRepository, http.StatusBadRequest, "BaseURL must be specified for payload repositories"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},

@@ -281,6 +281,10 @@ func (t *imageType) PayloadPipelines() []string {
 	return distro.PayloadPipelinesFallback()
 }
 
+func (t *imageType) PayloadPackageSets() []string {
+	return []string{"packages"}
+}
+
 func (t *imageType) Exports() []string {
 	if len(t.exports) > 0 {
 		return t.exports

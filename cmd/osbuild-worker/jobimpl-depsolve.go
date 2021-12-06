@@ -11,12 +11,17 @@ type DepsolveJobImpl struct {
 	RPMMDCache string
 }
 
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, modulePlatformID, arch, releasever string, packageSetsRepositories map[string][]rpmmd.RepoConfig) (map[string][]rpmmd.PackageSpec, error) {
 	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache, "/usr/libexec/osbuild-composer/dnf-json")
 
 	packageSpecs := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {
-		packageSpec, _, err := rpmMD.Depsolve(packageSet, repos, modulePlatformID, arch, releasever)
+		repositories := make([]rpmmd.RepoConfig, len(repos))
+		copy(repositories, repos)
+		if packageSetRepositories, ok := packageSetsRepositories[name]; ok {
+			repositories = append(repositories, packageSetRepositories...)
+		}
+		packageSpec, _, err := rpmMD.Depsolve(packageSet, repositories, modulePlatformID, arch, releasever)
 		if err != nil {
 			return nil, err
 		}
@@ -33,7 +38,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.DepsolveJobResult
-	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.ModulePlatformID, args.Arch, args.Releasever, args.PackageSetsRepositories)
 	if err != nil {
 		switch err.(type) {
 		case *rpmmd.DNFError:
