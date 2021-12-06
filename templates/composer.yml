@@ -220,6 +220,63 @@ objects:
       jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
 
+- apiVersion: v1
+  kind: CronJob
+  metadata:
+    labels:
+      service: image-builder
+    name: composer-maintenance
+  spec:
+    # run maintenance job at midnight
+    schedule: 0 0 * * *
+    concurrencyPolicy: Forbid
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            serviceAccountName: image-builder
+            restartPolicy: Never
+            containers:
+            - image: "${MAINTENANCE_IMAGE_NAME}:${IMAGE_TAG}"
+              name: composer-maintenance
+              resources:
+                requests:
+                  cpu: "${CPU_REQUEST}"
+                  memory: "${MEMORY_REQUEST}"
+                limits:
+                  cpu: "${CPU_LIMIT}"
+                  memory: "${MEMORY_LIMIT}"
+              env:
+              - name: PGHOST
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.host
+              - name: PGPORT
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.port
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.name
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.user
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.password
+              - name: PGSSLMODE
+                value: "${PGSSLMODE}"
+              - name: DRY_RUN
+                value: "${MAINTENANCE_DRY_RUN}"
+
 parameters:
   - description: composer image name
     name: IMAGE_NAME
@@ -268,3 +325,13 @@ parameters:
   - name: MEMORY_LIMIT
     description: Memory limit per container
     value: "512Mi"
+  # maintenance image variables
+  - description: composer-maintenance image name
+    name: MAINTENANCE_IMAGE_NAME
+    value: quay.io/app-sre/composer-maintenance
+    required: true
+  - description: composer-maintenance dry run
+    name: MAINTENANCE_DRY_RUN
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "true"
+    required: true
