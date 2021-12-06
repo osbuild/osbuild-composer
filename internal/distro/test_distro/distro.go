@@ -187,6 +187,10 @@ func (t *TestImageType) PayloadPipelines() []string {
 	return distro.PayloadPipelinesFallback()
 }
 
+func (t *TestImageType) PayloadPackageSets() []string {
+	return []string{}
+}
+
 func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
