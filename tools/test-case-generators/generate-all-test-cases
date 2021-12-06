@@ -25,6 +25,10 @@
       - In case you need to install packages from a specific external repository,
         you can specify each such repository using --repofrompath option.
         e.g. --repofrompath 'osbuild,https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild/fedora-$releasever-$basearch/'
+      - In case you need to install osbuild-composer RPMs, which were built
+        from the sources copied over to the runner, use the `--build-rpms`
+        option. The script will build osbuild-composer RPMs on the remote
+        runner and install them.
     4. Copies the 'sources' using rsync to the Runner.
     5. Executes the 'tools/test-case-generators/generate-test-cases' on the
        runner for each requested distro and image type.
@@ -730,7 +734,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         "python3-pyyaml",  # needed by image-info
     ]
 
-    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, repos=[], keep_workdir=False, log_level=logging.INFO):
+    def __init__(self, arch_gen_matrix, sources, output, ssh_id_file, repos=[], build_rpms=False, keep_workdir=False, log_level=logging.INFO):
         """
         'arch_get_matrix' is a dict of requested distro-image_type matrix per architecture:
         {
@@ -767,6 +771,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         self.output = output
         self.ssh_id_file = ssh_id_file
         self.repos = repos
+        self.build_rpms = build_rpms
         self.keep_workdir = keep_workdir
         self.log_level = log_level
 
@@ -849,14 +854,19 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
 
             # install necessary packages
             runner.dnf_install(self.install_rpms_list)
-            # Log installed versions of important RPMs
-            rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
-            log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
 
             # copy sources from the host to the runner
             log.info("Copying sources to the runner")
             runner_sources_dir = f"{runner_workdir}/sources"
             runner.copytree_to_runner(self.sources, runner_sources_dir)
+
+            if self.build_rpms:
+                # build composer RPMs from the copied over sources and install them
+                self._build_install_rpms_from_source(runner, runner_sources_dir)
+
+            # Log installed versions of important RPMs
+            rpm_versions, _, _ = runner.run_command("rpm -q osbuild osbuild-composer")
+            log.info("Installed packages: %s", " ".join(rpm_versions.split("\n")))
 
             # create output directory for the results on the runner
             runner_output_dir = f"{runner_workdir}/output"
@@ -911,6 +921,21 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         log.info("'%s' finished its work", current_process_name)
         log.info("Results: %s", results)
 
+    @staticmethod
+    def _build_install_rpms_from_source(runner: BaseRunner, sources_path: os.PathLike):
+        """
+        Builds the (presumably osbuild-composer's) RPMs from sources on the runner
+        and installs them on the runner.
+        """
+        log.info("Building RPMs from source and installing them")
+        enter_src_dir = f"cd {sources_path};"
+
+        runner.dnf_install(["'@RPM Development Tools'"])
+        runner.run_command_check_call(f"{enter_src_dir} sudo dnf -y builddep *.spec")
+        runner.run_command_check_call(f"{enter_src_dir} make rpm")
+        # do not install debuginfo and debugsource RPMs
+        runner.run_command_check_call(f"{enter_src_dir} sudo dnf install -y $(ls rpmbuild/RPMS/*/*.rpm | grep -Ev 'debugsource|debuginfo')")
+
     def _cleanup(self):
         """
         Terminates all running Runner processes.
@@ -940,7 +965,7 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
         raise NotImplementedError()
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, parser_args):
         raise NotImplementedError()
 
 
@@ -964,7 +989,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": S390xQEMURunner
     }
 
-    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, repos=[], ci_userdata=None, keep_workdir=False, log_level=logging.INFO):
+    def __init__(self, images, arch_gen_matrix, sources, output, ssh_id_file, repos=[], build_rpms=False, ci_userdata=None, keep_workdir=False, log_level=logging.INFO):
         """
         'images' is a dict of qcow2 image paths for each supported architecture,
         that should be used for VMs:
@@ -1000,7 +1025,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         for generating CDROM ISO image, that is attached to each VM as a cloud-init data source.
         If the value is not provided, then the default internal cloud-init user-data are used.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, log_level)
         self.images = images
         self.ci_userdata = ci_userdata
 
@@ -1079,7 +1104,7 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_qemu.set_defaults(func=QEMUTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, parser_args):
         """
         The main function of the 'qemu' command
         """
@@ -1093,7 +1118,8 @@ class QEMUTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with QEMUTestCaseMatrixGenerator(
             vm_images, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, repos, ci_userdata, keep_workdir, log.level) as generator:
+            ssh_id_file, repos, build_rpms, ci_userdata, keep_workdir,
+            log.level) as generator:
             generator.generate()
 
 
@@ -1111,7 +1137,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         "s390x": RemoteRunner
     }
 
-    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level=logging.INFO):
+    def __init__(self, hosts, username, arch_gen_matrix, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, log_level=logging.INFO):
         """
         'hosts' is a dict of a remote system hostnames or IP addresses for each supported architecture,
         that should be used to generate image test cases:
@@ -1146,7 +1172,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         'output' is a directory path, where the generated test case manifests should be stored.
         'ssh_id_file' is path to the SSH ID file to use as the authorized key for the QEMU VMs.
         """
-        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, keep_workdir, log_level)
+        super().__init__(arch_gen_matrix, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, log_level)
         self.hosts = hosts
         self.username = username
 
@@ -1211,7 +1237,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
         parser_remote.set_defaults(func=RemoteTestCaseMatrixGenerator.main)
 
     @staticmethod
-    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, parser_args):
+    def main(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, parser_args):
         """
         The main function of the 'remote' command
         """
@@ -1225,7 +1251,7 @@ class RemoteTestCaseMatrixGenerator(BaseTestCaseMatrixGenerator):
 
         with RemoteTestCaseMatrixGenerator(
             hosts, username, arch_gen_matrix_dict, sources, output,
-            ssh_id_file, repos, keep_workdir, log.level) as generator:
+            ssh_id_file, repos, build_rpms, keep_workdir, log.level) as generator:
             generator.generate()
 
 
@@ -1318,6 +1344,12 @@ def get_args():
             default=False
         )
     parser.add_argument(
+            "--build-rpms",
+            action="store_true",
+            help="Build RPMs from sources copied to the runner and install them.",
+            default=False
+        )
+    parser.add_argument(
             "--repofrompath",
             metavar="<repo>,<path/url>",
             action="append",
@@ -1349,6 +1381,7 @@ def main(args):
     arches = args.arch
     image_types = args.image_type
     repos = args.repofrompath
+    build_rpms = args.build_rpms
     keep_workdir = args.keep_workdir
 
     # determine the SSH ID file to be used
@@ -1400,7 +1433,7 @@ def main(args):
 
     log.debug("arch_gen_matrix_dict:\n%s", json.dumps(arch_gen_matrix_dict, indent=2, sort_keys=True))
 
-    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, keep_workdir, args)
+    args.func(arch_gen_matrix_dict, sources, output, ssh_id_file, repos, build_rpms, keep_workdir, args)
 
 
 if __name__ == '__main__':
