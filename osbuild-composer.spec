@@ -113,6 +113,7 @@ sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwagger
 %endif
 
 %build
+export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
 GO_BUILD_PATH=$PWD/_build
 install -m 0755 -vd $(dirname $GO_BUILD_PATH/src/%{goipath})
@@ -121,7 +122,7 @@ cd $GO_BUILD_PATH/src/%{goipath}
 install -m 0755 -vd _bin
 export PATH=$PWD/_bin${PATH:+:$PATH}
 export GOPATH=$GO_BUILD_PATH:%{gopath}
-export GOFLAGS=-mod=vendor
+export GOFLAGS+=" -mod=vendor"
 %endif
 
 # Set the commit hash so that composer can report what source version
@@ -283,8 +284,9 @@ install -m 0644 -vp internal/jobqueue/dbjobqueue/schemas/*      %{buildroot}%{_d
 %endif
 
 %check
+export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
-export GOFLAGS=-mod=vendor
+export GOFLAGS+=" -mod=vendor"
 export GOPATH=$PWD/_build:%{gopath}
 # cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
 cd $PWD/_build/src/%{goipath}
