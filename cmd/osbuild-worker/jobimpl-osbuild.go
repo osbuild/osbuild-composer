@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
@@ -33,7 +33,7 @@ type OSBuildJobImpl struct {
 
 func appendTargetError(res *worker.OSBuildJobResult, err error) {
 	errStr := err.Error()
-	log.Printf("target failed: %s", errStr)
+	logrus.Errorf("target failed: %s", errStr)
 	res.TargetErrors = append(res.TargetErrors, errStr)
 }
 
@@ -49,6 +49,7 @@ func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
+	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
 	var osbuildJobResult *worker.OSBuildJobResult = &worker.OSBuildJobResult{
 		Success: false,
@@ -64,12 +65,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	defer func() {
 		err := job.Update(osbuildJobResult)
 		if err != nil {
-			log.Printf("Error reporting job result: %v", err)
+			logWithId.Errorf("Error reporting job result: %v", err)
 		}
 
 		err = os.RemoveAll(outputDirectory)
 		if err != nil {
-			log.Printf("Error removing temporary output directory (%s): %v", outputDirectory, err)
+			logWithId.Errorf("Error removing temporary output directory (%s): %v", outputDirectory, err)
 		}
 	}()
 
@@ -105,7 +106,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// The specification allows multiple upload targets because it is an array, but we don't support it.
 	// Return an error to osbuild-composer.
 	if len(args.Targets) > 1 {
-		log.Printf("The job specification contains more than one upload target. This is not supported any more. " +
+		logrus.Warnf("The job specification contains more than one upload target. This is not supported any more. " +
 			"This might indicate a deployment of incompatible osbuild-worker and osbuild-composer versions.")
 		return nil
 	}
@@ -135,15 +136,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			// no pipeline output
 			continue
 		}
-		log.Printf("%s pipeline results:\n", pipelineName)
+		logWithId.Infof("%s pipeline results:\n", pipelineName)
 		for _, stageResult := range pipelineLog {
 			if stageResult.Success {
-				log.Printf("  %s success", stageResult.Type)
+				logWithId.Infof("  %s success", stageResult.Type)
 			} else {
-				log.Printf("  %s failure:", stageResult.Type)
+				logWithId.Infof("  %s failure:", stageResult.Type)
 				stageOutput := strings.Split(stageResult.Output, "\n")
 				for _, line := range stageOutput {
-					log.Printf("    %s", line)
+					logWithId.Infof("    %s", line)
 				}
 			}
 		}
@@ -206,7 +207,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			defer func() {
 				err := os.RemoveAll(tempDirectory)
 				if err != nil {
-					log.Printf("Error removing temporary directory for vmware symlink(%s): %v", tempDirectory, err)
+					logWithId.Errorf("Error removing temporary directory for vmware symlink(%s): %v", tempDirectory, err)
 				}
 			}()
 
@@ -327,7 +328,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			log.Printf("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
+			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
 			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, options.Filename),
 				options.Bucket, options.Object, map[string]string{gcp.MetadataKeyImageName: args.Targets[0].ImageName})
 			if err != nil {
@@ -335,26 +336,26 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			log.Printf("[GCP] 📥 Importing image into Compute Engine as '%s'", args.Targets[0].ImageName)
+			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", args.Targets[0].ImageName)
 			imageBuild, importErr := g.ComputeImageImport(ctx, options.Bucket, options.Object, args.Targets[0].ImageName, options.Os, options.Region)
 			if imageBuild != nil {
-				log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
-				log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
+				logWithId.Infof("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
+				logWithId.Infof("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
 
 				// Cleanup all resources potentially left after the image import job
 				deleted, err := g.CloudbuildBuildCleanup(ctx, imageBuild.Id)
 				for _, d := range deleted {
-					log.Printf("[GCP] 🧹 Deleted resource after image import job: %s", d)
+					logWithId.Infof("[GCP] 🧹 Deleted resource after image import job: %s", d)
 				}
 				if err != nil {
-					log.Printf("[GCP] Encountered error during image import cleanup: %v", err)
+					logWithId.Errorf("[GCP] Encountered error during image import cleanup: %v", err)
 				}
 			}
 
 			// Cleanup storage before checking for errors
-			log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", options.Bucket, options.Object)
+			logWithId.Infof("[GCP] 🧹 Deleting uploaded image file: %s/%s", options.Bucket, options.Object)
 			if err = g.StorageObjectDelete(ctx, options.Bucket, options.Object); err != nil {
-				log.Printf("[GCP] Encountered error while deleting object: %v", err)
+				logWithId.Errorf("[GCP] Encountered error while deleting object: %v", err)
 			}
 
 			// check error from ComputeImageImport()
@@ -362,10 +363,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				appendTargetError(osbuildJobResult, importErr)
 				return nil
 			}
-			log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(args.Targets[0].ImageName))
+			logWithId.Infof("[GCP] 💿 Image URL: %s", g.ComputeImageURL(args.Targets[0].ImageName))
 
 			if len(options.ShareWithAccounts) > 0 {
-				log.Printf("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
+				logWithId.Infof("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
 				err = g.ComputeImageShare(ctx, args.Targets[0].ImageName, options.ShareWithAccounts)
 				if err != nil {
 					appendTargetError(osbuildJobResult, err)
@@ -393,7 +394,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				appendTargetError(osbuildJobResult, err)
 				return nil
 			}
-			log.Print("[Azure] 🔑 Logged in Azure")
+			logWithId.Info("[Azure] 🔑 Logged in Azure")
 
 			storageAccountTag := azure.Tag{
 				Name:  "imageBuilderStorageAccount",
@@ -412,7 +413,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			if storageAccount == "" {
-				log.Print("[Azure] 📦 Creating a new storage account")
+				logWithId.Info("[Azure] 📦 Creating a new storage account")
 				const storageAccountPrefix = "ib"
 				storageAccount = azure.RandomStorageAccountName(storageAccountPrefix)
 
@@ -430,7 +431,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}
 
-			log.Print("[Azure] 🔑📦 Retrieving a storage account key")
+			logWithId.Info("[Azure] 🔑📦 Retrieving a storage account key")
 			storageAccessKey, err := c.GetStorageAccountKey(
 				ctx,
 				options.SubscriptionID,
@@ -450,7 +451,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			storageContainer := "imagebuilder"
 
-			log.Print("[Azure] 📦 Ensuring that we have a storage container")
+			logWithId.Info("[Azure] 📦 Ensuring that we have a storage container")
 			err = azureStorageClient.CreateStorageContainerIfNotExist(ctx, storageAccount, storageContainer)
 			if err != nil {
 				appendTargetError(osbuildJobResult, fmt.Errorf("cannot create a storage container: %v", err))
@@ -462,7 +463,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				blobName += ".vhd"
 			}
 
-			log.Print("[Azure] ⬆ Uploading the image")
+			logWithId.Info("[Azure] ⬆ Uploading the image")
 			err = azureStorageClient.UploadPageBlob(
 				azure.BlobMetadata{
 					StorageAccount: storageAccount,
@@ -477,7 +478,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			log.Print("[Azure] 📝 Registering the image")
+			logWithId.Info("[Azure] 📝 Registering the image")
 			err = c.RegisterImage(
 				ctx,
 				options.SubscriptionID,
@@ -493,7 +494,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			log.Print("[Azure] 🎉 Image uploaded and registered!")
+			logWithId.Info("[Azure] 🎉 Image uploaded and registered!")
 
 			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAzureImageTargetResult(&target.AzureImageTargetResultOptions{
 				ImageName: args.Targets[0].ImageName,

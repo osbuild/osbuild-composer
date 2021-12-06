@@ -3,9 +3,10 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -41,7 +42,7 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	defer func() {
 		err := k.Logout()
 		if err != nil {
-			log.Printf("koji logout failed: %v", err)
+			logrus.Warnf("koji logout failed: %v", err)
 		}
 	}()
 
