@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/sirupsen/logrus"
 )
 
 type OSBuildKojiJobImpl struct {
@@ -48,7 +48,7 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 	defer func() {
 		err := k.Logout()
 		if err != nil {
-			log.Printf("koji logout failed: %v", err)
+			logrus.Warnf("koji logout failed: %v", err)
 		}
 	}()
 
@@ -63,7 +63,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 	defer func() {
 		err := os.RemoveAll(outputDirectory)
 		if err != nil {
-			log.Printf("Error removing temporary output directory (%s): %v", outputDirectory, err)
+			logrus.Warnf("Error removing temporary output directory (%s): %v", outputDirectory, err)
 		}
 	}()
 

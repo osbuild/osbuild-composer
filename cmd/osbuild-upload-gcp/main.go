@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
+	"github.com/sirupsen/logrus"
 )
 
 type strArrayFlag []string
@@ -52,64 +52,64 @@ func main() {
 		var err error
 		credentials, err = ioutil.ReadFile(credentialsPath)
 		if err != nil {
-			log.Fatalf("[GCP] Error while reading credentials: %v", err)
+			logrus.Fatalf("[GCP] Error while reading credentials: %v", err)
 		}
 	}
 
 	g, err := gcp.New(credentials)
 	if err != nil {
-		log.Fatalf("[GCP] Failed to create new GCP object: %v", err)
+		logrus.Fatalf("[GCP] Failed to create new GCP object: %v", err)
 	}
 
 	ctx := context.Background()
 
 	// Upload image to the Storage
 	if !skipUpload {
-		log.Printf("[GCP] 🚀 Uploading image to: %s/%s", bucketName, objectName)
+		logrus.Infof("[GCP] 🚀 Uploading image to: %s/%s", bucketName, objectName)
 		_, err := g.StorageObjectUpload(ctx, imageFile, bucketName, objectName,
 			map[string]string{gcp.MetadataKeyImageName: imageName})
 		if err != nil {
-			log.Fatalf("[GCP] Uploading image failed: %v", err)
+			logrus.Fatalf("[GCP] Uploading image failed: %v", err)
 		}
 	}
 
 	// Import Image to Compute Engine
 	if !skipImport {
-		log.Printf("[GCP] 📥 Importing image into Compute Engine as '%s'", imageName)
+		logrus.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", imageName)
 		imageBuild, importErr := g.ComputeImageImport(ctx, bucketName, objectName, imageName, osFamily, region)
 		if imageBuild != nil {
-			log.Printf("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
-			log.Printf("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
+			logrus.Infof("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
+			logrus.Infof("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
 
 			// Cleanup all resources potentially left after the image import job
 			deleted, err := g.CloudbuildBuildCleanup(ctx, imageBuild.Id)
 			for _, d := range deleted {
-				log.Printf("[GCP] 🧹 Deleted resource after image import job: %s", d)
+				logrus.Infof("[GCP] 🧹 Deleted resource after image import job: %s", d)
 			}
 			if err != nil {
-				log.Printf("[GCP] Encountered error during image import cleanup: %v", err)
+				logrus.Warnf("[GCP] Encountered error during image import cleanup: %v", err)
 			}
 		}
 
 		// Cleanup storage before checking for errors
-		log.Printf("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucketName, objectName)
+		logrus.Infof("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucketName, objectName)
 		if err = g.StorageObjectDelete(ctx, bucketName, objectName); err != nil {
-			log.Printf("[GCP] Encountered error while deleting object: %v", err)
+			logrus.Warnf("[GCP] Encountered error while deleting object: %v", err)
 		}
 
 		// check error from ComputeImageImport()
 		if importErr != nil {
-			log.Fatalf("[GCP] Importing image failed: %v", importErr)
+			logrus.Fatalf("[GCP] Importing image failed: %v", importErr)
 		}
-		log.Printf("[GCP] 💿 Image URL: %s", g.ComputeImageURL(imageName))
+		logrus.Infof("[GCP] 💿 Image URL: %s", g.ComputeImageURL(imageName))
 	}
 
 	// Share the imported Image with specified accounts using IAM policy
 	if len(shareWith) > 0 {
-		log.Printf("[GCP] 🔗 Sharing the image with: %+v", shareWith)
+		logrus.Infof("[GCP] 🔗 Sharing the image with: %+v", shareWith)
 		err = g.ComputeImageShare(ctx, imageName, []string(shareWith))
 		if err != nil {
-			log.Fatalf("[GCP] Sharing image failed: %s", err)
+			logrus.Fatalf("[GCP] Sharing image failed: %s", err)
 		}
 	}
 }
