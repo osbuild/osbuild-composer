@@ -104,6 +104,7 @@ In simplified example, the script does the following:
 2. Waits for the Runner to be ready for use by running a specific command n it.
 3. Installs RPMs necessary for the test case generation on the Runner.
     - In case you need to install packages from a specific external repository, you can specify each such repository using `--repofrompath` option. For example if you want to use the latest `osbuild` upstream build, use `--repofrompath 'osbuild,https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild/fedora-$releasever-$basearch/'`.
+    - In case you need to install osbuild-composer RPMs, which were built from the sources copied over to the runner, use the `--build-rpms` option. The script will build osbuild-composer RPMs on the remote runner and install them.
 4. Copies the 'sources' using rsync to the Runner.
 5. Executes the 'tools/test-case-generators/generate-test-cases' on the runner for each requested distro and image type.
 6. After each image test case is generated successfully, the result is copied using rsync from the Runner to 'output' directory.
