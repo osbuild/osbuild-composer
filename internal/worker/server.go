@@ -328,7 +328,7 @@ type apiHandlers struct {
 func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
 	spec, err := api.GetSwagger()
 	if err != nil {
-		return api.HTTPError(api.ErrorFailedLoadingOpenAPISpec)
+		return api.HTTPErrorWithInternal(api.ErrorFailedLoadingOpenAPISpec, err)
 	}
 	return ctx.JSON(http.StatusOK, spec)
 }
@@ -347,7 +347,7 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
 	errorId, err := strconv.Atoi(id)
 	if err != nil {
-		return api.HTTPError(api.ErrorInvalidErrorId)
+		return api.HTTPErrorWithInternal(api.ErrorInvalidErrorId, err)
 	}
 
 	apiError := api.APIError(api.ServiceErrorCode(errorId), nil, ctx)
@@ -407,7 +407,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return api.HTTPError(api.ErrorMalformedJobToken)
+		return api.HTTPErrorWithInternal(api.ErrorMalformedJobToken, err)
 	}
 
 	jobId, err := h.server.jobs.IdFromToken(token)
@@ -416,7 +416,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 		case jobqueue.ErrNotExist:
 			return api.HTTPError(api.ErrorJobNotFound)
 		default:
-			return api.HTTPError(api.ErrorResolvingJobId)
+			return api.HTTPErrorWithInternal(api.ErrorResolvingJobId, err)
 		}
 	}
 
@@ -451,7 +451,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	token, err := uuid.Parse(idstr)
 	if err != nil {
-		return api.HTTPError(api.ErrorMalformedJobId)
+		return api.HTTPErrorWithInternal(api.ErrorMalformedJobId, err)
 	}
 
 	var body api.UpdateJobRequest
@@ -468,7 +468,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 		case ErrJobNotRunning:
 			return api.HTTPError(api.ErrorJobNotRunning)
 		default:
-			return api.HTTPError(api.ErrorFinishingJob)
+			return api.HTTPErrorWithInternal(api.ErrorFinishingJob, err)
 		}
 	}
 
@@ -482,7 +482,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name string) error {
 	token, err := uuid.Parse(tokenstr)
 	if err != nil {
-		return api.HTTPError(api.ErrorMalformedJobId)
+		return api.HTTPErrorWithInternal(api.ErrorMalformedJobId, err)
 	}
 
 	request := ctx.Request()
@@ -490,19 +490,19 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 	if h.server.artifactsDir == "" {
 		_, err := io.Copy(ioutil.Discard, request.Body)
 		if err != nil {
-			return api.HTTPError(api.ErrorDiscardingArtifact)
+			return api.HTTPErrorWithInternal(api.ErrorDiscardingArtifact, err)
 		}
 		return ctx.NoContent(http.StatusOK)
 	}
 
 	f, err := os.Create(path.Join(h.server.artifactsDir, "tmp", token.String(), name))
 	if err != nil {
-		return api.HTTPError(api.ErrorDiscardingArtifact)
+		return api.HTTPErrorWithInternal(api.ErrorDiscardingArtifact, err)
 	}
 
 	_, err = io.Copy(f, request.Body)
 	if err != nil {
-		return api.HTTPError(api.ErrorWritingArtifact)
+		return api.HTTPErrorWithInternal(api.ErrorWritingArtifact, err)
 	}
 
 	return ctx.NoContent(http.StatusOK)
@@ -523,7 +523,7 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	err := json.NewDecoder(request.Body).Decode(i)
 	if err != nil {
-		return api.HTTPError(api.ErrorBodyDecodingError)
+		return api.HTTPErrorWithInternal(api.ErrorBodyDecodingError, err)
 	}
 
 	return nil
