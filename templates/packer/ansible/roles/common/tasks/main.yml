@@ -6,5 +6,8 @@
 # Configure monitoring.
 - include_tasks: monitoring.yml
 
+# Configure worker initialization service.
+- include_tasks: worker-initialization-service.yml
+
 - name: Ensure SELinux contexts are updated
   command: restorecon -Rv /etc
