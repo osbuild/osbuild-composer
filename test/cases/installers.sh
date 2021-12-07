@@ -150,11 +150,11 @@ get_compose_metadata () {
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
-    tar -xf "$TARBALL" -C "${TEMPDIR}"
-    rm -f "$TARBALL"
+    sudo tar -xf "$TARBALL" -C "${TEMPDIR}"
+    sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    jq -M '.' "${TEMPDIR}"/"${COMPOSE_ID}".json | tee "$METADATA_FILE" > /dev/null
+    sudo jq -M '.' "${TEMPDIR}"/"${COMPOSE_ID}".json | tee "$METADATA_FILE" > /dev/null
 }
 
 # Build an installer
