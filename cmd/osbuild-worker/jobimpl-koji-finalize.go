@@ -111,6 +111,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		var result worker.KojiFinalizeJobResult
 		if err != nil {
 			result.KojiError = err.Error()
+			result.ResultCode = worker.KojiFinializeError
 		}
 		err = job.Update(&result)
 		if err != nil {
@@ -188,9 +189,11 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.KojiFinalizeJobResult
+	result.ResultCode = worker.JobSuccess
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
 		result.KojiError = err.Error()
+		result.ResultCode = worker.KojiFinializeError
 	}
 
 	err = job.Update(&result)

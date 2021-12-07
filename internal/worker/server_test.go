@@ -758,3 +758,92 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }
+
+func TestDepsolveError(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+	server := newTestServer(t, tempdir, time.Duration(0), "/api/image-builder-worker/v1")
+
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{Arch: "fake_arch"})
+	require.NoError(t, err)
+
+	_, token, _, _, _, err := server.RequestJobById(context.Background(), "fake_arch", depsolveJobId)
+	require.NoError(t, err)
+
+	jobResult := &worker.DepsolveJobResult{
+		ResultCode: worker.DepsolveError,
+	}
+	resultRaw, err := json.Marshal(jobResult)
+	require.NoError(t, err)
+
+	err = server.FinishJob(token, resultRaw)
+	require.NoError(t, err)
+
+	jobResultRead := new(worker.DepsolveJobResult)
+	_, _, err = server.JobStatus(depsolveJobId, jobResultRead)
+	require.NoError(t, err)
+	require.Equal(t, jobResult, jobResultRead)
+}
+
+func TestOsbuildBuildError(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
+	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
+
+	osbuildJob := worker.OSBuildJob{
+		Manifest:  emptyManifestV2,
+		ImageName: "with-pipeline-names",
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build"},
+			Payload: []string{"other", "pipelines"},
+		},
+	}
+
+	jobID, err := server.EnqueueOSBuild("fake_arch", &osbuildJob)
+	require.NoError(t, err)
+
+	_, token, _, _, _, err := server.RequestJobById(context.Background(), "fake_arch", jobID)
+	require.NoError(t, err)
+
+	jobRead := new(worker.OSBuildJob)
+	_, _, _, err = server.Job(jobID, jobRead)
+	require.NoError(t, err)
+
+	jobResult := &worker.OSBuildJobResult{
+		Success:    true,
+		ResultCode: worker.OsbuildError,
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build-result"},
+			Payload: []string{"result-test-payload", "result-test-assembler"},
+		},
+		OSBuildOutput: &osbuild2.Result{
+			Type:    "result",
+			Success: true,
+			Log: map[string]osbuild2.PipelineResult{
+				"build-new": {
+					osbuild2.StageResult{
+						ID:      "---",
+						Type:    "org.osbuild.test",
+						Output:  "<test output new>",
+						Success: true,
+					},
+				},
+			},
+		},
+	}
+	resultRaw, err := json.Marshal(jobResult)
+	require.NoError(t, err)
+
+	err = server.FinishJob(token, resultRaw)
+	require.NoError(t, err)
+
+	jobResultRead := new(worker.OSBuildJobResult)
+	_, _, err = server.JobStatus(jobID, jobResultRead)
+	require.NoError(t, err)
+	require.Equal(t, jobResult, jobResultRead)
+	require.Equal(t, worker.OsbuildError, jobResultRead.ResultCode)
+}

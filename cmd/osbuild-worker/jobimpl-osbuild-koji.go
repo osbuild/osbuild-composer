@@ -79,6 +79,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.OSBuildKojiJobResult
+	result.ResultCode = worker.UnspecifiedError
 	result.Arch = common.CurrentArch()
 	result.HostOS, err = distro.GetRedHatRelease()
 	if err != nil {
@@ -109,9 +110,11 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			if err != nil {
 				return err
 			}
+			result.ResultCode = worker.JobSuccess
 			result.ImageHash, result.ImageSize, err = impl.kojiUpload(f, args.KojiServer, args.KojiDirectory, args.KojiFilename)
 			if err != nil {
 				result.KojiError = err.Error()
+				result.ResultCode = worker.OsbuildKojiError
 			}
 		}
 	}

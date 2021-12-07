@@ -424,13 +424,15 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		var jobResult *worker.ManifestJobByIDResult = &worker.ManifestJobByIDResult{
-			Manifest: nil,
-			Error:    "",
+			Manifest:   nil,
+			Error:      "",
+			ResultCode: worker.JobSuccess,
 		}
 
 		defer func() {
 			if jobResult.Error != "" {
 				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.Error)
+				jobResult.ResultCode = worker.ManifestByIDError
 			}
 
 			result, err := json.Marshal(jobResult)

@@ -23,12 +23,14 @@ type OSBuildJob struct {
 }
 
 type OSBuildJobResult struct {
-	Success       bool                   `json:"success"`
-	OSBuildOutput *osbuild.Result        `json:"osbuild_output,omitempty"`
-	TargetResults []*target.TargetResult `json:"target_results,omitempty"`
-	TargetErrors  []string               `json:"target_errors,omitempty"`
-	UploadStatus  string                 `json:"upload_status"`
-	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
+	Success          bool                   `json:"success"`
+	OSBuildOutput    *osbuild.Result        `json:"osbuild_output,omitempty"`
+	TargetResults    []*target.TargetResult `json:"target_results,omitempty"`
+	TargetErrors     []string               `json:"target_errors,omitempty"`
+	TargetErrorCodes []ResultCode           `json:"target_error_codes,omitempty"`
+	UploadStatus     string                 `json:"upload_status"`
+	PipelineNames    *PipelineNames         `json:"pipeline_names,omitempty"`
+	ResultCode       ResultCode             `json:"result_code"`
 }
 
 type KojiInitJob struct {
@@ -39,9 +41,10 @@ type KojiInitJob struct {
 }
 
 type KojiInitJobResult struct {
-	BuildID   uint64 `json:"build_id"`
-	Token     string `json:"token"`
-	KojiError string `json:"koji_error"`
+	BuildID    uint64     `json:"build_id"`
+	Token      string     `json:"token"`
+	KojiError  string     `json:"koji_error"`
+	ResultCode ResultCode `json:"result_code"`
 }
 
 type OSBuildKojiJob struct {
@@ -62,6 +65,7 @@ type OSBuildKojiJobResult struct {
 	ImageHash     string          `json:"image_hash"`
 	ImageSize     uint64          `json:"image_size"`
 	KojiError     string          `json:"koji_error"`
+	ResultCode    ResultCode      `json:"result_code"`
 }
 
 type KojiFinalizeJob struct {
@@ -76,7 +80,8 @@ type KojiFinalizeJob struct {
 }
 
 type KojiFinalizeJobResult struct {
-	KojiError string `json:"koji_error"`
+	KojiError  string     `json:"koji_error"`
+	ResultCode ResultCode `json:"result_code"`
 }
 
 // PipelineNames is used to provide two pieces of information related to a job:
@@ -112,13 +117,15 @@ type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
 	Error        string                         `json:"error"`
 	ErrorType    ErrorType                      `json:"error_type"`
+	ResultCode   ResultCode                     `json:"result_code"`
 }
 
 type ManifestJobByID struct{}
 
 type ManifestJobByIDResult struct {
-	Manifest distro.Manifest `json:"data,omitempty"`
-	Error    string          `json:"error"`
+	Manifest   distro.Manifest `json:"data,omitempty"`
+	Error      string          `json:"error"`
+	ResultCode ResultCode      `json:"result_code"`
 }
 
 //

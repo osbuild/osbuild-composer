@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type AWS struct {
@@ -293,7 +294,8 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			},
 		)
 		if err != nil {
-			return nil, err
+			ce := worker.NewShareError(err)
+			return nil, &ce
 		}
 		log.Println("[AWS] 💿 Shared AMI")
 	}
