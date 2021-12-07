@@ -353,7 +353,7 @@ sudo podman rmi -f -a
 # Deal with stage repo image
 greenprint "🗜 Pushing image to quay.io"
 IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
-skopeo copy --dest-creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+sudo skopeo copy --dest-creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 # Clear image file
 sudo rm -f "$IMAGE_FILENAME"
 
