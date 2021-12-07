@@ -364,7 +364,7 @@ components:
           $ref: '#/components/schemas/UploadStatus'
     ImageStatusValue:
       type: string
-      enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']
+      enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering', 'upload_failure', 'registration_failure']
     UploadStatus:
       required:
         - status

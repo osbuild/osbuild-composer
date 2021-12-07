@@ -599,6 +599,14 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 		return ImageStatusValue_building
 	}
 
+	if result.ResultCode == worker.ImageUploadError {
+		return ImageStatusValue_upload_failure
+	}
+
+	if result.ResultCode == worker.ImageShareError {
+		return ImageStatusValue_registration_failure
+	}
+
 	if result.Success {
 		return ImageStatusValue_success
 	}
