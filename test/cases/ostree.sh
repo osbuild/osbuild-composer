@@ -163,11 +163,11 @@ get_compose_metadata () {
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
-    tar -xf "$TARBALL" -C "${TEMPDIR}"
-    rm -f "$TARBALL"
+    sudo tar -xf "$TARBALL" -C "${TEMPDIR}"
+    sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
 # Build ostree image.
