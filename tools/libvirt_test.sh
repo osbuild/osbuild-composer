@@ -119,11 +119,11 @@ get_compose_metadata () {
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
-    tar -xf "$TARBALL"
-    rm -f "$TARBALL"
+    sudo tar -xf "$TARBALL"
+    sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
 # Write a basic blueprint for our image.
