@@ -220,7 +220,7 @@ objects:
       jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
 
-- apiVersion: v1
+- apiVersion: batch/v1
   kind: CronJob
   metadata:
     labels:
