@@ -555,6 +555,7 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 		CheckGPG: repo.CheckGPG,
 		CheckSSL: !repo.IgnoreSSL,
 		System:   system,
+		RHSM:     repo.RHSM,
 	}
 
 	if repo.BaseURL != "" {
