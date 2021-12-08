@@ -2,6 +2,11 @@
 # Pass --with tests to rpmbuild to override
 %bcond_with tests
 
+# When --with relax_requires is specified osbuild-composer-tests
+# will require osbuild-composer only by name, excluding version/release
+# This is used internally during nightly pipeline testing!
+%bcond_with relax_requires
+
 %global goipath         github.com/osbuild/osbuild-composer
 
 Version:        44
@@ -371,7 +376,11 @@ The dnf-json binary used by osbuild-composer and the workers.
 
 %package tests
 Summary:    Integration tests
+%if %{with relax_requires}
+Requires:   %{name}
+%else
 Requires:   %{name} = %{version}-%{release}
+%endif
 Requires:   composer-cli
 Requires:   createrepo_c
 Requires:   xorriso
