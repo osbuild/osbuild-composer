@@ -321,15 +321,15 @@ function try_image_build {
     sudo composer-cli blueprints push "$BLUEPRINT_FILE"
     if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
     then
-    sudo cat /var/log/httpd/error_log
-    sudo journalctl -xe --unit osbuild-composer
-    exit 1
+        sudo cat /var/log/httpd/error_log
+        sudo journalctl -xe --unit osbuild-composer
+        exit 1
     fi
     if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}";
     then
-    sudo journalctl -xe --unit osbuild-composer
-    sudo journalctl -xe --unit osbuild-worker
-    exit 1
+        sudo journalctl -xe --unit osbuild-composer
+        sudo journalctl -xe --unit osbuild-worker
+        exit 1
     fi
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
