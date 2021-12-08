@@ -99,10 +99,15 @@ sudo mock -r "$MOCK_CONFIG" --buildsrpm \
   --sources "./osbuild-composer-${COMMIT}.tar.gz" \
   --resultdir ./srpm
 
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    RELAX_REQUIRES="--with=relax_requires"
+fi
+
 greenprint "🎁 Building RPMs"
 sudo mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
     --with=tests \
+    ${RELAX_REQUIRES:+"$RELAX_REQUIRES"} \
     --resultdir "$REPO_DIR" \
     srpm/*.src.rpm
 
@@ -111,6 +116,12 @@ sudo chown -R "$USER" "${REPO_DIR%%/*}"
 
 greenprint "🧹 Remove logs from mock build"
 rm "${REPO_DIR}"/*.log
+
+# leave only -tests RPM to minimize interference when installing
+# osbuild-composer.rpm from distro repositories
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    find "${REPO_DIR}" -type f -not -name "osbuild-composer-tests*.rpm" -exec rm -f "{}" \;
+fi
 
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
