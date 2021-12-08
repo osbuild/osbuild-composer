@@ -328,7 +328,8 @@ function try_image_build {
     if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}";
     then
         sudo journalctl -xe --unit osbuild-composer
-        sudo journalctl -xe --unit osbuild-worker
+        WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
+        sudo journalctl -xe --unit "${WORKER_UNIT}"
         exit 1
     fi
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
@@ -352,7 +353,8 @@ function try_image_build {
     sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
     sudo journalctl -xe --unit osbuild-composer
-    sudo journalctl -xe --unit osbuild-worker
+    WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
+    sudo journalctl -xe --unit "${WORKER_UNIT}"
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
