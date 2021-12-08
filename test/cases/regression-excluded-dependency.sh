@@ -75,6 +75,8 @@ while true; do
     sleep 30
 done
 
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+
 jq . "${COMPOSE_INFO}"
 
 # Did the compose finish with success?

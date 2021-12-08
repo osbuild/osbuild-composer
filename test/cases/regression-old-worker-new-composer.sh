@@ -118,6 +118,8 @@ while true; do
     sleep 30
 done
 
+sudo composer-cli -s "$WELDR_SOCK" compose delete "${COMPOSE_ID}" >/dev/null
+
 sudo journalctl -u osbuild-remote-worker@localhost:8700.service
 # Verify that the remote worker finished a job
 sudo journalctl -u osbuild-remote-worker@localhost:8700.service |

@@ -349,6 +349,8 @@ function try_image_build {
 
     done
 
+    sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+
     sudo journalctl -xe --unit osbuild-composer
     sudo journalctl -xe --unit osbuild-worker
 
