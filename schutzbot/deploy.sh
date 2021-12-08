@@ -127,6 +127,31 @@ retry sudo dnf -y upgrade selinux-policy
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
 
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    # check if we've installed the osbuild-composer RPM from the nightly tree
+    # under test or happen to install a newer version from one of the S3 repositories
+    rpm -qi osbuild-composer
+    if ! rpm -qi osbuild-composer | grep "Build Host" | grep "redhat.com"; then
+        echo "ERROR: Installed osbuild-composer RPM is not the official one"
+        exit 2
+    else
+        echo "INFO: Installed osbuild-composer RPM seems to be official"
+    fi
+
+    # cross-check the installed RPM against the one under COMPOSE_URL
+    source tools/define-compose-url.sh
+
+    INSTALLED=$(rpm -q --qf "%{name}-%{version}-%{release}.%{arch}.rpm" osbuild-composer)
+    RPM_URL="${COMPOSE_URL}/compose/AppStream/${ARCH}/os/Packages/${INSTALLED}"
+    RETURN_CODE=$(curl --silent -o -I -L -s -w "%{http_code}" "${RPM_URL}")
+    if [ "$RETURN_CODE" != 200 ]; then
+        echo "ERROR: Installed ${INSTALLED} not found at ${RPM_URL}. Response was ${RETURN_CODE}"
+        exit 3
+    else
+        echo "INFO: Installed ${INSTALLED} found at ${RPM_URL}, which matches SUT!"
+    fi
+fi
+
 if [ -n "${CI}" ]; then
     # copy repo files b/c GitLab can't upload artifacts
     # which are outside the build directory
