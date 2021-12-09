@@ -34,6 +34,7 @@ type RHSMSecrets struct {
 }
 
 func getRHSMSecrets() (*RHSMSecrets, error) {
+	fmt.Println("[DEBUG] Loading fallback secrets")
 	keys, err := filepath.Glob("/etc/pki/entitlement/*-key.pem")
 	if err != nil {
 		return nil, err
@@ -41,6 +42,9 @@ func getRHSMSecrets() (*RHSMSecrets, error) {
 	for _, key := range keys {
 		cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
 		if _, err := os.Stat(cert); err == nil {
+			fmt.Println("[DEBUG] CA: /etc/rhsm/ca/redhat-uep.pem")
+			fmt.Println("[DEBUG] client key: ", key)
+			fmt.Println("[DEBUG] client cert: ", cert)
 			return &RHSMSecrets{
 				SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
 				SSLClientKey:  key,
@@ -56,6 +60,7 @@ func getListOfSubscriptions() ([]subscription, error) {
 	// documented in `man yum.conf`. The same parsing mechanism could
 	// be used for any other repo file in /etc/yum.repos.d/.
 	availableSubscriptionsFile := "/etc/yum.repos.d/redhat.repo"
+	fmt.Println("[DEBUG] reading ", availableSubscriptionsFile, " repository file")
 	content, err := ioutil.ReadFile(availableSubscriptionsFile)
 	if err != nil {
 		if pErr, ok := err.(*os.PathError); ok {
@@ -106,26 +111,31 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 
 	for _, section := range cfg.Sections() {
 		id := section.Name()
+		fmt.Println("[DEBUG] processing section: ", id)
 		key, err := section.GetKey("baseurl")
 		if err != nil {
 			continue
 		}
 		baseurl := key.String()
+		fmt.Println("[DEBUG] baseurl: ", baseurl)
 		key, err = section.GetKey("sslcacert")
 		if err != nil {
 			continue
 		}
 		sslcacert := key.String()
+		fmt.Println("[DEBUG] sslcacert: ", sslcacert)
 		key, err = section.GetKey("sslclientkey")
 		if err != nil {
 			continue
 		}
 		sslclientkey := key.String()
+		fmt.Println("[DEBUG] sslclientkey: ", sslclientkey)
 		key, err = section.GetKey("sslclientcert")
 		if err != nil {
 			continue
 		}
 		sslclientcert := key.String()
+		fmt.Println("[DEBUG] sslclientcert: ", sslclientcert)
 		subscriptions = append(subscriptions, subscription{
 			id:            id,
 			baseurl:       baseurl,
@@ -135,15 +145,27 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 		})
 	}
 
+	fmt.Println("[DEBUG] Loaded these subscriptions:")
+	for i, s := range subscriptions {
+		fmt.Println("[DEBUG] ", i, "# ", s.id)
+	}
+
 	return subscriptions, nil
 }
 
 // GetSecretsForBaseurl queries the Subscriptions structure for a RHSMSecrets of a single repository.
 func (s *Subscriptions) GetSecretsForBaseurl(baseurl string, arch, releasever string) (*RHSMSecrets, error) {
+	fmt.Println("[DEBUG] getting secrets for baseurl: ", baseurl, ", arch: ", arch, ", releasever: ", releasever)
 	for _, subs := range s.available {
+		fmt.Println("[DEBUG] trying baseurl: ", subs.baseurl)
 		url := strings.Replace(subs.baseurl, "$basearch", arch, -1)
 		url = strings.Replace(url, "$releasever", releasever, -1)
+		fmt.Println("[DEBUG] after processing: ", url)
 		if url == baseurl {
+			fmt.Println("[DEBUG] found a match")
+			fmt.Println("[DEBUG] CA: ", subs.sslCACert)
+			fmt.Println("[DEBUG] client key: ", subs.sslClientKey)
+			fmt.Println("[DEBUG] client cert: ", subs.sslClientCert)
 			return &RHSMSecrets{
 				SSLCACert:     subs.sslCACert,
 				SSLClientKey:  subs.sslClientKey,
@@ -151,9 +173,12 @@ func (s *Subscriptions) GetSecretsForBaseurl(baseurl string, arch, releasever st
 			}, nil
 		}
 	}
+	fmt.Println("[DEBUG] not found secrets for ", baseurl, " trying fallback")
 	// If there is no matching URL, fall back to the global secrets
 	if s.secrets != nil {
+		fmt.Println("[DEBUG] fallback exists, using it")
 		return s.secrets, nil
 	}
+	fmt.Println("[DEBUG] fallback doesn't exist")
 	return nil, fmt.Errorf("no such baseurl in the available subscriptions")
 }
