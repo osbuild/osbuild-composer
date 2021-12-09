@@ -548,6 +548,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 				Value: "9.0",
 			},
 		},
+		nil,
 	)))
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
