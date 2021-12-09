@@ -52,8 +52,8 @@ RPM:
       - RUNNER:
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
+          - aws/rhel-9.0-nightly-x86_64
+          - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Prepare-rhel-internal:
@@ -91,8 +91,8 @@ Base:
       - RUNNER:
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
+          - aws/rhel-9.0-nightly-x86_64
+          - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -114,8 +114,8 @@ Regression:
       - RUNNER:
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
-          - aws/rhel-9.0-beta-nightly-x86_64
-          - aws/rhel-9.0-beta-nightly-aarch64
+          - aws/rhel-9.0-nightly-x86_64
+          - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -136,7 +136,7 @@ OSTree:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-ga-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
 
 New OSTree:
   stage: test
@@ -158,7 +158,7 @@ New OSTree (RHEL9-BETA):
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-9.0-beta-nightly-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -216,7 +216,7 @@ Integration:
           - azure.sh
           - filesystem.sh
         RUNNER:
-          - aws/rhel-9.0-beta-nightly-x86_64
+          - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .API_TESTS: &API_TESTS
@@ -240,7 +240,7 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-9.0-beta-nightly-x86_64
+          - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 libvirt:
@@ -256,7 +256,7 @@ libvirt:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-ga-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 NIGHTLY_FAIL:
@@ -291,7 +291,7 @@ Installer:
     matrix:
       - RUNNER:
           - openstack/rhel-8.5-ga-x86_64
-          - openstack/rhel-9.0-beta-nightly-x86_64
+          - openstack/rhel-9.0-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
