@@ -90,62 +90,14 @@ EOF
 
 cp rhel-"${VERSION_ID%.*}".json rhel-"${VERSION_ID%.*}"-beta.json
 
-JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
-# Do not create tests repo if it's provided from ENV
-if [ -z "${REPO_URL+x}" ]; then
-    greenprint "📦 Installing requirements"
-    sudo dnf -y install createrepo_c wget python3-pip
+# Create tests .repo file if REPO_URL is provided from ENV
+# Otherwise osbuild-composer-tests.rpm will be downloaded from
+# existing repositories
+if [ -n "${REPO_URL+x}" ]; then
+    JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 
-    # Install s3cmd if it is not present.
-    if ! s3cmd --version > /dev/null 2>&1; then
-        greenprint "📦 Installing s3cmd"
-        sudo pip3 -q install s3cmd
-    fi
-
-    REPO_DIR_LATEST="repo/${JOB_NAME}/latest/internal"
-    mkdir -p "$REPO_DIR_LATEST"
-
-    greenprint "Discover latest osbuild-composer NVR"
-    # Download only osbuild-composer-worker-*.rpm and use it in rpm --qf below
-    wget --quiet --recursive --no-parent --no-directories --accept "osbuild-composer-worker-*.rpm" \
-        "${COMPOSE_URL}/compose/AppStream/x86_64/os/Packages/"
-
-    # Download osbuild-composer-tests from Brew b/c it is not available in the distro
-    # version matches osbuild-composer from the internal tree
-    greenprint "Downloading osbuild-composer-tests RPMs from Brew"
-    for ARCH in $ALL_ARCHES; do
-        TESTS_RPM_URL=$(rpm -qp ./osbuild-composer-worker-*.rpm --qf "http://download.devel.redhat.com/brewroot/vol/rhel-${VERSION_ID%.*}/packages/osbuild-composer/%{version}/%{release}/$ARCH/osbuild-composer-tests-%{version}-%{release}.$ARCH.rpm")
-        wget --directory-prefix "$REPO_DIR_LATEST" "$TESTS_RPM_URL"
-    done
-
-    greenprint "⛓ Creating dnf repository"
-    createrepo_c "${REPO_DIR_LATEST}"
-
-    # Bucket in S3 where our artifacts are uploaded
-    REPO_BUCKET=osbuild-composer-repos
-
-    # Remove the previous latest repo for this job.
-    # Don't fail if the path is missing.
-    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
-    AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
-    s3cmd --recursive rm "s3://${REPO_BUCKET}/${REPO_DIR_LATEST}" || true
-
-    # Upload repository to S3.
-    greenprint "☁ Uploading RPMs to S3"
-    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
-    AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
-    s3cmd --acl-public put --recursive repo/ s3://${REPO_BUCKET}/repo/
-
-    # Public URL for the S3 bucket with our artifacts.
-    MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
-
-    # Full URL to the RPM repository after they are uploaded.
-    REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_DIR_LATEST}
-fi
-
-# amend repository file.
-greenprint "📜 Amend dnf repository file"
-tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
+    greenprint "📜 Amend dnf repository file"
+    tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
 
 [osbuild-composer-tests-multi-arch]
 name=Tests ${JOB_NAME}
@@ -155,3 +107,5 @@ gpgcheck=0
 # osbuild-composer repo priority is 5
 priority=1
 EOF
+
+fi
