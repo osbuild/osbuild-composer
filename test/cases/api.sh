@@ -303,6 +303,44 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+# make a dummy rpm and repo to test payload_repositories
+sudo dnf install -y rpm-build createrepo
+DUMMYRPMDIR=$(mktemp -d)
+DUMMYSPECFILE="$DUMMYRPMDIR/dummy.spec"
+PAYLOAD_REPO_PORT="9999"
+PAYLOAD_REPO_URL="http://localhost:9999"
+pushd "$DUMMYRPMDIR"
+
+cat <<EOF > "$DUMMYSPECFILE"
+#----------- spec file starts ---------------
+Name:                   dummy
+Version:                1.0.0
+Release:                0
+BuildArch:              noarch
+Vendor:                 dummy
+Summary:                Provides %{name}
+License:                BSD
+Provides:               dummy
+
+%description
+%{summary}
+
+%files
+EOF
+
+mkdir -p "DUMMYRPMDIR/rpmbuild"
+rpmbuild --quiet --define "_topdir $DUMMYRPMDIR/rpmbuild" -bb "$DUMMYSPECFILE"
+
+mkdir -p "$DUMMYRPMDIR/repo"
+cp "$DUMMYRPMDIR"/rpmbuild/RPMS/noarch/*rpm "$DUMMYRPMDIR/repo"
+pushd "$DUMMYRPMDIR/repo"
+createrepo .
+sudo python3 -m http.server "$PAYLOAD_REPO_PORT" &
+KILL_PIDS+=("$!")
+popd
+popd
+
+
 #
 # Install the necessary cloud provider client tools
 #
@@ -483,8 +521,14 @@ function createReqFileAWS() {
 {
   "distribution": "$DISTRO",
   "customizations": {
+    "payload_repositories": [
+      {
+        "baseurl": "$PAYLOAD_REPO_URL"
+      }
+    ],
     "packages": [
-      "postgresql"
+      "postgresql",
+      "dummy"
     ]${SUBSCRIPTION_BLOCK},
     "users":[
       {
@@ -522,8 +566,14 @@ function createReqFileAWSS3() {
 {
   "distribution": "$DISTRO",
   "customizations": {
+    "payload_repositories": [
+      {
+        "baseurl": "$PAYLOAD_REPO_URL"
+      }
+    ],
     "packages": [
-      "postgresql"
+      "postgresql",
+      "dummy"
     ],
     "users":[
       {
@@ -566,8 +616,14 @@ function createReqFileGCP() {
 {
   "distribution": "$DISTRO",
   "customizations": {
+    "payload_repositories": [
+      {
+        "baseurl": "$PAYLOAD_REPO_URL"
+      }
+    ],
     "packages": [
-      "postgresql"
+      "postgresql",
+      "dummy"
     ]${SUBSCRIPTION_BLOCK}
   },
   "image_request": {
@@ -592,8 +648,14 @@ function createReqFileAzure() {
 {
   "distribution": "$DISTRO",
   "customizations": {
+    "payload_repositories": [
+      {
+        "baseurl": "$PAYLOAD_REPO_URL"
+      }
+    ],
     "packages": [
-      "postgresql"
+      "postgresql",
+      "dummy"
     ]${SUBSCRIPTION_BLOCK}
   },
   "image_request": {
@@ -821,7 +883,7 @@ function _instanceCheck() {
   local _ssh="$1"
 
   # Check if postgres is installed
-  $_ssh rpm -q postgresql
+  $_ssh rpm -q postgresql dummy
 
   # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
   if [[ "$ID" == "rhel" ]]; then
