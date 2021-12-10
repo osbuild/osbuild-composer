@@ -206,6 +206,26 @@ Regression:
       - "*.repo"
     when: always
 
+Test Case Generation:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/generation.sh
+  interruptible: true
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-34-x86_64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log.gpg
+      - "*.repo"
+    when: always
+
 OSTree:
   stage: test
   extends: .terraform/openstack
