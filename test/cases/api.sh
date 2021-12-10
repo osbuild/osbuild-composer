@@ -1038,6 +1038,9 @@ function verifyInGCP() {
   GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
   $GCP_CMD config set project "$GCP_PROJECT"
 
+  # Add "gitlab-ci-test" label to the image
+  $GCP_CMD compute images add-labels "$GCP_IMAGE_NAME" --labels=gitlab-ci-test=true
+
   # Verify that the image was shared
   SHARE_OK=1
   $GCP_CMD compute images get-iam-policy "$GCP_IMAGE_NAME" > "$WORKDIR/image-iam-policy.json"
@@ -1074,6 +1077,7 @@ function verifyInGCP() {
     --zone="$GCP_ZONE" \
     --image-project="$GCP_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
+    --labels=gitlab-ci-test=true \
     --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
   HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
