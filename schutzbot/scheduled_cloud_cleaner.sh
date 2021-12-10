@@ -5,7 +5,12 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
-# Azure cleanup
+#---------------------------------------------------------------
+#                       Azure cleanup
+#---------------------------------------------------------------
+
+greenprint "Starting azure cleanup"
+
 if ! hash az; then
     # this installation method is taken from the official docs:
     # https://docs.microsoft.com/cs-cz/cli/azure/install-azure-cli-linux?pivots=dnf
@@ -211,3 +216,63 @@ for object in ${OBJECTS}; do
         fi
 done
 
+#---------------------------------------------------------------
+#                       GCP cleanup
+#---------------------------------------------------------------
+
+greenprint "starting gcp cleanup"
+
+# We need Google Gloud SDK to comunicate with gcp
+if ! hash gcloud; then
+  echo "Using 'gcloud' from a container"
+  sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+
+  # directory mounted to the container, in which gcloud stores the credentials after logging in
+  GCP_CMD_CREDS_DIR="${TEMPDIR}/gcloud_credentials"
+  mkdir "${GCP_CMD_CREDS_DIR}"
+
+  GCP_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+    -v ${GCP_CMD_CREDS_DIR}:/root/.config/gcloud:Z \
+    -v ${GOOGLE_APPLICATION_CREDENTIALS}:${GOOGLE_APPLICATION_CREDENTIALS}:Z \
+    -v ${TEMPDIR}:${TEMPDIR}:Z \
+    ${CONTAINER_IMAGE_CLOUD_TOOLS} gcloud --format=json"
+else
+  echo "Using pre-installed 'gcloud' from the system"
+  GCP_CMD="gcloud --format=json --quiet"
+fi
+$GCP_CMD --version
+
+# Authenticate
+$GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
+# Extract and set the default project to be used for commands
+GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
+$GCP_CMD config set project "$GCP_PROJECT"
+
+# List tagged intances and remove the old enough ones
+INSTANCES=$($GCP_CMD compute instances list --filter='labels.gitlab-ci-test:true' \
+	| jq -c '.[] | {"name": .name, "creationTimestamp": .creationTimestamp, "zone": .zone}')
+
+for instance in ${INSTANCES}; do                
+	CREATION_TIME=$(echo "${instance}" | jq '.creationTimestamp' | tr -d '"')
+
+        if [[ $(date -d "${CREATION_TIME}" +%s) -lt ${DELETE_TIME} ]]; then
+                ZONE=$(echo "${instance}" | jq '.zone' | awk -F / '{print $NF}' | tr -d '"')
+                NAME=$(echo "${instance}" | jq '.name' | tr -d '"')
+                $GCP_CMD compute instances delete --zone="$ZONE" "$NAME"
+                echo "deleted instance: ${NAME}"
+        fi
+done
+
+# List tagged images and remove the old enough ones
+IMAGES=$($GCP_CMD compute images list --filter='labels.gitlab-ci-test:true' \
+	| jq -c '.[] | {"name": .name, "creationTimestamp": .creationTimestamp}')
+
+for image in $IMAGES; do
+        CREATION_TIME=$(echo "${image}" | jq '.creationTimestamp' | tr -d '"')
+
+        if [[ $(date -d "${CREATION_TIME}" +%s) -lt ${DELETE_TIME} ]]; then
+                NAME=$(echo "${image}" | jq '.name' | tr -d '"')
+                $GCP_CMD compute images delete "$NAME"
+                echo "deleted image: ${NAME}"        
+	fi
+done
