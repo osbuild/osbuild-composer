@@ -137,7 +137,7 @@ github.com/coreos/go-semver/semver
 github.com/coreos/go-systemd/activation
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/deepmap/oapi-codegen v1.3.12
+# github.com/deepmap/oapi-codegen v1.9.0
 ## explicit
 github.com/deepmap/oapi-codegen/cmd/oapi-codegen
 github.com/deepmap/oapi-codegen/pkg/codegen
@@ -147,12 +147,16 @@ github.com/deepmap/oapi-codegen/pkg/types
 github.com/deepmap/oapi-codegen/pkg/util
 # github.com/dimchansky/utfbom v1.1.1
 github.com/dimchansky/utfbom
-# github.com/getkin/kin-openapi v0.13.0
+# github.com/getkin/kin-openapi v0.80.0
 ## explicit
 github.com/getkin/kin-openapi/jsoninfo
 github.com/getkin/kin-openapi/openapi3
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
+# github.com/go-openapi/jsonpointer v0.19.5
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/swag v0.19.5
+github.com/go-openapi/swag
 # github.com/gobwas/glob v0.2.3
 ## explicit
 github.com/gobwas/glob
@@ -237,7 +241,7 @@ github.com/jackc/pgx/v4/pgxpool
 github.com/jackc/puddle
 # github.com/jmespath/go-jmespath v0.4.0
 github.com/jmespath/go-jmespath
-# github.com/json-iterator/go v1.1.11
+# github.com/json-iterator/go v1.1.12
 github.com/json-iterator/go
 # github.com/julienschmidt/httprouter v1.3.0
 ## explicit
@@ -245,9 +249,9 @@ github.com/julienschmidt/httprouter
 # github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 ## explicit
 github.com/kolo/xmlrpc
-# github.com/kr/pretty v0.2.1
+# github.com/kr/pretty v0.3.0
 github.com/kr/pretty
-# github.com/kr/text v0.1.0
+# github.com/kr/text v0.2.0
 github.com/kr/text
 # github.com/labstack/echo/v4 v4.6.1
 ## explicit
@@ -259,6 +263,10 @@ github.com/labstack/gommon/bytes
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
 github.com/labstack/gommon/random
+# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-ieproxy v0.0.1
@@ -274,7 +282,7 @@ github.com/microcosm-cc/bluemonday/css
 github.com/mitchellh/go-homedir
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
+# github.com/modern-go/reflect2 v1.0.2
 github.com/modern-go/reflect2
 # github.com/openshift-online/ocm-sdk-go v0.1.214
 ## explicit
@@ -283,8 +291,6 @@ github.com/openshift-online/ocm-sdk-go/errors
 github.com/openshift-online/ocm-sdk-go/helpers
 github.com/openshift-online/ocm-sdk-go/internal
 github.com/openshift-online/ocm-sdk-go/logging
-# github.com/pkg/errors v0.9.1
-github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v1.11.0
@@ -305,6 +311,8 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/rogpeppe/go-internal v1.8.0
+github.com/rogpeppe/go-internal/fmtsort
 # github.com/segmentio/ksuid v1.0.4
 ## explicit
 github.com/segmentio/ksuid
@@ -386,7 +394,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/pbkdf2
@@ -394,6 +402,9 @@ golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
 # golang.org/x/mod v0.5.0
 ## explicit
+golang.org/x/mod/internal/lazyregexp
+golang.org/x/mod/module
+golang.org/x/mod/semver
 # golang.org/x/net v0.0.0-20210913180222-943fd674d43e
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -419,8 +430,9 @@ golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
+# golang.org/x/sys v0.0.0-20211031064116-611d5d643895
 ## explicit
+golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -439,8 +451,20 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
+# golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 golang.org/x/time/rate
+# golang.org/x/tools v0.1.5
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/imports
+golang.org/x/tools/internal/event
+golang.org/x/tools/internal/event/core
+golang.org/x/tools/internal/event/keys
+golang.org/x/tools/internal/event/label
+golang.org/x/tools/internal/fastwalk
+golang.org/x/tools/internal/gocommand
+golang.org/x/tools/internal/gopathwalk
+golang.org/x/tools/internal/imports
+golang.org/x/tools/internal/typeparams
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
@@ -589,5 +613,4 @@ gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.4.0
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-## explicit
 gopkg.in/yaml.v3

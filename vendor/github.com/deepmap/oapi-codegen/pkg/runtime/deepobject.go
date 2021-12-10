@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -26,7 +25,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 			newPath := append(path, strconv.Itoa(i))
 			fields, err := marshalDeepObject(iface, newPath)
 			if err != nil {
-				return nil, errors.Wrap(err, "error traversing array")
+				return nil, fmt.Errorf("error traversing array: %w", err)
 			}
 			result = append(result, fields...)
 		}
@@ -46,7 +45,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 			newPath := append(path, k)
 			fields, err := marshalDeepObject(t[k], newPath)
 			if err != nil {
-				return nil, errors.Wrap(err, "error traversing map")
+				return nil, fmt.Errorf("error traversing map: %w", err)
 			}
 			result = append(result, fields...)
 		}
@@ -70,16 +69,16 @@ func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	// but it's complicated, error-prone code.
 	buf, err := json.Marshal(i)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to marshal input to JSON")
+		return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
 	}
 	var i2 interface{}
 	err = json.Unmarshal(buf, &i2)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to unmarshal JSON")
+		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 	fields, err := marshalDeepObject(i2, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "error traversing JSON structure")
+		return "", fmt.Errorf("error traversing JSON structure: %w", err)
 	}
 
 	// Prefix the param name to each subscripted field.
@@ -153,7 +152,7 @@ func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) e
 	fieldPaths := makeFieldOrValue(paths, fieldValues)
 	err := assignPathValues(dst, fieldPaths)
 	if err != nil {
-		return errors.Wrap(err, "error assigning value to destination")
+		return fmt.Errorf("error assigning value to destination: %w", err)
 	}
 
 	return nil
@@ -206,35 +205,61 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 		dstSlice := reflect.MakeSlice(it, sliceLength, sliceLength)
 		err := assignSlice(dstSlice, pathValues)
 		if err != nil {
-			return errors.Wrap(err, "error assigning slice")
+			return fmt.Errorf("error assigning slice: %w", err)
 		}
 		iv.Set(dstSlice)
 		return nil
 	case reflect.Struct:
 		// Some special types we care about are structs. Handle them
-		// here.
-		if _, isDate := iv.Interface().(types.Date); isDate {
+		// here. They may be redefined, so we need to do some hoop
+		// jumping. If the types are aliased, we need to type convert
+		// the pointer, then set the value of the dereference pointer.
+
+		// We check to see if the object implements the Binder interface first.
+		if dst, isBinder := v.Interface().(Binder); isBinder {
+			return dst.Bind(pathValues.value)
+		}
+		// Then check the legacy types
+		if it.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 			var date types.Date
 			var err error
 			date.Time, err = time.Parse(types.DateFormat, pathValues.value)
 			if err != nil {
-				return errors.Wrap(err, "invalid date format")
+				return fmt.Errorf("invalid date format: %w", err)
 			}
-			iv.Set(reflect.ValueOf(date))
+			dst := iv
+			if it != reflect.TypeOf(types.Date{}) {
+				// Types are aliased, convert the pointers.
+				ivPtr := iv.Addr()
+				aPtr := ivPtr.Convert(reflect.TypeOf(&types.Date{}))
+				dst = reflect.Indirect(aPtr)
+			}
+			dst.Set(reflect.ValueOf(date))
 		}
-		if _, isTime := iv.Interface().(time.Time); isTime {
+		if it.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			var tm time.Time
 			var err error
-			tm, err = time.Parse(types.DateFormat, pathValues.value)
+			tm, err = time.Parse(time.RFC3339Nano, pathValues.value)
 			if err != nil {
-				return errors.Wrap(err, "invalid date format")
+				// Fall back to parsing it as a date.
+				tm, err = time.Parse(types.DateFormat, pathValues.value)
+				if err != nil {
+					return fmt.Errorf("error parsing tim as RFC3339 or 2006-01-02 time: %s", err)
+				}
+				return fmt.Errorf("invalid date format: %w", err)
 			}
-			iv.Set(reflect.ValueOf(tm))
+			dst := iv
+			if it != reflect.TypeOf(time.Time{}) {
+				// Types are aliased, convert the pointers.
+				ivPtr := iv.Addr()
+				aPtr := ivPtr.Convert(reflect.TypeOf(&time.Time{}))
+				dst = reflect.Indirect(aPtr)
+			}
+			dst.Set(reflect.ValueOf(tm))
 		}
-
 		fieldMap, err := fieldIndicesByJsonTag(iv.Interface())
 		if err != nil {
-			return errors.Wrap(err, "failed enumerating fields")
+			return fmt.Errorf("failed enumerating fields: %w", err)
 		}
 		for _, fieldName := range sortedFieldOrValueKeys(pathValues.fields) {
 			fieldValue := pathValues.fields[fieldName]
@@ -245,7 +270,7 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			field := iv.Field(fieldIndex)
 			err = assignPathValues(field.Addr().Interface(), fieldValue)
 			if err != nil {
-				return errors.Wrapf(err, "error assigning field [%s]", fieldName)
+				return fmt.Errorf("error assigning field [%s]: %w", fieldName, err)
 			}
 		}
 		return nil
@@ -311,11 +336,11 @@ func assignSlice(dst reflect.Value, pathValues fieldOrValue) error {
 
 	// This could be cleaner, but we can call into assignPathValues to
 	// avoid recreating this logic.
-	for i:=0; i < nValues; i++ {
+	for i := 0; i < nValues; i++ {
 		dstElem := dst.Index(i).Addr()
-		err := assignPathValues(dstElem.Interface(), fieldOrValue{value:values[i]})
+		err := assignPathValues(dstElem.Interface(), fieldOrValue{value: values[i]})
 		if err != nil {
-			return errors.Wrap(err, "error binding array")
+			return fmt.Errorf("error binding array: %w", err)
 		}
 	}
 

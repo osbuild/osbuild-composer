@@ -20,8 +20,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
-	github.com/deepmap/oapi-codegen v1.3.12
-	github.com/getkin/kin-openapi v0.13.0
+	github.com/deepmap/oapi-codegen v1.9.0
+	github.com/getkin/kin-openapi v0.80.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/glog v1.0.0 // indirect
@@ -48,10 +48,9 @@ require (
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
+	golang.org/x/sys v0.0.0-20211031064116-611d5d643895
 	google.golang.org/api v0.58.0
 	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/ini.v1 v1.63.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
