@@ -238,6 +238,7 @@ function cleanupAzure() {
   # since this function can be called at any time, ensure that we don't expand unbound variables
   AZURE_CMD="${AZURE_CMD:-}"
   AZURE_IMAGE_NAME="${AZURE_IMAGE_NAME:-}"
+  AZURE_INSTANCE_NAME="${AZURE_INSTANCE_NAME:-}"
 
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
