@@ -3,7 +3,7 @@
 set -eux
 
 COMPOSE_ID=$(cat COMPOSE_ID)
-MESSAGE="\"Nightly pipeline execution on *$COMPOSE_ID* finished with status *$1* $2 \n Link to results: $CI_PIPELINE_URL \""
+MESSAGE="\"Nightly pipeline execution on *$COMPOSE_ID* finished with status *$1* $2 \n QE: @atodorov, @jrusz, @jabia \n Link to results: $CI_PIPELINE_URL \""
 
 curl \
     -X POST \
