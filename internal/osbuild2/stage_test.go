@@ -665,6 +665,40 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "sshd.config-data1",
+			fields: fields{
+				Type: "org.osbuild.sshd.config",
+				Options: &SshdConfigStageOptions{
+					Config: SshdConfigConfig{
+						PasswordAuthentication:          common.BoolToPtr(false),
+						ChallengeResponseAuthentication: common.BoolToPtr(false),
+						ClientAliveInterval:             common.IntToPtr(42),
+						PermitRootLogin:                 PermitRootLoginValueNo,
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sshd.config","options":{"config":{"PasswordAuthentication":false,"ChallengeResponseAuthentication":false,"ClientAliveInterval":42,"PermitRootLogin":false}}}`),
+			},
+		},
+		{
+			name: "sshd.config-data2",
+			fields: fields{
+				Type: "org.osbuild.sshd.config",
+				Options: &SshdConfigStageOptions{
+					Config: SshdConfigConfig{
+						PasswordAuthentication:          common.BoolToPtr(false),
+						ChallengeResponseAuthentication: common.BoolToPtr(false),
+						ClientAliveInterval:             common.IntToPtr(42),
+						PermitRootLogin:                 PermitRootLoginValueForcedCommandsOnly,
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.sshd.config","options":{"config":{"PasswordAuthentication":false,"ChallengeResponseAuthentication":false,"ClientAliveInterval":42,"PermitRootLogin":"forced-commands-only"}}}`),
+			},
+		},
+		{
 			name: "authconfig",
 			fields: fields{
 				Type:    "org.osbuild.authconfig",
