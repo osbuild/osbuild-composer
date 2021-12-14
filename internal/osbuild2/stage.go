@@ -71,6 +71,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(ChronyStageOptions)
 	case "org.osbuild.dnf.config":
 		options = new(DNFConfigStageOptions)
+	case "org.osbuild.dnf-automatic.config":
+		options = new(DNFAutomaticConfigStageOptions)
 	case "org.osbuild.dracut":
 		options = new(DracutStageOptions)
 	case "org.osbuild.dracut.conf":

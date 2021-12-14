@@ -147,6 +147,16 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "dnf-automatic-config",
+			fields: fields{
+				Type:    "org.osbuild.dnf-automatic.config",
+				Options: &DNFAutomaticConfigStageOptions{},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.dnf-automatic.config","options":{}}`),
+			},
+		},
+		{
 			name: "dracut",
 			fields: fields{
 				Type:    "org.osbuild.dracut",
