@@ -38,37 +38,37 @@ init:
     - schutzbot/update_github_status.sh start
   interruptible: true
 
-RPM:
-  stage: rpmbuild
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - sh "schutzbot/mockbuild.sh"
-  interruptible: true
-  after_script:
-    - schutzbot/update_github_status.sh update
-    - schutzbot/save_journal.sh
-  artifacts:
-    paths:
-      - journal-log.gpg
-  parallel:
-    matrix:
-      - RUNNER:
+# RPM:
+#   stage: rpmbuild
+#   extends: .terraform
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+#   script:
+#     - sh "schutzbot/mockbuild.sh"
+#   interruptible: true
+#   after_script:
+#     - schutzbot/update_github_status.sh update
+#     - schutzbot/save_journal.sh
+#   artifacts:
+#     paths:
+#       - journal-log.gpg
+#   parallel:
+#     matrix:
+#       - RUNNER:
           # - aws/fedora-33-x86_64
           # - aws/fedora-33-aarch64
           # - aws/fedora-34-x86_64
           # - aws/fedora-34-aarch64
-          - aws/rhel-8.5-ga-x86_64
+          # - aws/rhel-8.5-ga-x86_64
           # - aws/rhel-8.5-ga-aarch64
           # - aws/centos-stream-8-x86_64
           # - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
+      # - RUNNER:
+      #     - aws/rhel-8.6-nightly-x86_64
           # - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-nightly-x86_64
+          # - aws/rhel-9.0-nightly-x86_64
           # - aws/rhel-9.0-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
+        # INTERNAL_NETWORK: ["true"]
 
 # Container:
 #   stage: rpmbuild
@@ -312,31 +312,31 @@ RPM:
 #           - aws/rhel-8.6-nightly-x86_64
 #         INTERNAL_NETWORK: ["true"]
 
-.API_TESTS: &API_TESTS
-  IMAGE_TYPE:
+# .API_TESTS: &API_TESTS
+#   IMAGE_TYPE:
     # - aws
     # - azure
     # - edge-commit
-    - gcp
+    # - gcp
 
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+# API:
+#   stage: test
+#   extends: .terraform
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+#     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+#     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+#   script:
+#     - schutzbot/deploy.sh
+#     - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
+#   parallel:
+#     matrix:
+#       - <<: *API_TESTS
+#         RUNNER:
+#           - aws/rhel-8.5-ga-x86_64
+#           - aws/rhel-8.6-nightly-x86_64
+#           - aws/rhel-9.0-nightly-x86_64
+#         INTERNAL_NETWORK: ["true"]
 
 # libvirt:
 #   stage: test
@@ -410,17 +410,17 @@ API:
 #           - openstack/rhel-8.6-nightly-x86_64
 #           - openstack/rhel-9.0-nightly-x86_64
 
-# SCHEDULED_CLOUD_CLEANER:
-#   stage: cleanup
-#   tags:
-#     - terraform
-#   variables:
-#     RUNNER: aws/centos-stream-8-x86_64
-#   rules:
-#     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
-#   script:
-#     - schutzbot/deploy.sh
-#     - schutzbot/scheduled_cloud_cleaner.sh
+SCHEDULED_CLOUD_CLEANER:
+  stage: cleanup
+  tags:
+    - terraform
+  variables:
+    RUNNER: aws/centos-stream-8-x86_64
+  # rules:
+  #   - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
+  script:
+    # - schutzbot/deploy.sh
+    - schutzbot/scheduled_cloud_cleaner.sh
 
 finish:
   stage: finish
