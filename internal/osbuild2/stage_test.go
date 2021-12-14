@@ -728,6 +728,24 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				data: []byte(`{"type":"org.osbuild.yum.config","options":{}}`),
 			},
 		},
+		{
+			name: "yum.repos",
+			fields: fields{
+				Type: "org.osbuild.yum.repos",
+				Options: &YumReposStageOptions{
+					Filename: "test.repo",
+					Repos: []YumRepository{
+						{
+							Id:      "my-repo",
+							BaseURL: []string{"http://example.org/repo"},
+						},
+					},
+				},
+			},
+			args: args{
+				data: []byte(`{"type":"org.osbuild.yum.repos","options":{"filename":"test.repo","repos":[{"id":"my-repo","baseurl":["http://example.org/repo"]}]}}`),
+			},
+		},
 	}
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
