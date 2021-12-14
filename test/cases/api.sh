@@ -234,8 +234,8 @@ function cleanupGCP() {
 
   if [ -n "$GCP_CMD" ]; then
     set +e
-    $GCP_CMD compute instances delete --zone="$GCP_ZONE" "$GCP_INSTANCE_NAME"
-    $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
+    # $GCP_CMD compute instances delete --zone="$GCP_ZONE" "$GCP_INSTANCE_NAME"
+    # $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
     set -e
   fi
 }
