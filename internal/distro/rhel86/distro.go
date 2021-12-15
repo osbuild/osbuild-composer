@@ -392,7 +392,9 @@ func (t *imageType) getPartitionTable(
 		return basePartitionTable, fmt.Errorf("unknown arch: " + archName)
 	}
 
-	return disk.CreatePartitionTable(mountpoints, options.Size, &basePartitionTable, rng)
+	imageSize := t.Size(options.Size)
+
+	return disk.CreatePartitionTable(mountpoints, imageSize, &basePartitionTable, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
