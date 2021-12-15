@@ -61,7 +61,7 @@ type imageType struct {
 	buildPipelines          []string
 	payloadPipelines        []string
 	exports                 []string
-	partitionTableGenerator func(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable
+	partitionTableGenerator func(imageSize uint64, arch distro.Arch, rng *rand.Rand) disk.PartitionTable
 	assembler               func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
 }
 
@@ -353,6 +353,8 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec, rng *rand.Rand) (*osbuild.Pipeline, error) {
 
+	imageSize := t.Size(options.Size)
+
 	if kernelOpts := c.GetKernel(); kernelOpts != nil && kernelOpts.Append != "" && t.rpmOstree {
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
@@ -367,6 +369,10 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		} else {
+			if m.MinSize > imageSize {
+				imageSize = m.MinSize
+			}
 		}
 	}
 
@@ -376,7 +382,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	var pt *disk.PartitionTable
 	if t.partitionTableGenerator != nil {
-		table := t.partitionTableGenerator(options, t.arch, rng)
+		table := t.partitionTableGenerator(imageSize, t.arch, rng)
 		pt = &table
 	}
 
@@ -684,10 +690,10 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
+func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
 	if arch.Name() == "x86_64" {
 		return disk.PartitionTable{
-			Size: imageOptions.Size,
+			Size: imageSize,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
 			Partitions: []disk.Partition{
@@ -730,7 +736,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 		}
 	} else if arch.Name() == "aarch64" {
 		return disk.PartitionTable{
-			Size: imageOptions.Size,
+			Size: imageSize,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
 			Partitions: []disk.Partition{
@@ -766,7 +772,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 		}
 	} else if arch.Name() == "ppc64le" {
 		return disk.PartitionTable{
-			Size: imageOptions.Size,
+			Size: imageSize,
 			UUID: "0x14fc63d2",
 			Type: "dos",
 			Partitions: []disk.Partition{
@@ -790,7 +796,7 @@ func defaultPartitionTable(imageOptions distro.ImageOptions, arch distro.Arch, r
 		}
 	} else if arch.Name() == "s390x" {
 		return disk.PartitionTable{
-			Size: imageOptions.Size,
+			Size: imageSize,
 			UUID: "0x14fc63d2",
 			Type: "dos",
 			Partitions: []disk.Partition{

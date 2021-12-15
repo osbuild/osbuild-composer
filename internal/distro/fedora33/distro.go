@@ -62,7 +62,7 @@ type imageType struct {
 	bootable         bool
 	rpmOstree        bool
 	defaultSize      uint64
-	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler
+	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler
 }
 
 func removePackage(packages []string, packageToRemove string) []string {
@@ -309,6 +309,9 @@ func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
 
 func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecs, buildPackageSpecs []rpmmd.PackageSpec) (*osbuild.Pipeline, error) {
 
+	// if options.Size is 0, this will be the default size of the image type
+	imageSize := t.Size(options.Size)
+
 	if kernelOpts := c.GetKernel(); kernelOpts != nil && kernelOpts.Append != "" && t.rpmOstree {
 		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
@@ -323,6 +326,10 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	for _, m := range mountpoints {
 		if m.Mountpoint != "/" {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		} else {
+			if m.MinSize > imageSize {
+				imageSize = m.MinSize
+			}
 		}
 	}
 
@@ -404,7 +411,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		}))
 	}
 
-	p.Assembler = t.assembler(t.arch.uefi, options, t.arch)
+	p.Assembler = t.assembler(t.arch.uefi, options, t.arch, imageSize)
 
 	return p, nil
 }
@@ -571,13 +578,13 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, imageOptions distro.ImageOptions) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, uefi bool, imageSize uint64) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     imageOptions.Size,
+			Size:     imageSize,
 			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
 			PTType:   "gpt",
 			Partitions: []osbuild.QEMUPartition{
@@ -608,7 +615,7 @@ func qemuAssembler(format string, filename string, uefi bool, imageOptions distr
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
-			Size:     imageOptions.Size,
+			Size:     imageSize,
 			PTUUID:   "0x14fc63d2",
 			PTType:   "mbr",
 			Partitions: []osbuild.QEMUPartition{
@@ -771,7 +778,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			"parsec", "dbus-parsec",
 		},
 		rpmOstree: true,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
 	}
@@ -803,8 +810,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		kernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("raw", "image.raw", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("raw", "image.raw", uefi, imageSize)
 		},
 	}
 
@@ -837,8 +844,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 		bootable:    true,
 		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, imageSize)
 		},
 	}
 
@@ -871,8 +878,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 		bootable:    true,
 		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options.Size)
 		},
 	}
 
@@ -910,8 +917,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("vpc", "disk.vhd", uefi, imageSize)
 		},
 	}
 
@@ -944,8 +951,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 		bootable:    true,
 		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("vmdk", "disk.vmdk", uefi, options.Size)
 		},
 	}
 
@@ -978,8 +985,8 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 		bootable:    true,
 		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options)
+		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, options.Size)
 		},
 	}
 
