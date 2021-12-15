@@ -119,6 +119,20 @@ def generate_test_case(test_type, distro, arch, output_format, test_case_request
         case_file.write("\n")
 
 
+def filter_repos_by_image_type_tags(image_type: str, repos: list) -> list:
+    filtered_repos = []
+    for repo in repos:
+        image_type_tags = repo.get("image_type_tags")
+        # if image type tags are defined for the repository, add it to the list only
+        # if the provided image type is in the list of image type tags.
+        if image_type_tags is not None:
+            if image_type in image_type_tags:
+                filtered_repos.append(repo)
+            continue
+        filtered_repos.append(repo)
+    return filtered_repos
+
+
 def main(distro, arch, image_types, keep_image_info, store, output):
     with open("tools/test-case-generators/format-request-map.json") as format_request_json:
         format_request_dict = json.load(format_request_json)
@@ -140,7 +154,9 @@ def main(distro, arch, image_types, keep_image_info, store, output):
         if supported_arches is not None and arch not in supported_arches:
             continue
         filtered_request["compose-request"]["arch"] = arch
-        filtered_request["compose-request"]["repositories"] = repos_dict[distro][arch]
+
+        request_repos = filter_repos_by_image_type_tags(filtered_request["compose-request"]["image-type"], repos_dict[distro][arch])
+        filtered_request["compose-request"]["repositories"] = request_repos
 
         if distro in test_case_request["overrides"]:
             filtered_request["compose-request"].update(test_case_request["overrides"][distro])
