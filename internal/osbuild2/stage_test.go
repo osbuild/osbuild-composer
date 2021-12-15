@@ -494,7 +494,7 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 				Options: &SysconfigStageOptions{},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.sysconfig","options":{"kernel":{},"network":{}}}`),
+				data: []byte(`{"type":"org.osbuild.sysconfig","options":{}}`),
 			},
 		},
 		{
@@ -502,11 +502,11 @@ func TestStage_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Type: "org.osbuild.sysconfig",
 				Options: &SysconfigStageOptions{
-					Kernel: SysconfigKernelOptions{
+					Kernel: &SysconfigKernelOptions{
 						UpdateDefault: true,
 						DefaultKernel: "kernel",
 					},
-					Network: SysconfigNetworkOptions{
+					Network: &SysconfigNetworkOptions{
 						Networking: true,
 						NoZeroConf: true,
 					},
