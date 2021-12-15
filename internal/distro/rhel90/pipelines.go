@@ -269,11 +269,11 @@ func ec2BaseTreePipeline(
 	}))
 
 	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: osbuild.SysconfigKernelOptions{
+		Kernel: &osbuild.SysconfigKernelOptions{
 			UpdateDefault: true,
 			DefaultKernel: "kernel",
 		},
-		Network: osbuild.SysconfigNetworkOptions{
+		Network: &osbuild.SysconfigNetworkOptions{
 			Networking: true,
 			NoZeroConf: true,
 		},
@@ -853,11 +853,11 @@ func osPipeline(repos []rpmmd.RepoConfig,
 
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
 	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: osbuild.SysconfigKernelOptions{
+		Kernel: &osbuild.SysconfigKernelOptions{
 			UpdateDefault: true,
 			DefaultKernel: "kernel",
 		},
-		Network: osbuild.SysconfigNetworkOptions{
+		Network: &osbuild.SysconfigNetworkOptions{
 			Networking: true,
 			NoZeroConf: true,
 		},
@@ -940,11 +940,11 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 
 	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
 	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: osbuild.SysconfigKernelOptions{
+		Kernel: &osbuild.SysconfigKernelOptions{
 			UpdateDefault: true,
 			DefaultKernel: "kernel",
 		},
-		Network: osbuild.SysconfigNetworkOptions{
+		Network: &osbuild.SysconfigNetworkOptions{
 			Networking: true,
 			NoZeroConf: true,
 		},

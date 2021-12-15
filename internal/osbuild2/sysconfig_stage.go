@@ -1,9 +1,9 @@
 package osbuild2
 
 type SysconfigStageOptions struct {
-	Kernel         SysconfigKernelOptions  `json:"kernel,omitempty"`
-	Network        SysconfigNetworkOptions `json:"network,omitempty"`
-	NetworkScripts *NetworkScriptsOptions  `json:"network-scripts,omitempty"`
+	Kernel         *SysconfigKernelOptions  `json:"kernel,omitempty"`
+	Network        *SysconfigNetworkOptions `json:"network,omitempty"`
+	NetworkScripts *NetworkScriptsOptions   `json:"network-scripts,omitempty"`
 }
 
 func (SysconfigStageOptions) isStageOptions() {}
