@@ -13,18 +13,7 @@ function greenprint {
 }
 
 # install requirements
-sudo dnf -q -y install make \
-    git \
-    go \
-    ranger \
-    openssl \
-    rpm-build \
-    aws \
-    qemu \
-    setools-console \
-    setroubleshoot \
-    container-selinux \
-    lvm2
+sudo dnf -y install go
 
 # stop dnf-json socket
 sudo systemctl stop osbuild-dnf-json.socket
