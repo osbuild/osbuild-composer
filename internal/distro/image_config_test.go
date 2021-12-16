@@ -29,6 +29,31 @@ func TestImageConfigInheritFrom(t *testing.T) {
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
 				DefaultTarget:    "multi-user.target",
+				Sysconfig: []*osbuild2.SysconfigStageOptions{
+					{
+						Kernel: &osbuild2.SysconfigKernelOptions{
+							UpdateDefault: true,
+							DefaultKernel: "kernel",
+						},
+						Network: &osbuild2.SysconfigNetworkOptions{
+							Networking: true,
+							NoZeroConf: true,
+						},
+						NetworkScripts: &osbuild2.NetworkScriptsOptions{
+							IfcfgFiles: map[string]osbuild2.IfcfgFile{
+								"eth0": {
+									Device:    "eth0",
+									Bootproto: osbuild2.IfcfgBootprotoDHCP,
+									OnBoot:    common.BoolToPtr(true),
+									Type:      osbuild2.IfcfgTypeEthernet,
+									UserCtl:   common.BoolToPtr(true),
+									PeerDNS:   common.BoolToPtr(true),
+									IPv6Init:  common.BoolToPtr(false),
+								},
+							},
+						},
+					},
+				},
 			},
 			imageConfig: &ImageConfig{
 				Timezone: "UTC",
@@ -66,6 +91,31 @@ func TestImageConfigInheritFrom(t *testing.T) {
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
 				DefaultTarget:    "multi-user.target",
+				Sysconfig: []*osbuild2.SysconfigStageOptions{
+					{
+						Kernel: &osbuild2.SysconfigKernelOptions{
+							UpdateDefault: true,
+							DefaultKernel: "kernel",
+						},
+						Network: &osbuild2.SysconfigNetworkOptions{
+							Networking: true,
+							NoZeroConf: true,
+						},
+						NetworkScripts: &osbuild2.NetworkScriptsOptions{
+							IfcfgFiles: map[string]osbuild2.IfcfgFile{
+								"eth0": {
+									Device:    "eth0",
+									Bootproto: osbuild2.IfcfgBootprotoDHCP,
+									OnBoot:    common.BoolToPtr(true),
+									Type:      osbuild2.IfcfgTypeEthernet,
+									UserCtl:   common.BoolToPtr(true),
+									PeerDNS:   common.BoolToPtr(true),
+									IPv6Init:  common.BoolToPtr(false),
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		{

@@ -31,20 +31,6 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 
-	if options.Subscription == nil {
-		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
-		treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
-			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
-				},
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
-				},
-			},
-		}))
-	}
-
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
@@ -163,8 +149,6 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 // The expectation is that specific EC2 image types can extend the returned pipeline
 // by appending additional stages.
 //
-// The argument `withRHUI` should be set to `true` only if the image package set includes RHUI client packages.
-//
 // Note: the caller of this function has to append the `osbuild.NewSELinuxStage(selinuxStageOptions(false))` stage
 // as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
 // any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
@@ -175,7 +159,6 @@ func ec2BaseTreePipeline(
 	bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
-	withRHUI bool,
 	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
 	// COMMON WITH osPipeline - START
@@ -251,6 +234,30 @@ func ec2BaseTreePipeline(
 	for _, sysconfigConfig := range imageConfig.Sysconfig {
 		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
 	}
+
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			}))
+
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		} else {
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		}
+	}
+
 	// COMMON WITH osPipeline - END
 
 	p.AddStage(osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
@@ -303,53 +310,13 @@ func ec2BaseTreePipeline(
 		Profile: "sssd",
 	}))
 
-	if t.arch.distro.isRHEL() {
-		if options.Subscription != nil {
-			commands := []string{
-				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-			}
-			if options.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-			}
-
-			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-				Commands:       commands,
-				WaitForNetwork: true,
-			}))
-		} else {
-			// The EC2 images should keep the RHSM DNF plugins enabled (RHBZ#1996670)
-			rhsmStageOptions := &osbuild.RHSMStageOptions{
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-				},
-			}
-
-			// Disable RHSM redhat.repo management only if the image uses RHUI
-			// for content. Otherwise subscribing the system manually after booting
-			// it would result in empty redhat.repo. Without RHUI, such system
-			// would have no way to get Red Hat content, but enable the repo
-			// management manually, which would be very confusing.
-			// RHBZ#1932802
-			if withRHUI {
-				rhsmStageOptions.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{
-					ManageRepos: common.BoolToPtr(false),
-				}
-			}
-
-			p.AddStage(osbuild.NewRHSMStage(rhsmStageOptions))
-		}
-	}
-
 	return p, nil
 }
 
 func ec2X86_64BaseTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations, options distro.ImageOptions, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+	c *blueprint.Customizations, options distro.ImageOptions, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
-	treePipeline, err := ec2BaseTreePipeline(t, repos, packages, bpPackages, c, options, withRHUI, pt)
+	treePipeline, err := ec2BaseTreePipeline(t, repos, packages, bpPackages, c, options, pt)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +339,7 @@ func ec2X86_64BaseTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages 
 
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
-	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
+	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -385,10 +352,10 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	// rhel-ec2-aarch64
 	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
+		treePipeline, err = ec2BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
@@ -411,7 +378,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
-	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
+	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -424,7 +391,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 	switch arch := t.arch.Name(); arch {
 	// rhel-sap-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
 	}
@@ -552,14 +519,14 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
 func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, false, t.Filename())
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, t.Filename())
 }
 
 // rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
 func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	rawImageFilename := "image.raw"
 
-	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
+	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, rawImageFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +541,7 @@ func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, op
 func rhelEc2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	rawImageFilename := "image.raw"
 
-	pipelines, err := ec2SapPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
+	pipelines, err := ec2SapPipelines(t, customizations, options, repos, packageSetSpecs, rng, rawImageFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -839,19 +806,27 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
 	}
 
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			}))
 
-		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		} else {
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		}
 	}
 	return p, nil
 }
@@ -931,19 +906,27 @@ func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd
 		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
 	}
 
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			}))
 
-		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		} else {
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		}
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))

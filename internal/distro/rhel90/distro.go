@@ -725,6 +725,18 @@ func newDistro(distroName string) distro.Distro {
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: "multi-user.target",
+			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+				distro.RHSMConfigNoSubscription: {
+					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+						ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+						SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+					},
+				},
+			},
 		},
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -856,7 +868,61 @@ func newDistro(distroName string) distro.Distro {
 				},
 			},
 		},
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					Rhsm: &osbuild.SubManConfigRHSMSection{
+						ManageRepos: common.BoolToPtr(false),
+					},
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
 	}
+
+	defaultAMIImageConfig := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the AMI
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	defaultAMIImageConfig = defaultAMIImageConfig.InheritFrom(defaultEc2ImageConfig)
 
 	amiImgTypeX86_64 := imageType{
 		name:     "ami",
@@ -866,7 +932,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfig,
+		defaultImageConfig:  defaultAMIImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -886,7 +952,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfig,
+		defaultImageConfig:  defaultAMIImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
