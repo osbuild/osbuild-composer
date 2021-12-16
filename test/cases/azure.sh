@@ -178,6 +178,17 @@ name = "cloud-init"
 enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
 EOF
 
+# Make sure the specified storage account exists
+if [ "$(az resource list --name "$AZURE_STORAGE_ACCOUNT")" == "[]" ]; then
+	echo "The storage account ${AZURE_STORAGE_ACCOUNT} was removed!"
+	az storage account create \
+		--name "${AZURE_STORAGE_ACCOUNT}" \
+		--resource-group "${AZURE_RESOURCE_GROUP}" \
+		--location  "${AZURE_LOCATION}" \
+		--sku Standard_RAGRS \
+		--kind StorageV2
+fi
+
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
