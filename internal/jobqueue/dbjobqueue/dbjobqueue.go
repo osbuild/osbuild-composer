@@ -321,7 +321,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	var started, finished *time.Time
 	var jobType string
 	canceled := false
-	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, &started, nil, &canceled)
+	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, &started, &finished, &canceled)
 	if err == pgx.ErrNoRows {
 		return jobqueue.ErrNotExist
 	}
