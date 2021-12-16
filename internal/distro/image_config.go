@@ -2,6 +2,13 @@ package distro
 
 import "github.com/osbuild/osbuild-composer/internal/osbuild2"
 
+type RHSMSubscriptionStatus string
+
+const (
+	RHSMConfigWithSubscription RHSMSubscriptionStatus = "with-subscription"
+	RHSMConfigNoSubscription   RHSMSubscriptionStatus = "no-subscription"
+)
+
 // ImageConfig represents a (default) configuration applied to the image
 type ImageConfig struct {
 	Timezone            string
@@ -12,6 +19,10 @@ type ImageConfig struct {
 	DisabledServices    []string
 	DefaultTarget       string
 	Sysconfig           []*osbuild2.SysconfigStageOptions
+
+	// for RHSM configuration, we need to potentially distinguish the case
+	// when the user want the image to be subscribed on first boot and when not
+	RHSMConfig map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -42,6 +53,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.Sysconfig == nil {
 			finalConfig.Sysconfig = parentConfig.Sysconfig
+		}
+		if finalConfig.RHSMConfig == nil {
+			finalConfig.RHSMConfig = parentConfig.RHSMConfig
 		}
 	}
 	return &finalConfig

@@ -914,6 +914,19 @@
             }
           },
           {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.systemd-logind",
             "options": {
               "filename": "00-getty-fixes.conf",
@@ -976,19 +989,6 @@
             "type": "org.osbuild.authselect",
             "options": {
               "profile": "sssd"
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
             }
           },
           {
