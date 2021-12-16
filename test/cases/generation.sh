@@ -15,11 +15,26 @@ function greenprint {
 # install requirements
 sudo dnf -y install go
 
+# test the test cases generation when systemd starts dnf-json
 # stop dnf-json socket
 sudo systemctl stop osbuild-dnf-json.socket
 
-# test the test cases generation
 WORKDIR=$(mktemp -d -p /var/tmp)
+
+OSBUILD_LABEL=$(matchpathcon -n "$(which osbuild)")
+chcon "$OSBUILD_LABEL" tools/image-info
+
+# test the test case generation when dnf-json socket is stopped
+sudo ./tools/test-case-generators/generate-test-cases\
+    --output test/data/manifests\
+    --arch x86_64\
+    --distro rhel-8\
+    --image-type qcow2\
+    --store "$WORKDIR"
+
+# test the test cases generation without systemd
+WORKDIR=$(mktemp -d -p /var/tmp)
+sudo dnf remove osbuild*
 
 OSBUILD_LABEL=$(matchpathcon -n "$(which osbuild)")
 chcon "$OSBUILD_LABEL" tools/image-info

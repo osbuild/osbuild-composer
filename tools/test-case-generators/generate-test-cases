@@ -66,13 +66,19 @@ class TestCaseGenerator:
     def get_test_case(self, no_image_info, store):
         compose_request = json.dumps(self.test_case["compose-request"])
 
+        dnf_json_instance = None
         command = ["systemctl", "is-active", "--quiet", "osbuild-dnf-json.socket"]
         if not is_subprocess_succeeding(command):
             print("osbuild-dnf-json.socket is not running, starting it up")
             command = ["systemctl", "start", "osbuild-dnf-json.socket", "--quiet"]
             if not is_subprocess_succeeding(command):
-                print("impossible to start osbuild-dnf-json.socket with systemd")
-                sys.exit(1)
+                print("unable to start osbuild-dnf-json.socket with systemd")
+                dnf_json_command = ["python", "./dnf-json"]
+                dnf_json_instance = subprocess.Popen(dnf_json_command)
+                if dnf_json_instance.poll() != None:
+                    print("unable to start dnf-json as a standalone executable")
+                    sys.exit(1)
+
 
         pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-"]
         self.test_case["manifest"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
@@ -96,6 +102,8 @@ class TestCaseGenerator:
                 image_info = get_subprocess_stdout(["tools/image-info", image_file], encoding="utf-8")
                 self.test_case["image-info"] = json.loads(image_info)
 
+        if dnf_json_instance != None:
+            dnf_json_instance.kill()
         return self.test_case
 
 
