@@ -9,8 +9,6 @@ PrivateTmp=true
 ExecStart=/usr/libexec/osbuild-composer/osbuild-worker -unix /run/osbuild-composer/job.socket
 Restart=always
 RestartSec=1s
-CPUSchedulingPolicy=batch
-IOSchedulingClass=idle
 CacheDirectory=osbuild-worker
 # systemd >= 240 sets this, but osbuild-worker runs on earlier versions
 Environment="CACHE_DIRECTORY=/var/cache/osbuild-worker"
