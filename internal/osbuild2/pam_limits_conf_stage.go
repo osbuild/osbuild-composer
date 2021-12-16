@@ -3,7 +3,6 @@ package osbuild2
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 // PamLimitsConfStageOptions represents a single pam_limits module configuration file.
@@ -134,13 +133,13 @@ func (l *PamLimitsConfigLine) UnmarshalJSON(data []byte) error {
 	}
 
 	var value PamLimitsValue
-	switch valueType := reflect.TypeOf(rawLine.Value); valueType.Kind() {
+	switch valueType := rawLine.Value.(type) {
 	// json.Unmarshal() uses float64 for JSON numbers
 	// https://pkg.go.dev/encoding/json#Unmarshal
 	// However the expected value is only integer.
-	case reflect.Float64:
+	case float64:
 		value = PamLimitsValueInt(rawLine.Value.(float64))
-	case reflect.String:
+	case string:
 		value = PamLimitsValueStr(rawLine.Value.(string))
 	default:
 		return fmt.Errorf("the 'value' item has unsupported type %q", valueType)
