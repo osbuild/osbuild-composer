@@ -24,7 +24,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -169,16 +169,17 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 // as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
 // any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
 func ec2BaseTreePipeline(
+	t *imageType,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
 	bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
-	enabledServices, disabledServices []string,
-	defaultTarget string,
-	withRHUI, isRHEL bool,
+	withRHUI bool,
 	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
+	// COMMON WITH osPipeline - START
+	imageConfig := t.getDefaultImageConfig()
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
@@ -196,17 +197,12 @@ func ec2BaseTreePipeline(
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
 	}
 	if keyboard != nil {
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	} else {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{
-			Keymap: "us",
-			X11Keymap: &osbuild.X11KeymapOptions{
-				Layouts: []string{"us"},
-			},
-		}))
+	} else if imageConfig.Keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
 	}
 
 	if hostname := c.GetHostname(); hostname != nil {
@@ -217,25 +213,13 @@ func ec2BaseTreePipeline(
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "UTC"}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
 	}
 
 	if len(ntpServers) > 0 {
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	} else {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{
-			Servers: []osbuild.ChronyConfigServer{
-				{
-					Hostname: "169.254.169.123",
-					Prefer:   common.BoolToPtr(true),
-					Iburst:   common.BoolToPtr(true),
-					Minpoll:  common.IntToPtr(4),
-					Maxpoll:  common.IntToPtr(4),
-				},
-			},
-			// empty string will remove any occurrences of the option from the configuration
-			LeapsecTz: common.StringToPtr(""),
-		}))
+	} else if imageConfig.TimeSynchronization != nil {
+		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
@@ -250,13 +234,24 @@ func ec2BaseTreePipeline(
 		p.AddStage(osbuild.NewUsersStage(userOptions))
 	}
 
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
+			imageConfig.EnabledServices,
+			imageConfig.DisabledServices,
+			services,
+			imageConfig.DefaultTarget,
+		)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
+
+	for _, sysconfigConfig := range imageConfig.Sysconfig {
+		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	}
+	// COMMON WITH osPipeline - END
 
 	p.AddStage(osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
 		Filename: "00-getty-fixes.conf",
@@ -264,30 +259,6 @@ func ec2BaseTreePipeline(
 
 			Login: osbuild.SystemdLogindConfigLoginSection{
 				NAutoVTs: common.IntToPtr(0),
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-		NetworkScripts: &osbuild.NetworkScriptsOptions{
-			IfcfgFiles: map[string]osbuild.IfcfgFile{
-				"eth0": {
-					Device:    "eth0",
-					Bootproto: osbuild.IfcfgBootprotoDHCP,
-					OnBoot:    common.BoolToPtr(true),
-					Type:      osbuild.IfcfgTypeEthernet,
-					UserCtl:   common.BoolToPtr(true),
-					PeerDNS:   common.BoolToPtr(true),
-					IPv6Init:  common.BoolToPtr(false),
-				},
 			},
 		},
 	}))
@@ -332,7 +303,7 @@ func ec2BaseTreePipeline(
 		Profile: "sssd",
 	}))
 
-	if isRHEL {
+	if t.arch.distro.isRHEL() {
 		if options.Subscription != nil {
 			commands := []string{
 				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
@@ -375,11 +346,10 @@ func ec2BaseTreePipeline(
 	return p, nil
 }
 
-func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
-	defaultTarget string, withRHUI, isRHEL bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+func ec2X86_64BaseTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
+	c *blueprint.Customizations, options distro.ImageOptions, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
-	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI, isRHEL, pt)
+	treePipeline, err := ec2BaseTreePipeline(t, repos, packages, bpPackages, c, options, withRHUI, pt)
 	if err != nil {
 		return nil, err
 	}
@@ -415,10 +385,10 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
 	// rhel-ec2-aarch64
 	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
+		treePipeline, err = ec2BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
@@ -454,7 +424,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 	switch arch := t.arch.Name(); arch {
 	// rhel-sap-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, withRHUI, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
 	}
@@ -619,7 +589,7 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, nil)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -662,7 +632,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, nil)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -700,7 +670,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := ostreeTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -789,34 +759,39 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func osPipeline(repos []rpmmd.RepoConfig,
+func osPipeline(t *imageType,
+	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
 	bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
-	enabledServices, disabledServices []string,
-	defaultTarget string,
 	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+	imageConfig := t.getDefaultImageConfig()
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 	if pt == nil || pt.BootPartition() == nil {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
 	}
+
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
 	}
 	if keyboard != nil {
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	} else if imageConfig.Keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
 	}
+
 	if hostname := c.GetHostname(); hostname != nil {
 		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
 	}
@@ -825,11 +800,13 @@ func osPipeline(repos []rpmmd.RepoConfig,
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
 	}
 
 	if len(ntpServers) > 0 {
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	} else if imageConfig.TimeSynchronization != nil {
+		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
@@ -844,25 +821,23 @@ func osPipeline(repos []rpmmd.RepoConfig,
 		p.AddStage(osbuild.NewUsersStage(userOptions))
 	}
 
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
+			imageConfig.EnabledServices,
+			imageConfig.DisabledServices,
+			services,
+			imageConfig.DefaultTarget,
+		)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
 
-	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-	}))
+	for _, sysconfigConfig := range imageConfig.Sysconfig {
+		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	}
 
 	if options.Subscription != nil {
 		commands := []string{
@@ -881,7 +856,8 @@ func osPipeline(repos []rpmmd.RepoConfig,
 	return p, nil
 }
 
-func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions) (*osbuild.Pipeline, error) {
+	imageConfig := t.getDefaultImageConfig()
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
@@ -894,15 +870,19 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
 	}
 	if keyboard != nil {
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	} else if imageConfig.Keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
 	}
+
 	if hostname := c.GetHostname(); hostname != nil {
 		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
 	}
@@ -911,11 +891,13 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
 	}
 
 	if len(ntpServers) > 0 {
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	} else if imageConfig.TimeSynchronization != nil {
+		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
@@ -931,25 +913,23 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 		p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
 	}
 
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
+			imageConfig.EnabledServices,
+			imageConfig.DisabledServices,
+			services,
+			imageConfig.DefaultTarget,
+		)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
 
-	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-	}))
+	for _, sysconfigConfig := range imageConfig.Sysconfig {
+		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	}
 
 	if options.Subscription != nil {
 		commands := []string{
@@ -975,6 +955,7 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	}))
 	return p, nil
 }
+
 func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-commit"
