@@ -39,7 +39,6 @@ source "amazon-ebs" "image_builder" {
 
   # Network configuration for the instance building our image.
   associate_public_ip_address = true
-  security_group_ids = ["sg-04bbbb35"]
   ssh_interface = "public_ip"
   ssh_username = "ec2-user"
   instance_type = "c5.large"
@@ -50,9 +49,11 @@ build {
 
   provisioner "ansible" {
     playbook_file = "${path.root}/ansible/playbook.yml"
+    user = "ec2-user"
     extra_arguments = [
       "-e", "COMPOSER_COMMIT=${var.composer_commit}",
       "-e", "OSBUILD_COMMIT=${var.osbuild_commit}",
+      "--skip-tags", "${var.ansible_skip_tags}",
     ]
   }
 }

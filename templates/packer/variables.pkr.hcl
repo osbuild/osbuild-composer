@@ -15,3 +15,9 @@ variable "osbuild_commit" { type = string }
 
 # The name of the resulting AMI and the underlying EBS snapshot
 variable "image_name" { type = string }
+
+# Skip ansible tags
+variable "ansible_skip_tags" {
+  type = string
+  default = ""
+}

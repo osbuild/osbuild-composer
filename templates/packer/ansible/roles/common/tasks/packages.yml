@@ -1,6 +1,8 @@
 ---
 
 - name: Add osbuild-composer repository
+  tags:
+    - rpmrepo
   yum_repository:
     name: "composer"
     description: "osbuild-composer commit {{ COMPOSER_COMMIT }}"
@@ -10,6 +12,8 @@
     priority: "5"
 
 - name: Add osbuild repository
+  tags:
+    - rpmrepo
   yum_repository:
     name: "osbuild"
     description: "osbuild commit {{ OSBUILD_COMMIT }}"
@@ -42,7 +46,6 @@
   package:
     name:
       - jq
-      - osbuild-composer-worker
       - unzip
       - monit
       - vector
@@ -74,3 +77,48 @@
   loop:
     - /tmp/awscli.zip
     - /tmp/aws
+
+- name: Create rpmbuild directory
+  tags:
+    - rpmcopy
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - /tmp/rpmbuild
+  - /tmp/rpmbuild/RPMS
+
+- name: Push rpms
+  tags:
+    - rpmcopy
+  ansible.posix.synchronize:
+    mode: push
+    src: "{{ playbook_dir }}/roles/common/files/rpmbuild/RPMS"
+    dest: /tmp/rpmbuild
+
+- name: Add repo config
+  tags:
+    - rpmcopy
+  copy:
+    dest: /etc/yum.repos.d/osbuild.repo
+    content: |
+      [osbuild]
+      name=osbuild
+      baseurl=file:///tmp/rpmbuild/RPMS
+      enabled=1
+      gpgcheck=0
+      priority=100
+
+- name: Install worker rpm
+  package:
+    name:
+      - osbuild-composer-worker
+    state: present
+
+- name: Cleanup rpmbuild dir
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /tmp/rpmbuild
+    - /etc/yum.repos.d/osbuild.repo
