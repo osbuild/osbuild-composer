@@ -959,6 +959,18 @@
             }
           },
           {
+            "type": "org.osbuild.dracut.conf",
+            "options": {
+              "filename": "ec2.conf",
+              "config": {
+                "add_drivers": [
+                  "nvme",
+                  "xen-blkfront"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.systemd.unit",
             "options": {
               "unit": "nm-cloud-setup.service",
@@ -974,18 +986,6 @@
             "type": "org.osbuild.authselect",
             "options": {
               "profile": "sssd"
-            }
-          },
-          {
-            "type": "org.osbuild.dracut.conf",
-            "options": {
-              "filename": "ec2.conf",
-              "config": {
-                "add_drivers": [
-                  "nvme",
-                  "xen-blkfront"
-                ]
-              }
             }
           },
           {
