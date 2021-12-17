@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -40,41 +41,62 @@ var mountpointAllowList = []string{
 }
 
 type distribution struct {
-	name             string
-	product          string
-	osVersion        string
-	releaseVersion   string
-	modulePlatformID string
-	vendor           string
-	ostreeRefTmpl    string
-	isolabelTmpl     string
-	runner           string
-	arches           map[string]distro.Arch
+	name               string
+	product            string
+	osVersion          string
+	releaseVersion     string
+	modulePlatformID   string
+	vendor             string
+	ostreeRefTmpl      string
+	isolabelTmpl       string
+	runner             string
+	arches             map[string]distro.Arch
+	defaultImageConfig *distro.ImageConfig
+}
+
+// RHEL-based OS image configuration defaults
+var defaultDistroImageConfig = &distro.ImageConfig{
+	Timezone: "America/New_York",
+	Locale:   "en_US.UTF-8",
+	Sysconfig: []*osbuild.SysconfigStageOptions{
+		{
+			Kernel: &osbuild.SysconfigKernelOptions{
+				UpdateDefault: true,
+				DefaultKernel: "kernel",
+			},
+			Network: &osbuild.SysconfigNetworkOptions{
+				Networking: true,
+				NoZeroConf: true,
+			},
+		},
+	},
 }
 
 // distribution objects without the arches > image types
 var distroMap = map[string]distribution{
 	"rhel-86": {
-		name:             "rhel-86",
-		product:          "Red Hat Enterprise Linux",
-		osVersion:        "8.6",
-		releaseVersion:   "8",
-		modulePlatformID: "platform:el8",
-		vendor:           "redhat",
-		ostreeRefTmpl:    "rhel/8/%s/edge",
-		isolabelTmpl:     "RHEL-8-6-0-BaseOS-%s",
-		runner:           "org.osbuild.rhel86",
+		name:               "rhel-86",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "8.6",
+		releaseVersion:     "8",
+		modulePlatformID:   "platform:el8",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/8/%s/edge",
+		isolabelTmpl:       "RHEL-8-6-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel86",
+		defaultImageConfig: defaultDistroImageConfig,
 	},
 	"centos-8": {
-		name:             "centos-8",
-		product:          "CentOS Stream",
-		osVersion:        "8-stream",
-		releaseVersion:   "8",
-		modulePlatformID: "platform:el8",
-		vendor:           "centos",
-		ostreeRefTmpl:    "centos/8/%s/edge",
-		isolabelTmpl:     "CentOS-Stream-8-%s-dvd",
-		runner:           "org.osbuild.centos8",
+		name:               "centos-8",
+		product:            "CentOS Stream",
+		osVersion:          "8-stream",
+		releaseVersion:     "8",
+		modulePlatformID:   "platform:el8",
+		vendor:             "centos",
+		ostreeRefTmpl:      "centos/8/%s/edge",
+		isolabelTmpl:       "CentOS-Stream-8-%s-dvd",
+		runner:             "org.osbuild.centos8",
+		defaultImageConfig: defaultDistroImageConfig,
 	},
 }
 
@@ -126,6 +148,10 @@ func (d *distribution) addArches(arches ...architecture) {
 
 func (d *distribution) isRHEL() bool {
 	return strings.HasPrefix(d.name, "rhel")
+}
+
+func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
+	return d.defaultImageConfig
 }
 
 type architecture struct {
@@ -194,21 +220,19 @@ type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
-	arch             *architecture
-	name             string
-	nameAliases      []string
-	filename         string
-	mimeType         string
-	packageSets      map[string]packageSetFunc
-	enabledServices  []string
-	disabledServices []string
-	defaultTarget    string
-	kernelOptions    string
-	defaultSize      uint64
-	buildPipelines   []string
-	payloadPipelines []string
-	exports          []string
-	pipelines        pipelinesFunc
+	arch               *architecture
+	name               string
+	nameAliases        []string
+	filename           string
+	mimeType           string
+	packageSets        map[string]packageSetFunc
+	defaultImageConfig *distro.ImageConfig
+	kernelOptions      string
+	defaultSize        uint64
+	buildPipelines     []string
+	payloadPipelines   []string
+	exports            []string
+	pipelines          pipelinesFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -357,6 +381,15 @@ func (t *imageType) getPartitionTable(
 	}
 
 	return disk.CreatePartitionTable(mountpoints, options.Size, basePartitionTable, rng), nil
+}
+
+func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
+	// ensure that image always returns non-nil default config
+	imageConfig := t.defaultImageConfig
+	if imageConfig == nil {
+		imageConfig = &distro.ImageConfig{}
+	}
+	return imageConfig.InheritFrom(t.arch.distro.getDefaultImageConfig())
 }
 
 // local type for ostree commit metadata used to define commit sources
@@ -569,7 +602,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: edgeBuildPackageSet,
 			osPkgsKey:    edgeCommitPackageSet,
 		},
-		enabledServices:  edgeServices,
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: edgeServices,
+		},
 		rpmOstree:        true,
 		pipelines:        edgeCommitPipelines,
 		buildPipelines:   []string{"build"},
@@ -591,7 +626,9 @@ func newDistro(distroName string) distro.Distro {
 				}
 			},
 		},
-		enabledServices:  edgeServices,
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: edgeServices,
+		},
 		rpmOstree:        true,
 		bootISO:          false,
 		pipelines:        edgeContainerPipelines,
@@ -636,7 +673,9 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey:        edgeCommitPackageSet,
 			installerPkgsKey: edgeInstallerPackageSet,
 		},
-		enabledServices:  edgeServices,
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: edgeServices,
+		},
 		rpmOstree:        true,
 		bootISO:          true,
 		pipelines:        edgeInstallerPipelines,
@@ -661,7 +700,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey:     edgeInstallerBuildPackageSet,
 			installerPkgsKey: edgeSimplifiedInstallerPackageSet,
 		},
-		enabledServices:     edgeServices,
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: edgeServices,
+		},
 		defaultSize:         10 * GigaByte,
 		rpmOstree:           true,
 		bootable:            true,
@@ -677,11 +718,25 @@ func newDistro(distroName string) distro.Distro {
 		name:          "qcow2",
 		filename:      "disk.qcow2",
 		mimeType:      "application/x-qemu-disk",
-		defaultTarget: "multi-user.target",
 		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    qcow2CommonPackageSet,
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			DefaultTarget: "multi-user.target",
+			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+				distro.RHSMConfigNoSubscription: {
+					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+						ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+						SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+					},
+				},
+			},
 		},
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -700,11 +755,13 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vhdCommonPackageSet,
 		},
-		enabledServices: []string{
-			"sshd",
-			"waagent",
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: []string{
+				"sshd",
+				"waagent",
+			},
+			DefaultTarget: "multi-user.target",
 		},
-		defaultTarget:       "multi-user.target",
 		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
@@ -751,18 +808,191 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	// EC2 services
-	ec2EnabledServices := []string{
-		"sshd",
-		"NetworkManager",
-		"nm-cloud-setup.service",
-		"nm-cloud-setup.timer",
-		"cloud-init",
-		"cloud-init-local",
-		"cloud-config",
-		"cloud-final",
-		"reboot.target",
+	// default EC2 images config (common for all architectures)
+	defaultEc2ImageConfig := &distro.ImageConfig{
+		Timezone: "UTC",
+		TimeSynchronization: &osbuild.ChronyStageOptions{
+			Servers: []osbuild.ChronyConfigServer{
+				{
+					Hostname: "169.254.169.123",
+					Prefer:   common.BoolToPtr(true),
+					Iburst:   common.BoolToPtr(true),
+					Minpoll:  common.IntToPtr(4),
+					Maxpoll:  common.IntToPtr(4),
+				},
+			},
+			// empty string will remove any occurrences of the option from the configuration
+			LeapsecTz: common.StringToPtr(""),
+		},
+		Keyboard: &osbuild.KeymapStageOptions{
+			Keymap: "us",
+			X11Keymap: &osbuild.X11KeymapOptions{
+				Layouts: []string{"us"},
+			},
+		},
+		EnabledServices: []string{
+			"sshd",
+			"NetworkManager",
+			"nm-cloud-setup.service",
+			"nm-cloud-setup.timer",
+			"cloud-init",
+			"cloud-init-local",
+			"cloud-config",
+			"cloud-final",
+			"reboot.target",
+		},
+		DefaultTarget: "multi-user.target",
+		Sysconfig: []*osbuild.SysconfigStageOptions{
+			{
+				Kernel: &osbuild.SysconfigKernelOptions{
+					UpdateDefault: true,
+					DefaultKernel: "kernel",
+				},
+				Network: &osbuild.SysconfigNetworkOptions{
+					Networking: true,
+					NoZeroConf: true,
+				},
+				NetworkScripts: &osbuild.NetworkScriptsOptions{
+					IfcfgFiles: map[string]osbuild.IfcfgFile{
+						"eth0": {
+							Device:    "eth0",
+							Bootproto: osbuild.IfcfgBootprotoDHCP,
+							OnBoot:    common.BoolToPtr(true),
+							Type:      osbuild.IfcfgTypeEthernet,
+							UserCtl:   common.BoolToPtr(true),
+							PeerDNS:   common.BoolToPtr(true),
+							IPv6Init:  common.BoolToPtr(false),
+						},
+					},
+				},
+			},
+		},
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					Rhsm: &osbuild.SubManConfigRHSMSection{
+						ManageRepos: common.BoolToPtr(false),
+					},
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+		SystemdLogind: []*osbuild.SystemdLogindStageOptions{
+			{
+				Filename: "00-getty-fixes.conf",
+				Config: osbuild.SystemdLogindConfigDropin{
+
+					Login: osbuild.SystemdLogindConfigLoginSection{
+						NAutoVTs: common.IntToPtr(0),
+					},
+				},
+			},
+		},
+		CloudInit: []*osbuild.CloudInitStageOptions{
+			{
+				Filename: "00-rhel-default-user.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					SystemInfo: &osbuild.CloudInitConfigSystemInfo{
+						DefaultUser: &osbuild.CloudInitConfigDefaultUser{
+							Name: "ec2-user",
+						},
+					},
+				},
+			},
+		},
+		Modprobe: []*osbuild.ModprobeStageOptions{
+			{
+				Filename: "blacklist-nouveau.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+				},
+			},
+		},
+		DracutConf: []*osbuild.DracutConfStageOptions{
+			{
+				Filename: "sgdisk.conf",
+				Config: osbuild.DracutConfigFile{
+					Install: []string{"sgdisk"},
+				},
+			},
+		},
+		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+			// RHBZ#1822863
+			{
+				Unit:   "nm-cloud-setup.service",
+				Dropin: "10-rh-enable-for-ec2.conf",
+				Config: osbuild.SystemdServiceUnitDropin{
+					Service: &osbuild.SystemdUnitServiceSection{
+						Environment: "NM_CLOUD_SETUP_EC2=yes",
+					},
+				},
+			},
+		},
+		Authselect: &osbuild.AuthselectStageOptions{
+			Profile: "sssd",
+		},
 	}
+
+	// default EC2 images config (x86_64)
+	defaultEc2ImageConfigX86_64 := &distro.ImageConfig{
+		DracutConf: append(defaultEc2ImageConfig.DracutConf,
+			&osbuild.DracutConfStageOptions{
+				Filename: "ec2.conf",
+				Config: osbuild.DracutConfigFile{
+					AddDrivers: []string{
+						"nvme",
+						"xen-blkfront",
+					},
+				},
+			}),
+	}
+	defaultEc2ImageConfigX86_64 = defaultEc2ImageConfigX86_64.InheritFrom(defaultEc2ImageConfig)
+
+	// default AMI (EC2 BYOS) images config
+	defaultAMIImageConfig := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the AMI
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	defaultAMIImageConfigX86_64 := defaultAMIImageConfig.InheritFrom(defaultEc2ImageConfigX86_64)
+	defaultAMIImageConfig = defaultAMIImageConfig.InheritFrom(defaultEc2ImageConfig)
 
 	amiImgTypeX86_64 := imageType{
 		name:     "ami",
@@ -772,8 +1002,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultAMIImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -793,8 +1022,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultAMIImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -813,8 +1041,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -834,8 +1061,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
@@ -854,8 +1080,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2HaPackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -867,6 +1092,117 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: ec2BasePartitionTables,
 	}
 
+	// default EC2-SAP image config (x86_64)
+	defaultEc2SapImageConfigX86_64 := &distro.ImageConfig{
+		SELinuxConfig: &osbuild.SELinuxConfigStageOptions{
+			State: osbuild.SELinuxStatePermissive,
+		},
+		// RHBZ#1960617
+		Tuned: osbuild.NewTunedStageOptions("sap-hana"),
+		// RHBZ#1959979
+		Tmpfilesd: []*osbuild.TmpfilesdStageOptions{
+			osbuild.NewTmpfilesdStageOptions("sap.conf",
+				[]osbuild.TmpfilesdConfigLine{
+					{
+						Type: "x",
+						Path: "/tmp/.sap*",
+					},
+					{
+						Type: "x",
+						Path: "/tmp/.hdb*lock",
+					},
+					{
+						Type: "x",
+						Path: "/tmp/.trex*lock",
+					},
+				},
+			),
+		},
+		// RHBZ#1959963
+		PamLimitsConf: []*osbuild.PamLimitsConfStageOptions{
+			osbuild.NewPamLimitsConfStageOptions("99-sap.conf",
+				[]osbuild.PamLimitsConfigLine{
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+				},
+			),
+		},
+		// RHBZ#1959962
+		Sysctld: []*osbuild.SysctldStageOptions{
+			osbuild.NewSysctldStageOptions("sap.conf",
+				[]osbuild.SysctldConfigLine{
+					{
+						Key:   "kernel.pid_max",
+						Value: "4194304",
+					},
+					{
+						Key:   "vm.max_map_count",
+						Value: "2147483647",
+					},
+				},
+			),
+		},
+		// E4S/EUS
+		DNFConfig: []*osbuild.DNFConfigStageOptions{
+			osbuild.NewDNFConfigStageOptions(
+				[]osbuild.DNFVariable{
+					{
+						Name:  "releasever",
+						Value: rd.osVersion,
+					},
+				},
+				nil,
+			),
+		},
+	}
+	defaultEc2SapImageConfigX86_64 = defaultEc2SapImageConfigX86_64.InheritFrom(defaultEc2ImageConfigX86_64)
+
 	ec2SapImgTypeX86_64 := imageType{
 		name:     "ec2-sap",
 		filename: "image.raw.xz",
@@ -875,13 +1211,12 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
 		},
-		defaultTarget:       "multi-user.target",
-		enabledServices:     ec2EnabledServices,
+		defaultImageConfig:  defaultEc2SapImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * GigaByte,
-		pipelines:           rhelEc2SapPipelines,
+		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
