@@ -72,7 +72,7 @@ jobs:
   rpmlint:
     name: "📦 RPMlint"
     runs-on: ubuntu-20.04
-    container: registry.fedoraproject.org/fedora:33
+    container: registry.fedoraproject.org/fedora:35
     steps:
       - name: Install dependencies
         run: sudo dnf install -y rpmlint rpm-build make git-core
