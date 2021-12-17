@@ -45,6 +45,9 @@ init:
     - aws/rhel-8.6-nightly-aarch64
     - aws/rhel-9.0-nightly-x86_64
     - aws/rhel-9.0-nightly-aarch64
+    - aws/centos-stream-9-x86_64
+    - aws/centos-stream-9-aarch64
+
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -164,6 +167,8 @@ Base:
           - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -218,6 +223,8 @@ Regression:
           - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
   artifacts:
     paths:
@@ -288,6 +295,7 @@ OSTree:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-8-x86_64
 
 New OSTree:
   stage: test
@@ -301,6 +309,7 @@ New OSTree:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64-large
 
 OSTree simplified installer:
   stage: test
@@ -314,6 +323,7 @@ OSTree simplified installer:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64-large
 
 OSTree raw image:
   stage: test
@@ -327,6 +337,7 @@ OSTree raw image:
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64-large
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
@@ -357,6 +368,7 @@ Integration:
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-nightly-x86_64
+          - aws/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
       - SCRIPT:
           - azure_hyperv_gen2.sh
@@ -408,6 +420,7 @@ libvirt:
           - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
 RHEL 9 on 8:
