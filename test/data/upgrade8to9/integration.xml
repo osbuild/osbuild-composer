@@ -1,0 +1,17 @@
+<network>
+  <name>integration</name>
+  <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='integration' stp='on' delay='0'/>
+  <mac address='52:54:00:36:46:ef'/>
+  <ip address='192.168.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.100.2' end='192.168.100.254'/>
+      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
+    </dhcp>
+  </ip>
+</network>

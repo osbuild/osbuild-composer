@@ -415,6 +415,26 @@ RHEL 9 on 8:
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-90
 
+Upgrade:
+  stage: test
+  extends: .terraform/openstack
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
+  variables:
+    RUNNER: openstack/rhel-9.0-nightly-x86_64
+  artifacts:
+    paths:
+      - journal-log.gpg
+      - ci-artifacts
+      - install_console.log
+      - upgrade_console.log
+      - osbuild-upgrade8to9.log
+      - osbuild-upgrade8to9.json
+    when: always
+
 NIGHTLY_FAIL:
   stage: finish
   tags:
