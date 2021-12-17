@@ -932,7 +932,11 @@ class BaseTestCaseMatrixGenerator(contextlib.AbstractContextManager):
 
         runner.dnf_install(["'@RPM Development Tools'"])
         runner.run_command_check_call(f"{enter_src_dir} sudo dnf -y builddep *.spec")
-        runner.run_command_check_call(f"{enter_src_dir} make rpm")
+        # Build RPMs without tests to prevent failing the unit test that checks
+        # image manifests. Since we are regenerating image test cases, it is
+        # assumed that the unit test would not pass until the respective tests
+        # are regenerated.
+        runner.run_command_check_call(f"{enter_src_dir} make scratch")
         # do not install debuginfo and debugsource RPMs
         runner.run_command_check_call(f"{enter_src_dir} sudo dnf install -y $(ls rpmbuild/RPMS/*/*.rpm | grep -Ev 'debugsource|debuginfo')")
 
