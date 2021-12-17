@@ -19,41 +19,19 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
-	if err != nil {
-		return nil, err
-	}
-
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-
-	if t.arch.distro.isRHEL() {
-		if options.Subscription == nil {
-			// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
-			treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
-				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-				},
-			}))
-		}
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	if err != nil {
+		return nil, err
 	}
-
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -78,23 +56,20 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
-	if err != nil {
-		return nil, err
-	}
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	if err != nil {
+		return nil, err
+	}
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -109,23 +84,20 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
-	if err != nil {
-		return nil, err
-	}
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	if err != nil {
+		return nil, err
+	}
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -140,23 +112,20 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
-	if err != nil {
-		return nil, err
-	}
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	if err != nil {
+		return nil, err
+	}
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -168,251 +137,9 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
-// ec2BaseTreePipeline returns the base OS pipeline common for all EC2 image types.
-//
-// The expectation is that specific EC2 image types can extend the returned pipeline
-// by appending additional stages.
-//
-// The argument `withRHUI` should be set to `true` only if the image package set includes RHUI client packages.
-//
-// Note: the caller of this function has to append the `osbuild.NewSELinuxStage(selinuxStageOptions(false))` stage
-// as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
-// any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
-func ec2BaseTreePipeline(
-	repos []rpmmd.RepoConfig,
-	packages []rpmmd.PackageSpec,
-	bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations,
-	options distro.ImageOptions,
-	enabledServices, disabledServices []string,
-	defaultTarget string,
-	withRHUI, isRHEL bool,
-	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
-
-	p := new(osbuild.Pipeline)
-	p.Name = "os"
-	p.Build = "name:build"
-	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-
-	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if pt.BootPartition() == nil {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-	} else {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
-	}
-
-	language, keyboard := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
-	}
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	} else {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{
-			Keymap: "us",
-			X11Keymap: &osbuild.X11KeymapOptions{
-				Layouts: []string{"us"},
-			},
-		}))
-	}
-
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	}
-
-	timezone, ntpServers := c.GetTimezoneSettings()
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "UTC"}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	} else {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{
-			Servers: []osbuild.ChronyConfigServer{
-				{
-					Hostname: "169.254.169.123",
-					Prefer:   common.BoolToPtr(true),
-					Iburst:   common.BoolToPtr(true),
-					Minpoll:  common.IntToPtr(4),
-					Maxpoll:  common.IntToPtr(4),
-				},
-			},
-			// empty string will remove any occurrences of the option from the configuration
-			LeapsecTz: common.StringToPtr(""),
-		}))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		userOptions, err := userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(userOptions))
-	}
-
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
-	}
-
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
-	}
-
-	p.AddStage(osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
-		Filename: "00-getty-fixes.conf",
-		Config: osbuild.SystemdLogindConfigDropin{
-
-			Login: osbuild.SystemdLogindConfigLoginSection{
-				NAutoVTs: common.IntToPtr(0),
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-		NetworkScripts: &osbuild.NetworkScriptsOptions{
-			IfcfgFiles: map[string]osbuild.IfcfgFile{
-				"eth0": {
-					Device:    "eth0",
-					Bootproto: osbuild.IfcfgBootprotoDHCP,
-					OnBoot:    common.BoolToPtr(true),
-					Type:      osbuild.IfcfgTypeEthernet,
-					UserCtl:   common.BoolToPtr(true),
-					PeerDNS:   common.BoolToPtr(true),
-					IPv6Init:  common.BoolToPtr(false),
-				},
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewCloudInitStage(&osbuild.CloudInitStageOptions{
-		Filename: "00-rhel-default-user.cfg",
-		Config: osbuild.CloudInitConfigFile{
-			SystemInfo: &osbuild.CloudInitConfigSystemInfo{
-				DefaultUser: &osbuild.CloudInitConfigDefaultUser{
-					Name: "ec2-user",
-				},
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewModprobeStage(&osbuild.ModprobeStageOptions{
-		Filename: "blacklist-nouveau.conf",
-		Commands: osbuild.ModprobeConfigCmdList{
-			osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-		},
-	}))
-
-	p.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
-		Filename: "sgdisk.conf",
-		Config: osbuild.DracutConfigFile{
-			Install: []string{"sgdisk"},
-		},
-	}))
-
-	// RHBZ#1822863
-	p.AddStage(osbuild.NewSystemdUnitStage(&osbuild.SystemdUnitStageOptions{
-		Unit:   "nm-cloud-setup.service",
-		Dropin: "10-rh-enable-for-ec2.conf",
-		Config: osbuild.SystemdServiceUnitDropin{
-			Service: &osbuild.SystemdUnitServiceSection{
-				Environment: "NM_CLOUD_SETUP_EC2=yes",
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewAuthselectStage(&osbuild.AuthselectStageOptions{
-		Profile: "sssd",
-	}))
-
-	if isRHEL {
-		if options.Subscription != nil {
-			commands := []string{
-				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-			}
-			if options.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-			}
-
-			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-				Commands:       commands,
-				WaitForNetwork: true,
-			}))
-		} else {
-			// The EC2 images should keep the RHSM DNF plugins enabled (RHBZ#1996670)
-			rhsmStageOptions := &osbuild.RHSMStageOptions{
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-				},
-			}
-
-			// Disable RHSM redhat.repo management only if the image uses RHUI
-			// for content. Otherwise subscribing the system manually after booting
-			// it would result in empty redhat.repo. Without RHUI, such system
-			// would have no way to get Red Hat content, but enable the repo
-			// management manually, which would be very confusing.
-			// RHBZ#1932802
-			if withRHUI {
-				rhsmStageOptions.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{
-					ManageRepos: common.BoolToPtr(false),
-				}
-			}
-
-			p.AddStage(osbuild.NewRHSMStage(rhsmStageOptions))
-		}
-	}
-
-	return p, nil
-}
-
-func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
-	defaultTarget string, withRHUI, isRHEL bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
-
-	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI, isRHEL, pt)
-	if err != nil {
-		return nil, err
-	}
-
-	// EC2 x86_64-specific stages
-	// Add 'nvme' driver to handle the case when initramfs is getting forcefully
-	// rebuild on a Xen instance (and not able to boot on Nitro after that).
-	treePipeline.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
-		Filename: "ec2.conf",
-		Config: osbuild.DracutConfigFile{
-			AddDrivers: []string{
-				"nvme",
-				"xen-blkfront",
-			},
-		},
-	}))
-
-	return treePipeline, nil
-}
-
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
-	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
+	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -421,169 +148,13 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	var treePipeline *osbuild.Pipeline
-	switch arch := t.arch.Name(); arch {
-	// rhel-ec2-x86_64, rhel-ha-ec2
-	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
-	// rhel-ec2-aarch64
-	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
-	default:
-		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
-	}
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	// The last stage must be the SELinux stage
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-	return pipelines, nil
-}
-
-func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
-	rng *rand.Rand, withRHUI bool, diskfile string) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	var treePipeline *osbuild.Pipeline
-	switch arch := t.arch.Name(); arch {
-	// rhel-sap-ec2
-	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, t.arch.distro.isRHEL(), &partitionTable)
-	default:
-		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	// SAP-specific configuration
-	treePipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{
-		State: osbuild.SELinuxStatePermissive,
-	}))
-
-	// RHBZ#1960617
-	treePipeline.AddStage(osbuild.NewTunedStage(osbuild.NewTunedStageOptions("sap-hana")))
-
-	// RHBZ#1959979
-	treePipeline.AddStage(osbuild.NewTmpfilesdStage(osbuild.NewTmpfilesdStageOptions("sap.conf",
-		[]osbuild.TmpfilesdConfigLine{
-			{
-				Type: "x",
-				Path: "/tmp/.sap*",
-			},
-			{
-				Type: "x",
-				Path: "/tmp/.hdb*lock",
-			},
-			{
-				Type: "x",
-				Path: "/tmp/.trex*lock",
-			},
-		},
-	)))
-
-	// RHBZ#1959963
-	treePipeline.AddStage(osbuild.NewPamLimitsConfStage(osbuild.NewPamLimitsConfStageOptions("99-sap.conf",
-		[]osbuild.PamLimitsConfigLine{
-			{
-				Domain: "@sapsys",
-				Type:   osbuild.PamLimitsTypeHard,
-				Item:   osbuild.PamLimitsItemNofile,
-				Value:  osbuild.PamLimitsValueInt(65536),
-			},
-			{
-				Domain: "@sapsys",
-				Type:   osbuild.PamLimitsTypeSoft,
-				Item:   osbuild.PamLimitsItemNofile,
-				Value:  osbuild.PamLimitsValueInt(65536),
-			},
-			{
-				Domain: "@dba",
-				Type:   osbuild.PamLimitsTypeHard,
-				Item:   osbuild.PamLimitsItemNofile,
-				Value:  osbuild.PamLimitsValueInt(65536),
-			},
-			{
-				Domain: "@dba",
-				Type:   osbuild.PamLimitsTypeSoft,
-				Item:   osbuild.PamLimitsItemNofile,
-				Value:  osbuild.PamLimitsValueInt(65536),
-			},
-			{
-				Domain: "@sapsys",
-				Type:   osbuild.PamLimitsTypeHard,
-				Item:   osbuild.PamLimitsItemNproc,
-				Value:  osbuild.PamLimitsValueUnlimited,
-			},
-			{
-				Domain: "@sapsys",
-				Type:   osbuild.PamLimitsTypeSoft,
-				Item:   osbuild.PamLimitsItemNproc,
-				Value:  osbuild.PamLimitsValueUnlimited,
-			},
-			{
-				Domain: "@dba",
-				Type:   osbuild.PamLimitsTypeHard,
-				Item:   osbuild.PamLimitsItemNproc,
-				Value:  osbuild.PamLimitsValueUnlimited,
-			},
-			{
-				Domain: "@dba",
-				Type:   osbuild.PamLimitsTypeSoft,
-				Item:   osbuild.PamLimitsItemNproc,
-				Value:  osbuild.PamLimitsValueUnlimited,
-			},
-		},
-	)))
-
-	// RHBZ#1959962
-	treePipeline.AddStage(osbuild.NewSysctldStage(osbuild.NewSysctldStageOptions("sap.conf",
-		[]osbuild.SysctldConfigLine{
-			{
-				Key:   "kernel.pid_max",
-				Value: "4194304",
-			},
-			{
-				Key:   "vm.max_map_count",
-				Value: "2147483647",
-			},
-		},
-	)))
-
-	// E4S/EUS
-	treePipeline.AddStage(osbuild.NewDNFConfigStage(osbuild.NewDNFConfigStageOptions(
-		[]osbuild.DNFVariable{
-			{
-				Name:  "releasever",
-				Value: "8.6",
-			},
-		},
-		nil,
-	)))
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
 	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	// The last stage must be the SELinux stage
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
-	pipelines = append(pipelines, *treePipeline)
-
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
@@ -591,29 +162,14 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
 func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, false, t.Filename())
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, t.Filename())
 }
 
 // rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
 func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	rawImageFilename := "image.raw"
 
-	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	lastPipeline := pipelines[len(pipelines)-1]
-	pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, rawImageFilename, t.Filename()))
-
-	return pipelines, nil
-}
-
-// rhelEc2SapPipelines returns pipelines which produce XZ-compressed EC2 SAP images which are expected to use RHUI for content
-func rhelEc2SapPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	rawImageFilename := "image.raw"
-
-	pipelines, err := ec2SapPipelines(t, customizations, options, repos, packageSetSpecs, rng, true, rawImageFilename)
+	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, rawImageFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -628,11 +184,10 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 	tarPipeline := osbuild.Pipeline{
 		Name:  "root-tar",
@@ -671,11 +226,10 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	kernelPkg := new(rpmmd.PackageSpec)
@@ -709,7 +263,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := ostreeTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -798,110 +352,48 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func osPipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func osPipeline(t *imageType,
+	repos []rpmmd.RepoConfig,
+	packages []rpmmd.PackageSpec,
+	bpPackages []rpmmd.PackageSpec,
+	c *blueprint.Customizations,
+	options distro.ImageOptions,
+	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+	imageConfig := t.getDefaultImageConfig()
 	p := new(osbuild.Pipeline)
-	p.Name = "os"
+	if t.rpmOstree {
+		p.Name = "ostree-tree"
+	} else {
+		p.Name = "os"
+	}
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-	language, keyboard := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
-	}
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	}
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	}
 
-	timezone, ntpServers := c.GetTimezoneSettings()
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		userOptions, err := userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(userOptions))
-	}
-
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
-	}
-
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
-	}
-
-	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-	}))
-
-	if t.arch.distro.isRHEL() {
-		if options.Subscription != nil {
-			commands := []string{
-				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-			}
-			if options.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-			}
-
-			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-				Commands:       commands,
-				WaitForNetwork: true,
-			},
-			))
-		}
-	}
-	return p, nil
-}
-
-func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
-	p := new(osbuild.Pipeline)
-	p.Name = "ostree-tree"
-	p.Build = "name:build"
-
-	packages = append(packages, bpPackages...)
-
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+	if t.rpmOstree && options.OSTree.Parent != "" && options.OSTree.URL != "" {
 		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
 	}
 
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+
+	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
+	if pt == nil || pt.BootPartition() == nil {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+	} else {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
+
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
 	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
 	}
 	if keyboard != nil {
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	} else if imageConfig.Keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
 	}
+
 	if hostname := c.GetHostname(); hostname != nil {
 		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
 	}
@@ -910,11 +402,13 @@ func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
 	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: "America/New_York"}))
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
 	}
 
 	if len(ntpServers) > 0 {
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	} else if imageConfig.TimeSynchronization != nil {
+		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
@@ -927,28 +421,28 @@ func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd
 			return nil, err
 		}
 		p.AddStage(osbuild.NewUsersStage(userOptions))
-		p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+		if t.rpmOstree {
+			p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+		}
 	}
 
-	if services := c.GetServices(); services != nil || enabledServices != nil || disabledServices != nil || defaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(enabledServices, disabledServices, services, defaultTarget)))
+	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
+			imageConfig.EnabledServices,
+			imageConfig.DisabledServices,
+			services,
+			imageConfig.DefaultTarget,
+		)))
 	}
 
 	if firewall := c.GetFirewall(); firewall != nil {
 		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
 	}
 
-	// These are the current defaults for the sysconfig stage. This can be changed to be image type exclusive if different configs are needed.
-	p.AddStage(osbuild.NewSysconfigStage(&osbuild.SysconfigStageOptions{
-		Kernel: &osbuild.SysconfigKernelOptions{
-			UpdateDefault: true,
-			DefaultKernel: "kernel",
-		},
-		Network: &osbuild.SysconfigNetworkOptions{
-			Networking: true,
-			NoZeroConf: true,
-		},
-	}))
+	for _, sysconfigConfig := range imageConfig.Sysconfig {
+		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	}
 
 	if t.arch.distro.isRHEL() {
 		if options.Subscription != nil {
@@ -958,24 +452,90 @@ func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd
 			if options.Subscription.Insights {
 				commands = append(commands, "/usr/bin/insights-client --register")
 			}
-
 			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
 				Commands:       commands,
 				WaitForNetwork: true,
-			},
-			))
+			}))
+
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		} else {
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
 		}
 	}
 
+	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
+		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
+	}
+
+	for _, cloudInitConfig := range imageConfig.CloudInit {
+		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
+	}
+
+	for _, modprobeConfig := range imageConfig.Modprobe {
+		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
+	}
+
+	for _, dracutConfConfig := range imageConfig.DracutConf {
+		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
+	}
+
+	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
+		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
+	}
+
+	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
+		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
+	}
+
+	if seLinuxConfig := imageConfig.SELinuxConfig; seLinuxConfig != nil {
+		p.AddStage(osbuild.NewSELinuxConfigStage(seLinuxConfig))
+	}
+
+	if tunedConfig := imageConfig.Tuned; tunedConfig != nil {
+		p.AddStage(osbuild.NewTunedStage(tunedConfig))
+	}
+
+	for _, tmpfilesdConfig := range imageConfig.Tmpfilesd {
+		p.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
+	}
+
+	for _, pamLimitsConfConfig := range imageConfig.PamLimitsConf {
+		p.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
+	}
+
+	for _, sysctldConfig := range imageConfig.Sysctld {
+		p.AddStage(osbuild.NewSysctldStage(sysctldConfig))
+	}
+
+	for _, dnfConfig := range imageConfig.DNFConfig {
+		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
+	}
+
+	if pt != nil {
+		p = prependKernelCmdlineStage(p, t, pt)
+		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptionsV2()))
+		kernelVer := kernelVerStr(bpPackages, c.GetKernel().Name, t.Arch().Name())
+		p.AddStage(bootloaderConfigStage(t, *pt, c.GetKernel(), kernelVer, false, false))
+	}
+
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
-	p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
-		EtcGroupMembers: []string{
-			// NOTE: We may want to make this configurable.
-			"wheel", "docker",
-		},
-	}))
+
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: We may want to make this configurable.
+				"wheel", "docker",
+			},
+		}))
+	}
+
 	return p, nil
 }
+
 func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-commit"

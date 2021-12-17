@@ -958,17 +958,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd-logind",
-            "options": {
-              "filename": "00-getty-fixes.conf",
-              "config": {
-                "Login": {
-                  "NAutoVTs": 0
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -990,6 +979,27 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd-logind",
+            "options": {
+              "filename": "00-getty-fixes.conf",
+              "config": {
+                "Login": {
+                  "NAutoVTs": 0
                 }
               }
             }
@@ -1046,16 +1056,6 @@
             "type": "org.osbuild.authselect",
             "options": {
               "profile": "sssd"
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
             }
           },
           {

@@ -946,17 +946,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd-logind",
-            "options": {
-              "filename": "00-getty-fixes.conf",
-              "config": {
-                "Login": {
-                  "NAutoVTs": 0
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -978,6 +967,30 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd-logind",
+            "options": {
+              "filename": "00-getty-fixes.conf",
+              "config": {
+                "Login": {
+                  "NAutoVTs": 0
                 }
               }
             }
@@ -1019,6 +1032,18 @@
             }
           },
           {
+            "type": "org.osbuild.dracut.conf",
+            "options": {
+              "filename": "ec2.conf",
+              "config": {
+                "add_drivers": [
+                  "nvme",
+                  "xen-blkfront"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.systemd.unit",
             "options": {
               "unit": "nm-cloud-setup.service",
@@ -1034,31 +1059,6 @@
             "type": "org.osbuild.authselect",
             "options": {
               "profile": "sssd"
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.dracut.conf",
-            "options": {
-              "filename": "ec2.conf",
-              "config": {
-                "add_drivers": [
-                  "nvme",
-                  "xen-blkfront"
-                ]
-              }
             }
           },
           {
