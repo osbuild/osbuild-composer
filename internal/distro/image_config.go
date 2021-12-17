@@ -23,6 +23,13 @@ type ImageConfig struct {
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
 	RHSMConfig map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
+
+	SystemdLogind []*osbuild2.SystemdLogindStageOptions
+	CloudInit     []*osbuild2.CloudInitStageOptions
+	Modprobe      []*osbuild2.ModprobeStageOptions
+	DracutConf    []*osbuild2.DracutConfStageOptions
+	SystemdUnit   []*osbuild2.SystemdUnitStageOptions
+	Authselect    *osbuild2.AuthselectStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -56,6 +63,24 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.RHSMConfig == nil {
 			finalConfig.RHSMConfig = parentConfig.RHSMConfig
+		}
+		if finalConfig.SystemdLogind == nil {
+			finalConfig.SystemdLogind = parentConfig.SystemdLogind
+		}
+		if finalConfig.CloudInit == nil {
+			finalConfig.CloudInit = parentConfig.CloudInit
+		}
+		if finalConfig.Modprobe == nil {
+			finalConfig.Modprobe = parentConfig.Modprobe
+		}
+		if finalConfig.DracutConf == nil {
+			finalConfig.DracutConf = parentConfig.DracutConf
+		}
+		if finalConfig.SystemdUnit == nil {
+			finalConfig.SystemdUnit = parentConfig.SystemdUnit
+		}
+		if finalConfig.Authselect == nil {
+			finalConfig.Authselect = parentConfig.Authselect
 		}
 	}
 	return &finalConfig

@@ -891,6 +891,60 @@ func newDistro(distroName string) distro.Distro {
 				},
 			},
 		},
+		SystemdLogind: []*osbuild.SystemdLogindStageOptions{
+			{
+				Filename: "00-getty-fixes.conf",
+				Config: osbuild.SystemdLogindConfigDropin{
+
+					Login: osbuild.SystemdLogindConfigLoginSection{
+						NAutoVTs: common.IntToPtr(0),
+					},
+				},
+			},
+		},
+		CloudInit: []*osbuild.CloudInitStageOptions{
+			{
+				Filename: "00-rhel-default-user.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					SystemInfo: &osbuild.CloudInitConfigSystemInfo{
+						DefaultUser: &osbuild.CloudInitConfigDefaultUser{
+							Name: "ec2-user",
+						},
+					},
+				},
+			},
+		},
+		Modprobe: []*osbuild.ModprobeStageOptions{
+			{
+				Filename: "blacklist-nouveau.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+				},
+			},
+		},
+		DracutConf: []*osbuild.DracutConfStageOptions{
+			{
+				Filename: "sgdisk.conf",
+				Config: osbuild.DracutConfigFile{
+					Install: []string{"sgdisk"},
+				},
+			},
+		},
+		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+			// RHBZ#1822863
+			{
+				Unit:   "nm-cloud-setup.service",
+				Dropin: "10-rh-enable-for-ec2.conf",
+				Config: osbuild.SystemdServiceUnitDropin{
+					Service: &osbuild.SystemdUnitServiceSection{
+						Environment: "NM_CLOUD_SETUP_EC2=yes",
+					},
+				},
+			},
+		},
+		Authselect: &osbuild.AuthselectStageOptions{
+			Profile: "sssd",
+		},
 	}
 
 	defaultAMIImageConfig := &distro.ImageConfig{
