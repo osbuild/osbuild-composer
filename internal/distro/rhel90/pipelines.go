@@ -144,179 +144,10 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
-// ec2BaseTreePipeline returns the base OS pipeline common for all EC2 image types.
-//
-// The expectation is that specific EC2 image types can extend the returned pipeline
-// by appending additional stages.
-//
-// Note: the caller of this function has to append the `osbuild.NewSELinuxStage(selinuxStageOptions(false))` stage
-// as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
-// any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
-func ec2BaseTreePipeline(
-	t *imageType,
-	repos []rpmmd.RepoConfig,
-	packages []rpmmd.PackageSpec,
-	bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations,
-	options distro.ImageOptions,
-	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
-
-	// COMMON WITH osPipeline - START
-	imageConfig := t.getDefaultImageConfig()
-	p := new(osbuild.Pipeline)
-	p.Name = "os"
-	p.Build = "name:build"
-	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-
-	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if pt.BootPartition() == nil {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-	} else {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
-	}
-
-	language, keyboard := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
-	}
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	} else if imageConfig.Keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
-	}
-
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	}
-
-	timezone, ntpServers := c.GetTimezoneSettings()
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	} else if imageConfig.TimeSynchronization != nil {
-		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		userOptions, err := userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(userOptions))
-	}
-
-	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
-		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
-			imageConfig.EnabledServices,
-			imageConfig.DisabledServices,
-			services,
-			imageConfig.DefaultTarget,
-		)))
-	}
-
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
-	}
-
-	for _, sysconfigConfig := range imageConfig.Sysconfig {
-		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
-	}
-
-	if t.arch.distro.isRHEL() {
-		if options.Subscription != nil {
-			commands := []string{
-				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-			}
-			if options.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-			}
-			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-				Commands:       commands,
-				WaitForNetwork: true,
-			}))
-
-			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
-				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
-			}
-		} else {
-			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
-				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
-			}
-		}
-	}
-
-	// COMMON WITH osPipeline - END
-
-	p.AddStage(osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
-		Filename: "00-getty-fixes.conf",
-		Config: osbuild.SystemdLogindConfigDropin{
-
-			Login: osbuild.SystemdLogindConfigLoginSection{
-				NAutoVTs: common.IntToPtr(0),
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewCloudInitStage(&osbuild.CloudInitStageOptions{
-		Filename: "00-rhel-default-user.cfg",
-		Config: osbuild.CloudInitConfigFile{
-			SystemInfo: &osbuild.CloudInitConfigSystemInfo{
-				DefaultUser: &osbuild.CloudInitConfigDefaultUser{
-					Name: "ec2-user",
-				},
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewModprobeStage(&osbuild.ModprobeStageOptions{
-		Filename: "blacklist-nouveau.conf",
-		Commands: osbuild.ModprobeConfigCmdList{
-			osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-		},
-	}))
-
-	p.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
-		Filename: "sgdisk.conf",
-		Config: osbuild.DracutConfigFile{
-			Install: []string{"sgdisk"},
-		},
-	}))
-
-	// RHBZ#1822863
-	p.AddStage(osbuild.NewSystemdUnitStage(&osbuild.SystemdUnitStageOptions{
-		Unit:   "nm-cloud-setup.service",
-		Dropin: "10-rh-enable-for-ec2.conf",
-		Config: osbuild.SystemdServiceUnitDropin{
-			Service: &osbuild.SystemdUnitServiceSection{
-				Environment: "NM_CLOUD_SETUP_EC2=yes",
-			},
-		},
-	}))
-
-	p.AddStage(osbuild.NewAuthselectStage(&osbuild.AuthselectStageOptions{
-		Profile: "sssd",
-	}))
-
-	return p, nil
-}
-
 func ec2X86_64BaseTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations, options distro.ImageOptions, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
-	treePipeline, err := ec2BaseTreePipeline(t, repos, packages, bpPackages, c, options, pt)
+	treePipeline, err := osPipeline(t, repos, packages, bpPackages, c, options, pt)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +186,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	// rhel-ec2-aarch64
 	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+		treePipeline, err = osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
@@ -828,6 +659,31 @@ func osPipeline(t *imageType,
 			}
 		}
 	}
+
+	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
+		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
+	}
+
+	for _, cloudInitConfig := range imageConfig.CloudInit {
+		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
+	}
+
+	for _, modprobeConfig := range imageConfig.Modprobe {
+		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
+	}
+
+	for _, dracutConfConfig := range imageConfig.DracutConf {
+		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
+	}
+
+	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
+		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
+	}
+
+	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
+		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
+	}
+
 	return p, nil
 }
 
@@ -927,6 +783,30 @@ func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd
 				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
 			}
 		}
+	}
+
+	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
+		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
+	}
+
+	for _, cloudInitConfig := range imageConfig.CloudInit {
+		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
+	}
+
+	for _, modprobeConfig := range imageConfig.Modprobe {
+		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
+	}
+
+	for _, dracutConfConfig := range imageConfig.DracutConf {
+		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
+	}
+
+	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
+		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
+	}
+
+	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
+		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
