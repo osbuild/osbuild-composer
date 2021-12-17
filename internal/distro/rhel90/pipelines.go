@@ -249,7 +249,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := ostreeTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -347,9 +347,18 @@ func osPipeline(t *imageType,
 	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 	imageConfig := t.getDefaultImageConfig()
 	p := new(osbuild.Pipeline)
-	p.Name = "os"
+	if t.rpmOstree {
+		p.Name = "ostree-tree"
+	} else {
+		p.Name = "os"
+	}
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
+
+	if t.rpmOstree && options.OSTree.Parent != "" && options.OSTree.URL != "" {
+		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	}
+
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
@@ -398,6 +407,9 @@ func osPipeline(t *imageType,
 			return nil, err
 		}
 		p.AddStage(osbuild.NewUsersStage(userOptions))
+		if t.rpmOstree {
+			p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+		}
 	}
 
 	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
@@ -498,162 +510,15 @@ func osPipeline(t *imageType,
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 
-	return p, nil
-}
-
-func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions) (*osbuild.Pipeline, error) {
-	imageConfig := t.getDefaultImageConfig()
-	p := new(osbuild.Pipeline)
-	p.Name = "ostree-tree"
-	p.Build = "name:build"
-
-	packages = append(packages, bpPackages...)
-
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: We may want to make this configurable.
+				"wheel", "docker",
+			},
+		}))
 	}
 
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-
-	language, keyboard := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
-	}
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	} else if imageConfig.Keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
-	}
-
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	}
-
-	timezone, ntpServers := c.GetTimezoneSettings()
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	} else if imageConfig.TimeSynchronization != nil {
-		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
-	}
-
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		userOptions, err := userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(userOptions))
-		p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
-	}
-
-	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
-		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
-			imageConfig.EnabledServices,
-			imageConfig.DisabledServices,
-			services,
-			imageConfig.DefaultTarget,
-		)))
-	}
-
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
-	}
-
-	for _, sysconfigConfig := range imageConfig.Sysconfig {
-		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
-	}
-
-	if t.arch.distro.isRHEL() {
-		if options.Subscription != nil {
-			commands := []string{
-				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-			}
-			if options.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-			}
-			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-				Commands:       commands,
-				WaitForNetwork: true,
-			}))
-
-			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
-				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
-			}
-		} else {
-			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
-				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
-			}
-		}
-	}
-
-	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
-		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
-	}
-
-	for _, cloudInitConfig := range imageConfig.CloudInit {
-		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
-	}
-
-	for _, modprobeConfig := range imageConfig.Modprobe {
-		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
-	}
-
-	for _, dracutConfConfig := range imageConfig.DracutConf {
-		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
-	}
-
-	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
-		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
-	}
-
-	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
-		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
-	}
-
-	if seLinuxConfig := imageConfig.SELinuxConfig; seLinuxConfig != nil {
-		p.AddStage(osbuild.NewSELinuxConfigStage(seLinuxConfig))
-	}
-
-	if tunedConfig := imageConfig.Tuned; tunedConfig != nil {
-		p.AddStage(osbuild.NewTunedStage(tunedConfig))
-	}
-
-	for _, tmpfilesdConfig := range imageConfig.Tmpfilesd {
-		p.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
-	}
-
-	for _, pamLimitsConfConfig := range imageConfig.PamLimitsConf {
-		p.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
-	}
-
-	for _, sysctldConfig := range imageConfig.Sysctld {
-		p.AddStage(osbuild.NewSysctldStage(sysctldConfig))
-	}
-
-	for _, dnfConfig := range imageConfig.DNFConfig {
-		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
-	}
-
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
-	p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
-		EtcGroupMembers: []string{
-			// NOTE: We may want to make this configurable.
-			"wheel", "docker",
-		},
-	}))
 	return p, nil
 }
 
