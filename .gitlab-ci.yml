@@ -92,11 +92,11 @@ Packer:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH =~ /PR-[0-9]+/'
   script:
-    - schutzbot/packer.sh
+    - tools/appsre-build-worker-packer.sh
   variables:
-    RUNNER: aws/centos-stream-8-x86_64
+    RUNNER: aws/rhel-8.5-ga-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal

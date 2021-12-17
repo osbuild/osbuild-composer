@@ -6,3 +6,5 @@ __pycache__
 /containers/config/
 /bin
 /rpmbuild
+
+/tools/appsre-ansible/inventory
