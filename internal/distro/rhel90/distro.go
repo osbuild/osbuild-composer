@@ -1093,6 +1093,117 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	// default EC2-SAP image config (x86_64)
+	defaultEc2SapImageConfigX86_64 := &distro.ImageConfig{
+		SELinuxConfig: &osbuild.SELinuxConfigStageOptions{
+			State: osbuild.SELinuxStatePermissive,
+		},
+		// RHBZ#1960617
+		Tuned: osbuild.NewTunedStageOptions("sap-hana"),
+		// RHBZ#1959979
+		Tmpfilesd: []*osbuild.TmpfilesdStageOptions{
+			osbuild.NewTmpfilesdStageOptions("sap.conf",
+				[]osbuild.TmpfilesdConfigLine{
+					{
+						Type: "x",
+						Path: "/tmp/.sap*",
+					},
+					{
+						Type: "x",
+						Path: "/tmp/.hdb*lock",
+					},
+					{
+						Type: "x",
+						Path: "/tmp/.trex*lock",
+					},
+				},
+			),
+		},
+		// RHBZ#1959963
+		PamLimitsConf: []*osbuild.PamLimitsConfStageOptions{
+			osbuild.NewPamLimitsConfStageOptions("99-sap.conf",
+				[]osbuild.PamLimitsConfigLine{
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNofile,
+						Value:  osbuild.PamLimitsValueInt(65536),
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@sapsys",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeHard,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+					{
+						Domain: "@dba",
+						Type:   osbuild.PamLimitsTypeSoft,
+						Item:   osbuild.PamLimitsItemNproc,
+						Value:  osbuild.PamLimitsValueUnlimited,
+					},
+				},
+			),
+		},
+		// RHBZ#1959962
+		Sysctld: []*osbuild.SysctldStageOptions{
+			osbuild.NewSysctldStageOptions("sap.conf",
+				[]osbuild.SysctldConfigLine{
+					{
+						Key:   "kernel.pid_max",
+						Value: "4194304",
+					},
+					{
+						Key:   "vm.max_map_count",
+						Value: "2147483647",
+					},
+				},
+			),
+		},
+		// E4S/EUS
+		DNFConfig: []*osbuild.DNFConfigStageOptions{
+			osbuild.NewDNFConfigStageOptions(
+				[]osbuild.DNFVariable{
+					{
+						Name:  "releasever",
+						Value: rd.osVersion,
+					},
+				},
+				nil,
+			),
+		},
+	}
+	defaultEc2SapImageConfigX86_64 = defaultEc2SapImageConfigX86_64.InheritFrom(defaultEc2ImageConfigX86_64)
+
 	ec2SapImgTypeX86_64 := imageType{
 		name:     "ec2-sap",
 		filename: "image.raw.xz",
@@ -1101,12 +1212,12 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfigX86_64,
+		defaultImageConfig:  defaultEc2SapImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * GigaByte,
-		pipelines:           rhelEc2SapPipelines,
+		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},

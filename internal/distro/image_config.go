@@ -30,6 +30,12 @@ type ImageConfig struct {
 	DracutConf    []*osbuild2.DracutConfStageOptions
 	SystemdUnit   []*osbuild2.SystemdUnitStageOptions
 	Authselect    *osbuild2.AuthselectStageOptions
+	SELinuxConfig *osbuild2.SELinuxConfigStageOptions
+	Tuned         *osbuild2.TunedStageOptions
+	Tmpfilesd     []*osbuild2.TmpfilesdStageOptions
+	PamLimitsConf []*osbuild2.PamLimitsConfStageOptions
+	Sysctld       []*osbuild2.SysctldStageOptions
+	DNFConfig     []*osbuild2.DNFConfigStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -81,6 +87,24 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.Authselect == nil {
 			finalConfig.Authselect = parentConfig.Authselect
+		}
+		if finalConfig.SELinuxConfig == nil {
+			finalConfig.SELinuxConfig = parentConfig.SELinuxConfig
+		}
+		if finalConfig.Tuned == nil {
+			finalConfig.Tuned = parentConfig.Tuned
+		}
+		if finalConfig.Tmpfilesd == nil {
+			finalConfig.Tmpfilesd = parentConfig.Tmpfilesd
+		}
+		if finalConfig.PamLimitsConf == nil {
+			finalConfig.PamLimitsConf = parentConfig.PamLimitsConf
+		}
+		if finalConfig.Sysctld == nil {
+			finalConfig.Sysctld = parentConfig.Sysctld
+		}
+		if finalConfig.DNFConfig == nil {
+			finalConfig.DNFConfig = parentConfig.DNFConfig
 		}
 	}
 	return &finalConfig
