@@ -175,7 +175,7 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 
 	he, ok := echoError.(*echo.HTTPError)
 	if !ok {
-		doResponse(ErrorNotHTTPError, c, he.Internal)
+		doResponse(ErrorNotHTTPError, c, echoError)
 		return
 	}
 
