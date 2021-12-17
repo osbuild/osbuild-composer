@@ -28,16 +28,10 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -67,15 +61,10 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -97,15 +86,10 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -127,15 +111,10 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -159,15 +138,9 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	if err != nil {
 		return nil, err
 	}
-
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
-	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
-	// The last stage must be the SELinux stage
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
+	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
@@ -201,7 +174,6 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	if err != nil {
 		return nil, err
 	}
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 	tarPipeline := osbuild.Pipeline{
 		Name:  "root-tar",
@@ -244,7 +216,6 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	if err != nil {
 		return nil, err
 	}
-	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	kernelPkg := new(rpmmd.PackageSpec)
@@ -517,6 +488,15 @@ func osPipeline(t *imageType,
 	for _, dnfConfig := range imageConfig.DNFConfig {
 		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
 	}
+
+	if pt != nil {
+		p = prependKernelCmdlineStage(p, t, pt)
+		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptionsV2()))
+		kernelVer := kernelVerStr(bpPackages, c.GetKernel().Name, t.Arch().Name())
+		p.AddStage(bootloaderConfigStage(t, *pt, c.GetKernel(), kernelVer, false, false))
+	}
+
+	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 
 	return p, nil
 }
