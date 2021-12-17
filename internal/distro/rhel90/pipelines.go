@@ -144,30 +144,6 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
-func ec2X86_64BaseTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
-	c *blueprint.Customizations, options distro.ImageOptions, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
-
-	treePipeline, err := osPipeline(t, repos, packages, bpPackages, c, options, pt)
-	if err != nil {
-		return nil, err
-	}
-
-	// EC2 x86_64-specific stages
-	// Add 'nvme' driver to handle the case when initramfs is getting forcefully
-	// rebuild on a Xen instance (and not able to boot on Nitro after that).
-	treePipeline.AddStage(osbuild.NewDracutConfStage(&osbuild.DracutConfStageOptions{
-		Filename: "ec2.conf",
-		Config: osbuild.DracutConfigFile{
-			AddDrivers: []string{
-				"nvme",
-				"xen-blkfront",
-			},
-		},
-	}))
-
-	return treePipeline, nil
-}
-
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
 	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
@@ -179,17 +155,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	var treePipeline *osbuild.Pipeline
-	switch arch := t.arch.Name(); arch {
-	// rhel-ec2-x86_64, rhel-ha-ec2
-	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
-	// rhel-ec2-aarch64
-	case distro.Aarch64ArchName:
-		treePipeline, err = osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
-	default:
-		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
-	}
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -218,14 +184,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 		return nil, err
 	}
 
-	var treePipeline *osbuild.Pipeline
-	switch arch := t.arch.Name(); arch {
-	// rhel-sap-ec2
-	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
-	default:
-		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
-	}
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
 	if err != nil {
 		return nil, err
 	}

@@ -808,7 +808,7 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	// default EC2 images config
+	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig := &distro.ImageConfig{
 		Timezone: "UTC",
 		TimeSynchronization: &osbuild.ChronyStageOptions{
@@ -947,6 +947,22 @@ func newDistro(distroName string) distro.Distro {
 		},
 	}
 
+	// default EC2 images config (x86_64)
+	defaultEc2ImageConfigX86_64 := &distro.ImageConfig{
+		DracutConf: append(defaultEc2ImageConfig.DracutConf,
+			&osbuild.DracutConfStageOptions{
+				Filename: "ec2.conf",
+				Config: osbuild.DracutConfigFile{
+					AddDrivers: []string{
+						"nvme",
+						"xen-blkfront",
+					},
+				},
+			}),
+	}
+	defaultEc2ImageConfigX86_64 = defaultEc2ImageConfigX86_64.InheritFrom(defaultEc2ImageConfig)
+
+	// default AMI (EC2 BYOS) images config
 	defaultAMIImageConfig := &distro.ImageConfig{
 		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
 			distro.RHSMConfigNoSubscription: {
@@ -976,6 +992,7 @@ func newDistro(distroName string) distro.Distro {
 			},
 		},
 	}
+	defaultAMIImageConfigX86_64 := defaultAMIImageConfig.InheritFrom(defaultEc2ImageConfigX86_64)
 	defaultAMIImageConfig = defaultAMIImageConfig.InheritFrom(defaultEc2ImageConfig)
 
 	amiImgTypeX86_64 := imageType{
@@ -986,7 +1003,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
-		defaultImageConfig:  defaultAMIImageConfig,
+		defaultImageConfig:  defaultAMIImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -1025,7 +1042,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfig,
+		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -1064,7 +1081,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2HaPackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfig,
+		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -1084,7 +1101,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
 		},
-		defaultImageConfig:  defaultEc2ImageConfig,
+		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
