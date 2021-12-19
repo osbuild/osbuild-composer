@@ -46,7 +46,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	rng := rand.New(rand.NewSource(0))
 	pt, err := disk.CreatePartitionTable(mountpoints, 1024, &pt, rng)
 	assert.NoError(t, err)
-	assert.GreaterOrEqual(t, expectedSize, pt.Size)
+	assert.GreaterOrEqual(t, pt.SectorsToBytes(pt.Size), expectedSize)
 }
 
 // common partition table that use used by tests
