@@ -152,16 +152,13 @@ func (pt *PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 	return &options
 }
 
-// Returns the root partition (the partition whose filesystem has / as
-// a mountpoint) of the partition table. Nil is returned if there's no such
-// partition.
-func (pt *PartitionTable) RootPartition() *Partition {
+func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partition {
 	for idx, p := range pt.Partitions {
 		if p.Filesystem == nil {
 			continue
 		}
 
-		if p.Filesystem.Mountpoint == "/" {
+		if p.Filesystem.Mountpoint == mountpoint {
 			return &pt.Partitions[idx]
 		}
 	}
@@ -169,21 +166,18 @@ func (pt *PartitionTable) RootPartition() *Partition {
 	return nil
 }
 
+// Returns the root partition (the partition whose filesystem has / as
+// a mountpoint) of the partition table. Nil is returned if there's no such
+// partition.
+func (pt *PartitionTable) RootPartition() *Partition {
+	return pt.FindPartitionForMountpoint("/")
+}
+
 // Returns the /boot partition (the partition whose filesystem has /boot as
 // a mountpoint) of the partition table. Nil is returned if there's no such
 // partition.
 func (pt *PartitionTable) BootPartition() *Partition {
-	for _, p := range pt.Partitions {
-		if p.Filesystem == nil {
-			continue
-		}
-
-		if p.Filesystem.Mountpoint == "/boot" {
-			return &p
-		}
-	}
-
-	return nil
+	return pt.FindPartitionForMountpoint("/boot")
 }
 
 // Returns the index of the boot partition: the partition whose filesystem has
