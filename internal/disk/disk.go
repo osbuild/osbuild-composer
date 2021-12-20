@@ -24,6 +24,8 @@ type PartitionTable struct {
 	UUID       string // Unique identifier of the partition table (GPT only).
 	Type       string // Partition table type, e.g. dos, gpt.
 	Partitions []Partition
+
+	SectorSize uint64 // Sector size in bytes
 }
 
 type Partition struct {
@@ -55,12 +57,20 @@ type Filesystem struct {
 
 // Convert the given bytes to the number of sectors.
 func (pt *PartitionTable) BytesToSectors(size uint64) uint64 {
-	return size / DefaultSectorSize
+	sectorSize := pt.SectorSize
+	if sectorSize == 0 {
+		sectorSize = DefaultSectorSize
+	}
+	return size / sectorSize
 }
 
 // Convert the given number of sectors to bytes.
 func (pt *PartitionTable) SectorsToBytes(size uint64) uint64 {
-	return size * DefaultSectorSize
+	sectorSize := pt.SectorSize
+	if sectorSize == 0 {
+		sectorSize = DefaultSectorSize
+	}
+	return size * sectorSize
 }
 
 // Clone the partition table (deep copy).
@@ -79,6 +89,8 @@ func (pt *PartitionTable) Clone() *PartitionTable {
 		UUID:       pt.UUID,
 		Type:       pt.Type,
 		Partitions: partitions,
+
+		SectorSize: pt.SectorSize,
 	}
 }
 
