@@ -19,6 +19,8 @@ import (
 const (
 	// Default sector size in bytes
 	DefaultSectorSize = 512
+
+	DefaultGrainBytes = uint64(1024 * 1024) // 1 MiB
 )
 
 type PartitionTable struct {
@@ -56,6 +58,14 @@ type Filesystem struct {
 	FSTabFreq uint64
 	// The sixth field of fstab(5); fs_passno
 	FSTabPassNo uint64
+}
+
+// AlignUp will align the given sectors to next aligned sector
+func (pt *PartitionTable) AlignUp(sectors uint64) uint64 {
+
+	grain := pt.BytesToSectors(DefaultGrainBytes)
+
+	return ((sectors + grain) / grain) * grain
 }
 
 // Convert the given bytes to the number of sectors.
