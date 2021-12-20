@@ -46,9 +46,8 @@ func CreatePartitionTable(
 		}
 	}
 
-	// start point for all of the arches is
-	// 2048 sectors.
-	table.updatePartitionStartPointOffsets(2048, imageSize)
+	// Calculate partition table offsets and sizes
+	table.updatePartitionStartPointOffsets(imageSize)
 
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
