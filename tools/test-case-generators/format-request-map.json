@@ -221,6 +221,7 @@
       "filename": "installer.iso",
       "blueprint": {}
     },
+    "no-image-info": true,
     "overrides": {}
   },
   "qcow2": {

@@ -161,7 +161,12 @@ def main(distro, arch, image_types, keep_image_info, store, output):
         if distro in test_case_request["overrides"]:
             filtered_request["compose-request"].update(test_case_request["overrides"][distro])
 
-        generate_test_case("boot", distro, arch, output_format, filtered_request, keep_image_info, store, output)
+        # Some image types can not be analyzed by 'image-info'. To be able to
+        # regenerate all test cases for a distro, this must be request definition
+        # and not a cli option. Default to the 'keep_image_info' value if not
+        # set explicitly for the image type.
+        no_image_info = filtered_request.get("no-image-info", keep_image_info)
+        generate_test_case("boot", distro, arch, output_format, filtered_request, no_image_info, store, output)
 
     return
 
