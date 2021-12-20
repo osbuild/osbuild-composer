@@ -46,15 +46,9 @@ func CreatePartitionTable(
 		}
 	}
 
-	if tableSize := table.getPartitionTableSize(); imageSize < tableSize {
-		imageSize = tableSize
-	}
-
-	table.Size = imageSize
-
 	// start point for all of the arches is
 	// 2048 sectors.
-	var start uint64 = table.updatePartitionStartPointOffsets(2048)
+	var start uint64 = table.updatePartitionStartPointOffsets(2048, imageSize)
 
 	// treat the root partition as a special case
 	// by setting the size dynamically
