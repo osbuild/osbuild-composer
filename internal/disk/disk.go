@@ -53,6 +53,16 @@ type Filesystem struct {
 	FSTabPassNo uint64
 }
 
+// Convert the given bytes to the number of sectors.
+func (pt *PartitionTable) BytesToSectors(size uint64) uint64 {
+	return size / DefaultSectorSize
+}
+
+// Convert the given number of sectors to bytes.
+func (pt *PartitionTable) SectorsToBytes(size uint64) uint64 {
+	return size * DefaultSectorSize
+}
+
 // Clone the partition table (deep copy).
 func (pt *PartitionTable) Clone() *PartitionTable {
 	if pt == nil {
