@@ -323,7 +323,6 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"selinux-policy-targeted",
 			"setup",
 			"shadow-utils",
-			"subscription-manager", // should be included only if 'redhat-release' is in the package set, which it always is
 			"sssd-common",
 			"sssd-kcm",
 			"sudo",
@@ -347,6 +346,17 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"sg3_utils-libs",
 			"python3-libselinux",
 		},
+	}
+
+	// Do not include this in the distroSpecificPackageSet for now,
+	// because it includes 'insights-client' which is not installed
+	// by default on all RHEL images (although it would probably make sense).
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"subscription-manager",
+			},
+		})
 	}
 
 	switch t.arch.Name() {
@@ -388,7 +398,7 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"authselect-compat",
 			"chrony",
@@ -407,7 +417,6 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
-			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
 		},
@@ -431,6 +440,17 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"udisks2",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+
+	// Ensure to not pull in subscription-manager on non-RHEL distro
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"subscription-manager-cockpit",
+			},
+		})
+	}
+
+	return ps
 }
 
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
@@ -802,7 +822,7 @@ func aarch64EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"authselect-compat",
 			"chrony",
@@ -837,11 +857,21 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
-			"subscription-manager-cockpit",
 			"tar",
 			"tcpdump",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroBuildPackageSet(t))
+
+	// Ensure to not pull in subscription-manager on non-RHEL distro
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"subscription-manager-cockpit",
+			},
+		})
+	}
+
+	return ps
 }
 
 // packages that are only in some (sub)-distributions
