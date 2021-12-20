@@ -12,8 +12,8 @@ source tools/set-env-variables.sh
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
-if [[ $ID == centos && ${VERSION_ID%.*} == 8 ]]; then
-  MOCK_CONFIG="centos-stream-8-$(uname -m)"
+if [[ $ID == centos ]]; then
+  MOCK_CONFIG="centos-stream-${VERSION_ID%.*}-$(uname -m)"
 fi
 
 # The commit this script operates on.
@@ -88,10 +88,9 @@ if [[ "$ID" == rhel && ${VERSION_ID%.*} == 8 ]] && ! sudo subscription-manager s
     cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
     # We need triple quotes at the end of the template to mark the end of the repo list.
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-elif [[ $VERSION_ID == 9.0 ]]; then
-    greenprint "📋 Inserting RHEL 9 mock template"
-    sudo cp schutzbot/rhel-9-mock-configs/templates/rhel-9.tpl /etc/mock/templates/
-    sudo cp schutzbot/rhel-9-mock-configs/*.cfg /etc/mock/
+elif [[ ${VERSION_ID%.*} == 9 ]]; then
+    greenprint "📋 Inserting EL9 mock templates"
+    sudo cp -r schutzbot/el9-mock-configs/* /etc/mock/
 fi
 
 greenprint "🔧 Building source RPM"
