@@ -36,9 +36,9 @@ func CreatePartitionTable(
 	table := basePartitionTable.Clone()
 
 	for _, m := range mountpoints {
-		partitionSize := m.MinSize / DefaultSectorSize
+		sectors := table.BytesToSectors(m.MinSize)
 		if m.Mountpoint != "/" {
-			table.createFilesystem(m.Mountpoint, partitionSize)
+			table.createFilesystem(m.Mountpoint, sectors)
 		}
 	}
 
@@ -55,7 +55,7 @@ func CreatePartitionTable(
 	// treat the root partition as a special case
 	// by setting the size dynamically
 	rootPartition := table.RootPartition()
-	rootPartition.Size = ((imageSize / DefaultSectorSize) - start - 100)
+	rootPartition.Size = (table.BytesToSectors(imageSize) - start - 100)
 
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
