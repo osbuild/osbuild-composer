@@ -9,6 +9,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDisk_AlignUp(t *testing.T) {
+
+	pt := disk.PartitionTable{}
+	firstAligned := pt.BytesToSectors(disk.DefaultGrainBytes)
+
+	tests := []struct {
+		size uint64
+		want uint64
+	}{
+		{0, firstAligned},
+		{1, firstAligned},
+		{firstAligned - 1, firstAligned},
+	}
+
+	for _, tt := range tests {
+		got := pt.AlignUp(tt.size)
+		assert.Equal(t, tt.want, got)
+	}
+}
+
 func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	mountpoints := []blueprint.FilesystemCustomization{
 		{
