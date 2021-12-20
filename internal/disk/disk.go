@@ -313,10 +313,11 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 	}
 }
 
-// dynamically calculate and update the start point
-// for each of the existing partitions
-// return the updated start point
-func (pt *PartitionTable) updatePartitionStartPointOffsets(start uint64) uint64 {
+// Dynamically calculate and update the start point for each of the existing
+// partitions. Adjusts the overall size of image to either the supplied
+// value in `size` or to the sum of all partitions if that is lager.
+// Returns the updated start point.
+func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) uint64 {
 	var rootIdx = -1
 	for i := range pt.Partitions {
 		partition := &pt.Partitions[i]
@@ -327,16 +328,21 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start uint64) uint64 
 		partition.Start = start
 		start += partition.Size
 	}
-	pt.Partitions[rootIdx].Start = start
-	return start
-}
 
-func (pt *PartitionTable) getPartitionTableSize() uint64 {
-	var size uint64
-	for _, p := range pt.Partitions {
-		size += p.Size
+	root := &pt.Partitions[rootIdx]
+	root.Start = start
+
+	// If the sum of all partitions is bigger then the specified size,
+	// we use that instead. Grow the partition table size if needed.
+	if sum := pt.SectorsToBytes(root.Start + root.Size); sum > size {
+		size = sum
 	}
-	return size
+
+	if size > pt.Size {
+		pt.Size = size
+	}
+
+	return start
 }
 
 // Ensure the partition has at least the given size. Will do nothing
