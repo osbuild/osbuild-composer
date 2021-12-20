@@ -14,6 +14,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+const (
+	// Default sector size in bytes
+	DefaultSectorSize = 512
+)
+
 type PartitionTable struct {
 	Size       uint64 // Size of the disk (in bytes).
 	UUID       string // Unique identifier of the partition table (GPT only).

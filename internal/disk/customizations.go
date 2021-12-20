@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	sectorSize            = 512
 	BIOSBootPartitionGUID = "21686148-6449-6E6F-744E-656564454649"
 	BIOSBootPartitionUUID = "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
 
@@ -37,8 +36,8 @@ func CreatePartitionTable(
 	table := basePartitionTable.Clone()
 
 	for _, m := range mountpoints {
+		partitionSize := m.MinSize / DefaultSectorSize
 		if m.Mountpoint != "/" {
-			partitionSize := m.MinSize / sectorSize
 			table.createFilesystem(m.Mountpoint, partitionSize)
 		}
 	}
@@ -56,7 +55,7 @@ func CreatePartitionTable(
 	// treat the root partition as a special case
 	// by setting the size dynamically
 	rootPartition := table.RootPartition()
-	rootPartition.Size = ((imageSize / sectorSize) - start - 100)
+	rootPartition.Size = ((imageSize / DefaultSectorSize) - start - 100)
 
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
