@@ -48,12 +48,7 @@ func CreatePartitionTable(
 
 	// start point for all of the arches is
 	// 2048 sectors.
-	var start uint64 = table.updatePartitionStartPointOffsets(2048, imageSize)
-
-	// treat the root partition as a special case
-	// by setting the size dynamically
-	rootPartition := table.RootPartition()
-	rootPartition.Size = (table.BytesToSectors(imageSize) - start - 100)
+	table.updatePartitionStartPointOffsets(2048, imageSize)
 
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
