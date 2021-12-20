@@ -155,7 +155,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1048676,
+				Size: 1048576,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
