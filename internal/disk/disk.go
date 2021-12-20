@@ -47,6 +47,25 @@ type Filesystem struct {
 	FSTabPassNo uint64
 }
 
+// Clone the partition table (deep copy).
+func (pt *PartitionTable) Clone() *PartitionTable {
+	if pt == nil {
+		return nil
+	}
+
+	var partitions []Partition
+	for _, p := range pt.Partitions {
+		p.Filesystem = p.Filesystem.Clone()
+		partitions = append(partitions, p)
+	}
+	return &PartitionTable{
+		Size:       pt.Size,
+		UUID:       pt.UUID,
+		Type:       pt.Type,
+		Partitions: partitions,
+	}
+}
+
 // Converts PartitionTable to osbuild.QEMUAssemblerOptions that encode
 // the same partition table.
 func (pt *PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
@@ -236,6 +255,25 @@ func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 		Bootable:   p.Bootable,
 		UUID:       p.UUID,
 		Filesystem: fs,
+	}
+}
+
+// Filesystem related functions
+
+// Clone the filesystem structure
+func (fs *Filesystem) Clone() *Filesystem {
+	if fs == nil {
+		return nil
+	}
+
+	return &Filesystem{
+		Type:         fs.Type,
+		UUID:         fs.UUID,
+		Label:        fs.Label,
+		Mountpoint:   fs.Mountpoint,
+		FSTabOptions: fs.FSTabOptions,
+		FSTabFreq:    fs.FSTabFreq,
+		FSTabPassNo:  fs.FSTabPassNo,
 	}
 }
 
