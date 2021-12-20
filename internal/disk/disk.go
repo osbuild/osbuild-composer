@@ -316,6 +316,7 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.
+// Will grow the root partition if there is any empty space.
 // Returns the updated start point.
 func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) uint64 {
 	var rootIdx = -1
@@ -341,6 +342,13 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) u
 	if size > pt.Size {
 		pt.Size = size
 	}
+
+	// If there is space left in the partition table, grow root
+	root.Size = pt.BytesToSectors(pt.Size) - root.Start
+
+	// Finally we shrink the last partition, i.e. the root partition,
+	// to leave space for the secondary GPT header.
+	root.Size -= 100
 
 	return start
 }
