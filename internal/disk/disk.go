@@ -330,7 +330,12 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 // value in `size` or to the sum of all partitions if that is lager.
 // Will grow the root partition if there is any empty space.
 // Returns the updated start point.
-func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) uint64 {
+func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
+
+	// initial alignment
+	start := pt.AlignUp(0)
+	size = pt.SectorsToBytes(pt.AlignUp(pt.BytesToSectors(size) - 1))
+
 	var rootIdx = -1
 	for i := range pt.Partitions {
 		partition := &pt.Partitions[i]
@@ -339,6 +344,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) u
 			continue
 		}
 		partition.Start = start
+		partition.Size = pt.AlignUp(partition.Size - 1)
 		start += partition.Size
 	}
 
@@ -354,7 +360,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) u
 
 	// If the sum of all partitions is bigger then the specified size,
 	// we use that instead. Grow the partition table size if needed.
-	end := root.Start + padding + root.Size
+	end := pt.AlignUp(root.Start + padding + root.Size - 1)
 	if endBytes := pt.SectorsToBytes(end); endBytes > size {
 		size = endBytes
 	}
