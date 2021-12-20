@@ -1101,14 +1101,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1048676,
+                  "size": 1048576,
                   "start": 411648,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 19511096,
-                  "start": 1460324,
+                  "size": 19511196,
+                  "start": 1460224,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -1150,7 +1150,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 411648,
-                  "size": 1048676
+                  "size": 1048576
                 }
               }
             }
@@ -1166,8 +1166,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "image.raw",
-                  "start": 1460324,
-                  "size": 19511096
+                  "start": 1460224,
+                  "size": 19511196
                 }
               }
             }
@@ -1197,7 +1197,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 411648,
-                  "size": 1048676
+                  "size": 1048576
                 }
               },
               "efi": {
@@ -1212,8 +1212,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "image.raw",
-                  "start": 1460324,
-                  "size": 19511096
+                  "start": 1460224,
+                  "size": 19511196
                 }
               }
             },
