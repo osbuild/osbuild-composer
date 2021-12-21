@@ -275,6 +275,56 @@ objects:
                     key: db.password
               - name: PGSSLMODE
                 value: "${PGSSLMODE}"
+              - name: GCP_AUTH_PROVIDER_X509_CERT_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: auth_provider_x509_cert_url
+              - name: GCP_AUTH_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: auth_uri
+              - name: GCP_CLIENT_EMAIL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_email
+              - name: GCP_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_id
+              - name: GCP_CLIENT_X509_CERT_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_x509_cert_url
+              - name: GCP_PRIVATE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: private_key
+              - name: GCP_PRIVATE_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: private_key_id
+              - name: GCP_PROJECT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: project_id
+              - name: GCP_TOKEN_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: token_uri
+              - name: GCP_TYPE
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: type
               - name: DRY_RUN
                 value: "${MAINTENANCE_DRY_RUN}"
               - name: MAX_CONCURRENT_REQUESTS

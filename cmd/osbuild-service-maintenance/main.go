@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
@@ -66,11 +67,25 @@ func main() {
 	go func() {
 		defer wg.Done()
 		logrus.Info("Cleaning up GCP")
-		if conf.GoogleApplicationCreds == "" {
-			logrus.Error("GCP credentials not specified")
+		var gcpConf GCPCredentialsConfig
+		err := LoadConfigFromEnv(&gcpConf)
+		if err != nil {
+			logrus.Error("Unable to load GCP config from environment")
 			return
 		}
-		err = GCPCleanup(maxCReqs, dryRun, cutoff)
+
+		if !gcpConf.valid() {
+			logrus.Error("GCP credentials invalid, fields missing")
+			return
+		}
+
+		creds, err := json.Marshal(&gcpConf)
+		if err != nil {
+			logrus.Errorf("Unable to marshal gcp conf: %v", err)
+			return
+		}
+
+		err = GCPCleanup(creds, maxCReqs, dryRun, cutoff)
 		if err != nil {
 			logrus.Errorf("GCP Cleanup failed: %v", err)
 		}
