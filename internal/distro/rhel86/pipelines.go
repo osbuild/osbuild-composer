@@ -19,7 +19,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -31,18 +31,20 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
 
-	if options.Subscription == nil {
-		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
-		treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
-			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
+	if t.arch.distro.isRHEL() {
+		if options.Subscription == nil {
+			// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
+			treePipeline.AddStage(osbuild.NewRHSMStage(&osbuild.RHSMStageOptions{
+				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
+					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
 				},
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
-				},
-			},
-		}))
+			}))
+		}
 	}
 
 	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
@@ -76,7 +78,7 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +109,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +628,7 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +671,7 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +709,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := ostreeTreePipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -796,7 +798,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	return p
 }
 
-func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func osPipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
@@ -859,24 +861,26 @@ func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackag
 		},
 	}))
 
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
 
-		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			},
+			))
+		}
 	}
 	return p, nil
 }
 
-func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func ostreeTreePipeline(t *imageType, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
@@ -946,19 +950,21 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 		},
 	}))
 
-	if options.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
-		}
-		if options.Subscription.Insights {
-			commands = append(commands, "/usr/bin/insights-client --register")
-		}
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
 
-		p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
-			Commands:       commands,
-			WaitForNetwork: true,
-		},
-		))
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			},
+			))
+		}
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))

@@ -253,7 +253,7 @@ func s390xLegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 // OS package sets
 
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"@core", "authselect-compat", "chrony", "cloud-init",
 			"cloud-utils-growpart", "cockpit-system", "cockpit-ws",
@@ -261,7 +261,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"NetworkManager", "net-tools", "nfs-utils", "oddjob",
 			"oddjob-mkhomedir", "psmisc", "python3-jsonschema",
 			"qemu-guest-agent", "redhat-release", "redhat-release-eula",
-			"rsync", "subscription-manager-cockpit", "tar", "tcpdump", "yum",
+			"rsync", "tar", "tcpdump", "yum",
 		},
 		Exclude: []string{
 			"aic94xx-firmware", "alsa-firmware", "alsa-lib",
@@ -279,6 +279,17 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"udisks2",
 		},
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+
+	// Ensure to not pull in subscription-manager on non-RHEL distro
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"subscription-manager-cockpit",
+			},
+		})
+	}
+
+	return ps
 }
 
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
@@ -481,7 +492,7 @@ func aarch64EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"authselect-compat", "chrony", "cockpit-system", "cockpit-ws",
 			"@core", "dhcp-client", "dnf", "dnf-utils", "dosfstools",
@@ -495,10 +506,21 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"oddjob-mkhomedir", "policycoreutils", "psmisc",
 			"python3-jsonschema", "qemu-guest-agent", "redhat-release",
 			"redhat-release-eula", "rsync", "selinux-policy-targeted",
-			"subscription-manager-cockpit", "tar", "tcpdump", "yum",
+			"tar", "tcpdump", "yum",
 		},
 		Exclude: nil,
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+
+	// Ensure to not pull in subscription-manager on non-RHEL distro
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"subscription-manager-cockpit",
+			},
+		})
+	}
+
+	return ps
 }
 
 // packages that are only in some (sub)-distributions
