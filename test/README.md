@@ -372,6 +372,23 @@ section and run `/usr/libexec/tests/osbuild-composer/api.sh gcp`.
 
 [gcp_creds]: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
 
+#### Setting up OCI integration tests
+
+The following environment variables are required:
+
+- `OCI_CLI_CONFIG_FILE` - path to [OCI authentication credentials][oci_creds] file. Defaults to $HOME/.oci/config
+- `OCI_CLI_USER`
+- `OCI_CLI_REGION`
+- `OCI_CLI_FINGERPRINT`
+- `OCI_CLI_KEY_CONTENT`
+- `OCI_CLI_TENANCY`
+- `OCI_BUCKET`
+- `OCI_NAMESPACE`
+- `OCI_COMPARTMENT`
+
+To execute the OCI integration tests, complete steps from *Cloud API integration testing*
+section and run `/usr/libexec/tests/osbuild-composer/api.sh oci`.
+
 ## Downstream testing notes
 
 To make it easier for us to test & verify downstream builds we are going to

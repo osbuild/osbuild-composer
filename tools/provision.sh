@@ -82,6 +82,24 @@ EOF
     set -x
 fi
 
+# if OCI credentials are defined in the ENV, add them to the worker's configuration
+OCI_CLI_USER="${OCI_CLI_USER:-}"
+OCI_CLI_PRIVATE_KEY="${OCI_CLI_PRIVATE_KEY:-}"
+if [[ -n "$OCI_CLI_USER" && -n "$OCI_CLI_PRIVATE_KEY" ]]; then
+    set +x
+    sudo tee /etc/osbuild-worker/oci-credentials.toml > /dev/null << EOF
+[default]
+user = "$OCI_CLI_USER"
+private_key = "$OCI_CLI_PRIVATE_KEY"
+EOF
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
+[oci]
+credentials = "/etc/osbuild-worker/oci-credentials.toml"
+EOF
+    set -x
+fi
+
 # Copy rpmrepo snapshots for use in weldr tests
 REPODIR=/etc/osbuild-composer/repositories
 sudo mkdir -p $REPODIR
