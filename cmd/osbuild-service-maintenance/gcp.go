@@ -13,8 +13,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 )
 
-func GCPCleanup(maxConcurrentRequests int, dryRun bool, cutoff time.Time) error {
-	g, err := gcp.New(nil)
+func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff time.Time) error {
+	g, err := gcp.New(creds)
 	if err != nil {
 		return err
 	}
