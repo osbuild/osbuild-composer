@@ -179,12 +179,8 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 	pipelines = append(pipelines, *treePipeline)
-	tarPipeline := osbuild.Pipeline{
-		Name:  "root-tar",
-		Build: "name:build",
-	}
-	tarPipeline.AddStage(tarStage("os", "root.tar.xz"))
-	pipelines = append(pipelines, tarPipeline)
+	tarPipeline := tarArchivePipeline("root-tar", treePipeline.Name, &osbuild.TarStageOptions{Filename: "root.tar.xz"})
+	pipelines = append(pipelines, *tarPipeline)
 	return pipelines, nil
 }
 
@@ -242,7 +238,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 
 	tarPath := "/liveimg.tar"
-	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
+	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, osbuild.NewTarStagePipelineTreeInputs(treePipeline.Name))}
 	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "")
 	if err != nil {
 		return nil, err
@@ -276,12 +272,8 @@ func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations,
 	if err != nil {
 		return nil, err
 	}
-	tarPipeline := osbuild.Pipeline{
-		Name:  "commit-archive",
-		Build: "name:build",
-	}
-	tarPipeline.AddStage(tarStage("ostree-commit", t.Filename()))
-	pipelines = append(pipelines, tarPipeline)
+	tarPipeline := tarArchivePipeline("commit-archive", "ostree-commit", &osbuild.TarStageOptions{Filename: t.Filename()})
+	pipelines = append(pipelines, *tarPipeline)
 	return pipelines, nil
 }
 
@@ -601,14 +593,6 @@ func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuil
 		&osbuild.OSTreeCommitStageInputs{Tree: commitStageInput}),
 	)
 	return p
-}
-
-func tarStage(source, filename string) *osbuild.Stage {
-	tree := new(osbuild.TarStageInput)
-	tree.Type = "org.osbuild.tree"
-	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{"name:" + source}
-	return osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: filename}, &osbuild.TarStageInputs{Tree: tree})
 }
 
 func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *osbuild.Pipeline {
@@ -1022,6 +1006,14 @@ func xzArchivePipeline(inputPipelineName, inputFilename, outputFilename string) 
 		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(inputPipelineName, inputFilename)),
 	))
 
+	return p
+}
+
+func tarArchivePipeline(name, inputPipelineName string, tarOptions *osbuild.TarStageOptions) *osbuild.Pipeline {
+	p := new(osbuild.Pipeline)
+	p.Name = name
+	p.Build = "name:build"
+	p.AddStage(osbuild.NewTarStage(tarOptions, osbuild.NewTarStagePipelineTreeInputs(inputPipelineName)))
 	return p
 }
 
