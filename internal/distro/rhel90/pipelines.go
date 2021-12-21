@@ -438,8 +438,29 @@ func osPipeline(t *imageType,
 		)))
 	}
 
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+	var fwStageOptions *osbuild.FirewallStageOptions
+	if firewallCustomization := c.GetFirewall(); firewallCustomization != nil {
+		fwStageOptions = firewallStageOptions(firewallCustomization)
+	}
+	if firewallConfig := imageConfig.Firewall; firewallConfig != nil {
+		// merge the user-provided firewall config with the default one
+		if fwStageOptions != nil {
+			fwStageOptions = &osbuild.FirewallStageOptions{
+				// Prefer the firewall ports and services settings provided
+				// via BP customization.
+				Ports:            fwStageOptions.Ports,
+				EnabledServices:  fwStageOptions.EnabledServices,
+				DisabledServices: fwStageOptions.DisabledServices,
+				// Default zone can not be set using BP customizations, therefore
+				// default to the one provided in the default image configuration.
+				DefaultZone: firewallConfig.DefaultZone,
+			}
+		} else {
+			fwStageOptions = firewallConfig
+		}
+	}
+	if fwStageOptions != nil {
+		p.AddStage(osbuild.NewFirewallStage(fwStageOptions))
 	}
 
 	for _, sysconfigConfig := range imageConfig.Sysconfig {
@@ -531,6 +552,14 @@ func osPipeline(t *imageType,
 
 	if waConfig := imageConfig.WAAgentConfig; waConfig != nil {
 		p.AddStage(osbuild.NewWAAgentConfStage(waConfig))
+	}
+
+	if dnfAutomaticConfig := imageConfig.DNFAutomaticConfig; dnfAutomaticConfig != nil {
+		p.AddStage(osbuild.NewDNFAutomaticConfigStage(dnfAutomaticConfig))
+	}
+
+	for _, yumRepo := range imageConfig.YUMRepos {
+		p.AddStage(osbuild.NewYumReposStage(yumRepo))
 	}
 
 	if pt != nil {

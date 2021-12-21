@@ -25,25 +25,27 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
-
-	SystemdLogind []*osbuild2.SystemdLogindStageOptions
-	CloudInit     []*osbuild2.CloudInitStageOptions
-	Modprobe      []*osbuild2.ModprobeStageOptions
-	DracutConf    []*osbuild2.DracutConfStageOptions
-	SystemdUnit   []*osbuild2.SystemdUnitStageOptions
-	Authselect    *osbuild2.AuthselectStageOptions
-	SELinuxConfig *osbuild2.SELinuxConfigStageOptions
-	Tuned         *osbuild2.TunedStageOptions
-	Tmpfilesd     []*osbuild2.TmpfilesdStageOptions
-	PamLimitsConf []*osbuild2.PamLimitsConfStageOptions
-	Sysctld       []*osbuild2.SysctldStageOptions
-	DNFConfig     []*osbuild2.DNFConfigStageOptions
-	SshdConfig    *osbuild2.SshdConfigStageOptions
-	Authconfig    *osbuild2.AuthconfigStageOptions
-	PwQuality     *osbuild2.PwqualityConfStageOptions
-	WAAgentConfig *osbuild2.WAAgentConfStageOptions
-	Grub2Config   *osbuild2.GRUB2Config
+	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
+	SystemdLogind      []*osbuild2.SystemdLogindStageOptions
+	CloudInit          []*osbuild2.CloudInitStageOptions
+	Modprobe           []*osbuild2.ModprobeStageOptions
+	DracutConf         []*osbuild2.DracutConfStageOptions
+	SystemdUnit        []*osbuild2.SystemdUnitStageOptions
+	Authselect         *osbuild2.AuthselectStageOptions
+	SELinuxConfig      *osbuild2.SELinuxConfigStageOptions
+	Tuned              *osbuild2.TunedStageOptions
+	Tmpfilesd          []*osbuild2.TmpfilesdStageOptions
+	PamLimitsConf      []*osbuild2.PamLimitsConfStageOptions
+	Sysctld            []*osbuild2.SysctldStageOptions
+	DNFConfig          []*osbuild2.DNFConfigStageOptions
+	SshdConfig         *osbuild2.SshdConfigStageOptions
+	Authconfig         *osbuild2.AuthconfigStageOptions
+	PwQuality          *osbuild2.PwqualityConfStageOptions
+	WAAgentConfig      *osbuild2.WAAgentConfStageOptions
+	Grub2Config        *osbuild2.GRUB2Config
+	DNFAutomaticConfig *osbuild2.DNFAutomaticConfigStageOptions
+	YUMRepos           []*osbuild2.YumReposStageOptions
+	Firewall           *osbuild2.FirewallStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -125,6 +127,15 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.PwQuality == nil {
 			finalConfig.PwQuality = parentConfig.PwQuality
+		}
+		if finalConfig.DNFAutomaticConfig == nil {
+			finalConfig.DNFAutomaticConfig = parentConfig.DNFAutomaticConfig
+		}
+		if finalConfig.YUMRepos == nil {
+			finalConfig.YUMRepos = parentConfig.YUMRepos
+		}
+		if finalConfig.Firewall == nil {
+			finalConfig.Firewall = parentConfig.Firewall
 		}
 	}
 	return &finalConfig
