@@ -325,6 +325,16 @@ objects:
                   secretKeyRef:
                     name: gcp-service-account
                     key: type
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-account
+                    key: access_key_id
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-account
+                    key: secret_access_key
               - name: DRY_RUN
                 value: "${MAINTENANCE_DRY_RUN}"
               - name: MAX_CONCURRENT_REQUESTS
