@@ -430,7 +430,6 @@
                   "sha256:066d47b6d9a955ba52ab53525db1c7f92cb09c9a8db40cf0f28e050e119a344d",
                   "sha256:42464424b9fa731f8122fe748aad0005519fc87b770dbbdb71f29f514ea0e889",
                   "sha256:45c48d32120739734ae97479cc0f3ca19796ea47e360ba39d52b77ce3ada61d7",
-                  "sha256:1cde7ec8148e826642d9c3572b36f97fb4bb1af0ea58c62ad3e7855c37aad50c",
                   "sha256:47b61754a278c4ca378871c874ccf6a0a07bffaef38505315cfa94f262887845",
                   "sha256:e57a218c73df587fb441a22bd4e5f97afb8cbe8812707b26b6dd658910e52dcc",
                   "sha256:cddd0c28a1549f6563cba12771886a1cb990b69b086ebeeced035d962b0eac6f",
@@ -664,7 +663,6 @@
                   "sha256:122fe05bd35778f2887e7f5cad32e8e93247fbbd71bd3da5ed78f788d529d028",
                   "sha256:7cf94e71d42aecccf095c8225aabe5085f8cf7fb4f956fabbe04d23ba7688029",
                   "sha256:176ffcb2cf0fdcbdd2d8119cbd98eef60a30fdb0fb065a9382d2c95e90c79652",
-                  "sha256:c77ac1a164a6e5d042b86bcdcffe7876bc6c60eb3be78c1cb5e09ad239b73299",
                   "sha256:1bd969e0521820374122f5132e5998d9bd2ab185be66565a7266096297419c8e",
                   "sha256:60f68176eddcf15cdcf8c772c2d52d670e2d324f6412131bdd7d604d74b928cd",
                   "sha256:c5b5967a094ced90899052a82e2c245529b75ba3f46e0ce1a89cfc95edb935ea",
@@ -672,17 +670,13 @@
                   "sha256:0e9a8a0f823bf0ef948862f0ccb62353460bd07931e756c98f23908c1c526578",
                   "sha256:ccfa1810aa19fae08aefd29cffe28b65d5123cd17bd7d2d4207f03cf9795594c",
                   "sha256:28c0f457d67213319f0313d993a3b2f8a778a077b202cd75bf45eb2792949d32",
-                  "sha256:caa73f06b13aaef91c4115e0af1689821cdf5130f9f75b416e2f0d2b0c3a6cf8",
                   "sha256:ddc064aa8fb904fbcb1c0da0946f61581a30f6dea8fde9343c29491b0bcd7009",
                   "sha256:777ed4abb0360d2b0e34021bdee6e6b0357629c84e34a8f47adfe1059ecc6cfa",
                   "sha256:db8b1968ff715eb7fbbe326efd5ee3dd2d7aef0d29645de12f36ae474514f909",
                   "sha256:78c43d8a15ca018de1803e4baac5819e1baab1963fd31f1e44e54e8a573acbfc",
-                  "sha256:5c0957decce3babef9864904be13190b0072aef720e9f4ca820bab6c02a20178",
-                  "sha256:109d6db30e5515601b00954b2fd8750c421730a18afc12e1fa7781e24e5b0863",
                   "sha256:ebeb05a4a9cdd5d060859eabac1349029c0120615c98fc939e26664c030655c1",
                   "sha256:72beca700b827714b57f9c61c7647df6eee90820e53af67fc3bee7f08ef631c3",
                   "sha256:62d08a0e508fe8bebd28e2a3fd65ea6c6fe26920d631872e676a100d8e35e806",
-                  "sha256:2ec8ee9578cb0eee9c45186118e0c1e999585e177f1e9de6423a4d79d896d6de",
                   "sha256:c4b1088492cb05631edda4cd62ea537911b79eb36e847270755bf083afafc6d9",
                   "sha256:1a39d5db45d7e97f0a9b564b263ae22d20433bd2f40a6298b8e3ca6a80875da3",
                   "sha256:bc96ccd4671ee6a42d4ad5bbfbbd67ad397d276e29b4353ca6d67ae9705924a7",
@@ -704,14 +698,12 @@
                   "sha256:a04cb3117395b962edc32bf45d8411f240632476b0706b2df7f4a1a87b2ce34b",
                   "sha256:233e5f78027b684e5aaac1395cc574aea3039059bf86eb4494422bc74216a396",
                   "sha256:563b3741d26b6af963fdb7b0634e0791445a707d0b6093ac71c3224299241639",
-                  "sha256:f24d03d0022841fc574d8b7f621b93001bd4ba40785f1db5b35bc2960332a693",
                   "sha256:6c308aa7a826674e1bc1e7ac99d8a1b6b0f2bc4d501086f1985af27e50baa4ff",
                   "sha256:aa1835fd302a37b84ac256db5dd0de09bd9883a5a07775aedb491faf46b18ee0",
                   "sha256:210ad2df4ce04d6792c43d16a7c3b40bfbd13103db7ba7326039852a7ea84322",
                   "sha256:bc7fc2028a29ac7a406719ed4f6740f6bf12c20961223c1e839a2a39069af38d",
                   "sha256:b170c69f99c0bacc01a003c70098e04132629589bf3b0737a73e229da75d0571",
                   "sha256:ef74f2c65ed0e38dd021177d6e59fcdf7fb8de8929b7544b7a6f0709eff6562c",
-                  "sha256:76acb678a5c1d93353d4f506e703ac9ce4925295d61c876f6a420e244102aaba",
                   "sha256:d967d6bbb33bf7a295a64807f81875c84e82a8ecc59b6c72fe955141b1660d39",
                   "sha256:19de7245f0ce7a0fed90263e2b63d98edb549ba1f40ce17916842ef3eb937c44",
                   "sha256:58cad77e10210a5c9183ce5518d452c6a234c5553b93b94af0de3f470c0d944b",
@@ -738,9 +730,6 @@
                   "sha256:4ce2a957083b7cac9ef04a17d2fd6d57039f1c9875d82fe00fe08a62e9fadaef",
                   "sha256:779241d34b7afcd80ef482421c8be90c53872e20254dab27a84f4fc263f0641b",
                   "sha256:08e0218eb17401cd38b3536d2502dfe0676ff05de764b6d4011ba9bf5a6da253",
-                  "sha256:a35e2d0f795f3fa58eaa5f27bd821df24f06a770d736b83a72c38562de6a4183",
-                  "sha256:3386ebe6e649b2cb6a4b3eef260d68f3c165d9ccf54b4e6767ee064aa32d3334",
-                  "sha256:4ac569d8ac68bc904a0a27398e49e3dff6d18cef65c5079c89bde9c953ca0eec",
                   "sha256:633737dc830de1084efc2637d6f4246f4a5b93eba3106184e4541f698c4f99e9",
                   "sha256:454ec267900a2b43ac86d9730b65e8b78bb0ef823c3b8777b531021029c5ce86",
                   "sha256:feb22f3d5529fce8a1d60fe9ddc9fba7dadf4d0864b6ae8bb8245985aef709ec",
@@ -754,7 +743,6 @@
                   "sha256:f006928e944be95bb8d6cb757d759ad25d76d2c36d05e7eab1c4308ed6134c90",
                   "sha256:654d9074dc8ebb93230fe258188a17ba3f7dbac2f360f9f79cc4fb1516953018",
                   "sha256:44999c555a6e4bb6cf5e6f6a79819e76912d036732cb50efaeefc20a180dd839",
-                  "sha256:1865d83df30869bb74fde21b6c31b5440c34b36323a0001fcf140698a9746c40",
                   "sha256:1600cd7372ca2682c9bd58de6e783092d6bdb6412c9888e3dd767db92c9b5239",
                   "sha256:2b743f157f47b27a0528d53fd9ae3e4eb0553f4b8357d01d362dd1b0e4e87c06",
                   "sha256:b9138ff38b834e05b9a34173709bc9b72ed55c7d8ddee4da3e5a4a68648fab5e",
@@ -1275,19 +1263,6 @@
             }
           },
           {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "dnf-plugins": {
-                "product-id": {
-                  "enabled": false
-                },
-                "subscription-manager": {
-                  "enabled": false
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
@@ -1586,9 +1561,6 @@
           "sha256:10814d88ff647e12aeceae4c3815f9eeb66ce7327099c642f934a391fd915f2c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/iwl3160-firmware-25.30.13.0-103.el8.1.noarch.rpm"
           },
-          "sha256:109d6db30e5515601b00954b2fd8750c421730a18afc12e1fa7781e24e5b0863": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-inotify-0.9.6-13.el8.noarch.rpm"
-          },
           "sha256:116c1d18b0bda6388cde56e4c93f28b2449dc496ea6a9c5e2d4b581065e2e6c4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-dbus-1.2.4-15.el8.aarch64.rpm"
           },
@@ -1637,9 +1609,6 @@
           "sha256:185f60a22dc698b4a48fc8c032787a999e56731f0e582f311bb682a8a975a439": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20210827/Packages/lorax-templates-generic-28.14.61-2.el8.aarch64.rpm"
           },
-          "sha256:1865d83df30869bb74fde21b6c31b5440c34b36323a0001fcf140698a9746c40": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/usermode-1.113-1.el8.aarch64.rpm"
-          },
           "sha256:187a1fbb7e2992dfa777c7ca5c2f7369ecb85e4be4a483e6c0c6036e02bacf95": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/info-6.5-6.el8.aarch64.rpm"
           },
@@ -1657,9 +1626,6 @@
           },
           "sha256:1bd969e0521820374122f5132e5998d9bd2ab185be66565a7266096297419c8e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-configobj-5.0.6-11.el8.noarch.rpm"
-          },
-          "sha256:1cde7ec8148e826642d9c3572b36f97fb4bb1af0ea58c62ad3e7855c37aad50c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/dnf-plugin-subscription-manager-1.28.20-1.el8.aarch64.rpm"
           },
           "sha256:1db2307d955fa6a794b6f691e64d0d7f0ab7eabadd30f679cd7a780a45565571": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/dracut-network-049-188.git20210802.el8.aarch64.rpm"
@@ -1783,9 +1749,6 @@
           },
           "sha256:3187b5a82f1e6906539903c42b3bbd0b9979f00ae41d73c52e69e239f1090bf7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20210827/Packages/cairo-1.15.12-3.el8.aarch64.rpm"
-          },
-          "sha256:3386ebe6e649b2cb6a4b3eef260d68f3c165d9ccf54b4e6767ee064aa32d3334": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-cockpit-1.28.20-1.el8.noarch.rpm"
           },
           "sha256:3401ccfb7fd08c12578b6257b4dac7e94ba5f4cd70fc6a234fd90bb99d1bb108": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/libtasn1-4.13-3.el8.aarch64.rpm"
@@ -1927,9 +1890,6 @@
           },
           "sha256:4a08d5264e865548e65d31886c91b659b33a2c2ba39fd115b00af3ea0bc91a83": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/grub2-common-2.02-99.el8.noarch.rpm"
-          },
-          "sha256:4ac569d8ac68bc904a0a27398e49e3dff6d18cef65c5079c89bde9c953ca0eec": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-rhsm-certificates-1.28.20-1.el8.aarch64.rpm"
           },
           "sha256:4ae071ebcf06cec6e4e7e49a50d83464cb1f1f1c72449a02ba1dfc820dbf67c5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/c-ares-1.13.0-5.el8.aarch64.rpm"
@@ -2168,9 +2128,6 @@
           "sha256:75dc9e6f813392de179031656e2ff5a3cc92771e545bf029a8bdeb42909e98e8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/bash-4.4.20-2.el8.aarch64.rpm"
           },
-          "sha256:76acb678a5c1d93353d4f506e703ac9ce4925295d61c876f6a420e244102aaba": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/rhsm-icons-1.28.20-1.el8.noarch.rpm"
-          },
           "sha256:76df9e0fc779fcd7d3ee836ae254ead30b5f9492022b55901d1f8bd914d38ef6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/selinux-policy-targeted-3.14.3-76.el8.noarch.rpm"
           },
@@ -2395,9 +2352,6 @@
           },
           "sha256:a33349c435ef9b8348864e5b8f09ed050d0b7a79fb2db5a88b2f7a5d869231d7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/pam-1.3.1-15.el8.aarch64.rpm"
-          },
-          "sha256:a35e2d0f795f3fa58eaa5f27bd821df24f06a770d736b83a72c38562de6a4183": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-1.28.20-1.el8.aarch64.rpm"
           },
           "sha256:a3ef96219165bfc64d4f5d50f51fbd43e803c500619240ffe4db1f9f8e337f83": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/kbd-legacy-2.0.4-10.el8.noarch.rpm"
@@ -2627,9 +2581,6 @@
           "sha256:c76813885102c12a962a8adf3cd864fa5965e4005050a1bbbd350c3f0040d6b5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/librepo-1.14.0-2.el8.aarch64.rpm"
           },
-          "sha256:c77ac1a164a6e5d042b86bcdcffe7876bc6c60eb3be78c1cb5e09ad239b73299": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-cloud-what-1.28.20-1.el8.aarch64.rpm"
-          },
           "sha256:c85fbf0045e810a8a7df257799a82e32fee141db8119e9f1eb7abdb96553127f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/libnftnl-1.1.5-4.el8.aarch64.rpm"
           },
@@ -2641,9 +2592,6 @@
           },
           "sha256:c98e748866b96eab0e8ea4170fe312cb48fd46db98e23c6125b1262c4b8b495d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20210827/Packages/cairo-gobject-1.15.12-3.el8.aarch64.rpm"
-          },
-          "sha256:caa73f06b13aaef91c4115e0af1689821cdf5130f9f75b416e2f0d2b0c3a6cf8": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-ethtool-0.14-3.el8.aarch64.rpm"
           },
           "sha256:cab4f9caf4d9e51a7bcaa4d69e7550d5b9372ce817d956d2e5fa4e374c76a8ab": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/libdb-5.3.28-40.el8.aarch64.rpm"
@@ -2875,9 +2823,6 @@
           },
           "sha256:f1f10022c95ef2ff496b3a358f6fa7f7474fecd4840ac0fac689075356a09689": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/libgcc-8.5.0-3.el8.aarch64.rpm"
-          },
-          "sha256:f24d03d0022841fc574d8b7f621b93001bd4ba40785f1db5b35bc2960332a693": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-subscription-manager-rhsm-1.28.20-1.el8.aarch64.rpm"
           },
           "sha256:f2628a19999f78a3ec1a796d66c8cd45f58cfb670850ecb7790528279f410677": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/libmodman-2.0.1-17.el8.aarch64.rpm"
@@ -9386,16 +9331,6 @@
         "check_gpg": true
       },
       {
-        "name": "dnf-plugin-subscription-manager",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/dnf-plugin-subscription-manager-1.28.20-1.el8.aarch64.rpm",
-        "checksum": "sha256:1cde7ec8148e826642d9c3572b36f97fb4bb1af0ea58c62ad3e7855c37aad50c",
-        "check_gpg": true
-      },
-      {
         "name": "dnf-plugins-core",
         "epoch": 0,
         "version": "4.0.21",
@@ -11726,16 +11661,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-cloud-what",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-cloud-what-1.28.20-1.el8.aarch64.rpm",
-        "checksum": "sha256:c77ac1a164a6e5d042b86bcdcffe7876bc6c60eb3be78c1cb5e09ad239b73299",
-        "check_gpg": true
-      },
-      {
         "name": "python3-configobj",
         "epoch": 0,
         "version": "5.0.6",
@@ -11806,16 +11731,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-ethtool",
-        "epoch": 0,
-        "version": "0.14",
-        "release": "3.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-ethtool-0.14-3.el8.aarch64.rpm",
-        "checksum": "sha256:caa73f06b13aaef91c4115e0af1689821cdf5130f9f75b416e2f0d2b0c3a6cf8",
-        "check_gpg": true
-      },
-      {
         "name": "python3-gobject-base",
         "epoch": 0,
         "version": "3.28.3",
@@ -11856,26 +11771,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-iniparse",
-        "epoch": 0,
-        "version": "0.4",
-        "release": "31.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
-        "checksum": "sha256:5c0957decce3babef9864904be13190b0072aef720e9f4ca820bab6c02a20178",
-        "check_gpg": true
-      },
-      {
-        "name": "python3-inotify",
-        "epoch": 0,
-        "version": "0.9.6",
-        "release": "13.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-inotify-0.9.6-13.el8.noarch.rpm",
-        "checksum": "sha256:109d6db30e5515601b00954b2fd8750c421730a18afc12e1fa7781e24e5b0863",
-        "check_gpg": true
-      },
-      {
         "name": "python3-jwt",
         "epoch": 0,
         "version": "1.6.1",
@@ -11903,16 +11798,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-libdnf-0.63.0-2.el8.aarch64.rpm",
         "checksum": "sha256:62d08a0e508fe8bebd28e2a3fd65ea6c6fe26920d631872e676a100d8e35e806",
-        "check_gpg": true
-      },
-      {
-        "name": "python3-librepo",
-        "epoch": 0,
-        "version": "1.14.0",
-        "release": "2.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-librepo-1.14.0-2.el8.aarch64.rpm",
-        "checksum": "sha256:2ec8ee9578cb0eee9c45186118e0c1e999585e177f1e9de6423a4d79d896d6de",
         "check_gpg": true
       },
       {
@@ -12126,16 +12011,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-subscription-manager-rhsm",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/python3-subscription-manager-rhsm-1.28.20-1.el8.aarch64.rpm",
-        "checksum": "sha256:f24d03d0022841fc574d8b7f621b93001bd4ba40785f1db5b35bc2960332a693",
-        "check_gpg": true
-      },
-      {
         "name": "python3-syspurpose",
         "epoch": 0,
         "version": "1.28.20",
@@ -12193,16 +12068,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/readline-7.0-10.el8.aarch64.rpm",
         "checksum": "sha256:ef74f2c65ed0e38dd021177d6e59fcdf7fb8de8929b7544b7a6f0709eff6562c",
-        "check_gpg": true
-      },
-      {
-        "name": "rhsm-icons",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/rhsm-icons-1.28.20-1.el8.noarch.rpm",
-        "checksum": "sha256:76acb678a5c1d93353d4f506e703ac9ce4925295d61c876f6a420e244102aaba",
         "check_gpg": true
       },
       {
@@ -12466,36 +12331,6 @@
         "check_gpg": true
       },
       {
-        "name": "subscription-manager",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-1.28.20-1.el8.aarch64.rpm",
-        "checksum": "sha256:a35e2d0f795f3fa58eaa5f27bd821df24f06a770d736b83a72c38562de6a4183",
-        "check_gpg": true
-      },
-      {
-        "name": "subscription-manager-cockpit",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-cockpit-1.28.20-1.el8.noarch.rpm",
-        "checksum": "sha256:3386ebe6e649b2cb6a4b3eef260d68f3c165d9ccf54b4e6767ee064aa32d3334",
-        "check_gpg": true
-      },
-      {
-        "name": "subscription-manager-rhsm-certificates",
-        "epoch": 0,
-        "version": "1.28.20",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/subscription-manager-rhsm-certificates-1.28.20-1.el8.aarch64.rpm",
-        "checksum": "sha256:4ac569d8ac68bc904a0a27398e49e3dff6d18cef65c5079c89bde9c953ca0eec",
-        "check_gpg": true
-      },
-      {
         "name": "sudo",
         "epoch": 0,
         "version": "1.8.29",
@@ -12623,16 +12458,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/tzdata-2021a-1.el8.noarch.rpm",
         "checksum": "sha256:44999c555a6e4bb6cf5e6f6a79819e76912d036732cb50efaeefc20a180dd839",
-        "check_gpg": true
-      },
-      {
-        "name": "usermode",
-        "epoch": 0,
-        "version": "1.113",
-        "release": "1.el8",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20210827/Packages/usermode-1.113-1.el8.aarch64.rpm",
-        "checksum": "sha256:1865d83df30869bb74fde21b6c31b5440c34b36323a0001fcf140698a9746c40",
         "check_gpg": true
       },
       {
@@ -13595,7 +13420,6 @@
       "dmidecode-3.2-10.el8.aarch64",
       "dnf-4.7.0-2.el8.noarch",
       "dnf-data-4.7.0-2.el8.noarch",
-      "dnf-plugin-subscription-manager-1.28.20-1.el8.aarch64",
       "dnf-plugins-core-4.0.21-2.el8.noarch",
       "dosfstools-4.1-6.el8.aarch64",
       "dracut-049-188.git20210802.el8.aarch64",
@@ -13877,7 +13701,6 @@
       "python3-cairo-1.16.3-6.el8.aarch64",
       "python3-cffi-1.11.5-5.el8.aarch64",
       "python3-chardet-3.0.4-7.el8.noarch",
-      "python3-cloud-what-1.28.20-1.el8.aarch64",
       "python3-configobj-5.0.6-11.el8.noarch",
       "python3-cryptography-3.2.1-5.el8.aarch64",
       "python3-dateutil-2.6.1-6.el8.noarch",
@@ -13885,15 +13708,12 @@
       "python3-decorator-4.2.1-2.el8.noarch",
       "python3-dnf-4.7.0-2.el8.noarch",
       "python3-dnf-plugins-core-4.0.21-2.el8.noarch",
-      "python3-ethtool-0.14-3.el8.aarch64",
       "python3-firewall-0.9.3-7.el8.noarch",
       "python3-gobject-3.28.3-2.el8.aarch64",
       "python3-gobject-base-3.28.3-2.el8.aarch64",
       "python3-gpg-1.13.1-9.el8.aarch64",
       "python3-hawkey-0.63.0-2.el8.aarch64",
       "python3-idna-2.5-5.el8.noarch",
-      "python3-iniparse-0.4-31.el8.noarch",
-      "python3-inotify-0.9.6-13.el8.noarch",
       "python3-jinja2-2.10.1-3.el8.noarch",
       "python3-jsonpatch-1.21-2.el8.noarch",
       "python3-jsonpointer-1.10-11.el8.noarch",
@@ -13901,7 +13721,6 @@
       "python3-jwt-1.6.1-2.el8.noarch",
       "python3-libcomps-0.1.16-2.el8.aarch64",
       "python3-libdnf-0.63.0-2.el8.aarch64",
-      "python3-librepo-1.14.0-2.el8.aarch64",
       "python3-libs-3.6.8-39.el8.aarch64",
       "python3-libselinux-2.9-5.el8.aarch64",
       "python3-libsemanage-2.9-6.el8.aarch64",
@@ -13931,7 +13750,6 @@
       "python3-six-1.11.0-8.el8.noarch",
       "python3-slip-0.6.4-11.el8.noarch",
       "python3-slip-dbus-0.6.4-11.el8.noarch",
-      "python3-subscription-manager-rhsm-1.28.20-1.el8.aarch64",
       "python3-syspurpose-1.28.20-1.el8.aarch64",
       "python3-systemd-234-8.el8.aarch64",
       "python3-unbound-1.7.3-17.el8.aarch64",
@@ -13941,7 +13759,6 @@
       "quota-nls-4.04-14.el8.noarch",
       "rdma-core-35.0-1.el8.aarch64",
       "readline-7.0-10.el8.aarch64",
-      "rhsm-icons-1.28.20-1.el8.noarch",
       "rootfiles-8.1-22.el8.noarch",
       "rpcbind-1.2.5-8.el8.aarch64",
       "rpm-4.14.3-15.el8.aarch64",
@@ -13972,9 +13789,6 @@
       "sssd-common-2.5.2-2.el8.aarch64",
       "sssd-kcm-2.5.2-2.el8.aarch64",
       "sssd-nfs-idmap-2.5.2-2.el8.aarch64",
-      "subscription-manager-1.28.20-1.el8.aarch64",
-      "subscription-manager-cockpit-1.28.20-1.el8.noarch",
-      "subscription-manager-rhsm-certificates-1.28.20-1.el8.aarch64",
       "sudo-1.8.29-7.el8.aarch64",
       "systemd-239-49.el8.aarch64",
       "systemd-libs-239-49.el8.aarch64",
@@ -13990,7 +13804,6 @@
       "tuned-2.16.0-1.el8.noarch",
       "tzdata-2021a-1.el8.noarch",
       "unbound-libs-1.7.3-17.el8.aarch64",
-      "usermode-1.113-1.el8.aarch64",
       "util-linux-2.32.1-28.el8.aarch64",
       "vim-minimal-8.0.1763-15.el8.aarch64",
       "virt-what-1.18-12.el8.aarch64",
@@ -14059,59 +13872,6 @@
       "user1:x:1000:1000::/home/user1:/bin/bash",
       "user2:x:1020:1050:description 2:/home/home2:/bin/sh"
     ],
-    "rhsm": {
-      "dnf-plugins": {
-        "product-id": {
-          "enabled": false
-        },
-        "subscription-manager": {
-          "enabled": false
-        }
-      },
-      "rhsm.conf": {
-        "logging": {
-          "default_log_level": "INFO"
-        },
-        "rhsm": {
-          "auto_enable_yum_plugins": "1",
-          "baseurl": "https://cdn.redhat.com",
-          "ca_cert_dir": "/etc/rhsm/ca/",
-          "consumercertdir": "/etc/pki/consumer",
-          "entitlementcertdir": "/etc/pki/entitlement",
-          "full_refresh_on_yum": "0",
-          "inotify": "1",
-          "manage_repos": "1",
-          "package_profile_on_trans": "0",
-          "pluginconfdir": "/etc/rhsm/pluginconf.d",
-          "plugindir": "/usr/share/rhsm-plugins",
-          "productcertdir": "/etc/pki/product",
-          "repo_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
-          "repomd_gpg_url": "",
-          "report_package_profile": "1"
-        },
-        "rhsmcertd": {
-          "auto_registration": "0",
-          "auto_registration_interval": "60",
-          "autoattachinterval": "1440",
-          "certcheckinterval": "240",
-          "disable": "0",
-          "splay": "1"
-        },
-        "server": {
-          "hostname": "subscription.rhsm.redhat.com",
-          "insecure": "0",
-          "no_proxy": "",
-          "port": "443",
-          "prefix": "/subscription",
-          "proxy_hostname": "",
-          "proxy_password": "",
-          "proxy_port": "",
-          "proxy_scheme": "http",
-          "proxy_user": "",
-          "ssl_verify_depth": "3"
-        }
-      }
-    },
     "rpm-verify": {
       "changed": {
         "/boot/efi/EFI/BOOT/BOOTAA64.EFI": ".......T.",
@@ -14122,8 +13882,6 @@
         "/boot/efi/EFI/centos/shimaa64-centos.efi": ".......T.",
         "/boot/efi/EFI/centos/shimaa64.efi": ".......T.",
         "/etc/chrony.conf": "S.5....T.",
-        "/etc/dnf/plugins/product-id.conf": "..5....T.",
-        "/etc/dnf/plugins/subscription-manager.conf": ".......T.",
         "/etc/machine-id": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",
@@ -14169,8 +13927,6 @@
       "poweroff.target",
       "rdisc.service",
       "remote-cryptsetup.target",
-      "rhsm-facts.service",
-      "rhsm.service",
       "runlevel0.target",
       "serial-getty@.service",
       "sshd-keygen@.service",
@@ -14213,7 +13969,6 @@
       "qemu-guest-agent.service",
       "reboot.target",
       "remote-fs.target",
-      "rhsmcertd.service",
       "rpcbind.service",
       "rpcbind.socket",
       "rsyslog.service",
@@ -14372,9 +14127,6 @@
         ],
         "setroubleshoot.conf": [
           "d /run/setroubleshoot 711 setroubleshoot setroubleshoot -"
-        ],
-        "subscription-manager.conf": [
-          "d /run/rhsm 0755 root root -"
         ],
         "sudo.conf": [
           "d /run/sudo 0711 root root",
