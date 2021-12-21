@@ -61,6 +61,17 @@
     },
     "overrides": {}
   },
+  "gce": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "gce",
+      "repositories": [],
+      "filename": "image.tar.gz",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "edge-commit": {
     "compose-request": {
       "distro": "",

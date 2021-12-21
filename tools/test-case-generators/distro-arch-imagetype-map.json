@@ -232,6 +232,7 @@
       "ec2",
       "ec2-ha",
       "ec2-sap",
+      "gce",
       "edge-commit",
       "edge-container",
       "edge-installer",
@@ -269,6 +270,7 @@
   "centos-9": {
     "x86_64": [
       "ami",
+      "gce",
       "openstack",
       "tar",
       "qcow2",
