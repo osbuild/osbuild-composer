@@ -170,6 +170,40 @@ func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, op
 	return pipelines, nil
 }
 
+func gcePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *treePipeline)
+
+	diskfile := "disk.raw"
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, *imagePipeline)
+
+	archivePipeline := tarArchivePipeline("archive", imagePipeline.Name, &osbuild.TarStageOptions{
+		Filename: t.Filename(),
+		Format:   osbuild.TarArchiveFormatOldgnu,
+		RootNode: osbuild.TarRootNodeOmit,
+		// import of the image to GCP fails in case the options below are enabled, which is the default
+		ACLs:    common.BoolToPtr(false),
+		SELinux: common.BoolToPtr(false),
+		Xattrs:  common.BoolToPtr(false),
+	})
+	pipelines = append(pipelines, *archivePipeline)
+
+	return pipelines, nil
+}
+
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))

@@ -1315,6 +1315,146 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	defaultGceImageConfig := &distro.ImageConfig{
+		Timezone: "UTC",
+		TimeSynchronization: &osbuild.ChronyStageOptions{
+			Timeservers: []string{"metadata.google.internal"},
+		},
+		Firewall: &osbuild.FirewallStageOptions{
+			DefaultZone: "trusted",
+		},
+		EnabledServices: []string{
+			"sshd",
+			"rngd",
+			"dnf-automatic.timer",
+		},
+		DisabledServices: []string{
+			"sshd-keygen@",
+			"reboot.target",
+		},
+		DefaultTarget: "multi-user.target",
+		Locale:        "en_US.UTF-8",
+		Keyboard: &osbuild.KeymapStageOptions{
+			Keymap: "us",
+		},
+		DNFConfig: []*osbuild.DNFConfigStageOptions{
+			{
+				Config: &osbuild.DNFConfig{
+					Main: &osbuild.DNFConfigMain{
+						IPResolve: "4",
+					},
+				},
+			},
+		},
+		DNFAutomaticConfig: &osbuild.DNFAutomaticConfigStageOptions{
+			Config: &osbuild.DNFAutomaticConfig{
+				Commands: &osbuild.DNFAutomaticConfigCommands{
+					ApplyUpdates: common.BoolToPtr(true),
+					UpgradeType:  osbuild.DNFAutomaticUpgradeTypeSecurity,
+				},
+			},
+		},
+		YUMRepos: []*osbuild.YumReposStageOptions{
+			{
+				Filename: "google-cloud.repo",
+				Repos: []osbuild.YumRepository{
+					{
+						Id:           "google-compute-engine",
+						Name:         "Google Compute Engine",
+						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"},
+						Enabled:      common.BoolToPtr(true),
+						GPGCheck:     common.BoolToPtr(true),
+						RepoGPGCheck: common.BoolToPtr(false),
+						GPGKey: []string{
+							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
+							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+						},
+					},
+					{
+						Id:           "google-cloud-sdk",
+						Name:         "Google Cloud SDK",
+						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64"},
+						Enabled:      common.BoolToPtr(true),
+						GPGCheck:     common.BoolToPtr(true),
+						RepoGPGCheck: common.BoolToPtr(false),
+						GPGKey: []string{
+							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
+							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+						},
+					},
+				},
+			},
+		},
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the GCE
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+		SshdConfig: &osbuild.SshdConfigStageOptions{
+			Config: osbuild.SshdConfigConfig{
+				PasswordAuthentication: common.BoolToPtr(false),
+				ClientAliveInterval:    common.IntToPtr(420),
+				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
+			},
+		},
+		Sysconfig: []*osbuild.SysconfigStageOptions{
+			{
+				Kernel: &osbuild.SysconfigKernelOptions{
+					DefaultKernel: "kernel-core",
+					UpdateDefault: true,
+				},
+			},
+		},
+		Modprobe: []*osbuild.ModprobeStageOptions{
+			{
+				Filename: "blacklist-floppy.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+				},
+			},
+		},
+	}
+
+	gceImgType := imageType{
+		name:     "gce",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    gcePackageSet,
+		},
+		defaultImageConfig:  defaultGceImageConfig,
+		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d",
+		bootable:            true,
+		bootType:            distro.UEFIBootType,
+		defaultSize:         20 * GigaByte,
+		pipelines:           gcePipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -1354,7 +1494,7 @@ func newDistro(distroName string) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
