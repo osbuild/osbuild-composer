@@ -7,7 +7,7 @@ type TarArchiveFormat string
 // valid values for the 'format' Tar stage option
 const (
 	TarArchiveFormatGnu    TarArchiveFormat = "gnu"
-	TarArchiveFormatOldgnu TarArchiveFormat = "oldngu"
+	TarArchiveFormatOldgnu TarArchiveFormat = "oldgnu"
 	TarArchiveFormatPosix  TarArchiveFormat = "posix"
 	TarArchiveFormatUstar  TarArchiveFormat = "ustar"
 	TarArchiveFormatV7     TarArchiveFormat = "v7"
