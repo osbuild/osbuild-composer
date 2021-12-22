@@ -155,11 +155,11 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 			apiErr := APIError(code, sec, c)
 
 			if sec.httpStatus == http.StatusInternalServerError {
-				c.Logger().Errorf("Internal server error. Internal: %s, Code: %s, OperationId: %s",
+				c.Logger().Errorf("Internal server error. Internal: %v, Code: %s, OperationId: %s",
 					internal, apiErr.Code, apiErr.OperationId)
 			} else {
-				c.Logger().Infof("%s, Code: %s, OperationId: %s", internal,
-					apiErr.Code, apiErr.OperationId)
+				c.Logger().Infof("Code: %s, OperationId: %s, Internal: %v",
+					apiErr.Code, apiErr.OperationId, internal)
 			}
 
 			if c.Request().Method == http.MethodHead {
@@ -168,7 +168,7 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 				err = c.JSON(sec.httpStatus, apiErr)
 			}
 			if err != nil {
-				c.Logger().Error(err)
+				c.Logger().Errorf("Failed to return error response: %v", err)
 			}
 		}
 	}
@@ -185,5 +185,5 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 		doResponse(apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
-	doResponse(sec, c, nil)
+	doResponse(sec, c, he.Internal)
 }
