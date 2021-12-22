@@ -2675,7 +2675,11 @@ def analyse_tarball(path):
         subprocess.run(command,
                        stdout=sys.stderr,
                        check=True)
-        return analyse_directory(tree)
+        # gce image type contains virtual raw disk inside a tarball
+        if os.path.isfile(f"{tree}/disk.raw"):
+            return analyse_image(f"{tree}/disk.raw")
+        else:
+            return analyse_directory(tree)
 
 
 def is_compressed(path):
