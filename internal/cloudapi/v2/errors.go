@@ -218,18 +218,17 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 
 // Convert an echo error into an AOC compliant one so we send a correct json error response
 func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
-	doResponse := func(code ServiceErrorCode, c echo.Context) {
+	doResponse := func(code ServiceErrorCode, c echo.Context, internal error) {
 		if !c.Response().Committed {
 			var err error
 			sec := find(code)
 			apiErr := APIError(code, sec, c)
 
 			if sec.httpStatus == http.StatusInternalServerError {
-				internalError, ok := echoError.(*echo.HTTPError)
 				errMsg := fmt.Sprintf("Internal server error. Code: %s, OperationId: %s", apiErr.Code, apiErr.OperationId)
 
-				if ok {
-					errMsg += fmt.Sprintf(", InternalError: %v", internalError)
+				if internal != nil {
+					errMsg += fmt.Sprintf(", InternalError: %v", internal)
 				}
 
 				c.Logger().Error(errMsg)
@@ -251,7 +250,7 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 	he, ok := echoError.(*echo.HTTPError)
 	if !ok {
 		c.Logger().Errorf("ErrorNotHTTPError %v", echoError)
-		doResponse(ErrorNotHTTPError, c)
+		doResponse(ErrorNotHTTPError, c, echoError)
 		return
 	}
 
@@ -265,8 +264,8 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 	sec, ok := he.Message.(ServiceErrorCode)
 	if !ok {
 		// No service code was set, so Echo threw this error
-		doResponse(apiErrorFromEchoError(he), c)
+		doResponse(apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
-	doResponse(sec, c)
+	doResponse(sec, c, he.Internal)
 }
