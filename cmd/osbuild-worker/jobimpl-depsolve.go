@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type DepsolveJobImpl struct {
@@ -42,11 +43,10 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		switch err.(type) {
 		case *rpmmd.DNFError:
-			result.ErrorType = worker.DepsolveErrorType
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFError, err.Error())
 		case error:
-			result.ErrorType = worker.OtherErrorType
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveJob, err.Error())
 		}
-		result.Error = err.Error()
 	}
 
 	err = job.Update(&result)

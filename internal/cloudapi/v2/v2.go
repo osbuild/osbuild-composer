@@ -28,6 +28,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 // Server represents the state of the cloud Server
@@ -124,6 +125,29 @@ func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
 		return HTTPError(ErrorErrorNotFound)
 	}
 	return ctx.JSON(http.StatusOK, apiError)
+}
+
+func checkDepsolveDependency(depsolveResults worker.DepsolveJobResult, result *worker.ManifestJobByIDResult) {
+	var badRequest = "Error in depsolve job dependency input, bad request"
+	var failedDepsolve = "Error in depsolve job dependency"
+	// for backwards compatibility we still need to check
+	// previous error types
+	if depsolveResults.Error != "" {
+		if depsolveResults.ErrorType == worker.DepsolveErrorType {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, badRequest)
+			return
+		}
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, failedDepsolve)
+		return
+	}
+	if jobErr := depsolveResults.JobError; jobErr != nil {
+		if jobErr.ID == clienterrors.ErrorDNFError {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, badRequest)
+			return
+		}
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, failedDepsolve)
+		return
+	}
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -454,12 +478,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		var jobResult *worker.ManifestJobByIDResult = &worker.ManifestJobByIDResult{
 			Manifest: nil,
-			Error:    "",
+			JobError: nil,
 		}
 
 		defer func() {
-			if jobResult.Error != "" {
-				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.Error)
+			if jobResult.JobError != nil {
+				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.JobError.Reason)
 			}
 
 			result, err := json.Marshal(jobResult)
@@ -474,29 +498,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}()
 
 		if len(dynArgs) == 0 {
-			jobResult.Error = "No dynamic arguments"
+			reason := "No dynamic arguments"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason)
 			return
 		}
 
 		var depsolveResults worker.DepsolveJobResult
 		err = json.Unmarshal(dynArgs[0], &depsolveResults)
 		if err != nil {
-			jobResult.Error = "Error parsing dynamic arguments"
+			reason := "Error parsing dynamic arguments"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason)
 			return
 		}
 
-		if depsolveResults.Error != "" {
-			if depsolveResults.ErrorType == worker.DepsolveErrorType {
-				jobResult.Error = "Error in depsolve job dependency input, bad request"
-				return
-			}
-			jobResult.Error = "Error in depsolve job dependency"
-			return
-		}
+		checkDepsolveDependency(depsolveResults, jobResult)
 
 		manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, seed)
 		if err != nil {
-			jobResult.Error = "Error generating manifest"
+			reason := "Error generating manifest"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason)
 			return
 		}
 

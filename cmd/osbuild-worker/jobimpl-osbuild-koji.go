@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -86,7 +87,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	if initArgs.KojiError == "" {
+	if initArgs.JobError != nil {
 		exports := args.Exports
 		if len(exports) == 0 {
 			// job did not define exports, likely coming from an older version of composer
@@ -112,7 +113,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			}
 			result.ImageHash, result.ImageSize, err = impl.kojiUpload(f, args.KojiServer, args.KojiDirectory, args.KojiFilename)
 			if err != nil {
-				result.KojiError = err.Error()
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error())
 			}
 		}
 	}

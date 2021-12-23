@@ -135,7 +135,12 @@ func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid
 	// top-level `Success` flag. Override it here by looking into the job.
 	if r, ok := result.(*OSBuildJobResult); ok {
 		if !r.Success && r.OSBuildOutput != nil {
-			r.Success = r.OSBuildOutput.Success && len(r.TargetErrors) == 0
+			// For backwards compatability: we need to check for both kinds
+			// of errors, old & new. It is possible that `TargetErrors` might
+			// be empty, but JobError might not be (or viceversa)
+			r.Success = r.OSBuildOutput.Success &&
+				len(r.TargetErrors) == 0 &&
+				r.JobError == nil
 		}
 	}
 
