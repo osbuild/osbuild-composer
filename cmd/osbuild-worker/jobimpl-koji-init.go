@@ -10,6 +10,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type KojiInitJobImpl struct {
@@ -64,7 +65,7 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 	var result worker.KojiInitJobResult
 	result.Token, result.BuildID, err = impl.kojiInit(args.Server, args.Name, args.Version, args.Release)
 	if err != nil {
-		result.KojiError = err.Error()
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, err.Error())
 	}
 
 	err = job.Update(&result)

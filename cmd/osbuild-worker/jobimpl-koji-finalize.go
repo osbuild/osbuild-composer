@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type KojiFinalizeJobImpl struct {
@@ -113,7 +114,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// Update the status immediately and bail out.
 		var result worker.KojiFinalizeJobResult
 		if err != nil {
-			result.KojiError = err.Error()
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, err.Error())
 		}
 		err = job.Update(&result)
 		if err != nil {
@@ -193,7 +194,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var result worker.KojiFinalizeJobResult
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
-		result.KojiError = err.Error()
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error())
 	}
 
 	err = job.Update(&result)
@@ -227,12 +228,12 @@ func extractDynamicArgs(job worker.Job) (*worker.KojiInitJobResult, []worker.OSB
 
 // Returns true if any of koji-finalize dependencies failed.
 func hasFailedDependency(kojiInitResult worker.KojiInitJobResult, osbuildKojiResults []worker.OSBuildKojiJobResult) bool {
-	if kojiInitResult.KojiError != "" {
+	if kojiInitResult.JobError != nil {
 		return true
 	}
 
 	for _, r := range osbuildKojiResults {
-		if !r.OSBuildOutput.Success || r.KojiError != "" {
+		if !r.OSBuildOutput.Success || r.JobError != nil {
 			return true
 		}
 	}
