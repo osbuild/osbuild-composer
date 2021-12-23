@@ -28,6 +28,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 // Server represents the state of the cloud Server
@@ -426,7 +427,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	manifestJobContext, manifestCancel := context.WithTimeout(context.Background(), time.Minute*5)
 
 	// start 1 goroutine which requests datajob type
-	go func(workers *worker.Server, manifestJobID uuid.UUID, b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64) {
+	go func(workers *worker.Server, manifestJobID uuid.UUID, b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64, depsolveJobID uuid.UUID) {
 		defer manifestCancel()
 		// wait until job is in a pending state
 		var token uuid.UUID
@@ -454,12 +455,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		var jobResult *worker.ManifestJobByIDResult = &worker.ManifestJobByIDResult{
 			Manifest: nil,
-			Error:    "",
 		}
 
 		defer func() {
-			if jobResult.Error != "" {
-				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.Error)
+			if jobResult.JobError != nil {
+				logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.JobError.Reason)
 			}
 
 			result, err := json.Marshal(jobResult)
@@ -474,34 +474,44 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}()
 
 		if len(dynArgs) == 0 {
-			jobResult.Error = "No dynamic arguments"
+			reason := "No dynamic arguments"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason)
 			return
 		}
 
 		var depsolveResults worker.DepsolveJobResult
 		err = json.Unmarshal(dynArgs[0], &depsolveResults)
 		if err != nil {
-			jobResult.Error = "Error parsing dynamic arguments"
+			reason := "Error parsing dynamic arguments"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason)
 			return
 		}
 
-		if depsolveResults.Error != "" {
-			if depsolveResults.ErrorType == worker.DepsolveErrorType {
-				jobResult.Error = "Error in depsolve job dependency input, bad request"
+		_, _, err = workers.JobStatus(depsolveJobID, &depsolveResults)
+		if err != nil {
+			reason := "Error reading depsolve status"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason)
+			return
+		}
+
+		if jobErr := depsolveResults.JobError; jobErr != nil {
+			if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingError {
+				jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested")
 				return
 			}
-			jobResult.Error = "Error in depsolve job dependency"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency")
 			return
 		}
 
 		manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, seed)
 		if err != nil {
-			jobResult.Error = "Error generating manifest"
+			reason := "Error generating manifest"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason)
 			return
 		}
 
 		jobResult.Manifest = manifest
-	}(h.server.workers, manifestJobID, blueprintCustoms, imageOptions, repositories, manifestSeed)
+	}(h.server.workers, manifestJobID, blueprintCustoms, imageOptions, repositories, manifestSeed, depsolveJobID)
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{

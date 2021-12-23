@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type Server struct {
@@ -131,11 +132,43 @@ func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid
 		}
 	}
 
-	// For backwards compatibility: OSBuildJobResult didn't use to have a
-	// top-level `Success` flag. Override it here by looking into the job.
-	if r, ok := result.(*OSBuildJobResult); ok {
+	switch r := result.(type) {
+	case *KojiInitJobResult:
+		if r.JobError == nil && r.KojiError != "" {
+			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
+		}
+	case *KojiFinalizeJobResult:
+		if r.JobError == nil && r.KojiError != "" {
+			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
+		}
+	case *OSBuildKojiJobResult:
+		if r.JobError == nil && r.KojiError != "" {
+			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
+		}
+	case *ManifestJobByIDResult:
+		if r.JobError == nil && r.Error != "" {
+			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.Error)
+		}
+	case *DepsolveJobResult:
+		if r.JobError == nil && r.Error != "" {
+			if r.ErrorType == DepsolveErrorType {
+				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, r.Error)
+			} else {
+				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, r.Error)
+			}
+		}
+	case *OSBuildJobResult:
+		if r.JobError == nil && len(r.TargetErrors) > 0 || (r.OSBuildOutput != nil && len(r.OSBuildOutput.Error) > 0) {
+			if r.OSBuildOutput != nil && len(r.OSBuildOutput.Error) > 0 {
+				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(r.OSBuildOutput.Error))
+			} else if len(r.TargetErrors) > 0 {
+				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.TargetErrors[0])
+			}
+		}
+		// For backwards compatibility: OSBuildJobResult didn't use to have a
+		// top-level `Success` flag. Override it here by looking into the job.
 		if !r.Success && r.OSBuildOutput != nil {
-			r.Success = r.OSBuildOutput.Success && len(r.TargetErrors) == 0
+			r.Success = r.OSBuildOutput.Success && r.JobError == nil
 		}
 	}
 
