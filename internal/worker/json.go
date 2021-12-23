@@ -7,6 +7,7 @@ import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 //
@@ -22,6 +23,10 @@ type OSBuildJob struct {
 	PipelineNames   *PipelineNames   `json:"pipeline_names,omitempty"`
 }
 
+type JobResult struct {
+	JobError *clienterrors.Error `json:"job_error,omitempty"`
+}
+
 type OSBuildJobResult struct {
 	Success       bool                   `json:"success"`
 	OSBuildOutput *osbuild.Result        `json:"osbuild_output,omitempty"`
@@ -29,6 +34,7 @@ type OSBuildJobResult struct {
 	TargetErrors  []string               `json:"target_errors,omitempty"`
 	UploadStatus  string                 `json:"upload_status"`
 	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
+	JobResult
 }
 
 type KojiInitJob struct {
@@ -42,6 +48,7 @@ type KojiInitJobResult struct {
 	BuildID   uint64 `json:"build_id"`
 	Token     string `json:"token"`
 	KojiError string `json:"koji_error"`
+	JobResult
 }
 
 type OSBuildKojiJob struct {
@@ -62,6 +69,7 @@ type OSBuildKojiJobResult struct {
 	ImageHash     string          `json:"image_hash"`
 	ImageSize     uint64          `json:"image_size"`
 	KojiError     string          `json:"koji_error"`
+	JobResult
 }
 
 type KojiFinalizeJob struct {
@@ -77,6 +85,7 @@ type KojiFinalizeJob struct {
 
 type KojiFinalizeJobResult struct {
 	KojiError string `json:"koji_error"`
+	JobResult
 }
 
 // PipelineNames is used to provide two pieces of information related to a job:
@@ -113,6 +122,7 @@ type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
 	Error        string                         `json:"error"`
 	ErrorType    ErrorType                      `json:"error_type"`
+	JobResult
 }
 
 type ManifestJobByID struct{}
@@ -120,6 +130,7 @@ type ManifestJobByID struct{}
 type ManifestJobByIDResult struct {
 	Manifest distro.Manifest `json:"data,omitempty"`
 	Error    string          `json:"error"`
+	JobResult
 }
 
 //
