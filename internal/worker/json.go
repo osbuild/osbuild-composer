@@ -7,6 +7,7 @@ import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 //
@@ -27,6 +28,7 @@ type OSBuildJobResult struct {
 	OSBuildOutput *osbuild.Result        `json:"osbuild_output,omitempty"`
 	TargetResults []*target.TargetResult `json:"target_results,omitempty"`
 	TargetErrors  []string               `json:"target_errors,omitempty"`
+	JobError      *clienterrors.Error    `json:"job_error,omitempty"`
 	UploadStatus  string                 `json:"upload_status"`
 	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
 }
@@ -39,9 +41,10 @@ type KojiInitJob struct {
 }
 
 type KojiInitJobResult struct {
-	BuildID   uint64 `json:"build_id"`
-	Token     string `json:"token"`
-	KojiError string `json:"koji_error"`
+	BuildID   uint64              `json:"build_id"`
+	Token     string              `json:"token"`
+	KojiError string              `json:"koji_error"`
+	JobError  *clienterrors.Error `json:"job_error,omitempty"`
 }
 
 type OSBuildKojiJob struct {
@@ -55,13 +58,14 @@ type OSBuildKojiJob struct {
 }
 
 type OSBuildKojiJobResult struct {
-	HostOS        string          `json:"host_os"`
-	Arch          string          `json:"arch"`
-	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
-	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
-	ImageHash     string          `json:"image_hash"`
-	ImageSize     uint64          `json:"image_size"`
-	KojiError     string          `json:"koji_error"`
+	HostOS        string              `json:"host_os"`
+	Arch          string              `json:"arch"`
+	OSBuildOutput *osbuild.Result     `json:"osbuild_output"`
+	PipelineNames *PipelineNames      `json:"pipeline_names,omitempty"`
+	ImageHash     string              `json:"image_hash"`
+	ImageSize     uint64              `json:"image_size"`
+	KojiError     string              `json:"koji_error"`
+	JobError      *clienterrors.Error `json:"job_error,omitempty"`
 }
 
 type KojiFinalizeJob struct {
@@ -76,7 +80,8 @@ type KojiFinalizeJob struct {
 }
 
 type KojiFinalizeJobResult struct {
-	KojiError string `json:"koji_error"`
+	KojiError string              `json:"koji_error"`
+	JobError  *clienterrors.Error `json:"job_error,omitempty"`
 }
 
 // PipelineNames is used to provide two pieces of information related to a job:
@@ -113,13 +118,15 @@ type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
 	Error        string                         `json:"error"`
 	ErrorType    ErrorType                      `json:"error_type"`
+	JobError     *clienterrors.Error            `json:"job_error,omitempty"`
 }
 
 type ManifestJobByID struct{}
 
 type ManifestJobByIDResult struct {
-	Manifest distro.Manifest `json:"data,omitempty"`
-	Error    string          `json:"error"`
+	Manifest distro.Manifest     `json:"data,omitempty"`
+	Error    string              `json:"error"`
+	JobError *clienterrors.Error `json:"job_error,omitempty"`
 }
 
 //
