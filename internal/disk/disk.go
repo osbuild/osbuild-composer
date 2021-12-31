@@ -345,8 +345,27 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 // Returns the updated start point.
 func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 
-	// initial alignment
-	start := pt.AlignUp(0)
+	// always reserve one extra sector for the GPT header
+	header := uint64(1)
+	footer := uint64(0)
+
+	if pt.Type == "gpt" {
+
+		// calculate the space we need for
+		parts := len(pt.Partitions)
+
+		// reserver a minimum of 128 partition entires
+		if parts < 128 {
+			parts = 128
+		}
+
+		nBytes := uint64(parts * 128)
+		header += pt.BytesToSectors(nBytes)
+
+		footer = header
+	}
+
+	start := pt.AlignUp(header)
 	size = pt.SectorsToBytes(pt.AlignUp(pt.BytesToSectors(size) - 1))
 
 	var rootIdx = -1
@@ -364,16 +383,12 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
 
-	// Calculate the room at the end of the partition table that
-	// we might need to leave empty
-	padding := pt.ExtraPadding
-	if pt.Type == "gpt" {
-		padding += 33 // 33 sectors for the secondary GPT header
-	}
+	// add the extra pedding specified in the partition table
+	footer += pt.ExtraPadding
 
 	// If the sum of all partitions is bigger then the specified size,
 	// we use that instead. Grow the partition table size if needed.
-	end := pt.AlignUp(root.Start + padding + root.Size - 1)
+	end := pt.AlignUp(root.Start + footer + root.Size - 1)
 	if endBytes := pt.SectorsToBytes(end); endBytes > size {
 		size = endBytes
 	}
@@ -386,8 +401,8 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	root.Size = pt.BytesToSectors(pt.Size) - root.Start
 
 	// Finally we shrink the last partition, i.e. the root partition,
-	// to leave space for the secondary GPT header.
-	root.Size -= padding
+	// to leave space for the footer, e.g. the secondary GPT header.
+	root.Size -= footer
 
 	return start
 }
