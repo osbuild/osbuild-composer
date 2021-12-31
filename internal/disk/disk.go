@@ -7,6 +7,7 @@ package disk
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"sort"
@@ -279,7 +280,7 @@ func (pt *PartitionTable) BootFilesystem() *Filesystem {
 
 // Create a new filesystem within the partition table at the given mountpoint
 // with the given minimum size in sectors.
-func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) {
+func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) error {
 	filesystem := Filesystem{
 		Type:         "xfs",
 		Mountpoint:   mountpoint,
@@ -293,11 +294,23 @@ func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) {
 		Filesystem: &filesystem,
 	}
 
+	n := len(pt.Partitions)
+	var maxNo int
+
 	if pt.Type == "gpt" {
 		partition.Type = FilesystemDataGUID
+		maxNo = 128
+	} else {
+		maxNo = 4
+	}
+
+	if n == maxNo {
+		return fmt.Errorf("maximum number of partitions reached (%d)", maxNo)
 	}
 
 	pt.Partitions = append(pt.Partitions, partition)
+
+	return nil
 }
 
 // Generate all needed UUIDs for all the partiton and filesystems
