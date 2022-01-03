@@ -58,8 +58,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
           - aws/rhel-8.5-ga-x86_64
@@ -140,8 +138,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
           # See COMPOSER-919
           # - aws/fedora-34-x86_64
           # - aws/fedora-34-aarch64
@@ -198,8 +194,6 @@ Regression:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
           # Enable f34 once we have rpmrepo snapshots for it
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
@@ -253,7 +247,6 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/fedora-33-x86_64
           # See COMPOSER-919
           # - openstack/fedora-34-x86_64
           - openstack/rhel-8.5-ga-x86_64
@@ -329,11 +322,10 @@ Integration:
     - schutzbot/stop_iostats.sh
   parallel:
     matrix:
-      - <<: *INTEGRATION_TESTS
+      - SCRIPT:
+          - koji.sh
+          - aws.sh
         RUNNER:
-          - aws/fedora-33-x86_64
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
@@ -391,7 +383,6 @@ libvirt:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/fedora-33-x86_64
           - openstack/centos-stream-8-x86_64
       - RUNNER:
           - openstack/rhel-8.5-ga-x86_64
