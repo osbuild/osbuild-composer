@@ -1,6 +1,6 @@
 module github.com/osbuild/osbuild-composer
 
-go 1.15
+go 1.16
 
 require (
 	cloud.google.com/go/cloudbuild v0.2.0
@@ -45,7 +45,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.26.1
-	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
