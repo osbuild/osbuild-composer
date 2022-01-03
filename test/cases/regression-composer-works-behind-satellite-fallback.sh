@@ -33,32 +33,6 @@ function generate_certificates {
     sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
 }
 
-function cleanup {
-    # Make the cleanup function best effort
-    set +eu
-
-    greenprint "Display httpd logs"
-    cat /var/log/httpd/access_log
-    cat /var/log/httpd/error_log
-
-    greenprint "Putting things back to their previous configuration"
-    if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ];
-    then
-        lsattr "${REDHAT_REPO}"
-        chattr -i "${REDHAT_REPO}"
-        sudo rm -f "${REDHAT_REPO}"
-        sudo mv "${REDHAT_REPO_BACKUP}" "${REDHAT_REPO}" || echo "no redhat.repo backup"
-        sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
-    fi
-    if [[ -d /etc/httpd/conf.d.backup ]];
-    then
-        sudo rm -rf /etc/httpd/conf.d
-        sudo mv /etc/httpd/conf.d.backup /etc/httpd/conf.d
-    fi
-    sudo rm -f /etc/httpd/conf.d/repo1.conf
-    sudo rm -f /etc/httpd/conf.d/repo2.conf
-    sudo systemctl stop httpd || echo "failed to stop httpd"
-}
 
 source /etc/os-release
 ARCH=$(uname -m)
@@ -131,6 +105,40 @@ case "${ID}" in
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 0
 esac
+
+function cleanup {
+    # Make the cleanup function best effort
+    set +eu
+
+    greenprint "Display httpd logs"
+    cat /var/log/httpd/access_log
+    cat /var/log/httpd/error_log
+
+    greenprint "Putting things back to their previous configuration"
+    
+    sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
+    if [[ -d /etc/httpd/conf.d.backup ]];
+    then
+        sudo rm -rf /etc/httpd/conf.d
+        sudo mv /etc/httpd/conf.d.backup /etc/httpd/conf.d
+    fi
+
+    if [[ -n "${REDHAT_REPO_BACKUP:-}" ]]; then
+	sudo rm -f "${REDHAT_REPO}"
+	sudo mv "${REDHAT_REPO_BACKUP}" "${REDHAT_REPO}"
+    fi
+
+    sudo rm -f /etc/httpd/conf.d/repo1.conf
+    sudo rm -f /etc/httpd/conf.d/repo2.conf
+    sudo systemctl stop httpd || echo "failed to stop httpd"
+
+    sudo rm -f "${REDHAT_CA_CERT}"
+    sudo mv "${REDHAT_CA_CERT_BACKUP}" "${REDHAT_CA_CERT}"
+    sudo rm -rf "${ENTITLEMENTS_DIR}"
+    sudo mv "${ENTITLEMENTS_DIR_BACKUP}" "${ENTITLEMENTS_DIR}"
+    
+    set -eu
+}
 
 trap cleanup EXIT
 
@@ -236,48 +244,6 @@ Listen 8009
 </VirtualHost>
 STOPHERE
 
-REDHAT_REPO=/etc/yum.repos.d/redhat.repo
-REDHAT_REPO_BACKUP=/etc/yum.repos.d/redhat.repo.backup
-sudo mv ${REDHAT_REPO} ${REDHAT_REPO_BACKUP} || echo "no redhat.repo"
-sudo tee ${REDHAT_REPO} << STOPHERE
-[repo1]
-name = Repo 1 - local proxy
-baseurl = https://localhost:8008/repo
-enabled = 1
-gpgcheck = 0
-sslverify = 1
-sslcacert = ${PKI_DIR}/ca1/ca.crt
-sslclientkey = ${PKI_DIR}/ca1/client.key
-sslclientcert = ${PKI_DIR}/ca1/client.crt
-metadata_expire = 86400
-enabled_metadata = 0
-
-[repo2]
-name = Repo 2 - local proxy
-baseurl = https://localhost:8009/repo
-enabled = 1
-gpgcheck = 0
-sslverify = 1
-sslcacert = ${PKI_DIR}/ca2/ca.crt
-sslclientkey = ${PKI_DIR}/ca2/client.key
-sslclientcert = ${PKI_DIR}/ca2/client.crt
-metadata_expire = 86400
-enabled_metadata = 0
-STOPHERE
-
-chattr +i ${REDHAT_REPO}
-lsattr ${REDHAT_REPO}
-cat ${REDHAT_REPO}
-
-# Allow httpd process to create network connections
-sudo setsebool httpd_can_network_connect on
-# Start httpd
-sudo systemctl start httpd || echo "Starting httpd failed"
-sudo systemctl status httpd
-
-greenprint "Verify dnf can use this configuration"
-sudo dnf install --repo=repo1 --repo=repo2 zsh -y
-
 greenprint "Rewrite osbuild-composer repository configuration"
 # In case this test case runs as part of multiple different test, try not to ruit the environment
 sudo mv "${REPOSITORY_OVERRIDE}" "${REPOSITORY_OVERRIDE}.backup"
@@ -299,9 +265,6 @@ sudo tee "${REPOSITORY_OVERRIDE}" << STOPHERE
   ]
 }
 STOPHERE
-
-sudo systemctl restart osbuild-composer
-sudo composer-cli status show
 
 BLUEPRINT_FILE=/tmp/bp.toml
 BLUEPRINT_NAME=zishy
@@ -362,5 +325,58 @@ function try_image_build {
         exit 1
     fi
 }
+
+# Ensure red hat redhat.repo does not exist
+REDHAT_REPO=/etc/yum.repos.d/redhat.repo
+ls -l /etc/yum.repos.d/
+if [ -f "${REDHAT_REPO}" ];
+then
+    echo "The ${REDHAT_REPO} file shouldn't exist, removing it for the test"
+    REDHAT_REPO_BACKUP="${REDHAT_REPO}.backup"
+    chattr -i ${REDHAT_REPO}
+    sudo mv "${REDHAT_REPO}" "${REDHAT_REPO_BACKUP}"
+fi
+
+REDHAT_CA_CERT="/etc/rhsm/ca/redhat-uep.pem"
+REDHAT_CA_CERT_BACKUP="${REDHAT_CA_CERT}.backup"
+if [ -f "${REDHAT_CA_CERT}" ];
+then
+    sudo mv "${REDHAT_CA_CERT}" "${REDHAT_CA_CERT_BACKUP}"
+fi
+
+# Make sure the directory exists
+sudo mkdir -p /etc/rhsm/ca
+# Copy the test CA cert instead of the official RH one
+sudo cp "${PKI_DIR}/ca1/ca.crt" "${REDHAT_CA_CERT}"
+
+# Make sure the directory with entitlements is empty
+ENTITLEMENTS_DIR="/etc/pki/entitlement"
+ENTITLEMENTS_DIR_BACKUP="${ENTITLEMENTS_DIR}.backup"
+if [ -d "${ENTITLEMENTS_DIR}" ];
+then
+    sudo mv "${ENTITLEMENTS_DIR}" "${ENTITLEMENTS_DIR_BACKUP}"
+fi
+sudo mkdir -p "${ENTITLEMENTS_DIR}"
+
+# Create the very first file to be encountered by the fallback mechanism
+CLIENT_KEY="/etc/pki/entitlement/0-key.pem"
+CLIENT_CERT="/etc/pki/entitlement/0.pem"
+sudo cp "${PKI_DIR}/ca1/client.key" "${CLIENT_KEY}"
+sudo cp "${PKI_DIR}/ca1/client.crt" "${CLIENT_CERT}"
+
+update-ca-trust
+
+# Allow httpd process to create network connections
+sudo setsebool httpd_can_network_connect on
+
+# Reconfigure the proxies to use only a single CA
+sudo sed -i "s|${PKI_DIR}/ca2|${PKI_DIR}/ca1|" /etc/httpd/conf.d/repo2.conf
+sudo systemctl restart httpd
+sleep 5
+sudo systemctl status httpd
+
+sudo systemctl restart osbuild-composer
+sleep 5
+sudo systemctl status osbuild-composer
 
 try_image_build

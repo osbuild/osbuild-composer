@@ -14,6 +14,7 @@ TEST_CASES=(
     "regression-excluded-dependency.sh"
     "regression-include-excluded-packages.sh"
     "regression-composer-works-behind-satellite.sh"
+    "regression-composer-works-behind-satellite-fallback.sh"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
