@@ -86,7 +86,7 @@ Container:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
+          - aws/centos-stream-8-x86_64
 
 Packer:
   stage: test
