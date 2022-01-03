@@ -155,6 +155,10 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 	archName := common.CurrentArch()
 
 	hostDistro := dr.GetDistro(hostDistroName)
+	if hostDistro == nil {
+		return nil, fmt.Errorf("host distro is not supported")
+	}
+
 	hostArch, err := hostDistro.GetArch(archName)
 	if err != nil {
 		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
