@@ -82,12 +82,6 @@ Conflicts: lorax-composer
 Obsoletes: lorax-composer < 34.3
 %endif
 
-# Remove when we stop releasing into Fedora 33
-%if 0%{?fedora} <= 33
-Obsoletes: golang-github-osbuild-composer < %{version}-%{release}
-Provides:  golang-github-osbuild-composer = %{version}-%{release}
-%endif
-
 # remove when F34 is EOL
 Obsoletes: osbuild-composer-koji <= 23
 
@@ -99,17 +93,6 @@ Obsoletes: osbuild-composer-koji <= 23
 %forgeautosetup -p1
 %else
 %goprep
-%endif
-
-%if 0%{?fedora} >= 34
-# Fedora 34 and newer ships a newer version of github.com/getkin/kin-openapi
-# package which has a different API than the older ones. Let's make the auto-
-# generated code compatible by applying some sed magic.
-#
-# Remove when F33 is EOL
-sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v1/openapi.v1.gen.go
-sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/cloudapi/v2/openapi.v2.gen.go
-sed -i "s/openapi3.Swagger/openapi3.T/;s/openapi3.NewSwaggerLoader().LoadSwaggerFromData/openapi3.NewLoader().LoadFromData/" internal/worker/api/api.gen.go
 %endif
 
 %build
