@@ -5,8 +5,8 @@ source "amazon-ebs" "image_builder" {
   secret_key = var.aws_secret_key
   region = var.region
 
-  # Use a static RHEL Cloud Access Image.
-  source_ami          = "ami-0b0af3577fe5e3532"
+  # Use a static RHEL 8.5 Cloud Access Image.
+  source_ami          = "ami-06f1e6f8b3457ae7c"
 
   # Remove previous image before making the new one.
   force_deregister = true
