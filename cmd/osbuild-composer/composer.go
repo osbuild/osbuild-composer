@@ -247,7 +247,6 @@ func (c *Composer) Start() error {
 
 	if c.apiListener != nil {
 		go func() {
-			const apiRoute = "/api/composer/v1"
 			const apiRouteV2 = "/api/image-builder-composer/v2"
 			const kojiRoute = "/api/composer-koji/v1"
 
@@ -256,7 +255,6 @@ func (c *Composer) Start() error {
 			// Add a "/" here, because http.ServeMux expects the
 			// trailing slash for rooted subtrees, whereas the
 			// handler functions don't.
-			mux.Handle(apiRoute+"/", c.api.V1(apiRoute))
 			mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
 			mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
 
