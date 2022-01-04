@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 TESTS_PATH=/usr/libexec/osbuild-composer-test
 mkdir --parents /tmp/logs
@@ -11,11 +13,18 @@ FAILED_TESTS=()
 
 TEST_CASES=(
   "osbuild-weldr-tests"
-  "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
   "osbuild-composer-dbjobqueue-tests"
 )
+
+if nvrGreaterOrEqual "osbuild-composer" "41"; then
+    # 0 - osbuild-composer == v41
+    # 11 - osbuild-composer > v41
+    # 12 - osbuild-composer < v41
+    echo "INFO: enabling osbuild-dnf-json-tests"
+    TEST_CASES+=("osbuild-dnf-json-tests")
+fi
 
 # Print out a nice test divider so we know when tests stop and start.
 test_divider () {
