@@ -3,6 +3,7 @@ module github.com/osbuild/osbuild-composer
 go 1.15
 
 require (
+	cloud.google.com/go v0.97.0
 	cloud.google.com/go/cloudbuild v0.2.0
 	cloud.google.com/go/storage v1.18.1
 	github.com/Azure/azure-pipeline-go v0.2.3

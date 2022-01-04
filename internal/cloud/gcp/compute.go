@@ -9,8 +9,11 @@ import (
 	"time"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
-	"google.golang.org/api/compute/v1"
+	compute "cloud.google.com/go/compute/apiv1"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 	cloudbuildpb "google.golang.org/genproto/googleapis/devtools/cloudbuild/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
@@ -122,7 +125,7 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 	}
 
 	createBuildReq := &cloudbuildpb.CreateBuildRequest{
-		ProjectId: g.creds.ProjectID,
+		ProjectId: g.GetProjectID(),
 		Build:     imageBuild,
 	}
 
@@ -183,7 +186,7 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 // ComputeImageURL returns an image's URL to Google Cloud Console. The method does
 // not check at all, if the image actually exists or not.
 func (g *GCP) ComputeImageURL(imageName string) string {
-	return fmt.Sprintf("https://console.cloud.google.com/compute/imagesDetail/projects/%s/global/images/%s", g.creds.ProjectID, imageName)
+	return fmt.Sprintf("https://console.cloud.google.com/compute/imagesDetail/projects/%s/global/images/%s", g.GetProjectID(), imageName)
 }
 
 // ComputeImageShare shares the specified Compute Engine image with list of accounts.
@@ -206,34 +209,43 @@ func (g *GCP) ComputeImageURL(imageName string) string {
 // Uses:
 //	- Compute Engine API
 func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith []string) error {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return fmt.Errorf("failed to get Compute Engine Images client: %v", err)
 	}
+	defer imagesClient.Close()
 
 	// Standard role to enable account to view and use a specific Image
 	imageDesiredRole := "roles/compute.imageUser"
 
 	// Get the current Policy set on the Image
-	policy, err := computeService.Images.GetIamPolicy(g.creds.ProjectID, imageName).Context(ctx).Do()
+	getIamPolicyReq := &computepb.GetIamPolicyImageRequest{
+		Project:  g.GetProjectID(),
+		Resource: imageName,
+	}
+	policy, err := imagesClient.GetIamPolicy(ctx, getIamPolicyReq)
 	if err != nil {
 		return fmt.Errorf("failed to get image's policy: %v", err)
 	}
 
 	// Add new members, who can use the image
 	// Completely override the old policy
-	userBinding := &compute.Binding{
+	userBinding := &computepb.Binding{
 		Members: shareWith,
-		Role:    imageDesiredRole,
+		Role:    common.StringToPtr(imageDesiredRole),
 	}
-	newPolicy := &compute.Policy{
-		Bindings: []*compute.Binding{userBinding},
+	newPolicy := &computepb.Policy{
+		Bindings: []*computepb.Binding{userBinding},
 		Etag:     policy.Etag,
 	}
-	req := &compute.GlobalSetPolicyRequest{
-		Policy: newPolicy,
+	setIamPolicyReq := &computepb.SetIamPolicyImageRequest{
+		Project:  g.GetProjectID(),
+		Resource: imageName,
+		GlobalSetPolicyRequestResource: &computepb.GlobalSetPolicyRequest{
+			Policy: newPolicy,
+		},
 	}
-	_, err = computeService.Images.SetIamPolicy(g.creds.ProjectID, imageName, req).Context(ctx).Do()
+	_, err = imagesClient.SetIamPolicy(ctx, setIamPolicyReq)
 	if err != nil {
 		return fmt.Errorf("failed to set new image policy: %v", err)
 	}
@@ -266,12 +278,17 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 // Uses:
 //	- Compute Engine API
 func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return fmt.Errorf("failed to get Compute Engine Images client: %v", err)
 	}
+	defer imagesClient.Close()
 
-	_, err = computeService.Images.Delete(g.creds.ProjectID, resourceId).Context(ctx).Do()
+	req := &computepb.DeleteImageRequest{
+		Project: g.GetProjectID(),
+		Image:   resourceId,
+	}
+	_, err = imagesClient.Delete(ctx, req)
 
 	return err
 }
@@ -280,14 +297,18 @@ func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
 // which is able to iterate over the images. Useful if something needs to be execute for each image.
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeExecuteFunctionForImages(ctx context.Context, f func(*compute.ImageList) error) error {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+func (g *GCP) ComputeExecuteFunctionForImages(ctx context.Context, f func(*compute.ImageIterator) error) error {
+	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return fmt.Errorf("failed to get Compute Engine Images client: %v", err)
 	}
+	defer imagesClient.Close()
 
-	imagesService := compute.NewImagesService(computeService)
-	return imagesService.List(g.creds.ProjectID).Pages(ctx, f)
+	req := &computepb.ListImagesRequest{
+		Project: g.GetProjectID(),
+	}
+	imagesIterator := imagesClient.List(ctx, req)
+	return f(imagesIterator)
 }
 
 // ComputeInstanceDelete deletes a Compute Engine instance with the given name and
@@ -297,12 +318,18 @@ func (g *GCP) ComputeExecuteFunctionForImages(ctx context.Context, f func(*compu
 // Uses:
 //	- Compute Engine API
 func (g *GCP) ComputeInstanceDelete(ctx context.Context, zone, instance string) error {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	instancesClient, err := compute.NewInstancesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return fmt.Errorf("failed to get Compute Engine Instances client: %v", err)
 	}
+	defer instancesClient.Close()
 
-	_, err = computeService.Instances.Delete(g.creds.ProjectID, zone, instance).Context(ctx).Do()
+	req := &computepb.DeleteInstanceRequest{
+		Project:  g.GetProjectID(),
+		Zone:     zone,
+		Instance: instance,
+	}
+	_, err = instancesClient.Delete(ctx, req)
 
 	return err
 }
@@ -312,13 +339,19 @@ func (g *GCP) ComputeInstanceDelete(ctx context.Context, zone, instance string) 
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeInstanceGet(ctx context.Context, zone, instance string) (*compute.Instance, error) {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+func (g *GCP) ComputeInstanceGet(ctx context.Context, zone, instance string) (*computepb.Instance, error) {
+	instancesClient, err := compute.NewInstancesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return nil, fmt.Errorf("failed to get Compute Engine Instances client: %v", err)
 	}
+	defer instancesClient.Close()
 
-	resp, err := computeService.Instances.Get(g.creds.ProjectID, zone, instance).Context(ctx).Do()
+	req := &computepb.GetInstanceRequest{
+		Project:  g.GetProjectID(),
+		Instance: instance,
+		Zone:     zone,
+	}
+	resp, err := instancesClient.Get(ctx, req)
 
 	return resp, err
 }
@@ -330,12 +363,18 @@ func (g *GCP) ComputeInstanceGet(ctx context.Context, zone, instance string) (*c
 // Uses:
 //	- Compute Engine API
 func (g *GCP) ComputeDiskDelete(ctx context.Context, zone, disk string) error {
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	disksClient, err := compute.NewDisksRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return fmt.Errorf("failed to get Compute Engine Disks client: %v", err)
 	}
+	defer disksClient.Close()
 
-	_, err = computeService.Disks.Delete(g.creds.ProjectID, zone, disk).Context(ctx).Do()
+	req := &computepb.DeleteDiskRequest{
+		Project: g.GetProjectID(),
+		Disk:    disk,
+		Zone:    zone,
+	}
+	_, err = disksClient.Delete(ctx, req)
 
 	return err
 }
@@ -373,20 +412,29 @@ func (g *GCP) storageRegionToComputeRegions(ctx context.Context, region string) 
 
 	// Handle Multi-Regions
 	// https://cloud.google.com/storage/docs/locations#location-mr
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	regionsClient, err := compute.NewRegionsRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return nil, fmt.Errorf("failed to get Compute Engine Regions client: %v", err)
 	}
+	defer regionsClient.Close()
 
-	regionObjList, err := computeService.Regions.List(g.creds.ProjectID).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get available Compute Engine Regions: %v", err)
+	req := &computepb.ListRegionsRequest{
+		Project: g.GetProjectID(),
 	}
+	regionIterator := regionsClient.List(ctx, req)
 
 	regionsMap := make(map[string][]string)
-	for _, regionObj := range regionObjList.Items {
-		regionPrefix := strings.Split(regionObj.Name, "-")[0]
-		regionsMap[regionPrefix] = append(regionsMap[regionPrefix], regionObj.Name)
+	for {
+		regionObj, err := regionIterator.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("encountered an error while iterating over Compute Engine Regions: %v", err)
+		}
+
+		regionPrefix := strings.Split(regionObj.GetName(), "-")[0]
+		regionsMap[regionPrefix] = append(regionsMap[regionPrefix], regionObj.GetName())
 	}
 
 	switch regionLower {
@@ -416,13 +464,23 @@ func (g *GCP) storageRegionToComputeRegions(ctx context.Context, region string) 
 func (g *GCP) ComputeZonesInRegion(ctx context.Context, region string) ([]string, error) {
 	var zones []string
 
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	regionsClient, err := compute.NewRegionsRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine client: %v", err)
+		return nil, fmt.Errorf("failed to get Compute Engine Regions client: %v", err)
 	}
+	defer regionsClient.Close()
+	zonesClient, err := compute.NewZonesRESTClient(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine Zones client: %v", err)
+	}
+	defer zonesClient.Close()
 
 	// Get available zones in the given region
-	regionObj, err := computeService.Regions.Get(g.creds.ProjectID, region).Context(ctx).Do()
+	getRegionReq := &computepb.GetRegionRequest{
+		Project: g.GetProjectID(),
+		Region:  region,
+	}
+	regionObj, err := regionsClient.Get(ctx, getRegionReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get information about Compute Engine region '%s': %v", region, err)
 	}
@@ -432,13 +490,17 @@ func (g *GCP) ComputeZonesInRegion(ctx context.Context, region string) ([]string
 		zoneNameSs := strings.Split(zoneURL, "/")
 		zoneName := zoneNameSs[len(zoneNameSs)-1]
 
-		zoneObj, err := computeService.Zones.Get(g.creds.ProjectID, zoneName).Context(ctx).Do()
+		getZoneReq := &computepb.GetZoneRequest{
+			Project: g.GetProjectID(),
+			Zone:    zoneName,
+		}
+		zoneObj, err := zonesClient.Get(ctx, getZoneReq)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get information about Compute Engine zone '%s': %v", zoneName, err)
 		}
 
 		// Make sure to return only Zones, which can be used
-		if zoneObj.Status == "UP" {
+		if zoneObj.Status == computepb.Zone_UP.Enum() {
 			zones = append(zones, zoneName)
 		}
 	}

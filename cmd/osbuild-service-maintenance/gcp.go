@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
+	compute "cloud.google.com/go/compute/apiv1"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
-	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/iterator"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 )
@@ -21,11 +22,19 @@ func GCPCleanup(maxConcurrentRequests int, dryRun bool, cutoff time.Time) error 
 
 	sem := semaphore.NewWeighted(int64(maxConcurrentRequests))
 	var wg sync.WaitGroup
-	removeImageOlderThan := func(images *compute.ImageList) error {
-		for _, image := range images.Items {
-			created, err := time.Parse(time.RFC3339, image.CreationTimestamp)
+	removeImageOlderThan := func(images *compute.ImageIterator) error {
+		for {
+			image, err := images.Next()
+			if err == iterator.Done {
+				break
+			}
 			if err != nil {
-				logrus.Errorf("Unable to parse image %s(%d)'s creation timestamp: %v", image.Name, image.Id, err)
+				logrus.Fatalf("Error iterating over list of images: %v", err)
+			}
+
+			created, err := time.Parse(time.RFC3339, image.GetCreationTimestamp())
+			if err != nil {
+				logrus.Errorf("Unable to parse image %s(%d)'s creation timestamp: %v", image.GetName(), image.Id, err)
 				continue
 			}
 
@@ -34,7 +43,7 @@ func GCPCleanup(maxConcurrentRequests int, dryRun bool, cutoff time.Time) error 
 			}
 
 			if dryRun {
-				logrus.Infof("Dry run, gcp image %s(%d), with creation date %v would be removed", image.Name, image.Id, created)
+				logrus.Infof("Dry run, gcp image %s(%d), with creation date %v would be removed", image.GetName(), image.Id, created)
 				continue
 			}
 
