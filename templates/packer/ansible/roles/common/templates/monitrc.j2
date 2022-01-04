@@ -26,14 +26,6 @@ CHECK FILESYSTEM root PATH /
     then exec {{ pozorbot_script }}
     else if succeeded then exec {{ pozorbot_script }}
 
-# Ensure the osbuild-composer filesystem isn't full.
-CHECK FILESYSTEM composer_persistent PATH /var/lib/osbuild-composer
-  if space usage > 80%
-    for 5 times
-    within 15 cycles
-    then exec {{ pozorbot_script }}
-    else if succeeded then exec {{ pozorbot_script }}
-
 # Check to see if we can reach cdn.redhat.com.
 # NOTE(mhayden): We will always get a 403 here because of client certs.
 CHECK HOST rhel_cdn WITH ADDRESS cdn.redhat.com
