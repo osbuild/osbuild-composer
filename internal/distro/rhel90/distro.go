@@ -1277,10 +1277,7 @@ func newDistro(distroName string) distro.Distro {
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
-
-		// add s390x to RHEL distro only
-		rd.addArches(s390x)
 	}
-	rd.addArches(x86_64, aarch64, ppc64le)
+	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
 }
