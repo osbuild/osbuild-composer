@@ -11,10 +11,11 @@ import (
 	"regexp"
 	"strings"
 
+	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
 
 const (
@@ -124,15 +125,19 @@ func (g *GCP) StorageImageImportCleanup(ctx context.Context, imageName string) (
 		return deletedObjects, errors
 	}
 	defer storageClient.Close()
-
-	computeService, err := compute.NewService(ctx, option.WithCredentials(g.creds))
+	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to get Compute Engine client: %v", err))
+		errors = append(errors, fmt.Errorf("failed to get Compute Engine Images client: %v", err))
 		return deletedObjects, errors
 	}
+	defer imagesClient.Close()
 
 	// Clean up the cache bucket
-	image, err := computeService.Images.Get(g.creds.ProjectID, imageName).Context(ctx).Do()
+	req := &computepb.GetImageRequest{
+		Project: g.GetProjectID(),
+		Image:   imageName,
+	}
+	image, err := imagesClient.Get(ctx, req)
 	if err != nil {
 		// Without the image, we can not determine which objects to delete, just return
 		errors = append(errors, fmt.Errorf("failed to get image: %v", err))
@@ -143,7 +148,7 @@ func (g *GCP) StorageImageImportCleanup(ctx context.Context, imageName string) (
 	// e.g. "https://www.googleapis.com/compute/v1/projects/ascendant-braid-303513/zones/europe-west1-b/disks/disk-d7tr4"
 	// e.g. "https://www.googleapis.com/compute/v1/projects/ascendant-braid-303513/zones/europe-west1-b/disks/disk-l7s2w-1"
 	// Needed is only the part between "disk-" and possible "-<num>"/"EOF"
-	ss := strings.Split(image.SourceDisk, "/")
+	ss := strings.Split(image.GetSourceDisk(), "/")
 	srcDiskName := ss[len(ss)-1]
 	ss = strings.Split(srcDiskName, "-")
 	if len(ss) < 2 {

@@ -128,7 +128,7 @@ func (g *GCP) CloudbuildBuildCleanup(ctx context.Context, buildID string) ([]str
 				break
 			}
 			// Prevent an unlikely infinite loop of waiting on deletion of an instance which can't be deleted.
-			if instanceInfo.DeletionProtection {
+			if instanceInfo.GetDeletionProtection() {
 				break
 			}
 			time.Sleep(1 * time.Second)
