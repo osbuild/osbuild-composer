@@ -119,7 +119,7 @@ case "${ID}-${VERSION_ID}" in
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
-        OS_VARIANT="rhel9-unknown"
+        OS_VARIANT="centos-stream9"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"

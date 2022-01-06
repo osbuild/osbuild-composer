@@ -136,7 +136,7 @@ case "${ID}-${VERSION_ID}" in
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
-        OS_VARIANT="centos9"
+        OS_VARIANT="centos-stream9"
         USER_IN_UPGRADE_BP="false"
         INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
