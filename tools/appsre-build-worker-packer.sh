@@ -14,7 +14,7 @@ if [ -n "$CI_COMMIT_BRANCH" ]; then
     COMMIT_BRANCH="$CI_COMMIT_BRANCH"
 fi
 
-if [[ "$CI" == true ]]; then
+if [ -n "$CI_COMMIT_SHA" ]; then
     sudo dnf install -y podman jq
 fi
 
@@ -34,7 +34,7 @@ function greenprint {
 
 KEY_NAME=$(uuidgen)
 function cleanup {
-    if [[ "$CI" != true ]]; then
+    if [ -z "$CI_COMMIT_SHA" ]; then
         if [ -n "$AWS_INSTANCE_ID" ]; then
             $CONTAINER_RUNTIME run --rm \
                                -e AWS_ACCESS_KEY_ID="$PACKER_AWS_ACCESS_KEY_ID" \
@@ -127,7 +127,7 @@ $CONTAINER_RUNTIME build \
                    -t "packer:$COMMIT_SHA" \
                    .
 
-if [[ "$CI" == true ]]; then
+if [ -n "$CI_COMMIT_SHA" ]; then
     # Use prebuilt rpms on CI
     SKIP_TAGS="rpmcopy"
 else
