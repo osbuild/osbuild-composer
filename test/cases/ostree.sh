@@ -62,7 +62,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="centos/9/${ARCH}/edge"
-        OS_VARIANT="centos9"
+        OS_VARIANT="centos-stream9"
         USER_IN_COMMIT="true"
         # This should be changed once we get centos-9 runners
         BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
