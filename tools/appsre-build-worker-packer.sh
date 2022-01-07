@@ -34,6 +34,7 @@ function greenprint {
 
 KEY_NAME=$(uuidgen)
 function cleanup {
+    set +e
     if [ -z "$CI_COMMIT_SHA" ]; then
         if [ -n "$AWS_INSTANCE_ID" ]; then
             $CONTAINER_RUNTIME run --rm \
