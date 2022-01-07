@@ -64,8 +64,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         USER_IN_COMMIT="true"
-        # This should be changed once we get centos-9 runners
-        BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
+        BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
