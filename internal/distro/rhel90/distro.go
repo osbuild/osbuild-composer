@@ -94,7 +94,7 @@ var distroMap = map[string]distribution{
 		modulePlatformID:   "platform:el9",
 		vendor:             "centos",
 		ostreeRefTmpl:      "centos/9/%s/edge",
-		isolabelTmpl:       "CentOS-Stream-9-%s-dvd",
+		isolabelTmpl:       "CentOS-Stream-9-BaseOS-%s",
 		runner:             "org.osbuild.centos9",
 		defaultImageConfig: defaultDistroImageConfig,
 	},
