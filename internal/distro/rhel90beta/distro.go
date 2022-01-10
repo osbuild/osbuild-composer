@@ -362,6 +362,16 @@ func (t *imageType) getPartitionTable(
 	return disk.CreatePartitionTable(mountpoints, imageSize, &basePartitionTable, rng)
 }
 
+func (t *imageType) PartitionType() string {
+	archName := t.arch.Name()
+	basePartitionTable, exists := t.basePartitionTables[archName]
+	if !exists {
+		return ""
+	}
+
+	return basePartitionTable.Type
+}
+
 // local type for ostree commit metadata used to define commit sources
 type ostreeCommit struct {
 	Checksum string

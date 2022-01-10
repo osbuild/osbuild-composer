@@ -97,6 +97,10 @@ type ImageType interface {
 	// is 0 the default value for the format will be returned.
 	Size(size uint64) uint64
 
+	// Returns the corresponding partion type ("gpt", "dos") or "" the image type
+	// has no partition table. Only support for RHEL 8.5+
+	PartitionType() string
+
 	// Returns the sets of packages to include and exclude when building the image.
 	// Indexed by a string label. How each set is labeled and used depends on the
 	// image type.

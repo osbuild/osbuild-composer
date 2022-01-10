@@ -167,6 +167,10 @@ func (t *TestImageType) Size(size uint64) uint64 {
 	return 0
 }
 
+func (t *TestImageType) PartitionType() string {
+	return ""
+}
+
 func (t *TestImageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	return nil, nil
 }
