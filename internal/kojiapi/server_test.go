@@ -22,6 +22,7 @@ import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -137,6 +138,34 @@ func TestCompose(t *testing.T) {
 		},
 		{
 			initResult: worker.KojiInitJobResult{
+				JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error"),
+			},
+			buildResult: worker.OSBuildKojiJobResult{
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
+				ImageHash: "browns",
+				ImageSize: 42,
+				OSBuildOutput: &osbuild.Result{
+					Success: true,
+				},
+			},
+			composeReplyCode: http.StatusBadRequest,
+			composeReply:     `{"message":"Could not initialize build with koji: Koji init error"}`,
+			composeStatus: `{
+				"image_statuses": [
+					{
+						"status": "failure"
+					},
+					{
+						"status": "failure"
+					}
+				],
+				"koji_task_id": 0,
+				"status": "failure"
+			}`,
+		},
+		{
+			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
@@ -209,9 +238,73 @@ func TestCompose(t *testing.T) {
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
+				JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error"),
+			},
+			composeReplyCode: http.StatusCreated,
+			composeReply:     `{"koji_build_id":42}`,
+			composeStatus: `{
+				"image_statuses": [
+					{
+						"status": "failure"
+					},
+					{
+						"status": "success"
+					}
+				],
+				"koji_build_id": 42,
+				"koji_task_id": 0,
+				"status": "failure"
+			}`,
+		},
+		{
+			initResult: worker.KojiInitJobResult{
+				BuildID: 42,
+				Token:   `"foobar"`,
+			},
+			buildResult: worker.OSBuildKojiJobResult{
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
+				ImageHash: "browns",
+				ImageSize: 42,
+				OSBuildOutput: &osbuild.Result{
+					Success: true,
+				},
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
 				KojiError: "failure",
+			},
+			composeReplyCode: http.StatusCreated,
+			composeReply:     `{"koji_build_id":42}`,
+			composeStatus: `{
+				"image_statuses": [
+					{
+						"status": "success"
+					},
+					{
+						"status": "success"
+					}
+				],
+				"koji_build_id": 42,
+				"koji_task_id": 0,
+				"status": "failure"
+			}`,
+		},
+		{
+			initResult: worker.KojiInitJobResult{
+				BuildID: 42,
+				Token:   `"foobar"`,
+			},
+			buildResult: worker.OSBuildKojiJobResult{
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
+				ImageHash: "browns",
+				ImageSize: 42,
+				OSBuildOutput: &osbuild.Result{
+					Success: true,
+				},
+			},
+			finalizeResult: worker.KojiFinalizeJobResult{
+				JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error"),
 			},
 			composeReplyCode: http.StatusCreated,
 			composeReply:     `{"koji_build_id":42}`,
