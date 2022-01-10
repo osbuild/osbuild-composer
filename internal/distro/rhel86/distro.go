@@ -404,6 +404,17 @@ func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
 		imageConfig = &distro.ImageConfig{}
 	}
 	return imageConfig.InheritFrom(t.arch.distro.getDefaultImageConfig())
+
+}
+
+func (t *imageType) PartitionType() string {
+	archName := t.arch.Name()
+	basePartitionTable, exists := t.basePartitionTables[archName]
+	if !exists {
+		return ""
+	}
+
+	return basePartitionTable.Type
 }
 
 // local type for ostree commit metadata used to define commit sources

@@ -192,6 +192,10 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
+func (t *imageType) PartitionType() string {
+	return ""
+}
+
 func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
 	packages := append(t.packages, bp.GetPackages()...)
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
