@@ -14,6 +14,12 @@ if [ -n "$CI_COMMIT_BRANCH" ]; then
     COMMIT_BRANCH="$CI_COMMIT_BRANCH"
 fi
 
+# $WORKSPACE is set by jenkins and in gitlab,
+# for gitlab change it to the current directory
+if [ -n "$CI_COMMIT_SHA" ]; then
+    WORKSPACE="$PWD"
+fi
+
 if [ -n "$CI_COMMIT_SHA" ]; then
     sudo dnf install -y podman jq
 fi
@@ -114,7 +120,7 @@ EOF
 
     greenprint "📦 Building the rpms"
     $CONTAINER_RUNTIME run --rm \
-                       -v ".:/osbuild-composer:z" \
+                       -v "$WORKSPACE:/osbuild-composer:z" \
                        "packer:$COMMIT_SHA" ansible-playbook \
                        -i /osbuild-composer/tools/appsre-ansible/inventory \
                        /osbuild-composer/tools/appsre-ansible/rpmbuild.yml \
@@ -147,5 +153,5 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
                    -e PKR_VAR_osbuild_commit="$(jq -r '.["rhel-8.4"].dependencies.osbuild.commit' Schutzfile)" \
                    -e PKR_VAR_ansible_skip_tags="$SKIP_TAGS" \
-                   -v ".:/osbuild-composer:z" \
+                   -v "$WORKSPACE:/osbuild-composer:z" \
                    "packer:$COMMIT_SHA" /usr/bin/packer build /osbuild-composer/templates/packer
