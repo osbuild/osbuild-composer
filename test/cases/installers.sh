@@ -109,7 +109,23 @@ polkit.addRule(function(action, subject) {
 EOF
 
 # Set up variables.
-OS_VARIANT="rhel8-unknown"
+case "${ID}-${VERSION_ID}" in
+    rhel-8*)
+        OS_VARIANT="rhel8-unknown"
+        ;;
+    rhel-9*)
+        OS_VARIANT="rhel9-unknown"
+        ;;
+    centos-8)
+        OS_VARIANT="centos8"
+        ;;
+    centos-9)
+        OS_VARIANT="centos-stream9"
+        ;;
+    *)
+        echo "unsupported distro: ${ID}-${VERSION_ID}"
+        exit 1;;
+esac
 TEST_UUID=$(uuidgen)
 SSH_USER="admin"
 IMAGE_KEY="osbuild-composer-installer-test-${TEST_UUID}"
