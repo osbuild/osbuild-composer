@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 func newTestServer(t *testing.T, tempdir string, jobRequestTimeout time.Duration, basePath string) *worker.Server {
@@ -745,6 +746,271 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+	newJobResultRaw, err := json.Marshal(newJobResult)
+	require.NoError(err)
+	newJobToken := jobTokens[newJobID]
+	err = server.FinishJob(newJobToken, newJobResultRaw)
+	require.NoError(err)
+
+	newJobResultRead := new(worker.OSBuildKojiJobResult)
+	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	require.NoError(err)
+	require.Equal(newJobResult, newJobResultRead)
+}
+
+func TestDepsolveLegacyErrorConversion(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
+
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{})
+	require.NoError(t, err)
+
+	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"})
+	require.NoError(t, err)
+
+	reason := "Depsolve failed"
+	errType := worker.DepsolveErrorType
+
+	expectedResult := worker.DepsolveJobResult{
+		Error:     reason,
+		ErrorType: errType,
+		JobResult: worker.JobResult{
+			JobError: clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason),
+		},
+	}
+
+	depsolveJobResult := worker.DepsolveJobResult{
+		Error:     reason,
+		ErrorType: errType,
+	}
+
+	_, _, err = server.JobStatus(depsolveJobId, &depsolveJobResult)
+	require.NoError(t, err)
+	require.Equal(t, expectedResult, depsolveJobResult)
+}
+
+// Enquueue OSBuild jobs and save both kinds of
+// error types (old & new) to the queue and ensure
+// that both kinds of errors can be read back
+func TestMixedOSBuildJobErrors(t *testing.T) {
+	require := require.New(t)
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(err)
+	defer os.RemoveAll(tempdir)
+
+	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
+	server := newTestServer(t, tempdir, time.Millisecond*10, "/")
+
+	oldJob := worker.OSBuildJob{
+		Manifest:  emptyManifestV2,
+		ImageName: "no-pipeline-names",
+	}
+	oldJobID, err := server.EnqueueOSBuild("x", &oldJob)
+	require.NoError(err)
+
+	newJob := worker.OSBuildJob{
+		Manifest:  emptyManifestV2,
+		ImageName: "with-pipeline-names",
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build"},
+			Payload: []string{"other", "pipelines"},
+		},
+	}
+	newJobID, err := server.EnqueueOSBuild("x", &newJob)
+	require.NoError(err)
+
+	oldJobRead := new(worker.OSBuildJob)
+	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	require.NoError(err)
+	// Not entirely equal
+	require.NotEqual(oldJob, oldJobRead)
+
+	// NewJob the same when read back
+	newJobRead := new(worker.OSBuildJob)
+	_, _, _, err = server.Job(newJobID, newJobRead)
+	require.NoError(err)
+
+	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
+	// test the result retrieval
+
+	getJob := func() (uuid.UUID, uuid.UUID) {
+		// don't block forever if the jobs weren't added or can't be retrieved
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		id, token, _, _, _, err := server.RequestJob(ctx, "x", []string{"osbuild"})
+		require.NoError(err)
+		return id, token
+	}
+
+	getJobTokens := func(n uint) map[uuid.UUID]uuid.UUID {
+		tokens := make(map[uuid.UUID]uuid.UUID, n)
+		for idx := uint(0); idx < n; idx++ {
+			id, token := getJob()
+			tokens[id] = token
+		}
+		return tokens
+	}
+
+	jobTokens := getJobTokens(2)
+	// make sure we got them both as expected
+	require.Contains(jobTokens, oldJobID)
+	require.Contains(jobTokens, newJobID)
+
+	oldJobResult := &worker.OSBuildJobResult{
+		TargetErrors: []string{"Upload error"},
+	}
+	oldJobResultRaw, err := json.Marshal(oldJobResult)
+	require.NoError(err)
+	oldJobToken := jobTokens[oldJobID]
+	err = server.FinishJob(oldJobToken, oldJobResultRaw)
+	require.NoError(err)
+
+	oldJobResultRead := new(worker.OSBuildJobResult)
+	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	require.NoError(err)
+
+	require.NotEqual(oldJobResult, oldJobResultRead)
+	require.Equal(oldJobResult.Success, false)
+	require.Equal(oldJobResultRead.Success, false)
+
+	newJobResult := &worker.OSBuildJobResult{
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build-result"},
+			Payload: []string{"result-test-payload", "result-test-assembler"},
+		},
+		JobResult: worker.JobResult{
+			JobError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Error uploading image", nil),
+		},
+	}
+	newJobResultRaw, err := json.Marshal(newJobResult)
+	require.NoError(err)
+	newJobToken := jobTokens[newJobID]
+	err = server.FinishJob(newJobToken, newJobResultRaw)
+	require.NoError(err)
+
+	newJobResultRead := new(worker.OSBuildJobResult)
+	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	require.NoError(err)
+	require.Equal(newJobResult, newJobResultRead)
+	require.Equal(newJobResult.Success, false)
+	require.Equal(newJobResultRead.Success, false)
+}
+
+// Enquueue Koji jobs and save both kinds of
+// error types (old & new) to the queue and ensure
+// that both kinds of errors can be read back
+func TestMixedOSBuildKojiJobErrors(t *testing.T) {
+	require := require.New(t)
+	tempdir, err := ioutil.TempDir("", "worker-tests-")
+	require.NoError(err)
+	defer os.RemoveAll(tempdir)
+
+	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
+	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
+
+	enqueueKojiJob := func(job *worker.OSBuildKojiJob) uuid.UUID {
+		initJob := new(worker.KojiInitJob)
+		initJobID, err := server.EnqueueKojiInit(initJob)
+		require.NoError(err)
+		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID)
+		require.NoError(err)
+		return jobID
+	}
+	oldJob := worker.OSBuildKojiJob{
+		Manifest:  emptyManifestV2,
+		ImageName: "no-pipeline-names",
+	}
+	oldJobID := enqueueKojiJob(&oldJob)
+
+	newJob := worker.OSBuildKojiJob{
+		Manifest:  emptyManifestV2,
+		ImageName: "with-pipeline-names",
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build"},
+			Payload: []string{"other", "pipelines"},
+		},
+	}
+	newJobID := enqueueKojiJob(&newJob)
+
+	oldJobRead := new(worker.OSBuildKojiJob)
+	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	require.NoError(err)
+	// Not entirely equal
+	require.NotEqual(oldJob, oldJobRead)
+
+	// NewJob the same when read back
+	newJobRead := new(worker.OSBuildKojiJob)
+	_, _, _, err = server.Job(newJobID, newJobRead)
+	require.NoError(err)
+
+	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
+	// test the result retrieval
+
+	// Finish init jobs
+	for idx := uint(0); idx < 2; idx++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"koji-init"})
+		require.NoError(err)
+		require.NoError(server.FinishJob(token, nil))
+	}
+
+	getJob := func() (uuid.UUID, uuid.UUID) {
+		// don't block forever if the jobs weren't added or can't be retrieved
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"osbuild-koji"})
+		require.NoError(err)
+		return id, token
+	}
+
+	getJobTokens := func(n uint) map[uuid.UUID]uuid.UUID {
+		tokens := make(map[uuid.UUID]uuid.UUID, n)
+		for idx := uint(0); idx < n; idx++ {
+			id, token := getJob()
+			tokens[id] = token
+		}
+		return tokens
+	}
+
+	jobTokens := getJobTokens(2)
+	// make sure we got them both as expected
+	require.Contains(jobTokens, oldJobID)
+	require.Contains(jobTokens, newJobID)
+
+	oldJobResult := &worker.OSBuildKojiJobResult{
+		KojiError: "koji build error",
+	}
+	oldJobResultRaw, err := json.Marshal(oldJobResult)
+	require.NoError(err)
+	oldJobToken := jobTokens[oldJobID]
+	err = server.FinishJob(oldJobToken, oldJobResultRaw)
+	require.NoError(err)
+
+	oldJobResultRead := new(worker.OSBuildKojiJobResult)
+	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	require.NoError(err)
+
+	// oldJobResultRead should have PipelineNames now
+	require.NotEqual(oldJobResult, oldJobResultRead)
+
+	newJobResult := &worker.OSBuildKojiJobResult{
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build-result"},
+			Payload: []string{"result-test-payload", "result-test-assembler"},
+		},
+		JobResult: worker.JobResult{
+			JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, "Koji build error", nil),
 		},
 	}
 	newJobResultRaw, err := json.Marshal(newJobResult)

@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.CancelFunc) {
@@ -359,6 +360,115 @@ func TestComposeStatusFailure(t *testing.T) {
 	}`, jobId, jobId))
 
 	err = wrksrv.FinishJob(token, nil)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "failure"}
+	}`, jobId, jobId))
+}
+
+func TestComposeLegacyError(t *testing.T) {
+	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+	srv, wrksrv, cancel := newV2Server(t, dir)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, "osbuild", jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"}
+	}`, jobId, jobId))
+
+	jobResult, err := json.Marshal(worker.OSBuildJobResult{TargetErrors: []string{"Osbuild failed"}})
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, jobResult)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "failure"}
+	}`, jobId, jobId))
+}
+
+func TestComposeJobError(t *testing.T) {
+	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+	srv, wrksrv, cancel := newV2Server(t, dir)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, "osbuild", jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"}
+	}`, jobId, jobId))
+
+	jobErr := worker.JobResult{
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error building image"),
+	}
+	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, jobResult)
 	require.NoError(t, err)
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
