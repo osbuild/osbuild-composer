@@ -15,6 +15,11 @@ variable "osbuild_commit" { type = string }
 
 # The name of the resulting AMI and the underlying EBS snapshot
 variable "image_name" { type = string }
+# A list of users to share the AMI with
+variable "image_users" {
+  type = list(string)
+  default = []
+}
 
 # Skip ansible tags
 variable "ansible_skip_tags" {

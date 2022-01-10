@@ -143,6 +143,13 @@ else
     SKIP_TAGS="rpmrepo"
 fi
 
+# Format: PACKER_IMAGE_USERS="\"000000000000\",\"000000000001\""
+if [ -n "$PACKER_IMAGE_USERS" ]; then
+    cat > templates/packer/share.auto.pkrvars.hcl <<EOF
+image_users = [$PACKER_IMAGE_USERS]
+EOF
+fi
+
 greenprint "🖼️ Building the image using packer container"
 # Use an absolute path to packer binary to avoid conflicting cracklib-packer symling in /usr/sbin,
 # installed during ansible installation process
