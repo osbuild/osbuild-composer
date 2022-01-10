@@ -1,0 +1,109 @@
+package weldr
+
+import (
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"testing"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
+	"github.com/stretchr/testify/require"
+)
+
+func TestComposeStatusFromLegacyError(t *testing.T) {
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+
+	jobResult := worker.OSBuildJobResult{TargetErrors: []string{"Upload error"}}
+	rawResult, err := json.Marshal(jobResult)
+	require.NoError(t, err)
+	err = api.workers.FinishJob(token, rawResult)
+	require.NoError(t, err)
+
+	jobStatus, _, err := api.workers.JobStatus(jobId, &jobResult)
+	require.NoError(t, err)
+
+	state := composeStateFromJobStatus(jobStatus, &jobResult)
+	require.Equal(t, "FAILED", state.ToString())
+}
+
+func TestComposeStatusFromJobError(t *testing.T) {
+
+	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+		t.Skip("This test is for internal testing only")
+	}
+
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	require.NoError(t, err)
+
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+
+	jobResult := worker.OSBuildJobResult{}
+	jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Upload error")
+	rawResult, err := json.Marshal(jobResult)
+	require.NoError(t, err)
+	err = api.workers.FinishJob(token, rawResult)
+	require.NoError(t, err)
+
+	jobStatus, _, err := api.workers.JobStatus(jobId, &jobResult)
+	require.NoError(t, err)
+
+	state := composeStateFromJobStatus(jobStatus, &jobResult)
+	require.Equal(t, "FAILED", state.ToString())
+}
