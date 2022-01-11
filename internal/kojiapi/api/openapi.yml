@@ -163,13 +163,7 @@ components:
         - koji_task_id
       properties:
         status:
-          type: string
-          enum:
-            - success
-            - failure
-            - pending
-            - registering
-          example: success
+          $ref: '#/components/schemas/ComposeStatusValue'
         image_statuses:
           type: array
           items:
@@ -180,6 +174,14 @@ components:
         koji_build_id:
           type: integer
           example: 42
+    ComposeStatusValue:
+      type: string
+      enum:
+        - success
+        - failure
+        - pending
+        - registering
+      example: success
     ComposeLogs:
       required:
         - koji_init_logs
@@ -195,14 +197,16 @@ components:
         - status
       properties:
         status:
-          type: string
-          enum:
-            - success
-            - failure
-            - pending
-            - building
-            - uploading
-          example: success
+          $ref: '#/components/schemas/ImageStatusValue'
+    ImageStatusValue:
+      type: string
+      enum:
+        - success
+        - failure
+        - pending
+        - building
+        - uploading
+      example: success
     ComposeRequest:
       type: object
       required:
