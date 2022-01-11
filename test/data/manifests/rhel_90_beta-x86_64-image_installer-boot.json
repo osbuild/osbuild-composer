@@ -2005,10 +2005,7 @@
               "templates": "80-rhel",
               "rootfs": {
                 "compression": {
-                  "method": "xz",
-                  "options": {
-                    "bcj": "x86"
-                  }
+                  "method": "lz4"
                 },
                 "size": 9216
               }

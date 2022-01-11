@@ -266,10 +266,6 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 }
 
 func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
-	comprOptions := new(osbuild.FSCompressionOptions)
-	if bcj := osbuild.BCJOption(arch); bcj != "" {
-		comprOptions.BCJ = bcj
-	}
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
@@ -300,8 +296,7 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 		RootFS: osbuild.RootFS{
 			Size: 9216,
 			Compression: osbuild.FSCompression{
-				Method:  "xz",
-				Options: comprOptions,
+				Method: "lz4",
 			},
 		},
 	}

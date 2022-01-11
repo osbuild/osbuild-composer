@@ -253,10 +253,6 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 }
 
 func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMonoStageOptions {
-	comprOptions := new(osbuild.FSCompressionOptions)
-	if bcj := osbuild.BCJOption(arch); bcj != "" {
-		comprOptions.BCJ = bcj
-	}
 	isolabel := fmt.Sprintf("RHEL-9-0-0-BaseOS-%s", arch)
 	return &osbuild.BootISOMonoStageOptions{
 		Product: osbuild.Product{
@@ -281,8 +277,7 @@ func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMono
 		RootFS: osbuild.RootFS{
 			Size: 9216,
 			Compression: osbuild.FSCompression{
-				Method:  "xz",
-				Options: comprOptions,
+				Method: "lz4",
 			},
 		},
 	}
