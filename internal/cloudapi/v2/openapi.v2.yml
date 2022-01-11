@@ -372,8 +372,7 @@ components:
         - options
       properties:
         status:
-          type: string
-          enum: ['success', 'failure', 'pending', 'running']
+          $ref: '#/components/schemas/UploadStatusValue'
         type:
           $ref: '#/components/schemas/UploadTypes'
         options:
@@ -382,6 +381,9 @@ components:
             - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
+    UploadStatusValue:
+      type: string
+      enum: ['success', 'failure', 'pending', 'running']
     UploadTypes:
       type: string
       enum:

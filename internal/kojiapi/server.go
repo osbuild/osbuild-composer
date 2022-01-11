@@ -245,54 +245,54 @@ func splitExtension(filename string) string {
 	return "." + strings.Join(filenameParts[1:], ".")
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildKojiJobResult, result *worker.KojiFinalizeJobResult) string {
+func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildKojiJobResult, result *worker.KojiFinalizeJobResult) api.ComposeStatusValue {
 	if js.Canceled {
-		return "failure"
+		return api.ComposeStatusValueFailure
 	}
 
 	if js.Finished.IsZero() {
-		return "pending"
+		return api.ComposeStatusValuePending
 	}
 
 	if initResult.KojiError != "" {
-		return "failure"
+		return api.ComposeStatusValueFailure
 	}
 
 	for _, buildResult := range buildResults {
 		if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
-			return "failure"
+			return api.ComposeStatusValueFailure
 		}
 		if buildResult.KojiError != "" {
-			return "failure"
+			return api.ComposeStatusValueFailure
 		}
 	}
 
 	if result.KojiError != "" {
-		return "failure"
+		return api.ComposeStatusValueFailure
 	}
 
-	return "success"
+	return api.ComposeStatusValueSuccess
 }
 
-func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) string {
+func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) api.ImageStatusValue {
 	if js.Canceled {
-		return "failure"
+		return api.ImageStatusValueFailure
 	}
 
 	if initResult.KojiError != "" {
-		return "failure"
+		return api.ImageStatusValueFailure
 	}
 
 	if js.Started.IsZero() {
-		return "pending"
+		return api.ImageStatusValuePending
 	}
 
 	if js.Finished.IsZero() {
-		return "building"
+		return api.ImageStatusValueBuilding
 	}
 
 	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == "" {
-		return "success"
+		return api.ImageStatusValueSuccess
 	}
 
 	return "failure"

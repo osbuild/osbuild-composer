@@ -281,7 +281,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	var irTarget *target.Target
 	/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 	switch ir.ImageType {
-	case ImageTypes_aws:
+	case ImageTypesAws:
 		var awsUploadOptions AWSEC2UploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 		if err != nil {
@@ -311,17 +311,17 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		irTarget = t
-	case ImageTypes_guest_image:
+	case ImageTypesGuestImage:
 		fallthrough
-	case ImageTypes_vsphere:
+	case ImageTypesVsphere:
 		fallthrough
-	case ImageTypes_image_installer:
+	case ImageTypesImageInstaller:
 		fallthrough
-	case ImageTypes_edge_installer:
+	case ImageTypesEdgeInstaller:
 		fallthrough
-	case ImageTypes_edge_container:
+	case ImageTypesEdgeContainer:
 		fallthrough
-	case ImageTypes_edge_commit:
+	case ImageTypesEdgeCommit:
 		var awsS3UploadOptions AWSS3UploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 		if err != nil {
@@ -342,7 +342,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		t.ImageName = key
 
 		irTarget = t
-	case ImageTypes_gcp:
+	case ImageTypesGcp:
 		var gcpUploadOptions GCPUploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 		if err != nil {
@@ -375,7 +375,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		irTarget = t
-	case ImageTypes_azure:
+	case ImageTypesAzure:
 		var azureUploadOptions AzureUploadOptions
 		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
 		if err != nil {
@@ -515,23 +515,23 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 func imageTypeFromApiImageType(it ImageTypes) string {
 	switch it {
-	case ImageTypes_aws:
+	case ImageTypesAws:
 		return "ami"
-	case ImageTypes_gcp:
+	case ImageTypesGcp:
 		return "vhd"
-	case ImageTypes_azure:
+	case ImageTypesAzure:
 		return "vhd"
-	case ImageTypes_guest_image:
+	case ImageTypesGuestImage:
 		return "qcow2"
-	case ImageTypes_vsphere:
+	case ImageTypesVsphere:
 		return "vmdk"
-	case ImageTypes_image_installer:
+	case ImageTypesImageInstaller:
 		return "image-installer"
-	case ImageTypes_edge_commit:
+	case ImageTypesEdgeCommit:
 		return "rhel-edge-commit"
-	case ImageTypes_edge_container:
+	case ImageTypesEdgeContainer:
 		return "rhel-edge-container"
-	case ImageTypes_edge_installer:
+	case ImageTypesEdgeInstaller:
 		return "rhel-edge-installer"
 	}
 	return ""
@@ -562,27 +562,27 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 		switch tr.Name {
 		case "org.osbuild.aws":
-			uploadType = UploadTypes_aws
+			uploadType = UploadTypesAws
 			awsOptions := tr.Options.(*target.AWSTargetResultOptions)
 			uploadOptions = AWSEC2UploadStatus{
 				Ami:    awsOptions.Ami,
 				Region: awsOptions.Region,
 			}
 		case "org.osbuild.aws.s3":
-			uploadType = UploadTypes_aws_s3
+			uploadType = UploadTypesAwsS3
 			awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
 			uploadOptions = AWSS3UploadStatus{
 				Url: awsOptions.URL,
 			}
 		case "org.osbuild.gcp":
-			uploadType = UploadTypes_gcp
+			uploadType = UploadTypesGcp
 			gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
 			uploadOptions = GCPUploadStatus{
 				ImageName: gcpOptions.ImageName,
 				ProjectId: gcpOptions.ProjectID,
 			}
 		case "org.osbuild.azure.image":
-			uploadType = UploadTypes_azure
+			uploadType = UploadTypesAzure
 			gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
 			uploadOptions = AzureUploadStatus{
 				ImageName: gcpOptions.ImageName,
@@ -592,7 +592,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		}
 
 		us = &UploadStatus{
-			Status:  result.UploadStatus,
+			Status:  UploadStatusValue(result.UploadStatus),
 			Type:    uploadType,
 			Options: uploadOptions,
 		}
@@ -613,24 +613,24 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
 	if js.Canceled {
-		return ImageStatusValue_failure
+		return ImageStatusValueFailure
 	}
 
 	if js.Started.IsZero() {
-		return ImageStatusValue_pending
+		return ImageStatusValuePending
 	}
 
 	if js.Finished.IsZero() {
-		// TODO: handle also ImageStatusValue_uploading
-		// TODO: handle also ImageStatusValue_registering
-		return ImageStatusValue_building
+		// TODO: handle also ImageStatusValueUploading
+		// TODO: handle also ImageStatusValueRegistering
+		return ImageStatusValueBuilding
 	}
 
 	if result.Success {
-		return ImageStatusValue_success
+		return ImageStatusValueSuccess
 	}
 
-	return ImageStatusValue_failure
+	return ImageStatusValueFailure
 }
 
 // ComposeMetadata handles a /composes/{id}/metadata GET request
