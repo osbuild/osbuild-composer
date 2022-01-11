@@ -160,7 +160,7 @@ func (t *TestImageType) MIMEType() string {
 }
 
 func (t *TestImageType) OSTreeRef() string {
-	return ""
+	return t.architecture.distribution.OSTreeRef()
 }
 
 func (t *TestImageType) Size(size uint64) uint64 {
@@ -232,6 +232,7 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 		name:             name,
 		releasever:       releasever,
 		modulePlatformID: modulePlatformID,
+		ostreeRef:        "test/13/x86_64/edge",
 	}
 
 	ta1 := TestArch{
