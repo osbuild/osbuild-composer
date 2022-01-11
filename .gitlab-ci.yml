@@ -58,6 +58,8 @@ RPM:
       - RUNNER:
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
+          - aws/fedora-35-x86_64
+          - aws/fedora-35-aarch64
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
@@ -130,9 +132,10 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          # See COMPOSER-919
-          # - aws/fedora-34-x86_64
-          # - aws/fedora-34-aarch64
+          - aws/fedora-34-x86_64
+          - aws/fedora-34-aarch64
+          - aws/fedora-35-x86_64
+          - aws/fedora-35-aarch64
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
           - aws/centos-stream-8-x86_64
@@ -184,7 +187,10 @@ Regression:
   parallel:
     matrix:
       - RUNNER:
-          # Enable f34 once we have rpmrepo snapshots for it
+          - aws/fedora-34-x86_64
+          - aws/fedora-34-aarch64
+          - aws/fedora-35-x86_64
+          - aws/fedora-35-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -262,8 +268,7 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          # See COMPOSER-919
-          # - rhos-01/fedora-34-x86_64
+          - rhos-01/fedora-35-x86_64
           - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
@@ -333,6 +338,8 @@ Integration:
           - koji.sh
           - aws.sh
         RUNNER:
+          - aws/fedora-34-x86_64
+          - aws/fedora-35-x86_64
           - aws/centos-stream-8-x86_64
       - <<: *INTEGRATION_TESTS
         RUNNER:
