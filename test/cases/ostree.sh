@@ -14,12 +14,12 @@ fi
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-33")
+    "fedora-35")
         IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/33/${ARCH}/iot"
-        OS_VARIANT="fedora33"
+        OSTREE_REF="fedora/35/${ARCH}/iot"
+        OS_VARIANT="fedora35"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/33/Everything/x86_64/os/"
+        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/35/Everything/x86_64/os/"
         ;;
     "rhel-8.5")
         IMAGE_TYPE=rhel-edge-commit
