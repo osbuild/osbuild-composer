@@ -106,11 +106,10 @@ function ec2_rpm_build {
 
 
     for LOOP_COUNTER in {0..30}; do
-        if ssh-keyscan "$RPMBUILDER_HOST" > /dev/null 2>&1; then
+        if ssh -i ./keypair.pem -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$RPMBUILDER_HOST" true > /dev/null 2>&1; then
             break
         fi
         echo "sleeping, try #$LOOP_COUNTER"
-        sleep 10
     done
 
     cat > tools/appsre-ansible/inventory <<EOF
