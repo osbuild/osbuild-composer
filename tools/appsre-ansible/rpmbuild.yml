@@ -24,29 +24,29 @@
       path: "{{ item }}"
       state: directory
     with_items:
-    - /tmp/rpmbuild
-    - /tmp/rpmbuild/SOURCES
-    - /tmp/rpmbuild/RPMS
+    - /home/ec2-user/rpmbuild
+    - /home/ec2-user/rpmbuild/SOURCES
+    - /home/ec2-user/rpmbuild/RPMS
 
   - name: Download osbuild-composer archive
     get_url:
       url: "https://github.com/osbuild/osbuild-composer/archive/{{ COMPOSER_COMMIT }}.tar.gz"
-      dest: "/tmp/rpmbuild/SOURCES/osbuild-composer-{{ COMPOSER_COMMIT }}.tar.gz"
+      dest: "/home/ec2-user/rpmbuild/SOURCES/osbuild-composer-{{ COMPOSER_COMMIT }}.tar.gz"
 
   - name: Download osbuild-composer spec
     get_url:
       url: "https://raw.githubusercontent.com/osbuild/osbuild-composer/{{ COMPOSER_COMMIT }}/osbuild-composer.spec"
-      dest: /tmp/osbuild-composer.spec
+      dest: /home/ec2-user/osbuild-composer.spec
 
   - name: Download osbuild archive
     get_url:
       url: "https://github.com/osbuild/osbuild/archive/{{ OSBUILD_COMMIT }}.tar.gz"
-      dest: "/tmp/rpmbuild/SOURCES/osbuild-{{ OSBUILD_COMMIT }}.tar.gz"
+      dest: "/home/ec2-user/rpmbuild/SOURCES/osbuild-{{ OSBUILD_COMMIT }}.tar.gz"
 
   - name: Download osbuild spec
     get_url:
       url: "https://raw.githubusercontent.com/osbuild/osbuild/{{ OSBUILD_COMMIT }}/osbuild.spec"
-      dest: /tmp/osbuild.spec
+      dest: /home/ec2-user/osbuild.spec
 
   - name: Install build tools
     package:
@@ -60,9 +60,9 @@
     command: >-
       rpmbuild -bs
       --define "commit {{ OSBUILD_COMMIT }}"
-      --define "_topdir /tmp/rpmbuild"
+      --define "_topdir /home/ec2-user/rpmbuild"
       --define "_srpmfilename %%{NAME}.srpm"
-      /tmp/osbuild.spec
+      /home/ec2-user/osbuild.spec
 
   - name: Mockbuild osbuild
     shell: >-
@@ -70,16 +70,16 @@
         --rebuild
         --define "commit {{ OSBUILD_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
-        --resultdir /tmp/rpmbuild/RPMS
-        /tmp/rpmbuild/SRPMS/osbuild-*.src.rpm
+        --resultdir /home/ec2-user/rpmbuild/RPMS
+        /home/ec2-user/rpmbuild/SRPMS/osbuild-*.src.rpm
 
   - name: Make osbuild-composer srpm
     command: >-
       rpmbuild -bs
       --define "commit {{ COMPOSER_COMMIT }}"
-      --define "_topdir /tmp/rpmbuild"
+      --define "_topdir /home/ec2-user/rpmbuild"
       --define "_srpmfilename %%{NAME}.srpm"
-      /tmp/osbuild-composer.spec
+      /home/ec2-user/osbuild-composer.spec
 
 
   - name: Mockbuild osbuild-composer
@@ -88,14 +88,14 @@
         --rebuild
         --define "commit {{ COMPOSER_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
-        --resultdir /tmp/rpmbuild/RPMS
-        /tmp/rpmbuild/SRPMS/osbuild-composer-*.src.rpm
+        --resultdir /home/ec2-user/rpmbuild/RPMS
+        /home/ec2-user/rpmbuild/SRPMS/osbuild-composer-*.src.rpm
 
   - name: Create a repository from the artifacts
-    command: createrepo_c /tmp/rpmbuild/RPMS
+    command: createrepo_c /home/ec2-user/rpmbuild/RPMS
 
   - name: Fetch rpms
     ansible.posix.synchronize:
       mode: pull
-      src: /tmp/rpmbuild/RPMS
+      src: /home/ec2-user/rpmbuild/RPMS
       dest: /osbuild-composer/rpmbuild
