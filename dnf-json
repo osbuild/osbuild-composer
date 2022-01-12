@@ -200,6 +200,7 @@ class Solver():
                 "summary": package.summary,
                 "description": package.description,
                 "url": package.url,
+                "repo_id": package.reponame,
                 "epoch": package.epoch,
                 "version": package.version,
                 "release": package.release,
