@@ -120,7 +120,6 @@ EOF
 
     greenprint "📦 Building the rpms"
     $CONTAINER_RUNTIME run --rm \
-                       -e ANSIBLE_DEBUG="True" \
                        -v "$WORKSPACE:/osbuild-composer:z" \
                        "packer:$COMMIT_SHA" ansible-playbook \
                        -i /osbuild-composer/tools/appsre-ansible/inventory \
