@@ -106,9 +106,10 @@ function ec2_rpm_build {
 
 
     for LOOP_COUNTER in {0..30}; do
-        if ssh -i ./keypair.pem -o ConnectTimeout=10 -o StrictHostKeyChecking=no "ec2-user@$RPMBUILDER_HOST" true > /dev/null 2>&1; then
+        if ssh -i ./keypair.pem -o ConnectTimeout=5 -o StrictHostKeyChecking=no "ec2-user@$RPMBUILDER_HOST" true; then
             break
         fi
+        sleep 5
         echo "sleeping, try #$LOOP_COUNTER"
     done
 
