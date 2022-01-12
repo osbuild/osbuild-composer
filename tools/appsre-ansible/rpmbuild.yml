@@ -98,4 +98,4 @@
     ansible.posix.synchronize:
       mode: pull
       src: /home/ec2-user/rpmbuild/RPMS
-      dest: /osbuild-composer/rpmbuild
+      dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild
