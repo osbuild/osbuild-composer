@@ -115,7 +115,7 @@ function ec2_rpm_build {
 
     cat > tools/appsre-ansible/inventory <<EOF
 [rpmbuilder]
-$RPMBUILDER_HOST ansible_ssh_private_key_file=/osbuild-composer/keypair.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+$RPMBUILDER_HOST ansible_ssh_private_key_file=/osbuild-composer/keypair.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ServerAliveInterval=5'
 EOF
 
     greenprint "📦 Building the rpms"
