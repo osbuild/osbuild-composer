@@ -8,3 +8,6 @@ RUN ansible-galaxy collection install ansible.posix
 RUN curl https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip -o /tmp/awscli.zip
 RUN unzip /tmp/awscli.zip
 RUN aws/install
+
+# copy in entire workspace
+COPY . /osbuild-composer
