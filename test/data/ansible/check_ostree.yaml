@@ -43,12 +43,12 @@
 
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
-      command: rpm-ostree status --json
+      shell: rpm-ostree status --json | jq -r '.deployments[0].checksum'
       register: result_commit
 
     - name: make a json result
       set_fact:
-        deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
+        deploy_commit: "{{ result_commit.stdout }}"
 
     - name: check commit deployed and built
       block:
@@ -468,12 +468,12 @@
     - name: check ostree commit after rollback
       block:
         - name: check ostree commit after rollback
-          command: rpm-ostree status --json
+          shell: rpm-ostree status --json | jq -r '.deployments[0].checksum'
           register: result_commit
 
         - name: make a json result
           set_fact:
-            deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
+            deploy_commit: "{{ result_commit.stdout }}"
 
         - assert:
             that:
