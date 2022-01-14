@@ -2229,7 +2229,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		cr.OSTree.Ref = imageType.OSTreeRef()
 	} else if !ostree.VerifyRef(cr.OSTree.Ref) {
 		errors := responseError{
-			ID:  "InvalidChars",
+			ID:  "OSTreeOptionsError",
 			Msg: "Invalid ostree ref",
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
@@ -2278,7 +2278,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			parent, err = ostree.ResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
 			if err != nil {
 				errors := responseError{
-					ID:  "OSTreeCommitError",
+					ID:  "OSTreeOptionsError",
 					Msg: err.Error(),
 				}
 				statusResponseError(writer, http.StatusBadRequest, errors)
