@@ -61,7 +61,7 @@ func ResolveParams(params OSTreeRequest, imageType distro.ImageType) (OSTreeRequ
 	if resolved.Ref == "" {
 		resolved.Ref = imageType.OSTreeRef()
 	} else if !VerifyRef(params.Ref) { // only verify if specified in params
-		return resolved, fmt.Errorf("Invalid ostree ref")
+		return resolved, fmt.Errorf("Invalid ostree ref %q", params.Ref)
 	}
 
 	resolved.URL = params.URL
