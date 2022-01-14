@@ -821,7 +821,7 @@ func TestCompose(t *testing.T) {
 		// Ref + invalid URL = error
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Get \"invalid-url/refs/heads/refid\": unsupported protocol scheme \"\""}]}`, nil, []string{"build_id"}},
 		// Bad Ref + URL = error
-		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref"}]}`, expectedComposeOSTreeURL, []string{"build_id"}},
+		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref \"/bad/ref\""}]}`, expectedComposeOSTreeURL, []string{"build_id"}},
 		// Ref + Parent + URL = error
 		{false, "POST", "/api/v1/compose", fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":"http://ostree/"}}`, test_distro.TestImageTypeName), http.StatusBadRequest, `{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Supply at most one of Parent and URL"}]}`, expectedComposeOSTreeRef, []string{"build_id"}},
 		// Parent + URL = error
