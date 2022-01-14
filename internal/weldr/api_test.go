@@ -128,8 +128,8 @@ func TestBasic(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
 	for _, c := range cases {
-		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
