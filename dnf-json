@@ -275,6 +275,13 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({"kind": kind, "reason":
             reason}).encode("utf-8"))
 
+    def response_failure(self, json_object):
+        self._send()
+        self.send_response(500)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(json_object).encode("utf-8"))
+
     def response_success(self, json_object):
         self._send()
         self.send_response(200)
@@ -305,9 +312,18 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
                 arguments = call["arguments"]
                 repos = arguments.get("repos", {})
                 arch = arguments["arch"]
-                self.cache_dir = arguments["cachedir"]
-                cache_state = CacheState.load_cache_state_from_disk(self.cache_dir)
                 module_platform_id = arguments["module_platform_id"]
+
+                # If dnf-json is run as a service, we don't want users to be able to set the cache
+                self.cache_dir = os.environ.get("OVERWRITE_CACHE_DIR", "")
+                if self.cache_dir:
+                    self.cache_dir = os.path.join(self.cache_dir, arch)
+                else:
+                    self.cache_dir = arguments.get("cachedir", "")
+
+                if not self.cache_dir:
+                    self.response_failure({ "kind": "Error", "reason": "No cache dir set" })
+                cache_state = CacheState.load_cache_state_from_disk(self.cache_dir)
 
                 with tempfile.TemporaryDirectory() as persistdir:
                     try:
@@ -358,24 +374,21 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
 log.info("Starting the dnf-json server")
 
 LISTEN_FDS = int(os.environ.get("LISTEN_FDS", 0))
-SOCK_PATH = "/run/osbuild-dnf-json/"
-SOCK_NAME = "api.sock"
+# set from entrypoint if differs from 3
+LISTEN_FD = int(os.environ.get("LISTEN_FD", 3))
 
 # The dnf-json web server has to use forks to serve the requests. Because the
 # dnf library is leaking memory in its Cpp side.
 class SystemDActivationSocketServer(socketserver.ForkingMixIn, socketserver.UnixStreamServer):
     def server_bind(self):
         log.debug("service bind")
-        if LISTEN_FDS == 0:
-            log.debug("create new socket")
-            socketserver.UnixStreamServer.server_bind(self)
-        else:
-            log.debug("rebind socket")
-            log.debug("address_family: %d ", self.address_family)
-            log.debug("socket_type: %d ", self.socket_type)
-            self.socket = socket.fromfd(3, self.address_family, self.socket_type)
+        log.debug("rebind socket")
+        log.debug("address_family: %d ", self.address_family)
+        log.debug("socket_type: %d ", self.socket_type)
+        if LISTEN_FDS > 1:
+            log.warning("More than one LISTEN_FDS")
+        self.socket = socket.fromfd(LISTEN_FD, self.address_family, self.socket_type)
 
 # start the web server
-pathlib.Path(SOCK_PATH).mkdir(parents=True, exist_ok=True)
-server = SystemDActivationSocketServer(f"{SOCK_PATH}{SOCK_NAME}", DnfJsonRequestHandler)
+server = SystemDActivationSocketServer('', DnfJsonRequestHandler)
 server.serve_forever()

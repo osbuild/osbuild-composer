@@ -52,6 +52,8 @@ rpm -q "$WORKER_RPM"
 # run container
 WELDR_DIR="$(mktemp -d)"
 WELDR_SOCK="$WELDR_DIR/api.socket"
+DNF_DIR="$(mktemp -d)"
+DNF_SOCK="$DNF_DIR/api.sock"
 
 sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
@@ -66,6 +68,8 @@ sudo podman run  \
      -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
      -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
      -v "$WELDR_DIR:/run/weldr/":Z \
+     -v "$DNF_DIR:/run/osbuild-dnf-json/":Z \
+     -e OVERWRITE_CACHE_DIR="/var/cache/dnf-json" \
      -p 8700:8700 \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
      --weldr-api --dnf-json --remote-worker-api \
@@ -128,5 +132,30 @@ sudo journalctl -u osbuild-remote-worker@localhost:8700.service |
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
     echo "Something went wrong with the compose. 😢"
+    exit 1
+fi
+
+tee "dnf-json-request.json" <<EOF
+{
+    "command": "dump",
+    "arguments": {
+        "repos": [
+            {
+                "name": "fedora",
+                "id": "blep-2",
+                "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-35&arch=x86_64",
+                "check_gpg": true
+            }
+        ],
+        "arch": "x86_64",
+        "module_platform_id": "platform:f35"
+    }
+}
+EOF
+
+DNF_JSON_OUT=$(curl -d"@dnf-json-request.json" --unix-socket "$DNF_SOCK" http:/dump | jq '.packages | length')
+# expect more than 1 package
+if [ ! "$DNF_JSON_OUT" -gt "1" ]; then
+    echo "dnf-json endpoint didn't return list of packages"
     exit 1
 fi
