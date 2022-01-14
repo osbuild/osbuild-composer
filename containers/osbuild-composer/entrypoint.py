@@ -108,6 +108,13 @@ class Cli(contextlib.AbstractContextManager):
             dest="dnf_json",
             help="Disable dnf-json",
         )
+        self._parser.add_argument(
+            "--dnf-json-port",
+            type=int,
+            default=0,
+            dest="dnf_json_port",
+            help="Specify the port dnf-json should listen on",
+        )
 
         self._parser.set_defaults(
             builtin_worker=False,
@@ -258,9 +265,22 @@ class Cli(contextlib.AbstractContextManager):
             "/usr/libexec/osbuild-composer/dnf-json",
         ]
 
+        if self.args.dnf_json_port:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            self._exitstack.enter_context(contextlib.closing(sock))
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            sock.bind(("::", self.args.dnf_json_port))
+            sock.listen()
+        else:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._exitstack.enter_context(contextlib.closing(sock))
+            sock.bind("/run/osbuild-dnf-json/api.sock")
+            sock.listen()
+
         dnfenv = os.environ.copy()
-        dnfenv["LISTEN_FDS"] = "0"
-        dnfenv["LISTEN_FDNAMES"] = ""
+        dnfenv["LISTEN_FDS"] = "1"
+        dnfenv["LISTEN_FD"] = str(sock.fileno())
 
         return subprocess.Popen(
             cmd,
@@ -268,6 +288,7 @@ class Cli(contextlib.AbstractContextManager):
             stdin=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
             env=dnfenv,
+            pass_fds=[sock.fileno()]
         )
 
     def run(self):
@@ -286,14 +307,20 @@ class Cli(contextlib.AbstractContextManager):
             if self.args.dnf_json:
                 proc_dnf_json = self._spawn_dnf_json()
 
-            proc_composer = self._spawn_composer(sockets)
+            if any([self.args.weldr_api, self.args.composer_api, self.args.local_worker_api, self.args.remote_worker_api]):
+                proc_composer = self._spawn_composer(sockets)
 
-            res = proc_composer.wait()
+            if proc_composer:
+                res = proc_composer.wait()
+
             if proc_worker:
-                proc_worker.terminate()
+                if proc_composer:
+                    proc_worker.terminate()
                 proc_worker.wait()
+
             if proc_dnf_json:
-                proc_dnf_json.terminate()
+                if proc_composer:
+                    proc_dnf_json.terminate()
                 proc_dnf_json.wait()
 
             return res
