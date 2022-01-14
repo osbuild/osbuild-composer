@@ -9,8 +9,6 @@ import (
 	"path"
 	"regexp"
 	"strings"
-
-	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
 var ostreeRefRE = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
@@ -54,12 +52,12 @@ func ResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
-func ResolveParams(params RequestParams, imageType distro.ImageType) (RequestParams, error) {
+func ResolveParams(params RequestParams, defaultRef string) (RequestParams, error) {
 	resolved := RequestParams{}
 	resolved.Ref = params.Ref
 	// if ref is not provided, use distro default
 	if resolved.Ref == "" {
-		resolved.Ref = imageType.OSTreeRef()
+		resolved.Ref = defaultRef
 	} else if !VerifyRef(params.Ref) { // only verify if specified in params
 		return resolved, fmt.Errorf("Invalid ostree ref %q", params.Ref)
 	}

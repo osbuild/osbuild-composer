@@ -2247,7 +2247,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		// Fake a parent commit for test requests
 		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
 	} else {
-		ostreeParams, err := ostree.ResolveParams(cr.OSTree, imageType)
+		ostreeParams, err := ostree.ResolveParams(cr.OSTree, imageType.OSTreeRef())
 		if err != nil {
 			errors := responseError{
 				ID:  "OSTreeOptionsError",
