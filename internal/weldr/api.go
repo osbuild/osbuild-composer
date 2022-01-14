@@ -2155,7 +2155,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		BlueprintName string               `json:"blueprint_name"`
 		ComposeType   string               `json:"compose_type"`
 		Size          uint64               `json:"size"`
-		OSTree        ostree.OSTreeRequest `json:"ostree"`
+		OSTree        ostree.RequestParams `json:"ostree"`
 		Branch        string               `json:"branch"`
 		Upload        *uploadRequest       `json:"upload"`
 	}

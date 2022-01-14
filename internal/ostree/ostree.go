@@ -15,7 +15,7 @@ import (
 
 var ostreeRefRE = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-type OSTreeRequest struct {
+type RequestParams struct {
 	URL    string `json:"url"`
 	Ref    string `json:"ref"`
 	Parent string `json:"parent"`
@@ -54,8 +54,8 @@ func ResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
-func ResolveParams(params OSTreeRequest, imageType distro.ImageType) (OSTreeRequest, error) {
-	resolved := OSTreeRequest{}
+func ResolveParams(params RequestParams, imageType distro.ImageType) (RequestParams, error) {
+	resolved := RequestParams{}
 	resolved.Ref = params.Ref
 	// if ref is not provided, use distro default
 	if resolved.Ref == "" {
