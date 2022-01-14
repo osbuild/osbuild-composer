@@ -2224,18 +2224,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	// set default ostree ref, if one not provided
-	if cr.OSTree.Ref == "" {
-		cr.OSTree.Ref = imageType.OSTreeRef()
-	} else if !ostree.VerifyRef(cr.OSTree.Ref) {
-		errors := responseError{
-			ID:  "OSTreeOptionsError",
-			Msg: "Invalid ostree ref",
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
 	composeID := uuid.New()
 
 	var targets []*target.Target
@@ -2243,7 +2231,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		t := uploadRequestToTarget(*cr.Upload, imageType)
 		targets = append(targets, t)
 	}
-
 	// Check for test parameter
 	q, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
@@ -2256,36 +2243,20 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	testMode := q.Get("test")
 
-	// Fetch parent ostree commit from ref + url if commit is not
-	// provided. The parameter name "parent" is perhaps slightly misleading
-	// as it represent whatever commit sha the image type requires, not
-	// strictly speaking just the parent commit.
-	if cr.OSTree.Ref != "" && cr.OSTree.URL != "" {
-		if cr.OSTree.Parent != "" {
+	if testMode == "1" || testMode == "2" {
+		// Fake a parent commit for test requests
+		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
+	} else {
+		ostreeParams, err := ostree.ResolveParams(cr.OSTree, imageType)
+		if err != nil {
 			errors := responseError{
 				ID:  "OSTreeOptionsError",
-				Msg: "Supply at most one of Parent and URL",
+				Msg: err.Error(),
 			}
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		var parent string
-		if testMode == "1" || testMode == "2" {
-			// Fake a parent commit for test requests
-			parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
-		} else {
-			// Resolve the URL and get the parent commit
-			parent, err = ostree.ResolveRef(cr.OSTree.URL, cr.OSTree.Ref)
-			if err != nil {
-				errors := responseError{
-					ID:  "OSTreeOptionsError",
-					Msg: err.Error(),
-				}
-				statusResponseError(writer, http.StatusBadRequest, errors)
-				return
-			}
-		}
-		cr.OSTree.Parent = parent
+		cr.OSTree = ostreeParams
 	}
 
 	packageSets, err := api.depsolveBlueprintForImageType(*bp, imageType)
