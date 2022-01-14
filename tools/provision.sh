@@ -18,11 +18,15 @@ elif [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
     curl -LO --insecure https://hdn.corp.redhat.com/rhel8-csb/RPMS/noarch/redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm
     sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
     sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
-    # jmespath required for json_query
-    sudo dnf install -y ansible-core koji python3-jmespath
+fi
 
-    # json_query filter, used in our ansible playbooks, was moved to the
-    # 'community.general' collection
+# RHEL 8.6+ and CentOS 9 require different handling for ansible
+ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical comparison for the version
+echo -n "${ID}=${VERSION_ID} "
+if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
+    sudo dnf install -y ansible-core koji
+
+    # NOTE: do we need this?
     sudo ansible-galaxy collection install community.general
 fi
 
