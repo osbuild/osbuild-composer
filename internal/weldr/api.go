@@ -2300,7 +2300,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
 			Size: size,
-			OSTree: distro.OSTreeImageOptions{
+			OSTree: ostree.RequestParams{
 				Ref:    cr.OSTree.Ref,
 				Parent: cr.OSTree.Parent,
 				URL:    cr.OSTree.URL,
