@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -103,7 +104,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				distro.ImageOptions{
 					Size: imageType.Size(0),
-					OSTree: distro.OSTreeImageOptions{
+					OSTree: ostree.RequestParams{
 						Ref: imageType.OSTreeRef(),
 					},
 				},

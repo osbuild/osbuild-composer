@@ -275,11 +275,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		// set default ostree ref, if one not provided
 		ostreeOptions := ir.Ostree
 		if ostreeOptions == nil || ostreeOptions.Ref == nil {
-			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: imageType.OSTreeRef()}
+			imageOptions.OSTree = ostree.RequestParams{Ref: imageType.OSTreeRef()}
 		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
 			return HTTPError(ErrorInvalidOSTreeRef)
 		} else {
-			imageOptions.OSTree = distro.OSTreeImageOptions{Ref: *ostreeOptions.Ref}
+			imageOptions.OSTree = ostree.RequestParams{Ref: *ostreeOptions.Ref}
 		}
 
 		var parent string

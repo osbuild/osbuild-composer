@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -145,7 +146,7 @@ func main() {
 		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
 			distro.ImageOptions{
 				Size: imageType.Size(0),
-				OSTree: distro.OSTreeImageOptions{
+				OSTree: ostree.RequestParams{
 					Ref:    composeRequest.OSTree.Ref,
 					Parent: composeRequest.OSTree.Parent,
 					URL:    composeRequest.OSTree.URL,

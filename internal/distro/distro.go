@@ -12,6 +12,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -127,16 +128,9 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	OSTree       OSTreeImageOptions
+	OSTree       ostree.RequestParams
 	Size         uint64
 	Subscription *SubscriptionImageOptions
-}
-
-// The OSTreeImageOptions specify ostree-specific image options
-type OSTreeImageOptions struct {
-	Ref    string
-	Parent string
-	URL    string
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
