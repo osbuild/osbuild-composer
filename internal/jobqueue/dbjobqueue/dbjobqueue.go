@@ -183,7 +183,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		return uuid.Nil, fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	prometheus.PendingJobs.WithLabelValues(jobType).Inc()
+	prometheus.EnqueueJobMetrics(jobType)
 	logrus.Infof("Enqueued job of type %s with ID %s(dependencies %v)", jobType, id, dependencies)
 
 	return id, nil
@@ -234,10 +234,7 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 		}
 	}
 
-	diff := started.Sub(*queued).Seconds()
-	prometheus.JobWaitDuration.WithLabelValues(jobType).Observe(diff)
-	prometheus.PendingJobs.WithLabelValues(jobType).Dec()
-	prometheus.RunningJobs.WithLabelValues(jobType).Inc()
+	prometheus.DequeueJobMetrics(*queued, *started, jobType)
 
 	// insert heartbeat
 	_, err = conn.Exec(ctx, sqlInsertHeartbeat, token, id)
@@ -290,10 +287,7 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	}
 
 	logrus.Infof("Dequeued job of type %v with ID %s", jobType, id)
-	diff := started.Sub(*queued).Seconds()
-	prometheus.JobWaitDuration.WithLabelValues(jobType).Observe(diff)
-	prometheus.PendingJobs.WithLabelValues(jobType).Dec()
-	prometheus.RunningJobs.WithLabelValues(jobType).Inc()
+	prometheus.DequeueJobMetrics(*queued, *started, jobType)
 
 	return token, dependencies, jobType, args, nil
 }
@@ -362,9 +356,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	}
 
 	logrus.Infof("Finished job with ID %s", id)
-	diff := finished.Sub(*started).Seconds()
-	prometheus.JobDuration.WithLabelValues(jobType).Observe(diff)
-	prometheus.RunningJobs.WithLabelValues(jobType).Dec()
+	prometheus.FinishJobMetrics(*started, *finished, canceled, jobType)
 
 	return nil
 }
@@ -387,11 +379,7 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 	}
 
 	logrus.Infof("Cancelled job with ID %s", id)
-	if started != nil {
-		prometheus.RunningJobs.WithLabelValues(jobType).Dec()
-	} else {
-		prometheus.PendingJobs.WithLabelValues(jobType).Dec()
-	}
+	prometheus.CancelJobMetrics(*started, jobType)
 
 	return nil
 }

@@ -1,6 +1,8 @@
 package prometheus
 
 import (
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -44,3 +46,32 @@ var (
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2049},
 	}, []string{"type"})
 )
+
+func EnqueueJobMetrics(jobType string) {
+	PendingJobs.WithLabelValues(jobType).Inc()
+}
+
+func DequeueJobMetrics(queued time.Time, started time.Time, jobType string) {
+	if !started.IsZero() && !queued.IsZero() {
+		diff := started.Sub(queued).Seconds()
+		JobWaitDuration.WithLabelValues(jobType).Observe(diff)
+		PendingJobs.WithLabelValues(jobType).Dec()
+		RunningJobs.WithLabelValues(jobType).Inc()
+	}
+}
+
+func CancelJobMetrics(started time.Time, jobType string) {
+	if !started.IsZero() {
+		RunningJobs.WithLabelValues(jobType).Dec()
+	} else {
+		PendingJobs.WithLabelValues(jobType).Dec()
+	}
+}
+
+func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType string) {
+	if !finished.IsZero() && !canceled {
+		diff := finished.Sub(started).Seconds()
+		JobDuration.WithLabelValues(jobType).Observe(diff)
+		RunningJobs.WithLabelValues(jobType).Dec()
+	}
+}
