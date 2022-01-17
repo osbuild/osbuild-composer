@@ -842,6 +842,15 @@ components:
         ref:
           type: string
           example: 'rhel/8/x86_64/edge'
+        parent:
+          type: string
+          examples:
+            commit_id:
+              value: '02604b2da6e954bd34b8b82a835e5a77d2b60ffa'
+              summary: A commit ID
+            ref:
+              value: 'rhel/8/x86_64/edge'
+              summary: A branch-like ref
     Subscription:
       type: object
       required:
