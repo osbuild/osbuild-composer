@@ -761,10 +761,7 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"clevis-dracut",
 			"clevis-luks",
 			"greenboot",
-			"greenboot-grub2",
-			"greenboot-rpm-ostree-grub2",
-			"greenboot-reboot",
-			"greenboot-status",
+			"greenboot-default-health-checks",
 		},
 		Exclude: []string{
 			"rng-tools",
