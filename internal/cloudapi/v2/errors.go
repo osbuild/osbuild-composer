@@ -39,6 +39,7 @@ const (
 	ErrorNoBaseURLInPayloadRepository ServiceErrorCode = 24
 	ErrorInvalidNumberOfImageBuilds   ServiceErrorCode = 25
 	ErrorInvalidJobType               ServiceErrorCode = 26
+	ErrorInvalidOSTreeParams          ServiceErrorCode = 27
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -102,6 +103,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorNoBaseURLInPayloadRepository, http.StatusBadRequest, "BaseURL must be specified for payload repositories"},
 		serviceError{ErrorInvalidJobType, http.StatusNotFound, "Requested job has invalid type"},
 		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
+		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},

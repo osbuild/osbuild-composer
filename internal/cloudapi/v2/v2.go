@@ -272,24 +272,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 		}
 
-		// set default ostree ref, if one not provided
-		ostreeOptions := ir.Ostree
-		if ostreeOptions == nil || ostreeOptions.Ref == nil {
-			imageOptions.OSTree = ostree.RequestParams{Ref: imageType.OSTreeRef()}
-		} else if !ostree.VerifyRef(*ostreeOptions.Ref) {
-			return HTTPError(ErrorInvalidOSTreeRef)
-		} else {
-			imageOptions.OSTree = ostree.RequestParams{Ref: *ostreeOptions.Ref}
-		}
-
-		var parent string
-		if ostreeOptions != nil && ostreeOptions.Url != nil {
-			imageOptions.OSTree.URL = *ostreeOptions.Url
-			parent, err = ostree.ResolveRef(imageOptions.OSTree.URL, imageOptions.OSTree.Ref)
-			if err != nil {
-				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, err)
+		ostreeOptions := ostree.RequestParams{}
+		if ir.Ostree != nil {
+			if ir.Ostree.Ref != nil {
+				ostreeOptions.Ref = *ir.Ostree.Ref
 			}
-			imageOptions.OSTree.Parent = parent
+			if ir.Ostree.Url != nil {
+				ostreeOptions.URL = *ir.Ostree.Url
+			}
+		}
+		if imageOptions.OSTree, err = ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef()); err != nil {
+			switch v := err.(type) {
+			case ostree.InvalidParameterError:
+				return HTTPError(ErrorInvalidOSTreeRef)
+			case ostree.ResolveRefError:
+				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, v)
+			default:
+				// general case
+				return HTTPError(ErrorInvalidOSTreeParams)
+			}
 		}
 
 		var irTarget *target.Target
