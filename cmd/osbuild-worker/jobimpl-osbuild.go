@@ -80,6 +80,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// Read the job specification
+	logrus.Debug("Read the job specification")
 	var args worker.OSBuildJob
 	err = job.Args(&args)
 	if err != nil {
@@ -88,6 +89,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// In case the manifest is empty, try to get it from dynamic args
 	if len(args.Manifest) == 0 && job.NDynamicArgs() > 0 {
+		logrus.Debug("try to get the manifest from dynamic args")
 		var manifestJR worker.ManifestJobByIDResult
 		err = job.DynamicArgs(0, &manifestJR)
 		if err != nil {
@@ -96,6 +98,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 		// skip the job if the manifest generation failed
 		if manifestJR.Error != "" {
+			logrus.Debug("Manifest generation failed")
 			return nil
 		}
 		args.Manifest = manifestJR.Manifest
@@ -116,6 +119,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		// job did not define exports, likely coming from an older version of composer
 		// fall back to default "assembler"
 		exports = []string{"assembler"}
+		logrus.Debug("Job without exports, fall back to assembler")
 	} else if len(exports) > 1 {
 		// this worker only supports returning one (1) export
 		return fmt.Errorf("at most one build artifact can be exported")
@@ -125,6 +129,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
+		logrus.Debug("Osbuild crashed")
 		return err
 	}
 
@@ -152,6 +157,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
+		logrus.Debug("Osbuild finished but failed")
 		return nil
 	}
 

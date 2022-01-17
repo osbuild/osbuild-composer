@@ -142,6 +142,10 @@ func main() {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
 		} `toml:"authentication"`
+		Logrus *struct {
+			LogLevel  string `toml:"log_level"`
+			LogFormat string `toml:"log_format"`
+		}
 		BasePath string `toml:"base_path"`
 	}
 	var unix bool
@@ -162,9 +166,29 @@ func main() {
 
 	_, err := toml.DecodeFile(configFile, &config)
 	if err == nil {
+		logrus.SetOutput(os.Stdout)
+		if config.Logrus != nil {
+			logLevel, err := logrus.ParseLevel(config.Logrus.LogLevel)
+			logrus.SetReportCaller(true)
+			if err == nil {
+				logrus.SetLevel(logLevel)
+			} else {
+				logrus.Info("Failed to load loglevel from config:", err)
+			}
+			switch config.Logrus.LogFormat {
+			case "text":
+				logrus.SetFormatter(&logrus.TextFormatter{})
+			case "json":
+				logrus.SetFormatter(&logrus.JSONFormatter{})
+			default:
+				logrus.Infof("Failed to set logging format from config, '%s' is not a valid option", config.Logrus.LogFormat)
+			}
+		} else {
+			logrus.Info("Log level set to default")
+		}
 		logrus.Info("Composer configuration:")
 		encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
-		err := encoder.Encode(&config)
+		err = encoder.Encode(&config)
 		if err != nil {
 			logrus.Fatalf("Could not print config: %v", err)
 		}
