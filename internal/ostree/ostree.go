@@ -2,7 +2,6 @@ package ostree
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -23,32 +22,39 @@ func VerifyRef(ref string) bool {
 	return len(ref) > 0 && ostreeRefRE.MatchString(ref)
 }
 
+// ResolveRef resolves the URL path specified by the location and ref
+// (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
+// there is an error, it will be of type ResolveRefError.
 func ResolveRef(location, ref string) (string, error) {
 	u, err := url.Parse(location)
 	if err != nil {
-		return "", err
+		return "", NewResolveRefError(err.Error())
 	}
 	u.Path = path.Join(u.Path, "refs/heads/", ref)
 	resp, err := http.Get(u.String())
 	if err != nil {
-		return "", err
+		return "", NewResolveRefError(err.Error())
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ostree repository %q returned status: %s", u.String(), resp.Status)
+		return "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", NewResolveRefError(err.Error())
 	}
 	parent := strings.TrimSpace(string(body))
 	// Check that this is at least a hex string.
 	_, err = hex.DecodeString(parent)
 	if err != nil {
-		return "", fmt.Errorf("ostree repository %q returned invalid reference", u.String())
+		return "", NewResolveRefError("ostree repository %q returned invalid reference", u.String())
 	}
 	return parent, nil
 }
 
+// ResolveParams resolves all necessary missing parameters in the given struct:
+// it sets the defaultRef if none is provided and resolves the parent commit if
+// a URL and Ref are provided. If there is an error, it will be of type
+// InvalidParameterError or ResolveRefError (from the ResolveRef function)
 func ResolveParams(params RequestParams, defaultRef string) (RequestParams, error) {
 	resolved := RequestParams{}
 	resolved.Ref = params.Ref
@@ -56,7 +62,7 @@ func ResolveParams(params RequestParams, defaultRef string) (RequestParams, erro
 	if resolved.Ref == "" {
 		resolved.Ref = defaultRef
 	} else if !VerifyRef(params.Ref) { // only verify if specified in params
-		return resolved, fmt.Errorf("Invalid ostree ref %q", params.Ref)
+		return resolved, NewInvalidParameterError("Invalid ostree ref %q", params.Ref)
 	}
 
 	resolved.URL = params.URL
@@ -66,12 +72,12 @@ func ResolveParams(params RequestParams, defaultRef string) (RequestParams, erro
 	// strictly speaking just the parent commit.
 	if resolved.Ref != "" && resolved.URL != "" {
 		if params.Parent != "" {
-			return resolved, fmt.Errorf("Supply at most one of Parent and URL")
+			return resolved, NewInvalidParameterError("Supply at most one of Parent and URL")
 		}
 
 		parent, err := ResolveRef(resolved.URL, resolved.Ref)
 		if err != nil {
-			return resolved, err
+			return resolved, err // ResolveRefError
 		}
 		resolved.Parent = parent
 	}
