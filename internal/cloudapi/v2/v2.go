@@ -280,6 +280,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if ir.Ostree.Url != nil {
 				ostreeOptions.URL = *ir.Ostree.Url
 			}
+			if ir.Ostree.Parent != nil {
+				ostreeOptions.Parent = *ir.Ostree.Parent
+			}
 		}
 		if imageOptions.OSTree, err = ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef()); err != nil {
 			switch v := err.(type) {
