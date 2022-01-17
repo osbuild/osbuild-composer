@@ -20,10 +20,7 @@ type RequestParams struct {
 }
 
 func VerifyRef(ref string) bool {
-	if len(ref) > 0 && ostreeRefRE.MatchString(ref) {
-		return true
-	}
-	return false
+	return len(ref) > 0 && ostreeRefRE.MatchString(ref)
 }
 
 func ResolveRef(location, ref string) (string, error) {
