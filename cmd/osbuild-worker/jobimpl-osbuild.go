@@ -76,10 +76,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
+		logrus.Debugf("error creating temporary output directory")
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
 
 	// Read the job specification
+	logrus.Debugf("Read the job specification")
 	var args worker.OSBuildJob
 	err = job.Args(&args)
 	if err != nil {
@@ -88,6 +90,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// In case the manifest is empty, try to get it from dynamic args
 	if len(args.Manifest) == 0 && job.NDynamicArgs() > 0 {
+		logrus.Debugf("try to get the manifest from dynamic args")
 		var manifestJR worker.ManifestJobByIDResult
 		err = job.DynamicArgs(0, &manifestJR)
 		if err != nil {
@@ -96,6 +99,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 		// skip the job if the manifest generation failed
 		if manifestJR.Error != "" {
+			logrus.Debugf("Manifest generation failed")
 			return nil
 		}
 		args.Manifest = manifestJR.Manifest
@@ -116,8 +120,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		// job did not define exports, likely coming from an older version of composer
 		// fall back to default "assembler"
 		exports = []string{"assembler"}
+		logrus.Debugf("Job without exports, fall back to assembler")
 	} else if len(exports) > 1 {
 		// this worker only supports returning one (1) export
+		logrus.Debugf("at most one build artifact can be exported")
 		return fmt.Errorf("at most one build artifact can be exported")
 	}
 
@@ -125,15 +131,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
+		logrus.Debugf("Osbuild crashed")
 		return err
 	}
 
 	// Include pipeline stages output inside the worker's logs.
 	// Order pipelines based on PipelineNames from job
+	logrus.Debugf("Number of output logs: %d", len(osbuildJobResult.OSBuildOutput.Log))
+	logrus.Debugf("error's raw message: %s", osbuildJobResult.OSBuildOutput.Error)
 	for _, pipelineName := range osbuildJobResult.PipelineNames.All() {
 		pipelineLog, hasLog := osbuildJobResult.OSBuildOutput.Log[pipelineName]
 		if !hasLog {
-			// no pipeline output
+			logrus.Debugf("No output result for pipeline: %s", pipelineName)
 			continue
 		}
 		logWithId.Infof("%s pipeline results:\n", pipelineName)
@@ -152,6 +161,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
+		logrus.Debugf("Osbuild finished but failed")
 		return nil
 	}
 

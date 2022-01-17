@@ -33,6 +33,11 @@ sudo cp -a /usr/share/tests/osbuild-composer/composer/osbuild-composer.toml \
 sudo mkdir -p /etc/osbuild-worker
 sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker.toml \
     /etc/osbuild-worker/
+sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+[Logrus]
+log_level = "DEBUG"
+log_format = "text"
+EOF
 
 # if GCP credentials are defined in the ENV, add them to the worker's configuration
 GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
