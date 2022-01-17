@@ -107,7 +107,7 @@
       baseurl=file:///tmp/rpmbuild/RPMS
       enabled=1
       gpgcheck=0
-      priority=100
+      priority=1
 
 - name: Install worker rpm
   package:
