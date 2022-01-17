@@ -3924,7 +3924,7 @@
               "filesystem": {
                 "type": "vfat",
                 "uuid": "46BB-8120",
-                "label": "EFI System Partition",
+                "label": "EFI-SYSTEM",
                 "mountpoint": "/boot/efi"
               }
             },
