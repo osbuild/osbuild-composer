@@ -65,17 +65,29 @@ func ResolveParams(params RequestParams, defaultRef string) (RequestParams, erro
 		return resolved, NewInvalidParameterError("Invalid ostree ref %q", params.Ref)
 	}
 
-	resolved.URL = params.URL
-	// Fetch parent ostree commit from ref + url if commit is not
-	// provided. The parameter name "parent" is perhaps slightly misleading
-	// as it represent whatever commit sha the image type requires, not
-	// strictly speaking just the parent commit.
-	if resolved.Ref != "" && resolved.URL != "" {
-		if params.Parent != "" {
-			return resolved, NewInvalidParameterError("Supply at most one of Parent and URL")
+	if params.Parent != "" {
+		// parent must also be a valid ref
+		if !VerifyRef(params.Parent) {
+			return resolved, NewInvalidParameterError("Invalid ostree parent ref %q", params.Parent)
 		}
+		if params.URL == "" {
+			// specifying parent ref also requires URL
+			return resolved, NewInvalidParameterError("ostree parent ref specified, but no URL to retrieve it")
+		}
+	}
 
-		parent, err := ResolveRef(resolved.URL, resolved.Ref)
+	resolved.URL = params.URL
+	if resolved.URL != "" {
+		// if a URL is specified, we need to fetch the commit at the URL
+		// the reference to resolve is the parent commit which is defined by
+		// the 'parent' argument
+		// if the parent argument is not specified, we use the specified ref
+		// if neither is specified, we use the default ref
+		parentRef := params.Parent
+		if parentRef == "" {
+			parentRef = resolved.Ref
+		}
+		parent, err := ResolveRef(resolved.URL, parentRef)
 		if err != nil {
 			return resolved, err // ResolveRefError
 		}
