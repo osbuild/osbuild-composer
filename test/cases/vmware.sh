@@ -196,6 +196,12 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     --disk.controller=ide \
     "${IMAGE_KEY}"
 
+# tagging vm as testing object
+$GOVC_CMD tags.attach -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+    -k=true \
+    -c "osbuild-composer testing" gitlab-ci-test \
+    "/${GOVMOMI_DATACENTER}/vm/${GOVMOMI_FOLDER}/${IMAGE_KEY}"
+
 greenprint "Getting IP of created VM"
 VM_IP=$($GOVC_CMD vm.ip -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}")
 
