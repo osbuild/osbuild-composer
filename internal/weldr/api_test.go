@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -62,38 +63,6 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 	}
 
 	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", nil), fixture.Store
-}
-
-type testOSTreeRepo struct {
-	ostreeRef string
-	server    *httptest.Server
-}
-
-func (repo *testOSTreeRepo) tearDown() {
-	if repo == nil {
-		return
-	}
-	repo.server.Close()
-}
-
-func setupOSTreeRepo(ref string) *testOSTreeRepo {
-	repo := new(testOSTreeRepo)
-	repo.ostreeRef = ref
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/refs/heads/"+ref, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "02604b2da6e954bd34b8b82a835e5a77d2b60ffa")
-		return
-	})
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// catch-all handler, return 404
-		http.NotFound(w, r)
-		return
-	})
-
-	repo.server = httptest.NewServer(mux)
-
-	return repo
 }
 
 // createWeldrAPI2 is an alternative function to createWeldrAPI, using different test architecture
@@ -813,10 +782,10 @@ func TestCompose(t *testing.T) {
 	}
 
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
-	ostreeRepoDefault := setupOSTreeRepo(test_distro.New().OSTreeRef())
-	defer ostreeRepoDefault.tearDown()
-	ostreeRepoOther := setupOSTreeRepo("some/other/ref")
-	defer ostreeRepoOther.tearDown()
+	ostreeRepoDefault := mock_ostree_repo.Setup(test_distro.New().OSTreeRef())
+	defer ostreeRepoDefault.TearDown()
+	ostreeRepoOther := mock_ostree_repo.Setup("some/other/ref")
+	defer ostreeRepoOther.TearDown()
 
 	var cases = []struct {
 		External        bool
@@ -906,7 +875,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoOther.ostreeRef, ostreeRepoOther.server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeOSTree,
@@ -939,9 +908,9 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, "the/wrong/ref", ostreeRepoDefault.server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, "the/wrong/ref", ostreeRepoDefault.Server.URL),
 			http.StatusBadRequest,
-			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.server.URL),
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.Server.URL),
 			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
@@ -950,7 +919,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, "the/new/ref", ostreeRepoOther.ostreeRef, ostreeRepoOther.server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, "the/new/ref", ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
@@ -961,7 +930,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.ostreeRef, ostreeRepoDefault.server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
@@ -972,7 +941,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
