@@ -20,16 +20,28 @@ func NewResolveRefError(msg string, args ...interface{}) ResolveRefError {
 
 // InvalidParamsError is returned when a parameter is invalid (e.g., malformed
 // or contains illegal characters).
-type InvalidParameterError struct {
+type RefError struct {
 	msg string
 }
 
-func (e InvalidParameterError) Error() string {
+func (e RefError) Error() string {
 	return e.msg
 }
 
-// NewInvalidParameterError creates and returns a new InvalidParameterError
+// NewRefError creates and returns a new InvalidParameterError
 // with a given formatted message.
-func NewInvalidParameterError(msg string, args ...interface{}) InvalidParameterError {
-	return InvalidParameterError{msg: fmt.Sprintf(msg, args...)}
+func NewRefError(msg string, args ...interface{}) RefError {
+	return RefError{msg: fmt.Sprintf(msg, args...)}
+}
+
+type ParameterComboError struct {
+	msg string
+}
+
+func (e ParameterComboError) Error() string {
+	return e.msg
+}
+
+func NewParameterComboError(msg string, args ...interface{}) ParameterComboError {
+	return ParameterComboError{msg: fmt.Sprintf(msg, args...)}
 }

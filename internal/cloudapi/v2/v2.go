@@ -286,7 +286,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 		if imageOptions.OSTree, err = ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef()); err != nil {
 			switch v := err.(type) {
-			case ostree.InvalidParameterError:
+			case ostree.RefError:
 				return HTTPError(ErrorInvalidOSTreeRef)
 			case ostree.ResolveRefError:
 				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, v)
