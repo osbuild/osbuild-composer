@@ -585,6 +585,7 @@
                   "sha256:7694dce8baf41abd9d37759c6abe1b0692e2d079409aaf94b66ea3f23e3ee948",
                   "sha256:1f1518511e3dc9c199cc9215eb99e16cfc5b7cf4a474fc1d24bd46a7b51b06e3",
                   "sha256:9c0132a7535813623f9ecc77827dde81bfac6afe530a8149c4e9e9337865d956",
+                  "sha256:85bbb36deb440290998a34782c92db155d399d00dee10c156810b5e50ca0baed",
                   "sha256:36be1ddc6748a7425fc9ee7aa3764ede57b2d0bc733e1d828a5375cd506d6cbc",
                   "sha256:e016bc2a6360cc4c12cb5167c1ab3866eef4689cf46844807784aadc2d347f13",
                   "sha256:67cefaee4eb3fc3afaf5a79821eb8fe54662d6962db5fd9a2573385ab3808ddf",
@@ -1662,6 +1663,9 @@
           },
           "sha256:85a57785d83ef8a7243027afd8f8741c9698a2edd39e08bd213c827f546b457b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/rpm-libs-4.16.1.3-10.el9.aarch64.rpm"
+          },
+          "sha256:85bbb36deb440290998a34782c92db155d399d00dee10c156810b5e50ca0baed": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/greenboot-default-health-checks-0.14.0-3.el9.aarch64.rpm"
           },
           "sha256:86d1533dd9531354f266b8c434e5ceadc94b9c3d249f3e43d16813acabff39e4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/python3-pysocks-1.7.1-10.el9.noarch.rpm"
@@ -8664,6 +8668,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/greenboot-0.14.0-3.el9.aarch64.rpm",
         "checksum": "sha256:9c0132a7535813623f9ecc77827dde81bfac6afe530a8149c4e9e9337865d956"
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.14.0",
+        "release": "3.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/greenboot-default-health-checks-0.14.0-3.el9.aarch64.rpm",
+        "checksum": "sha256:85bbb36deb440290998a34782c92db155d399d00dee10c156810b5e50ca0baed"
       },
       {
         "name": "jose",

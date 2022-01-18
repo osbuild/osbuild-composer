@@ -622,6 +622,7 @@
                   "sha256:34384ca5d51125d92a02a1f20e8a68aa8e17314eb0ecf4dec64594ac61e4fee7",
                   "sha256:eb8973df11266ce57f1db004883df3f14690c17646992c2d977f81cd6ba560f7",
                   "sha256:99001f89823d24cfa212b0b32a58ec2e9db39b18c63da4d8a92745a9fccb73a3",
+                  "sha256:e62c5f4fd1a5cbbf12ed268687f8b041645e3f9c09f8d4593b556800d36c0d2f",
                   "sha256:97e95484635a1e585021d1307ebfdae4ff8f34b02d7584b3d6bf21f1c6c526bd",
                   "sha256:d7c0c309e54126a8d1410eaf411bdb2537eb66f3f0a83ab185e5de66f605f309",
                   "sha256:7555233a951d6e316dd982bff58c418ee20810b26237ffd49ca8ca8744f0a52a",
@@ -2015,6 +2016,9 @@
           },
           "sha256:e5f1cfbdca0b5731107573eb057260815cecef2dcf8e7f75aeff55d546fe0b30": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/isomd5sum-1.2.3-14.el9.x86_64.rpm"
+          },
+          "sha256:e62c5f4fd1a5cbbf12ed268687f8b041645e3f9c09f8d4593b556800d36c0d2f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/greenboot-default-health-checks-0.14.0-3.el9.x86_64.rpm"
           },
           "sha256:e683c47baf67ed18dd3e2a767c4aacc0c4176c682a7067180c9949099b706d7a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/gettext-libs-0.21-7.el9.x86_64.rpm"
@@ -8009,6 +8013,15 @@
         "checksum": "sha256:99001f89823d24cfa212b0b32a58ec2e9db39b18c63da4d8a92745a9fccb73a3"
       },
       {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.14.0",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/greenboot-default-health-checks-0.14.0-3.el9.x86_64.rpm",
+        "checksum": "sha256:e62c5f4fd1a5cbbf12ed268687f8b041645e3f9c09f8d4593b556800d36c0d2f"
+      },
+      {
         "name": "jose",
         "epoch": 0,
         "version": "11",
@@ -8756,6 +8769,7 @@
       "gpg-pubkey-fd431d51-4ae0493b",
       "gpgme-1.15.1-5.el9.x86_64",
       "greenboot-0.14.0-3.el9.x86_64",
+      "greenboot-default-health-checks-0.14.0-3.el9.x86_64",
       "grep-3.6-5.el9.x86_64",
       "grub2-common-2.06-16.el9.noarch",
       "grub2-efi-x64-2.06-16.el9.x86_64",
@@ -9262,6 +9276,12 @@
     },
     "systemd-service-dropins": {
       "/usr/lib/systemd/system": {
+        "greenboot-healthcheck.service.d": {
+          "Unit": {
+            "After": "network-online.target",
+            "Wants": "network-online.target"
+          }
+        },
         "systemd-hostnamed.service.d": {
           "Service": {
             "PrivateDevices": "no"
