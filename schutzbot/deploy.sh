@@ -39,11 +39,17 @@ function setup_repo {
   local project=$1
   local commit=$2
   local priority=${3:-10}
+
+  local REPO_PATH=${project}/${DISTRO_VERSION}/${ARCH}/${commit}
+  if [[ "${NIGHTLY:=false}" == "true" && "${project}" == "osbuild-composer" ]]; then
+    REPO_PATH=nightly/${REPO_PATH}
+  fi
+
   greenprint "Setting up dnf repository for ${project} ${commit}"
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/${DISTRO_VERSION}/${ARCH}/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${REPO_PATH}
 enabled=1
 gpgcheck=0
 priority=${priority}

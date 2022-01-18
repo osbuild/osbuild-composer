@@ -38,6 +38,9 @@ fi
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
 REPO_PATH=osbuild-composer/${DISTRO_VERSION}/${ARCH}/${COMMIT}
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    REPO_PATH=nightly/${REPO_PATH}
+fi
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
