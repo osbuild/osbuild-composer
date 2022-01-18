@@ -248,11 +248,11 @@ OSTree:
     matrix:
       - RUNNER:
           # See COMPOSER-919
-          # - openstack/fedora-34-x86_64
-          - openstack/rhel-8.5-ga-x86_64
-          - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-nightly-x86_64
-          - openstack/centos-stream-8-x86_64
+          # - rhos-01/fedora-34-x86_64
+          - rhos-01/rhel-8.5-ga-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
 
 New OSTree:
   stage: test
@@ -265,9 +265,9 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.6-nightly-x86_64-large
-          - openstack/rhel-9.0-nightly-x86_64-large
-          - openstack/centos-stream-8-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64-large
+          - rhos-01/rhel-9.0-nightly-x86_64-large
+          - rhos-01/centos-stream-8-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -280,9 +280,9 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.6-nightly-x86_64-large
-          - openstack/centos-stream-8-x86_64
-          - openstack/rhel-9.0-nightly-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64-large
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
 
 OSTree raw image:
   stage: test
@@ -295,9 +295,9 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.6-nightly-x86_64
-          - openstack/centos-stream-8-x86_64
-          - openstack/rhel-9.0-nightly-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
@@ -383,11 +383,11 @@ libvirt:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/centos-stream-8-x86_64
+          - rhos-01/centos-stream-8-x86_64
       - RUNNER:
-          - openstack/rhel-8.5-ga-x86_64
-          - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-nightly-x86_64
+          - rhos-01/rhel-8.5-ga-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 RHEL 9 on 8:
@@ -415,7 +415,7 @@ Upgrade:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
-    RUNNER: openstack/rhel-9.0-nightly-x86_64
+    RUNNER: rhos-01/rhel-9.0-nightly-x86_64
   artifacts:
     paths:
       - journal-log.gpg
@@ -461,8 +461,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8.6-nightly-x86_64
-          - openstack/rhel-9.0-nightly-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
