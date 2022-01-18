@@ -64,6 +64,38 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 	return NewTestAPI(rpm, arch, dr, rr, nil, fixture.Store, fixture.Workers, "", nil), fixture.Store
 }
 
+type testOSTreeRepo struct {
+	ostreeRef string
+	server    *httptest.Server
+}
+
+func (repo *testOSTreeRepo) tearDown() {
+	if repo == nil {
+		return
+	}
+	repo.server.Close()
+}
+
+func setupOSTreeRepo(ref string) *testOSTreeRepo {
+	repo := new(testOSTreeRepo)
+	repo.ostreeRef = ref
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/refs/heads/"+ref, func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "02604b2da6e954bd34b8b82a835e5a77d2b60ffa")
+		return
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// catch-all handler, return 404
+		http.NotFound(w, r)
+		return
+	})
+
+	repo.server = httptest.NewServer(mux)
+
+	return repo
+}
+
 // createWeldrAPI2 is an alternative function to createWeldrAPI, using different test architecture
 // with more than a single image type
 func createWeldrAPI2(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator,
@@ -737,7 +769,7 @@ func TestCompose(t *testing.T) {
 		},
 		Packages: []rpmmd.PackageSpec{},
 	}
-	expectedComposeOSTreeRef := &store.Compose{
+	expectedComposeOSTree := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -748,22 +780,6 @@ func TestCompose(t *testing.T) {
 		},
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
-			ImageType:   imgType,
-			Manifest:    manifest,
-		},
-		Packages: []rpmmd.PackageSpec{},
-	}
-	expectedComposeOSTreeURL := &store.Compose{
-		Blueprint: &blueprint.Blueprint{
-			Name:           "test",
-			Version:        "0.0.0",
-			Packages:       []blueprint.Package{},
-			Modules:        []blueprint.Package{},
-			Groups:         []blueprint.Group{},
-			Customizations: nil,
-		},
-		ImageBuild: store.ImageBuild{
-			QueueStatus: common.IBFinished,
 			ImageType:   imgType,
 			Manifest:    manifest,
 		},
@@ -795,6 +811,12 @@ func TestCompose(t *testing.T) {
 		},
 		Packages: []rpmmd.PackageSpec{},
 	}
+
+	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
+	ostreeRepoDefault := setupOSTreeRepo(test_distro.New().OSTreeRef())
+	defer ostreeRepoDefault.tearDown()
+	ostreeRepoOther := setupOSTreeRepo("some/other/ref")
+	defer ostreeRepoOther.tearDown()
 
 	var cases = []struct {
 		External        bool
@@ -868,26 +890,26 @@ func TestCompose(t *testing.T) {
 		},
 
 		// === OSTree params ===
-		// Ref + Parent = OK
+		// Ref + Parent = error (parent without URL)
 		{
 			false,
 			"POST",
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, test_distro.TestImageTypeName),
-			http.StatusOK,
-			`{"status": true}`,
-			expectedComposeOSTreeRef,
+			http.StatusBadRequest,
+			`{"status": false, "errors":[{"id":"OSTreeOptionsError","msg":"ostree parent ref specified, but no URL to retrieve it"}]}`,
+			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
-		// Ref + URL = OK
+		// Valid Ref + URL = OK
 		{
 			false,
 			"POST",
-			"/api/v1/compose?test=2",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName),
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoOther.ostreeRef, ostreeRepoOther.server.URL),
 			http.StatusOK,
 			`{"status": true}`,
-			expectedComposeOSTreeURL,
+			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
 		// Ref + invalid URL = error
@@ -895,9 +917,9 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"whatever","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeName),
 			http.StatusBadRequest,
-			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Get \"invalid-url/refs/heads/refid\": unsupported protocol scheme \"\""}]}`,
+			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
 			nil,
 			[]string{"build_id"},
 		},
@@ -906,33 +928,54 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`,
-				test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName),
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref \"/bad/ref\""}]}`,
-			expectedComposeOSTreeURL,
+			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
-		// Ref + Parent + URL = error
+		// Incorrect Ref + URL = the parameters are okay, but the ostree repo returns 404
 		{
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":"http://ostree/"}}`, test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, "the/wrong/ref", ostreeRepoDefault.server.URL),
 			http.StatusBadRequest,
-			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Supply at most one of Parent and URL"}]}`,
-			expectedComposeOSTreeRef,
+			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.server.URL),
+			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
-		// Parent + URL = error
+		// Ref + Parent + URL = OK
 		{
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"parentid","url":"http://ostree/"}}`, test_distro.TestImageTypeName),
-			http.StatusBadRequest,
-			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Supply at most one of Parent and URL"}]}`,
-			expectedComposeOSTreeRef,
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, "the/new/ref", ostreeRepoOther.ostreeRef, ostreeRepoOther.server.URL),
+			http.StatusOK,
+			`{"status":true}`,
+			expectedComposeOSTree,
+			[]string{"build_id"},
+		},
+		// Parent + URL = OK
+		{
+			false,
+			"POST",
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.ostreeRef, ostreeRepoDefault.server.URL),
+			http.StatusOK,
+			`{"status":true}`,
+			expectedComposeOSTree,
+			[]string{"build_id"},
+		},
+		// URL only = OK (uses default ref, so we need to specify URL for ostree repo with default ref)
+		{
+			false,
+			"POST",
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.server.URL),
+			http.StatusOK,
+			`{"status":true}`,
+			expectedComposeOSTree,
 			[]string{"build_id"},
 		},
 	}
