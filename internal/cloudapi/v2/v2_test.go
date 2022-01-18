@@ -350,6 +350,61 @@ func TestCompose(t *testing.T) {
 		"code": "IMAGE-BUILDER-COMPOSER-9",
 		"reason": "Invalid OSTree ref"
 	}`, "operation_id")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "edge-commit",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			},
+			"ostree": {
+				"ref": "good/edge/ref",
+				"url": "http://example.org",
+				"parent": "aparent"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/9",
+		"id": "9",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-9",
+		"reason": "Invalid OSTree ref"
+	}`, "operation_id")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "edge-commit",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			},
+			"ostree": {
+				"url": "http://example.org",
+				"parent": "aparent"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/9",
+		"id": "9",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-9",
+		"reason": "Invalid OSTree ref"
+	}`, "operation_id")
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
