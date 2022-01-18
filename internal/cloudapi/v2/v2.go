@@ -290,6 +290,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				return HTTPError(ErrorInvalidOSTreeRef)
 			case ostree.ResolveRefError:
 				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, v)
+			case ostree.ParameterComboError:
+				return HTTPError(ErrorInvalidOSTreeParams)
 			default:
 				// general case
 				return HTTPError(ErrorInvalidOSTreeParams)
