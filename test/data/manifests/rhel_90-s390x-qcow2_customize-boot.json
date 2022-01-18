@@ -464,7 +464,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto"
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0"
             }
           },
           {
@@ -13261,10 +13261,10 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20211207101636-0-rescue-ffffffffffffffffffffffffffffffff",
+        "id": "-20220204144421-0-rescue-ffffffffffffffffffffffffffffffff",
         "initrd": "/boot/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
         "linux": "/boot/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
         "title": " (0-rescue-ffffffffffffffffffffffffffffffff)",
         "version": "0-rescue-ffffffffffffffffffffffffffffffff"
       },
@@ -13272,10 +13272,10 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20211207101636-5.14.0-4.el9.s390x",
+        "id": "-20220204144421-5.14.0-4.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-4.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-4.el9.s390x",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
         "title": " (5.14.0-4.el9.s390x)",
         "version": "5.14.0-4.el9.s390x"
       }
@@ -14056,7 +14056,7 @@
         "partuuid": "14fc63d2-01",
         "size": 524288000,
         "start": 1048576,
-        "type": "0",
+        "type": "83",
         "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
       },
       {

@@ -331,7 +331,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1"
+              "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1"
             }
           },
           {
@@ -1392,7 +1392,7 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
+              "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
               "legacy": "i386-pc",
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64"
             }
@@ -11895,7 +11895,7 @@
       "profile-id": "sssd"
     },
     "boot-environment": {
-      "kernelopts": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
+      "kernelopts": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
       "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64"
     },
     "bootloader": "grub",
@@ -11906,7 +11906,7 @@
         "grub_users": "$grub_users",
         "initrd": "/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
         "linux": "/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
         "title": "Red Hat Enterprise Linux (0-rescue-ffffffffffffffffffffffffffffffff) 9.0 (Plow)",
         "version": "0-rescue-ffffffffffffffffffffffffffffffff"
       },
@@ -11916,7 +11916,7 @@
         "grub_users": "$grub_users",
         "initrd": "/initramfs-5.14.0-4.el9.x86_64.img $tuned_initrd",
         "linux": "/vmlinuz-5.14.0-4.el9.x86_64",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1 $tuned_params",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1 $tuned_params",
         "title": "Red Hat Enterprise Linux (5.14.0-4.el9.x86_64) 9.0 (Plow)",
         "version": "5.14.0-4.el9.x86_64"
       }
@@ -12967,6 +12967,7 @@
         "/etc/pam.d/smartcard-auth": "....L....",
         "/etc/pam.d/system-auth": "....L....",
         "/etc/rhsm/rhsm.conf": "..5....T.",
+        "/etc/ssh/sshd_config": "S.5....T.",
         "/etc/udev/hwdb.bin": ".M.......",
         "/proc": ".M.......",
         "/sys": ".M.......",
