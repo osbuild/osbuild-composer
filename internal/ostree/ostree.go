@@ -62,17 +62,17 @@ func ResolveParams(params RequestParams, defaultRef string) (RequestParams, erro
 	if resolved.Ref == "" {
 		resolved.Ref = defaultRef
 	} else if !VerifyRef(params.Ref) { // only verify if specified in params
-		return resolved, NewInvalidParameterError("Invalid ostree ref %q", params.Ref)
+		return resolved, NewRefError("Invalid ostree ref %q", params.Ref)
 	}
 
 	if params.Parent != "" {
 		// parent must also be a valid ref
 		if !VerifyRef(params.Parent) {
-			return resolved, NewInvalidParameterError("Invalid ostree parent ref %q", params.Parent)
+			return resolved, NewRefError("Invalid ostree parent ref %q", params.Parent)
 		}
 		if params.URL == "" {
 			// specifying parent ref also requires URL
-			return resolved, NewInvalidParameterError("ostree parent ref specified, but no URL to retrieve it")
+			return resolved, NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
 		}
 	}
 
