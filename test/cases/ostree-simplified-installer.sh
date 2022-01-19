@@ -279,6 +279,24 @@ sudo ostree --repo="$PROD_REPO" remote add --no-gpg-verify edge-stage "$STAGE_RE
 greenprint "🔧 Prepare stage repo network"
 sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
 
+###########################################################
+##
+## Prepare fdo server
+##
+###########################################################
+greenprint "🔧 Prepare fdo manufacturing server"
+sudo git clone https://github.com/runcom/fdo-containers
+cd fdo-containers/ || exit
+sudo ./create-keys.sh
+sudo setenforce 0
+sudo podman run -d -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers -v "$PWD"/config/rendezvous-info.yml:/etc/fdo/rendezvous-info.yml -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.yml -v "$PWD"/keys:/etc/fdo/keys --ip 192.168.200.2 --name fdo-manufacturing-server --network edge quay.io/runcom/fdo-manufacturing-server:0.3.0
+cd .. || exit
+
+# Wait for fdo server to be running
+until [ "$(curl -X POST http://192.168.200.2:8080/ping)" == "pong" ]; do
+    sleep 1;
+done;
+
 ##########################################################
 ##
 ## Build edge-container image and start it in podman
@@ -323,13 +341,6 @@ build_image container "${CONTAINER_TYPE}"
 # Download the image
 greenprint "📥 Downloading the container image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-
-# Clear stage repo running env
-greenprint "🧹 Clearing stage repo running env"
-# Remove any status containers if exist
-sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-# Remove all images
-sudo podman rmi -f -a
 
 # Deal with stage repo image
 greenprint "🗜 Starting container"
@@ -404,6 +415,10 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+
+[customizations.fdo]
+manufacturing_server_url="http://192.168.200.2:8080"
+diun_pub_key_insecure="true"
 EOF
 
 greenprint "📄 installer blueprint"
@@ -455,6 +470,14 @@ sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/disk.img.xz/coreos.inst
 greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+greenprint "checking running containers"
+sudo podman ps -a
+
+greenprint "Check manufacturing server up and running"
+until [ "$(curl -X POST http://192.168.200.2:8080/ping)" == "pong" ]; do
+    sleep 1;
+done;
 
 greenprint "📋 Install edge vm via http boot"
 sudo virt-install --name="${IMAGE_KEY}-http"\
