@@ -7,13 +7,16 @@ COMMIT_SHA=$(git rev-parse HEAD)
 COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ON_JENKINS=true
 
-# Use CI variables if available
+# Use gitlab CI variables if available
 if [ -n "$CI_COMMIT_SHA" ]; then
     ON_JENKINS=false
     COMMIT_SHA="$CI_COMMIT_SHA"
 fi
 if [ -n "$CI_COMMIT_BRANCH" ]; then
     COMMIT_BRANCH="$CI_COMMIT_BRANCH"
+elif [ -n "$GIT_BRANCH" ]; then
+    # Use jenkins CI variables if available
+    COMMIT_BRANCH="${GIT_BRANCH#*/}"
 fi
 
 if [ "$ON_JENKINS" = false ]; then
