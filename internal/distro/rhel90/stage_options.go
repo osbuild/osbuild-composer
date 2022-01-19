@@ -311,7 +311,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 	var architectures []string
 
 	if arch == "x86_64" {
-		architectures = []string{"IA32", "X64"}
+		architectures = []string{"X64"}
 	} else if arch == "aarch64" {
 		architectures = []string{"AA64"}
 	} else {
