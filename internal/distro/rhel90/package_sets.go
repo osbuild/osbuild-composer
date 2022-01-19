@@ -115,12 +115,10 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
-				"grub2-efi-ia32-cdboot",
 				"grub2-efi-x64",
 				"grub2-efi-x64-cdboot",
 				"grub2-pc",
 				"grub2-pc-modules",
-				"shim-ia32",
 				"shim-x64",
 				"syslinux",
 				"syslinux-nonlinux",
@@ -974,7 +972,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"glibc-all-langpacks",
 			"gnome-kiosk",
 			"google-noto-sans-cjk-ttc-fonts",
-			"grub2-efi-ia32-cdboot",
 			"grub2-efi-x64-cdboot",
 			"grub2-tools",
 			"grub2-tools-efi",
@@ -1054,7 +1051,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"rsyslog",
 			"selinux-policy-targeted",
 			"sg3_utils",
-			"shim-ia32",
 			"shim-x64",
 			"sil-abyssinica-fonts",
 			"sil-padauk-fonts",
