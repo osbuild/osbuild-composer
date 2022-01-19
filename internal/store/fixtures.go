@@ -305,3 +305,45 @@ func FixtureEmpty() *Store {
 
 	return s
 }
+
+// FixtureOldChanges contains a blueprint and old changes
+// This simulates restarting the service and losing the old blueprints
+func FixtureOldChanges() *Store {
+	var bName = "test-old-changes"
+	var b = blueprint.Blueprint{
+		Name:           bName,
+		Version:        "0.0.0",
+		Packages:       []blueprint.Package{},
+		Modules:        []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Customizations: nil,
+	}
+
+	d := test_distro.New()
+	arch, err := d.GetArch(test_distro.TestArchName)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+	}
+
+	s := New(nil, arch, nil)
+
+	s.PushBlueprint(b, "Initial commit")
+	b.Version = "0.0.1"
+	b.Packages = []blueprint.Package{{Name: "tmux", Version: "1.2.3"}}
+	s.PushBlueprint(b, "Add tmux package")
+	b.Version = "0.0.2"
+	b.Packages = []blueprint.Package{{Name: "tmux", Version: "*"}}
+	s.PushBlueprint(b, "Change tmux version")
+
+	// Replace the associated blueprints. This simulates reading the store from
+	// disk which doesn't actually save the old blueprints to disk.
+	for bp := range s.blueprintsChanges {
+		for c := range s.blueprintsChanges[bp] {
+			change := s.blueprintsChanges[bp][c]
+			change.Blueprint = blueprint.Blueprint{}
+			s.blueprintsChanges[bp][c] = change
+		}
+	}
+
+	return s
+}

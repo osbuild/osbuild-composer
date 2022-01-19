@@ -601,7 +601,47 @@ func TestBlueprintsDepsolve(t *testing.T) {
 	}
 }
 
-func TestBlueprintsUndo(t *testing.T) {
+// TestOldBlueprintsUndo run tests with blueprint changes after a service restart
+// Old blueprints are not saved, after a restart the changes are listed, but cannot be recalled
+func TestOldBlueprintsUndo(t *testing.T) {
+	tempdir, err := ioutil.TempDir("", "weldr-tests-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempdir)
+
+	api, _ := createWeldrAPI(tempdir, rpmmd_mock.OldChangesFixture)
+	rand.Seed(time.Now().UnixNano())
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	ignoreFields := []string{"commit", "timestamp"}
+
+	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"Change tmux version","revision":null,"timestamp":""},{"commit":"","message":"Add tmux package","revision":null,"timestamp":""},{"commit":"","message":"Initial commit","revision":null,"timestamp":""}],"name":"test-old-changes","total":3}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
+
+	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var changes BlueprintsChangesV0
+	err = json.Unmarshal(body, &changes)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(changes.BlueprintsChanges))
+	require.Equal(t, 3, len(changes.BlueprintsChanges[0].Changes))
+	commit := changes.BlueprintsChanges[0].Changes[2].Commit
+
+	// Undo a known commit, that is old
+	test.TestRoute(t, api, true, "POST", "/api/v0/blueprints/undo/test-old-changes/"+commit, ``, http.StatusOK, `{"status":true}`)
+
+	// Check to make sure the undo is not present (can't undo something not there)
+	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"Change tmux version","revision":null,"timestamp":""},{"commit":"","message":"Add tmux package","revision":null,"timestamp":""},{"commit":"","message":"Initial commit","revision":null,"timestamp":""}],"name":"test-old-changes","total":3}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
+
+	// Check to make sure it didn't create an empty blueprint
+	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/list", ``, http.StatusOK, `{"total":1,"offset":0,"limit":1,"blueprints":["test-old-changes"]}`)
+
+	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/test-old-changes", ``)
+}
+
+// TestNewBlueprintsUndo run tests with blueprint changes without a service restart
+func TestNewBlueprintsUndo(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "weldr-tests-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
