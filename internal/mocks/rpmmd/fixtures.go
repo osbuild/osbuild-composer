@@ -182,3 +182,20 @@ func BadFetch(tmpdir string) Fixture {
 		createBaseWorkersFixture(tmpdir),
 	}
 }
+
+func OldChangesFixture(tmpdir string) Fixture {
+	return Fixture{
+		fetchPackageList{
+			generatePackageList(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
+			nil,
+		},
+		depsolve{
+			createBaseDepsolveFixture(),
+			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
+			nil,
+		},
+		store.FixtureOldChanges(),
+		createBaseWorkersFixture(tmpdir),
+	}
+}
