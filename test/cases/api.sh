@@ -194,12 +194,10 @@ function cleanupAWS() {
   AWS_SNAPSHOT_ID="${AWS_SNAPSHOT_ID:-}"
 
   if [ -n "$AWS_CMD" ]; then
-    set +e
     $AWS_CMD ec2 terminate-instances --instance-ids "$AWS_INSTANCE_ID"
     $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
     $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
-    set -e
   fi
 }
 
@@ -219,9 +217,7 @@ function cleanupAWSS3() {
   AWS_CMD="${AWS_CMD:-}"
 
   if [ -n "$AWS_CMD" ]; then
-    set +e
     $AWS_CMD s3 rm "${S3_URI}"
-    set -e
   fi
 }
 
@@ -233,10 +229,8 @@ function cleanupGCP() {
   GCP_ZONE="${GCP_ZONE:-}"
 
   if [ -n "$GCP_CMD" ]; then
-    set +e
     $GCP_CMD compute instances delete --zone="$GCP_ZONE" "$GCP_INSTANCE_NAME"
     $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
-    set -e
   fi
 }
 
@@ -247,7 +241,6 @@ function cleanupAzure() {
 
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
-    set +e
     # Re-get the vm_details in case the VM creation is failed.
     [ -f "$WORKDIR/vm_details.json" ] || $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
     # Get all the resources ids
@@ -273,13 +266,13 @@ function cleanupAzure() {
     AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
     AZURE_CONNECTION_STRING=$($AZURE_CMD storage account show-connection-string --name "$AZURE_STORAGE_ACCOUNT" | jq -r .connectionString)
     $AZURE_CMD storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT" --connection-string "$AZURE_CONNECTION_STRING"
-    set -e
   fi
 }
 
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
 function cleanup() {
+  set +eu
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
       cleanupAWS
@@ -300,6 +293,7 @@ function cleanup() {
   for P in "${KILL_PIDS[@]}"; do
       sudo pkill -P "$P"
   done
+  set -eu
 }
 trap cleanup EXIT
 
