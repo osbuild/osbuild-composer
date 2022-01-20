@@ -131,6 +131,9 @@ func (s *Store) ListBlueprints() []string {
 
 	names := make([]string, 0, len(s.blueprints))
 	for name := range s.blueprints {
+		if len(name) == 0 {
+			continue
+		}
 		names = append(names, name)
 	}
 	sort.Strings(names)
