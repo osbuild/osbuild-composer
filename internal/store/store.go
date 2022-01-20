@@ -198,6 +198,10 @@ func (s *Store) GetBlueprintChanges(name string) []blueprint.Change {
 
 func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 	return s.change(func() error {
+		if len(bp.Name) == 0 {
+			return fmt.Errorf("empty blueprint name not allowed")
+		}
+
 		commit, err := randomSHA1String()
 		if err != nil {
 			return err
@@ -237,6 +241,10 @@ func (s *Store) PushBlueprint(bp blueprint.Blueprint, commitMsg string) error {
 
 func (s *Store) PushBlueprintToWorkspace(bp blueprint.Blueprint) error {
 	return s.change(func() error {
+		if len(bp.Name) == 0 {
+			return fmt.Errorf("empty blueprint name not allowed")
+		}
+
 		// Make sure the blueprint has default values and that the version is valid
 		err := bp.Initialize()
 		if err != nil {
