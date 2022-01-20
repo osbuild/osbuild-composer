@@ -2021,6 +2021,15 @@ func (api *API) blueprintUndoHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	bp := bpChange.Blueprint
+	if len(bpChange.Blueprint.Name) == 0 {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: fmt.Sprintf("no blueprint found for commit %s", commit),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	commitMsg := name + ".toml reverted to commit " + commit
 	err = api.store.PushBlueprint(bp, commitMsg)
 	if err != nil {
