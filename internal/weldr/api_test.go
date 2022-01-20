@@ -629,7 +629,7 @@ func TestOldBlueprintsUndo(t *testing.T) {
 	commit := changes.BlueprintsChanges[0].Changes[2].Commit
 
 	// Undo a known commit, that is old
-	test.TestRoute(t, api, true, "POST", "/api/v0/blueprints/undo/test-old-changes/"+commit, ``, http.StatusOK, `{"status":true}`)
+	test.TestRoute(t, api, true, "POST", "/api/v0/blueprints/undo/test-old-changes/"+commit, ``, http.StatusBadRequest, `{"errors":[{"id":"BlueprintsError", "msg":"empty blueprint name not allowed"}], "status":false}`)
 
 	// Check to make sure the undo is not present (can't undo something not there)
 	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"Change tmux version","revision":null,"timestamp":""},{"commit":"","message":"Add tmux package","revision":null,"timestamp":""},{"commit":"","message":"Initial commit","revision":null,"timestamp":""}],"name":"test-old-changes","total":3}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
