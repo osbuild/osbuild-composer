@@ -201,6 +201,33 @@ Regression:
       - "*.repo"
     when: always
 
+
+Image Tests:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/image_tests.sh
+  interruptible: true
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-8.6-nightly-aarch64
+          # See https://github.com/osbuild/osbuild-composer/issues/1819 and related issues
+          - aws/rhel-9.0-nightly-x86_64
+          - aws/rhel-9.0-nightly-aarch64
+        INTERNAL_NETWORK: ["true"]
+  artifacts:
+    paths:
+      - journal-log.gpg
+      - "*.repo"
+    when: always
+
+
 Test Case Generation:
   stage: test
   extends: .terraform
