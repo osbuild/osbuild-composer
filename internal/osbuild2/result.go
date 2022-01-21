@@ -17,6 +17,45 @@ type Result struct {
 	Metadata map[string]PipelineMetadata `json:"metadata"`
 }
 
+type OsbuildLogStage struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+}
+
+type OsbuildLogPipeline struct {
+	Name  string           `json:"name"`
+	Id    string           `json:"id"`
+	Stage *OsbuildLogStage `json:"stage:omitempty"`
+}
+
+type OsbuildLogContext struct {
+	Origin    string              `json:"origin"`
+	Id        string              `json:"id"`
+	Piepeline *OsbuildLogPipeline `json:"pipeline,omitempty"`
+}
+
+type OSBuildLogStageProgress struct {
+	Name  string `json:"name"`
+	Total int    `json:"total"`
+	Done  int    `json:"done"`
+	Unit  string `json:"unit,omitempty"`
+}
+
+type OSBuildLogPipelineProgress struct {
+	Name     string                  `json:"name"`
+	Total    int                     `json:"total"`
+	Done     int                     `json:"done"`
+	Unit     string                  `json:"unit,omitempty"`
+	Progress OSBuildLogStageProgress `json:"progress:omitempty"`
+}
+
+type OsbuildLog struct {
+	Message  string                     `json:"message"`
+	Error    json.RawMessage            `json:"error,omitempty"`
+	Context  OsbuildLogContext          `json:"context"`
+	Progress OSBuildLogPipelineProgress `json:"progress"`
+}
+
 type PipelineResult []StageResult
 
 type StageResult struct {
