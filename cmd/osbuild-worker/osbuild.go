@@ -66,6 +66,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 	defer logrus.SetReportCaller(true)
 
 	var result osbuild.Result
+	var previous_log *osbuild.OsbuildLog
+	previous_log = nil
 	for scanner.Scan() {
 		var log *osbuild.OsbuildLog
 		//try to decode the received json as a message if it fails, then
@@ -76,7 +78,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 				return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, scanner.Text())
 			}
 		} else {
-			logrus.Debugf(log.Message)
+			log.Print(previous_log)
+			previous_log = log
 		}
 	}
 
