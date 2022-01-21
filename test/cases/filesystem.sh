@@ -175,9 +175,11 @@ greenprint "💬 Checking mountpoints"
 INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
-for MOUNTPOINT in '/var' '/usr' '/' '/var/log'; do
+for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/usr'; do
   EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
-  if ! $EXISTS; then
+  if $EXISTS; then
+    greenprint "INFO: mountpoint $MOUNTPOINT exists"
+  else
     FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
   fi
 done
