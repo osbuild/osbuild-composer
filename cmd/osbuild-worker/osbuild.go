@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/sirupsen/logrus"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
@@ -21,7 +22,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,
-		"--json", "-",
+		"--json",
+		"--json-mode", "progress", "-",
 	)
 
 	for _, export := range exports {
@@ -34,8 +36,7 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
 	}
 
-	var stdoutBuffer bytes.Buffer
-	cmd.Stdout = &stdoutBuffer
+	stdout, _ := cmd.StdoutPipe()
 
 	err = cmd.Start()
 	if err != nil {
@@ -52,15 +53,34 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		return nil, fmt.Errorf("error closing osbuild's stdin: %v", err)
 	}
 
-	err = cmd.Wait()
+	// Get the logs from osbuild as they come though stdout.
+	scanner := bufio.NewScanner(stdout)
+	buf := make([]byte, 0, 64*1024)
+	//authorize the scanner to allocate memory up until 4MB.
+	scanner.Buffer(buf, 4*1024*1024)
 
-	// try to decode the output even though the job could have failed
+	//deactivate line number and file name for these logs as it makes everything confusing without adding valuable
+	//information
+	logrus.Debugln("Get and print logs from Osbuild")
+	logrus.SetReportCaller(false)
+	defer logrus.SetReportCaller(true)
+
 	var result osbuild.Result
-	decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &result)
-	if decodeErr != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
+	for scanner.Scan() {
+		var log *osbuild.OsbuildLog
+		//try to decode the received json as a message if it fails, then
+		decodeErr := json.Unmarshal(scanner.Bytes(), &log)
+		if decodeErr != nil {
+			decodeErr := json.Unmarshal(scanner.Bytes(), &result)
+			if decodeErr != nil {
+				return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, scanner.Text())
+			}
+		} else {
+			logrus.Debug(log.Message)
+		}
 	}
 
+	err = cmd.Wait()
 	if err != nil {
 		// ignore ExitError if output could be decoded correctly
 		if _, isExitError := err.(*exec.ExitError); !isExitError {
