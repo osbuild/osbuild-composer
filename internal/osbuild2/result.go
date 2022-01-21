@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"github.com/sirupsen/logrus"
 )
 
 type Result struct {
@@ -18,14 +19,14 @@ type Result struct {
 }
 
 type OsbuildLogStage struct {
-	Name string `json:"name"`
-	Id   string `json:"id"`
+	Name *string `json:"name,omitempty"`
+	Id   *string `json:"id,omitempty"`
 }
 
 type OsbuildLogPipeline struct {
-	Name  string           `json:"name"`
-	Id    string           `json:"id"`
-	Stage *OsbuildLogStage `json:"stage:omitempty"`
+	Name  *string          `json:"name,omitempty"`
+	Id    *string          `json:"id,omitempty"`
+	Stage *OsbuildLogStage `json:"stage,omitempty"`
 }
 
 type OsbuildLogContext struct {
@@ -35,25 +36,26 @@ type OsbuildLogContext struct {
 }
 
 type OSBuildLogStageProgress struct {
-	Name  string `json:"name"`
-	Total int    `json:"total"`
-	Done  int    `json:"done"`
-	Unit  string `json:"unit,omitempty"`
+	Name  string  `json:"name"`
+	Total int     `json:"total"`
+	Done  *int    `json:"done,omitempty"`
+	Unit  *string `json:"unit,omitempty"`
 }
 
 type OSBuildLogPipelineProgress struct {
-	Name     string                  `json:"name"`
-	Total    int                     `json:"total"`
-	Done     int                     `json:"done"`
-	Unit     string                  `json:"unit,omitempty"`
-	Progress OSBuildLogStageProgress `json:"progress:omitempty"`
+	Name     string                   `json:"name"`
+	Total    int                      `json:"total"`
+	Done     *int                     `json:"done,omitempty"`
+	Unit     *string                  `json:"unit,omitempty"`
+	Progress *OSBuildLogStageProgress `json:"progress,omitempty"`
 }
 
 type OsbuildLog struct {
-	Message  string                     `json:"message"`
-	Error    json.RawMessage            `json:"error,omitempty"`
-	Context  OsbuildLogContext          `json:"context"`
-	Progress OSBuildLogPipelineProgress `json:"progress"`
+	Message   string                     `json:"message"`
+	Error     *json.RawMessage           `json:"error,omitempty"`
+	Context   OsbuildLogContext          `json:"context"`
+	Progress  OSBuildLogPipelineProgress `json:"progress"`
+	Timestamp float64                    `json:"timestamp"`
 }
 
 type PipelineResult []StageResult
@@ -302,4 +304,66 @@ func isV1Result(data []byte) (bool, error) {
 	}
 
 	return v1ResultStub.Build != nil || v1ResultStub.Stages != nil || v1ResultStub.Assembler != nil, nil
+}
+
+func (stage *OsbuildLogStage) is_equals(other_stage *OsbuildLogStage) bool {
+	if stage.Name != other_stage.Name {
+		return false
+	} else {
+		return stage.Id == other_stage.Id
+	}
+}
+
+func (pipeline *OsbuildLogPipeline) is_equals(other_pipeline *OsbuildLogPipeline) bool {
+	if pipeline.Name != other_pipeline.Name {
+		return false
+	} else {
+		if pipeline.Id != other_pipeline.Id {
+			return false
+		} else {
+			if pipeline.Stage != nil {
+				return pipeline.Stage.is_equals(other_pipeline.Stage)
+			} else {
+				return other_pipeline.Stage == nil
+			}
+		}
+	}
+}
+
+func (context *OsbuildLogContext) is_equals(other_context *OsbuildLogContext) bool {
+	if context.Origin != other_context.Origin {
+		return false
+	} else {
+		if context.Piepeline != nil {
+			return context.Piepeline.is_equals(other_context.Piepeline)
+		} else {
+			return other_context.Piepeline == nil
+		}
+	}
+}
+
+func (context *OsbuildLogContext) printHeader() {
+	if context.Piepeline == nil || context.Piepeline.Name == nil {
+		logrus.Debugf("%s", context.Origin)
+	} else {
+		if context.Piepeline.Stage == nil || context.Piepeline.Stage.Name == nil {
+			logrus.Debugf("%s from pipeline %s", context.Origin, *context.Piepeline.Name)
+		} else {
+			logrus.Debugf("%s from pipeline %s on stage %s",
+				context.Origin,
+				*context.Piepeline.Name,
+				*context.Piepeline.Stage.Name)
+		}
+	}
+}
+
+func (osLog *OsbuildLog) Print(previous *OsbuildLog) {
+	if previous != nil {
+		if !osLog.Context.is_equals(&previous.Context) {
+			osLog.Context.printHeader()
+		}
+	} else {
+		osLog.Context.printHeader()
+	}
+	logrus.Debugf("    %s", osLog.Message)
 }
