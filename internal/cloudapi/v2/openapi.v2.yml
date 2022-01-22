@@ -354,6 +354,8 @@ components:
         properties:
           image_status:
             $ref: '#/components/schemas/ImageStatus'
+          koji_status:
+            $ref: '#/components/schemas/KojiStatus'
     ImageStatus:
       required:
        - status
@@ -430,6 +432,12 @@ components:
         image_name:
           type: string
           example: 'my-image'
+    KojiStatus:
+      type: object
+      properties:
+        build_id:
+          type: integer
+          example: 42
 
     ComposeMetadata:
       allOf:
@@ -482,6 +490,8 @@ components:
           $ref: '#/components/schemas/ImageRequest'
         customizations:
           $ref: '#/components/schemas/Customizations'
+        koji:
+          $ref: '#/components/schemas/Koji'
     ImageRequest:
       required:
         - architecture
@@ -733,7 +743,31 @@ components:
           key:
             type: string
             example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
-
+    Koji:
+      type: object
+      required:
+        - server
+        - task_id
+        - name
+        - version
+        - release
+      properties:
+        server:
+          type: string
+          format: url
+          example: 'https://koji.fedoraproject.org/kojihub'
+        task_id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Fedora-Cloud-Base
+        version:
+          type: string
+          example: '31'
+        release:
+          type: string
+          example: '20200907.0'
     ComposeId:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'

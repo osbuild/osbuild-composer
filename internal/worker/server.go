@@ -103,6 +103,10 @@ func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uui
 	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
 }
 
+func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID) (uuid.UUID, error) {
+	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID})
+}
+
 func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
 	return s.jobs.Enqueue("koji-init", job, nil)
 }

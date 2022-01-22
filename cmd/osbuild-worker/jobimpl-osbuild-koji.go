@@ -87,6 +87,29 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	// In case the manifest is empty, try to get it from dynamic args
+	if len(args.Manifest) == 0 {
+		if job.NDynamicArgs() > 1 {
+			var manifestJR worker.ManifestJobByIDResult
+			err = job.DynamicArgs(1, &manifestJR)
+			if err != nil {
+				return err
+			}
+
+			// skip the job if the manifest generation failed
+			if manifestJR.JobError != nil {
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed")
+				return nil
+			}
+			args.Manifest = manifestJR.Manifest
+			if len(args.Manifest) == 0 {
+				return fmt.Errorf("received empty manifest")
+			}
+		} else {
+			return fmt.Errorf("job has no manifest")
+		}
+	}
+
 	if initArgs.JobError == nil {
 		exports := args.Exports
 		if len(exports) == 0 {
