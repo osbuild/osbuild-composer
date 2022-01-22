@@ -52,7 +52,7 @@ type KojiInitJobResult struct {
 }
 
 type OSBuildKojiJob struct {
-	Manifest      distro.Manifest `json:"manifest"`
+	Manifest      distro.Manifest `json:"manifest,omitempty"`
 	ImageName     string          `json:"image_name"`
 	Exports       []string        `json:"exports"`
 	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`

@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -125,6 +126,25 @@ func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
 		return HTTPError(ErrorErrorNotFound)
 	}
 	return ctx.JSON(http.StatusOK, apiError)
+}
+
+// splitExtension returns the extension of the given file. If there's
+// a multipart extension (e.g. file.tar.gz), it returns all parts (e.g.
+// .tar.gz). If there's no extension in the input, it returns an empty
+// string. If the filename starts with dot, the part before the second dot
+// is not considered as an extension.
+func splitExtension(filename string) string {
+	filenameParts := strings.Split(filename, ".")
+
+	if len(filenameParts) > 0 && filenameParts[0] == "" {
+		filenameParts = filenameParts[1:]
+	}
+
+	if len(filenameParts) <= 1 {
+		return ""
+	}
+
+	return "." + strings.Join(filenameParts[1:], ".")
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -411,16 +431,69 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	id, err := h.server.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
-		Targets: []*target.Target{irTarget},
-		Exports: imageType.Exports(),
-		PipelineNames: &worker.PipelineNames{
-			Build:   imageType.BuildPipelines(),
-			Payload: imageType.PayloadPipelines(),
-		},
-	}, manifestJobID)
-	if err != nil {
-		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	var id uuid.UUID
+	if request.Koji != nil {
+		kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
+
+		initID, err := h.server.workers.EnqueueKojiInit(&worker.KojiInitJob{
+			Server:  request.Koji.Server,
+			Name:    request.Koji.Name,
+			Version: request.Koji.Version,
+			Release: request.Koji.Release,
+		})
+		if err != nil {
+			// This is a programming error.
+			panic(err)
+		}
+		kojiFilename := fmt.Sprintf(
+			"%s-%s-%s.%s%s",
+			request.Koji.Name,
+			request.Koji.Version,
+			request.Koji.Release,
+			arch.Name(),
+			splitExtension(imageType.Filename()),
+		)
+		buildID, err := h.server.workers.EnqueueOSBuildKojiAsDependency(arch.Name(), &worker.OSBuildKojiJob{
+			ImageName: imageType.Filename(),
+			Exports:   imageType.Exports(),
+			PipelineNames: &worker.PipelineNames{
+				Build:   imageType.BuildPipelines(),
+				Payload: imageType.PayloadPipelines(),
+			},
+			KojiServer:    request.Koji.Server,
+			KojiDirectory: kojiDirectory,
+			KojiFilename:  kojiFilename,
+		}, manifestJobID, initID)
+		if err != nil {
+			// This is a programming error.
+			panic(err)
+		}
+		id, err = h.server.workers.EnqueueKojiFinalize(&worker.KojiFinalizeJob{
+			Server:        request.Koji.Server,
+			Name:          request.Koji.Name,
+			Version:       request.Koji.Version,
+			Release:       request.Koji.Release,
+			KojiFilenames: []string{kojiFilename},
+			KojiDirectory: kojiDirectory,
+			TaskID:        uint64(request.Koji.TaskId),
+			StartTime:     uint64(time.Now().Unix()),
+		}, initID, []uuid.UUID{buildID})
+		if err != nil {
+			// This is a programming error.
+			panic(err)
+		}
+	} else {
+		id, err = h.server.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
+			Targets: []*target.Target{irTarget},
+			Exports: imageType.Exports(),
+			PipelineNames: &worker.PipelineNames{
+				Build:   imageType.BuildPipelines(),
+				Payload: imageType.PayloadPipelines(),
+			},
+		}, manifestJobID)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		}
 	}
 
 	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get("operationID"))
@@ -553,75 +626,120 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		return HTTPError(ErrorInvalidComposeId)
 	}
 
-	var result worker.OSBuildJobResult
-	status, _, err := h.server.workers.JobStatus(jobId, &result)
+	jobType, _, _, err := h.server.workers.Job(jobId, nil)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	var us *UploadStatus
-	if result.TargetResults != nil {
-		// Only single upload target is allowed, therefore only a single upload target result is allowed as well
-		if len(result.TargetResults) != 1 {
-			return HTTPError(ErrorSeveralUploadTargets)
-		}
-		tr := *result.TargetResults[0]
-
-		var uploadType UploadTypes
-		var uploadOptions interface{}
-
-		switch tr.Name {
-		case "org.osbuild.aws":
-			uploadType = UploadTypesAws
-			awsOptions := tr.Options.(*target.AWSTargetResultOptions)
-			uploadOptions = AWSEC2UploadStatus{
-				Ami:    awsOptions.Ami,
-				Region: awsOptions.Region,
-			}
-		case "org.osbuild.aws.s3":
-			uploadType = UploadTypesAwsS3
-			awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
-			uploadOptions = AWSS3UploadStatus{
-				Url: awsOptions.URL,
-			}
-		case "org.osbuild.gcp":
-			uploadType = UploadTypesGcp
-			gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
-			uploadOptions = GCPUploadStatus{
-				ImageName: gcpOptions.ImageName,
-				ProjectId: gcpOptions.ProjectID,
-			}
-		case "org.osbuild.azure.image":
-			uploadType = UploadTypesAzure
-			gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
-			uploadOptions = AzureUploadStatus{
-				ImageName: gcpOptions.ImageName,
-			}
-		default:
-			return HTTPError(ErrorUnknownUploadTarget)
+	if strings.HasPrefix(jobType, "osbuild:") {
+		var result worker.OSBuildJobResult
+		status, _, err := h.server.workers.JobStatus(jobId, &result)
+		if err != nil {
+			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 
-		us = &UploadStatus{
-			Status:  UploadStatusValue(result.UploadStatus),
-			Type:    uploadType,
-			Options: uploadOptions,
+		var us *UploadStatus
+		if result.TargetResults != nil {
+			// Only single upload target is allowed, therefore only a single upload target result is allowed as well
+			if len(result.TargetResults) != 1 {
+				return HTTPError(ErrorSeveralUploadTargets)
+			}
+			tr := *result.TargetResults[0]
+
+			var uploadType UploadTypes
+			var uploadOptions interface{}
+
+			switch tr.Name {
+			case "org.osbuild.aws":
+				uploadType = UploadTypesAws
+				awsOptions := tr.Options.(*target.AWSTargetResultOptions)
+				uploadOptions = AWSEC2UploadStatus{
+					Ami:    awsOptions.Ami,
+					Region: awsOptions.Region,
+				}
+			case "org.osbuild.aws.s3":
+				uploadType = UploadTypesAwsS3
+				awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
+				uploadOptions = AWSS3UploadStatus{
+					Url: awsOptions.URL,
+				}
+			case "org.osbuild.gcp":
+				uploadType = UploadTypesGcp
+				gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
+				uploadOptions = GCPUploadStatus{
+					ImageName: gcpOptions.ImageName,
+					ProjectId: gcpOptions.ProjectID,
+				}
+			case "org.osbuild.azure.image":
+				uploadType = UploadTypesAzure
+				gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
+				uploadOptions = AzureUploadStatus{
+					ImageName: gcpOptions.ImageName,
+				}
+			default:
+				return HTTPError(ErrorUnknownUploadTarget)
+			}
+
+			us = &UploadStatus{
+				Status:  UploadStatusValue(result.UploadStatus),
+				Type:    uploadType,
+				Options: uploadOptions,
+			}
 		}
+
+		return ctx.JSON(http.StatusOK, ComposeStatus{
+			ObjectReference: ObjectReference{
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
+				Id:   jobId.String(),
+				Kind: "ComposeStatus",
+			},
+			ImageStatus: ImageStatus{
+				Status:       imageStatusFromOSBuildJobStatus(status, &result),
+				UploadStatus: us,
+			},
+		})
+	} else if jobType == "koji-finalize" {
+		var result worker.KojiFinalizeJobResult
+		_, deps, err := h.server.workers.JobStatus(jobId, &result)
+		if err != nil {
+			return HTTPError(ErrorMalformedOSBuildJobResult)
+		}
+		// TODO: support any number of builds
+		if len(deps) != 2 {
+			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
+		}
+		var initResult worker.KojiInitJobResult
+		_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+		if err != nil {
+			return HTTPError(ErrorMalformedOSBuildJobResult)
+		}
+		var buildResult worker.OSBuildKojiJobResult
+		buildJobStatus, _, err := h.server.workers.JobStatus(deps[1], &buildResult)
+		if err != nil {
+			return HTTPError(ErrorMalformedOSBuildJobResult)
+		}
+		response := ComposeStatus{
+			ObjectReference: ObjectReference{
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
+				Id:   jobId.String(),
+				Kind: "ComposeStatus",
+			},
+			ImageStatus: ImageStatus{
+				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildResult),
+			},
+			KojiStatus: &KojiStatus{},
+		}
+		buildID := int(initResult.BuildID)
+		if buildID != 0 {
+			response.KojiStatus.BuildId = &buildID
+		}
+		return ctx.JSON(http.StatusOK, response)
+	} else {
+		return HTTPError(ErrorInvalidJobType)
 	}
-
-	return ctx.JSON(http.StatusOK, ComposeStatus{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
-			Id:   jobId.String(),
-			Kind: "ComposeStatus",
-		},
-		ImageStatus: ImageStatus{
-			Status:       composeStatusFromJobStatus(status, &result),
-			UploadStatus: us,
-		},
-	})
 }
 
-func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
+func imageStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
 	if js.Canceled {
 		return ImageStatusValueFailure
 	}
@@ -637,6 +755,30 @@ func composeStatusFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobR
 	}
 
 	if result.Success {
+		return ImageStatusValueSuccess
+	}
+
+	return ImageStatusValueFailure
+}
+
+func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) ImageStatusValue {
+	if js.Canceled {
+		return ImageStatusValueFailure
+	}
+
+	if initResult.KojiError != "" {
+		return ImageStatusValueFailure
+	}
+
+	if js.Started.IsZero() {
+		return ImageStatusValuePending
+	}
+
+	if js.Finished.IsZero() {
+		return ImageStatusValueBuilding
+	}
+
+	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == "" {
 		return ImageStatusValueSuccess
 	}
 

@@ -37,6 +37,8 @@ const (
 	ErrorMethodNotAllowed             ServiceErrorCode = 22
 	ErrorNotAcceptable                ServiceErrorCode = 23
 	ErrorNoBaseURLInPayloadRepository ServiceErrorCode = 24
+	ErrorInvalidNumberOfImageBuilds   ServiceErrorCode = 25
+	ErrorInvalidJobType               ServiceErrorCode = 26
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -54,6 +56,7 @@ const (
 	ErrorMalformedOSBuildJobResult                ServiceErrorCode = 1012
 	ErrorGettingDepsolveJobStatus                 ServiceErrorCode = 1013
 	ErrorDepsolveJobCanceled                      ServiceErrorCode = 1014
+	ErrorUnexpectedNumberOfImageBuilds            ServiceErrorCode = 1015
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -97,6 +100,8 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
 		serviceError{ErrorNoBaseURLInPayloadRepository, http.StatusBadRequest, "BaseURL must be specified for payload repositories"},
+		serviceError{ErrorInvalidJobType, http.StatusNotFound, "Requested job has invalid type"},
+		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -113,6 +118,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorMalformedOSBuildJobResult, http.StatusInternalServerError, "OSBuildJobResult does not have expected fields set"},
 		serviceError{ErrorGettingDepsolveJobStatus, http.StatusInternalServerError, "Unable to get depsolve job status"},
 		serviceError{ErrorDepsolveJobCanceled, http.StatusInternalServerError, "Depsolve job was cancelled"},
+		serviceError{ErrorUnexpectedNumberOfImageBuilds, http.StatusInternalServerError, "Compose has unexpected number of image builds"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
