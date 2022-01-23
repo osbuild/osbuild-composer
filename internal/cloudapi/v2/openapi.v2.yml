@@ -497,7 +497,6 @@ components:
         - architecture
         - image_type
         - repositories
-        - upload_options
       properties:
         architecture:
           type: string
