@@ -299,133 +299,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	var irTarget *target.Target
-	/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
-	switch ir.ImageType {
-	case ImageTypesAws:
-		var awsUploadOptions AWSEC2UploadOptions
-		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONMarshallingError)
-		}
-		err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONUnMarshallingError)
-		}
-
-		// For service maintenance, images are discovered by the "Name:composer-api-*"
-		// tag filter. Currently all image names in the service are generated, so they're
-		// guaranteed to be unique as well. If users are ever allowed to name their images,
-		// an extra tag should be added.
-		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-		t := target.NewAWSTarget(&target.AWSTargetOptions{
-			Filename:          imageType.Filename(),
-			Region:            awsUploadOptions.Region,
-			Bucket:            h.server.awsBucket,
-			Key:               key,
-			ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
-		})
-		if awsUploadOptions.SnapshotName != nil {
-			t.ImageName = *awsUploadOptions.SnapshotName
-		} else {
-			t.ImageName = key
-		}
-
-		irTarget = t
-	case ImageTypesGuestImage:
-		fallthrough
-	case ImageTypesVsphere:
-		fallthrough
-	case ImageTypesImageInstaller:
-		fallthrough
-	case ImageTypesEdgeInstaller:
-		fallthrough
-	case ImageTypesEdgeContainer:
-		fallthrough
-	case ImageTypesEdgeCommit:
-		var awsS3UploadOptions AWSS3UploadOptions
-		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONMarshallingError)
-		}
-		err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONUnMarshallingError)
-		}
-
-		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-		t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-			Filename: imageType.Filename(),
-			Region:   awsS3UploadOptions.Region,
-			Bucket:   h.server.awsBucket,
-			Key:      key,
-		})
-		t.ImageName = key
-
-		irTarget = t
-	case ImageTypesGcp:
-		var gcpUploadOptions GCPUploadOptions
-		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONMarshallingError)
-		}
-		err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONUnMarshallingError)
-		}
-
-		var share []string
-		if gcpUploadOptions.ShareWithAccounts != nil {
-			share = *gcpUploadOptions.ShareWithAccounts
-		}
-
-		object := fmt.Sprintf("composer-api-%s", uuid.New().String())
-		t := target.NewGCPTarget(&target.GCPTargetOptions{
-			Filename:          imageType.Filename(),
-			Region:            gcpUploadOptions.Region,
-			Os:                "", // not exposed in cloudapi for now
-			Bucket:            gcpUploadOptions.Bucket,
-			Object:            object,
-			ShareWithAccounts: share,
-		})
-		// Import will fail if an image with this name already exists
-		if gcpUploadOptions.ImageName != nil {
-			t.ImageName = *gcpUploadOptions.ImageName
-		} else {
-			t.ImageName = object
-		}
-
-		irTarget = t
-	case ImageTypesAzure:
-		var azureUploadOptions AzureUploadOptions
-		jsonUploadOptions, err := json.Marshal(ir.UploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONMarshallingError)
-		}
-		err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
-		if err != nil {
-			return HTTPError(ErrorJSONUnMarshallingError)
-		}
-		t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
-			Filename:       imageType.Filename(),
-			TenantID:       azureUploadOptions.TenantId,
-			Location:       azureUploadOptions.Location,
-			SubscriptionID: azureUploadOptions.SubscriptionId,
-			ResourceGroup:  azureUploadOptions.ResourceGroup,
-		})
-
-		if azureUploadOptions.ImageName != nil {
-			t.ImageName = *azureUploadOptions.ImageName
-		} else {
-			// if ImageName wasn't given, generate a random one
-			t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
-		}
-
-		irTarget = t
-	default:
-		return HTTPError(ErrorUnsupportedImageType)
-	}
-
 	manifestJobID, err := h.server.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobID)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -433,6 +306,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var id uuid.UUID
 	if request.Koji != nil {
+		if ir.UploadOptions != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+
 		kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
 
 		initID, err := h.server.workers.EnqueueKojiInit(&worker.KojiInitJob{
@@ -483,6 +360,136 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			panic(err)
 		}
 	} else {
+		var irTarget *target.Target
+		if ir.UploadOptions == nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+		/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
+		switch ir.ImageType {
+		case ImageTypesAws:
+			var awsUploadOptions AWSEC2UploadOptions
+			jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONMarshallingError)
+			}
+			err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONUnMarshallingError)
+			}
+
+			// For service maintenance, images are discovered by the "Name:composer-api-*"
+			// tag filter. Currently all image names in the service are generated, so they're
+			// guaranteed to be unique as well. If users are ever allowed to name their images,
+			// an extra tag should be added.
+			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			t := target.NewAWSTarget(&target.AWSTargetOptions{
+				Filename:          imageType.Filename(),
+				Region:            awsUploadOptions.Region,
+				Bucket:            h.server.awsBucket,
+				Key:               key,
+				ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
+			})
+			if awsUploadOptions.SnapshotName != nil {
+				t.ImageName = *awsUploadOptions.SnapshotName
+			} else {
+				t.ImageName = key
+			}
+
+			irTarget = t
+		case ImageTypesGuestImage:
+			fallthrough
+		case ImageTypesVsphere:
+			fallthrough
+		case ImageTypesImageInstaller:
+			fallthrough
+		case ImageTypesEdgeInstaller:
+			fallthrough
+		case ImageTypesEdgeContainer:
+			fallthrough
+		case ImageTypesEdgeCommit:
+			var awsS3UploadOptions AWSS3UploadOptions
+			jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONMarshallingError)
+			}
+			err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONUnMarshallingError)
+			}
+
+			key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
+				Filename: imageType.Filename(),
+				Region:   awsS3UploadOptions.Region,
+				Bucket:   h.server.awsBucket,
+				Key:      key,
+			})
+			t.ImageName = key
+
+			irTarget = t
+		case ImageTypesGcp:
+			var gcpUploadOptions GCPUploadOptions
+			jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONMarshallingError)
+			}
+			err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONUnMarshallingError)
+			}
+
+			var share []string
+			if gcpUploadOptions.ShareWithAccounts != nil {
+				share = *gcpUploadOptions.ShareWithAccounts
+			}
+
+			object := fmt.Sprintf("composer-api-%s", uuid.New().String())
+			t := target.NewGCPTarget(&target.GCPTargetOptions{
+				Filename:          imageType.Filename(),
+				Region:            gcpUploadOptions.Region,
+				Os:                "", // not exposed in cloudapi for now
+				Bucket:            gcpUploadOptions.Bucket,
+				Object:            object,
+				ShareWithAccounts: share,
+			})
+			// Import will fail if an image with this name already exists
+			if gcpUploadOptions.ImageName != nil {
+				t.ImageName = *gcpUploadOptions.ImageName
+			} else {
+				t.ImageName = object
+			}
+
+			irTarget = t
+		case ImageTypesAzure:
+			var azureUploadOptions AzureUploadOptions
+			jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONMarshallingError)
+			}
+			err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
+			if err != nil {
+				return HTTPError(ErrorJSONUnMarshallingError)
+			}
+			t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
+				Filename:       imageType.Filename(),
+				TenantID:       azureUploadOptions.TenantId,
+				Location:       azureUploadOptions.Location,
+				SubscriptionID: azureUploadOptions.SubscriptionId,
+				ResourceGroup:  azureUploadOptions.ResourceGroup,
+			})
+
+			if azureUploadOptions.ImageName != nil {
+				t.ImageName = *azureUploadOptions.ImageName
+			} else {
+				// if ImageName wasn't given, generate a random one
+				t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
+			}
+
+			irTarget = t
+		default:
+			return HTTPError(ErrorUnsupportedImageType)
+		}
+
 		id, err = h.server.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 			Targets: []*target.Target{irTarget},
 			Exports: imageType.Exports(),
