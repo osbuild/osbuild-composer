@@ -56,8 +56,8 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 	// Get the logs from osbuild as they come though stdout.
 	scanner := bufio.NewScanner(stdout)
 	buf := make([]byte, 0, 64*1024)
-	//authorize the scanner to allocate memory up until 1MB.
-	scanner.Buffer(buf, 1024*1024)
+	//authorize the scanner to allocate memory up until 4MB.
+	scanner.Buffer(buf, 4*1024*1024)
 
 	//deactivate line number and file name for these logs as it makes everything confusing without adding valuable
 	//information
