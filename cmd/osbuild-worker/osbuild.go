@@ -70,12 +70,17 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 	previous_log = nil
 	for scanner.Scan() {
 		var log *osbuild.OsbuildLog
-		//try to decode the received json as a message if it fails, then
-		decodeErr := json.Unmarshal(scanner.Bytes(), &log)
-		if decodeErr != nil {
+		// There's only two types of json we get out of osbuild stdout:
+		// * OsbuildLog
+		// * osbuild.Result
+		// As the most common one is OsbuildLog, try to decode this one first
+		if json.Unmarshal(scanner.Bytes(), &log) != nil {
 			decodeErr := json.Unmarshal(scanner.Bytes(), &result)
 			if decodeErr != nil {
 				return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, scanner.Text())
+			} else {
+				// no need to continue reading stdout after successfully getting the osbuild.Result object
+				break
 			}
 		} else {
 			log.Print(previous_log)
