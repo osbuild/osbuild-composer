@@ -343,10 +343,10 @@ func (context *OsbuildLogContext) is_equals(other_context *OsbuildLogContext) bo
 }
 
 func (context *OsbuildLogContext) printHeader() {
-	if context.Piepeline == nil {
+	if context.Piepeline == nil || context.Piepeline.Name == nil {
 		logrus.Debugf("%s", context.Origin)
 	} else {
-		if context.Piepeline.Stage == nil {
+		if context.Piepeline.Stage == nil || context.Piepeline.Stage.Name == nil {
 			logrus.Debugf("%s from pipeline %s", context.Origin, *context.Piepeline.Name)
 		} else {
 			logrus.Debugf("%s from pipeline %s on stage %s",
