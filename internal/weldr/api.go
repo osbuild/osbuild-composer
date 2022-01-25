@@ -2496,12 +2496,12 @@ func (api *API) composeCancelHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	composeStatus := api.getComposeStatus(compose)
-	if composeStatus.State == ComposeWaiting {
+	if composeStatus.State != ComposeWaiting && composeStatus.State != ComposeRunning {
 		errors := responseError{
 			ID:  "BuildInWrongState",
-			Msg: fmt.Sprintf("Build %s has not started yet. No logs to view.", uuidString),
+			Msg: fmt.Sprintf("Build %s is not in WAITING or RUNNING.", uuidString),
 		}
-		statusResponseError(writer, http.StatusOK, errors) // weirdly, Lorax returns 200 in this case
+		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
