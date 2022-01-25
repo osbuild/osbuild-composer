@@ -315,7 +315,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "building"}
+		"image_status": {"status": "building"},
+		"status": "pending"
 	}`, jobId, jobId))
 
 	res, err := json.Marshal(&worker.OSBuildJobResult{
@@ -330,7 +331,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "success"}
+		"image_status": {"status": "success"},
+		"status": "success"
 	}`, jobId, jobId))
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusInternalServerError, `
@@ -379,7 +381,8 @@ func TestComposeStatusFailure(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "building"}
+		"image_status": {"status": "building"},
+		"status": "pending"
 	}`, jobId, jobId))
 
 	err = wrksrv.FinishJob(token, nil)
@@ -389,7 +392,8 @@ func TestComposeStatusFailure(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"}
+		"image_status": {"status": "failure"},
+		"status": "failure"
 	}`, jobId, jobId))
 }
 
@@ -429,7 +433,8 @@ func TestComposeLegacyError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "building"}
+		"image_status": {"status": "building"},
+		"status": "pending"
 	}`, jobId, jobId))
 
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{TargetErrors: []string{"Osbuild failed"}})
@@ -442,7 +447,8 @@ func TestComposeLegacyError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"}
+		"image_status": {"status": "failure"},
+		"status": "failure"
 	}`, jobId, jobId))
 }
 
@@ -482,7 +488,8 @@ func TestComposeJobError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "building"}
+		"image_status": {"status": "building"},
+		"status": "pending"
 	}`, jobId, jobId))
 
 	jobErr := worker.JobResult{
@@ -498,7 +505,8 @@ func TestComposeJobError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"}
+		"image_status": {"status": "failure"},
+		"status": "failure"
 	}`, jobId, jobId))
 }
 

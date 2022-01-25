@@ -350,12 +350,22 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - type: object
         required:
+          - status
           - image_status
         properties:
+          status:
+            $ref: '#/components/schemas/ComposeStatusValue'
           image_status:
             $ref: '#/components/schemas/ImageStatus'
           koji_status:
             $ref: '#/components/schemas/KojiStatus'
+    ComposeStatusValue:
+      type: string
+      enum:
+        - success
+        - failure
+        - pending
+      example: success
     ImageStatus:
       required:
        - status
