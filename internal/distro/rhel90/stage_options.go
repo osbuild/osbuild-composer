@@ -85,18 +85,32 @@ func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageO
 }
 
 func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
-	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+1)
+	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+2)
 	// workaround for creating authorized_keys file for user
+	// need to special case the root user, which has its home in a different place
 	varhome := filepath.Join("/var", "home")
+	roothome := filepath.Join("/var", "roothome")
+
 	for name, user := range usersStageOptions.Users {
 		if user.Key != nil {
-			sshdir := filepath.Join(varhome, name, ".ssh")
+			var home string
+
+			if name == "root" {
+				home = roothome
+			} else {
+				home = filepath.Join(varhome, name)
+			}
+
+			sshdir := filepath.Join(home, ".ssh")
+
 			cmds = append(cmds, fmt.Sprintf("mkdir -p %s", sshdir))
 			cmds = append(cmds, fmt.Sprintf("sh -c 'echo %q >> %q'", *user.Key, filepath.Join(sshdir, "authorized_keys")))
 			cmds = append(cmds, fmt.Sprintf("chown %s:%s -Rc %s", name, name, sshdir))
 		}
 	}
 	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", varhome))
+	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", roothome))
+
 	options := &osbuild.FirstBootStageOptions{
 		Commands:       cmds,
 		WaitForNetwork: false,
