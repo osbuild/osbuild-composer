@@ -700,6 +700,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 				Id:   jobId.String(),
 				Kind: "ComposeStatus",
 			},
+			Status: composeStatusFromOSBuildJobStatus(status, &result),
 			ImageStatus: ImageStatus{
 				Status:       imageStatusFromOSBuildJobStatus(status, &result),
 				UploadStatus: us,
@@ -707,7 +708,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		})
 	} else if jobType == "koji-finalize" {
 		var result worker.KojiFinalizeJobResult
-		_, deps, err := h.server.workers.JobStatus(jobId, &result)
+		finalizeStatus, deps, err := h.server.workers.JobStatus(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -731,6 +732,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 				Id:   jobId.String(),
 				Kind: "ComposeStatus",
 			},
+			Status: composeStatusFromKojiJobStatus(finalizeStatus, &initResult, []worker.OSBuildKojiJobResult{buildResult}, &result),
 			ImageStatus: ImageStatus{
 				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildResult),
 			},
@@ -773,7 +775,7 @@ func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiI
 		return ImageStatusValueFailure
 	}
 
-	if initResult.KojiError != "" {
+	if initResult.JobError != nil {
 		return ImageStatusValueFailure
 	}
 
@@ -785,11 +787,53 @@ func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiI
 		return ImageStatusValueBuilding
 	}
 
-	if buildResult.OSBuildOutput != nil && buildResult.OSBuildOutput.Success && buildResult.KojiError == "" {
-		return ImageStatusValueSuccess
+	if buildResult.JobError != nil {
+		return ImageStatusValueFailure
 	}
 
-	return ImageStatusValueFailure
+	return ImageStatusValueSuccess
+}
+
+func composeStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ComposeStatusValue {
+	if js.Canceled {
+		return ComposeStatusValueFailure
+	}
+
+	if js.Finished.IsZero() {
+		return ComposeStatusValuePending
+	}
+
+	if result.Success {
+		return ComposeStatusValueSuccess
+	}
+
+	return ComposeStatusValueFailure
+}
+
+func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildKojiJobResult, result *worker.KojiFinalizeJobResult) ComposeStatusValue {
+	if js.Canceled {
+		return ComposeStatusValueFailure
+	}
+
+	if js.Finished.IsZero() {
+		return ComposeStatusValuePending
+	}
+
+	if initResult.JobError != nil {
+		return ComposeStatusValueFailure
+	}
+
+	for _, buildResult := range buildResults {
+		if buildResult.JobError != nil {
+			return ComposeStatusValueFailure
+		}
+	}
+
+	if result.JobError != nil {
+		return ComposeStatusValueFailure
+	}
+
+	return ComposeStatusValueSuccess
 }
 
 // ComposeMetadata handles a /composes/{id}/metadata GET request
