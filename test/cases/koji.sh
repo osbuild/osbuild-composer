@@ -11,6 +11,11 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    greenprint "INFO: Test not supported during nightly CI pipelines. Exiting ..."
+    exit 0
+fi
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
