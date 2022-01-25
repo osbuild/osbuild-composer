@@ -19,14 +19,14 @@ type Result struct {
 }
 
 type OsbuildLogStage struct {
-	Name string `json:"name"`
-	Id   string `json:"id"`
+	Name *string `json:"name,omitempty"`
+	Id   *string `json:"id,omitempty"`
 }
 
 type OsbuildLogPipeline struct {
-	Name  string           `json:"name"`
-	Id    string           `json:"id"`
-	Stage *OsbuildLogStage `json:"stage:omitempty"`
+	Name  *string          `json:"name,omitempty"`
+	Id    *string          `json:"id,omitempty"`
+	Stage *OsbuildLogStage `json:"stage,omitempty"`
 }
 
 type OsbuildLogContext struct {
@@ -36,25 +36,26 @@ type OsbuildLogContext struct {
 }
 
 type OSBuildLogStageProgress struct {
-	Name  string `json:"name"`
-	Total int    `json:"total"`
-	Done  int    `json:"done"`
-	Unit  string `json:"unit,omitempty"`
+	Name  string  `json:"name"`
+	Total int     `json:"total"`
+	Done  *int    `json:"done,omitempty"`
+	Unit  *string `json:"unit,omitempty"`
 }
 
 type OSBuildLogPipelineProgress struct {
-	Name     string                  `json:"name"`
-	Total    int                     `json:"total"`
-	Done     int                     `json:"done"`
-	Unit     string                  `json:"unit,omitempty"`
-	Progress OSBuildLogStageProgress `json:"progress:omitempty"`
+	Name     string                   `json:"name"`
+	Total    int                      `json:"total"`
+	Done     *int                     `json:"done,omitempty"`
+	Unit     *string                  `json:"unit,omitempty"`
+	Progress *OSBuildLogStageProgress `json:"progress,omitempty"`
 }
 
 type OsbuildLog struct {
-	Message  string                     `json:"message"`
-	Error    json.RawMessage            `json:"error,omitempty"`
-	Context  OsbuildLogContext          `json:"context"`
-	Progress OSBuildLogPipelineProgress `json:"progress"`
+	Message   string                     `json:"message"`
+	Error     *json.RawMessage           `json:"error,omitempty"`
+	Context   OsbuildLogContext          `json:"context"`
+	Progress  OSBuildLogPipelineProgress `json:"progress"`
+	Timestamp float64                    `json:"timestamp"`
 }
 
 type PipelineResult []StageResult
@@ -346,12 +347,12 @@ func (context *OsbuildLogContext) printHeader() {
 		logrus.Debugf("%s", context.Origin)
 	} else {
 		if context.Piepeline.Stage == nil {
-			logrus.Debugf("%s from pipeline %s", context.Origin, context.Piepeline.Name)
+			logrus.Debugf("%s from pipeline %s", context.Origin, *context.Piepeline.Name)
 		} else {
 			logrus.Debugf("%s from pipeline %s on stage %s",
 				context.Origin,
-				context.Piepeline.Name,
-				context.Piepeline.Stage.Name)
+				*context.Piepeline.Name,
+				*context.Piepeline.Stage.Name)
 		}
 	}
 }

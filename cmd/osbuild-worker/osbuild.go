@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -74,12 +75,18 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		// * OsbuildLog
 		// * osbuild.Result
 		// As the most common one is OsbuildLog, try to decode this one first
-		if json.Unmarshal(scanner.Bytes(), &log) != nil {
-			decodeErr := json.Unmarshal(scanner.Bytes(), &result)
+		b := scanner.Bytes()
+		dec := json.NewDecoder(bytes.NewReader(b))
+		dec.DisallowUnknownFields()
+		decodeErr := dec.Decode(&log) != nil
+		if decodeErr {
+			decodeErr := json.Unmarshal(b, &result)
 			if decodeErr != nil {
+				logrus.Debugf("failed to parse manifest")
 				return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, scanner.Text())
 			} else {
 				// no need to continue reading stdout after successfully getting the osbuild.Result object
+				logrus.Debugf("received manifest")
 				break
 			}
 		} else {
