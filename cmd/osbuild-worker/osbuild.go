@@ -42,9 +42,9 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		return nil, fmt.Errorf("error starting osbuild: %v", err)
 	}
 
-	err = json.NewEncoder(stdin).Encode(manifest)
+	_, err = stdin.Write(manifest)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding osbuild pipeline: %v", err)
+		return nil, fmt.Errorf("error writing osbuild manifest: %v", err)
 	}
 
 	err = stdin.Close()
