@@ -233,7 +233,9 @@ func hasFailedDependency(kojiInitResult worker.KojiInitJobResult, osbuildKojiRes
 	}
 
 	for _, r := range osbuildKojiResults {
-		if !r.OSBuildOutput.Success || r.JobError != nil {
+		// No `OSBuildOutput` implies failure: either osbuild crashed or
+		// rejected the input (manifest or command line arguments)
+		if r.OSBuildOutput == nil || !r.OSBuildOutput.Success || r.JobError != nil {
 			return true
 		}
 	}
