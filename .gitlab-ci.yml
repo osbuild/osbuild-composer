@@ -469,6 +469,7 @@ SCHEDULED_CLOUD_CLEANER:
     - terraform
   variables:
     RUNNER: aws/centos-stream-8-x86_64
+    INTERNAL_NETWORK: "true"
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
   script:
