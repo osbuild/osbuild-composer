@@ -19,14 +19,6 @@ fi
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-# See https://pagure.io/koji/pull-request/3172
-greenprint "Fix missing --keytab in koji-cli 1.27"
-if [[ $(rpm -q koji) == koji-1.27* ]];
-then
-    sudo dnf install -y patch
-    cat /usr/share/tests/osbuild-composer/koji/Return-mistakenly-dropped-option-keytab.patch | sudo patch -p1 -d /usr/bin
-fi
-
 # Make sure podman-plugins are installed
 sudo dnf -y install podman-plugins
 
