@@ -172,6 +172,22 @@ func (w *Writer) open() error {
 			// call to set up the upload as well as calls to upload individual chunks
 			// for a resumable upload (as long as the chunk size is non-zero). Hence
 			// there is no need to add retries here.
+
+			// Retry only when the operation is idempotent or the retry policy is RetryAlways.
+			isIdempotent := w.o.conds != nil && (w.o.conds.GenerationMatch >= 0 || w.o.conds.DoesNotExist == true)
+			var useRetry bool
+			if (w.o.retry == nil || w.o.retry.policy == RetryIdempotent) && isIdempotent {
+				useRetry = true
+			} else if w.o.retry != nil && w.o.retry.policy == RetryAlways {
+				useRetry = true
+			}
+			if useRetry {
+				if w.o.retry != nil {
+					call.WithRetry(w.o.retry.backoff, w.o.retry.shouldRetry)
+				} else {
+					call.WithRetry(nil, nil)
+				}
+			}
 			resp, err = call.Do()
 		}
 		if err != nil {
@@ -436,7 +452,7 @@ func (w *Writer) queryProgress() (int64, error) {
 	q, err := w.o.c.gc.QueryWriteStatus(w.ctx, &storagepb.QueryWriteStatusRequest{UploadId: w.upid})
 
 	// q.GetCommittedSize() will return 0 if q is nil.
-	return q.GetCommittedSize(), err
+	return q.GetPersistedSize(), err
 }
 
 // uploadBuffer opens a Write stream and uploads the buffer at the given offset (if
