@@ -357,6 +357,10 @@ components:
             $ref: '#/components/schemas/ComposeStatusValue'
           image_status:
             $ref: '#/components/schemas/ImageStatus'
+          image_statuses:
+            type: array
+            items:
+              $ref: '#/components/schemas/ImageStatus'
           koji_status:
             $ref: '#/components/schemas/KojiStatus'
     ComposeStatusValue:
@@ -491,13 +495,16 @@ components:
     ComposeRequest:
       required:
         - distribution
-        - image_request
       properties:
         distribution:
           type: string
           example: 'rhel-8'
         image_request:
           $ref: '#/components/schemas/ImageRequest'
+        image_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRequest'
         customizations:
           $ref: '#/components/schemas/Customizations'
         koji:

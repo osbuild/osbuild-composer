@@ -184,7 +184,24 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 	manifestSeed := bigSeed.Int64()
 
-	ir := request.ImageRequest
+	// For backwards compatibility, we support both a single image request
+	// as well as an array of requests in the API. In case both are
+	// specified we merge them together.
+	irs := make([]ImageRequest, 0)
+	if request.ImageRequest != nil {
+		irs = append(irs, *request.ImageRequest)
+	}
+	if request.ImageRequests != nil {
+		irs = append(irs, (*request.ImageRequests)...)
+	}
+	// For now, we only actually support one image request, no matter
+	// how it is specified.
+	// TODO: drop this limitation
+	if len(irs) != 1 {
+		return HTTPError(ErrorInvalidNumberOfImageBuilds)
+	}
+	ir := irs[0]
+
 	arch, err := distribution.GetArch(ir.Architecture)
 	if err != nil {
 		return HTTPError(ErrorUnsupportedArchitecture)
@@ -733,8 +750,10 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 				Kind: "ComposeStatus",
 			},
 			Status: composeStatusFromKojiJobStatus(finalizeStatus, &initResult, []worker.OSBuildKojiJobResult{buildResult}, &result),
-			ImageStatus: ImageStatus{
-				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildResult),
+			ImageStatuses: &[]ImageStatus{
+				{
+					Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildResult),
+				},
 			},
 			KojiStatus: &KojiStatus{},
 		}
