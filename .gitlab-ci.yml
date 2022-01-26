@@ -476,6 +476,16 @@ SCHEDULED_CLOUD_CLEANER:
     - schutzbot/deploy.sh
     - schutzbot/scheduled_cloud_cleaner.sh
 
+SonarQube:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/sonarqube.sh
+  variables:
+    RUNNER: aws/centos-stream-8-x86_64
+    INTERNAL_NETWORK: "true"
+    GIT_DEPTH: 0
+
 finish:
   stage: finish
   tags:
