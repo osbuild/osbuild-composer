@@ -483,7 +483,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
                    --noautoconsole \
-                   --wait=-1 \
+                   --wait=30 \
                    --noreboot
 
 # Start VM.
@@ -554,7 +554,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
-                   --wait=-1 \
+                   --wait=30 \
                    --noreboot
 
 # Start VM.
