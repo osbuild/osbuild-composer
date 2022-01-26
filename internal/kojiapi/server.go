@@ -260,7 +260,7 @@ func composeStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiIni
 	}
 
 	for _, buildResult := range buildResults {
-		if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
+		if buildResult.OSBuildOutput == nil || !buildResult.OSBuildOutput.Success {
 			return api.ComposeStatusValueFailure
 		}
 		if buildResult.JobError != nil {
