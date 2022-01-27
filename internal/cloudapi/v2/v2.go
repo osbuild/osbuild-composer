@@ -584,7 +584,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return
 		}
 
-		_, _, err = workers.JobStatus(depsolveJobID, &depsolveResults)
+		_, _, err = workers.DepsolveJobStatus(depsolveJobID, &depsolveResults)
 		if err != nil {
 			reason := "Error reading depsolve status"
 			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason)
@@ -650,14 +650,14 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		return HTTPError(ErrorInvalidComposeId)
 	}
 
-	jobType, _, _, err := h.server.workers.Job(jobId, nil)
+	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	if strings.HasPrefix(jobType, "osbuild:") {
+	if jobType == "osbuild" {
 		var result worker.OSBuildJobResult
-		status, _, err := h.server.workers.JobStatus(jobId, &result)
+		status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -725,7 +725,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		})
 	} else if jobType == "koji-finalize" {
 		var result worker.KojiFinalizeJobResult
-		finalizeStatus, deps, err := h.server.workers.JobStatus(jobId, &result)
+		finalizeStatus, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -734,12 +734,12 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
 		}
 		var initResult worker.KojiInitJobResult
-		_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+		_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 		var buildResult worker.OSBuildKojiJobResult
-		buildJobStatus, _, err := h.server.workers.JobStatus(deps[1], &buildResult)
+		buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[1], &buildResult)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -863,13 +863,13 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 	}
 
 	var result worker.OSBuildJobResult
-	status, _, err := h.server.workers.JobStatus(jobId, &result)
+	status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 
 	var job worker.OSBuildJob
-	if _, _, _, err = h.server.workers.Job(jobId, &job); err != nil {
+	if err = h.server.workers.OSBuildJob(jobId, &job); err != nil {
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 

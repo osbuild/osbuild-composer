@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -123,60 +124,143 @@ func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID) 
 	return s.jobs.Enqueue("manifest-id-only", job, []uuid.UUID{parent})
 }
 
-func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid.UUID, error) {
-	rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
+func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if !finished.IsZero() && !canceled {
+	if !strings.HasPrefix(jobType, "osbuild:") { // Build jobs get automatic arch suffix: Check prefix
+		return nil, nil, fmt.Errorf("expected osbuild:*, found %q job instead", jobType)
+	}
+
+	if result.JobError == nil {
+		if result.OSBuildOutput == nil {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
+		} else if len(result.OSBuildOutput.Error) > 0 {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error))
+		} else if len(result.TargetErrors) > 0 {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.TargetErrors[0])
+		}
+	}
+	// For backwards compatibility: OSBuildJobResult didn't use to have a
+	// top-level `Success` flag. Override it here by looking into the job.
+	if !result.Success && result.OSBuildOutput != nil {
+		result.Success = result.OSBuildOutput.Success && result.JobError == nil
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !strings.HasPrefix(jobType, "osbuild-koji:") { // Build jobs get automatic arch suffix: Check prefix
+		return nil, nil, fmt.Errorf("expected \"osbuild-koji:*\", found %q job instead", jobType)
+	}
+
+	if result.JobError == nil {
+		if result.OSBuildOutput == nil {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
+		} else if len(result.OSBuildOutput.Error) > 0 {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error))
+		} else if result.KojiError != "" {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError)
+		}
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != "koji-init" {
+		return nil, nil, fmt.Errorf("expected \"koji-init\", found %q job instead", jobType)
+	}
+
+	if result.JobError == nil && result.KojiError != "" {
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError)
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != "koji-finalize" {
+		return nil, nil, fmt.Errorf("expected \"koji-finalize\", found %q job instead", jobType)
+	}
+
+	if result.JobError == nil && result.KojiError != "" {
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError)
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != "depsolve" {
+		return nil, nil, fmt.Errorf("expected \"depsolve\", found %q job instead", jobType)
+	}
+
+	if result.JobError == nil && result.Error != "" {
+		if result.ErrorType == DepsolveErrorType {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, result.Error)
+		} else {
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, result.Error)
+		}
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) ManifestByIdJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != "manifest-by-id" {
+		return nil, nil, fmt.Errorf("expected \"koji-init\", found %q job instead", jobType)
+	}
+
+	if result.JobError == nil && result.Error != "" {
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.Error)
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, *JobStatus, []uuid.UUID, error) {
+	jobType, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	if result != nil && !finished.IsZero() && !canceled {
 		err = json.Unmarshal(rawResult, result)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
+			return "", nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
 		}
 	}
 
-	switch r := result.(type) {
-	case *KojiInitJobResult:
-		if r.JobError == nil && r.KojiError != "" {
-			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
-		}
-	case *KojiFinalizeJobResult:
-		if r.JobError == nil && r.KojiError != "" {
-			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
-		}
-	case *OSBuildKojiJobResult:
-		if r.JobError == nil && r.KojiError != "" {
-			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.KojiError)
-		}
-	case *ManifestJobByIDResult:
-		if r.JobError == nil && r.Error != "" {
-			r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.Error)
-		}
-	case *DepsolveJobResult:
-		if r.JobError == nil && r.Error != "" {
-			if r.ErrorType == DepsolveErrorType {
-				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, r.Error)
-			} else {
-				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, r.Error)
-			}
-		}
-	case *OSBuildJobResult:
-		if r.JobError == nil && len(r.TargetErrors) > 0 || (r.OSBuildOutput != nil && len(r.OSBuildOutput.Error) > 0) {
-			if r.OSBuildOutput != nil && len(r.OSBuildOutput.Error) > 0 {
-				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(r.OSBuildOutput.Error))
-			} else if len(r.TargetErrors) > 0 {
-				r.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, r.TargetErrors[0])
-			}
-		}
-		// For backwards compatibility: OSBuildJobResult didn't use to have a
-		// top-level `Success` flag. Override it here by looking into the job.
-		if !r.Success && r.OSBuildOutput != nil {
-			r.Success = r.OSBuildOutput.Success && r.JobError == nil
-		}
-	}
-
-	return &JobStatus{
+	return jobType, &JobStatus{
 		Queued:   queued,
 		Started:  started,
 		Finished: finished,
@@ -184,20 +268,48 @@ func (s *Server) JobStatus(id uuid.UUID, result interface{}) (*JobStatus, []uuid
 	}, deps, nil
 }
 
-// Job provides access to all the parameters of a job.
-func (s *Server) Job(id uuid.UUID, job interface{}) (string, json.RawMessage, []uuid.UUID, error) {
-	jobType, rawArgs, deps, err := s.jobs.Job(id)
+// OSBuildJob returns the parameters of an OSBuildJob
+func (s *Server) OSBuildJob(id uuid.UUID, job *OSBuildJob) error {
+	jobType, rawArgs, _, err := s.jobs.Job(id)
 	if err != nil {
-		return "", nil, nil, err
+		return err
 	}
 
-	if job != nil {
-		if err := json.Unmarshal(rawArgs, job); err != nil {
-			return "", nil, nil, fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
-		}
+	if !strings.HasPrefix(jobType, "osbuild:") { // Build jobs get automatic arch suffix: Check prefix
+		return fmt.Errorf("expected osbuild:*, found %q job instead for job '%s'", jobType, id)
 	}
 
-	return jobType, rawArgs, deps, nil
+	if err := json.Unmarshal(rawArgs, job); err != nil {
+		return fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
+	}
+
+	return nil
+}
+
+// OSBuildKojiJob returns the parameters of an OSBuildKojiJob
+func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
+	jobType, rawArgs, _, err := s.jobs.Job(id)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jobType, "osbuild-koji:") { // Build jobs get automatic arch suffix: Check prefix
+		return fmt.Errorf("expected osbuild-koji:*, found %q job instead for job '%s'", jobType, id)
+	}
+
+	if err := json.Unmarshal(rawArgs, job); err != nil {
+		return fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
+	}
+
+	return nil
+}
+
+// JobType returns the type of the job
+func (s *Server) JobType(id uuid.UUID) (string, error) {
+	jobType, _, _, err := s.jobs.Job(id)
+	// the architecture is internally encdode in the job type, but hide that
+	// from this API
+	return strings.Split(jobType, ":")[0], err
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
@@ -211,7 +323,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
-	status, _, err := s.JobStatus(id, &json.RawMessage{})
+	_, status, _, err := s.jobStatus(id, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -240,7 +352,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return errors.New("Artifacts not enabled")
 	}
 
-	status, _, err := s.JobStatus(id, &json.RawMessage{})
+	_, status, _, err := s.jobStatus(id, nil)
 	if err != nil {
 		return err
 	}
@@ -295,7 +407,8 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	}
 
 	for _, depID := range depIDs {
-		result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
+		// TODO: include type of arguments
+		_, result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
 		dynamicArgs = append(dynamicArgs, result)
 	}
 
@@ -334,12 +447,6 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 		default:
 			return fmt.Errorf("error finishing job: %v", err)
 		}
-	}
-
-	var jobResult OSBuildJobResult
-	_, _, err = s.JobStatus(jobId, &jobResult)
-	if err != nil {
-		return fmt.Errorf("error finding job status: %v", err)
 	}
 
 	// Move artifacts from the temporary location to the final job
@@ -470,7 +577,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	h.server.jobs.RefreshHeartbeat(token)
 
-	status, _, err := h.server.JobStatus(jobId, &json.RawMessage{})
+	_, status, _, err := h.server.jobStatus(jobId, nil)
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorRetrievingJobStatus, err)
 	}

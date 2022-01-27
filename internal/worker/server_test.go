@@ -246,12 +246,9 @@ func TestArgs(t *testing.T) {
 	require.NotNil(t, args)
 
 	var jobArgs worker.OSBuildJob
-	jobType, rawArgs, deps, err := server.Job(jobId, &jobArgs)
+	err = server.OSBuildJob(jobId, &jobArgs)
 	require.NoError(t, err)
-	require.Equal(t, args, rawArgs)
 	require.Equal(t, job, jobArgs)
-	require.Equal(t, jobType, "osbuild:"+arch.Name())
-	require.Equal(t, []uuid.UUID(nil), deps)
 }
 
 func TestUpload(t *testing.T) {
@@ -489,8 +486,8 @@ func TestMixedOSBuildJob(t *testing.T) {
 	newJobID, err := server.EnqueueOSBuild("x", &newJob)
 	require.NoError(err)
 
-	oldJobRead := new(worker.OSBuildJob)
-	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	var oldJobRead worker.OSBuildJob
+	err = server.OSBuildJob(oldJobID, &oldJobRead)
 	require.NoError(err)
 	require.NotNil(oldJobRead.PipelineNames)
 	// OldJob gets default pipeline names when read
@@ -501,8 +498,8 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NotEqual(oldJob, oldJobRead)
 
 	// NewJob the same when read back
-	newJobRead := new(worker.OSBuildJob)
-	_, _, _, err = server.Job(newJobID, newJobRead)
+	var newJobRead worker.OSBuildJob
+	err = server.OSBuildJob(newJobID, &newJobRead)
 	require.NoError(err)
 	require.NotNil(newJobRead.PipelineNames)
 	require.Equal(newJob.PipelineNames, newJobRead.PipelineNames)
@@ -557,7 +554,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	_, _, err = server.OSBuildJobStatus(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	// oldJobResultRead should have PipelineNames now
@@ -595,7 +592,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	_, _, err = server.OSBuildJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }
@@ -637,8 +634,8 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	}
 	newJobID := enqueueKojiJob(&newJob)
 
-	oldJobRead := new(worker.OSBuildKojiJob)
-	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	var oldJobRead worker.OSBuildKojiJob
+	err = server.OSBuildKojiJob(oldJobID, &oldJobRead)
 	require.NoError(err)
 	require.NotNil(oldJobRead.PipelineNames)
 	// OldJob gets default pipeline names when read
@@ -649,8 +646,8 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	require.NotEqual(oldJob, oldJobRead)
 
 	// NewJob the same when read back
-	newJobRead := new(worker.OSBuildKojiJob)
-	_, _, _, err = server.Job(newJobID, newJobRead)
+	var newJobRead worker.OSBuildKojiJob
+	err = server.OSBuildKojiJob(newJobID, &newJobRead)
 	require.NoError(err)
 	require.NotNil(newJobRead.PipelineNames)
 	require.Equal(newJob.PipelineNames, newJobRead.PipelineNames)
@@ -715,7 +712,7 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	_, _, err = server.OSBuildKojiJobStatus(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	// oldJobResultRead should have PipelineNames now
@@ -755,7 +752,7 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	_, _, err = server.OSBuildKojiJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }
@@ -794,7 +791,7 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 		ErrorType: errType,
 	}
 
-	_, _, err = server.JobStatus(depsolveJobId, &depsolveJobResult)
+	_, _, err = server.DepsolveJobStatus(depsolveJobId, &depsolveJobResult)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, depsolveJobResult)
 }
@@ -830,14 +827,14 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 	require.NoError(err)
 
 	oldJobRead := new(worker.OSBuildJob)
-	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	err = server.OSBuildJob(oldJobID, oldJobRead)
 	require.NoError(err)
 	// Not entirely equal
 	require.NotEqual(oldJob, oldJobRead)
 
 	// NewJob the same when read back
 	newJobRead := new(worker.OSBuildJob)
-	_, _, _, err = server.Job(newJobID, newJobRead)
+	err = server.OSBuildJob(newJobID, newJobRead)
 	require.NoError(err)
 
 	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
@@ -876,7 +873,7 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	_, _, err = server.OSBuildJobStatus(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	require.NotEqual(oldJobResult, oldJobResultRead)
@@ -899,7 +896,7 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	_, _, err = server.OSBuildJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 	require.Equal(newJobResult.Success, false)
@@ -943,14 +940,14 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 	newJobID := enqueueKojiJob(&newJob)
 
 	oldJobRead := new(worker.OSBuildKojiJob)
-	_, _, _, err = server.Job(oldJobID, oldJobRead)
+	err = server.OSBuildKojiJob(oldJobID, oldJobRead)
 	require.NoError(err)
 	// Not entirely equal
 	require.NotEqual(oldJob, oldJobRead)
 
 	// NewJob the same when read back
 	newJobRead := new(worker.OSBuildKojiJob)
-	_, _, _, err = server.Job(newJobID, newJobRead)
+	err = server.OSBuildKojiJob(newJobID, newJobRead)
 	require.NoError(err)
 
 	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
@@ -998,7 +995,7 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.JobStatus(oldJobID, oldJobResultRead)
+	_, _, err = server.OSBuildKojiJobStatus(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	// oldJobResultRead should have PipelineNames now
@@ -1020,7 +1017,7 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.JobStatus(newJobID, newJobResultRead)
+	_, _, err = server.OSBuildKojiJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }

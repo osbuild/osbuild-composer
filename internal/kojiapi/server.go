@@ -207,7 +207,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	// changes.
 	var initResult worker.KojiInitJobResult
 	for {
-		status, _, err := h.server.workers.JobStatus(initID, &initResult)
+		status, _, err := h.server.workers.KojiInitJobStatus(initID, &initResult)
 		if err != nil {
 			panic(err)
 		}
@@ -306,23 +306,14 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Make sure id exists and matches a FinalizeJob
-	if _, _, err := h.getFinalizeJob(id); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
-	}
-
 	var finalizeResult worker.KojiFinalizeJobResult
-	finalizeStatus, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
+	finalizeStatus, deps, err := h.server.workers.KojiFinalizeJobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
-	// Make sure deps[0] matches a KojiInitJob
-	if _, err := h.getInitJob(deps[0]); err != nil {
-		panic(err)
-	}
 	var initResult worker.KojiInitJobResult
-	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+	_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
 	if err != nil {
 		// this is a programming error
 		panic(err)
@@ -331,12 +322,8 @@ func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
 	var buildResults []worker.OSBuildKojiJobResult
 	var imageStatuses []api.ImageStatus
 	for i := 1; i < len(deps); i++ {
-		// Make sure deps[i] matches an OSBuildKojiJob
-		if _, _, err := h.getBuildJob(deps[i]); err != nil {
-			panic(err)
-		}
 		var buildResult worker.OSBuildKojiJobResult
-		jobStatus, _, err := h.server.workers.JobStatus(deps[i], &buildResult)
+		jobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
 		if err != nil {
 			// this is a programming error
 			panic(err)
@@ -372,24 +359,14 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Make sure id exists and matches a FinalizeJob
-	if _, _, err := h.getFinalizeJob(id); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
-	}
-
 	var finalizeResult worker.KojiFinalizeJobResult
-	_, deps, err := h.server.workers.JobStatus(id, &finalizeResult)
+	_, deps, err := h.server.workers.KojiFinalizeJobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
-	// Make sure deps[0] matches a KojiInitJob
-	if _, err := h.getInitJob(deps[0]); err != nil {
-		panic(err)
-	}
-
 	var initResult worker.KojiInitJobResult
-	_, _, err = h.server.workers.JobStatus(deps[0], &initResult)
+	_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
 	if err != nil {
 		// This is a programming error.
 		panic(err)
@@ -397,12 +374,8 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 
 	var buildResults []interface{}
 	for i := 1; i < len(deps); i++ {
-		// Make sure deps[i] matches an OSBuildKojiJob
-		if _, _, err := h.getBuildJob(deps[i]); err != nil {
-			panic(err)
-		}
 		var buildResult worker.OSBuildKojiJobResult
-		_, _, err = h.server.workers.JobStatus(deps[i], &buildResult)
+		_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
 		if err != nil {
 			// This is a programming error.
 			panic(err)
@@ -422,53 +395,6 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-// getFinalizeJob retrieves a KojiFinalizeJob and the IDs of its dependencies
-// from the job queue given its ID.  It returns an error if the ID matches a
-// job of a different type.
-func (h *apiHandlers) getFinalizeJob(id uuid.UUID) (*worker.KojiFinalizeJob, []uuid.UUID, error) {
-	job := new(worker.KojiFinalizeJob)
-	jobType, _, deps, err := h.server.workers.Job(id, job)
-	if err != nil {
-		return nil, nil, err
-	}
-	expType := "koji-finalize"
-	if jobType != expType {
-		return nil, nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
-	}
-	return job, deps, err
-}
-
-// getInitJob retrieves a KojiInitJob from the job queue given its ID.
-func (h *apiHandlers) getInitJob(id uuid.UUID) (*worker.KojiInitJob, error) {
-	// It returns an error if the ID matches a job of a different type.
-	job := new(worker.KojiInitJob)
-	jobType, _, _, err := h.server.workers.Job(id, job)
-	if err != nil {
-		return nil, err
-	}
-	expType := "koji-init"
-	if jobType != expType {
-		return nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
-	}
-	return job, err
-}
-
-// getBuildJob retrieves a OSBuildKojiJob and the IDs of its dependencies from
-// the job queue given its ID.  It returns an error if the ID matches a job of
-// a different type.
-func (h *apiHandlers) getBuildJob(id uuid.UUID) (*worker.OSBuildKojiJob, []uuid.UUID, error) {
-	job := new(worker.OSBuildKojiJob)
-	jobType, _, deps, err := h.server.workers.Job(id, job)
-	if err != nil {
-		return nil, nil, err
-	}
-	expType := "osbuild-koji"
-	if !strings.HasPrefix(jobType, expType) { // Build jobs get automatic arch suffix: Check prefix
-		return nil, nil, fmt.Errorf("expected %q, found %q job instead", expType, jobType)
-	}
-	return job, deps, nil
-}
-
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
 func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) error {
 	id, err := uuid.Parse(idstr)
@@ -476,19 +402,20 @@ func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	_, deps, err := h.getFinalizeJob(id)
+	var finalizeResult worker.KojiFinalizeJobResult
+	_, deps, err := h.server.workers.KojiFinalizeJobStatus(id, &finalizeResult)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s not found: %s", idstr, err))
 	}
 
-	manifests := make([]distro.Manifest, len(deps)-1)
-	for i, id := range deps[1:] {
-		buildJob, _, err := h.getBuildJob(id)
+	var manifests []distro.Manifest
+	for _, id := range deps[1:] {
+		var buildJob worker.OSBuildKojiJob
+		err = h.server.workers.OSBuildKojiJob(id, &buildJob)
 		if err != nil {
-			// This is a programming error.
-			panic(err)
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Job %s could not be deserialized: %s", idstr, err))
 		}
-		manifests[i] = buildJob.Manifest
+		manifests = append(manifests, buildJob.Manifest)
 	}
 
 	return ctx.JSON(http.StatusOK, manifests)
