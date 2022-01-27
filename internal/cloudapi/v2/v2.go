@@ -862,6 +862,16 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 		return HTTPError(ErrorInvalidComposeId)
 	}
 
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	// TODO: support koji builds
+	if jobType != "osbuild" {
+		return HTTPError(ErrorInvalidJobType)
+	}
+
 	var result worker.OSBuildJobResult
 	status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 	if err != nil {
@@ -954,4 +964,125 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 		}
 	}
 	return packages
+}
+
+// Get logs for a compose
+func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	// TODO: support non-koji builds
+	if jobType != "koji-finalize" {
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	var finalizeResult worker.KojiFinalizeJobResult
+	_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	var initResult worker.KojiInitJobResult
+	_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	var buildResultBlobs []interface{}
+	for i := 1; i < len(deps); i++ {
+		var buildResult worker.OSBuildKojiJobResult
+		_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+		buildResultBlobs = append(buildResultBlobs, buildResult)
+	}
+
+	// Return the OSBuildJobResults as-is for now. The contents of ImageLogs
+	// is not part of the API. It's meant for a human to be able to access
+	// the logs, which just happen to be in JSON.
+	resp := &ComposeLogs{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId),
+			Id:   jobId.String(),
+			Kind: "ComposeLogs",
+		},
+		Koji: &KojiLogs{
+			Init:   initResult,
+			Import: finalizeResult,
+		},
+		ImageBuilds: buildResultBlobs,
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+// GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
+func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	// TODO: support non-koji builds
+	if jobType != "koji-finalize" {
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	var finalizeResult worker.KojiFinalizeJobResult
+	_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	var manifestBlobs []interface{}
+	for _, id := range deps[1:] {
+		var buildJob worker.OSBuildKojiJob
+		err = h.server.workers.OSBuildKojiJob(id, &buildJob)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+		var manifest distro.Manifest
+		if len(buildJob.Manifest) == 0 {
+			manifest = buildJob.Manifest
+		} else {
+			_, deps, err := h.server.workers.OSBuildKojiJobStatus(id, nil)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+			if len(deps) < 2 {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+			var manifestResult worker.ManifestJobByIDResult
+			_, _, err = h.server.workers.ManifestJobStatus(deps[1], &manifestResult)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+			manifest = manifestResult.Manifest
+		}
+		manifestBlobs = append(manifestBlobs, manifest)
+	}
+
+	resp := &ComposeManifests{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId),
+			Id:   jobId.String(),
+			Kind: "ComposeManifests",
+		},
+		Manifests: manifestBlobs,
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }

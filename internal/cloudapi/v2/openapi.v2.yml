@@ -144,6 +144,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  '/composes/{id}/logs':
+    get:
+      operationId: getComposeLogs
+      summary: Get logs for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the status of a running or finished compose. This includes whether or not it succeeded, and also meta information about the result.'
+      responses:
+        '200':
+          description: The logs for the given compose, in no particular format (though valid JSON).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeLogs'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/composes/{id}/manifests':
+    get:
+      operationId: getComposeManifests
+      summary: Get the manifests for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the manifests of a running or finished compose. Returns one manifest for each image in the request. Each manifest conforms to the format defined at https://www.osbuild.org/man/osbuild-manifest.5'
+      responses:
+        '200':
+          description: The manifest for the given compose.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeManifests'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
 
   /compose:
     post:
@@ -370,6 +436,34 @@ components:
         - failure
         - pending
       example: success
+    ComposeLogs:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - image_builds
+        properties:
+          image_builds:
+            type: array
+          koji:
+            $ref: '#/components/schemas/KojiLogs'
+    KojiLogs:
+      type: object
+      required:
+        - init
+        - import
+      properties:
+        init: {}
+        import: {}
+    ComposeManifests:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - manifests
+        properties:
+          manifests:
+            type: array
     ImageStatus:
       required:
        - status
