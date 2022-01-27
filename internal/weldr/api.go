@@ -345,8 +345,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
-
-	jobStatus, _, err := api.workers.JobStatus(jobId, &result)
+	jobStatus, _, err := api.workers.OSBuildJobStatus(jobId, &result)
 	if err != nil {
 		panic(err)
 	}
