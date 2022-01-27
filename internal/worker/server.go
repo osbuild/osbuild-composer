@@ -247,6 +247,19 @@ func (s *Server) ManifestByIdJobStatus(id uuid.UUID, result *ManifestJobByIDResu
 	return status, deps, nil
 }
 
+func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, status, deps, err := s.jobStatus(id, result)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != "manifest-job-by-id" {
+		return nil, nil, fmt.Errorf("expected \"manifest-job-by-id\", found %q job instead", jobType)
+	}
+
+	return status, deps, nil
+}
+
 func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, *JobStatus, []uuid.UUID, error) {
 	jobType, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
 	if err != nil {
