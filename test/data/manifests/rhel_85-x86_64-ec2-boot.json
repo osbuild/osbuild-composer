@@ -1051,6 +1051,14 @@
             }
           },
           {
+            "type": "org.osbuild.sshd.config",
+            "options": {
+              "config": {
+                "PasswordAuthentication": false
+              }
+            }
+          },
+          {
             "type": "org.osbuild.dracut.conf",
             "options": {
               "filename": "ec2.conf",
