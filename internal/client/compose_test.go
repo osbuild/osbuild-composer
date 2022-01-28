@@ -13,6 +13,8 @@
 //       * image download
 //       * log download
 //       * logs archive download
+//       * cancel waiting compose
+//       * cancel running compose
 //
 //       In addition osbuild-composer has not implemented:
 //
@@ -121,7 +123,16 @@ func TestComposeInvalidCharsBlueprintV0(t *testing.T) {
 }
 
 // Test compose cancel for unknown uuid fails
-// Is cancel implemented at all?
+func TestCancelUnknownComposeV0(t *testing.T) {
+	status, resp, err := CancelComposeV0(testState.socket, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	require.NoError(t, err, "failed with a client error")
+	assert.Equal(t, weldr.CancelComposeStatusV0{}, status)
+	require.NotNil(t, resp)
+	require.False(t, resp.Status, "Cancel did not fail")
+	require.Equal(t, 1, len(resp.Errors), "%#v", resp)
+	require.Equal(t, "UnknownUUID", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, "c91818f9-8025-47af-89d2-f030d7000c2c")
+}
 
 // Test compose delete for unknown uuid
 func TestDeleteUnknownComposeV0(t *testing.T) {
@@ -148,9 +159,6 @@ func TestUnknownComposeInfoV0(t *testing.T) {
 
 // Test compose metadata for unknown uuid
 // TODO osbuild-composer has not implemented compose/metadata yet
-
-// Test compose results for unknown uuid
-// TODO osbuild-composer has not implemented compose/results yet
 
 // Test compose image for unknown uuid
 func TestComposeInvalidImageV0(t *testing.T) {
@@ -355,6 +363,16 @@ func TestFailedComposeV0(t *testing.T) {
 	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
+
+	// Test canceling the failed compose
+	cancelStatus, resp, err := CancelComposeV0(testState.socket, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	assert.Equal(t, weldr.CancelComposeStatusV0{}, cancelStatus)
+	require.NotNil(t, resp)
+	require.False(t, resp.Status, "Cancel did not fail")
+	require.Equal(t, 1, len(resp.Errors), "%#v", resp)
+	require.Equal(t, "BuildInWrongState", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, buildID.String())
 }
 
 // Setup and run the finished compose tests
@@ -450,6 +468,16 @@ func TestFinishedComposeV0(t *testing.T) {
 	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
+
+	// Test canceling the finished compose
+	cancelStatus, resp, err := CancelComposeV0(testState.socket, buildID.String())
+	require.NoError(t, err, "failed with a client error")
+	assert.Equal(t, weldr.CancelComposeStatusV0{}, cancelStatus)
+	require.NotNil(t, resp)
+	require.False(t, resp.Status, "Cancel did not fail")
+	require.Equal(t, 1, len(resp.Errors), "%#v", resp)
+	require.Equal(t, "BuildInWrongState", resp.Errors[0].ID)
+	require.Contains(t, resp.Errors[0].Msg, buildID.String())
 }
 
 func TestComposeSupportedMountPointV0(t *testing.T) {

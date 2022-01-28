@@ -105,6 +105,20 @@ func GetComposesTypesV0(socket *http.Client) ([]weldr.ComposeTypeV0, *APIRespons
 	return composeTypes.Types, nil, nil
 }
 
+// CancelComposeV0 cancels one composes based on the uuid
+func CancelComposeV0(socket *http.Client, uuid string) (weldr.CancelComposeStatusV0, *APIResponse, error) {
+	body, resp, err := DeleteRaw(socket, "/api/v0/compose/cancel/"+uuid)
+	if resp != nil || err != nil {
+		return weldr.CancelComposeStatusV0{}, resp, err
+	}
+	var status weldr.CancelComposeStatusV0
+	err = json.Unmarshal(body, &status)
+	if err != nil {
+		return weldr.CancelComposeStatusV0{}, nil, err
+	}
+	return status, nil, nil
+}
+
 // DeleteComposeV0 deletes one or more composes based on their uuid
 func DeleteComposeV0(socket *http.Client, uuids string) (weldr.DeleteComposeResponseV0, *APIResponse, error) {
 	body, resp, err := DeleteRaw(socket, "/api/v0/compose/delete/"+uuids)
