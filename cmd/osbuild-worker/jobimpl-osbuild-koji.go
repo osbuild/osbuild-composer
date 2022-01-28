@@ -87,7 +87,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	if initArgs.JobError != nil {
+	if initArgs.JobError == nil {
 		exports := args.Exports
 		if len(exports) == 0 {
 			// job did not define exports, likely coming from an older version of composer
