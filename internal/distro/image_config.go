@@ -36,6 +36,7 @@ type ImageConfig struct {
 	PamLimitsConf []*osbuild2.PamLimitsConfStageOptions
 	Sysctld       []*osbuild2.SysctldStageOptions
 	DNFConfig     []*osbuild2.DNFConfigStageOptions
+	SshdConfig    *osbuild2.SshdConfigStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -105,6 +106,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.DNFConfig == nil {
 			finalConfig.DNFConfig = parentConfig.DNFConfig
+		}
+		if finalConfig.SshdConfig == nil {
+			finalConfig.SshdConfig = parentConfig.SshdConfig
 		}
 	}
 	return &finalConfig
