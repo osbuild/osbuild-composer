@@ -536,14 +536,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				PrivateKey:  options.PrivateKey,
 			})
 			if err != nil {
-				appendTargetError(osbuildJobResult, fmt.Errorf("failed to create an OCI uploder: %w", err))
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
 			log.Print("[OCI] 🔑 Logged in OCI")
 			log.Print("[OCI] ⬆ Uploading the image")
 			file, err := os.Open(path.Join(outputDirectory, exportPath, options.FileName))
 			if err != nil {
-				appendTargetError(osbuildJobResult, fmt.Errorf("failed to create an OCI uploder: %w", err))
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
 			defer file.Close()
@@ -557,7 +557,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				args.Targets[0].ImageName,
 			)
 			if err != nil {
-				appendTargetError(osbuildJobResult, fmt.Errorf("failed to upload the image: %w", err))
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
 			log.Print("[OCI] 🎉 Image uploaded and registered!")
