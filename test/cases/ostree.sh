@@ -199,7 +199,7 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     if [[ $blueprint_name == upgrade ]]; then
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$COMMIT_HASH" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     else
         sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
     fi
@@ -335,10 +335,6 @@ sudo rm -f "$IMAGE_FILENAME"
 greenprint "Clean up osbuild-composer"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete ostree > /dev/null
-
-# Get ostree commit value.
-greenprint "Get ostree image commit value"
-COMMIT_HASH=$(jq -r '."ostree-commit"' < ${HTTPD_PATH}/compose.json)
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
