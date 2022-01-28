@@ -944,6 +944,11 @@ func newDistro(distroName string) distro.Distro {
 		Authselect: &osbuild.AuthselectStageOptions{
 			Profile: "sssd",
 		},
+		SshdConfig: &osbuild.SshdConfigStageOptions{
+			Config: osbuild.SshdConfigConfig{
+				PasswordAuthentication: common.BoolToPtr(false),
+			},
+		},
 	}
 
 	// default EC2 images config (x86_64)
