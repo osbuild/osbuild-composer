@@ -371,6 +371,12 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 		p.AddStage(osbuild.NewRHSMStage(rhsmStageOptions))
 	}
 
+	p.AddStage((osbuild.NewSshdConfigStage(&osbuild.SshdConfigStageOptions{
+		Config: osbuild.SshdConfigConfig{
+			PasswordAuthentication: common.BoolToPtr(false),
+		},
+	})))
+
 	return p, nil
 }
 
