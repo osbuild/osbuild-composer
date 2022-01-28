@@ -113,8 +113,6 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 1024000, // 500 MB
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
@@ -141,8 +139,6 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size: 1024000, // 500 MB
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
