@@ -95,7 +95,6 @@
                   "sha256:82a35422382dabf9607d0888f966dd7c75a89dd6147a488892e73e00a28b5ed4",
                   "sha256:6cbc1e6b5952017f85eb08eef8a07a4adfdbe1e57f6b684b6d812cc6177893a1",
                   "sha256:51c3f858023baa419b1976f8e98a70e07e71b7675ba49d7e4ab555b7bec4fde7",
-                  "sha256:264dfc9e9a577b3bfb58eb14dd2e2e3e044e6b891be0f35237f100ab83b9a83f",
                   "sha256:4e49a61f7e60aeb6f4f632e05ad0e9f9132258555df2d338377d442d8c7d1a43",
                   "sha256:3ba40b602c1a41741ee7de075e5507d8eaabd5d328c0c18aeafb42b1644db08d",
                   "sha256:f2d033d12fba32931a5db0b27cc0b591b8620738cae6c73ef058aab52b4e8c1d",
@@ -245,7 +244,6 @@
                   "sha256:837f4f1591fdb2c8c0eb8b5fb4976396e8aa85036c2818490d278d8e9ba3bf35",
                   "sha256:ecb5f365c2c27d37159b65cd60f22a8c1383a0608ff23206ba813bd0709cb0c7",
                   "sha256:dfef22b869148c0d88673a4139874d34f6dfa9af017467c3c7b0cf60a62f1943",
-                  "sha256:c96c8e5d6b359d88c7b6b2990fac5e9c43a5b09888d96779099a00077aaeebe7",
                   "sha256:dd6c970a0b0f9dd3509036090669a64af1449cde2f02810a5f666db9936fdd4c",
                   "sha256:caf797ef8f54ea443d435b970b79f9a09588135b54b7c10bd7dc1a335e16ef2e",
                   "sha256:7190b1f00b96d9ea7c82f09176376ed41eb050c65ab00656f047560427a8219d",
@@ -1099,7 +1097,6 @@
                   "sha256:6cbc1e6b5952017f85eb08eef8a07a4adfdbe1e57f6b684b6d812cc6177893a1",
                   "sha256:4f21b0f1a6f81e9674390201f10b144902e5373b1909a721c4292858784273d9",
                   "sha256:51c3f858023baa419b1976f8e98a70e07e71b7675ba49d7e4ab555b7bec4fde7",
-                  "sha256:264dfc9e9a577b3bfb58eb14dd2e2e3e044e6b891be0f35237f100ab83b9a83f",
                   "sha256:4e49a61f7e60aeb6f4f632e05ad0e9f9132258555df2d338377d442d8c7d1a43",
                   "sha256:3ba40b602c1a41741ee7de075e5507d8eaabd5d328c0c18aeafb42b1644db08d",
                   "sha256:f2d033d12fba32931a5db0b27cc0b591b8620738cae6c73ef058aab52b4e8c1d",
@@ -1359,7 +1356,6 @@
                   "sha256:0ca6ceab03e87d70d0303849511cd606d6fe41fb5c3cccd5645e876e4b73023f",
                   "sha256:ecb5f365c2c27d37159b65cd60f22a8c1383a0608ff23206ba813bd0709cb0c7",
                   "sha256:dfef22b869148c0d88673a4139874d34f6dfa9af017467c3c7b0cf60a62f1943",
-                  "sha256:c96c8e5d6b359d88c7b6b2990fac5e9c43a5b09888d96779099a00077aaeebe7",
                   "sha256:dd6c970a0b0f9dd3509036090669a64af1449cde2f02810a5f666db9936fdd4c",
                   "sha256:d3237a7764708789d98b3332a6978037efe1f4f8f256fed75ee5c2877ad9160a",
                   "sha256:98a679dd55b94522c245d397f54ed7a0d7c402cecb95971ff6f261e42c7741d0",
@@ -1994,7 +1990,6 @@
               "isolabel": "RHEL-9-0-0-BaseOS-x86_64",
               "efi": {
                 "architectures": [
-                  "IA32",
                   "X64"
                 ],
                 "vendor": "redhat"
@@ -2506,9 +2501,6 @@
           },
           "sha256:2642e4623fcf504cfaaeac1bfec8d5dab0de93b2f038931e7789461cf3107c59": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210930/Packages/rpm-plugin-systemd-inhibit-4.16.1.3-7.el9.x86_64.rpm"
-          },
-          "sha256:264dfc9e9a577b3bfb58eb14dd2e2e3e044e6b891be0f35237f100ab83b9a83f": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/grub2-efi-ia32-cdboot-2.06~rc1-8.el9.x86_64.rpm"
           },
           "sha256:266167efe47d97803fad32ec52453f63a0d6d1fc7b7d3c6b90bb3e1a43aaa95c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210930/Packages/upower-0.99.13-2.el9.x86_64.rpm"
@@ -4306,9 +4298,6 @@
           },
           "sha256:c8a9ed01fb0adb98368b8917f15e0e35bfc6964a758a28e8f7a0839c57a43dcd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20210930/Packages/anaconda-gui-34.25.0.16-1.el9.x86_64.rpm"
-          },
-          "sha256:c96c8e5d6b359d88c7b6b2990fac5e9c43a5b09888d96779099a00077aaeebe7": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/shim-ia32-15-16.el8.x86_64.rpm"
           },
           "sha256:c99b07bbf7c6203d94c6a0b50fdd2812cc99ae4952f999d91b3856edd575be02": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/libgcc-11.2.1-2.2.el9.x86_64.rpm"
@@ -6398,15 +6387,6 @@
         "checksum": "sha256:51c3f858023baa419b1976f8e98a70e07e71b7675ba49d7e4ab555b7bec4fde7"
       },
       {
-        "name": "grub2-efi-ia32-cdboot",
-        "epoch": 1,
-        "version": "2.06~rc1",
-        "release": "8.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/grub2-efi-ia32-cdboot-2.06~rc1-8.el9.x86_64.rpm",
-        "checksum": "sha256:264dfc9e9a577b3bfb58eb14dd2e2e3e044e6b891be0f35237f100ab83b9a83f"
-      },
-      {
         "name": "grub2-efi-x64",
         "epoch": 1,
         "version": "2.06~rc1",
@@ -7746,15 +7726,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/shared-mime-info-2.1-4.el9.x86_64.rpm",
         "checksum": "sha256:dfef22b869148c0d88673a4139874d34f6dfa9af017467c3c7b0cf60a62f1943"
-      },
-      {
-        "name": "shim-ia32",
-        "epoch": 0,
-        "version": "15",
-        "release": "16.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/shim-ia32-15-16.el8.x86_64.rpm",
-        "checksum": "sha256:c96c8e5d6b359d88c7b6b2990fac5e9c43a5b09888d96779099a00077aaeebe7"
       },
       {
         "name": "shim-x64",
@@ -9314,15 +9285,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/grub2-common-2.06~rc1-8.el9.noarch.rpm",
         "checksum": "sha256:51c3f858023baa419b1976f8e98a70e07e71b7675ba49d7e4ab555b7bec4fde7"
-      },
-      {
-        "name": "grub2-efi-ia32-cdboot",
-        "epoch": 1,
-        "version": "2.06~rc1",
-        "release": "8.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/grub2-efi-ia32-cdboot-2.06~rc1-8.el9.x86_64.rpm",
-        "checksum": "sha256:264dfc9e9a577b3bfb58eb14dd2e2e3e044e6b891be0f35237f100ab83b9a83f"
       },
       {
         "name": "grub2-efi-x64",
@@ -11654,15 +11616,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/shared-mime-info-2.1-4.el9.x86_64.rpm",
         "checksum": "sha256:dfef22b869148c0d88673a4139874d34f6dfa9af017467c3c7b0cf60a62f1943"
-      },
-      {
-        "name": "shim-ia32",
-        "epoch": 0,
-        "version": "15",
-        "release": "16.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20210930/Packages/shim-ia32-15-16.el8.x86_64.rpm",
-        "checksum": "sha256:c96c8e5d6b359d88c7b6b2990fac5e9c43a5b09888d96779099a00077aaeebe7"
       },
       {
         "name": "shim-x64",
