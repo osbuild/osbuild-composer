@@ -501,6 +501,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
 	}
 
+	if sshdConfig := imageConfig.SshdConfig; sshdConfig != nil {
+		p.AddStage((osbuild.NewSshdConfigStage(sshdConfig)))
+	}
+
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptionsV2()))
