@@ -1046,6 +1046,14 @@
             }
           },
           {
+            "type": "org.osbuild.sshd.config",
+            "options": {
+              "config": {
+                "PasswordAuthentication": false
+              }
+            }
+          },
+          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
