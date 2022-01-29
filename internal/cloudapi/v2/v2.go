@@ -729,8 +729,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
-		// TODO: support any number of builds
-		if len(deps) != 2 {
+		if len(deps) < 2 {
 			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
 		}
 		var initResult worker.KojiInitJobResult
@@ -738,10 +737,18 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
-		var buildResult worker.OSBuildKojiJobResult
-		buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[1], &buildResult)
-		if err != nil {
-			return HTTPError(ErrorMalformedOSBuildJobResult)
+		var buildJobResults []worker.OSBuildKojiJobResult
+		var buildJobStatuses []ImageStatus
+		for i := 1; i < len(deps); i++ {
+			var buildJobResult worker.OSBuildKojiJobResult
+			buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
+			if err != nil {
+				return HTTPError(ErrorMalformedOSBuildJobResult)
+			}
+			buildJobResults = append(buildJobResults, buildJobResult)
+			buildJobStatuses = append(buildJobStatuses, ImageStatus{
+				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildJobResult),
+			})
 		}
 		response := ComposeStatus{
 			ObjectReference: ObjectReference{
@@ -749,13 +756,10 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 				Id:   jobId.String(),
 				Kind: "ComposeStatus",
 			},
-			Status: composeStatusFromKojiJobStatus(finalizeStatus, &initResult, []worker.OSBuildKojiJobResult{buildResult}, &result),
-			ImageStatuses: &[]ImageStatus{
-				{
-					Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildResult),
-				},
-			},
-			KojiStatus: &KojiStatus{},
+			Status:        composeStatusFromKojiJobStatus(finalizeStatus, &initResult, buildJobResults, &result),
+			ImageStatus:   buildJobStatuses[0], // backwards compatibility
+			ImageStatuses: &buildJobStatuses,
+			KojiStatus:    &KojiStatus{},
 		}
 		buildID := int(initResult.BuildID)
 		if buildID != 0 {
