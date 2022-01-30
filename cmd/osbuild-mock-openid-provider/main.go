@@ -21,11 +21,13 @@ func main() {
 	var rsaPem string
 	var tlsCert string
 	var tlsKey string
+	var tokenExpires int
 	flag.StringVar(&addr, "a", "localhost:8080", "Address to serve on")
 	flag.StringVar(&rsaPubPem, "rsaPubPem", "", "rsa pubkey in pem format (path)")
 	flag.StringVar(&rsaPem, "rsaPem", "", "rsa privkey in pem format (path)")
 	flag.StringVar(&tlsCert, "cert", "", "tls cert")
 	flag.StringVar(&tlsKey, "key", "", "tls key")
+	flag.IntVar(&tokenExpires, "expires", 60, "Expiration of the token in seconds (default: 360))")
 	flag.Parse()
 
 	if rsaPubPem == "" || rsaPem == "" {
@@ -102,12 +104,17 @@ func main() {
 			panic(err)
 		}
 
+		// See https://datatracker.ietf.org/doc/html/rfc6749
 		type response struct {
 			AccessToken string `json:"access_token"`
+			TokenType   string `json:"token_type"`           // required
+			ExpiresIn   int    `json:"expires_in,omitempty"` // lifetime in seconds
 		}
 
 		err = json.NewEncoder(w).Encode(response{
 			AccessToken: tokenStr,
+			TokenType:   "Bearer",
+			ExpiresIn:   tokenExpires,
 		})
 		if err != nil {
 			panic(err)
