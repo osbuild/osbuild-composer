@@ -40,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
+      SKIP_CI: ${{ github.event.pull_request.draft == true || contains(github.event.pull_request.labels.*.name, 'WIP') }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v2.4.0
@@ -60,4 +61,5 @@ jobs:
             git checkout -b PR-${{ github.event.pull_request.number }}
           fi
 
-          git push -f ci
+          [[ "${SKIP_CI}" == true ]] && PUSH_OPTION="-o ci.skip" || PUSH_OPTION=""
+          git push -f ci "${PUSH_OPTION}"
