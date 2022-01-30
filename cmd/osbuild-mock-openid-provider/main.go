@@ -22,12 +22,14 @@ func main() {
 	var tlsCert string
 	var tlsKey string
 	var tokenExpires int
+	var tokenScope string
 	flag.StringVar(&addr, "a", "localhost:8080", "Address to serve on")
 	flag.StringVar(&rsaPubPem, "rsaPubPem", "", "rsa pubkey in pem format (path)")
 	flag.StringVar(&rsaPem, "rsaPem", "", "rsa privkey in pem format (path)")
 	flag.StringVar(&tlsCert, "cert", "", "tls cert")
 	flag.StringVar(&tlsKey, "key", "", "tls key")
 	flag.IntVar(&tokenExpires, "expires", 60, "Expiration of the token in seconds (default: 360))")
+	flag.StringVar(&tokenScope, "scope", "", "The scope of the token (default: not set)")
 	flag.Parse()
 
 	if rsaPubPem == "" || rsaPem == "" {
@@ -109,12 +111,14 @@ func main() {
 			AccessToken string `json:"access_token"`
 			TokenType   string `json:"token_type"`           // required
 			ExpiresIn   int    `json:"expires_in,omitempty"` // lifetime in seconds
+			Scope       string `json:"scope,omitempty"`
 		}
 
 		err = json.NewEncoder(w).Encode(response{
 			AccessToken: tokenStr,
 			TokenType:   "Bearer",
 			ExpiresIn:   tokenExpires,
+			Scope:       tokenScope,
 		})
 		if err != nil {
 			panic(err)
