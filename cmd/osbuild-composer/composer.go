@@ -220,8 +220,12 @@ func (c *Composer) Start() error {
 			handler := c.workers.Handler()
 			var err error
 			if c.config.Worker.EnableJWT {
+				keysURLs := c.config.Worker.JWTKeysURLs
+				if c.config.Worker.JWTKeysURL != "" {
+					keysURLs = append(keysURLs, c.config.Worker.JWTKeysURL)
+				}
 				handler, err = auth.BuildJWTAuthHandler(
-					c.config.Worker.JWTKeysURL,
+					keysURLs,
 					c.config.Worker.JWTKeysCA,
 					c.config.Worker.JWTACLFile,
 					[]string{
@@ -265,8 +269,12 @@ func (c *Composer) Start() error {
 			handler := http.Handler(mux)
 			var err error
 			if c.config.Koji.EnableJWT {
+				keysURLs := c.config.Koji.JWTKeysURLs
+				if c.config.Koji.JWTKeysURL != "" {
+					keysURLs = append(keysURLs, c.config.Koji.JWTKeysURL)
+				}
 				handler, err = auth.BuildJWTAuthHandler(
-					c.config.Koji.JWTKeysURL,
+					keysURLs,
 					c.config.Koji.JWTKeysCA,
 					c.config.Koji.JWTACLFile,
 					[]string{
