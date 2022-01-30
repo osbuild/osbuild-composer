@@ -15,7 +15,7 @@ import (
 
 // When using this handler for auth, it should be run as high up as possible.
 // Exceptions can be registered in the `exclude` slice
-func BuildJWTAuthHandler(keysURL, caFile, aclFile string, exclude []string, next http.Handler) (handler http.Handler, err error) {
+func BuildJWTAuthHandler(keysURLs []string, caFile, aclFile string, exclude []string, next http.Handler) (handler http.Handler, err error) {
 	logBuilder := logging.NewGoLoggerBuilder()
 	if caFile != "" {
 		logBuilder = logBuilder.Debug(true)
@@ -29,8 +29,11 @@ func BuildJWTAuthHandler(keysURL, caFile, aclFile string, exclude []string, next
 	logger.Info(context.Background(), aclFile)
 
 	builder := authentication.NewHandler().
-		Logger(logger).
-		KeysURL(keysURL)
+		Logger(logger)
+
+	for _, keysURL := range keysURLs {
+		builder = builder.KeysURL(keysURL)
+	}
 
 	// Used during testing
 	if caFile != "" {
