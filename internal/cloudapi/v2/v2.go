@@ -498,12 +498,12 @@ func enqueueCompose(workers *worker.Server, distribution distro.Distro, bp bluep
 	ir := irs[0]
 
 	depsolveJobID, err := workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSets:             ir.imageType.PackageSets(bp),
-		Repos:                   ir.repositories,
-		ModulePlatformID:        distribution.ModulePlatformID(),
-		Arch:                    ir.arch.Name(),
-		Releasever:              distribution.Releasever(),
-		PackageSetsRepositories: ir.packageSetsRepositories,
+		PackageSets:      ir.imageType.PackageSets(bp),
+		Repos:            ir.repositories,
+		ModulePlatformID: distribution.ModulePlatformID(),
+		Arch:             ir.arch.Name(),
+		Releasever:       distribution.Releasever(),
+		PackageSetsRepos: ir.packageSetsRepositories,
 	})
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -550,12 +550,12 @@ func enqueueKojiCompose(workers *worker.Server, taskID uint64, server, name, ver
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
 		depsolveJobID, err := workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:             ir.imageType.PackageSets(bp),
-			Repos:                   ir.repositories,
-			ModulePlatformID:        distribution.ModulePlatformID(),
-			Arch:                    ir.arch.Name(),
-			Releasever:              distribution.Releasever(),
-			PackageSetsRepositories: ir.packageSetsRepositories,
+			PackageSets:      ir.imageType.PackageSets(bp),
+			Repos:            ir.repositories,
+			ModulePlatformID: distribution.ModulePlatformID(),
+			Arch:             ir.arch.Name(),
+			Releasever:       distribution.Releasever(),
+			PackageSetsRepos: ir.packageSetsRepositories,
 		})
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
