@@ -662,6 +662,14 @@ components:
           type: boolean
         ignore_ssl:
           type: boolean
+        package_sets:
+          type: array
+          example: ["build", "os"]
+          items:
+            type: string
+          description: |
+            Naming package sets for a repository assigns it to a specific part
+            (pipeline) of the build process.
     UploadOptions:
       oneOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
@@ -804,6 +812,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
+          description: |
+            Extra repositories for packages specified in customizations. These
+            repositories will only be used to depsolve and retrieve packages
+            for the OS itself (they will not be available for the build root or
+            any other part of the build process). The package_sets field for these
+            repositories is ignored.
     OSTree:
       type: object
       properties:
