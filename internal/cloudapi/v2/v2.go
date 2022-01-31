@@ -242,42 +242,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return HTTPError(ErrorUnsupportedImageType)
 		}
-		repositories := make([]rpmmd.RepoConfig, len(ir.Repositories))
-		for j, repo := range ir.Repositories {
-			repositories[j].RHSM = repo.Rhsm
 
-			if repo.Baseurl != nil {
-				repositories[j].BaseURL = *repo.Baseurl
-			} else if repo.Mirrorlist != nil {
-				repositories[j].MirrorList = *repo.Mirrorlist
-			} else if repo.Metalink != nil {
-				repositories[j].Metalink = *repo.Metalink
-			} else {
-				return HTTPError(ErrorInvalidRepository)
-			}
-		}
-
-		payloadPackageSets := imageType.PayloadPackageSets()
-		packageSetsRepositories := make(map[string][]rpmmd.RepoConfig, len(payloadPackageSets))
-
-		for _, packageSetKey := range payloadPackageSets {
-			packageSetsRepositories[packageSetKey] = make([]rpmmd.RepoConfig, len(payloadRepositories))
-			for j, repo := range payloadRepositories {
-				if repo.Baseurl != nil {
-					packageSetsRepositories[packageSetKey][j].BaseURL = *repo.Baseurl
-				} else {
-					return HTTPError(ErrorNoBaseURLInPayloadRepository)
-				}
-				if repo.GpgKey != nil {
-					packageSetsRepositories[packageSetKey][j].GPGKey = *repo.GpgKey
-				}
-				if repo.CheckGpg != nil {
-					packageSetsRepositories[packageSetKey][j].CheckGPG = *repo.CheckGpg
-				}
-				if repo.IgnoreSsl != nil {
-					packageSetsRepositories[packageSetKey][j].IgnoreSSL = *repo.IgnoreSsl
-				}
-			}
+		repos, pkgSetsRepos, err := collectRepos(ir.Repositories, payloadRepositories, imageType.PayloadPackageSets())
+		if err != nil {
+			return err
 		}
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
@@ -458,9 +426,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		irs = append(irs, imageRequest{
 			imageType:               imageType,
 			arch:                    arch,
-			repositories:            repositories,
+			repositories:            repos,
 			imageOptions:            imageOptions,
-			packageSetsRepositories: packageSetsRepositories,
+			packageSetsRepositories: pkgSetsRepos,
 			target:                  irTarget,
 		})
 	}
@@ -1172,4 +1140,55 @@ func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 	}
 
 	return ctx.JSON(http.StatusOK, resp)
+}
+
+func collectRepos(irRepos, payloadRepositories []Repository, payloadPackageSets []string) ([]rpmmd.RepoConfig, map[string][]rpmmd.RepoConfig, error) {
+	// build package set repository map and base repository set based on repository package sets
+	// No package_sets -> base set
+	mainRepoConfigs := make([]rpmmd.RepoConfig, 0, len(irRepos))
+	pkgSetsRepoConfigs := make(map[string][]rpmmd.RepoConfig, len(irRepos))
+
+	for _, irRepo := range irRepos {
+		repo, err := genRepoConfig(irRepo)
+		if err != nil {
+			return nil, nil, err
+		}
+		if pkgSets := irRepo.PackageSets; pkgSets != nil && len(*irRepo.PackageSets) > 0 {
+			for _, pkgSet := range *pkgSets {
+				pkgSetsRepoConfigs[pkgSet] = append(pkgSetsRepoConfigs[pkgSet], *repo)
+			}
+		} else {
+			mainRepoConfigs = append(mainRepoConfigs, *repo)
+		}
+	}
+
+	// add user custom repos to all payload package sets
+	for _, plRepo := range payloadRepositories {
+		for _, payloadName := range payloadPackageSets {
+			repo, err := genRepoConfig(plRepo)
+			if err != nil {
+				return nil, nil, err
+			}
+			pkgSetsRepoConfigs[payloadName] = append(pkgSetsRepoConfigs[payloadName], *repo)
+		}
+	}
+
+	return mainRepoConfigs, pkgSetsRepoConfigs, nil
+}
+
+func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
+	repoConfig := new(rpmmd.RepoConfig)
+	repoConfig.RHSM = repo.Rhsm
+
+	if repo.Baseurl != nil {
+		repoConfig.BaseURL = *repo.Baseurl
+	} else if repo.Mirrorlist != nil {
+		repoConfig.MirrorList = *repo.Mirrorlist
+	} else if repo.Metalink != nil {
+		repoConfig.Metalink = *repo.Metalink
+	} else {
+		return nil, HTTPError(ErrorInvalidRepository)
+	}
+
+	return repoConfig, nil
 }
