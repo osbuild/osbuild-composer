@@ -3,7 +3,6 @@
 #
 # Test the available distributions. Only allow releases for the current distro.
 #
-
 APISOCKET=/run/weldr/api.socket
 
 source /etc/os-release
@@ -75,17 +74,79 @@ if ! sudo curl -s --unix-socket $APISOCKET http:///localhost/api/status > /dev/n
     exit 1
 fi
 
-if ! DISTROS=$(sudo curl -s --unix-socket $APISOCKET http:///localhost/api/v1/distros/list); then
+if ! RECOGNIZED_DISTROS=$(sudo curl -s --unix-socket $APISOCKET http:///localhost/api/v1/distros/list | jq -r '.distros[]'); then
     echo "osbuild-composer server error getting distros list. 😢"
     exit 1
 fi
 
-REMAINDER=$(echo "$DISTROS" | jq -r '.distros' | grep -v -E "$PATTERN")
-if [ -n "$REMAINDER" ]; then
-    echo "🔥 Unexpected distros installed:"
-    echo "$REMAINDER"
+# Get a list of all installed distros and compare it with a pattern matching host distribution
+INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }' | sort)
+INSTALLED_REMAINDER=$(echo "$INSTALLED_DISTROS" | grep -v -E "$PATTERN")
+# Check if there are any extra distros that match the host pattern but are not recognized
+UNRECOGNIZED_DISTROS=$(echo "${INSTALLED_DISTROS}" | grep -v "${RECOGNIZED_DISTROS}")
+if [ -n "$INSTALLED_REMAINDER" ] || [ -n "$UNRECOGNIZED_DISTROS" ];then
+    echo "Unexpected distros detected:"
+    echo "$INSTALLED_REMAINDER"
+    echo "$UNRECOGNIZED_DISTROS"
     exit 1
 else
-    echo "🎉 All tests passed."
-    exit 0
+    echo "All installed distros are recognized by composer."
 fi
+
+# set path to all composer repositories
+if [ ! -d "repositories/" ]; then
+    git clone --depth 1 http://github.com/osbuild/osbuild-composer
+    REPO_PATH="osbuild-composer/repositories/"
+else
+    REPO_PATH="repositories/"
+fi
+
+# ALL_DISTROS - all possible distros from upstream repository
+# ALL_EXPECTED_DISTROS - all distros matching host pattern
+# ALL_REMAINDERS - all the unrecognized distros
+ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }')
+ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | sort)
+ALL_REMAINDERS=$(echo "$ALL_DISTROS" | grep -v "$RECOGNIZED_DISTROS")
+
+# Check for any missing distros based on the expected host pattern
+if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ];then
+    echo "Some distros are missing!"
+    echo "Missing distros:"
+    diff <(echo "${ALL_EXPECTED_DISTROS}") <(echo "${INSTALLED_DISTROS}") | grep "<" | sed 's/^<\ //g'
+    exit 1
+fi
+
+# Push a blueprint with unsupported distro to see if composer fails gracefuly
+for REMAINING_DISTRO in $ALL_REMAINDERS; do
+    TEST_BP=blueprint.toml
+    tee "$TEST_BP" > /dev/null << EOF
+name = "bash"
+description = "A base system with bash"
+version = "0.0.1"
+distro= "$REMAINING_DISTRO"
+
+[[packages]]
+name = "bash"
+EOF
+    RESPONSE=$(sudo composer-cli blueprints push $TEST_BP 2>&1)
+
+    # there is a different reponse if legacy composer-cli is used
+    if rpm -q --quiet weldr-client; then
+        EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution"
+    else
+        EXPECTED_RESPONSE="'$REMAINING_DISTRO' is not a valid distribution"
+        RESPONSE=${RESPONSE#*: }
+    fi
+
+    if [ "$RESPONSE" == "$EXPECTED_RESPONSE" ];then
+            echo "Blueprint push with $REMAINING_DISTRO distro failed as expected."
+    else
+            echo "Something went wrong during blueprint push test."
+            echo "RESPONSE=$RESPONSE"
+            echo "EXPECTED_RESPONSE=$EXPECTED_RESPONSE"
+            exit 1
+    fi
+done
+
+echo "🎉 All tests passed."
+exit 0
