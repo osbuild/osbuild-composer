@@ -22,6 +22,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
+	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
@@ -93,35 +94,40 @@ func (s *Server) WatchHeartbeats() {
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild:"+arch, job, nil)
+	return s.enqueue("osbuild:"+arch, job, nil)
 }
 
 func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, manifestID uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID})
+	return s.enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID})
 }
 
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
+	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
 }
 
 func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID})
+	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID})
 }
 
 func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
-	return s.jobs.Enqueue("koji-init", job, nil)
+	return s.enqueue("koji-init", job, nil)
 }
 
 func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
+	return s.enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
 }
 
 func (s *Server) EnqueueDepsolve(job *DepsolveJob) (uuid.UUID, error) {
-	return s.jobs.Enqueue("depsolve", job, nil)
+	return s.enqueue("depsolve", job, nil)
 }
 
 func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID) (uuid.UUID, error) {
-	return s.jobs.Enqueue("manifest-id-only", job, []uuid.UUID{parent})
+	return s.enqueue("manifest-id-only", job, []uuid.UUID{parent})
+}
+
+func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+	prometheus.EnqueueJobMetrics(jobType)
+	return s.jobs.Enqueue(jobType, job, dependencies)
 }
 
 func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
@@ -326,6 +332,12 @@ func (s *Server) JobType(id uuid.UUID) (string, error) {
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
+	jobType, status, _, err := s.jobStatus(id, nil)
+	if err != nil {
+		logrus.Errorf("error getting job status: %v", err)
+	} else {
+		prometheus.CancelJobMetrics(status.Started, jobType)
+	}
 	return s.jobs.CancelJob(id)
 }
 
@@ -419,6 +431,13 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		return
 	}
 
+	jobType, status, _, err := s.jobStatus(jobId, nil)
+	if err != nil {
+		logrus.Errorf("error retrieving job status: %v", err)
+	} else {
+		prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
+	}
+
 	for _, depID := range depIDs {
 		// TODO: include type of arguments
 		_, result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
@@ -460,6 +479,14 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 		default:
 			return fmt.Errorf("error finishing job: %v", err)
 		}
+	}
+
+	var jobResult JobResult
+	jobType, status, _, err := s.jobStatus(jobId, &jobResult)
+	if err != nil {
+		logrus.Errorf("error finding job status: %v", err)
+	} else {
+		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType)
 	}
 
 	// Move artifacts from the temporary location to the final job
