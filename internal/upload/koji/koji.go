@@ -2,6 +2,8 @@ package koji
 
 import (
 	"bytes"
+	"time"
+
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
@@ -300,7 +302,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("fileverify", "adler32")
 	u.RawQuery = q.Encode()
 
-	client := http.Client{Transport: k.transport}
+	client := http.Client{Transport: k.transport, Timeout: 5 * time.Second}
 	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 	if err != nil {
 		return err
