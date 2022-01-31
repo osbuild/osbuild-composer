@@ -14,16 +14,16 @@ type DepsolveJobImpl struct {
 
 // depsolve each package set in the pacakgeSets map.  The repositories defined
 // in repos are used for all package sets, whereas the repositories in
-// packageSetsRepositories are only used for the package set with the same name
+// packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepositories map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
 	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache)
 
 	packageSpecs := make(map[string][]rpmmd.PackageSpec)
 	for name, packageSet := range packageSets {
 		repositories := make([]rpmmd.RepoConfig, len(repos))
 		copy(repositories, repos)
-		if packageSetRepositories, ok := packageSetsRepositories[name]; ok {
+		if packageSetRepositories, ok := packageSetsRepos[name]; ok {
 			repositories = append(repositories, packageSetRepositories...)
 		}
 		packageSpec, _, err := rpmMD.Depsolve(packageSet, repositories, modulePlatformID, arch, releasever)
@@ -43,7 +43,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.DepsolveJobResult
-	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.PackageSetsRepositories, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.PackageSetsRepos, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
 		case *rpmmd.DNFError:
