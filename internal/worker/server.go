@@ -486,7 +486,8 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	if err != nil {
 		logrus.Errorf("error finding job status: %v", err)
 	} else {
-		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType)
+		statusCode := clienterrors.GetStatusCode(jobResult.JobError)
+		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType, statusCode)
 	}
 
 	// Move artifacts from the temporary location to the final job

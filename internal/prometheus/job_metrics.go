@@ -3,11 +3,21 @@ package prometheus
 import (
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const workerSubsystem = "composer_worker"
+
+var (
+	TotalJobs = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name:      "total_jobs",
+		Namespace: namespace,
+		Subsystem: workerSubsystem,
+		Help:      "Total jobs",
+	}, []string{"type", "status"})
+)
 
 var (
 	PendingJobs = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -34,7 +44,7 @@ var (
 		Subsystem: workerSubsystem,
 		Help:      "Duration spent by workers on a job.",
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2049},
-	}, []string{"type"})
+	}, []string{"type", "status"})
 )
 
 var (
@@ -68,10 +78,11 @@ func CancelJobMetrics(started time.Time, jobType string) {
 	}
 }
 
-func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType string) {
+func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType string, status clienterrors.StatusCode) {
 	if !finished.IsZero() && !canceled {
 		diff := finished.Sub(started).Seconds()
-		JobDuration.WithLabelValues(jobType).Observe(diff)
+		JobDuration.WithLabelValues(jobType, status.ToString()).Observe(diff)
+		TotalJobs.WithLabelValues(jobType, status.ToString()).Inc()
 		RunningJobs.WithLabelValues(jobType).Dec()
 	}
 }
