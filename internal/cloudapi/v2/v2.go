@@ -205,6 +205,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	// add the user-defined repositories only to the depsolve job for the
+	// payload (the packages for the final image)
 	var payloadRepositories []Repository
 	if request.Customizations != nil && request.Customizations.PayloadRepositories != nil {
 		payloadRepositories = *request.Customizations.PayloadRepositories
