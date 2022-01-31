@@ -34,6 +34,40 @@ type Error struct {
 	Details interface{}     `json:"details"`
 }
 
+const (
+	JobStatusSuccess        = "2xx"
+	JobStatusUserInputError = "4xx"
+	JobStatusInternalError  = "5xx"
+)
+
+type StatusCode string
+
+func (s *StatusCode) ToString() string {
+	return string(*s)
+}
+
+func GetStatusCode(err *Error) StatusCode {
+	if err == nil {
+		return JobStatusSuccess
+	}
+	switch err.ID {
+	case ErrorDNFDepsolveError:
+		return JobStatusInternalError
+	case ErrorDNFMarkingError:
+		return JobStatusInternalError
+	case ErrorNoDynamicArgs:
+		return JobStatusUserInputError
+	case ErrorInvalidTargetConfig:
+		return JobStatusUserInputError
+	case ErrorSharingTarget:
+		return JobStatusUserInputError
+	case ErrorInvalidTarget:
+		return JobStatusUserInputError
+	default:
+		return JobStatusInternalError
+	}
+}
+
 func WorkerClientError(code ClientErrorCode, reason string, details ...interface{}) *Error {
 	return &Error{
 		ID:      code,
