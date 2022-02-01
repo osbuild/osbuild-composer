@@ -2,7 +2,7 @@
   "fedora-33": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     },
     "dependants": {
@@ -14,28 +14,28 @@
   "fedora-34": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     }
   },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     }
   },
   "rhel-8.5": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     }
   },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     },
     "repos": {
@@ -44,34 +44,34 @@
         {
           "title": "RHEL-8-NIGHTLY-BaseOS",
           "name": "baseos",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201"
         },
         {
           "title": "RHEL-8-NIGHTLY-AppStream",
           "name": "appstream",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201"
         },
         {
           "title": "RHEL-8-NIGHTLY-CRB",
           "name": "crb",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-crb-n8.6-20220126"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-crb-n8.6-20220201"
         }
       ],
       "aarch64": [
         {
           "title": "RHEL-8-NIGHTLY-BaseOS",
           "name": "baseos",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201"
         },
         {
           "title": "RHEL-8-NIGHTLY-AppStream",
           "name": "appstream",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201"
         },
         {
           "title": "RHEL-8-NIGHTLY-CRB",
           "name": "crb",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.6-20220126"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.6-20220201"
         }
       ]
     }
@@ -79,7 +79,7 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     },
     "repos": {
@@ -88,34 +88,34 @@
         {
           "title": "RHEL-9-NIGHTLY-BaseOS",
           "name": "baseos",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220201"
         },
         {
           "title": "RHEL-9-NIGHTLY-AppStream",
           "name": "appstream",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220201"
         },
         {
           "title": "RHEL-9-NIGHTLY-CRB",
           "name": "crb",
-          "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.0.0/compose/CRB/x86_64/os/"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-crb-n9.0-20220201"
         }
       ],
       "aarch64": [
         {
           "title": "RHEL-9-NIGHTLY-BaseOS",
           "name": "baseos",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220201"
         },
         {
           "title": "RHEL-9-NIGHTLY-AppStream",
           "name": "appstream",
-          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220106"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220201"
         },
         {
           "title": "RHEL-9-NIGHTLY-CRB",
           "name": "crb",
-          "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.0.0/compose/CRB/aarch64/os/"
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-crb-n9.0-20220201"
         }
       ]
     }
@@ -123,7 +123,7 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "f7bf23fabaae6027b1e1147b27870d90d4b1911f"
+        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     }
   }
