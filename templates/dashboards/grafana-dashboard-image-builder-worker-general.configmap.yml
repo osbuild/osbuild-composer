@@ -31,8 +31,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 3,
-      "iteration": 1639488117492,
+      "iteration": 1644236264867,
       "links": [],
       "panels": [
         {
@@ -44,14 +43,14 @@ data:
             "x": 0,
             "y": 0
           },
-          "id": 128,
+          "id": 212,
           "panels": [],
-          "title": "Depsolve Duration",
+          "title": "Build Job Success Rate",
           "type": "row"
         },
         {
           "datasource": "${datasource}",
-          "description": "The duration of 90% of depsolve jobs",
+          "description": "The percentage of successful osbuild jobs for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -70,24 +69,25 @@ data:
                   "type": "special"
                 }
               ],
+              "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
+                    "color": "red",
                     "value": null
                   },
                   {
                     "color": "#EAB839",
-                    "value": "25"
+                    "value": "0.95"
                   },
                   {
-                    "color": "red",
-                    "value": "30"
+                    "color": "green",
+                    "value": "0.955"
                   }
                 ]
               },
-              "unit": "s"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -128,43 +128,43 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
+              "expr": "sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"2xx\"}[$__range]))/sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "title": "Depsolve Job Duration",
+          "title": "Build Job Success Rate",
           "type": "stat"
         },
         {
           "datasource": "${datasource}",
-          "description": "The request Duration for depsolve jobs over the selected date range",
+          "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
                 "mode": "thresholds"
               },
               "custom": {
-                "axisLabel": "seconds",
+                "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
                 "drawStyle": "line",
-                "fillOpacity": 35,
-                "gradientMode": "scheme",
+                "fillOpacity": 11,
+                "gradientMode": "none",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
                   "viz": false
                 },
                 "lineInterpolation": "linear",
-                "lineWidth": 3,
+                "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "never",
-                "spanNulls": true,
+                "showPoints": "auto",
+                "spanNulls": false,
                 "stacking": {
                   "group": "A",
                   "mode": "none"
@@ -174,127 +174,28 @@ data:
                 }
               },
               "mappings": [],
-              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "175"
-                  },
-                  {
                     "color": "red",
-                    "value": "200"
+                    "value": null
                   }
                 ]
               },
-              "unit": "s"
+              "unit": "none"
             },
             "overrides": [
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "99p"
+                  "options": "success/sec"
                 },
                 "properties": [
                   {
                     "id": "color",
                     "value": {
-                      "fixedColor": "red",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "95p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "90p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "yellow",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "50p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p90"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "yellow",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p99"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "red",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p50"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
+                      "fixedColor": "green",
                       "mode": "fixed"
                     }
                   }
@@ -308,7 +209,7 @@ data:
             "x": 5,
             "y": 1
           },
-          "id": 205,
+          "id": 202,
           "options": {
             "legend": {
               "calcs": [],
@@ -322,34 +223,27 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval])) - sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))",
+              "hide": false,
               "interval": "",
-              "legendFormat": "p50",
+              "legendFormat": "success/sec",
               "refId": "A"
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))",
               "hide": false,
               "interval": "",
-              "legendFormat": "p90",
+              "legendFormat": "errors/sec",
               "refId": "B"
-            },
-            {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "p99",
-              "refId": "C"
             }
           ],
-          "title": "Depsolve Job Duration",
+          "title": "Build Job Throughput Rate",
           "type": "timeseries"
         },
         {
           "datasource": "${datasource}",
-          "description": "Percent of requests exceeding Duration allowed by SLO",
+          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -389,12 +283,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
                     "color": "red",
-                    "value": 80
+                    "value": null
                   }
                 ]
               },
@@ -422,13 +312,13 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[$interval]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$interval]))",
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))/sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "title": "Slow Request Rate",
+          "title": "Build Job Error Rate",
           "type": "timeseries"
         },
         {
@@ -491,7 +381,7 @@ data:
             "x": 0,
             "y": 9
           },
-          "id": 115,
+          "id": 238,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -516,7 +406,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\"}[$__range]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))/ sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))) + 0.001)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -599,7 +489,7 @@ data:
             "x": 4,
             "y": 9
           },
-          "id": 119,
+          "id": 239,
           "links": [],
           "options": {
             "legend": {
@@ -615,7 +505,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[28d]))/sum(increase(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[28d]))) - $latency_slo)/ (1 - $latency_slo)",
+              "expr": "1 - ((1 - sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))/sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))) - $stability_slo)/ (1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -639,7 +529,7 @@ data:
           },
           "id": 129,
           "panels": [],
-          "title": "Osbuild Job Duration",
+          "title": "Build Job Duration",
           "type": "row"
         },
         {
@@ -727,7 +617,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Osbuild Job Duration",
+          "title": "Build Job Duration",
           "type": "stat"
         },
         {
@@ -937,7 +827,7 @@ data:
               "refId": "C"
             }
           ],
-          "title": "Osbuild Job Duration",
+          "title": "Build Job Duration",
           "type": "timeseries"
         },
         {
@@ -1230,6 +1120,1082 @@ data:
             "x": 0,
             "y": 34
           },
+          "id": 214,
+          "panels": [],
+          "title": "Depsolve Job Success Rate",
+          "type": "row"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The percentage of successful depsolve jobs for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "0.95"
+                  },
+                  {
+                    "color": "green",
+                    "value": "0.955"
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 0,
+            "y": 35
+          },
+          "id": 225,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"2xx\"}[$__range]))/sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$__range]))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Depsolve Job Success Rate",
+          "type": "stat"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 11,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success/sec"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 5,
+            "y": 35
+          },
+          "id": 227,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval])) - sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "success/sec",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "errors/sec",
+              "refId": "B"
+            }
+          ],
+          "title": "Build Job Throughput Rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 35
+          },
+          "id": 228,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))/sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Build Job Error Rate",
+          "type": "timeseries"
+        },
+        {
+          "cacheTimeout": 1,
+          "datasource": "${datasource}",
+          "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 2,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "1.40 days"
+                    }
+                  },
+                  "type": "special"
+                },
+                {
+                  "options": {
+                    "from": 672,
+                    "result": {
+                      "index": 1,
+                      "text": "∞"
+                    },
+                    "to": 3360100
+                  },
+                  "type": "range"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 40
+                  },
+                  {
+                    "color": "green",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "h"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 4,
+            "x": 0,
+            "y": 43
+          },
+          "id": 223,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {
+              "valueSize": 80
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))/ sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))) + 0.001)",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Error Budget Remaining",
+          "type": "stat"
+        },
+        {
+          "cacheTimeout": null,
+          "datasource": "${datasource}",
+          "description": "The percentage of error budget consumed for the selected time range. ",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 0,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "links": [],
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.95
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 20,
+            "x": 4,
+            "y": 43
+          },
+          "id": 224,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "1 - ((1 - sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))/sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))) - $stability_slo)/ (1 - $stability_slo)",
+              "instant": false,
+              "interval": "",
+              "intervalFactor": 10,
+              "legendFormat": "errorbudget",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Error Budget Consumed",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "datasource": null,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 51
+          },
+          "id": 128,
+          "panels": [],
+          "title": "Depsolve Duration",
+          "type": "row"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The duration of 90% of depsolve jobs",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "25"
+                  },
+                  {
+                    "color": "red",
+                    "value": "30"
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 0,
+            "y": 52
+          },
+          "id": 237,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Depsolve Job Duration",
+          "type": "stat"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "The request Duration for depsolve jobs over the selected date range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "seconds",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 35,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 3,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "175"
+                  },
+                  {
+                    "color": "red",
+                    "value": "200"
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "99p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "95p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "90p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "50p"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p90"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p99"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p50"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 5,
+            "y": 52
+          },
+          "id": 205,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "interval": "",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p99",
+              "refId": "C"
+            }
+          ],
+          "title": "Depsolve Job Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "${datasource}",
+          "description": "Percent of requests exceeding Duration allowed by SLO",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 52
+          },
+          "id": 234,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[$interval]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$interval]))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Slow Request Rate",
+          "type": "timeseries"
+        },
+        {
+          "cacheTimeout": 1,
+          "datasource": "${datasource}",
+          "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 2,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "1.40 days"
+                    }
+                  },
+                  "type": "special"
+                },
+                {
+                  "options": {
+                    "from": 672,
+                    "result": {
+                      "index": 1,
+                      "text": "∞"
+                    },
+                    "to": 3360100
+                  },
+                  "type": "range"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 40
+                  },
+                  {
+                    "color": "green",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "h"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 4,
+            "x": 0,
+            "y": 60
+          },
+          "id": 115,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {
+              "valueSize": 80
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\"}[$__range]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$__range])))",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Error Budget Remaining",
+          "type": "stat"
+        },
+        {
+          "cacheTimeout": null,
+          "datasource": "${datasource}",
+          "description": "The percentage of error budget consumed for the selected time range. ",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 100,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 0,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "links": [],
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.95
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 20,
+            "x": 4,
+            "y": 60
+          },
+          "id": 119,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          },
+          "pluginVersion": "8.1.5",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "1 - ((sum(increase(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[28d]))/sum(increase(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[28d]))) - $latency_slo)/ (1 - $latency_slo)",
+              "instant": false,
+              "interval": "",
+              "intervalFactor": 10,
+              "legendFormat": "errorbudget",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Error Budget Consumed",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "datasource": null,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 68
+          },
           "id": 207,
           "panels": [],
           "title": "Job Wait Duration",
@@ -1281,7 +2247,7 @@ data:
             "h": 8,
             "w": 5,
             "x": 0,
-            "y": 35
+            "y": 69
           },
           "id": 208,
           "mappings": [
@@ -1492,7 +2458,7 @@ data:
             "h": 8,
             "w": 11,
             "x": 5,
-            "y": 35
+            "y": 69
           },
           "id": 209,
           "options": {
@@ -1593,7 +2559,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 35
+            "y": 69
           },
           "id": 204,
           "options": {
@@ -1772,5 +2738,5 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 1
+      "version": 2
     }
