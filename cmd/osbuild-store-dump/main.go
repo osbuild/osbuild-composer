@@ -11,7 +11,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -116,8 +116,8 @@ func main() {
 	awsTarget.ImageName = "My Image"
 	awsTarget.Created = time.Now()
 
-	d := fedora33.New()
-	a, err := d.GetArch("x86_64")
+	d := fedora.NewF35()
+	a, err := d.GetArch(distro.X86_64ArchName)
 	if err != nil {
 		panic(err)
 	}
@@ -129,11 +129,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-33")
+	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-35")
 	if err != nil {
 		panic(err)
 	}
-	repos := allRepos["x86_64"]
+	repos := allRepos[distro.X86_64ArchName]
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
