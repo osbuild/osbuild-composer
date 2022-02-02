@@ -8,7 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
 )
 
 func TestFilenameFromType(t *testing.T) {
@@ -60,8 +60,8 @@ func TestFilenameFromType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dist := fedora33.New()
-			arch, _ := dist.GetArch("x86_64")
+			dist := fedora.NewF35()
+			arch, _ := dist.GetArch(distro.X86_64ArchName)
 			imgType, err := arch.GetImageType(tt.args.outputFormat)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Arch.GetImageType() error = %v, wantErr %v", err, tt.wantErr)
@@ -106,10 +106,10 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"xz",
 	}
 	buildPackages := map[string][]string{
-		"x86_64":  x8664BuildPackages,
-		"aarch64": aarch64BuildPackages,
+		distro.X86_64ArchName:  x8664BuildPackages,
+		distro.Aarch64ArchName: aarch64BuildPackages,
 	}
-	d := fedora33.New()
+	d := fedora.NewF35()
 	for _, archLabel := range d.ListArches() {
 		archStruct, err := d.GetArch(archLabel)
 		if err != nil {
@@ -137,13 +137,13 @@ func TestImageType_BuildPackages(t *testing.T) {
 }
 
 func TestImageType_Name(t *testing.T) {
-	distro := fedora33.New()
+	f35 := fedora.NewF35()
 	imgMap := []struct {
 		arch     string
 		imgNames []string
 	}{
 		{
-			arch: "x86_64",
+			arch: distro.X86_64ArchName,
 			imgNames: []string{
 				"ami",
 				"qcow2",
@@ -153,7 +153,7 @@ func TestImageType_Name(t *testing.T) {
 			},
 		},
 		{
-			arch: "aarch64",
+			arch: distro.Aarch64ArchName,
 			imgNames: []string{
 				"ami",
 				"qcow2",
@@ -162,7 +162,7 @@ func TestImageType_Name(t *testing.T) {
 		},
 	}
 	for _, mapping := range imgMap {
-		arch, err := distro.GetArch(mapping.arch)
+		arch, err := f35.GetArch(mapping.arch)
 		if assert.NoError(t, err) {
 			for _, imgName := range mapping.imgNames {
 				imgType, err := arch.GetImageType(imgName)
@@ -203,8 +203,8 @@ func TestImageType_Size(t *testing.T) {
 		},
 	}
 
-	distro := fedora33.New()
-	arch, err := distro.GetArch("x86_64")
+	f35 := fedora.NewF35()
+	arch, err := f35.GetArch(distro.X86_64ArchName)
 	if assert.NoError(t, err) {
 		for _, mapping := range sizeMap {
 			imgType, err := arch.GetImageType(mapping.name)
@@ -282,8 +282,8 @@ func TestImageType_BasePackages(t *testing.T) {
 			bootable: true,
 		},
 	}
-	distro := fedora33.New()
-	arch, err := distro.GetArch("x86_64")
+	f35 := fedora.NewF35()
+	arch, err := f35.GetArch(distro.X86_64ArchName)
 	assert.NoError(t, err)
 
 	for _, pkgMap := range pkgMaps {
@@ -307,7 +307,7 @@ func TestImageType_BasePackages(t *testing.T) {
 func TestDistro_ManifestError(t *testing.T) {
 	// Currently, the only unsupported configuration is OSTree commit types
 	// with Kernel boot options
-	f33distro := fedora33.New()
+	f35distro := fedora.NewF35()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Kernel: &blueprint.KernelCustomization{
@@ -316,8 +316,8 @@ func TestDistro_ManifestError(t *testing.T) {
 		},
 	}
 
-	for _, archName := range f33distro.ListArches() {
-		arch, _ := f33distro.GetArch(archName)
+	for _, archName := range f35distro.ListArches() {
+		arch, _ := f35distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
@@ -330,23 +330,23 @@ func TestDistro_ManifestError(t *testing.T) {
 	}
 }
 
-func TestFedora33_ListArches(t *testing.T) {
-	distro := fedora33.New()
-	arches := distro.ListArches()
-	assert.Equal(t, []string{"aarch64", "x86_64"}, arches)
+func TestFedora35_ListArches(t *testing.T) {
+	f35 := fedora.NewF35()
+	arches := f35.ListArches()
+	assert.Equal(t, []string{distro.Aarch64ArchName, distro.X86_64ArchName}, arches)
 }
 
-func TestFedora33_GetArch(t *testing.T) {
-	distro := fedora33.New()
+func TestFedora35_GetArch(t *testing.T) {
+	f35 := fedora.NewF35()
 	arches := []struct {
 		name          string
 		errorExpected bool
 	}{
 		{
-			name: "x86_64",
+			name: distro.X86_64ArchName,
 		},
 		{
-			name: "aarch64",
+			name: distro.Aarch64ArchName,
 		},
 		{
 			name:          "foo-arch",
@@ -355,7 +355,7 @@ func TestFedora33_GetArch(t *testing.T) {
 	}
 
 	for _, a := range arches {
-		actualArch, err := distro.GetArch(a.name)
+		actualArch, err := f35.GetArch(a.name)
 		if !a.errorExpected {
 			assert.Equal(t, a.name, actualArch.Name())
 			assert.NoError(t, err)
@@ -366,22 +366,34 @@ func TestFedora33_GetArch(t *testing.T) {
 	}
 }
 
-func TestFedora33_Name(t *testing.T) {
-	distro := fedora33.New()
-	assert.Equal(t, "fedora-33", distro.Name())
+func TestFedora35_Name(t *testing.T) {
+	distro := fedora.NewF35()
+	assert.Equal(t, "fedora-35", distro.Name())
 }
 
-func TestFedora33_ModulePlatformID(t *testing.T) {
-	distro := fedora33.New()
-	assert.Equal(t, "platform:f33", distro.ModulePlatformID())
+func TestFedora35_ModulePlatformID(t *testing.T) {
+	distro := fedora.NewF35()
+	assert.Equal(t, "platform:f35", distro.ModulePlatformID())
 }
 
-func TestFedora33_KernelOption(t *testing.T) {
-	distro_test_common.TestDistro_KernelOption(t, fedora33.New())
+func TestFedora35_OSTreeRef(t *testing.T) {
+	f35 := fedora.NewF35()
+	assert.Equal(t, "fedora/35/%s/iot", f35.OSTreeRef())
+
+	x86_64, err := f35.GetArch(distro.X86_64ArchName)
+	assert.Nilf(t, err, "failed to get %q architecture of %q distribution", distro.X86_64ArchName, f35.Name())
+	ostreeImgName := "fedora-iot-commit"
+	ostreeImg, err := x86_64.GetImageType(ostreeImgName)
+	assert.Nilf(t, err, "failed to get %q image type for %q architecture of %q distribution", ostreeImgName, distro.X86_64ArchName, f35.Name())
+	assert.Equal(t, "fedora/35/x86_64/iot", ostreeImg.OSTreeRef())
+}
+
+func TestFedora35_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, fedora.NewF35())
 }
 
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
-	f33distro := fedora33.New()
+	f35distro := fedora.NewF35()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -392,8 +404,8 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			},
 		},
 	}
-	for _, archName := range f33distro.ListArches() {
-		arch, _ := f33distro.GetArch(archName)
+	for _, archName := range f35distro.ListArches() {
+		arch, _ := f35distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
@@ -407,7 +419,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 }
 
 func TestDistro_TestRootMountPoint(t *testing.T) {
-	f33distro := fedora33.New()
+	f35distro := fedora.NewF35()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -418,8 +430,8 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			},
 		},
 	}
-	for _, archName := range f33distro.ListArches() {
-		arch, _ := f33distro.GetArch(archName)
+	for _, archName := range f35distro.ListArches() {
+		arch, _ := f35distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)

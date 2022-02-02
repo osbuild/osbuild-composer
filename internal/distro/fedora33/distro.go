@@ -16,27 +16,25 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const defaultName = "fedora-33"
-const releaseVersion = "33"
-const modulePlatformID = "platform:f33"
-const ostreeRef = "fedora/33/%s/iot"
+const nameTmpl = "fedora-%s"
+const modulePlatformIDTmpl = "platform:f%s"
 
-const f34Name = "fedora-34"
-const f34modulePlatformID = "platform:f34"
-const f34ostreeRef = "fedora/34/%s/iot"
+// The second format value is intentionally escaped, because the
+// format string is substituted in two steps:
+//  1. on distribution level when being created
+//  2. on image level
+const ostreeRefTmpl = "fedora/%s/%%s/iot"
 
-const f35Name = "fedora-35"
-const f35modulePlatformID = "platform:f35"
-const f35ostreeRef = "fedora/35/%s/iot"
-
-const f36Name = "fedora-36"
-const f36modulePlatformID = "platform:f36"
-const f36ostreeRef = "fedora/36/%s/iot"
+const f33ReleaseVersion = "33"
+const f34ReleaseVersion = "34"
+const f35ReleaseVersion = "35"
+const f36ReleaseVersion = "36"
 
 type distribution struct {
 	name             string
+	releaseVersion   string
 	modulePlatformID string
-	ostreeRef        string
+	ostreeRefTmpl    string
 	arches           map[string]architecture
 	buildPackages    []string
 }
@@ -177,7 +175,7 @@ func (t *imageType) MIMEType() string {
 
 func (t *imageType) OSTreeRef() string {
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(t.Arch().Distro().OSTreeRef(), t.Arch().Name())
 	}
 	return ""
 }
@@ -278,7 +276,7 @@ func (d *distribution) Name() string {
 }
 
 func (d *distribution) Releasever() string {
-	return releaseVersion
+	return d.releaseVersion
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -286,7 +284,7 @@ func (d *distribution) ModulePlatformID() string {
 }
 
 func (d *distribution) OSTreeRef() string {
-	return d.ostreeRef
+	return d.ostreeRefTmpl
 }
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
@@ -642,28 +640,79 @@ func ostreeCommitAssembler(options distro.ImageOptions, arch distro.Arch) *osbui
 }
 
 // New creates a new distro object, defining the supported architectures and image types
-func New() distro.Distro {
-	return newDistro(defaultName, modulePlatformID, ostreeRef)
+func NewF33() distro.Distro {
+	return newDefaultDistro(f33ReleaseVersion)
 }
 
 func NewF34() distro.Distro {
-	return newDistro(f34Name, f34modulePlatformID, f34ostreeRef)
+	return newDefaultDistro(f34ReleaseVersion)
 }
 
 func NewF35() distro.Distro {
-	return newDistro(f35Name, f35modulePlatformID, f35ostreeRef)
+	return newDefaultDistro(f35ReleaseVersion)
 }
 
 func NewF36() distro.Distro {
-	return newDistro(f36Name, f36modulePlatformID, f36ostreeRef)
+	return newDefaultDistro(f36ReleaseVersion)
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro(name, modulePlatformID, ostreeRef)
 }
 
+func newDefaultDistro(releaseVersion string) distro.Distro {
+	return newDistro(
+		fmt.Sprintf(nameTmpl, releaseVersion),
+		fmt.Sprintf(modulePlatformIDTmpl, releaseVersion),
+		fmt.Sprintf(ostreeRefTmpl, releaseVersion),
+	)
+}
+
 func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
+
+	r := distribution{
+		buildPackages: []string{
+			"dnf",
+			"dosfstools",
+			"e2fsprogs",
+			"policycoreutils",
+			"qemu-img",
+			"selinux-policy-targeted",
+			"systemd",
+			"tar",
+			"xz",
+		},
+		name:             name,
+		modulePlatformID: modulePlatformID,
+		ostreeRefTmpl:    ostreeRef,
+	}
+
+	x86_64 := architecture{
+		distro: &r,
+		name:   distro.X86_64ArchName,
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"grub2-pc",
+		},
+		buildPackages: []string{
+			"grub2-pc",
+		},
+		legacy: "i386-pc",
+	}
+
+	aarch64 := architecture{
+		distro: &r,
+		name:   distro.Aarch64ArchName,
+		bootloaderPackages: []string{
+			"dracut-config-generic",
+			"efibootmgr",
+			"grub2-efi-aa64",
+			"grub2-tools",
+			"shim-aa64",
+		},
+		uefi: true,
+	}
 
 	iotImgType := imageType{
 		name:     "fedora-iot-commit",
@@ -934,35 +983,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 	}
 
-	r := distribution{
-		buildPackages: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"policycoreutils",
-			"qemu-img",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"xz",
-		},
-		name:             name,
-		modulePlatformID: modulePlatformID,
-		ostreeRef:        ostreeRef,
-	}
-	x8664 := architecture{
-		distro: &r,
-		name:   "x86_64",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"grub2-pc",
-		},
-		buildPackages: []string{
-			"grub2-pc",
-		},
-		legacy: "i386-pc",
-	}
-	x8664.setImageTypes(
+	x86_64.setImageTypes(
 		iotImgType,
 		amiImgType,
 		qcow2ImageType,
@@ -972,18 +993,6 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		ociImageType,
 	)
 
-	aarch64 := architecture{
-		distro: &r,
-		name:   "aarch64",
-		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"grub2-tools",
-			"shim-aa64",
-		},
-		uefi: true,
-	}
 	aarch64.setImageTypes(
 		amiImgType,
 		qcow2ImageType,
@@ -991,7 +1000,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		ociImageType,
 	)
 
-	r.setArches(x8664, aarch64)
+	r.setArches(x86_64, aarch64)
 
 	return &r
 }
