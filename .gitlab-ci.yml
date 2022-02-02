@@ -11,6 +11,7 @@ stages:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
     - schutzbot/run_cloud_cleaner.sh
+  interruptible: true
   tags:
     - terraform
   artifacts:
@@ -36,7 +37,6 @@ init:
     - shell
   script:
     - schutzbot/update_github_status.sh start
-  interruptible: true
 
 RPM:
   stage: rpmbuild
@@ -45,7 +45,6 @@ RPM:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - sh "schutzbot/mockbuild.sh"
-  interruptible: true
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
@@ -76,7 +75,6 @@ Container:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - sh "schutzbot/containerbuild.sh"
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -100,7 +98,6 @@ Prepare-rhel-internal:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
   script:
     - schutzbot/prepare-rhel-internal.sh
-  interruptible: true
   artifacts:
     paths:
       - rhel-${RHEL_MAJOR}.json
@@ -126,7 +123,6 @@ Base:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -180,7 +176,6 @@ Regression:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/regression.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -211,7 +206,6 @@ Image Tests:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -236,7 +230,6 @@ Test Case Generation:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/generation.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -258,7 +251,6 @@ OSTree:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -382,7 +374,6 @@ libvirt:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/libvirt.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
@@ -401,7 +392,6 @@ RHEL 9 on 8:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
-  interruptible: true
   variables:
     RUNNER: aws/rhel-8.5-ga-x86_64
     INTERNAL_NETWORK: "true"
@@ -456,7 +446,6 @@ Installer:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
-  interruptible: true
   parallel:
     matrix:
       - RUNNER:
