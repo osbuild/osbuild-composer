@@ -39,19 +39,6 @@ func main() {
 		logrus.Info("Dry run, no state will be changed")
 	}
 
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		conf.PGUser,
-		conf.PGPassword,
-		conf.PGHost,
-		conf.PGPort,
-		conf.PGDatabase,
-		conf.PGSSLMode,
-	)
-	jobs, err := dbjobqueue.New(dbURL)
-	if err != nil {
-		panic(err)
-	}
-
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -93,6 +80,24 @@ func main() {
 
 	wg.Wait()
 	logrus.Info("🦀🦀🦀 cloud cleanup done 🦀🦀🦀")
+
+	if conf.PGHost == "" {
+		logrus.Info("🦀🦀🦀 db host not defined, skipping db cleanup 🦀🦀🦀")
+		return
+	}
+
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		conf.PGUser,
+		conf.PGPassword,
+		conf.PGHost,
+		conf.PGPort,
+		conf.PGDatabase,
+		conf.PGSSLMode,
+	)
+	jobs, err := dbjobqueue.New(dbURL)
+	if err != nil {
+		panic(err)
+	}
 
 	var jobTypes []string
 	for _, a := range archs {
