@@ -250,6 +250,16 @@ an issue where the first line in the credentials file gets lost resulting in
 incomplete credentials. The work-around is to define a dummy ENV variable on
 the first line!
 
+### Cloud cleaner
+
+Some tests deploy images to different clouds. After the tests run, these images
+get removed by cloud cleaner (`cmd/cloud-cleaner`). But if something fails during the tests, or the
+pipeline gets canceled, that image could get left behind in the cloud, wasting
+resources.
+
+To deal with this problem, we have scheduled cloud cleaner (`schutzbot/scheduled_cloud_cleaner.sh`), that goes through all
+the clouds looking for testing resources that were not removed.
+
 ## Integration testing
 
 Since `osbuild-composer` externally provides two types of API, there also
