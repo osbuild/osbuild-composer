@@ -80,7 +80,8 @@ if ! RECOGNIZED_DISTROS=$(sudo curl -s --unix-socket $APISOCKET http:///localhos
 fi
 
 # Get a list of all installed distros and compare it with a pattern matching host distribution
-INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }' | sort)
+# Filter out beta and centos-stream, see GH issue #2257
+INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }' | grep -Ev 'beta|stream' | sort)
 INSTALLED_REMAINDER=$(echo "$INSTALLED_DISTROS" | grep -v -E "$PATTERN")
 # Check if there are any extra distros that match the host pattern but are not recognized
 UNRECOGNIZED_DISTROS=$(echo "${INSTALLED_DISTROS}" | grep -v "${RECOGNIZED_DISTROS}")
@@ -104,8 +105,9 @@ fi
 # ALL_DISTROS - all possible distros from upstream repository
 # ALL_EXPECTED_DISTROS - all distros matching host pattern
 # ALL_REMAINDERS - all the unrecognized distros
+# Filter out beta and centos-stream, see GH issue #2257
 ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }')
-ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | sort)
+ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta|stream' | sort)
 ALL_REMAINDERS=$(echo "$ALL_DISTROS" | grep -v "$RECOGNIZED_DISTROS")
 
 # Check for any missing distros based on the expected host pattern
