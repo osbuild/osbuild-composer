@@ -498,6 +498,8 @@ SCHEDULED_CLOUD_CLEANER:
 SonarQube:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - schutzbot/sonarqube.sh
   variables:
