@@ -418,9 +418,29 @@ func osPipeline(t *imageType,
 		if err != nil {
 			return nil, err
 		}
-		p.AddStage(osbuild.NewUsersStage(userOptions))
+
 		if t.rpmOstree {
+			// for ostree, writing the key during user creation is redundant
+			// and can cause issues so create users without keys and write them
+			// on first boot
+			userOptionsSansKeys := new(osbuild.UsersStageOptions)
+			userOptionsSansKeys.Users = make(map[string]osbuild.UsersStageOptionsUser, len(userOptions.Users))
+			for name, options := range userOptions.Users {
+				userOptionsSansKeys.Users[name] = osbuild.UsersStageOptionsUser{
+					UID:         options.UID,
+					GID:         options.GID,
+					Groups:      options.Groups,
+					Description: options.Description,
+					Home:        options.Home,
+					Shell:       options.Shell,
+					Password:    options.Password,
+					Key:         nil,
+				}
+			}
+			p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
 			p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+		} else {
+			p.AddStage(osbuild.NewUsersStage(userOptions))
 		}
 	}
 
