@@ -57,7 +57,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	}
 	// if the job failed, but the JobError is
 	// nil, we still need to handle this as an error
-	if !result.OSBuildOutput.Success {
+	if result.OSBuildOutput == nil || !result.OSBuildOutput.Success {
 		reason := "osbuild job was unsuccessful"
 		logWithId.Errorf("osbuild job failed: %s", reason)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason)
@@ -111,6 +111,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		var manifestJR worker.ManifestJobByIDResult
 		err = job.DynamicArgs(0, &manifestJR)
 		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
 			return err
 		}
 
