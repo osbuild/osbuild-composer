@@ -10,7 +10,7 @@ curl "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scan
 unzip -q sonar-scanner-cli.zip
 
 SONAR_SCANNER_CMD="sonar-scanner-$SONAR_SCANNER_CLI_VERSION-linux/bin/sonar-scanner"
-SCANNER_OPTS="-Dsonar.projectKey=osbuild:osbuild-composer -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.corp.redhat.com -Dsonar.login=$SONAR_SCANNER_TOKEN"
+SCANNER_OPTS="-Dsonar.projectKey=osbuild:osbuild-composer -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.corp.redhat.com -Dsonar.login=$SONAR_SCANNER_TOKEN -Dsonar.c.file.suffixes=-"
 
 # add options for branch analysis if not running on main
 if [ "$CI_COMMIT_BRANCH" != "main" ];then
