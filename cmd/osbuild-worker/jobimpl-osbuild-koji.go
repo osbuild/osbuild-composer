@@ -56,12 +56,36 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 	return k.Upload(file, directory, filename)
 }
 
+func validateKojiResult(result *worker.OSBuildKojiJobResult, jobID string) {
+	logWithId := logrus.WithField("jobId", jobID)
+	if result.JobError != nil {
+		logWithId.Errorf("osbuild job failed: %s", result.JobError.Reason)
+		return
+	}
+	// if the job failed, but the JobError is
+	// nil, we still need to handle this as an error
+	if result.OSBuildOutput == nil || !result.OSBuildOutput.Success {
+		reason := "osbuild job was unsuccessful"
+		logWithId.Errorf("osbuild job failed: %s", reason)
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason)
+	}
+}
+
 func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
+	var result worker.OSBuildKojiJobResult
 	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
 	defer func() {
+		validateKojiResult(&result, job.Id().String())
+
+		// this is necessary for early return errors
+		err = job.Update(&result)
+		if err != nil {
+			logrus.Warnf("Error reporting job result: %v", err)
+		}
+
 		err := os.RemoveAll(outputDirectory)
 		if err != nil {
 			logrus.Warnf("Error removing temporary output directory (%s): %v", outputDirectory, err)
@@ -80,7 +104,6 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	var result worker.OSBuildKojiJobResult
 	result.Arch = common.CurrentArch()
 	result.HostOS, err = distro.GetRedHatRelease()
 	if err != nil {
@@ -93,6 +116,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			var manifestJR worker.ManifestJobByIDResult
 			err = job.DynamicArgs(1, &manifestJR)
 			if err != nil {
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
 				return err
 			}
 
@@ -103,10 +127,14 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			}
 			args.Manifest = manifestJR.Manifest
 			if len(args.Manifest) == 0 {
-				return fmt.Errorf("received empty manifest")
+				err := fmt.Errorf("Received empty manifest")
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, err.Error())
+				return err
 			}
 		} else {
-			return fmt.Errorf("job has no manifest")
+			err := fmt.Errorf("Job has no manifest")
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, err.Error())
+			return err
 		}
 	}
 
@@ -118,7 +146,9 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			exports = []string{"assembler"}
 		} else if len(exports) > 1 {
 			// this worker only supports returning one (1) export
-			return fmt.Errorf("at most one build artifact can be exported")
+			err = fmt.Errorf("at most one build artifact can be exported")
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, err.Error())
+			return err
 		}
 		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
 		if err != nil {
