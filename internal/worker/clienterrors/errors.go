@@ -52,9 +52,9 @@ func GetStatusCode(err *Error) StatusCode {
 	}
 	switch err.ID {
 	case ErrorDNFDepsolveError:
-		return JobStatusInternalError
+		return JobStatusUserInputError
 	case ErrorDNFMarkingError:
-		return JobStatusInternalError
+		return JobStatusUserInputError
 	case ErrorNoDynamicArgs:
 		return JobStatusUserInputError
 	case ErrorInvalidTargetConfig:
