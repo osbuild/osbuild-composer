@@ -10,6 +10,8 @@
     # current target host's IP address
     - debug: var=ansible_all_ipv4_addresses
 
+    - debug: var=ansible_facts['distribution_version']
+
     # default kernel or rt kernel
     - name: check installed kernel
       command: uname -r
@@ -64,6 +66,27 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check ostree ref
+    - name: check ostree ref
+      shell: rpm-ostree status --json | jq -r '.deployments[0].origin'
+      register: result_ref
+
+    - name: check ostree ref deployed
+      block:
+        - assert:
+            that:
+              - result_ref.stdout == ostree_ref
+            fail_msg: "deployed ostree ref failed"
+            success_msg: "ostree ref successful building and deployment"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (ostree_ref is defined) and (ostree_ref|length > 0)
 
     # case from bug: https://bugzilla.redhat.com/show_bug.cgi?id=1848453
     - name: check ostree-remount status
@@ -388,6 +411,26 @@
       when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '<')) or
             (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('8', '==')) or
             (ansible_facts['distribution'] == 'Fedora')
+
+    - name: greenboot should be installed
+      block:
+        - name: greenboot should be installed
+          shell: rpm -qa | grep greenboot
+          register: result_greenboot_packages
+
+        - assert:
+            that:
+              - "'greenboot-0' in result_greenboot_packages.stdout"
+            fail_msg: "greenboot is not installed"
+            success_msg: "greenboot is installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: ansible_facts['distribution_version'] != '8.5'
 
     # case: check greenboot* services
     - name: a list of greenboot* service should be enabled

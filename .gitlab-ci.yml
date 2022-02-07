@@ -307,6 +307,19 @@ OSTree raw image:
           - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
+Rebase OSTree:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-rebase.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-8.6-nightly-x86_64-large
+          - rhos-01/rhel-9.0-nightly-x86_64-large
+          - rhos-01/centos-stream-8-x86_64-large
+
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
   SCRIPT:
     - koji.sh
