@@ -48,3 +48,26 @@ func (fs *Filesystem) QEMUFilesystem() osbuild.QEMUFilesystem {
 		Mountpoint: fs.Mountpoint,
 	}
 }
+
+func (fs *Filesystem) GetMountpoint() string {
+	return fs.Mountpoint
+}
+
+func (fs *Filesystem) GetFSType() string {
+	return fs.Type
+}
+
+func (fs *Filesystem) GetFSSpec() FSSpec {
+	return FSSpec{
+		UUID:  fs.UUID,
+		Label: fs.Label,
+	}
+}
+
+func (fs *Filesystem) GetFSTabOptions() FSTabOptions {
+	return FSTabOptions{
+		MntOps: fs.FSTabOptions,
+		Freq:   fs.FSTabFreq,
+		PassNo: fs.FSTabPassNo,
+	}
+}
