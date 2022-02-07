@@ -18,6 +18,43 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+// Guest OS Features for RHEL8 images
+var GuestOsFeaturesRHEL8 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
+	{Type: common.StringToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.StringToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.StringToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+}
+
+// Guest OS Features for RHEL9 images
+var GuestOsFeaturesRHEL9 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
+	{Type: common.StringToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.StringToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.StringToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+	{Type: common.StringToPtr(computepb.GuestOsFeature_GVNIC.String())},
+}
+
+// GuestOsFeaturesByDistro returns the the list of Guest OS Features, which
+// should be used when importing an image of the specified distribution.
+//
+// In case the provided distribution does not have any specific Guest OS
+// Features list defined, nil is returned.
+func GuestOsFeaturesByDistro(distroName string) []*computepb.GuestOsFeature {
+	switch {
+	case strings.HasPrefix(distroName, "centos-8"):
+		fallthrough
+	case strings.HasPrefix(distroName, "rhel-8"):
+		return GuestOsFeaturesRHEL8
+
+	case strings.HasPrefix(distroName, "centos-9"):
+		fallthrough
+	case strings.HasPrefix(distroName, "rhel-9"):
+		return GuestOsFeaturesRHEL9
+
+	default:
+		return nil
+	}
+}
+
 // ComputeImageImport imports a previously uploaded image by submitting a Cloud Build API
 // job. The job builds an image into Compute Engine from an image uploaded to the
 // storage.
@@ -181,6 +218,97 @@ func (g *GCP) ComputeImageImport(ctx context.Context, bucket, object, imageName,
 	}
 
 	return imageBuild, nil
+}
+
+// ComputeImageInsert imports a previously uploaded archive with raw image into Compute Engine.
+//
+// The image must be RAW image named 'disk.raw' inside a gzip-ed tarball.
+//
+// To delete the Storage object (image) used for the image import, use StorageObjectDelete().
+//
+// bucket - Google storage bucket name with the uploaded image archive
+// object - Google storage object name of the uploaded image
+// imageName - Desired image name after the import. This must be unique within the whole project.
+// regions - A list of valid Google Storage regions where the resulting image should be located.
+//           It is possible to specify multiple regions. Also multi and dual regions are allowed.
+//           If not provided, the region of the used Storage object is used.
+//           See: https://cloud.google.com/storage/docs/locations
+// guestOsFeatures - A list of features supported by the Guest OS on the imported image.
+//
+// Uses:
+//	- Compute Engine API
+func (g *GCP) ComputeImageInsert(
+	ctx context.Context,
+	bucket, object, imageName string,
+	regions []string,
+	guestOsFeatures []*computepb.GuestOsFeature) (*computepb.Image, error) {
+	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine Images client: %v", err)
+	}
+	defer imagesClient.Close()
+
+	operationsClient, err := compute.NewGlobalOperationsRESTClient(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Compute Engine Operations client: %v", err)
+	}
+	defer operationsClient.Close()
+
+	imgInsertReq := &computepb.InsertImageRequest{
+		Project: g.GetProjectID(),
+		ImageResource: &computepb.Image{
+			Name:             &imageName,
+			StorageLocations: regions,
+			GuestOsFeatures:  guestOsFeatures,
+			RawDisk: &computepb.RawDisk{
+				ContainerType: common.StringToPtr(computepb.RawDisk_TAR.String()),
+				Source:        common.StringToPtr(fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, object)),
+			},
+		},
+	}
+
+	operation, err := imagesClient.Insert(ctx, imgInsertReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert provided image into GCE: %v", err)
+	}
+
+	// wait for the operation to finish
+	var operationResource *computepb.Operation
+	for {
+		waitOperationReq := &computepb.WaitGlobalOperationRequest{
+			Operation: operation.Proto().GetName(),
+			Project:   g.GetProjectID(),
+		}
+
+		operationResource, err = operationsClient.Wait(ctx, waitOperationReq)
+		if err != nil {
+			return nil, fmt.Errorf("failed to wait for an Image Import operation: %v", err)
+		}
+
+		// The operation finished
+		if operationResource.GetStatus() != computepb.Operation_RUNNING && operationResource.GetStatus() != computepb.Operation_PENDING {
+			break
+		}
+	}
+
+	// If the operation failed, the HttpErrorStatusCode is set to a non-zero value
+	if operationStatusCode := operationResource.GetHttpErrorStatusCode(); operationStatusCode != 0 {
+		operationErrorMsg := operationResource.GetHttpErrorMessage()
+		operationErrors := operationResource.GetError().GetErrors()
+		return nil, fmt.Errorf("failed to insert image into GCE. HTTPErrorCode:%d HTTPErrorMsg:%v Errors:%v", operationStatusCode, operationErrorMsg, operationErrors)
+	}
+
+	getImageReq := &computepb.GetImageRequest{
+		Image:   imageName,
+		Project: g.GetProjectID(),
+	}
+
+	image, err := imagesClient.Get(ctx, getImageReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get information about the imported Image: %v", err)
+	}
+
+	return image, nil
 }
 
 // ComputeImageURL returns an image's URL to Google Cloud Console. The method does
