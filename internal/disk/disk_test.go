@@ -1,18 +1,17 @@
-package disk_test
+package disk
 
 import (
 	"math/rand"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDisk_AlignUp(t *testing.T) {
 
-	pt := disk.PartitionTable{}
-	firstAligned := disk.DefaultGrainBytes
+	pt := PartitionTable{}
+	firstAligned := DefaultGrainBytes
 
 	tests := []struct {
 		size uint64
@@ -39,20 +38,20 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 			Mountpoint: "/usr",
 		},
 	}
-	pt := disk.PartitionTable{
+	pt := PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
-		Partitions: []disk.Partition{
+		Partitions: []Partition{
 			{
 				Size:     2048,
 				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Filesystem: &Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -67,29 +66,29 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
-	pt, err := disk.CreatePartitionTable(mountpoints, 1024, &pt, rng)
+	pt, err := CreatePartitionTable(mountpoints, 1024, &pt, rng)
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, pt.SectorsToBytes(pt.Size), expectedSize)
 }
 
 // common partition table that use used by tests
-var canonicalPartitionTable = disk.PartitionTable{
+var canonicalPartitionTable = PartitionTable{
 	UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 	Type: "gpt",
-	Partitions: []disk.Partition{
+	Partitions: []Partition{
 		{
 			Size:     2048,
 			Bootable: true,
-			Type:     disk.BIOSBootPartitionGUID,
-			UUID:     disk.BIOSBootPartitionUUID,
+			Type:     BIOSBootPartitionGUID,
+			UUID:     BIOSBootPartitionUUID,
 		},
 		{
 			Size: 204800,
-			Type: disk.EFISystemPartitionGUID,
-			UUID: disk.EFISystemPartitionUUID,
-			Filesystem: &disk.Filesystem{
+			Type: EFISystemPartitionGUID,
+			UUID: EFISystemPartitionUUID,
+			Filesystem: &Filesystem{
 				Type:         "vfat",
-				UUID:         disk.EFIFilesystemUUID,
+				UUID:         EFIFilesystemUUID,
 				Mountpoint:   "/boot/efi",
 				FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 				FSTabFreq:    0,
@@ -98,9 +97,9 @@ var canonicalPartitionTable = disk.PartitionTable{
 		},
 		{
 			Size: 1048576,
-			Type: disk.FilesystemDataGUID,
-			UUID: disk.FilesystemDataUUID,
-			Filesystem: &disk.Filesystem{
+			Type: FilesystemDataGUID,
+			UUID: FilesystemDataUUID,
+			Filesystem: &Filesystem{
 				Type:         "xfs",
 				Mountpoint:   "/boot",
 				FSTabOptions: "defaults",
@@ -109,9 +108,9 @@ var canonicalPartitionTable = disk.PartitionTable{
 			},
 		},
 		{
-			Type: disk.FilesystemDataGUID,
-			UUID: disk.RootPartitionUUID,
-			Filesystem: &disk.Filesystem{
+			Type: FilesystemDataGUID,
+			UUID: RootPartitionUUID,
+			Filesystem: &Filesystem{
 				Type:         "xfs",
 				Label:        "root",
 				Mountpoint:   "/",
@@ -129,18 +128,18 @@ func TestDisk_ForEachFilesystem(t *testing.T) {
 	efiFs := canonicalPartitionTable.Partitions[1].Filesystem
 
 	// check we iterate in the correct order and throughout the whole array
-	var expectedFilesystems []*disk.Filesystem
-	err := canonicalPartitionTable.ForEachFilesystem(func(fs *disk.Filesystem) error {
+	var expectedFilesystems []*Filesystem
+	err := canonicalPartitionTable.ForEachFilesystem(func(fs *Filesystem) error {
 		expectedFilesystems = append(expectedFilesystems, fs)
 		return nil
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, []*disk.Filesystem{efiFs, bootFs, rootFs}, expectedFilesystems)
+	assert.Equal(t, []*Filesystem{efiFs, bootFs, rootFs}, expectedFilesystems)
 
 	// check we stop iterating when the callback returns false
-	expectedFilesystems = make([]*disk.Filesystem, 0)
-	err = canonicalPartitionTable.ForEachFilesystem(func(fs *disk.Filesystem) error {
+	expectedFilesystems = make([]*Filesystem, 0)
+	err = canonicalPartitionTable.ForEachFilesystem(func(fs *Filesystem) error {
 		if fs.Mountpoint != "/boot" {
 			return nil
 		}
@@ -149,9 +148,9 @@ func TestDisk_ForEachFilesystem(t *testing.T) {
 		assert.NotEqual(t, fs.Mountpoint, "/")
 
 		expectedFilesystems = append(expectedFilesystems, fs)
-		return disk.StopIter
+		return StopIter
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, []*disk.Filesystem{bootFs}, expectedFilesystems)
+	assert.Equal(t, []*Filesystem{bootFs}, expectedFilesystems)
 }
