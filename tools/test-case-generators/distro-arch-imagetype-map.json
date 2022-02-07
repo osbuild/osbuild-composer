@@ -1,5 +1,18 @@
 {
-    "fedora-33": {
+    "fedora-34": {
+        "x86_64": [
+            "ami",
+            "fedora-iot-commit",
+            "openstack",
+            "qcow2",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami"
+        ]
+    },
+    "fedora-35": {
         "x86_64": [
             "ami",
             "fedora-iot-commit",
