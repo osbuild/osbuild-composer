@@ -305,6 +305,14 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 	}
 }
 
+func (pt *PartitionTable) GetItemCount() uint {
+	return uint(len(pt.Partitions))
+}
+
+func (pt *PartitionTable) GetChild(n uint) Entity {
+	return &pt.Partitions[n]
+}
+
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.

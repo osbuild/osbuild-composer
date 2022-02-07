@@ -1,6 +1,10 @@
 package disk
 
-import osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+import (
+	"fmt"
+
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+)
 
 type Partition struct {
 	Start    uint64 // Start of the partition in bytes
@@ -43,4 +47,18 @@ func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 		UUID:       p.UUID,
 		Filesystem: fs,
 	}
+}
+
+func (pt *Partition) GetItemCount() uint {
+	if pt.Filesystem == nil {
+		return 0
+	}
+	return 1
+}
+
+func (p *Partition) GetChild(n uint) Entity {
+	if n != 0 {
+		panic(fmt.Sprintf("invalid child index for Partition: %d != 0", n))
+	}
+	return p.Filesystem
 }
