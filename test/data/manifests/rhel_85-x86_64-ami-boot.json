@@ -10454,6 +10454,7 @@
         "/etc/pam.d/smartcard-auth": "....L....",
         "/etc/pam.d/system-auth": "....L....",
         "/etc/rhsm/rhsm.conf": "..5....T.",
+        "/etc/ssh/sshd_config": "S.5....T.",
         "/proc": ".M.......",
         "/sys": ".M.......",
         "/var/log/lastlog": ".M....G..",

@@ -10505,6 +10505,7 @@
         "/etc/pam.d/smartcard-auth": "....L....",
         "/etc/pam.d/system-auth": "....L....",
         "/etc/rhsm/rhsm.conf": "..5....T.",
+        "/etc/ssh/sshd_config": "S.5....T.",
         "/etc/yum.repos.d/redhat-rhui-beta.repo": "..5....T.",
         "/etc/yum.repos.d/redhat-rhui-client-config.repo": "..5....T.",
         "/proc": ".M.......",
