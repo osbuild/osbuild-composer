@@ -83,9 +83,9 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 
 	server, err := servers.Create(client, servers.CreateOpts{
 		Name:      "osbuild-composer-vm-for-" + imageID,
-		FlavorRef: "77b8cf27-be16-40d9-95b1-81db4522be1e", // ci.m1.medium.ephemeral
-		Networks: []servers.Network{ // provider_net_cci_2
-			servers.Network{UUID: "74e8faa7-87ba-41b2-a000-438013194814"},
+		FlavorRef: "f2c4469b-f516-46d1-8b87-1dcca68fb3d9", // ci-ssd.standard.medium
+		Networks: []servers.Network{ // shared_net_2
+			servers.Network{UUID: "0bb5a1a2-cf3b-4371-9b31-3ae78313971d"},
 		},
 		ImageRef: imageID,
 		UserData: []byte(userData),
@@ -118,7 +118,7 @@ func WithBootedImageInOpenStack(p *gophercloud.ProviderClient, imageID, userData
 	// server.AccessIPv4 is empty so list all addresses and
 	// get the first fixed one. ssh should be equally happy with v4 or v6
 	var fixedIP string
-	for _, networkAddresses := range server.Addresses["provider_net_cci_2"].([]interface{}) {
+	for _, networkAddresses := range server.Addresses["shared_net_2"].([]interface{}) {
 		address := networkAddresses.(map[string]interface{})
 		if address["OS-EXT-IPS:type"] == "fixed" {
 			fixedIP = address["addr"].(string)
