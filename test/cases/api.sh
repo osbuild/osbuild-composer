@@ -467,10 +467,6 @@ case "$ID-$VERSION_ID" in
       SSH_USER="cloud-user"
     fi
     ;;
-  "fedora-33")
-    DISTRO="fedora-33"
-    SSH_USER="fedora"
-    ;;
   "centos-8")
     DISTRO="centos-8"
     if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
