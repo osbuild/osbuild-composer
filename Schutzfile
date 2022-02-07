@@ -1,23 +1,4 @@
 {
-  "fedora-33": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
-      }
-    },
-    "dependants": {
-      "koji-osbuild": {
-        "commit": "4fdc457745e1147475ea3ac1e3b073e592d7b174"
-      }
-    }
-  },
-  "fedora-34": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
-      }
-    }
-  },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
