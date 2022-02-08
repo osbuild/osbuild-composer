@@ -713,7 +713,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 					Size:  204800,
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "vfat",
 						UUID:         "7B77-95E7",
 						Mountpoint:   "/boot/efi",
@@ -726,7 +726,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 					Start: 208896,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Label:        "root",
@@ -749,7 +749,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 					Size:  204800,
 					Type:  "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
 					UUID:  "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "vfat",
 						UUID:         "7B77-95E7",
 						Mountpoint:   "/boot/efi",
@@ -762,7 +762,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 					Start: 206848,
 					Type:  "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 					UUID:  "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Label:        "root",
@@ -787,7 +787,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 				},
 				{
 					Start: 10240,
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Mountpoint:   "/",
@@ -807,7 +807,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 				{
 					Start:    2048,
 					Bootable: true,
-					Filesystem: &disk.Filesystem{
+					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						UUID:         uuid.Must(newRandomUUIDFromReader(rng)).String(),
 						Mountpoint:   "/",

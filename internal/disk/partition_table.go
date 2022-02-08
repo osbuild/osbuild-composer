@@ -104,7 +104,7 @@ func (pt *PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
 func (pt *PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 	var options osbuild.FSTabStageOptions
 	for _, p := range pt.Partitions {
-		fs := p.Filesystem
+		fs := p.Payload
 		if fs == nil {
 			continue
 		}
@@ -124,7 +124,7 @@ func (pt *PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
 func (pt *PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 	var options osbuild2.FSTabStageOptions
 	for _, p := range pt.Partitions {
-		fs := p.Filesystem
+		fs := p.Payload
 		if fs == nil {
 			continue
 		}
@@ -142,11 +142,11 @@ func (pt *PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
 
 func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partition {
 	for idx, p := range pt.Partitions {
-		if p.Filesystem == nil {
+		if p.Payload == nil {
 			continue
 		}
 
-		if p.Filesystem.Mountpoint == mountpoint {
+		if p.Payload.Mountpoint == mountpoint {
 			return &pt.Partitions[idx]
 		}
 	}
@@ -176,12 +176,12 @@ func (pt *PartitionTable) BootPartitionIndex() int {
 	// find partition with '/boot' mountpoint and fallback to '/'
 	rootIdx := -1
 	for idx, part := range pt.Partitions {
-		if part.Filesystem == nil {
+		if part.Payload == nil {
 			continue
 		}
-		if part.Filesystem.Mountpoint == "/boot" {
+		if part.Payload.Mountpoint == "/boot" {
 			return idx
-		} else if part.Filesystem.Mountpoint == "/" {
+		} else if part.Payload.Mountpoint == "/" {
 			rootIdx = idx
 		}
 	}
@@ -204,11 +204,11 @@ type ForEachFileSystemFunc func(fs *Filesystem) error
 // does not return an error.
 func (pt *PartitionTable) ForEachFilesystem(cb ForEachFileSystemFunc) error {
 	for _, part := range pt.Partitions {
-		if part.Filesystem == nil {
+		if part.Payload == nil {
 			continue
 		}
 
-		if err := cb(part.Filesystem); err != nil {
+		if err := cb(part.Payload); err != nil {
 			if err == StopIter {
 				return nil
 			}
@@ -265,8 +265,8 @@ func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) error
 	}
 
 	partition := Partition{
-		Size:       size,
-		Filesystem: &filesystem,
+		Size:    size,
+		Payload: &filesystem,
 	}
 
 	n := len(pt.Partitions)
@@ -366,7 +366,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	var rootIdx = -1
 	for i := range pt.Partitions {
 		partition := &pt.Partitions[i]
-		if partition.Filesystem != nil && partition.Filesystem.Mountpoint == "/" {
+		if partition.Payload != nil && partition.Payload.Mountpoint == "/" {
 			rootIdx = i
 			continue
 		}

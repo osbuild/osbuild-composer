@@ -699,7 +699,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 			{
 				Start: 0,
 				Size:  20971520,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:       "vfat",
 					Mountpoint: "/",
 				},
@@ -990,7 +990,7 @@ func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild.Stag
 	}
 
 	for _, p := range pt.Partitions {
-		if p.Filesystem == nil {
+		if p.Payload == nil {
 			// no filesystem for partition (e.g., BIOS boot)
 			continue
 		}
@@ -1002,28 +1002,28 @@ func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild.Stag
 				Size:     pt.BytesToSectors(p.Size),
 			},
 		)
-		switch p.Filesystem.Type {
+		switch p.Payload.Type {
 		case "xfs":
 			options := &osbuild.MkfsXfsStageOptions{
-				UUID:  p.Filesystem.UUID,
-				Label: p.Filesystem.Label,
+				UUID:  p.Payload.UUID,
+				Label: p.Payload.Label,
 			}
 			stage = osbuild.NewMkfsXfsStage(options, stageDevice)
 		case "vfat":
 			options := &osbuild.MkfsFATStageOptions{
-				VolID: strings.Replace(p.Filesystem.UUID, "-", "", -1),
+				VolID: strings.Replace(p.Payload.UUID, "-", "", -1),
 			}
 			stage = osbuild.NewMkfsFATStage(options, stageDevice)
 		case "btrfs":
 			options := &osbuild.MkfsBtrfsStageOptions{
-				UUID:  p.Filesystem.UUID,
-				Label: p.Filesystem.Label,
+				UUID:  p.Payload.UUID,
+				Label: p.Payload.Label,
 			}
 			stage = osbuild.NewMkfsBtrfsStage(options, stageDevice)
 		case "ext4":
 			options := &osbuild.MkfsExt4StageOptions{
-				UUID:  p.Filesystem.UUID,
-				Label: p.Filesystem.Label,
+				UUID:  p.Payload.UUID,
+				Label: p.Payload.Label,
 			}
 			stage = osbuild.NewMkfsExt4Stage(options, stageDevice)
 		default:
