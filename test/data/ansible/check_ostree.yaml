@@ -337,11 +337,33 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] != '8.5'
+      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] is version('8.5', '!=')
 
     # case: check installed greenboot packages
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L634
-    - name: greenboot and it's related packages should be installed
+    - name: greenboot and it's related packages should be installed (RHEL 8.6+ and CS9)
+      block:
+        - name: greenboot and it's related packages should be installed
+          shell: rpm -qa | grep greenboot
+          register: result_greenboot_packages
+
+        - assert:
+            that:
+              - "'greenboot-0' in result_greenboot_packages.stdout"
+              - "'greenboot-default-health-checks' in result_greenboot_packages.stdout"
+            fail_msg: "Some of greenboot and its related packages are not installed"
+            success_msg: "All greenboot and its related packages are installed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '>=')) or
+            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('9', '=='))
+
+    - name: greenboot and it's related packages should be installed (RHEL 8.5, CS8, and Fedora)
       block:
         - name: greenboot and it's related packages should be installed
           shell: rpm -qa | grep greenboot
@@ -363,6 +385,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '<')) or
+            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('8', '==')) or
+            (ansible_facts['distribution'] == 'Fedora')
 
     # case: check greenboot* services
     - name: a list of greenboot* service should be enabled
