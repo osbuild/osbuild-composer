@@ -158,6 +158,8 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(YumConfigStageOptions)
 	case "org.osbuild.yum.repos":
 		options = new(YumReposStageOptions)
+	case "org.osbuild.luks2.format":
+		options = new(LUKS2CreateStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
