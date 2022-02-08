@@ -42,7 +42,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 			},
 		}))
 	}
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -79,7 +79,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	}
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -108,7 +108,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	}
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -136,7 +136,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -410,7 +410,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	// The last stage must be the SELinux stage
@@ -551,7 +551,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 	)))
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
-	treePipeline.AddStage(osbuild.NewFSTabStage(partitionTable.FSTabStageOptionsV2()))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	// The last stage must be the SELinux stage

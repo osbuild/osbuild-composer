@@ -417,7 +417,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p.AddStage(osbuild.NewFixBLSStage())
 
 	if pt != nil {
-		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptions()))
+		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
 	}
 
 	if t.bootable {
@@ -824,7 +824,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 }
 
 func qemuAssembler(pt *disk.PartitionTable, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch, qcow2Compat string) *osbuild.Assembler {
-	options := pt.QEMUAssemblerOptions()
+	options := osbuild.NewQEMUAssemblerOptions(pt)
 
 	options.Format = format
 	options.Filename = filename

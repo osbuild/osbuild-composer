@@ -1,7 +1,5 @@
 package disk
 
-import osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
-
 // Filesystem related functions
 type Filesystem struct {
 	Type string
@@ -36,16 +34,6 @@ func (fs *Filesystem) Clone() Entity {
 		FSTabOptions: fs.FSTabOptions,
 		FSTabFreq:    fs.FSTabFreq,
 		FSTabPassNo:  fs.FSTabPassNo,
-	}
-}
-
-// Converts Filesystem to osbuild.QEMUFilesystem that encodes the same fs.
-func (fs *Filesystem) QEMUFilesystem() osbuild.QEMUFilesystem {
-	return osbuild.QEMUFilesystem{
-		Type:       fs.Type,
-		UUID:       fs.UUID,
-		Label:      fs.Label,
-		Mountpoint: fs.Mountpoint,
 	}
 }
 
