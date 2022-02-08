@@ -13,6 +13,33 @@ func (vg *LVMVolumeGroup) IsContainer() bool {
 	return true
 }
 
+func (vg *LVMVolumeGroup) Clone() Entity {
+	if vg == nil {
+		return nil
+	}
+
+	clone := &LVMVolumeGroup{
+		Name:           vg.Name,
+		Description:    vg.Description,
+		LogicalVolumes: make([]LVMLogicalVolume, len(vg.LogicalVolumes)),
+	}
+
+	for idx, lv := range vg.LogicalVolumes {
+		ent := lv.Clone()
+		var lv *LVMLogicalVolume
+		if ent != nil {
+			lvEnt, cloneOk := ent.(*LVMLogicalVolume)
+			if !cloneOk {
+				panic("LVMLogicalVolume.Clone() returned an Entity that cannot be converted to *LVMLogicalVolume; this is a programming error")
+			}
+			lv = lvEnt
+		}
+		clone.LogicalVolumes[idx] = *lv
+	}
+
+	return clone
+}
+
 func (vg *LVMVolumeGroup) GetItemCount() uint {
 	return uint(len(vg.LogicalVolumes))
 }
@@ -48,6 +75,14 @@ type LVMLogicalVolume struct {
 
 func (lv *LVMLogicalVolume) IsContainer() bool {
 	return true
+}
+
+func (lv *LVMLogicalVolume) Clone() Entity {
+	return &LVMLogicalVolume{
+		Name:    lv.Name,
+		Size:    lv.Size,
+		Payload: lv.Payload,
+	}
 }
 
 func (lv *LVMLogicalVolume) GetItemCount() uint {

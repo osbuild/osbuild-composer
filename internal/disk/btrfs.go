@@ -16,6 +16,30 @@ func (b *Btrfs) IsContainer() bool {
 	return true
 }
 
+func (b *Btrfs) Clone() Entity {
+	if b == nil {
+		return nil
+	}
+
+	clone := &Btrfs{
+		UUID:       b.UUID,
+		Label:      b.Label,
+		Mountpoint: b.Mountpoint,
+		Subvolumes: make([]BtrfsSubvolume, len(b.Subvolumes)),
+	}
+
+	for idx, subvol := range b.Subvolumes {
+		entClone := subvol.Clone()
+		svClone, cloneOk := entClone.(*BtrfsSubvolume)
+		if !cloneOk {
+			panic("BtrfsSubvolume.Clone() returned an Entity that cannot be converted to *BtrfsSubvolume; this is a programming error")
+		}
+		clone.Subvolumes[idx] = *svClone
+	}
+
+	return clone
+}
+
 func (b *Btrfs) GetItemCount() uint {
 	return uint(len(b.Subvolumes))
 }
@@ -54,6 +78,21 @@ type BtrfsSubvolume struct {
 
 func (subvol *BtrfsSubvolume) IsContainer() bool {
 	return false
+}
+
+func (bs *BtrfsSubvolume) Clone() Entity {
+	if bs == nil {
+		return nil
+	}
+
+	return &BtrfsSubvolume{
+		Name:       bs.Name,
+		Size:       bs.Size,
+		Mountpoint: bs.Mountpoint,
+		GroupID:    bs.GroupID,
+		MntOps:     bs.MntOps,
+		UUID:       bs.UUID,
+	}
 }
 
 func (bs *BtrfsSubvolume) GetSize() uint64 {

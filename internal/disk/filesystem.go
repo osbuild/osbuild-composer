@@ -23,7 +23,7 @@ func (fs *Filesystem) IsContainer() bool {
 }
 
 // Clone the filesystem structure
-func (fs *Filesystem) Clone() *Filesystem {
+func (fs *Filesystem) Clone() Entity {
 	if fs == nil {
 		return nil
 	}
