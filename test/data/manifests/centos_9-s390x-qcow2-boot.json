@@ -11455,7 +11455,7 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20220215195140-5.14.0-55.el9.s390x",
+        "id": "-20220219190204-5.14.0-55.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-55.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-55.el9.s390x",
         "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
@@ -12209,7 +12209,7 @@
         "fstype": "xfs",
         "label": null,
         "partuuid": "14fc63d2-02",
-        "size": 10212030464,
+        "size": 10212081664,
         "start": 525336576,
         "type": "83",
         "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"

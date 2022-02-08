@@ -8198,7 +8198,7 @@
         "id": "rhel-20220124154823-4.18.0-361.el8.s390x",
         "initrd": "/boot/initramfs-4.18.0-361.el8.s390x.img",
         "linux": "/boot/vmlinuz-4.18.0-361.el8.s390x",
-        "options": "root=/dev/mapper/cs_s390x--kvm--018-root crashkernel=1G-4G:192M,4G-64G:256M,64G-:512M rd.lvm.lv=cs_s390x-kvm-018/root rd.lvm.lv=cs_s390x-kvm-018/swap",
+        "options": "root=/dev/mapper/cs_s390x--kvm--025-root crashkernel=1G-4G:192M,4G-64G:256M,64G-:512M rd.lvm.lv=cs_s390x-kvm-025/root rd.lvm.lv=cs_s390x-kvm-025/swap",
         "title": "Red Hat Enterprise Linux (4.18.0-361.el8.s390x) 8.6 (Ootpa)",
         "version": "4.18.0-361.el8.s390x"
       }

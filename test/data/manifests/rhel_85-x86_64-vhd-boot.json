@@ -1145,7 +1145,7 @@
               ]
             },
             "devices": {
-              "efi": {
+              "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
@@ -1170,9 +1170,9 @@
                 "target": "/"
               },
               {
-                "name": "efi",
+                "name": "boot.efi",
                 "type": "org.osbuild.fat",
-                "source": "efi",
+                "source": "boot.efi",
                 "target": "/boot/efi"
               }
             ]

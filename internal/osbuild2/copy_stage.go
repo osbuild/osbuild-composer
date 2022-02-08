@@ -2,7 +2,6 @@ package osbuild2
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -92,37 +91,34 @@ func GenCopyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTab
 
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
-	for _, p := range pt.Partitions {
-		if p.Payload == nil {
-			// no filesystem for partition (e.g., BIOS boot)
-			continue
-		}
-		name := filepath.Base(p.Payload.Mountpoint)
-		if name == "/" {
-			name = "root"
-		}
-		devices[name] = *NewLoopbackDevice(
-			&LoopbackDeviceOptions{
-				Filename: devOptions.Filename,
-				Start:    pt.BytesToSectors(p.Start),
-				Size:     pt.BytesToSectors(p.Size),
-			},
-		)
+	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
+		stageDevices, name := getDevices(path, devOptions.Filename)
+		mountpoint := mnt.GetMountpoint()
+
 		var mount *Mount
-		switch p.Payload.Type {
+		t := mnt.GetFSType()
+		switch t {
 		case "xfs":
-			mount = NewXfsMount(name, name, p.Payload.Mountpoint)
+			mount = NewXfsMount(name, name, mountpoint)
 		case "vfat":
-			mount = NewFATMount(name, name, p.Payload.Mountpoint)
+			mount = NewFATMount(name, name, mountpoint)
 		case "ext4":
-			mount = NewExt4Mount(name, name, p.Payload.Mountpoint)
+			mount = NewExt4Mount(name, name, mountpoint)
 		case "btrfs":
-			mount = NewBtrfsMount(name, name, p.Payload.Mountpoint)
+			mount = NewBtrfsMount(name, name, mountpoint)
 		default:
-			panic("unknown fs type " + p.Type)
+			panic("unknown fs type " + t)
 		}
 		mounts = append(mounts, *mount)
+
+		// update devices map with new elements from stageDevices
+		for devName := range stageDevices {
+			devices[devName] = stageDevices[devName]
+		}
+		return nil
 	}
+
+	_ = pt.ForEachMountable(genMounts)
 
 	// sort the mounts, using < should just work because:
 	// - a parent directory should be always before its children:

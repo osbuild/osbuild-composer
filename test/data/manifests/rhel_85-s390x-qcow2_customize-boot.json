@@ -13982,7 +13982,7 @@
         "id": "rhel-20210322163432-0-rescue-ffffffffffffffffffffffffffffffff",
         "initrd": "/boot/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
         "linux": "/boot/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "root=UUID=fb180daf-48a7-4ee0-b10d-394651850fd4 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
         "title": "Red Hat Enterprise Linux (0-rescue-ffffffffffffffffffffffffffffffff) 8.5 (Ootpa)",
         "version": "0-rescue-ffffffffffffffffffffffffffffffff"
       },
@@ -13993,7 +13993,7 @@
         "id": "rhel-20210322163432-4.18.0-299.1.el8.s390x",
         "initrd": "/boot/initramfs-4.18.0-299.1.el8.s390x.img",
         "linux": "/boot/vmlinuz-4.18.0-299.1.el8.s390x",
-        "options": "root=UUID=fb180daf-48a7-4ee0-b10d-394651850fd4 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+        "options": "root=UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
         "title": "Red Hat Enterprise Linux (4.18.0-299.1.el8.s390x) 8.5 (Ootpa)",
         "version": "4.18.0-299.1.el8.s390x"
       }
@@ -14157,7 +14157,7 @@
     "fstab": [
       [
         "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-        "/usr",
+        "/",
         "xfs",
         "defaults",
         "0",
@@ -14165,7 +14165,7 @@
       ],
       [
         "UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-        "/var",
+        "/usr",
         "xfs",
         "defaults",
         "0",
@@ -14173,7 +14173,7 @@
       ],
       [
         "UUID=fb180daf-48a7-4ee0-b10d-394651850fd4",
-        "/",
+        "/var",
         "xfs",
         "defaults",
         "0",
@@ -14790,7 +14790,7 @@
         "size": 7515092992,
         "start": 3222274048,
         "type": "83",
-        "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
+        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
       },
       {
         "bootable": false,
@@ -14800,7 +14800,7 @@
         "size": 2147483648,
         "start": 1048576,
         "type": "83",
-        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+        "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
       },
       {
         "bootable": false,
@@ -14810,7 +14810,7 @@
         "size": 1073741824,
         "start": 2148532224,
         "type": "83",
-        "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+        "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
       }
     ],
     "passwd": [
