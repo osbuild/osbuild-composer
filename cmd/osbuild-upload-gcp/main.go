@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/sirupsen/logrus"
+	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
 
 type strArrayFlag []string
@@ -26,7 +27,7 @@ func main() {
 	var credentialsPath string
 	var bucketName string
 	var objectName string
-	var region string
+	var regions strArrayFlag
 	var osFamily string
 	var imageName string
 	var imageFile string
@@ -38,14 +39,25 @@ func main() {
 	flag.StringVar(&credentialsPath, "cred-path", "", "Path to a file with service account credentials")
 	flag.StringVar(&bucketName, "bucket", "", "Target Storage Bucket name")
 	flag.StringVar(&objectName, "object", "", "Target Storage Object name")
-	flag.StringVar(&region, "region", "", "Target region for the uploaded image")
-	flag.StringVar(&osFamily, "os", "", "OS type used to determine which version of GCP guest tools to install")
+	flag.Var(&regions, "regions", "Target regions for the uploaded image")
+	flag.StringVar(&osFamily, "os-family", "rhel-8", "OS family to determine Guest OS features when importing the image.")
 	flag.StringVar(&imageName, "image-name", "", "Image name after import to Compute Engine")
 	flag.StringVar(&imageFile, "image", "", "Image file to upload")
 	flag.Var(&shareWith, "share-with", "Accounts to share the image with. Can be set multiple times. Allowed values are 'user:{emailid}' / 'serviceAccount:{emailid}' / 'group:{emailid}' / 'domain:{domain}'.")
 	flag.BoolVar(&skipUpload, "skip-upload", false, "Use to skip Image Upload step")
 	flag.BoolVar(&skipImport, "skip-import", false, "Use to skup Image Import step")
 	flag.Parse()
+
+	var guestOSFeatures []*computepb.GuestOsFeature
+
+	switch osFamily {
+	case "rhel-8":
+		guestOSFeatures = gcp.GuestOsFeaturesRHEL8
+	case "rhel-9":
+		guestOSFeatures = gcp.GuestOsFeaturesRHEL9
+	default:
+		logrus.Fatalf("[GCP] Unknown OS Family %q. Use one of: 'rhel-8', 'rhel-9'.", osFamily)
+	}
 
 	var credentials []byte
 	if credentialsPath != "" {
@@ -76,20 +88,7 @@ func main() {
 	// Import Image to Compute Engine
 	if !skipImport {
 		logrus.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", imageName)
-		imageBuild, importErr := g.ComputeImageImport(ctx, bucketName, objectName, imageName, osFamily, region)
-		if imageBuild != nil {
-			logrus.Infof("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
-			logrus.Infof("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
-
-			// Cleanup all resources potentially left after the image import job
-			deleted, err := g.CloudbuildBuildCleanup(ctx, imageBuild.Id)
-			for _, d := range deleted {
-				logrus.Infof("[GCP] 🧹 Deleted resource after image import job: %s", d)
-			}
-			if err != nil {
-				logrus.Warnf("[GCP] Encountered error during image import cleanup: %v", err)
-			}
-		}
+		_, importErr := g.ComputeImageInsert(ctx, bucketName, objectName, imageName, regions, guestOSFeatures)
 
 		// Cleanup storage before checking for errors
 		logrus.Infof("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucketName, objectName)
