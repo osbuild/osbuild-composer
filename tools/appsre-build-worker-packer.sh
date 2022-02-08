@@ -6,6 +6,7 @@ set -exv
 COMMIT_SHA=$(git rev-parse HEAD)
 COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ON_JENKINS=true
+AMI_ID=ami-06f1e6f8b3457ae7c
 
 # Use gitlab CI variables if available
 if [ -n "$CI_COMMIT_SHA" ]; then
@@ -71,7 +72,7 @@ mkdir -p "$RPMBUILD_DIR"
 
 aws ec2 create-key-pair --key-name "$KEY_NAME" --query 'KeyMaterial' --output text > /osbuild-composer/keypair.pem
 chmod 600 /osbuild-composer/keypair.pem
-aws ec2 run-instances --image-id ami-0b0af3577fe5e3532 --instance-type c5.large --key-name "$KEY_NAME" \
+aws ec2 run-instances --image-id "$PKR_VAR_ami_id" --instance-type c5.large --key-name "$KEY_NAME" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=commit,Value=$COMMIT_SHA},{Key=name,Value=rpm-builder-$COMMIT_SHA}]" \
     > ./rpminstance.json
 AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "rpminstance.json")
@@ -96,7 +97,9 @@ ansible-playbook \
     -i /osbuild-composer/tools/appsre-ansible/inventory \
     /osbuild-composer/tools/appsre-ansible/rpmbuild.yml \
     -e "COMPOSER_COMMIT=$COMMIT_SHA" \
-    -e "OSBUILD_COMMIT=$(jq -r '.["rhel-8.4"].dependencies.osbuild.commit' /osbuild-composer/Schutzfile)"
+    -e "OSBUILD_COMMIT=$(jq -r '.["rhel-8.5"].dependencies.osbuild.commit' /osbuild-composer/Schutzfile)" \
+    -e "RH_ACTIVATION_KEY=$RH_ACTIVATION_KEY" \
+    -e "RH_ORG_ID=$RH_ORG_ID"
 EOF
 }
 
@@ -138,7 +141,10 @@ $CONTAINER_RUNTIME run --rm \
                    -e COMMIT_SHA="$COMMIT_SHA" \
                    -e ON_JENKINS="$ON_JENKINS" \
                    -e PACKER_IMAGE_USERS="$PACKER_IMAGE_USERS" \
+                   -e RH_ACTIVATION_KEY="$RH_ACTIVATION_KEY" \
+                   -e RH_ORG_ID="$RH_ORG_ID" \
                    -e PKR_VAR_aws_access_key="$PACKER_AWS_ACCESS_KEY_ID" \
+                   -e PKR_VAR_ami_id="$AMI_ID" \
                    -e PKR_VAR_aws_secret_key="$PACKER_AWS_SECRET_ACCESS_KEY" \
                    -e PKR_VAR_image_name="osbuild-composer-worker-$COMMIT_BRANCH-$COMMIT_SHA" \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
