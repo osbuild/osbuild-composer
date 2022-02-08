@@ -818,6 +818,22 @@ components:
             for the OS itself (they will not be available for the build root or
             any other part of the build process). The package_sets field for these
             repositories is ignored.
+        filesystem:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filesystem'
+    Filesystem:
+      type: object
+      required:
+        - mountpoint
+        - min_size
+      properties:
+        mountpoint:
+          type: string
+          example: '/var'
+        min_size:
+          type: integer
+          example: 1024
     OSTree:
       type: object
       properties:
