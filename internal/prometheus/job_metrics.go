@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const workerSubsystem = "composer_worker"
+const workerSubsystem = "worker"
 
 var (
 	TotalJobs = promauto.NewCounterVec(prometheus.CounterOpts{
