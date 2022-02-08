@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/google/uuid"
 
@@ -429,78 +428,6 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
 	}
 
 	return stageOptions
-}
-
-// copyFSTreeOptions creates the options, inputs, devices, and mounts properties
-// for an org.osbuild.copy stage for a given source tree using a partition
-// table description to define the mounts
-func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *osbuild.Device) (
-	*osbuild.CopyStageOptions,
-	*osbuild.Devices,
-	*osbuild.Mounts,
-) {
-	// assume loopback device for simplicity since it's the only one currently supported
-	// panic if the conversion fails
-	devOptions, ok := device.Options.(*osbuild.LoopbackDeviceOptions)
-	if !ok {
-		panic("copyStageOptions: failed to convert device options to loopback options")
-	}
-
-	devices := make(map[string]osbuild.Device, len(pt.Partitions))
-	mounts := make([]osbuild.Mount, 0, len(pt.Partitions))
-	for _, p := range pt.Partitions {
-		if p.Payload == nil {
-			// no filesystem for partition (e.g., BIOS boot)
-			continue
-		}
-		name := filepath.Base(p.Payload.Mountpoint)
-		if name == "/" {
-			name = "root"
-		}
-		devices[name] = *osbuild.NewLoopbackDevice(
-			&osbuild.LoopbackDeviceOptions{
-				Filename: devOptions.Filename,
-				Start:    pt.BytesToSectors(p.Start),
-				Size:     pt.BytesToSectors(p.Size),
-			},
-		)
-		var mount *osbuild.Mount
-		switch p.Payload.Type {
-		case "xfs":
-			mount = osbuild.NewXfsMount(name, name, p.Payload.Mountpoint)
-		case "vfat":
-			mount = osbuild.NewFATMount(name, name, p.Payload.Mountpoint)
-		case "ext4":
-			mount = osbuild.NewExt4Mount(name, name, p.Payload.Mountpoint)
-		case "btrfs":
-			mount = osbuild.NewBtrfsMount(name, name, p.Payload.Mountpoint)
-		default:
-			panic("unknown fs type " + p.Type)
-		}
-		mounts = append(mounts, *mount)
-	}
-
-	// sort the mounts, using < should just work because:
-	// - a parent directory should be always before its children:
-	//   / < /boot
-	// - the order of siblings doesn't matter
-	sort.Slice(mounts, func(i, j int) bool {
-		return mounts[i].Target < mounts[j].Target
-	})
-
-	stageMounts := osbuild.Mounts(mounts)
-	stageDevices := osbuild.Devices(devices)
-
-	options := osbuild.CopyStageOptions{
-		Paths: []osbuild.CopyStagePath{
-			{
-				From: fmt.Sprintf("input://%s/", inputName),
-				To:   "mount://root/",
-			},
-		},
-	}
-
-	return &options, &stageDevices, &stageMounts
 }
 
 func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform string) *osbuild.Grub2InstStageOptions {
