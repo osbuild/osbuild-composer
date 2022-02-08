@@ -62,4 +62,4 @@ jobs:
           fi
 
           [[ "${SKIP_CI}" == true ]] && PUSH_OPTION="-o ci.skip" || PUSH_OPTION=""
-          git push -f ci "${PUSH_OPTION}"
+          git push -f ${PUSH_OPTION} ci 
