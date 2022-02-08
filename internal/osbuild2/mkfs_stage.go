@@ -18,47 +18,50 @@ func GenMkfsStages(pt *disk.PartitionTable, device *Device) []*Stage {
 		panic("GenMkfsStages: failed to convert device options to loopback options")
 	}
 
-	for _, p := range pt.Partitions {
-		if p.Payload == nil {
-			// no filesystem for partition (e.g., BIOS boot)
-			continue
-		}
+	genStage := func(mnt disk.Mountable, path []disk.Entity) error {
+		t := mnt.GetFSType()
 		var stage *Stage
-		stageDevice := NewLoopbackDevice(
-			&LoopbackDeviceOptions{
-				Filename: devOptions.Filename,
-				Start:    pt.BytesToSectors(p.Start),
-				Size:     pt.BytesToSectors(p.Size),
-			},
-		)
-		switch p.Payload.Type {
+
+		stageDevices, lastName := getDevices(path, devOptions.Filename)
+
+		// the last device on the PartitionTable must be named "device"
+		lastDevice := stageDevices[lastName]
+		delete(stageDevices, lastName)
+		stageDevices["device"] = lastDevice
+
+		fsSpec := mnt.GetFSSpec()
+		switch t {
 		case "xfs":
 			options := &MkfsXfsStageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
+				UUID:  fsSpec.UUID,
+				Label: fsSpec.Label,
 			}
-			stage = NewMkfsXfsStage(options, stageDevice)
+			stage = NewMkfsXfsStage(options, stageDevices)
 		case "vfat":
 			options := &MkfsFATStageOptions{
-				VolID: strings.Replace(p.Payload.UUID, "-", "", -1),
+				VolID: strings.Replace(fsSpec.UUID, "-", "", -1),
 			}
-			stage = NewMkfsFATStage(options, stageDevice)
+			stage = NewMkfsFATStage(options, stageDevices)
 		case "btrfs":
 			options := &MkfsBtrfsStageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
+				UUID:  fsSpec.UUID,
+				Label: fsSpec.Label,
 			}
-			stage = NewMkfsBtrfsStage(options, stageDevice)
+			stage = NewMkfsBtrfsStage(options, stageDevices)
 		case "ext4":
 			options := &MkfsExt4StageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
+				UUID:  fsSpec.UUID,
+				Label: fsSpec.Label,
 			}
-			stage = NewMkfsExt4Stage(options, stageDevice)
+			stage = NewMkfsExt4Stage(options, stageDevices)
 		default:
-			panic("unknown fs type " + p.Type)
+			panic("unknown fs type " + t)
 		}
 		stages = append(stages, stage)
+
+		return nil
 	}
+
+	_ = pt.ForEachMountable(genStage) // genStage always returns nil
 	return stages
 }

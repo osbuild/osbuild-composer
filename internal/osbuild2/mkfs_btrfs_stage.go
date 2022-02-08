@@ -7,10 +7,10 @@ type MkfsBtrfsStageOptions struct {
 
 func (MkfsBtrfsStageOptions) isStageOptions() {}
 
-func NewMkfsBtrfsStage(options *MkfsBtrfsStageOptions, device *Device) *Stage {
+func NewMkfsBtrfsStage(options *MkfsBtrfsStageOptions, devices map[string]Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkfs.btrfs",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: devices,
 	}
 }

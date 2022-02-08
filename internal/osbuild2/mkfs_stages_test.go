@@ -17,11 +17,15 @@ func TestNewMkfsStage(t *testing.T) {
 	}
 	device := NewLoopbackDevice(&devOpts)
 
+	devices := map[string]Device{
+		"device": *device,
+	}
+
 	btrfsOptions := &MkfsBtrfsStageOptions{
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	mkbtrfs := NewMkfsBtrfsStage(btrfsOptions, device)
+	mkbtrfs := NewMkfsBtrfsStage(btrfsOptions, devices)
 	mkbtrfsExpected := &Stage{
 		Type:    "org.osbuild.mkfs.btrfs",
 		Options: btrfsOptions,
@@ -33,7 +37,7 @@ func TestNewMkfsStage(t *testing.T) {
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	mkext4 := NewMkfsExt4Stage(ext4Options, device)
+	mkext4 := NewMkfsExt4Stage(ext4Options, devices)
 	mkext4Expected := &Stage{
 		Type:    "org.osbuild.mkfs.ext4",
 		Options: ext4Options,
@@ -46,7 +50,7 @@ func TestNewMkfsStage(t *testing.T) {
 		Label:   "test",
 		FATSize: common.IntToPtr(12),
 	}
-	mkfat := NewMkfsFATStage(fatOptions, device)
+	mkfat := NewMkfsFATStage(fatOptions, devices)
 	mkfatExpected := &Stage{
 		Type:    "org.osbuild.mkfs.fat",
 		Options: fatOptions,
@@ -58,7 +62,7 @@ func TestNewMkfsStage(t *testing.T) {
 		UUID:  uuid.New().String(),
 		Label: "test",
 	}
-	mkxfs := NewMkfsXfsStage(xfsOptions, device)
+	mkxfs := NewMkfsXfsStage(xfsOptions, devices)
 	mkxfsExpected := &Stage{
 		Type:    "org.osbuild.mkfs.xfs",
 		Options: xfsOptions,
