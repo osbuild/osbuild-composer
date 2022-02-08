@@ -35,6 +35,9 @@ type Entity interface {
 	// IsContainer indicates if the implementing type can
 	// contain any other entities.
 	IsContainer() bool
+
+	// Clone returns a deep copy of the entity.
+	Clone() Entity
 }
 
 // Container is the interface for entities that can contain other entities.

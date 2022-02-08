@@ -38,3 +38,24 @@ func (lc *LUKSContainer) GetChild(n uint) Entity {
 	}
 	return lc.Payload
 }
+
+func (lc *LUKSContainer) Clone() Entity {
+	if lc == nil {
+		return nil
+	}
+
+	return &LUKSContainer{
+		Passphrase: lc.Passphrase,
+		UUID:       lc.UUID,
+		Cipher:     lc.Cipher,
+		Label:      lc.Label,
+		Subsystem:  lc.Subsystem,
+		SectorSize: lc.SectorSize,
+		PBKDF: Argon2id{
+			Iterations:  lc.PBKDF.Iterations,
+			Memory:      lc.PBKDF.Memory,
+			Parallelism: lc.PBKDF.Parallelism,
+		},
+		Payload: lc.Payload,
+	}
+}

@@ -22,6 +22,31 @@ func (p *Partition) IsContainer() bool {
 	return true
 }
 
+func (p *Partition) Clone() Entity {
+	if p == nil {
+		return p
+	}
+
+	ent := p.Filesystem.Clone()
+	var fs *Filesystem
+	if ent != nil {
+		fsEnt, cloneOk := ent.(*Filesystem)
+		if !cloneOk {
+			panic("Filesystem.Clone() returned an Entity that cannot be converted to *Filesystem; this is a programming error")
+		}
+		fs = fsEnt
+	}
+
+	return &Partition{
+		Start:      p.Start,
+		Size:       p.Size,
+		Type:       p.Type,
+		Bootable:   p.Bootable,
+		UUID:       p.UUID,
+		Filesystem: fs,
+	}
+}
+
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem

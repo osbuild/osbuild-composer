@@ -25,6 +25,36 @@ func (pt *PartitionTable) IsContainer() bool {
 	return true
 }
 
+func (pt *PartitionTable) Clone() Entity {
+	if pt == nil {
+		return nil
+	}
+
+	clone := &PartitionTable{
+		Size:         pt.Size,
+		UUID:         pt.UUID,
+		Type:         pt.Type,
+		Partitions:   make([]Partition, len(pt.Partitions)),
+		SectorSize:   pt.SectorSize,
+		ExtraPadding: pt.ExtraPadding,
+	}
+
+	for idx, partition := range pt.Partitions {
+		ent := partition.Clone()
+		var part *Partition
+
+		if ent != nil {
+			pEnt, cloneOk := ent.(*Partition)
+			if !cloneOk {
+				panic("PartitionTable.Clone() returned an Entity that cannot be converted to *PartitionTable; this is a programming error")
+			}
+			part = pEnt
+		}
+		clone.Partitions[idx] = *part
+	}
+	return clone
+}
+
 // AlignUp will align the given bytes to next aligned grain if not already
 // aligned
 func (pt *PartitionTable) AlignUp(size uint64) uint64 {
@@ -52,28 +82,6 @@ func (pt *PartitionTable) SectorsToBytes(size uint64) uint64 {
 		sectorSize = DefaultSectorSize
 	}
 	return size * sectorSize
-}
-
-// Clone the partition table (deep copy).
-func (pt *PartitionTable) Clone() *PartitionTable {
-	if pt == nil {
-		return nil
-	}
-
-	var partitions []Partition
-	for _, p := range pt.Partitions {
-		p.Filesystem = p.Filesystem.Clone()
-		partitions = append(partitions, p)
-	}
-	return &PartitionTable{
-		Size:       pt.Size,
-		UUID:       pt.UUID,
-		Type:       pt.Type,
-		Partitions: partitions,
-
-		SectorSize:   pt.SectorSize,
-		ExtraPadding: pt.ExtraPadding,
-	}
 }
 
 // Converts PartitionTable to osbuild.QEMUAssemblerOptions that encode

@@ -30,7 +30,10 @@ func CreatePartitionTable(
 	// we are modifying the contents of the base partition table,
 	// including the file systems, which are shared among shallow
 	// copies of the partition table, so make a copy first
-	table := basePartitionTable.Clone()
+	table, cloneOk := basePartitionTable.Clone().(*PartitionTable)
+	if !cloneOk {
+		panic("PartitionTable.Clone() returned an Entity that cannot be converted to *PartitionTable; this is a programming error")
+	}
 
 	for _, m := range mountpoints {
 		// if we already have a partition ensure that the
