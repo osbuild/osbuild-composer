@@ -401,3 +401,29 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 
 	return start
 }
+
+type MountableCallback func(mnt Mountable, path []Entity) error
+
+func forEachMountable(c Container, path []Entity, cb MountableCallback) error {
+	for idx := uint(0); idx < c.GetItemCount(); idx++ {
+		child := c.GetChild(idx)
+		childPath := append(path, child)
+		var err error
+		switch ent := child.(type) {
+		case Mountable:
+			err = cb(ent, childPath)
+		case Container:
+			err = forEachMountable(ent, childPath, cb)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ForEachMountable runs the provided callback function on each Mountable in
+// the PartitionTable.
+func (pt *PartitionTable) ForEachMountable(cb MountableCallback) error {
+	return forEachMountable(pt, []Entity{pt}, cb)
+}
