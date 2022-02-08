@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -711,7 +710,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
 	p.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{Filename: filename, Size: fmt.Sprintf("%d", pt.Size)}))
 
-	for _, stage := range mkfsStages(&pt, loopback) {
+	for _, stage := range osbuild.GenMkfsStages(&pt, loopback) {
 		p.AddStage(stage)
 	}
 
@@ -952,7 +951,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: outputFilename})
 	p.AddStage(osbuild.NewSfdiskStage(sfOptions, loopback))
 
-	for _, stage := range mkfsStages(pt, loopback) {
+	for _, stage := range osbuild.GenMkfsStages(pt, loopback) {
 		p.AddStage(stage)
 	}
 
@@ -975,63 +974,6 @@ func xzArchivePipeline(inputPipelineName, inputFilename, outputFilename string) 
 	))
 
 	return p
-}
-
-// mkfsStages generates a list of org.osbuild.mkfs.* stages based on a
-// partition table description for a single device node
-func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild.Stage {
-	stages := make([]*osbuild.Stage, 0, len(pt.Partitions))
-
-	// assume loopback device for simplicity since it's the only one currently supported
-	// panic if the conversion fails
-	devOptions, ok := device.Options.(*osbuild.LoopbackDeviceOptions)
-	if !ok {
-		panic("mkfsStages: failed to convert device options to loopback options")
-	}
-
-	for _, p := range pt.Partitions {
-		if p.Payload == nil {
-			// no filesystem for partition (e.g., BIOS boot)
-			continue
-		}
-		var stage *osbuild.Stage
-		stageDevice := osbuild.NewLoopbackDevice(
-			&osbuild.LoopbackDeviceOptions{
-				Filename: devOptions.Filename,
-				Start:    pt.BytesToSectors(p.Start),
-				Size:     pt.BytesToSectors(p.Size),
-			},
-		)
-		switch p.Payload.Type {
-		case "xfs":
-			options := &osbuild.MkfsXfsStageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
-			}
-			stage = osbuild.NewMkfsXfsStage(options, stageDevice)
-		case "vfat":
-			options := &osbuild.MkfsFATStageOptions{
-				VolID: strings.Replace(p.Payload.UUID, "-", "", -1),
-			}
-			stage = osbuild.NewMkfsFATStage(options, stageDevice)
-		case "btrfs":
-			options := &osbuild.MkfsBtrfsStageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
-			}
-			stage = osbuild.NewMkfsBtrfsStage(options, stageDevice)
-		case "ext4":
-			options := &osbuild.MkfsExt4StageOptions{
-				UUID:  p.Payload.UUID,
-				Label: p.Payload.Label,
-			}
-			stage = osbuild.NewMkfsExt4Stage(options, stageDevice)
-		default:
-			panic("unknown fs type " + p.Type)
-		}
-		stages = append(stages, stage)
-	}
-	return stages
 }
 
 func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow2Compat string) *osbuild.Pipeline {
