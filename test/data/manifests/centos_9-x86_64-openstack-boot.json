@@ -1076,7 +1076,7 @@
                   "size": 1024000
                 }
               },
-              "efi": {
+              "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
@@ -1107,9 +1107,9 @@
                 "target": "/boot"
               },
               {
-                "name": "efi",
+                "name": "boot.efi",
                 "type": "org.osbuild.fat",
-                "source": "efi",
+                "source": "boot.efi",
                 "target": "/boot/efi"
               }
             ]
@@ -10725,7 +10725,7 @@
         "fstype": "xfs",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 3558815744,
+        "size": 3558850048,
         "start": 736100352,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"

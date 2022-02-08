@@ -13710,7 +13710,7 @@
         "fstype": "xfs",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 10735269888,
+        "size": 10735304192,
         "start": 2097152,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"

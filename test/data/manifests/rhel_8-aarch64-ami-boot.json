@@ -9147,23 +9147,23 @@
     "partitions": [
       {
         "bootable": false,
-        "fstype": "xfs",
-        "label": null,
-        "partuuid": "7CEC5879-020E-9F4B-A44D-928D0A8BAAEE",
-        "size": 5942263296,
-        "start": 500170752,
-        "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-        "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd"
-      },
-      {
-        "bootable": false,
         "fstype": "vfat",
         "label": "EFI\\ System",
-        "partuuid": "EB0B4FC0-0920-FB49-94B1-8D41B171E1CA",
+        "partuuid": "9F7ACD3B-81D5-3C46-8FAF-694468069EB0",
         "size": 498073600,
         "start": 1048576,
         "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
         "uuid": "46BB-8120"
+      },
+      {
+        "bootable": false,
+        "fstype": "xfs",
+        "label": null,
+        "partuuid": "FE0B2159-8510-1C42-A227-2B64998C3680",
+        "size": 5942263296,
+        "start": 500170752,
+        "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+        "uuid": "0bd700f8-090f-4556-b797-b340297ea1bd"
       }
     ],
     "passwd": [

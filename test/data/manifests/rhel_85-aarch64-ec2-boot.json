@@ -1251,7 +1251,7 @@
                   "size": 1048576
                 }
               },
-              "efi": {
+              "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "image.raw",
@@ -1282,9 +1282,9 @@
                 "target": "/boot"
               },
               {
-                "name": "efi",
+                "name": "boot.efi",
                 "type": "org.osbuild.fat",
-                "source": "efi",
+                "source": "boot.efi",
                 "target": "/boot/efi"
               }
             ]
