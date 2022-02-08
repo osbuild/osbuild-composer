@@ -205,6 +205,22 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Filesystem != nil {
+		var fsCustomizations []blueprint.FilesystemCustomization
+		for _, f := range *request.Customizations.Filesystem {
+
+			fsCustomizations = append(fsCustomizations,
+				blueprint.FilesystemCustomization{
+					Mountpoint: f.Mountpoint,
+					MinSize:    uint64(f.MinSize),
+				},
+			)
+		}
+		bp.Customizations = &blueprint.Customizations{
+			Filesystem: fsCustomizations,
+		}
+	}
+
 	// add the user-defined repositories only to the depsolve job for the
 	// payload (the packages for the final image)
 	var payloadRepositories []Repository
