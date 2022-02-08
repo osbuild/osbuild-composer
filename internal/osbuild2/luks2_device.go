@@ -8,9 +8,10 @@ type LUKS2DeviceOptions struct {
 
 func (LUKS2DeviceOptions) isDeviceOptions() {}
 
-func NewLUKS2Device(options *LUKS2DeviceOptions) *Device {
+func NewLUKS2Device(parent string, options *LUKS2DeviceOptions) *Device {
 	return &Device{
 		Type:    "org.osbuild.luks2",
+		Parent:  parent,
 		Options: options,
 	}
 }

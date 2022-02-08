@@ -7,10 +7,10 @@ type MkfsExt4StageOptions struct {
 
 func (MkfsExt4StageOptions) isStageOptions() {}
 
-func NewMkfsExt4Stage(options *MkfsExt4StageOptions, device *Device) *Stage {
+func NewMkfsExt4Stage(options *MkfsExt4StageOptions, devices map[string]Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkfs.ext4",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: devices,
 	}
 }

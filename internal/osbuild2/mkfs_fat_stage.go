@@ -8,10 +8,10 @@ type MkfsFATStageOptions struct {
 
 func (MkfsFATStageOptions) isStageOptions() {}
 
-func NewMkfsFATStage(options *MkfsFATStageOptions, device *Device) *Stage {
+func NewMkfsFATStage(options *MkfsFATStageOptions, devices map[string]Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkfs.fat",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: devices,
 	}
 }
