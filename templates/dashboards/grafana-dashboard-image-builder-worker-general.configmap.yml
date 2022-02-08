@@ -31,7 +31,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1644236264867,
+      "iteration": 1644336592519,
       "links": [],
       "panels": [
         {
@@ -63,7 +63,7 @@ data:
                     "match": "null",
                     "result": {
                       "index": 0,
-                      "text": "N/A"
+                      "text": "0%"
                     }
                   },
                   "type": "special"
@@ -128,7 +128,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"2xx\"}[$__range]))/sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$__range]))",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -223,7 +223,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval])) - sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
@@ -231,7 +231,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -279,6 +279,8 @@ data:
               },
               "mappings": [],
               "max": 1,
+              "min": 3,
+              "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -312,9 +314,10 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))/sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  / \n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "instant": false,
               "interval": "",
-              "legendFormat": "",
+              "legendFormat": "build_job_error_rate",
               "refId": "A"
             }
           ],
@@ -336,8 +339,9 @@ data:
                   "options": {
                     "match": "null",
                     "result": {
+                      "color": "green",
                       "index": 0,
-                      "text": "1.40 days"
+                      "text": "∞"
                     }
                   },
                   "type": "special"
@@ -406,7 +410,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))/ sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo)\n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -505,7 +509,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((1 - sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))/sum(increase(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))) - $stability_slo)/ (1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    ) \n  ) \n)\n/ \n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -611,7 +615,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -805,14 +809,14 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p90",
@@ -820,7 +824,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -906,7 +910,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$interval]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$interval]))",
+              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1000,7 +1004,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$__range]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n( \n  1.001 - ( \n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$__range]))\n    )  OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1098,7 +1102,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_composer_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[28d]))/sum(increase(image_builder_composer_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[28d]))) - $latency_slo)/ (1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[28d])) \n    ) OR on() vector(1)  \n  ) - $latency_slo\n)\n/\n(1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1140,7 +1144,7 @@ data:
                     "match": "null",
                     "result": {
                       "index": 0,
-                      "text": "N/A"
+                      "text": "0%"
                     }
                   },
                   "type": "special"
@@ -1204,7 +1208,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"2xx\"}[$__range]))/sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$__range]))",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1299,7 +1303,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval])) - sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
@@ -1307,7 +1311,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -1388,7 +1392,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))/sum(rate(image_builder_composer_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1412,8 +1416,9 @@ data:
                   "options": {
                     "match": "null",
                     "result": {
+                      "color": "green",
                       "index": 0,
-                      "text": "1.40 days"
+                      "text": "∞"
                     }
                   },
                   "type": "special"
@@ -1482,7 +1487,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))/ sum(rate(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo) \n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1581,7 +1586,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((1 - sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))/sum(increase(image_builder_composer_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))) - $stability_slo)/ (1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      ( \n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))\n      ) OR on() vector(0)\n    )\n  )\n)\n/ \n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1687,7 +1692,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1881,14 +1886,14 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p90",
@@ -1896,7 +1901,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -1981,7 +1986,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[$interval]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$interval]))",
+              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -2075,7 +2080,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\"}[$__range]))/sum(rate(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n(\n  1.001 - (\n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[$__range]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -2174,7 +2179,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_composer_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[28d]))/sum(increase(image_builder_composer_worker_job_duration_seconds_count{type=\"depsolve\"}[28d]))) - $latency_slo)/ (1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[28d])) \n    ) OR on() vector(1)\n  ) - $latency_slo\n)\n/ (1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -2280,7 +2285,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -2474,14 +2479,14 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p90",
@@ -2489,7 +2494,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -2575,7 +2580,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_composer_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_composer_worker_job_wait_duration_seconds_count[$interval]))",
+              "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -2738,5 +2743,5 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 2
+      "version": 3
     }
