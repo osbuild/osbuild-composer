@@ -19,6 +19,11 @@
     retries: 5
     until: result is success
 
+  - name: Subscribe
+    community.general.redhat_subscription:
+      activationkey: "{{ RH_ACTIVATION_KEY }}"
+      org_id: "{{ RH_ORG_ID }}"
+
   - name: Create rpmbuild directory
     file:
       path: "{{ item }}"
