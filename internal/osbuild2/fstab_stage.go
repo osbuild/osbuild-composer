@@ -1,5 +1,11 @@
 package osbuild2
 
+import (
+	"sort"
+
+	"github.com/osbuild/osbuild-composer/internal/disk"
+)
+
 // The FSTabStageOptions describe the content of the /etc/fstab file.
 //
 // The structure of the options follows the format of /etc/fstab, except
@@ -47,4 +53,21 @@ func (options *FSTabStageOptions) AddFilesystem(id string, vfsType string, path 
 		Freq:    freq,
 		PassNo:  passNo,
 	})
+}
+
+func NewFSTabStageOptions(pt *disk.PartitionTable) *FSTabStageOptions {
+	var options FSTabStageOptions
+	genOption := func(mnt disk.Mountable, path []disk.Entity) error {
+		fsSpec := mnt.GetFSSpec()
+		fsOptions := mnt.GetFSTabOptions()
+		options.AddFilesystem(fsSpec.UUID, mnt.GetFSType(), mnt.GetMountpoint(), fsOptions.MntOps, fsOptions.Freq, fsOptions.PassNo)
+		return nil
+	}
+
+	_ = pt.ForEachMountable(genOption) // genOption always returns nil
+	// sort the entries by PassNo to maintain backward compatibility
+	sort.Slice(options.FileSystems, func(i, j int) bool {
+		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
+	})
+	return &options
 }

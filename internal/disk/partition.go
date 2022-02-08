@@ -2,8 +2,6 @@ package disk
 
 import (
 	"fmt"
-
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
 )
 
 type Partition struct {
@@ -46,23 +44,6 @@ func (p *Partition) Clone() Entity {
 		Bootable: p.Bootable,
 		UUID:     p.UUID,
 		Payload:  fs,
-	}
-}
-
-// Converts Partition to osbuild.QEMUPartition that encodes the same partition.
-func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
-	var fs *osbuild.QEMUFilesystem
-	if p.Payload != nil {
-		f := p.Payload.QEMUFilesystem()
-		fs = &f
-	}
-	return osbuild.QEMUPartition{
-		Start:      p.Start,
-		Size:       p.Size,
-		Type:       p.Type,
-		Bootable:   p.Bootable,
-		UUID:       p.UUID,
-		Filesystem: fs,
 	}
 }
 

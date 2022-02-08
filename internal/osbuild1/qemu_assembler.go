@@ -1,5 +1,7 @@
 package osbuild1
 
+import "github.com/osbuild/osbuild-composer/internal/disk"
+
 // QEMUAssemblerOptions desrcibe how to assemble a tree into an image using qemu.
 //
 // The assembler creates an image of the given size, adds a GRUB2 bootloader
@@ -45,5 +47,50 @@ func NewQEMUAssembler(options *QEMUAssemblerOptions) *Assembler {
 	return &Assembler{
 		Name:    "org.osbuild.qemu",
 		Options: options,
+	}
+}
+
+// NewQEMUAssemblerOptions creates and returns QEMUAssemblerOptions based on
+// the given PartitionTable.
+func NewQEMUAssemblerOptions(pt *disk.PartitionTable) QEMUAssemblerOptions {
+	var partitions []QEMUPartition
+	for idx := range pt.Partitions {
+		partitions = append(partitions, NewQEMUPartition(&pt.Partitions[idx]))
+	}
+
+	return QEMUAssemblerOptions{
+		Size:       pt.Size,
+		PTUUID:     pt.UUID,
+		PTType:     pt.Type,
+		Partitions: partitions,
+	}
+}
+
+// NewQEMUPartition creates and returns a QEMUPartition based on the given
+// Partition.
+func NewQEMUPartition(p *disk.Partition) QEMUPartition {
+	var fs *QEMUFilesystem
+	if p.Payload != nil {
+		f := NewQEMUFilesystem(p.Payload)
+		fs = &f
+	}
+	return QEMUPartition{
+		Start:      p.Start,
+		Size:       p.Size,
+		Type:       p.Type,
+		Bootable:   p.Bootable,
+		UUID:       p.UUID,
+		Filesystem: fs,
+	}
+}
+
+// NewQEMUFilesystem creates and returns a QEMUFilesystem based on the given
+// Filesystem.
+func NewQEMUFilesystem(fs *disk.Filesystem) QEMUFilesystem {
+	return QEMUFilesystem{
+		Type:       fs.Type,
+		UUID:       fs.UUID,
+		Label:      fs.Label,
+		Mountpoint: fs.Mountpoint,
 	}
 }

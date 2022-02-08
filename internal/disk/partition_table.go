@@ -4,11 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"sort"
 
 	"github.com/google/uuid"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 type PartitionTable struct {
@@ -82,62 +79,6 @@ func (pt *PartitionTable) SectorsToBytes(size uint64) uint64 {
 		sectorSize = DefaultSectorSize
 	}
 	return size * sectorSize
-}
-
-// Converts PartitionTable to osbuild.QEMUAssemblerOptions that encode
-// the same partition table.
-func (pt *PartitionTable) QEMUAssemblerOptions() osbuild.QEMUAssemblerOptions {
-	var partitions []osbuild.QEMUPartition
-	for _, p := range pt.Partitions {
-		partitions = append(partitions, p.QEMUPartition())
-	}
-
-	return osbuild.QEMUAssemblerOptions{
-		Size:       pt.Size,
-		PTUUID:     pt.UUID,
-		PTType:     pt.Type,
-		Partitions: partitions,
-	}
-}
-
-// Generates org.osbuild.fstab stage options from this partition table.
-func (pt *PartitionTable) FSTabStageOptions() *osbuild.FSTabStageOptions {
-	var options osbuild.FSTabStageOptions
-	for _, p := range pt.Partitions {
-		fs := p.Payload
-		if fs == nil {
-			continue
-		}
-
-		options.AddFilesystem(fs.UUID, fs.Type, fs.Mountpoint, fs.FSTabOptions, fs.FSTabFreq, fs.FSTabPassNo)
-	}
-
-	// sort the entries by PassNo to maintain backward compatibility
-	sort.Slice(options.FileSystems, func(i, j int) bool {
-		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
-	})
-
-	return &options
-}
-
-// Generates org.osbuild.fstab stage options from this partition table.
-func (pt *PartitionTable) FSTabStageOptionsV2() *osbuild2.FSTabStageOptions {
-	var options osbuild2.FSTabStageOptions
-	for _, p := range pt.Partitions {
-		fs := p.Payload
-		if fs == nil {
-			continue
-		}
-
-		options.AddFilesystem(fs.UUID, fs.Type, fs.Mountpoint, fs.FSTabOptions, fs.FSTabFreq, fs.FSTabPassNo)
-	}
-
-	// sort the entries by PassNo to maintain backward compatibility
-	sort.Slice(options.FileSystems, func(i, j int) bool {
-		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
-	})
-
-	return &options
 }
 
 func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partition {
