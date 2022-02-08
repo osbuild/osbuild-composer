@@ -449,11 +449,11 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 	devices := make(map[string]osbuild.Device, len(pt.Partitions))
 	mounts := make([]osbuild.Mount, 0, len(pt.Partitions))
 	for _, p := range pt.Partitions {
-		if p.Filesystem == nil {
+		if p.Payload == nil {
 			// no filesystem for partition (e.g., BIOS boot)
 			continue
 		}
-		name := filepath.Base(p.Filesystem.Mountpoint)
+		name := filepath.Base(p.Payload.Mountpoint)
 		if name == "/" {
 			name = "root"
 		}
@@ -465,15 +465,15 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 			},
 		)
 		var mount *osbuild.Mount
-		switch p.Filesystem.Type {
+		switch p.Payload.Type {
 		case "xfs":
-			mount = osbuild.NewXfsMount(name, name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewXfsMount(name, name, p.Payload.Mountpoint)
 		case "vfat":
-			mount = osbuild.NewFATMount(name, name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewFATMount(name, name, p.Payload.Mountpoint)
 		case "ext4":
-			mount = osbuild.NewExt4Mount(name, name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewExt4Mount(name, name, p.Payload.Mountpoint)
 		case "btrfs":
-			mount = osbuild.NewBtrfsMount(name, name, p.Filesystem.Mountpoint)
+			mount = osbuild.NewBtrfsMount(name, name, p.Payload.Mountpoint)
 		default:
 			panic("unknown fs type " + p.Type)
 		}
@@ -510,13 +510,13 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	}
 	bootPart := pt.Partitions[bootPartIndex]
 	prefixPath := "/boot/grub2"
-	if bootPart.Filesystem.Mountpoint == "/boot" {
+	if bootPart.Payload.Mountpoint == "/boot" {
 		prefixPath = "/grub2"
 	}
 	core := osbuild.CoreMkImage{
 		Type:       "mkimage",
 		PartLabel:  pt.Type,
-		Filesystem: pt.Partitions[bootPartIndex].Filesystem.Type,
+		Filesystem: pt.Partitions[bootPartIndex].Payload.Type,
 	}
 
 	prefix := osbuild.PrefixPartition{

@@ -51,7 +51,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 			{
 				Type: FilesystemDataGUID,
 				UUID: RootPartitionUUID,
-				Filesystem: &Filesystem{
+				Payload: &Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -86,7 +86,7 @@ var canonicalPartitionTable = PartitionTable{
 			Size: 204800,
 			Type: EFISystemPartitionGUID,
 			UUID: EFISystemPartitionUUID,
-			Filesystem: &Filesystem{
+			Payload: &Filesystem{
 				Type:         "vfat",
 				UUID:         EFIFilesystemUUID,
 				Mountpoint:   "/boot/efi",
@@ -99,7 +99,7 @@ var canonicalPartitionTable = PartitionTable{
 			Size: 1048576,
 			Type: FilesystemDataGUID,
 			UUID: FilesystemDataUUID,
-			Filesystem: &Filesystem{
+			Payload: &Filesystem{
 				Type:         "xfs",
 				Mountpoint:   "/boot",
 				FSTabOptions: "defaults",
@@ -110,7 +110,7 @@ var canonicalPartitionTable = PartitionTable{
 		{
 			Type: FilesystemDataGUID,
 			UUID: RootPartitionUUID,
-			Filesystem: &Filesystem{
+			Payload: &Filesystem{
 				Type:         "xfs",
 				Label:        "root",
 				Mountpoint:   "/",
@@ -123,9 +123,9 @@ var canonicalPartitionTable = PartitionTable{
 }
 
 func TestDisk_ForEachFilesystem(t *testing.T) {
-	rootFs := canonicalPartitionTable.Partitions[3].Filesystem
-	bootFs := canonicalPartitionTable.Partitions[2].Filesystem
-	efiFs := canonicalPartitionTable.Partitions[1].Filesystem
+	rootFs := canonicalPartitionTable.Partitions[3].Payload
+	bootFs := canonicalPartitionTable.Partitions[2].Payload
+	efiFs := canonicalPartitionTable.Partitions[1].Payload
 
 	// check we iterate in the correct order and throughout the whole array
 	var expectedFilesystems []*Filesystem

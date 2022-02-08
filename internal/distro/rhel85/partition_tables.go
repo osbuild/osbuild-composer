@@ -31,7 +31,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 104857600,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
@@ -43,7 +43,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -63,7 +63,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 104857600,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
@@ -75,7 +75,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -97,7 +97,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Bootable: true,
 			},
 			{
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -114,7 +114,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Bootable: true,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -141,7 +141,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -161,7 +161,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				Size: 209715200,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
@@ -174,7 +174,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				Size: 536870912,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
 					FSTabOptions: "defaults",
@@ -185,7 +185,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -214,7 +214,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 133169152,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
@@ -228,7 +228,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 402653184,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
 					Label:        "boot",
@@ -240,7 +240,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",
@@ -260,7 +260,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 133169152,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,
 					Mountpoint:   "/boot/efi",
@@ -274,7 +274,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Size: 402653184,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
 					Label:        "boot",
@@ -286,7 +286,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
-				Filesystem: &disk.Filesystem{
+				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Label:        "root",
 					Mountpoint:   "/",

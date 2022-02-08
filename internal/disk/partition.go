@@ -11,11 +11,13 @@ type Partition struct {
 	Size     uint64 // Size of the partition in bytes
 	Type     string // Partition type, e.g. 0x83 for MBR or a UUID for gpt
 	Bootable bool   // `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
+
 	// ID of the partition, dos doesn't use traditional UUIDs, therefore this
 	// is just a string.
 	UUID string
-	// If nil, the partition is raw; It doesn't contain a filesystem.
-	Filesystem *Filesystem
+
+	// If nil, the partition is raw; It doesn't contain a payload.
+	Payload *Filesystem
 }
 
 func (p *Partition) IsContainer() bool {
@@ -27,7 +29,7 @@ func (p *Partition) Clone() Entity {
 		return p
 	}
 
-	ent := p.Filesystem.Clone()
+	ent := p.Payload.Clone()
 	var fs *Filesystem
 	if ent != nil {
 		fsEnt, cloneOk := ent.(*Filesystem)
@@ -38,20 +40,20 @@ func (p *Partition) Clone() Entity {
 	}
 
 	return &Partition{
-		Start:      p.Start,
-		Size:       p.Size,
-		Type:       p.Type,
-		Bootable:   p.Bootable,
-		UUID:       p.UUID,
-		Filesystem: fs,
+		Start:    p.Start,
+		Size:     p.Size,
+		Type:     p.Type,
+		Bootable: p.Bootable,
+		UUID:     p.UUID,
+		Payload:  fs,
 	}
 }
 
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
-	if p.Filesystem != nil {
-		f := p.Filesystem.QEMUFilesystem()
+	if p.Payload != nil {
+		f := p.Payload.QEMUFilesystem()
 		fs = &f
 	}
 	return osbuild.QEMUPartition{
@@ -65,7 +67,7 @@ func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 }
 
 func (pt *Partition) GetItemCount() uint {
-	if pt.Filesystem == nil {
+	if pt.Payload == nil {
 		return 0
 	}
 	return 1
@@ -75,7 +77,7 @@ func (p *Partition) GetChild(n uint) Entity {
 	if n != 0 {
 		panic(fmt.Sprintf("invalid child index for Partition: %d != 0", n))
 	}
-	return p.Filesystem
+	return p.Payload
 }
 
 func (p *Partition) GetSize() uint64 {
