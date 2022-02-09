@@ -224,6 +224,17 @@
     "no-image-info": true,
     "overrides": {}
   },
+  "oci": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "oci",
+      "repositories": [],
+      "filename": "disk.qcow2",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "qcow2": {
     "compose-request": {
       "distro": "",
