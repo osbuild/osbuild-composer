@@ -323,6 +323,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 			switch ir.ImageType {
 			case ImageTypesAws:
+				fallthrough
+			case ImageTypesAwsRhui:
+				fallthrough
+			case ImageTypesAwsHaRhui:
+				fallthrough
+			case ImageTypesAwsSapRhui:
 				var awsUploadOptions AWSEC2UploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
 				if err != nil {
@@ -693,6 +699,12 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 	switch it {
 	case ImageTypesAws:
 		return "ami"
+	case ImageTypesAwsRhui:
+		return "ec2"
+	case ImageTypesAwsHaRhui:
+		return "ec2-ha"
+	case ImageTypesAwsSapRhui:
+		return "ec2-sap"
 	case ImageTypesGcp:
 		return "vhd"
 	case ImageTypesAzure:
