@@ -95,20 +95,6 @@ func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partiti
 	return nil
 }
 
-// Returns the root partition (the partition whose filesystem has / as
-// a mountpoint) of the partition table. Nil is returned if there's no such
-// partition.
-func (pt *PartitionTable) RootPartition() *Partition {
-	return pt.FindPartitionForMountpoint("/")
-}
-
-// Returns the /boot partition (the partition whose filesystem has /boot as
-// a mountpoint) of the partition table. Nil is returned if there's no such
-// partition.
-func (pt *PartitionTable) BootPartition() *Partition {
-	return pt.FindPartitionForMountpoint("/boot")
-}
-
 // Returns the index of the boot partition: the partition whose filesystem has
 // /boot as a mountpoint.  If there is no explicit boot partition, the root
 // partition is returned.

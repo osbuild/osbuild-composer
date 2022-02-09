@@ -361,7 +361,7 @@ func osPipeline(t *imageType,
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if pt == nil || pt.BootPartition() == nil {
+	if pt == nil || pt.FindMountable("/boot") == nil {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
