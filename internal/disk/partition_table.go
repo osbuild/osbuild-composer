@@ -428,3 +428,15 @@ func forEachMountable(c Container, path []Entity, cb MountableCallback) error {
 func (pt *PartitionTable) ForEachMountable(cb MountableCallback) error {
 	return forEachMountable(pt, []Entity{pt}, cb)
 }
+
+// FindMountable returns the Mountable entity with the given mountpoint in the
+// PartitionTable. Returns nil if no Entity has the target as a Mountpoint.
+func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
+	path := entityPath(pt, mountpoint)
+
+	if len(path) == 0 {
+		return nil
+	}
+	// first path element is guaranteed to be Mountable
+	return path[0].(Mountable)
+}
