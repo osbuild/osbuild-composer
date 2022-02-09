@@ -72,6 +72,7 @@
   - name: Mockbuild osbuild
     shell: >-
         mock
+        -r "rhel-8-x86_64"
         --rebuild
         --define "commit {{ OSBUILD_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
@@ -90,6 +91,7 @@
   - name: Mockbuild osbuild-composer
     shell: >-
         mock
+        -r "rhel-8-x86_64"
         --rebuild
         --define "commit {{ COMPOSER_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
