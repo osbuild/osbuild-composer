@@ -51,7 +51,7 @@ func CreatePartitionTable(
 	}
 
 	// Calculate partition table offsets and sizes
-	table.updatePartitionStartPointOffsets(imageSize)
+	table.relayout(imageSize)
 
 	// Generate new UUIDs for filesystems and partitions
 	table.GenerateUUIDs(rng)
