@@ -6,10 +6,14 @@
             "openstack",
             "qcow2",
             "vhd",
-            "vmdk"
+            "vmdk",
+            "oci"
         ],
         "aarch64": [
-            "ami"
+            "ami",
+            "openstack",
+            "qcow2",
+            "oci"
         ]
     },
     "fedora-35": {
@@ -19,10 +23,14 @@
             "openstack",
             "qcow2",
             "vhd",
-            "vmdk"
+            "vmdk",
+            "oci"
         ],
         "aarch64": [
-            "ami"
+            "ami",
+            "openstack",
+            "qcow2",
+            "oci"
         ]
     },
     "centos-8": {
