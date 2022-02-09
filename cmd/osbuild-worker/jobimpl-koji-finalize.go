@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -15,8 +17,8 @@ import (
 )
 
 type KojiFinalizeJobImpl struct {
-	KojiServers        map[string]koji.GSSAPICredentials
-	relaxTimeoutFactor uint
+	KojiServers   map[string]koji.GSSAPICredentials
+	timeoutFactor uint
 }
 
 func (impl *KojiFinalizeJobImpl) kojiImport(
@@ -25,7 +27,13 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 	buildRoots []koji.BuildRoot,
 	images []koji.Image,
 	directory, token string) error {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -37,7 +45,7 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	k, err := koji.NewFromGSSAPI(server, &creds, transport)
+	k, err := koji.NewFromGSSAPI(server, &creds, transport, impl.timeoutFactor)
 	if err != nil {
 		return err
 	}
@@ -57,7 +65,13 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 }
 
 func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token string) error {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -69,7 +83,7 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	k, err := koji.NewFromGSSAPI(server, &creds, transport)
+	k, err := koji.NewFromGSSAPI(server, &creds, transport, impl.timeoutFactor)
 	if err != nil {
 		return err
 	}

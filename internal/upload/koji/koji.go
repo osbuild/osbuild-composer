@@ -8,7 +8,6 @@ import (
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -127,14 +126,24 @@ type loginReply struct {
 	SessionKey string `xmlrpc:"session-key"`
 }
 
-func newKoji(server string, transport http.RoundTripper, reply loginReply) (*Koji, error) {
+func newKoji(server string, transport http.RoundTripper, reply loginReply, timeoutFactor uint) (*Koji, error) {
+
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	if timeoutFactor > 0 {
+		t.TLSHandshakeTimeout *= time.Duration(timeoutFactor)
+		t.DialContext = (&net.Dialer{
+			Timeout:   30 * time.Second * time.Duration(timeoutFactor),
+			KeepAlive: 30 * time.Second,
+		}).DialContext
+	}
+
 	// Create the final xmlrpc client with our custom RoundTripper handling
 	// sessionID, sessionKey and callnum
 	kojiTransport := &Transport{
 		sessionID:  reply.SessionID,
 		sessionKey: reply.SessionKey,
 		callnum:    0,
-		transport:  transport,
+		transport:  t,
 	}
 	client, err := xmlrpc.NewClient(server, kojiTransport)
 	if err != nil {
@@ -168,13 +177,13 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 		return nil, err
 	}
 
-	return newKoji(server, transport, reply)
+	return newKoji(server, transport, reply, 1)
 }
 
 // NewFromGSSAPI creates a new Koji session authenticated using GSSAPI.
 // Principal and keytab used for the session is passed using credentials
 // parameter.
-func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http.RoundTripper) (*Koji, error) {
+func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http.RoundTripper, timeoutFactor uint) (*Koji, error) {
 	// Create a temporary xmlrpc client with kerberos transport.
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
@@ -194,7 +203,7 @@ func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http
 		return nil, err
 	}
 
-	return newKoji(server, transport, reply)
+	return newKoji(server, transport, reply, timeoutFactor)
 }
 
 // GetAPIVersion gets the version of the API of the remote Koji instance
@@ -423,25 +432,4 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 		Principal: principal,
 		KeyTab:    keyTab,
 	}, nil
-}
-
-func CreateKojiTransport(relaxTimeout uint) *http.Transport {
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-		MinVersion:    tls.VersionTLS12,
-	}
-
-	// Relax timeouts a bit
-	if relaxTimeout > 0 {
-		transport.TLSHandshakeTimeout *= time.Duration(relaxTimeout)
-		transport.DialContext = (&net.Dialer{
-			Timeout:   30 * time.Second * time.Duration(relaxTimeout),
-			KeepAlive: 30 * time.Second,
-		}).DialContext
-	}
-
-	return transport
 }

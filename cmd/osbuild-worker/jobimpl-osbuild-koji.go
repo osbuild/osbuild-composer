@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -17,14 +19,20 @@ import (
 )
 
 type OSBuildKojiJobImpl struct {
-	Store              string
-	Output             string
-	KojiServers        map[string]koji.GSSAPICredentials
-	relaxTimeoutFactor uint
+	Store         string
+	Output        string
+	KojiServers   map[string]koji.GSSAPICredentials
+	timeoutFactor uint
 }
 
 func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, filename string) (string, uint64, error) {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -36,7 +44,7 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 		return "", 0, fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	k, err := koji.NewFromGSSAPI(server, &creds, transport)
+	k, err := koji.NewFromGSSAPI(server, &creds, transport, impl.timeoutFactor)
 	if err != nil {
 		return "", 0, err
 	}
