@@ -313,9 +313,7 @@ func (pt *PartitionTable) ForEachEntity(cb EntityCallback) error {
 // Will grow the root partition if there is any empty space.
 // Returns the updated start point.
 func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
-
 	// always reserve one extra sector for the GPT header
-
 	header := pt.SectorsToBytes(1)
 	footer := uint64(0)
 
@@ -324,7 +322,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 		// calculate the space we need for
 		parts := len(pt.Partitions)
 
-		// reserver a minimum of 128 partition entires
+		// reserve a minimum of 128 partition entires
 		if parts < 128 {
 			parts = 128
 		}
@@ -338,15 +336,19 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	size = pt.AlignUp(size)
 
 	var rootIdx = -1
-	for i := range pt.Partitions {
-		partition := &pt.Partitions[i]
-		if partition.Payload != nil && partition.Payload.Mountpoint == "/" {
-			rootIdx = i
+	for idx := range pt.Partitions {
+		partition := &pt.Partitions[idx]
+		if len(entityPath(partition, "/")) != 0 {
+			rootIdx = idx
 			continue
 		}
 		partition.Start = start
 		partition.Size = pt.AlignUp(partition.Size)
 		start += partition.Size
+	}
+
+	if rootIdx < 0 {
+		panic("no root filesystem found; this is a programming error")
 	}
 
 	root := &pt.Partitions[rootIdx]
