@@ -312,7 +312,7 @@ func (pt *PartitionTable) ForEachEntity(cb EntityCallback) error {
 // value in `size` or to the sum of all partitions if that is lager.
 // Will grow the root partition if there is any empty space.
 // Returns the updated start point.
-func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
+func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// always reserve one extra sector for the GPT header
 	header := pt.SectorsToBytes(1)
 	footer := uint64(0)
