@@ -1766,6 +1766,168 @@ def read_security_limits_configs(tree):
     return _read_glob_paths_with_parser(tree, checked_globs, read_tmpfilesd_config)
 
 
+def read_ssh_config(config_path):
+    """
+    Read the content of provided SSH(d) configuration file.
+
+    Returns: list of uncommented and non-empty lines read from the configuation
+    file.
+
+    An example return value:
+    [
+        "Match final all",
+        "Include /etc/crypto-policies/back-ends/openssh.config",
+        "GSSAPIAuthentication yes",
+        "ForwardX11Trusted yes",
+        "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+        "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+        "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+        "SendEnv XMODIFIERS"
+    ]
+    """
+    config_lines = []
+
+    with open(config_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line[0] == "#":
+                continue
+            config_lines.append(line)
+
+    return config_lines
+
+
+def read_ssh_configs(tree):
+    """
+    Read all SSH configuration files from a predefined list of paths and
+    parse them.
+
+    The searched paths are:
+    - "/etc/ssh/ssh_config"
+    - "/etc/ssh/ssh_config.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_ssh_config()'.
+
+    An example return value:
+    {
+        "/etc/ssh": {
+            "ssh_config": [
+                "Include /etc/ssh/ssh_config.d/*.conf"
+            ]
+        },
+        "/etc/ssh/ssh_config.d": {
+            "05-redhat.conf": [
+                "Match final all",
+                "Include /etc/crypto-policies/back-ends/openssh.config",
+                "GSSAPIAuthentication yes",
+                "ForwardX11Trusted yes",
+                "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+                "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+                "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+                "SendEnv XMODIFIERS"
+            ]
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/ssh/ssh_config",
+        "/etc/ssh/ssh_config.d/*.conf"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_ssh_config)
+
+
+def read_sshd_configs(tree):
+    """
+    Read all SSHd configuration files from a predefined list of paths and
+    parse them.
+
+    The searched paths are:
+    - "/etc/ssh/sshd_config"
+    - "/etc/ssh/sshd_config.d/*.conf"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by 'read_ssh_config()'.
+
+    An example return value:
+    {
+        "/etc/ssh": {
+            "sshd_config": [
+                "HostKey /etc/ssh/ssh_host_rsa_key",
+                "HostKey /etc/ssh/ssh_host_ecdsa_key",
+                "HostKey /etc/ssh/ssh_host_ed25519_key",
+                "SyslogFacility AUTHPRIV",
+                "PermitRootLogin no",
+                "AuthorizedKeysFile\t.ssh/authorized_keys",
+                "PasswordAuthentication no",
+                "ChallengeResponseAuthentication no",
+                "GSSAPIAuthentication yes",
+                "GSSAPICleanupCredentials no",
+                "UsePAM yes",
+                "X11Forwarding yes",
+                "PrintMotd no",
+                "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+                "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+                "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+                "AcceptEnv XMODIFIERS",
+                "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server",
+                "ClientAliveInterval 420"
+            ]
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/ssh/sshd_config",
+        "/etc/ssh/sshd_config.d/*.conf"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, read_ssh_config)
+
+
+def read_yum_repos(tree):
+    """
+    Read all YUM/DNF repo files.
+
+    The searched paths are:
+    - "/etc/yum.repos.d/*.repo"
+
+    Returns: dictionary as returned by '_read_glob_paths_with_parser()' with
+    configuration representation as returned by '_read_inifile_to_dict()'.
+
+    An example return value:
+    {
+        "/etc/yum.repos.d": {
+            "google-cloud.repo": {
+                "google-cloud-sdk": {
+                    "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+                    "enabled": "1",
+                    "gpgcheck": "1",
+                    "gpgkey": "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+                    "name": "Google Cloud SDK",
+                    "repo_gpgcheck": "0"
+                },
+                "google-compute-engine": {
+                    "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+                    "enabled": "1",
+                    "gpgcheck": "1",
+                    "gpgkey": "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+                    "name": "Google Compute Engine",
+                    "repo_gpgcheck": "0"
+                }
+            }
+        }
+    }
+    """
+    checked_globs = [
+        "/etc/yum.repos.d/*.repo"
+    ]
+
+    return _read_glob_paths_with_parser(tree, checked_globs, _read_inifile_to_dict)
+
+
 def read_sudoers(tree):
     """
     Read uncommented lines from sudoers configuration file and /etc/sudoers.d
@@ -1862,6 +2024,49 @@ def read_udev_rules(tree):
     return result
 
 
+def _read_inifile_to_dict(config_path):
+    """
+    Read INI file from the provided path
+
+    Returns: a dictionary representing the provided INI file content.
+
+    An example return value:
+    {
+        "google-cloud-sdk": {
+            "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+            "name": "Google Cloud SDK",
+            "repo_gpgcheck": "0"
+        },
+        "google-compute-engine": {
+            "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+            "name": "Google Compute Engine",
+            "repo_gpgcheck": "0"
+        }
+    }
+    """
+    result = {}
+
+    with contextlib.suppress(FileNotFoundError):
+        with open(config_path) as f:
+            parser = configparser.RawConfigParser()
+            # prevent conversion of the opion name to lowercase
+            parser.optionxform = lambda option: option
+            parser.readfp(f)
+
+            for section in parser.sections():
+                section_config = dict(parser.items(section))
+                if section_config:
+                    result[section] = section_config
+
+    return result
+
+
 def read_dnf_conf(tree):
     """
     Read DNF configuration and defined variable files.
@@ -1886,22 +2091,9 @@ def read_dnf_conf(tree):
     """
     result = {}
 
-    with contextlib.suppress(FileNotFoundError):
-        with open(f"{tree}/etc/dnf/dnf.conf") as f:
-            parser = configparser.RawConfigParser()
-            # prevent conversion of the opion name to lowercase
-            parser.optionxform = lambda option: option
-            parser.read(f)
-
-            dnf_config = {}
-            for section in parser.sections():
-                section_config = {}
-                section_config.update(parser[section])
-                if section_config:
-                    dnf_config[section] = section_config
-
-            if dnf_config:
-                result["dnf.conf"] = dnf_config
+    dnf_config = _read_inifile_to_dict(f"{tree}/etc/dnf/dnf.conf")
+    if dnf_config:
+        result["dnf.conf"] = dnf_config
 
     dnf_vars = {}
     for file in glob.glob(f"{tree}/etc/dnf/vars/*"):
@@ -1911,6 +2103,41 @@ def read_dnf_conf(tree):
         result["vars"] = dnf_vars
 
     return result
+
+
+def read_dnf_automatic_conf(tree):
+    """
+    Read DNF Automatic configuation.
+
+    Returns: dictionary as returned by '_read_inifile_to_dict()'.
+
+    An example return value:
+    {
+        "base": {
+            "debuglevel": "1"
+        },
+        "command_email": {
+            "email_from": "root@example.com",
+            "email_to": "root"
+        },
+        "commands": {
+            "apply_updates": "yes",
+            "download_updates": "yes",
+            "network_online_timeout": "60",
+            "random_sleep": "0",
+            "upgrade_type": "security"
+        },
+        "email": {
+            "email_from": "root@example.com",
+            "email_host": "localhost",
+            "email_to": "root"
+        },
+        "emitters": {
+            "emit_via": "stdio"
+        }
+    }
+    """
+    return _read_inifile_to_dict(f"{tree}/etc/dnf/automatic.conf")
 
 
 def read_authselect_conf(tree):
@@ -2023,6 +2250,14 @@ def append_filesystem(report, tree, *, is_ostree=False):
         if dnf_conf:
             report["dnf"] = dnf_conf
 
+        dnf_automatic = read_dnf_automatic_conf(tree)
+        if dnf_automatic:
+            report["/etc/dnf/automatic.conf"] = dnf_automatic
+
+        yum_repos = read_yum_repos(tree)
+        if yum_repos:
+            report["yum_repos"] = yum_repos
+
         dracut_configs = read_dracut_configs(tree)
         if dracut_configs:
             report["dracut"] = dracut_configs
@@ -2073,6 +2308,14 @@ def append_filesystem(report, tree, *, is_ostree=False):
         selinux = read_selinux_info(tree, is_ostree)
         if selinux:
             report["selinux"] = selinux
+
+        ssh_configs = read_ssh_configs(tree)
+        if ssh_configs:
+            report["ssh_config"] = ssh_configs
+
+        sshd_configs = read_sshd_configs(tree)
+        if sshd_configs:
+            report["sshd_config"] = sshd_configs
 
         sudoers_conf = read_sudoers(tree)
         if sudoers_conf:
