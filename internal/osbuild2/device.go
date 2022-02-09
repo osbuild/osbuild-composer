@@ -19,6 +19,72 @@ type DeviceOptions interface {
 	isDeviceOptions()
 }
 
+func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage {
+	stages := make([]*Stage, 0)
+
+	genStages := func(e disk.Entity, path []disk.Entity) error {
+
+		switch ent := e.(type) {
+		case *disk.LUKSContainer:
+			// do not include us when getting the devices
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+
+			// "org.osbuild.luks2.format" expects a "device" to create the VG on,
+			// thus rename the last device to "device"
+			lastDevice := stageDevices[lastName]
+			delete(stageDevices, lastName)
+			stageDevices["device"] = lastDevice
+
+			stage := NewLUKS2CreateStage(
+				&LUKS2CreateStageOptions{
+					UUID:       ent.UUID,
+					Passphrase: ent.Passphrase,
+					Cipher:     ent.Cipher,
+					Label:      ent.Label,
+					Subsystem:  ent.Subsystem,
+					SectorSize: ent.SectorSize,
+					PBKDF: Argon2id{
+						Method:      "argon2id",
+						Iterations:  ent.PBKDF.Iterations,
+						Memory:      ent.PBKDF.Memory,
+						Parallelism: ent.PBKDF.Parallelism,
+					},
+				},
+				stageDevices)
+
+			stages = append(stages, stage)
+
+		case *disk.LVMVolumeGroup:
+			// do not include us when getting the devices
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+
+			// "org.osbuild.lvm2.create" expects a "device" to create the VG on,
+			// thus rename the last device to "device"
+			lastDevice := stageDevices[lastName]
+			delete(stageDevices, lastName)
+			stageDevices["device"] = lastDevice
+
+			volumes := make([]LogicalVolume, len(ent.LogicalVolumes))
+			for idx, lv := range ent.LogicalVolumes {
+				volumes[idx].Name = lv.Name
+				volumes[idx].Size = fmt.Sprintf("%d", lv.Size)
+			}
+
+			stage := NewLVM2CreateStage(
+				&LVM2CreateStageOptions{
+					Volumes: volumes,
+				}, stageDevices)
+
+			stages = append(stages, stage)
+		}
+
+		return nil
+	}
+
+	_ = pt.ForEachEntity(genStages)
+	return stages
+}
+
 func deviceName(p disk.Entity) string {
 	if p == nil {
 		panic("device is nil; this is a programming error")
