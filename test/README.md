@@ -235,15 +235,15 @@ The following environment variables are required
 
 The following environment variables are required
 
-- `GOVMOMI_URL` - vCenter hostname
-- `GOVMOMI_USERNAME`
-- `GOVMOMI_PASSWORD`
-- `GOVMOMI_DATACENTER`
-- `GOVMOMI_CLUSTER`
-- `GOVMOMI_NETWORK`
-- `GOVMOMI_DATASTORE`
-- `GOVMOMI_FOLDER`
-- `GOVMOMI_INSECURE` - value of 1 will skip checking SSL certificates
+- `GOVC_URL` - vCenter hostname
+- `GOVC_USERNAME`
+- `GOVC_PASSWORD`
+- `GOVC_DATACENTER`
+- `GOVC_CLUSTER`
+- `GOVC_NETWORK`
+- `GOVC_DATASTORE`
+- `GOVC_FOLDER`
+- `GOVC_INSECURE` - value of 1 will skip checking SSL certificates
 
 **WARNING:** when configuring the credentials for Schutzbot we've experienced
 an issue where the first line in the credentials file gets lost resulting in
