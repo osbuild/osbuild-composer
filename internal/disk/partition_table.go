@@ -274,6 +274,39 @@ func (pt *PartitionTable) EnsureSize(s uint64) bool {
 	return false
 }
 
+type EntityCallback func(e Entity, path []Entity) error
+
+func forEachEntity(e Entity, path []Entity, cb EntityCallback) error {
+
+	childPath := append(path, e)
+	err := cb(e, childPath)
+
+	if err != nil {
+		return err
+	}
+
+	c, ok := e.(Container)
+	if !ok {
+		return nil
+	}
+
+	for idx := uint(0); idx < c.GetItemCount(); idx++ {
+		child := c.GetChild(idx)
+		err = forEachEntity(child, childPath, cb)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ForEachEntity runs the provided callback function on each entity in
+// the PartitionTable.
+func (pt *PartitionTable) ForEachEntity(cb EntityCallback) error {
+	return forEachEntity(pt, []Entity{}, cb)
+}
+
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.
