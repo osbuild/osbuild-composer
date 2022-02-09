@@ -376,6 +376,31 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	return start
 }
 
+// entityPath stats at ent and searches for an Entity with a Mountpoint equal
+// to the target. Returns a slice of all the Entities leading to the Mountable
+// in reverse order. If no Entity has the target as a Mountpoint, returns nil.
+// If a slice is returned, the last element is always the starting Entity ent
+// and the first element is always a Mountable with a Mountpoint equal to the
+// target.
+func entityPath(ent Entity, target string) []Entity {
+	switch e := ent.(type) {
+	case Mountable:
+		if target == e.GetMountpoint() {
+			return []Entity{ent}
+		}
+	case Container:
+		for idx := uint(0); idx < e.GetItemCount(); idx++ {
+			child := e.GetChild(idx)
+			path := entityPath(child, target)
+			if path != nil {
+				path = append(path, e)
+				return path
+			}
+		}
+	}
+	return nil
+}
+
 type MountableCallback func(mnt Mountable, path []Entity) error
 
 func forEachMountable(c Container, path []Entity, cb MountableCallback) error {
