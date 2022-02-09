@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -16,7 +14,8 @@ import (
 )
 
 type KojiFinalizeJobImpl struct {
-	KojiServers map[string]koji.GSSAPICredentials
+	KojiServers        map[string]koji.GSSAPICredentials
+	relaxTimeoutFactor uint
 }
 
 func (impl *KojiFinalizeJobImpl) kojiImport(
@@ -25,13 +24,7 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 	buildRoots []koji.BuildRoot,
 	images []koji.Image,
 	directory, token string) error {
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-		MinVersion:    tls.VersionTLS12,
-	}
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -63,13 +56,7 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 }
 
 func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token string) error {
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-		MinVersion:    tls.VersionTLS12,
-	}
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {

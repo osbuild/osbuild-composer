@@ -2,9 +2,13 @@ package koji
 
 import (
 	"bytes"
+	"net"
+	"time"
+
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -419,4 +423,25 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 		Principal: principal,
 		KeyTab:    keyTab,
 	}, nil
+}
+
+func CreateKojiTransport(relaxTimeout uint) *http.Transport {
+	// Koji for some reason needs TLS renegotiation enabled.
+	// Clone the default http transport and enable renegotiation.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{
+		Renegotiation: tls.RenegotiateOnceAsClient,
+		MinVersion:    tls.VersionTLS12,
+	}
+
+	// Relax timeouts a bit
+	if relaxTimeout > 0 {
+		transport.TLSHandshakeTimeout *= time.Duration(relaxTimeout)
+		transport.DialContext = (&net.Dialer{
+			Timeout:   30 * time.Second * time.Duration(relaxTimeout),
+			KeepAlive: 30 * time.Second,
+		}).DialContext
+	}
+
+	return transport
 }

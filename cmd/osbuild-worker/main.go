@@ -142,7 +142,8 @@ func main() {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
 		} `toml:"authentication"`
-		BasePath string `toml:"base_path"`
+		RelaxTimeoutFactor uint   `toml:"RelaxTimeoutFactor"`
+		BasePath           string `toml:"base_path"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -323,15 +324,18 @@ func main() {
 			AWSCreds:    awsCredentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
-			Store:       store,
-			Output:      output,
-			KojiServers: kojiServers,
+			Store:              store,
+			Output:             output,
+			KojiServers:        kojiServers,
+			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
 		"koji-init": &KojiInitJobImpl{
-			KojiServers: kojiServers,
+			KojiServers:        kojiServers,
+			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
 		"koji-finalize": &KojiFinalizeJobImpl{
-			KojiServers: kojiServers,
+			KojiServers:        kojiServers,
+			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
 	}
 
