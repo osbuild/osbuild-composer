@@ -626,6 +626,9 @@ components:
       type: string
       enum:
         - aws
+        - aws-rhui
+        - aws-ha-rhui
+        - aws-sap-rhui
         - azure
         - edge-commit
         - edge-container
