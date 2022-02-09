@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -18,19 +16,14 @@ import (
 )
 
 type OSBuildKojiJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
+	Store              string
+	Output             string
+	KojiServers        map[string]koji.GSSAPICredentials
+	relaxTimeoutFactor uint
 }
 
 func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, filename string) (string, uint64, error) {
-	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{
-		Renegotiation: tls.RenegotiateOnceAsClient,
-		MinVersion:    tls.VersionTLS12,
-	}
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
