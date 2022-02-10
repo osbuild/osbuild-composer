@@ -63,11 +63,11 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
 	if t.arch.name == distro.S390xArchName {
-		rootFs := pt.RootFilesystem()
+		rootFs := pt.FindMountable("/")
 		if rootFs == nil {
 			panic("s390x image must have a root filesystem, this is a programming error")
 		}
-		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFs.UUID, t.kernelOptions))
+		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFs.GetFSSpec().UUID, t.kernelOptions))
 		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	}
 	return pipeline
