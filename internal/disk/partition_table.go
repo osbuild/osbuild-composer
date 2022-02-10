@@ -283,6 +283,39 @@ func (pt *PartitionTable) EnsureSize(s uint64) bool {
 	return false
 }
 
+func (pt *PartitionTable) CreateVolume(mountpoint string, size uint64) (Entity, error) {
+	filesystem := Filesystem{
+		Type:         "xfs",
+		Mountpoint:   mountpoint,
+		FSTabOptions: "defaults",
+		FSTabFreq:    0,
+		FSTabPassNo:  0,
+	}
+
+	partition := Partition{
+		Size:    size,
+		Payload: &filesystem,
+	}
+
+	n := len(pt.Partitions)
+	var maxNo int
+
+	if pt.Type == "gpt" {
+		partition.Type = FilesystemDataGUID
+		maxNo = 128
+	} else {
+		maxNo = 4
+	}
+
+	if n == maxNo {
+		return nil, fmt.Errorf("maximum number of partitions reached (%d)", maxNo)
+	}
+
+	pt.Partitions = append(pt.Partitions, partition)
+
+	return &pt.Partitions[len(pt.Partitions)-1], nil
+}
+
 type EntityCallback func(e Entity, path []Entity) error
 
 func forEachEntity(e Entity, path []Entity, cb EntityCallback) error {
