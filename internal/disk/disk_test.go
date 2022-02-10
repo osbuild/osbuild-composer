@@ -71,61 +71,273 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	assert.GreaterOrEqual(t, newpt.Size, expectedSize)
 }
 
-// common partition table that use used by tests
-var canonicalPartitionTable = PartitionTable{
-	UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-	Type: "gpt",
-	Partitions: []Partition{
-		{
-			Size:     2048,
-			Bootable: true,
-			Type:     BIOSBootPartitionGUID,
-			UUID:     BIOSBootPartitionUUID,
-		},
-		{
-			Size: 204800,
-			Type: EFISystemPartitionGUID,
-			UUID: EFISystemPartitionUUID,
-			Payload: &Filesystem{
-				Type:         "vfat",
-				UUID:         EFIFilesystemUUID,
-				Mountpoint:   "/boot/efi",
-				FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-				FSTabFreq:    0,
-				FSTabPassNo:  2,
+var testPartitionTables = map[string]PartitionTable{
+	"plain": {
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []Partition{
+			{
+				Size:     1048576, // 1MB
+				Bootable: true,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
+			},
+			{
+				Size: 209715200, // 200 MB
+				Type: EFISystemPartitionGUID,
+				UUID: EFISystemPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "vfat",
+					UUID:         EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Size: 1024000, // 500 MB
+				Type: FilesystemDataGUID,
+				UUID: FilesystemDataUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Label:        "root",
+					Mountpoint:   "/",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
 			},
 		},
-		{
-			Size: 1048576,
-			Type: FilesystemDataGUID,
-			UUID: FilesystemDataUUID,
-			Payload: &Filesystem{
-				Type:         "xfs",
-				Mountpoint:   "/boot",
-				FSTabOptions: "defaults",
-				FSTabFreq:    0,
-				FSTabPassNo:  0,
+	},
+
+	"luks": {
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []Partition{
+			{
+				Size:     1048576, // 1MB
+				Bootable: true,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
+			},
+			{
+				Size: 209715200, // 200 MB
+				Type: EFISystemPartitionGUID,
+				UUID: EFISystemPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "vfat",
+					UUID:         EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Size: 1024000, // 500 MB
+				Type: FilesystemDataGUID,
+				UUID: FilesystemDataUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Payload: &LUKSContainer{
+					UUID:  "",
+					Label: "crypt_root",
+					Payload: &Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
 			},
 		},
-		{
-			Type: FilesystemDataGUID,
-			UUID: RootPartitionUUID,
-			Payload: &Filesystem{
-				Type:         "xfs",
-				Label:        "root",
-				Mountpoint:   "/",
-				FSTabOptions: "defaults",
-				FSTabFreq:    0,
-				FSTabPassNo:  0,
+	},
+	"luks+lvm": {
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []Partition{
+			{
+				Size:     1048576, // 1MB
+				Bootable: true,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
+			},
+			{
+				Size: 209715200, // 200 MB
+				Type: EFISystemPartitionGUID,
+				UUID: EFISystemPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "vfat",
+					UUID:         EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Size: 1024000, // 500 MB
+				Type: FilesystemDataGUID,
+				UUID: FilesystemDataUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Size: 5 * 1024 * 1024 * 1024,
+				Payload: &LUKSContainer{
+					UUID: "",
+					Payload: &LVMVolumeGroup{
+						Name:        "",
+						Description: "",
+						LogicalVolumes: []LVMLogicalVolume{
+							{
+								Size: 2 * 1024 * 1024 * 1024,
+								Payload: &Filesystem{
+									Type:         "xfs",
+									Label:        "root",
+									Mountpoint:   "/",
+									FSTabOptions: "defaults",
+									FSTabFreq:    0,
+									FSTabPassNo:  0,
+								},
+							},
+							{
+								Size: 2 * 1024 * 1024 * 1024,
+								Payload: &Filesystem{
+									Type:         "xfs",
+									Label:        "root",
+									Mountpoint:   "/home",
+									FSTabOptions: "defaults",
+									FSTabFreq:    0,
+									FSTabPassNo:  0,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
+	},
+	"btrfs": {
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []Partition{
+			{
+				Size:     1048576, // 1MB
+				Bootable: true,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
+			},
+			{
+				Size: 209715200, // 200 MB
+				Type: EFISystemPartitionGUID,
+				UUID: EFISystemPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "vfat",
+					UUID:         EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Size: 1024000, // 500 MB
+				Type: FilesystemDataGUID,
+				UUID: FilesystemDataUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Size: 10 * 1024 * 1024 * 1024,
+				Payload: &Btrfs{
+					UUID:       "",
+					Label:      "",
+					Mountpoint: "",
+					Subvolumes: []BtrfsSubvolume{
+						{
+							Size:       0,
+							Mountpoint: "/",
+							GroupID:    0,
+						},
+						{
+							Size:       5 * 1024 * 1024 * 1024,
+							Mountpoint: "/var",
+							GroupID:    0,
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
+var bp = []blueprint.FilesystemCustomization{
+	{
+		Mountpoint: "/",
+		MinSize:    10 * 1024 * 1024 * 1024,
+	},
+	{
+		Mountpoint: "/home",
+		MinSize:    20 * 1024 * 1024 * 1024,
+	},
+	{
+		Mountpoint: "/opt",
+		MinSize:    7 * 1024 * 1024 * 1024,
 	},
 }
 
 func TestDisk_ForEachEntity(t *testing.T) {
 
 	count := 0
-	err := canonicalPartitionTable.ForEachEntity(func(e Entity, path []Entity) error {
+
+	plain := testPartitionTables["plain"]
+	err := plain.ForEachEntity(func(e Entity, path []Entity) error {
 		assert.NotNil(t, e)
 		assert.NotNil(t, path)
 
@@ -137,5 +349,23 @@ func TestDisk_ForEachEntity(t *testing.T) {
 
 	// PartitionTable, 4 partitions, 3 filesystems -> 8 entities
 	assert.Equal(t, 8, count)
+}
 
+func TestCreatePartitionTable(t *testing.T) {
+	assert := assert.New(t)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	for name := range testPartitionTables {
+		pt := testPartitionTables[name]
+		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), rng)
+		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
+		assert.NotNil(mpt, "Partition table generation failed: %s (nil partition table)", name)
+		assert.Greater(mpt.GetSize(), uint64(37*1024*1024*1024))
+
+		assert.NotNil(mpt.Type, "Partition table generation failed: %s (nil partition table type)", name)
+
+		mnt := pt.FindMountable("/")
+		assert.NotNil(mnt, "Partition table '%s': failed to find root mountable", name)
+	}
 }
