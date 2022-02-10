@@ -23,4 +23,14 @@ test/README.md and add these additional items:
 - [ ] QE has approved reproducer/new tests and
 - [ ] Subsequent commits provide bug fixes without modifying the reproducer; CI reports PASS and
 - [ ] QE approves this PR; RHBZ status is set to `MODIFIED + Verified=Tested`
+
+Information regarding our GitLab pipeline (Schutzbot):
+
+CI will not be ran automatically if WIP label is applied or the PR is in DRAFT state, instead only
+a link will be provided to the pipeline which can then be triggered manually if desired. To run the
+CI automatically either switch the PR to ready or apply WIP+test label.
+
+Outside contributors need manual approval from one of the osbuild-composer maintainers.
+
+Schutzbot will only be triggered if all Tests jobs in GitHub workflow succeed.
 -->
