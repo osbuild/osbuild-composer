@@ -41,7 +41,11 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 }
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
-	rootFsUUID := pt.RootFilesystem().UUID
+	rootFs := pt.FindMountable("/")
+	if rootFs == nil {
+		panic("root filesystem must be defined for kernel-cmdline stage, this is a programming error")
+	}
+	rootFsUUID := rootFs.GetFSSpec().UUID
 	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
