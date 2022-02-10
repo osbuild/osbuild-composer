@@ -328,18 +328,6 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
 	return stageOptions
 }
 
-func ziplInstStageOptions(kernel string, pt *disk.PartitionTable) *osbuild.ZiplInstStageOptions {
-	bootPartIndex := pt.BootPartitionIndex()
-	if bootPartIndex == -1 {
-		panic("failed to find boot or root partition for zipl.inst stage")
-	}
-
-	return &osbuild.ZiplInstStageOptions{
-		Kernel:   kernel,
-		Location: pt.BytesToSectors(pt.Partitions[bootPartIndex].Start),
-	}
-}
-
 func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
 	var options osbuild.QEMUFormatOptions
 	switch format {

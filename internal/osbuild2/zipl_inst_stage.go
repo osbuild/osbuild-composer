@@ -1,5 +1,7 @@
 package osbuild2
 
+import "github.com/osbuild/osbuild-composer/internal/disk"
+
 // Install the Z Initial Program Loader
 
 type ZiplInstStageOptions struct {
@@ -25,5 +27,39 @@ func NewZiplInstStage(options *ZiplInstStageOptions, disk *Device, devices *Devi
 		Options: options,
 		Devices: ziplDevices,
 		Mounts:  *mounts,
+	}
+}
+
+func NewZiplInstStageOptions(kernel string, pt *disk.PartitionTable) *ZiplInstStageOptions {
+	bootIdx := -1
+	rootIdx := -1
+	for idx := range pt.Partitions {
+		// NOTE: we only support having /boot at the top level of the partition
+		// table (e.g., not in LUKS or LVM), so we don't need to descend into
+		// VolumeContainer types. If /boot is on the root partition, then the
+		// root partition needs to be at the top level.
+		partition := &pt.Partitions[idx]
+		if partition.Payload == nil {
+			continue
+		}
+		if partition.Payload.GetMountpoint() == "/boot" {
+			bootIdx = idx
+		} else if partition.Payload.GetMountpoint() == "/" {
+			rootIdx = idx
+		}
+	}
+	if bootIdx == -1 {
+		// if there's no boot partition, fall back to root
+		if rootIdx == -1 {
+			// no root either!?
+			panic("failed to find boot or root partition for zipl.inst stage")
+		}
+		bootIdx = rootIdx
+	}
+
+	bootPart := pt.Partitions[bootIdx]
+	return &ZiplInstStageOptions{
+		Kernel:   kernel,
+		Location: pt.BytesToSectors(bootPart.Start),
 	}
 }
