@@ -1,7 +1,7 @@
 // Disk package contains abstract data-types to define disk-related entities.
 //
 // PartitionTable, Partition and Filesystem types are currently defined.
-// All of them can be 1:1 converted to osbuild.QEMUAssemblerOptions.
+// All of them can be 1:1 converted to osbuild.QEMUAssmelberOptions.
 package disk
 
 import (
