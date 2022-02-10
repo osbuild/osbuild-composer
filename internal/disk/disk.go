@@ -29,7 +29,20 @@ const (
 	// Default sector size in bytes
 	DefaultSectorSize = 512
 
-	DefaultGrainBytes = uint64(1024 * 1024) // 1 MiB
+	DefaultGrainBytes = uint64(1048576) // 1 MiB
+
+	// UUIDs
+	BIOSBootPartitionGUID = "21686148-6449-6E6F-744E-656564454649"
+	BIOSBootPartitionUUID = "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+
+	FilesystemDataGUID = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+	FilesystemDataUUID = "CB07C243-BC44-4717-853E-28852021225B"
+
+	EFISystemPartitionGUID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+	EFISystemPartitionUUID = "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+	EFIFilesystemUUID      = "7B77-95E7"
+
+	RootPartitionUUID = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
 )
 
 // Entity is the base interface for all disk-related entities.
