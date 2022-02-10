@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
 type PartitionTable struct {
@@ -16,6 +17,28 @@ type PartitionTable struct {
 
 	SectorSize   uint64 // Sector size in bytes
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
+}
+
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, rng *rand.Rand) (*PartitionTable, error) {
+	newPT := basePT.Clone().(*PartitionTable)
+	for _, mnt := range mountpoints {
+		size := newPT.AlignUp(mnt.MinSize)
+		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
+			resizeEntityBranch(path, size)
+		} else {
+			if err := newPT.createFilesystem(mnt.Mountpoint, size); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Calculate partition table offsets and sizes
+	newPT.relayout(imageSize)
+
+	// Generate new UUIDs for filesystems and partitions
+	newPT.GenerateUUIDs(rng)
+
+	return newPT, nil
 }
 
 func (pt *PartitionTable) IsContainer() bool {
@@ -364,6 +387,35 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	return start
 }
 
+func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error {
+	rootPath := entityPath(pt, "/")
+	if rootPath == nil {
+		panic("no root mountpoint for PartitionTable")
+	}
+
+	var vc VolumeContainer
+	var entity Entity
+	var idx int
+	for idx, entity = range rootPath {
+		var ok bool
+		if vc, ok = entity.(VolumeContainer); ok {
+			break
+		}
+	}
+
+	if vc == nil {
+		panic("could not find root volume container")
+	}
+
+	newVol, err := vc.CreateVolume(mountpoint, 0)
+	if err != nil {
+		return fmt.Errorf("failed creating volume: " + err.Error())
+	}
+	vcPath := append([]Entity{newVol}, rootPath[idx:]...)
+	resizeEntityBranch(vcPath, size)
+	return nil
+}
+
 // entityPath stats at ent and searches for an Entity with a Mountpoint equal
 // to the target. Returns a slice of all the Entities leading to the Mountable
 // in reverse order. If no Entity has the target as a Mountpoint, returns nil.
@@ -425,4 +477,32 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 	}
 	// first path element is guaranteed to be Mountable
 	return path[0].(Mountable)
+}
+
+func resizeEntityBranch(path []Entity, size uint64) {
+	if len(path) == 0 {
+		return
+	}
+
+	element := path[0]
+
+	if c, ok := element.(Container); ok {
+		containerSize := uint64(0)
+		for idx := uint(0); idx < c.GetItemCount(); idx++ {
+			if s, ok := c.GetChild(idx).(Sizeable); ok {
+				containerSize += s.GetSize()
+			} else {
+				break
+			}
+		}
+		if containerSize > size {
+			size = containerSize
+		}
+	}
+	if sz, ok := element.(Sizeable); ok {
+		if !sz.EnsureSize(size) {
+			return
+		}
+	}
+	resizeEntityBranch(path[1:], size)
 }
