@@ -44,8 +44,10 @@ type OSBuildJobImpl struct {
 func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awscloud.AWS, error) {
 	if accessId != "" && secret != "" {
 		return awscloud.New(region, accessId, secret, token)
-	} else {
+	} else if impl.AWSCreds != "" {
 		return awscloud.NewFromFile(impl.AWSCreds, region)
+	} else {
+		return awscloud.NewDefault(region)
 	}
 }
 
