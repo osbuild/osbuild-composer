@@ -40,6 +40,21 @@ init:
   script:
     - schutzbot/update_github_status.sh start
 
+.build_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "false"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true"'
+      when: manual
+
+.upstream_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+
+.nightly_rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
@@ -56,7 +71,7 @@ RPM:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.build_rules, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
   after_script:
@@ -79,8 +94,7 @@ Build -tests RPM for RHEL:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.nightly_rules, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
   interruptible: true
@@ -95,7 +109,7 @@ Container:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.build_rules, rules]
   script:
     - sh "schutzbot/containerbuild.sh"
   parallel:
@@ -117,8 +131,7 @@ Prepare-rhel-internal:
   stage: prepare-rhel-internal
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/prepare-rhel-internal.sh
   artifacts:
@@ -140,9 +153,8 @@ Base:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -170,9 +182,8 @@ Manifests:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
@@ -186,9 +197,8 @@ Regression:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/regression.sh
@@ -216,8 +226,7 @@ Image Tests:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
@@ -235,7 +244,7 @@ Test Case Generation:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.upstream_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/generation.sh
@@ -249,9 +258,8 @@ OSTree:
   stage: test
   extends: .terraform/openstack
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -333,9 +341,8 @@ Integration:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -368,7 +375,7 @@ API:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.upstream_rules, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
   script:
@@ -387,9 +394,8 @@ libvirt:
   stage: test
   extends: .terraform/openstack
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/libvirt.sh
@@ -397,18 +403,16 @@ libvirt:
     matrix:
       - RUNNER:
           - rhos-01/centos-stream-8-x86_64
-      - RUNNER:
           - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-        INTERNAL_NETWORK: ["true"]
 
 RHEL 9 on 8:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.upstream_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
@@ -421,7 +425,7 @@ Upgrade:
   stage: test
   extends: .terraform/openstack
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
@@ -462,9 +466,8 @@ Installer:
   stage: test
   extends: .terraform/openstack
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8\.[0-9]-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
@@ -492,7 +495,7 @@ SonarQube:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.upstream_rules, rules]
   script:
     - schutzbot/sonarqube.sh
   variables:
