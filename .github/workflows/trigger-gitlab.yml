@@ -2,52 +2,53 @@
 
 name: Trigger GitLab CI
 
-# do not trigger gitlab CI on pushes to upstream
 on:
-  pull_request_target:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
 
 jobs:
-  pr-info:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Query author repository permissions
-        uses: octokit/request-action@v2.x
-        id: user_permission
-        with:
-          route: GET /repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # restrict running of tests to users with admin or write permission for the repository
-      # see https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#get-repository-permissions-for-a-user
-      # store output if user is allowed in allowed_user job output so it has to be checked in downstream job
-      - name: Check if user does have correct permissions
-        if: contains('admin write', fromJson(steps.user_permission.outputs.data).permission)
-        id: check_user_perm
-        run: |
-          echo "User '${{ github.event.sender.login }}' has permission '${{ fromJson(steps.user_permission.outputs.data).permission }}' allowed values: 'admin', 'write'"
-          echo "::set-output name=allowed_user::true"
-
-    outputs:
-      allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
-
   trigger-gitlab:
-    needs: pr-info
-    if: needs.pr-info.outputs.allowed_user == 'true' || ${{ github.event.sender.login }} == 'dependabot[bot]'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
       SKIP_CI: ${{ github.event.pull_request.draft == true || contains(github.event.pull_request.labels.*.name, 'WIP') }}
     steps:
+      - name: Report status
+        uses: haya14busa/action-workflow_run-status@v1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt install -y jq
+
       - name: Clone repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v2
         with:
-          # otherwise we are testing target branch instead of the PR branch (see pull_request_target trigger)
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+
+      - uses: octokit/request-action@v2.x
+        id: fetch_pulls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          route: GET /repos/${{ github.repository }}/pulls
+
+      - name: Checkout branch
+        run: |
+          PR_DATA=$(mktemp)
+          # use uuid as a file terminator to avoid conflicts with data content
+          cat > "$PR_DATA" <<'a21b3e7f-d5eb-44a3-8be0-c2412851d2e6'
+          ${{ steps.fetch_pulls.outputs.data }}
+          a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
+
+          PR=$(jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' "$PR_DATA" | jq -r .number)
+          if [ ! -z "$PR" ]; then
+            git checkout -b PR-$PR
+          else
+            git checkout ${{ github.event.workflow_run.head_branch }}
+          fi
 
       - name: Push to gitlab
         run: |
@@ -57,9 +58,5 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
           git remote add ci git@gitlab.com:osbuild/ci/osbuild-composer.git
-          if [ ${{ github.event.pull_request.number }} ]; then
-            git checkout -b PR-${{ github.event.pull_request.number }}
-          fi
-
           [[ "${SKIP_CI}" == true ]] && PUSH_OPTION="-o ci.skip" || PUSH_OPTION=""
-          git push -f ${PUSH_OPTION} ci 
+          git push -f ${PUSH_OPTION} ci
