@@ -57,9 +57,9 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 				defer sem.Release(1)
 				defer wg.Done()
 
-				err = g.ComputeImageDelete(context.Background(), id)
+				err = g.ComputeImageDelete(context.Background(), image.GetName())
 				if err != nil {
-					logrus.Errorf("Error deleting image %s created at %v", id, created)
+					logrus.Errorf("Error deleting image %s created at %v: %v", image.GetName(), created, err)
 				}
 			}(fmt.Sprintf("%d", image.Id))
 		}
