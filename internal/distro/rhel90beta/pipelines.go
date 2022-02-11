@@ -1047,7 +1047,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	}
 
 	inputName := "root-tree"
-	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, inputPipelineName, pt, loopback)
+	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, inputPipelineName, outputFilename, pt)
 	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 	p.AddStage(bootloaderInstStage(outputFilename, pt, arch, kernelVer, copyDevices, copyMounts, loopback))

@@ -77,22 +77,16 @@ func NewCopyStagePipelineTreeInputs(inputName, inputPipeline string) *CopyStageI
 // GenCopyFSTreeOptions creates the options, inputs, devices, and mounts properties
 // for an org.osbuild.copy stage for a given source tree using a partition
 // table description to define the mounts
-func GenCopyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable, device *Device) (
+func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.PartitionTable) (
 	*CopyStageOptions,
 	*Devices,
 	*Mounts,
 ) {
-	// assume loopback device for simplicity since it's the only one currently supported
-	// panic if the conversion fails
-	devOptions, ok := device.Options.(*LoopbackDeviceOptions)
-	if !ok {
-		panic("GenCopyStageOptions: failed to convert device options to loopback options")
-	}
 
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
-		stageDevices, name := getDevices(path, devOptions.Filename)
+		stageDevices, name := getDevices(path, filename)
 		mountpoint := mnt.GetMountpoint()
 
 		var mount *Mount
