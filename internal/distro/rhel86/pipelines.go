@@ -802,6 +802,11 @@ func ostreeDeployPipeline(
 	))
 	p.AddStage(osbuild.NewOSTreeConfigStage(ostreeConfigStageOptions(repoPath, true)))
 	p.AddStage(osbuild.NewMkdirStage(efiMkdirStageOptions()))
+	kernelOpts := []string{
+		"console=tty0",
+		"console=ttyS0",
+	}
+	kernelOpts = append(kernelOpts, osbuild.GenImageKernelOptions(pt)...)
 	p.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: osname,
@@ -811,10 +816,7 @@ func ostreeDeployPipeline(
 			Rootfs: osbuild.Rootfs{
 				Label: "root",
 			},
-			KernelOpts: []string{
-				"console=tty0",
-				"console=ttyS0",
-			},
+			KernelOpts: kernelOpts,
 		},
 	))
 
