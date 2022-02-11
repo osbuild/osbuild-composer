@@ -277,7 +277,7 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 //
 // Uses:
 //	- Compute Engine API
-func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
+func (g *GCP) ComputeImageDelete(ctx context.Context, name string) error {
 	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return fmt.Errorf("failed to get Compute Engine Images client: %v", err)
@@ -286,7 +286,7 @@ func (g *GCP) ComputeImageDelete(ctx context.Context, resourceId string) error {
 
 	req := &computepb.DeleteImageRequest{
 		Project: g.GetProjectID(),
-		Image:   resourceId,
+		Image:   name,
 	}
 	_, err = imagesClient.Delete(ctx, req)
 
