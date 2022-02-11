@@ -72,7 +72,12 @@ func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
 func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
-			Include: []string{"rpm-ostree"},
+			Include: []string{
+				"clevis",
+				"clevis-luks",
+				"cryptsetup",
+				"rpm-ostree",
+			},
 			Exclude: nil,
 		})
 }

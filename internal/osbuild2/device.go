@@ -54,6 +54,14 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 
 			stages = append(stages, stage)
 
+			if ent.Clevis != nil {
+				stages = append(stages, NewClevisLuksBindStage(&ClevisLuksBindStageOptions{
+					Passphrase: ent.Passphrase,
+					Pin:        ent.Clevis.Pin,
+					Policy:     ent.Clevis.Policy,
+				}, stageDevices))
+			}
+
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
 			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
@@ -93,6 +101,21 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 	genStages := func(e disk.Entity, path []disk.Entity) error {
 
 		switch ent := e.(type) {
+		case *disk.LUKSContainer:
+			// do not include us when getting the devices
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
+
+			lastDevice := stageDevices[lastName]
+			delete(stageDevices, lastName)
+			stageDevices["device"] = lastDevice
+
+			if ent.Clevis != nil {
+				if ent.Clevis.RemovePassphrase {
+					stages = append(stages, NewLUKS2RemoveKeyStage(&LUKS2RemoveKeyStageOptions{
+						Passphrase: ent.Passphrase,
+					}, stageDevices))
+				}
+			}
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
 			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)

@@ -12,6 +12,12 @@ type Argon2id struct {
 	Memory      uint
 	Parallelism uint
 }
+
+type ClevisBind struct {
+	Pin              string
+	Policy           string
+	RemovePassphrase bool
+}
 type LUKSContainer struct {
 	Passphrase string
 	UUID       string
@@ -22,6 +28,8 @@ type LUKSContainer struct {
 
 	// password-based key derivation function
 	PBKDF Argon2id
+
+	Clevis *ClevisBind
 
 	Payload Entity
 }
@@ -48,8 +56,7 @@ func (lc *LUKSContainer) Clone() Entity {
 	if lc == nil {
 		return nil
 	}
-
-	return &LUKSContainer{
+	clc := &LUKSContainer{
 		Passphrase: lc.Passphrase,
 		UUID:       lc.UUID,
 		Cipher:     lc.Cipher,
@@ -63,6 +70,14 @@ func (lc *LUKSContainer) Clone() Entity {
 		},
 		Payload: lc.Payload.Clone(),
 	}
+	if lc.Clevis != nil {
+		clc.Clevis = &ClevisBind{
+			Pin:              lc.Clevis.Pin,
+			Policy:           lc.Clevis.Policy,
+			RemovePassphrase: lc.Clevis.RemovePassphrase,
+		}
+	}
+	return clc
 }
 
 func (lc *LUKSContainer) GenUUID(rng *rand.Rand) {
