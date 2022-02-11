@@ -33,7 +33,7 @@ func (o LVM2MetadataStageOptions) validate() error {
 	return nil
 }
 
-func NewLVM2MetadataStage(options *LVM2MetadataStageOptions, device *Device) *Stage {
+func NewLVM2MetadataStage(options *LVM2MetadataStageOptions, devices Devices) *Stage {
 	if err := options.validate(); err != nil {
 		panic(err)
 	}
@@ -41,6 +41,6 @@ func NewLVM2MetadataStage(options *LVM2MetadataStageOptions, device *Device) *St
 	return &Stage{
 		Type:    "org.osbuild.lvm2.metadata",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: devices,
 	}
 }
