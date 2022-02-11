@@ -85,6 +85,37 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 	return stages
 }
 
+func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
+	stages := make([]*Stage, 0)
+
+	genStages := func(e disk.Entity, path []disk.Entity) error {
+
+		switch ent := e.(type) {
+		case *disk.LVMVolumeGroup:
+			// do not include us when getting the devices
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+
+			// "org.osbuild.lvm2.metadata" expects a "device" to rename the VG,
+			// thus rename the last device to "device"
+			lastDevice := stageDevices[lastName]
+			delete(stageDevices, lastName)
+			stageDevices["device"] = lastDevice
+
+			stage := NewLVM2MetadataStage(
+				&LVM2MetadataStageOptions{
+					VGName: ent.Name,
+				}, stageDevices)
+
+			stages = append(stages, stage)
+		}
+
+		return nil
+	}
+
+	_ = pt.ForEachEntity(genStages)
+	return stages
+}
+
 func deviceName(p disk.Entity) string {
 	if p == nil {
 		panic("device is nil; this is a programming error")
