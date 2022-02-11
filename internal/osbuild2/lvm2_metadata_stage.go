@@ -27,8 +27,10 @@ func (o LVM2MetadataStageOptions) validate() error {
 		return fmt.Errorf("volume group name %q doesn't conform to schema (%s)", o.VGName, nameRegex.String())
 	}
 
-	if _, err := strconv.ParseUint(o.CreationTime, 10, 64); err != nil {
-		return fmt.Errorf("invalid volume creation time: %s", o.CreationTime)
+	if o.CreationTime != "" {
+		if _, err := strconv.ParseUint(o.CreationTime, 10, 64); err != nil {
+			return fmt.Errorf("invalid volume creation time: %s", o.CreationTime)
+		}
 	}
 	return nil
 }
