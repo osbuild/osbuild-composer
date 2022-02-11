@@ -79,6 +79,9 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{
+				"clevis",
+				"clevis-luks",
+				"cryptsetup",
 				"rpm-ostree",
 			},
 		})

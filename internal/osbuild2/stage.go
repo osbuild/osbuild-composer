@@ -160,6 +160,10 @@ func (stage *Stage) UnmarshalJSON(data []byte) error {
 		options = new(YumReposStageOptions)
 	case "org.osbuild.luks2.format":
 		options = new(LUKS2CreateStageOptions)
+	case "org.osbuild.clevis.luks-bind":
+		options = new(ClevisLuksBindStageOptions)
+	case "org.osbuild.luks2.remove-key":
+		options = new(LUKS2RemoveKeyStageOptions)
 	default:
 		return fmt.Errorf("unexpected stage type: %s", rawStage.Type)
 	}
