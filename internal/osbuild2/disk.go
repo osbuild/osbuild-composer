@@ -63,3 +63,19 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string) []*Stage {
 func GenImageFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 	return GenDeviceFinishStages(pt, filename)
 }
+
+func GenImageKernelOptions(pt *disk.PartitionTable) []string {
+	cmdline := make([]string, 0)
+
+	genOptions := func(e disk.Entity, path []disk.Entity) error {
+		switch ent := e.(type) {
+		case *disk.LUKSContainer:
+			karg := "luks.uuid=" + ent.UUID
+			cmdline = append(cmdline, karg)
+		}
+		return nil
+	}
+
+	_ = pt.ForEachEntity(genOptions)
+	return cmdline
+}
