@@ -71,3 +71,46 @@ func TestGenDeviceCreationStages(t *testing.T) {
 	assert.Equal(parent.Type, "org.osbuild.loopback")
 
 }
+
+func TestGenDeviceFinishStages(t *testing.T) {
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+
+	luks_lvm := testPartitionTables["luks+lvm"]
+
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, rng)
+	assert.NoError(err)
+
+	stages := GenDeviceFinishStages(pt, "image.raw")
+
+	// we should have one stage
+	assert.Equal(1, len(stages))
+
+	// it should be a "org.osbuild.lvm2.metadata"
+	lvm := stages[0]
+	assert.Equal("org.osbuild.lvm2.metadata", lvm.Type)
+
+	// it should have two devices
+	assert.Equal(2, len(lvm.Devices))
+
+	// this is the target one, which should be the luks one
+	device, ok := lvm.Devices["device"]
+	assert.True(ok, "Need device called `device`")
+	assert.Equal("org.osbuild.luks2", device.Type)
+	assert.NotEmpty(device.Parent, "Need a parent device for LUKS on loopback")
+
+	luksOptions, ok := device.Options.(*LUKS2DeviceOptions)
+	assert.True(ok, "Need LUKS2DeviceOptions for luks device")
+	assert.Equal("osbuild", luksOptions.Passphrase)
+
+	parent, ok := lvm.Devices[device.Parent]
+	assert.True(ok, "Need device called `device`")
+	assert.Equal("org.osbuild.loopback", parent.Type)
+
+	opts, ok := lvm.Options.(*LVM2MetadataStageOptions)
+	assert.True(ok, "Need LVM2MetadataStageOptions for org.osbuild.lvm2.metadata")
+	assert.Equal("root", opts.VGName)
+}
