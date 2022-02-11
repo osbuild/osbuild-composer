@@ -8,7 +8,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
-	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -325,28 +324,6 @@ func xorrisofsStageOptions(filename string, arch string, isolinux bool) *osbuild
 	}
 
 	return options
-}
-
-// sfdiskStageOptions creates the options and devices properties for an
-// org.osbuild.sfdisk stage based on a partition table description
-func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
-	partitions := make([]osbuild.Partition, len(pt.Partitions))
-	for idx, p := range pt.Partitions {
-		partitions[idx] = osbuild.Partition{
-			Bootable: p.Bootable,
-			Start:    pt.BytesToSectors(p.Start),
-			Size:     pt.BytesToSectors(p.Size),
-			Type:     p.Type,
-			UUID:     p.UUID,
-		}
-	}
-	stageOptions := &osbuild.SfdiskStageOptions{
-		Label:      pt.Type,
-		UUID:       pt.UUID,
-		Partitions: partitions,
-	}
-
-	return stageOptions
 }
 
 func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
