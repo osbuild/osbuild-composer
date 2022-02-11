@@ -1222,12 +1222,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	p.Name = "image"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{Filename: outputFilename, Size: fmt.Sprintf("%d", pt.Size)}))
-	sfOptions := sfdiskStageOptions(pt)
-	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: outputFilename})
-	p.AddStage(osbuild.NewSfdiskStage(sfOptions, loopback))
-
-	for _, stage := range osbuild.GenMkfsStages(pt, loopback) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, outputFilename) {
 		p.AddStage(stage)
 	}
 
@@ -1235,6 +1230,12 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, inputPipelineName, outputFilename, pt)
 	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+
+	for _, stage := range osbuild.GenImageFinishStages(pt, outputFilename) {
+		p.AddStage(stage)
+	}
+
+	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: outputFilename})
 	p.AddStage(bootloaderInstStage(outputFilename, pt, arch, kernelVer, copyDevices, copyMounts, loopback))
 	return p
 }
