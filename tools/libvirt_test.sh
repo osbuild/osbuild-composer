@@ -300,6 +300,13 @@ for LOOP_COUNTER in $(seq 0 ${MAX_LOOPS}); do
     echo "Machine is not ready yet, retrying connection."
     sleep 10
 done
+# additional tests for regressions
+SSH_OPTIONS=(-o StrictHostKeyChecking=no -o ConnectTimeout=5)
+# simple check if manual pages are installed, rhbz#2004401
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"$INSTANCE_ADDRESS" 'man man > /dev/null'
+# check for grubenv presence and if  grubby command exits with 0, rhbz#2003038
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"$INSTANCE_ADDRESS" 'sudo ls /boot/grub2/grubenv > /dev/null'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"$INSTANCE_ADDRESS" 'sudo grubby --set-default-index=0 > /dev/null'
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
