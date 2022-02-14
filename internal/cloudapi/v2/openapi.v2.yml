@@ -472,6 +472,18 @@ components:
           $ref: '#/components/schemas/ImageStatusValue'
         upload_status:
           $ref: '#/components/schemas/UploadStatus'
+        error:
+          $ref: '#/components/schemas/ComposeStatusError'
+    ComposeStatusError:
+      required:
+       - id
+       - reason
+      properties:
+        id:
+          type: integer
+        reason:
+          type: string
+        details: {}
     ImageStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']

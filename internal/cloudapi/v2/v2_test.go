@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -600,7 +601,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 	}`, jobId, jobId))
 
 	res, err := json.Marshal(&worker.OSBuildJobResult{
-		Success: true,
+		Success:       true,
+		OSBuildOutput: &osbuild2.Result{},
 	})
 	require.NoError(t, err)
 
@@ -672,7 +674,14 @@ func TestComposeStatusFailure(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"},
+		"image_status": {
+			"error": {
+				"id": 10,
+				"details": null,
+				"reason": "osbuild build failed"
+			},
+			"status": "failure"
+		},
 		"status": "failure"
 	}`, jobId, jobId))
 }
@@ -727,7 +736,14 @@ func TestComposeLegacyError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"},
+		"image_status": {
+			"error": {
+				"id": 10,
+				"details": null,
+				"reason": "osbuild build failed"
+			},
+			"status": "failure"
+		},
 		"status": "failure"
 	}`, jobId, jobId))
 }
@@ -785,7 +801,14 @@ func TestComposeJobError(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
 		"id": "%v",
-		"image_status": {"status": "failure"},
+		"image_status": {
+			"error": {
+				"id": 10,
+				"details": null,
+				"reason": "Error building image"
+			},
+			"status": "failure"
+		},
 		"status": "failure"
 	}`, jobId, jobId))
 }

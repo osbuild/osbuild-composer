@@ -823,6 +823,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			Status: composeStatusFromOSBuildJobStatus(status, &result),
 			ImageStatus: ImageStatus{
 				Status:       imageStatusFromOSBuildJobStatus(status, &result),
+				Error:        composeStatusErrorFromJobError(result.JobError),
 				UploadStatus: us,
 			},
 		})
@@ -851,6 +852,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			buildJobResults = append(buildJobResults, buildJobResult)
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{
 				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildJobResult),
+				Error:  composeStatusErrorFromJobError(result.JobError),
 			})
 		}
 		response := ComposeStatus{
@@ -871,6 +873,17 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusOK, response)
 	} else {
 		return HTTPError(ErrorInvalidJobType)
+	}
+}
+
+func composeStatusErrorFromJobError(jobError *clienterrors.Error) *ComposeStatusError {
+	if jobError == nil {
+		return nil
+	}
+	return &ComposeStatusError{
+		Id:      int(jobError.ID),
+		Reason:  jobError.Reason,
+		Details: &jobError.Details,
 	}
 }
 
