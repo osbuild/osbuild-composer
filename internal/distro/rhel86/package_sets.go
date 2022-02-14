@@ -450,24 +450,10 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"bash-completion", "tmux", "ima-evm-utils", "audit", "podman",
 			"container-selinux", "skopeo", "criu", "slirp4netns",
 			"fuse-overlayfs", "clevis", "clevis-dracut", "clevis-luks",
-			"greenboot",
+			"greenboot", "greenboot-default-health-checks",
 		},
 		Exclude: []string{"rng-tools"},
 	}
-
-	var greenbootExtras rpmmd.PackageSet
-	if t.arch.distro.isRHEL() {
-		greenbootExtras.Include = []string{"greenboot-default-health-checks"}
-	} else {
-		greenbootExtras.Include = []string{
-			"greenboot-grub2",
-			"greenboot-reboot",
-			"greenboot-rpm-ostree-grub2",
-			"greenboot-status",
-		}
-	}
-
-	ps = ps.Append(greenbootExtras)
 
 	ps = ps.Append(bootPackageSet(t))
 
