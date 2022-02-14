@@ -147,7 +147,7 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 		return nil, nil, fmt.Errorf("expected osbuild:*, found %q job instead", jobType)
 	}
 
-	if result.JobError == nil {
+	if result.JobError == nil && !status.Finished.IsZero() {
 		if result.OSBuildOutput == nil {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
 		} else if len(result.OSBuildOutput.Error) > 0 {
@@ -175,7 +175,7 @@ func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult
 		return nil, nil, fmt.Errorf("expected \"osbuild-koji:*\", found %q job instead", jobType)
 	}
 
-	if result.JobError == nil {
+	if result.JobError == nil && !status.Finished.IsZero() {
 		if result.OSBuildOutput == nil {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
 		} else if len(result.OSBuildOutput.Error) > 0 {
