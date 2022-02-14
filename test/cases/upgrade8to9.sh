@@ -121,6 +121,8 @@ sudo pkill -P "$CONSOLE_PID"
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-composer/upgrade8to9/*.sh root@"$INSTANCE_ADDRESS":
 set +e
 sudo ssh "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'source /root/upgrade_prepare.sh'
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-preupgrade.log .
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-report.txt .
 set -e
 
 # watch and log the console during upgrade
