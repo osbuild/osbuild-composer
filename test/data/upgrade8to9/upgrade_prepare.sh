@@ -32,6 +32,9 @@ enabled=0
 gpgcheck=0
 EOF
 
+# AllowZoneDrifting is disabled in RHEL-9, see rhbz#2054271 for more details
+sed -i "s/^AllowZoneDrifting=.*/AllowZoneDrifting=no/" /etc/firewalld/firewalld.conf
+
 # check upgrade
 leapp preupgrade --debug --no-rhsm
 
