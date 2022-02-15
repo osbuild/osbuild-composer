@@ -5968,6 +5968,31 @@
       "selinux-autorelabel-mark.service",
       "sshd.service"
     ],
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "Include /etc/ssh/sshd_config.d/*.conf",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      },
+      "/etc/ssh/sshd_config.d": {
+        "50-redhat.conf": [
+          "Include /etc/crypto-policies/back-ends/opensshserver.config",
+          "SyslogFacility AUTHPRIV",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS"
+        ]
+      }
+    },
     "sysconfig": {
       "kernel": {
         "DEFAULTKERNEL": "kernel",

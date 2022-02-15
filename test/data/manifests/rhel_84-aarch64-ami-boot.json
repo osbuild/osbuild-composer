@@ -9241,6 +9241,17 @@
       }
     },
     "default-target": "multi-user.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -9996,6 +10007,49 @@
       "udisks2.service",
       "unbound-anchor.timer"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "05-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication yes",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",

@@ -9098,6 +9098,17 @@
       }
     },
     "default-target": "graphical.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -9888,6 +9899,42 @@
       "tuned.service",
       "udisks2.service"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "50-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "Include /etc/ssh/sshd_config.d/*.conf",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      },
+      "/etc/ssh/sshd_config.d": {
+        "50-redhat.conf": [
+          "Include /etc/crypto-policies/back-ends/opensshserver.config",
+          "SyslogFacility AUTHPRIV",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",

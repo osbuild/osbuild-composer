@@ -12555,6 +12555,15 @@
     },
     "default-target": "multi-user.target",
     "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      },
       "vars": {
         "releasever": "8.6"
       }
@@ -13534,6 +13543,49 @@
       "unbound-anchor.timer",
       "uuidd.socket"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "05-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication no",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -13782,6 +13834,190 @@
     "tuned": {
       "active_profile": "sap-hana",
       "profile_mode": "manual"
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "redhat-rhui-client-config-sap-bundle.repo": {
+          "rhui-client-config-server-8-sap-bundle": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/protected/rhui-client-config/rhel/server/8/$basearch/sap-bundle",
+            "name": "Red Hat Update Infrastructure 3 Client Configuration for SAP Bundle",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/rhui-client-config-server-8-sap-bundle.crt",
+            "sslclientkey": "/etc/pki/rhui/rhui-client-config-server-8-sap-bundle.key",
+            "sslverify": "1"
+          }
+        },
+        "redhat-rhui-sap-bundle-e4s.repo": {
+          "rhel-8-for-x86_64-appstream-e4s-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/appstream/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - AppStream - Update Services for SAP Solutions from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-appstream-e4s-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/appstream/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - AppStream - Update Services for SAP Solutions from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-appstream-e4s-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/appstream/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - AppStream - Update Services for SAP Solutions from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-baseos-e4s-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/baseos/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - BaseOS - Update Services for SAP Solutions from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-baseos-e4s-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/baseos/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - BaseOS - Update Services for SAP Solutions from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-baseos-e4s-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/baseos/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - BaseOS - Update Services for SAP Solutions from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-highavailability-e4s-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/highavailability/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability - Update Services for SAP Solutions from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-highavailability-e4s-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/highavailability/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability - Update Services for SAP Solutions from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-highavailability-e4s-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/highavailability/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability - Update Services for SAP Solutions from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-netweaver-e4s-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP NetWeaver - Update Services for SAP Solutions from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-netweaver-e4s-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP NetWeaver - Update Services for SAP Solutions from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-netweaver-e4s-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP NetWeaver - Update Services for SAP Solutions from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-solutions-e4s-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap-solutions/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP Solutions - Update Services for SAP Solutions from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-solutions-e4s-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap-solutions/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP Solutions - Update Services for SAP Solutions from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          },
+          "rhel-8-for-x86_64-sap-solutions-e4s-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/e4s/rhel8/rhui/$releasever/$basearch/sap-solutions/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - SAP Solutions - Update Services for SAP Solutions from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-sap-bundle-e4s.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-sap-bundle-e4s.key",
+            "sslverify": "1"
+          }
+        }
+      }
     }
   }
 }

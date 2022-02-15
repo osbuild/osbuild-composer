@@ -14462,6 +14462,15 @@
     },
     "default-target": "multi-user.target",
     "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      },
       "vars": {
         "contentdir": "centos",
         "infra": "stock",
@@ -15278,6 +15287,49 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "05-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication yes",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -15491,6 +15543,89 @@
           "D! /tmp/.Test-unix 1777 root root 10d",
           "r! /tmp/.X[0-9]*-lock"
         ]
+      }
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "CentOS-Stream-AppStream.repo": {
+          "appstream": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=AppStream&infra=$infra",
+            "name": "CentOS Stream $releasever - AppStream"
+          }
+        },
+        "CentOS-Stream-BaseOS.repo": {
+          "baseos": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=BaseOS&infra=$infra",
+            "name": "CentOS Stream $releasever - BaseOS"
+          }
+        },
+        "CentOS-Stream-Debuginfo.repo": {
+          "debuginfo": {
+            "baseurl": "http://debuginfo.centos.org/$stream/$basearch/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Debuginfo"
+          }
+        },
+        "CentOS-Stream-Extras.repo": {
+          "extras": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=extras&infra=$infra",
+            "name": "CentOS Stream $releasever - Extras"
+          }
+        },
+        "CentOS-Stream-HighAvailability.repo": {
+          "ha": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=HighAvailability&infra=$infra",
+            "name": "CentOS Stream $releasever - HighAvailability"
+          }
+        },
+        "CentOS-Stream-Media.repo": {
+          "media-appstream": {
+            "baseurl": "file:///media/CentOS/AppStream\nfile:///media/cdrom/AppStream\nfile:///media/cdrecorder/AppStream",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Media - AppStream"
+          },
+          "media-baseos": {
+            "baseurl": "file:///media/CentOS/BaseOS\nfile:///media/cdrom/BaseOS\nfile:///media/cdrecorder/BaseOS",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Media - BaseOS"
+          }
+        },
+        "CentOS-Stream-PowerTools.repo": {
+          "powertools": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=PowerTools&infra=$infra",
+            "name": "CentOS Stream $releasever - PowerTools"
+          }
+        },
+        "CentOS-Stream-RealTime.repo": {
+          "rt": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=RT&infra=$infra",
+            "name": "CentOS Stream $releasever - RealTime"
+          }
+        }
       }
     }
   }

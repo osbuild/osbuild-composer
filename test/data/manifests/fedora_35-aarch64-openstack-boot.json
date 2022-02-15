@@ -10083,6 +10083,17 @@
       }
     },
     "default-target": "graphical.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "False",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "True"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -10797,6 +10808,50 @@
       "systemd-userdbd.socket",
       "unbound-anchor.timer"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "50-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "Include /etc/ssh/sshd_config.d/*.conf",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      },
+      "/etc/ssh/sshd_config.d": {
+        "50-redhat.conf": [
+          "Include /etc/crypto-policies/back-ends/opensshserver.config",
+          "SyslogFacility AUTHPRIV",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -11036,6 +11091,250 @@
           "D! /tmp/.Test-unix 1777 root root 10d",
           "r! /tmp/.X[0-9]*-lock"
         ]
+      }
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "fedora-cisco-openh264.repo": {
+          "fedora-cisco-openh264": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "14d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-$releasever&arch=$basearch",
+            "name": "Fedora $releasever openh264 (From Cisco) - $basearch",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "True",
+            "type": "rpm"
+          },
+          "fedora-cisco-openh264-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "14d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-cisco-openh264-debug-$releasever&arch=$basearch",
+            "name": "Fedora $releasever openh264 (From Cisco) - $basearch - Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "True",
+            "type": "rpm"
+          }
+        },
+        "fedora-modular.repo": {
+          "fedora-modular": {
+            "countme": "1",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "fedora-modular-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-debug-$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch - Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "fedora-modular-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-source-$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        },
+        "fedora-updates-modular.repo": {
+          "updates-modular": {
+            "countme": "1",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch - Updates",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-modular-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-debug-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch - Updates - Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-modular-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-source-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - Updates Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        },
+        "fedora-updates-testing-modular.repo": {
+          "updates-testing-modular": {
+            "countme": "1",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch - Test Updates",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-testing-modular-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-debug-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - $basearch - Test Updates Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-testing-modular-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-source-f$releasever&arch=$basearch",
+            "name": "Fedora Modular $releasever - Test Updates Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        },
+        "fedora-updates-testing.repo": {
+          "updates-testing": {
+            "countme": "1",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch - Test Updates",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-testing-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-debug-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch - Test Updates Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-testing-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-testing-source-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - Test Updates Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        },
+        "fedora-updates.repo": {
+          "updates": {
+            "countme": "1",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch - Updates",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-debug-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch - Updates - Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "updates-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "6h",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-source-f$releasever&arch=$basearch",
+            "name": "Fedora $releasever - Updates Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        },
+        "fedora.repo": {
+          "fedora": {
+            "countme": "1",
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "fedora-debuginfo": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-debug-$releasever&arch=$basearch",
+            "name": "Fedora $releasever - $basearch - Debug",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          },
+          "fedora-source": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch",
+            "metadata_expire": "7d",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-source-$releasever&arch=$basearch",
+            "name": "Fedora $releasever - Source",
+            "repo_gpgcheck": "0",
+            "skip_if_unavailable": "False",
+            "type": "rpm"
+          }
+        }
       }
     }
   }
