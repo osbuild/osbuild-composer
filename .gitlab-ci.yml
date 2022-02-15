@@ -370,6 +370,21 @@ API:
           - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
+download_failure:
+  stage: test
+  extends: .terraform/openstack
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/download_error.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/centos-stream-8-x86_64
+
 libvirt:
   stage: test
   extends: .terraform/openstack

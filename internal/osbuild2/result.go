@@ -15,6 +15,7 @@ type Result struct {
 	Error    json.RawMessage             `json:"error,omitempty"`
 	Log      map[string]PipelineResult   `json:"log"`
 	Metadata map[string]PipelineMetadata `json:"metadata"`
+	Sources  []OsbuildSource             `json:"sources,omitempty"`
 }
 
 type PipelineResult []StageResult
@@ -38,6 +39,12 @@ type StageMetadata interface {
 type RawStageMetadata json.RawMessage
 
 func (RawStageMetadata) isStageMetadata() {}
+
+type OsbuildSource struct {
+	Source  string `json:"source"`
+	Success bool   `json:"success"`
+	Error   string `json:"error_message,omitempty"`
+}
 
 // UnmarshalJSON decodes json-encoded StageResult.
 //

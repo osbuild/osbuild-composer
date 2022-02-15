@@ -155,6 +155,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	if osbuildJobResult.OSBuildOutput.Sources != nil {
+		for _, source := range osbuildJobResult.OSBuildOutput.Sources {
+			if !source.Success {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, source.Error)
+				return nil
+			}
+		}
+	}
+
 	// Include pipeline stages output inside the worker's logs.
 	// Order pipelines based on PipelineNames from job
 	for _, pipelineName := range osbuildJobResult.PipelineNames.All() {
