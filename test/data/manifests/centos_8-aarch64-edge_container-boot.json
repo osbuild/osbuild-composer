@@ -627,6 +627,8 @@
                   "sha256:e3206aed9f4e96fafa95e1876b3170861e249db522037c1622ecfb3d7d1fe24e",
                   "sha256:dadfae281c20476ad63d90e209a0bc65d062f9bb671b495b2bee6d40e9bd447e",
                   "sha256:72e7ee95086d3cfa9eb8917903e674eb87eb5c599ff2b3362f855d34789a8213",
+                  "sha256:4d1ab7041106feb61243423ec78d3e8178ff59b622168d2ce35b9e6366bc1fab",
+                  "sha256:84677a6741eed60b340a545ced78f1fdbc42d628d24769618e332565f7d4e1e3",
                   "sha256:fdc0e00e0c400921721df05eeec78114b67b017a6a12203cffc7dd1182740920",
                   "sha256:aa8f0dae2070f802a045bcda2cbb47fc11de15e69cb2ead6d802d289cb6a5e98",
                   "sha256:3dbe0db373a576c0acc579c0062e67ae4eb86ac62bb7eaebb68acc5bcbd4e026",
@@ -871,7 +873,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1698,6 +1701,9 @@
           "sha256:4c186d4cf2d434dea59de23bc540fba1260715749c78d9960f0650fe8ce71ecb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/NetworkManager-wwan-1.36.0-0.7.el8.aarch64.rpm"
           },
+          "sha256:4d1ab7041106feb61243423ec78d3e8178ff59b622168d2ce35b9e6366bc1fab": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/fdo-client-0.3.0-4.el8.aarch64.rpm"
+          },
           "sha256:4db3ba5adf510e33ff0b1230607bac778760168b644b8e33a3f38e88ca9e8d64": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/crda-3.18_2020.04.29-1.el8.noarch.rpm"
           },
@@ -2003,6 +2009,9 @@
           },
           "sha256:8422fbc84108abc9a89fe98cef9cd18ad1788b4dc6a9ec0bba1836b772fcaeda": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libnfnetlink-1.0.1-13.el8.aarch64.rpm"
+          },
+          "sha256:84677a6741eed60b340a545ced78f1fdbc42d628d24769618e332565f7d4e1e3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-4.el8.aarch64.rpm"
           },
           "sha256:84d0f5ae6a2bb4855d800c8e26be44bd06ac5f3c286a7877310bddabec12477a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libdb-utils-5.3.28-42.el8_4.aarch64.rpm"
@@ -12216,6 +12225,26 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/dnsmasq-2.79-20.el8.aarch64.rpm",
         "checksum": "sha256:72e7ee95086d3cfa9eb8917903e674eb87eb5c599ff2b3362f855d34789a8213",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "4.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/fdo-client-0.3.0-4.el8.aarch64.rpm",
+        "checksum": "sha256:4d1ab7041106feb61243423ec78d3e8178ff59b622168d2ce35b9e6366bc1fab",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "4.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-4.el8.aarch64.rpm",
+        "checksum": "sha256:84677a6741eed60b340a545ced78f1fdbc42d628d24769618e332565f7d4e1e3",
         "check_gpg": true
       },
       {

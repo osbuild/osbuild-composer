@@ -650,6 +650,8 @@
                   "sha256:e3206aed9f4e96fafa95e1876b3170861e249db522037c1622ecfb3d7d1fe24e",
                   "sha256:eab9f7ea12838e068ee0d9a46186abed0f2764350ac56a2e6b71072c0bc1559b",
                   "sha256:ce41150e1d6339797f0663edbad0f0ad6a3b3c2315b7551ec7e25734de825350",
+                  "sha256:4093f283940e1821413c84b5f086abfed642ad322e6c580cc3dbed206e935c32",
+                  "sha256:3ca4f9c50e1d269728ca3410f8106f17966410838736df1944c363cc22b13754",
                   "sha256:9485aab0a68c1a09603fdf2f8e3024b6d741577646123ffc5415a03775613da6",
                   "sha256:bd591ce02aca250a87f879e3f220632589218f384ac968e46c558cd7468fddbb",
                   "sha256:829ca3e156a507b78152c9912ff3dfa233bf9dcbc6432b9e1920620b5f13706f",
@@ -894,7 +896,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1628,6 +1631,9 @@
           "sha256:3c3f955518bf3e960d2bfddb32408d0fd90b3f7d8e52fdaecc005526174ccc9c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/clevis-luks-15-8.el8.x86_64.rpm"
           },
+          "sha256:3ca4f9c50e1d269728ca3410f8106f17966410838736df1944c363cc22b13754": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-4.el8.x86_64.rpm"
+          },
           "sha256:3d22f213a58b2a2d1424e2a91baa9a6d894e1ae37348b04a6ab2e2aa989961d2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/protobuf-3.5.0-13.el8.x86_64.rpm"
           },
@@ -1654,6 +1660,9 @@
           },
           "sha256:40676b73567e195228ba2a8bb53692f88f88d43612564613fb168383eee57f6a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/dosfstools-4.1-6.el8.x86_64.rpm"
+          },
+          "sha256:4093f283940e1821413c84b5f086abfed642ad322e6c580cc3dbed206e935c32": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/fdo-client-0.3.0-4.el8.x86_64.rpm"
           },
           "sha256:41716536ea16798238ac89fbc3041b3f9dc80f9a64ea4b19d6e67ad2c909269a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/ncurses-base-6.1-9.20180224.el8.noarch.rpm"
@@ -12523,6 +12532,26 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/dnsmasq-2.79-20.el8.x86_64.rpm",
         "checksum": "sha256:ce41150e1d6339797f0663edbad0f0ad6a3b3c2315b7551ec7e25734de825350",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/fdo-client-0.3.0-4.el8.x86_64.rpm",
+        "checksum": "sha256:4093f283940e1821413c84b5f086abfed642ad322e6c580cc3dbed206e935c32",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-4.el8.x86_64.rpm",
+        "checksum": "sha256:3ca4f9c50e1d269728ca3410f8106f17966410838736df1944c363cc22b13754",
         "check_gpg": true
       },
       {

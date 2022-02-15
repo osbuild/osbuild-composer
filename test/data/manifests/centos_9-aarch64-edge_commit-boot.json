@@ -299,6 +299,8 @@
                   "sha256:7454ac5ae41b0d7a8126348cf5bb1a244291f47682edc425a44d18b884830c03",
                   "sha256:854106ba247632de385a644142d8951e238242745ccf70d71d258125fa000c27",
                   "sha256:45f5c96026fee3e9b9fa610cfe1989afacc211526b5ebf98c0c59b8b6f3b4655",
+                  "sha256:ce5c13bfc0c280720c5bf55eae777de51a3406bc4b91008e13d9b2696a62da36",
+                  "sha256:f87b15bcfcd262af233c47a011e0d559adc54400e560471cb8a07543206f0f9d",
                   "sha256:8d49431d9df2dbe2851107e261075cefb0c2570cda7453eea4890ad089d9729e",
                   "sha256:72f769b160a5e8183922c4cb513d8a19bd0930c8cd32521c28b8dc160a59fb70",
                   "sha256:7fb660daba6d501ded9d83094573ae783ec3ec29b7e065351fca815035f48711",
@@ -780,7 +782,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1839,6 +1842,9 @@
           "sha256:ce454fa8f9a2d015face9e9ae64f6730f2ba104d0556c91b93fca2006f132bf9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-dbus-1.2.18-2.el9.aarch64.rpm"
           },
+          "sha256:ce5c13bfc0c280720c5bf55eae777de51a3406bc4b91008e13d9b2696a62da36": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/fdo-client-0.3.0-1.el9.aarch64.rpm"
+          },
           "sha256:ce5d1d183414d6e4e359a90049fed520332d4d2d555d13383459e8d7916ff757": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/rpm-4.16.1.3-10.el9.aarch64.rpm"
           },
@@ -2027,6 +2033,9 @@
           },
           "sha256:f807e7a97ab99a16069484f3c1b502a0501344c2f7e178292641867a9f5911b3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/rpm-sign-libs-4.16.1.3-10.el9.aarch64.rpm"
+          },
+          "sha256:f87b15bcfcd262af233c47a011e0d559adc54400e560471cb8a07543206f0f9d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.aarch64.rpm"
           },
           "sha256:f91971dc2093b7346eb05746e918c3f86c6b2191d8dbb21d27c284a2b0501173": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/pkgconf-m4-1.7.3-9.el9.noarch.rpm"
@@ -5423,6 +5432,26 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/dnsmasq-2.85-2.el9.aarch64.rpm",
         "checksum": "sha256:45f5c96026fee3e9b9fa610cfe1989afacc211526b5ebf98c0c59b8b6f3b4655",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/fdo-client-0.3.0-1.el9.aarch64.rpm",
+        "checksum": "sha256:ce5c13bfc0c280720c5bf55eae777de51a3406bc4b91008e13d9b2696a62da36",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.aarch64.rpm",
+        "checksum": "sha256:f87b15bcfcd262af233c47a011e0d559adc54400e560471cb8a07543206f0f9d",
         "check_gpg": true
       },
       {
@@ -9096,6 +9125,8 @@
       "elfutils-libelf-0.186-1.el9.aarch64",
       "elfutils-libs-0.186-1.el9.aarch64",
       "expat-2.2.10-5.el9.aarch64",
+      "fdo-client-0.3.0-1.el9.aarch64",
+      "fdo-owner-cli-0.3.0-1.el9.aarch64",
       "file-5.39-8.el9.aarch64",
       "file-libs-5.39-8.el9.aarch64",
       "filesystem-3.16-2.el9.aarch64",
@@ -9488,6 +9519,7 @@
       "dbus.service",
       "dbus.socket",
       "dm-event.socket",
+      "fdo-client-linuxapp.service",
       "firewalld.service",
       "getty@.service",
       "greenboot-grub2-set-counter.service",

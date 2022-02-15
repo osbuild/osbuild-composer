@@ -625,6 +625,8 @@
                   "sha256:f17ec4d5e98f435b5ac7c1bd7b183abcfbdc6f37c69b423d551c5e9307c23f40",
                   "sha256:a23142d9dcbaf4376788092ce814fd2dcabf3089c5b97c3f6a095781985c177e",
                   "sha256:28f5364731f793eedcd09217a54f4fde7c5e9d68c2a83b0f3f931c677f94ffc8",
+                  "sha256:0f296ca3f672faba91678b75ff556a7c6655330282c399ed001cdfc5baf60891",
+                  "sha256:0cc0b52dae96475b8f6665208e6373be90270a816f858a8a37e4d0d57bd4038a",
                   "sha256:85dd2795055cc0c5392002495c1f1628c3f07809b0e1cd2f3f5dbe2aa553ce78",
                   "sha256:fa795eeae1e87fc81daf25b023934764f2d286acc4940601444995be8367cb1f",
                   "sha256:1f33ccee059042b26f48b4b90d891af46d7e5fd253d72d0b313148838c82b97a",
@@ -868,7 +870,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1012,6 +1015,9 @@
           "sha256:0c851bb11d2bce1ccb4804a958d21c1082267b8bc2f7f825e5236857e1f35274": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/fuse-2.9.7-12.el8.aarch64.rpm"
           },
+          "sha256:0cc0b52dae96475b8f6665208e6373be90270a816f858a8a37e4d0d57bd4038a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/fdo-owner-cli-0.2.0-5.el8.aarch64.rpm"
+          },
           "sha256:0db53cd5eb3c4821899b1bbf9ccb1b224f199bc86f022d59806fbc362ebc29b0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/krb5-libs-1.18.2-14.el8.aarch64.rpm"
           },
@@ -1023,6 +1029,9 @@
           },
           "sha256:0f1a02850c102e2a186787504f965c0c10d6432b9f600c18bc2f520e55f04a8c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/libassuan-2.5.1-3.el8.aarch64.rpm"
+          },
+          "sha256:0f296ca3f672faba91678b75ff556a7c6655330282c399ed001cdfc5baf60891": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/fdo-client-0.2.0-5.el8.aarch64.rpm"
           },
           "sha256:0f6d940ccddd815da01182de1e7b7e2d12c493125285ff7ee902843beefdec16": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/libmnl-1.0.4-6.el8.aarch64.rpm"
@@ -8694,6 +8703,24 @@
         "checksum": "sha256:28f5364731f793eedcd09217a54f4fde7c5e9d68c2a83b0f3f931c677f94ffc8"
       },
       {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.2.0",
+        "release": "5.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/fdo-client-0.2.0-5.el8.aarch64.rpm",
+        "checksum": "sha256:0f296ca3f672faba91678b75ff556a7c6655330282c399ed001cdfc5baf60891"
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.2.0",
+        "release": "5.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/fdo-owner-cli-0.2.0-5.el8.aarch64.rpm",
+        "checksum": "sha256:0cc0b52dae96475b8f6665208e6373be90270a816f858a8a37e4d0d57bd4038a"
+      },
+      {
         "name": "fuse-overlayfs",
         "epoch": 0,
         "version": "1.8",
@@ -9309,6 +9336,8 @@
       "elfutils-libelf-0.186-1.el8.aarch64",
       "elfutils-libs-0.186-1.el8.aarch64",
       "expat-2.2.5-4.el8.aarch64",
+      "fdo-client-0.2.0-5.el8.aarch64",
+      "fdo-owner-cli-0.2.0-5.el8.aarch64",
       "file-5.33-20.el8.aarch64",
       "file-libs-5.33-20.el8.aarch64",
       "filesystem-3.8-6.el8.aarch64",
@@ -9704,6 +9733,7 @@
       "dbus-org.freedesktop.nm-dispatcher.service",
       "dbus-org.freedesktop.timedate1.service",
       "dm-event.socket",
+      "fdo-client-linuxapp.service",
       "firewalld.service",
       "getty@.service",
       "greenboot-grub2-set-counter.service",
