@@ -325,6 +325,8 @@
                   "sha256:e3ee56af0c754deec13e57898a928ef974f73b617b7aa39b08b55072b520b1ec",
                   "sha256:1fc3fa1736d3d3fd6c09547b07f8d9376860c507870234f5be5afc3ad0bce924",
                   "sha256:e7d7941f9ccb330c900ab4f3d4e07d4ca3b9a329fc62058be5100cac383d7c3f",
+                  "sha256:60e33590b0123fb565c9c054b2b884a12df81b1a8719db271f05408c9e2c5458",
+                  "sha256:dc406748a2a03445f9052fe622050dec57734b706e8e59a6ca9edef9e0d73064",
                   "sha256:78896c3b4f93d907d724093161eb84c315c894bd8bf7eff24fb52d8bc20de04b",
                   "sha256:a260d67a9494034547d01f618e72ebd721886985715a540555407451d5f57668",
                   "sha256:051038580b4ef736fb2932ebde906c91fc910640d0b2b4bcb8131a27629b23b5",
@@ -930,7 +932,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1520,6 +1523,9 @@
           },
           "sha256:606fda6e7bbe188920afcae1529967fc13c10763ed727d8ac6ce1037a8549228": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/glibc-common-2.34-21.el9.x86_64.rpm"
+          },
+          "sha256:60e33590b0123fb565c9c054b2b884a12df81b1a8719db271f05408c9e2c5458": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/fdo-client-0.3.0-1.el9.x86_64.rpm"
           },
           "sha256:60f00a1bb3e502e76bcc538c6ca175cc35224c610a527cfab9a7f2beeff63574": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/libcap-ng-python3-0.8.2-6.el9.x86_64.rpm"
@@ -2126,6 +2132,9 @@
           },
           "sha256:db815d76afabb8dd7eca6ca5a5bf838304f82824c41e4f06b6d25b5eb63c65c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/python3-pyudev-0.22.0-6.el9.noarch.rpm"
+          },
+          "sha256:dc406748a2a03445f9052fe622050dec57734b706e8e59a6ca9edef9e0d73064": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.x86_64.rpm"
           },
           "sha256:dd3acff1d589a5294e1634c50c6267a90ddc25fe16450277796b40cff0847f63": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/syslinux-nonlinux-6.04-0.19.el9.noarch.rpm"
@@ -6691,6 +6700,26 @@
         "check_gpg": true
       },
       {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/fdo-client-0.3.0-1.el9.x86_64.rpm",
+        "checksum": "sha256:60e33590b0123fb565c9c054b2b884a12df81b1a8719db271f05408c9e2c5458",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.x86_64.rpm",
+        "checksum": "sha256:dc406748a2a03445f9052fe622050dec57734b706e8e59a6ca9edef9e0d73064",
+        "check_gpg": true
+      },
+      {
         "name": "flashrom",
         "epoch": 0,
         "version": "1.2",
@@ -10725,6 +10754,8 @@
       "elfutils-libs-0.186-1.el9.x86_64",
       "ethtool-5.10-4.el9.x86_64",
       "expat-2.2.10-5.el9.x86_64",
+      "fdo-client-0.3.0-1.el9.x86_64",
+      "fdo-owner-cli-0.3.0-1.el9.x86_64",
       "file-5.39-8.el9.x86_64",
       "file-libs-5.39-8.el9.x86_64",
       "filesystem-3.16-2.el9.x86_64",
@@ -11164,6 +11195,7 @@
       "dbus.service",
       "dbus.socket",
       "dm-event.socket",
+      "fdo-client-linuxapp.service",
       "firewalld.service",
       "getty@.service",
       "greenboot-grub2-set-counter.service",

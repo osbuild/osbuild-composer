@@ -577,6 +577,8 @@
                   "sha256:da928c469d400e6576cf33ab80666b99c9a714bbb7657a6529b1b0fe0591b503",
                   "sha256:80f022d578487b273a5865fdb1b8af21cc3ea1074dcd65ba143b4dd5244a1876",
                   "sha256:0375b3cd9301189ae39cc4518d1186857de567d26f76730a10824570b25762ec",
+                  "sha256:c6040b7e5ea4bd3875e933a2d2198d6132ed8eabce90de9553fd5dbd67085807",
+                  "sha256:7b67d793f1b94daaad6ce24e69d8d43ab30d8202974bb04a59f9d478774d2aec",
                   "sha256:6d48a681772e3b4a203f51f6132de11898b570f82212c3976b9fbd180d4b84ae",
                   "sha256:37852f438baecf2b2855b92c46049c739fd682ed58c43abd3b54a871495486b9",
                   "sha256:64f8b68558e989f9b6a38686fa66be2eb0b9071ac65e607738e1893fba7b7b59",
@@ -776,7 +778,8 @@
               "enabled_services": [
                 "NetworkManager.service",
                 "firewalld.service",
-                "sshd.service"
+                "sshd.service",
+                "fdo-client-linuxapp.service"
               ]
             }
           },
@@ -1598,6 +1601,9 @@
           "sha256:7b60c9dcb68b34bf87ada12f9b3a3987ca9d14cb440c06e5bd782cca82e74962": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/libdb-5.3.28-53.el9.aarch64.rpm"
           },
+          "sha256:7b67d793f1b94daaad6ce24e69d8d43ab30d8202974bb04a59f9d478774d2aec": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.aarch64.rpm"
+          },
           "sha256:7b738903b5a814568894b08e43b837c8e9af7bae834deb3bd8c1c2b6a5abf513": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/firewalld-1.0.0-4.el9.noarch.rpm"
           },
@@ -1972,6 +1978,9 @@
           },
           "sha256:c5e0c6b47a2404b6dc82bde6bb7c2c21c45aa1c42197171f42d36e48bd16162f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/bash-5.1.8-2.el9.aarch64.rpm"
+          },
+          "sha256:c6040b7e5ea4bd3875e933a2d2198d6132ed8eabce90de9553fd5dbd67085807": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/fdo-client-0.3.0-1.el9.aarch64.rpm"
           },
           "sha256:c608c05126a45982e68152fae5a89f713a254c925d0290fa40fe9b0e07b9d926": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/libblkid-2.37.2-1.el9.aarch64.rpm"
@@ -8596,6 +8605,24 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/dnsmasq-2.85-2.el9.aarch64.rpm",
         "checksum": "sha256:0375b3cd9301189ae39cc4518d1186857de567d26f76730a10824570b25762ec"
+      },
+      {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/fdo-client-0.3.0-1.el9.aarch64.rpm",
+        "checksum": "sha256:c6040b7e5ea4bd3875e933a2d2198d6132ed8eabce90de9553fd5dbd67085807"
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.3.0",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/fdo-owner-cli-0.3.0-1.el9.aarch64.rpm",
+        "checksum": "sha256:7b67d793f1b94daaad6ce24e69d8d43ab30d8202974bb04a59f9d478774d2aec"
       },
       {
         "name": "flashrom",
