@@ -63,45 +63,20 @@ The containers are a good way to quickly test small changes, but before
 submitting a Pull Request, it's recommended to run through all the tests using
 the [Virtual Machine](#virtual-machine) setup described above.
 
-### Configuration
-
-Each service (*composer* and *worker*) requires a configuration file and a set
-of certificates. The storage location for these is shared between the
-containers for simplicity. By default it's configured to be at
-`./containers/config`, but this can be changed in the
-[`./distribution/.env`](./distribution/.env) file by modifying the value of the
-`$CONTAINER_CONFIG_DIR` variable (both absolute and relative paths work).
-
-Use the [`tools/gen-certs.sh`](./tools/gen-certs.sh) script to
-generate the certificates (using the test OpenSSL config file):
-
-    ./tools/gen-certs.sh ./test/data/x509/openssl.cnf ./containers/config  ./containers/config/ca
-
-Note that the two arguments `./containers/config` and `./containers/config/ca`
-should be the same location as the `$CONTAINER_CONFIG_DIR` described above
-
-The services also require a config file each which they expect to be in the
-same directory. The following test files can be copied into it:
-
-    cp ./test/data/composer/osbuild-composer.toml ./test/data/worker/osbuild-worker.toml ./containers/config/
-
-The `$CONTAINER_CONFIG_DIR` (default `containers/config`) directory will be mounted inside both containers (see
-the [`docker-composer.yml`](./distribution/docker-compose.yml) file).
-
 ### Build and run
 
-To build the containers, change into the `distribution/` directory and run:
+To build the containers run:
 
     docker-compose build
 
-To start the containers, change into the `distribution/` directory and run:
+To start the containers run:
 
     docker-compose up
 
-You can send requests to the *osbuild-composer* container directly using the
-generated certificate and client key. For example, from the project root, run:
+You can send requests to the *osbuild-composer* container by entering the devel
+container and running:
 
-    curl -k --cert ./containers/config/client-crt.pem --key ./containers/config/client-key.pem https://172.30.0.10:8080/api/composer-koji/v1/status
+    curl -k --cert /etc/osbuild-composer/client-crt.pem --key /etc/osbuild-composer/client-key.pem https://172.30.0.10:8080/api/composer-koji/v1/status
 
 To rebuild the containers after a change, add the `--build` flag to the `docker-compose` command:
 
