@@ -18,6 +18,8 @@ const (
 	kspath = "/usr/share/anaconda/interactive-defaults.ks"
 )
 
+type pipelinesFunc func(t *imageTypeS2, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
+
 type imageTypeS2 struct {
 	arch             *architecture
 	name             string
@@ -35,6 +37,7 @@ type imageTypeS2 struct {
 	buildPipelines   []string
 	payloadPipelines []string
 	exports          []string
+	pipelines        pipelinesFunc
 }
 
 func (t *imageTypeS2) Arch() distro.Arch {
@@ -152,7 +155,7 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(source)
-	pipelines, err := t.pipelines(c, options, repos, packageSpecSets, rng)
+	pipelines, err := t.pipelines(t, c, options, repos, packageSpecSets, rng)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
@@ -216,7 +219,7 @@ func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostr
 	return sources
 }
 
-func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func edgePipelines(t *imageTypeS2, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 
 	if t.bootISO {
 		if options.OSTree.Parent == "" {
