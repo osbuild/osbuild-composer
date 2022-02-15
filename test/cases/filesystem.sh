@@ -156,7 +156,7 @@ size = 131072000
 
 [[customizations.filesystem]]
 mountpoint = "/var/log/audit"
-size = 131072000
+size = "125 MiB"
 
 [[customizations.filesystem]]
 mountpoint = "/usr"
