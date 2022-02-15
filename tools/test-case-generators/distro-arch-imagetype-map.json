@@ -125,6 +125,7 @@
             "azure-rhui",
             "ec2",
             "ec2-ha",
+            "gce",
             "openstack",
             "tar",
             "qcow2",

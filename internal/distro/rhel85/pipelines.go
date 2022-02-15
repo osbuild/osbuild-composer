@@ -460,6 +460,400 @@ func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, op
 	return pipelines, nil
 }
 
+// osPipelineRhel86 is a backport of the osPipeline from RHEL-86
+//
+// This pipeline generator takes distro.ImageConfig instance, which
+// defines the image default configuration
+func osPipelineRhel86(t *imageType,
+	imageConfig *distro.ImageConfig,
+	repos []rpmmd.RepoConfig,
+	packages []rpmmd.PackageSpec,
+	bpPackages []rpmmd.PackageSpec,
+	c *blueprint.Customizations,
+	options distro.ImageOptions,
+	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+	p := new(osbuild.Pipeline)
+	if t.rpmOstree {
+		p.Name = "ostree-tree"
+	} else {
+		p.Name = "os"
+	}
+	p.Build = "name:build"
+	packages = append(packages, bpPackages...)
+
+	if t.rpmOstree && options.OSTree.Parent != "" && options.OSTree.URL != "" {
+		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	}
+
+	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
+
+	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
+	if pt == nil || pt.FindMountable("/boot") == nil {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+	} else {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
+
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
+	} else {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
+	}
+	if keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
+	} else if imageConfig.Keyboard != nil {
+		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
+	}
+
+	if hostname := c.GetHostname(); hostname != nil {
+		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
+	}
+
+	timezone, ntpServers := c.GetTimezoneSettings()
+	if timezone != nil {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
+	} else {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
+	}
+
+	if len(ntpServers) > 0 {
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+	} else if imageConfig.TimeSynchronization != nil {
+		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
+	}
+
+	if !t.bootISO {
+		// don't put users and groups in the payload of an installer
+		// add them via kickstart instead
+		if groups := c.GetGroups(); len(groups) > 0 {
+			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
+		}
+
+		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+			return nil, err
+		} else if userOptions != nil {
+			if t.rpmOstree {
+				// for ostree, writing the key during user creation is
+				// redundant and can cause issues so create users without keys
+				// and write them on first boot
+				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
+				if err != nil {
+					return nil, err
+				}
+				p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
+				p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+			} else {
+				p.AddStage(osbuild.NewUsersStage(userOptions))
+			}
+		}
+	}
+
+	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
+			imageConfig.EnabledServices,
+			imageConfig.DisabledServices,
+			services,
+			imageConfig.DefaultTarget,
+		)))
+	}
+
+	var fwStageOptions *osbuild.FirewallStageOptions
+	if firewallCustomization := c.GetFirewall(); firewallCustomization != nil {
+		fwStageOptions = firewallStageOptions(firewallCustomization)
+	}
+	if firewallConfig := imageConfig.Firewall; firewallConfig != nil {
+		// merge the user-provided firewall config with the default one
+		if fwStageOptions != nil {
+			fwStageOptions = &osbuild.FirewallStageOptions{
+				// Prefer the firewall ports and services settings provided
+				// via BP customization.
+				Ports:            fwStageOptions.Ports,
+				EnabledServices:  fwStageOptions.EnabledServices,
+				DisabledServices: fwStageOptions.DisabledServices,
+				// Default zone can not be set using BP customizations, therefore
+				// default to the one provided in the default image configuration.
+				DefaultZone: firewallConfig.DefaultZone,
+			}
+		} else {
+			fwStageOptions = firewallConfig
+		}
+	}
+	if fwStageOptions != nil {
+		p.AddStage(osbuild.NewFirewallStage(fwStageOptions))
+	}
+
+	for _, sysconfigConfig := range imageConfig.Sysconfig {
+		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	}
+
+	if t.arch.distro.isRHEL() {
+		if options.Subscription != nil {
+			commands := []string{
+				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
+			}
+			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
+			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+				Commands:       commands,
+				WaitForNetwork: true,
+			}))
+
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		} else {
+			if rhsmConfig, exists := imageConfig.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+				p.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+			}
+		}
+	}
+
+	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
+		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
+	}
+
+	for _, cloudInitConfig := range imageConfig.CloudInit {
+		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
+	}
+
+	for _, modprobeConfig := range imageConfig.Modprobe {
+		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
+	}
+
+	for _, dracutConfConfig := range imageConfig.DracutConf {
+		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
+	}
+
+	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
+		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
+	}
+
+	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
+		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
+	}
+
+	if seLinuxConfig := imageConfig.SELinuxConfig; seLinuxConfig != nil {
+		p.AddStage(osbuild.NewSELinuxConfigStage(seLinuxConfig))
+	}
+
+	if tunedConfig := imageConfig.Tuned; tunedConfig != nil {
+		p.AddStage(osbuild.NewTunedStage(tunedConfig))
+	}
+
+	for _, tmpfilesdConfig := range imageConfig.Tmpfilesd {
+		p.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
+	}
+
+	for _, pamLimitsConfConfig := range imageConfig.PamLimitsConf {
+		p.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
+	}
+
+	for _, sysctldConfig := range imageConfig.Sysctld {
+		p.AddStage(osbuild.NewSysctldStage(sysctldConfig))
+	}
+
+	for _, dnfConfig := range imageConfig.DNFConfig {
+		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
+	}
+
+	if sshdConfig := imageConfig.SshdConfig; sshdConfig != nil {
+		p.AddStage((osbuild.NewSshdConfigStage(sshdConfig)))
+	}
+
+	if dnfAutomaticConfig := imageConfig.DNFAutomaticConfig; dnfAutomaticConfig != nil {
+		p.AddStage(osbuild.NewDNFAutomaticConfigStage(dnfAutomaticConfig))
+	}
+
+	for _, yumRepo := range imageConfig.YUMRepos {
+		p.AddStage(osbuild.NewYumReposStage(yumRepo))
+	}
+
+	if pt != nil {
+		p = prependKernelCmdlineStage(p, t, pt)
+		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
+		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(bpPackages, c.GetKernel().Name)
+		p.AddStage(bootloaderConfigStage(t, pt, c.GetKernel(), kernelVer, false, false))
+	}
+
+	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: We may want to make this configurable.
+				"wheel", "docker",
+			},
+		}))
+	}
+
+	return p, nil
+}
+
+// gcePipelinesRhel86 is a slightly modified RHEL-86 version of gcePipelines() function
+func gcePipelinesRhel86(t *imageType, imageConfig *distro.ImageConfig, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
+
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+
+	treePipeline, err := osPipelineRhel86(t, imageConfig, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *treePipeline)
+
+	diskfile := "disk.raw"
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, *imagePipeline)
+
+	archivePipeline := tarArchivePipeline("archive", imagePipeline.Name, &osbuild.TarStageOptions{
+		Filename: t.Filename(),
+		Format:   osbuild.TarArchiveFormatOldgnu,
+		RootNode: osbuild.TarRootNodeOmit,
+		// import of the image to GCP fails in case the options below are enabled, which is the default
+		ACLs:    common.BoolToPtr(false),
+		SELinux: common.BoolToPtr(false),
+		Xattrs:  common.BoolToPtr(false),
+	})
+	pipelines = append(pipelines, *archivePipeline)
+
+	return pipelines, nil
+}
+
+func getDefaultGceByosImageConfig() *distro.ImageConfig {
+	return &distro.ImageConfig{
+		Timezone: "UTC",
+		TimeSynchronization: &osbuild.ChronyStageOptions{
+			Timeservers: []string{"metadata.google.internal"},
+		},
+		Firewall: &osbuild.FirewallStageOptions{
+			DefaultZone: "trusted",
+		},
+		EnabledServices: []string{
+			"sshd",
+			"rngd",
+			"dnf-automatic.timer",
+		},
+		DisabledServices: []string{
+			"sshd-keygen@",
+			"reboot.target",
+		},
+		DefaultTarget: "multi-user.target",
+		Locale:        "en_US.UTF-8",
+		Keyboard: &osbuild.KeymapStageOptions{
+			Keymap: "us",
+		},
+		DNFConfig: []*osbuild.DNFConfigStageOptions{
+			{
+				Config: &osbuild.DNFConfig{
+					Main: &osbuild.DNFConfigMain{
+						IPResolve: "4",
+					},
+				},
+			},
+		},
+		DNFAutomaticConfig: &osbuild.DNFAutomaticConfigStageOptions{
+			Config: &osbuild.DNFAutomaticConfig{
+				Commands: &osbuild.DNFAutomaticConfigCommands{
+					ApplyUpdates: common.BoolToPtr(true),
+					UpgradeType:  osbuild.DNFAutomaticUpgradeTypeSecurity,
+				},
+			},
+		},
+		YUMRepos: []*osbuild.YumReposStageOptions{
+			{
+				Filename: "google-cloud.repo",
+				Repos: []osbuild.YumRepository{
+					{
+						Id:           "google-compute-engine",
+						Name:         "Google Compute Engine",
+						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
+						Enabled:      common.BoolToPtr(true),
+						GPGCheck:     common.BoolToPtr(true),
+						RepoGPGCheck: common.BoolToPtr(false),
+						GPGKey: []string{
+							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
+							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+						},
+					},
+					{
+						Id:           "google-cloud-sdk",
+						Name:         "Google Cloud SDK",
+						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"},
+						Enabled:      common.BoolToPtr(true),
+						GPGCheck:     common.BoolToPtr(true),
+						RepoGPGCheck: common.BoolToPtr(false),
+						GPGKey: []string{
+							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
+							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
+						},
+					},
+				},
+			},
+		},
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the GCE
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+		SshdConfig: &osbuild.SshdConfigStageOptions{
+			Config: osbuild.SshdConfigConfig{
+				PasswordAuthentication: common.BoolToPtr(false),
+				ClientAliveInterval:    common.IntToPtr(420),
+				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
+			},
+		},
+		Sysconfig: []*osbuild.SysconfigStageOptions{
+			{
+				Kernel: &osbuild.SysconfigKernelOptions{
+					DefaultKernel: "kernel-core",
+					UpdateDefault: true,
+				},
+			},
+		},
+		Modprobe: []*osbuild.ModprobeStageOptions{
+			{
+				Filename: "blacklist-floppy.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+				},
+			},
+		},
+	}
+}
+
+// GCE BYOS image
+func gceByosPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	return gcePipelinesRhel86(t, getDefaultGceByosImageConfig(), customizations, options, repos, packageSetSpecs, rng)
+}
+
 func tarArchivePipeline(name, inputPipelineName string, tarOptions *osbuild.TarStageOptions) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = name
