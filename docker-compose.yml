@@ -1,0 +1,92 @@
+version: '2.4'
+services:
+  devel:
+    image: local/osbuild-composer-devel
+    build:
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile
+    volumes:
+      - config:/etc/osbuild-composer
+      - weldr:/run/weldr
+      - dnf-json:/run/osbuild-dnf-json
+      - .:/workspace
+      - go-cache:/root/.cache/go-build
+      - go-mod:/root/go/pkg/mod
+    networks:
+      net:
+        ipv4_address: 172.30.0.2
+    working_dir: /workspace
+    command: /bin/sh -c "while sleep 1000; do :; done"
+  create-config:
+    image: local/osbuild-composer-create-config
+    build:
+      context: .
+      dockerfile: ./distribution/Dockerfile-config
+    volumes:
+      - config:/config
+  composer:
+    image: local/osbuild-composer
+    build:
+      context: .
+      dockerfile: ./distribution/Dockerfile-ubi
+    entrypoint:
+      [
+        "python3",
+        "/opt/entrypoint.py",
+        "--dnf-json",
+        "--weldr-api",
+        "--remote-worker-api",
+        "--composer-api",
+        "--composer-api-port",
+        "8080"
+      ]
+    volumes:
+      - config:/etc/osbuild-composer
+      - weldr:/run/weldr
+      - dnf-json:/run/osbuild-dnf-json
+    networks:
+      net:
+        ipv4_address: 172.30.0.10
+    depends_on:
+      - create-config
+  worker:
+    image: local/osbuild-worker
+    build:
+      context: .
+      dockerfile: ./distribution/Dockerfile-worker
+    # override the entrypoint to specify composer hostname and port
+    entrypoint:
+      [
+        "/usr/libexec/osbuild-composer/osbuild-worker",
+        "composer:8700"
+      ]
+    volumes:
+      - config:/etc/osbuild-composer
+      - dnf-json:/run/osbuild-dnf-json
+    environment:
+      - CACHE_DIRECTORY=/var/cache/osbuild-worker
+    privileged: true
+    cap_add:
+      - MKNOD
+      - SYS_ADMIN
+      - NET_ADMIN
+    networks:
+      net:
+        ipv4_address: 172.30.0.20
+    depends_on:
+      - "create-config"
+      - "composer"
+
+networks:
+  net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  config:
+  weldr:
+  dnf-json:
+  go-cache:
+  go-mod:
