@@ -190,3 +190,32 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		}
 	}
 }
+
+// GetTestingPackageSpecSets returns PackageSpecSets useful for unit testing.
+//
+// A dummy PackageSpec for the provided packageName is added
+// to all PackageSpecSets provided in pkgSetNames.
+//
+// E.g. `kernel` package is a hard requirement of some payload pipelines
+// and they panic if it is not found in the packageSpecSets passed to
+// Manifest().
+func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) map[string][]rpmmd.PackageSpec {
+	pkgTestingSpec := []rpmmd.PackageSpec{
+		{
+			Name:           packageName,
+			Epoch:          0,
+			Version:        "1.2.3",
+			Release:        "2.el123",
+			Arch:           arch,
+			RemoteLocation: "http://example.org",
+			Checksum:       "lorenipsum",
+			Secrets:        "lorenipsum",
+			CheckGPG:       false,
+		},
+	}
+	testPackageSpecSets := map[string][]rpmmd.PackageSpec{}
+	for _, pkgSetName := range pkgSetNames {
+		testPackageSpecSets[pkgSetName] = pkgTestingSpec
+	}
+	return testPackageSpecSets
+}
