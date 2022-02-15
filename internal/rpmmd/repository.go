@@ -203,6 +203,23 @@ func (re *RepositoryError) Error() string {
 	return re.msg
 }
 
+func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
+	for _, pkg := range pkgs {
+		if pkg.Name == packageName {
+			return fmt.Sprintf("%s-%s.%s", pkg.Version, pkg.Release, pkg.Arch), nil
+		}
+	}
+	return "", fmt.Errorf("package %q not found in the PackageSpec list", packageName)
+}
+
+func GetVerStrFromPackageSpecListPanic(pkgs []PackageSpec, packageName string) string {
+	pkgVerStr, err := GetVerStrFromPackageSpecList(pkgs, packageName)
+	if err != nil {
+		panic(err)
+	}
+	return pkgVerStr
+}
+
 func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
 	f, err := os.Open(filename)
 	if err != nil {

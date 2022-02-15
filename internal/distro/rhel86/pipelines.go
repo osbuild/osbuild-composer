@@ -31,7 +31,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
@@ -69,7 +69,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -97,7 +97,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -125,7 +125,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
@@ -153,8 +153,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 	pipelines = append(pipelines, *treePipeline)
-
-	kernelVer := kernelVerStr(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name, t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
@@ -211,7 +210,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	d := t.arch.distro
 	archName := t.arch.name
-	kernelVer := kernelVerStr(installerPackages, "kernel", archName)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
 	kickstartOptions := ostreeKickstartStageOptions(makeISORootPath(ostreeRepoPath), options.OSTree.Ref)
@@ -522,7 +521,7 @@ func osPipeline(t *imageType,
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(pt.FSTabStageOptionsV2()))
-		kernelVer := kernelVerStr(bpPackages, c.GetKernel().Name, t.Arch().Name())
+		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(bpPackages, c.GetKernel().Name)
 		p.AddStage(bootloaderConfigStage(t, *pt, c.GetKernel(), kernelVer, false, false))
 	}
 
@@ -637,7 +636,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 	installerPackages := packageSetSpecs[installerPkgsKey]
-	kernelVer := kernelVerStr(installerPackages, "kernel", t.Arch().Name())
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	imgName := "disk.img.xz"
 	installDevice := customizations.GetInstallationDevice()
 
@@ -1071,20 +1070,4 @@ func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *archite
 	}
 
 	return nil
-}
-
-func kernelVerStr(pkgs []rpmmd.PackageSpec, kernelName, arch string) string {
-	kernelPkg := new(rpmmd.PackageSpec)
-	for _, pkg := range pkgs {
-		if pkg.Name == kernelName {
-			// Implicit memory alasing doesn't couse any bug in this case
-			/* #nosec G601 */
-			kernelPkg = &pkg
-			break
-		}
-	}
-	if kernelPkg == nil {
-		panic(fmt.Sprintf("kernel package %q not found", kernelName))
-	}
-	return fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 }
