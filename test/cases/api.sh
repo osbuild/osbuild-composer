@@ -515,7 +515,7 @@ function createReqFileAWS() {
     "filesystem": [
       {
         "mountpoint": "/var",
-        "min_size": 1024
+        "min_size": 262144000
       }
     ],
     "payload_repositories": [
@@ -563,12 +563,6 @@ function createReqFileAWSS3() {
 {
   "distribution": "$DISTRO",
   "customizations": {
-    "filesystem": [
-      {
-        "mountpoint": "/var",
-        "min_size": 1024
-      }
-    ],
     "payload_repositories": [
       {
         "baseurl": "$PAYLOAD_REPO_URL"
@@ -622,7 +616,7 @@ function createReqFileGCP() {
     "filesystem": [
       {
         "mountpoint": "/var",
-        "min_size": 1024
+        "min_size": 262144000
       }
     ],
     "payload_repositories": [
@@ -660,7 +654,7 @@ function createReqFileAzure() {
     "filesystem": [
       {
         "mountpoint": "/var",
-        "min_size": 1024
+        "min_size": 262144000
       }
     ],
     "payload_repositories": [
