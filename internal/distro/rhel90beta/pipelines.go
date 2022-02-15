@@ -61,7 +61,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
 	rootFsUUID := pt.RootPartition().Filesystem.UUID
-	kernelStage := osbuild.NewKernelCmdlineStage(kernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
+	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
 }

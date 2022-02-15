@@ -47,7 +47,7 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 		if rootPartition == nil {
 			panic("s390x image must have a root partition, this is a programming error")
 		}
-		kernelStage := osbuild.NewKernelCmdlineStage(kernelCmdlineStageOptions(rootPartition.Filesystem.UUID, t.kernelOptions))
+		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootPartition.Filesystem.UUID, t.kernelOptions))
 		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	}
 	return pipeline

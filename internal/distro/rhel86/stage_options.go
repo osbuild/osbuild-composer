@@ -573,13 +573,6 @@ func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions
 	}
 }
 
-func kernelCmdlineStageOptions(rootUUID string, kernelOptions string) *osbuild.KernelCmdlineStageOptions {
-	return &osbuild.KernelCmdlineStageOptions{
-		RootFsUUID: rootUUID,
-		KernelOpts: kernelOptions,
-	}
-}
-
 func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {
 	// configure nginx to work in an unprivileged container
 	cfg := &osbuild.NginxConfig{
