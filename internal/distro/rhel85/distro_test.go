@@ -164,6 +164,14 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "gce",
+			args: args{"gce"},
+			want: wantResult{
+				filename: "image.tar.gz",
+				mimeType: "application/gzip",
+			},
+		},
+		{
 			name: "invalid-output-type",
 			args: args{"foobar"},
 			want: wantResult{wantErr: true},
@@ -266,6 +274,7 @@ func TestImageType_Name(t *testing.T) {
 				"edge-installer",
 				"tar",
 				"image-installer",
+				"gce",
 			},
 		},
 		{
@@ -454,6 +463,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"tar",
 				"image-installer",
 				"oci",
+				"gce",
 			},
 		},
 		{

@@ -98,6 +98,10 @@ func (d *distribution) addArches(arches ...architecture) {
 	}
 }
 
+func (d *distribution) isRHEL() bool {
+	return strings.HasPrefix(d.name, "rhel")
+}
+
 type architecture struct {
 	distro           *distribution
 	name             string
@@ -857,6 +861,29 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		basePartitionTables: ec2BasePartitionTables,
 	}
 
+	// This image type does not take the disabled / enabled service definitions
+	// from this structure definition, but rather from distro.ImageConfig instance
+	// defined in the gcePipelines() function. The same applies to the default
+	// target.
+	gceImgType := imageType{
+		name:     "gce",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    gcePackageSet,
+		},
+		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		bootable:            true,
+		bootType:            distro.UEFIBootType,
+		defaultSize:         20 * GigaByte,
+		pipelines:           gceByosPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -893,7 +920,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:          []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, imageInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImageType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, imageInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImageType, gceImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)

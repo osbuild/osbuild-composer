@@ -380,6 +380,83 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 	return ec2HaPackageSet
 }
 
+// common GCE image
+func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core",
+			"langpacks-en", // not in Google's KS
+			"acpid",
+			"dhcp-client",
+			"dnf-automatic",
+			"net-tools",
+			//"openssh-server", included in core
+			"python3",
+			"rng-tools",
+			"tar",
+			"vim",
+
+			// GCE guest tools
+			"google-compute-engine",
+			"google-osconfig-agent",
+			"gce-disk-expand",
+			// GCP SDK
+			"google-cloud-sdk",
+
+			// Not explicitly included in GCP kickstart, but present on the image
+			// for time synchronization
+			"chrony",
+			"timedatex",
+			// Detected Platform requirements by Anaconda
+			"qemu-guest-agent",
+			// EFI
+			"grub2-tools-efi",
+		},
+		Exclude: []string{
+			"alsa-utils",
+			"b43-fwcutter",
+			"dmraid",
+			"eject",
+			"gpm",
+			"irqbalance",
+			"microcode_ctl",
+			"smartmontools",
+			"aic94xx-firmware",
+			"atmel-firmware",
+			"b43-openfwwf",
+			"bfa-firmware",
+			"ipw2100-firmware",
+			"ipw2200-firmware",
+			"ivtv-firmware",
+			"iwl100-firmware",
+			"iwl1000-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6050-firmware",
+			"kernel-firmware",
+			"libertas-usb8388-firmware",
+			"ql2100-firmware",
+			"ql2200-firmware",
+			"ql23xx-firmware",
+			"ql2400-firmware",
+			"ql2500-firmware",
+			"rt61pci-firmware",
+			"rt73usb-firmware",
+			"xorg-x11-drv-ati-firmware",
+			"zd1211-firmware",
+		},
+	}.Append(bootPackageSet(t))
+}
+
+// GCE BYOS image
+func gcePackageSet(t *imageType) rpmmd.PackageSet {
+	return gceCommonPackageSet(t)
+}
+
 // edge commit OS package set
 func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
