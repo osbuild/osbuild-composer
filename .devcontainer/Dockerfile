@@ -1,17 +1,33 @@
-FROM fedora:34
+FROM fedora:35
 
-# Install few packages for convenient usage.
-# Inspired by the devcontainer in osbuild.
+# Install:
+#  - a few packages for convenient usage
+#  - RPM tooling
+#  - the go compiler
+#  - weldr-client to use the weldr API
+#  - builddep to be able to pull in requirements from .spec
 RUN dnf install -y \
     fish \
     fd-find \
     ripgrep \
-    jq
-# We build composer using RPM, install the tooling
-RUN dnf install fedora-packager rpmdevtools go-srpm-macros -y
-# The list of requirements is specified in the spec file.
-# To install them, dnf needs the "builddep" command.
-RUN dnf install 'dnf-command(builddep)' -y
-# Copy the specfile and install the dependencies.
-COPY osbuild-composer.spec /tmp/osbuild-composer.spec
+    jq \
+    fedora-packager \
+    rpmdevtools \
+    go-srpm-macros \
+    go \
+    weldr-client \
+    osbuild \
+    osbuild-lvm2 \
+    osbuild-luks2 \
+    osbuild-ostree \
+    osbuild-tools \
+    'dnf-command(builddep)'
+# install the language server
+RUN go install -v golang.org/x/tools/gopls@latest
+RUN go install -v github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest
+RUN go install -v github.com/ramya-rao-a/go-outline@latest
+RUN go install -v github.com/go-delve/delve/cmd/dlv@latest
+RUN go install -v honnef.co/go/tools/cmd/staticcheck@latest
+COPY ./osbuild-composer.spec /tmp/osbuild-composer.spec
 RUN dnf builddep /tmp/osbuild-composer.spec -y
+RUN rm /tmp/osbuild-composer.spec

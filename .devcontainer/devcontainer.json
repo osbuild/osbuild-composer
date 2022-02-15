@@ -1,5 +1,5 @@
 {
-  "name": "ComposerBuilder",
+  "name": "composer",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -12,6 +12,7 @@
   ],
   "extensions": [
     "laurenttreguier.rpm-spec",
-    "golang.Go"
+    "golang.Go",
+    "GitHub.vscode-pull-request-github"
   ]
 }
