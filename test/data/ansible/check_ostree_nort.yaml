@@ -320,11 +320,11 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts ['distribution_version'] is version('8.5', '!=')
+      when: ansible_facts['distribution'] != 'RedHat' and ansible_facts['distribution_version'] is version('8.5', '!=')
 
     # case: check installed greenboot packages
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L634
-    - name: greenboot and it's related packages should be installed (RHEL 8.6+ and CS9)
+    - name: greenboot and it's related packages should be installed (RHEL 8.6+, CS8, and CS9)
       block:
         - name: greenboot and it's related packages should be installed
           shell: rpm -qa | grep greenboot
@@ -344,9 +344,9 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '>=')) or
-            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('9', '=='))
+            (ansible_facts['distribution'] == 'CentOS')
 
-    - name: greenboot and it's related packages should be installed (RHEL 8.5, CS8, and Fedora)
+    - name: greenboot and it's related packages should be installed (RHEL 8.5 and Fedora)
       block:
         - name: greenboot and it's related packages should be installed
           shell: rpm -qa | grep greenboot
@@ -369,7 +369,6 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '<')) or
-            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('8', '==')) or
             (ansible_facts['distribution'] == 'Fedora')
 
     # case: check greenboot* services
