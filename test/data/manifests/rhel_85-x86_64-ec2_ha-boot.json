@@ -12117,6 +12117,17 @@
       }
     },
     "default-target": "multi-user.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -13066,6 +13077,49 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "05-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication no",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -13307,6 +13361,190 @@
           "D! /tmp/.Test-unix 1777 root root 10d",
           "r! /tmp/.X[0-9]*-lock"
         ]
+      }
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "redhat-rhui-client-config-ha.repo": {
+          "rhui-client-config-server-8-ha": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/protected/rhui-client-config/rhel/server/8/$basearch/ha",
+            "name": "Red Hat Update Infrastructure 3 Client Configuration Server 8 HA",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/rhui-client-config-server-8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/rhui-client-config-server-8-ha.key",
+            "sslverify": "1"
+          }
+        },
+        "redhat-rhui-ha.repo": {
+          "codeready-builder-for-rhel-8-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/codeready-builder/debug",
+            "name": "Red Hat CodeReady Linux Builder for RHEL 8 $basearch (Debug RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "codeready-builder-for-rhel-8-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/codeready-builder/os",
+            "name": "Red Hat CodeReady Linux Builder for RHEL 8 $basearch (RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "codeready-builder-for-rhel-8-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/codeready-builder/source/SRPMS",
+            "name": "Red Hat CodeReady Linux Builder for RHEL 8 $basearch (Source RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-appstream-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/appstream/debug",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - AppStream from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-appstream-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/appstream/os",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - AppStream from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-appstream-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/appstream/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - AppStream from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-baseos-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/baseos/debug",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - BaseOS from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-baseos-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/baseos/os",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - BaseOS from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-baseos-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/baseos/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for $basearch - BaseOS from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-supplementary-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/supplementary/debug",
+            "name": "Red Hat Enterprise Linux 8 - Supplementary (Debug RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-supplementary-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/supplementary/os",
+            "name": "Red Hat Enterprise Linux 8 - Supplementary (RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhel-8-supplementary-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/$basearch/supplementary/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 - Supplementary (Source RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-8-for-x86_64-highavailability-debug-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/x86_64/highavailability/debug",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability (Debug RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-8-for-x86_64-highavailability-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/x86_64/highavailability/os",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability (RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-8-for-x86_64-highavailability-source-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui3.REGION.aws.ce.redhat.com/pulp/mirror/content/dist/rhel8/rhui/$releasever/x86_64/highavailability/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 8 for x86_64 - High Availability (Source RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel8-ha.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel8-ha.key",
+            "sslverify": "1"
+          }
+        }
       }
     }
   }

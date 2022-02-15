@@ -8165,7 +8165,7 @@
         "id": "rhel-20210927213626-4.18.0-345.1.el8.s390x",
         "initrd": "/boot/initramfs-4.18.0-345.1.el8.s390x.img",
         "linux": "/boot/vmlinuz-4.18.0-345.1.el8.s390x",
-        "options": "root=UUID=03ae1441-3a92-4f66-bd03-a222de005b19 rootflags=subvol=root",
+        "options": "root=UUID=b9867d4e-38c1-4bed-a75d-57debfed3565 rootflags=subvol=root",
         "title": "Red Hat Enterprise Linux (4.18.0-345.1.el8.s390x) 8.6 (Ootpa)",
         "version": "4.18.0-345.1.el8.s390x"
       }
@@ -8545,6 +8545,30 @@
       "selinux-autorelabel-mark.service",
       "sshd.service"
     ],
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication yes",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sysconfig": {
       "kernel": {
         "DEFAULTKERNEL": "kernel",

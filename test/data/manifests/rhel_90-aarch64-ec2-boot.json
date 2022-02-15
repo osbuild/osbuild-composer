@@ -9175,6 +9175,17 @@
       }
     },
     "default-target": "multi-user.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -9990,6 +10001,43 @@
       "tuned.service",
       "udisks2.service"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "50-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "Include /etc/ssh/sshd_config.d/*.conf",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server",
+          "PasswordAuthentication no"
+        ]
+      },
+      "/etc/ssh/sshd_config.d": {
+        "50-redhat.conf": [
+          "Include /etc/crypto-policies/back-ends/opensshserver.config",
+          "SyslogFacility AUTHPRIV",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -10270,6 +10318,124 @@
           "D! /tmp/.Test-unix 1777 root root 10d",
           "r! /tmp/.X[0-9]*-lock"
         ]
+      }
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "redhat-rhui-beta.repo": {
+          "rhui-rhel-9-appstream-beta-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/appstream/debug",
+            "name": "Red Hat Enterprise Linux 9 - AppStream Beta from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-appstream-beta-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/appstream/os",
+            "name": "Red Hat Enterprise Linux 9 - AppStream Beta from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-appstream-beta-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/appstream/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 9 - AppStream Beta from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-baseos-beta-rhui-debug-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/baseos/debug",
+            "name": "Red Hat Enterprise Linux 9 - BaseOS Beta from RHUI (Debug RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-baseos-beta-rhui-rpms": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/baseos/os",
+            "name": "Red Hat Enterprise Linux 9 - BaseOS Beta from RHUI (RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-baseos-beta-rhui-source-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/baseos/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 9 - BaseOS Beta from RHUI (Source RPMs)",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-supplementary-beta-debug-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/supplementary/debug",
+            "name": "Red Hat Enterprise Linux 9 - Supplementary Beta (Debug RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-supplementary-beta-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/supplementary/os",
+            "name": "Red Hat Enterprise Linux 9 - Supplementary Beta (RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          },
+          "rhui-rhel-9-supplementary-beta-source-rhui-rpms": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/content/beta/rhel9/rhui/9/$basearch/supplementary/source/SRPMS",
+            "name": "Red Hat Enterprise Linux 9 - Supplementary Beta (Source RPMs) from RHUI",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/content-rhel9.crt",
+            "sslclientkey": "/etc/pki/rhui/content-rhel9.key",
+            "sslverify": "1"
+          }
+        },
+        "redhat-rhui-client-config.repo": {
+          "rhui-client-config-server-9": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "mirrorlist": "https://rhui.REGION.aws.ce.redhat.com/pulp/mirror/protected/rhui-client-config/rhel/server/9/$basearch/os",
+            "name": "Red Hat Enterprise Linux 9 Client Configuration",
+            "sslcacert": "/etc/pki/rhui/cdn.redhat.com-chain.crt",
+            "sslclientcert": "/etc/pki/rhui/product/rhui-client-config-server-9.crt",
+            "sslclientkey": "/etc/pki/rhui/rhui-client-config-server-9.key",
+            "sslverify": "1"
+          }
+        }
       }
     }
   }

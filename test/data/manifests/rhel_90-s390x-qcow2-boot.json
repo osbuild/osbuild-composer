@@ -10825,7 +10825,7 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20220209130747-5.14.0-55.el9.s390x",
+        "id": "-20220214183313-5.14.0-55.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-55.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-55.el9.s390x",
         "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
@@ -10950,6 +10950,17 @@
       }
     },
     "default-target": "multi-user.target",
+    "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      }
+    },
     "dracut": {
       "/usr/lib/dracut/dracut.conf.d": {
         "01-dist.conf": {
@@ -11778,6 +11789,42 @@
       "sssd.service",
       "tuned.service"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "50-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "Include /etc/ssh/sshd_config.d/*.conf",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      },
+      "/etc/ssh/sshd_config.d": {
+        "50-redhat.conf": [
+          "Include /etc/crypto-policies/back-ends/opensshserver.config",
+          "SyslogFacility AUTHPRIV",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
