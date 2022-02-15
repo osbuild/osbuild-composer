@@ -179,6 +179,7 @@ func (a *architecture) addS2ImageTypes(imageTypes ...imageTypeS2) {
 			buildPipelines:   it.buildPipelines,
 			payloadPipelines: it.payloadPipelines,
 			exports:          it.exports,
+			pipelines:        it.pipelines,
 		}
 	}
 }
@@ -1300,6 +1301,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		enabledServices:  edgeImgTypeX86_64.enabledServices,
 		rpmOstree:        true,
 		bootISO:          false,
+		pipelines:        edgePipelines,
 	}
 
 	edgeBuildPkgs := []string{
@@ -1524,6 +1526,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "assembler"},
 		exports:          []string{"assembler"},
+		pipelines:        edgePipelines,
 	}
 
 	edgeOCIImgTypeAarch64 := imageTypeS2{
@@ -1543,6 +1546,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "assembler"},
 		exports:          []string{"assembler"},
+		pipelines:        edgePipelines,
 	}
 
 	x8664.addImageTypes(
