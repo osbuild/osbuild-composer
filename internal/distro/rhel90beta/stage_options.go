@@ -505,10 +505,3 @@ func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions
 		Format:   options,
 	}
 }
-
-func kernelCmdlineStageOptions(rootUUID string, kernelOptions string) *osbuild.KernelCmdlineStageOptions {
-	return &osbuild.KernelCmdlineStageOptions{
-		RootFsUUID: rootUUID,
-		KernelOpts: kernelOptions,
-	}
-}

@@ -17,3 +17,10 @@ func NewKernelCmdlineStage(options *KernelCmdlineStageOptions) *Stage {
 		Options: options,
 	}
 }
+
+func NewKernelCmdlineStageOptions(rootUUID string, kernelOptions string) *KernelCmdlineStageOptions {
+	return &KernelCmdlineStageOptions{
+		RootFsUUID: rootUUID,
+		KernelOpts: kernelOptions,
+	}
+}
