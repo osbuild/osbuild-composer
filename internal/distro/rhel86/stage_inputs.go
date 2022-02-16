@@ -2,7 +2,6 @@ package rhel86
 
 import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func bootISOMonoStageInputs() *osbuild.BootISOMonoStageInputs {
@@ -13,22 +12,6 @@ func bootISOMonoStageInputs() *osbuild.BootISOMonoStageInputs {
 	return &osbuild.BootISOMonoStageInputs{
 		RootFS: rootfsInput,
 	}
-}
-
-func rpmStageInputs(specs []rpmmd.PackageSpec) *osbuild.RPMStageInputs {
-	stageInput := new(osbuild.RPMStageInput)
-	stageInput.Type = "org.osbuild.files"
-	stageInput.Origin = "org.osbuild.source"
-	stageInput.References = pkgRefs(specs)
-	return &osbuild.RPMStageInputs{Packages: stageInput}
-}
-
-func pkgRefs(specs []rpmmd.PackageSpec) osbuild.RPMStageReferences {
-	refs := make([]string, len(specs))
-	for idx, pkg := range specs {
-		refs[idx] = pkg.Checksum
-	}
-	return refs
 }
 
 func ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePullStageInputs {

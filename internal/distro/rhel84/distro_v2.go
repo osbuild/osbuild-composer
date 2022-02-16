@@ -275,7 +275,7 @@ func (t *imageTypeS2) buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs 
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
 	p.Runner = "org.osbuild.rhel84"
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(buildPackageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(buildPackageSpecs)))
 	p.AddStage(osbuild.NewSELinuxStage(t.selinuxStageOptions()))
 	return p
 }
@@ -284,7 +284,7 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
@@ -381,7 +381,7 @@ func (t *imageTypeS2) containerTreePipeline(repos []rpmmd.RepoConfig, packages [
 	p := new(osbuild.Pipeline)
 	p.Name = "container-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
@@ -424,7 +424,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), t.rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(t.rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
@@ -486,22 +486,6 @@ func (t *imageTypeS2) bootISOPipeline() *osbuild.Pipeline {
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: t.Filename()}))
 
 	return p
-}
-
-func (t *imageTypeS2) rpmStageInputs(specs []rpmmd.PackageSpec) *osbuild.RPMStageInputs {
-	stageInput := new(osbuild.RPMStageInput)
-	stageInput.Type = "org.osbuild.files"
-	stageInput.Origin = "org.osbuild.source"
-	stageInput.References = pkgRefs(specs)
-	return &osbuild.RPMStageInputs{Packages: stageInput}
-}
-
-func pkgRefs(specs []rpmmd.PackageSpec) osbuild.RPMStageReferences {
-	refs := make([]string, len(specs))
-	for idx, pkg := range specs {
-		refs[idx] = pkg.Checksum
-	}
-	return refs
 }
 
 func (t *imageTypeS2) ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePullStageInputs {

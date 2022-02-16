@@ -107,3 +107,19 @@ func RPMPackageMetadataToSignature(pkg RPMPackageMetadata) *string {
 	}
 	return nil
 }
+
+func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
+	stageInput := new(RPMStageInput)
+	stageInput.Type = "org.osbuild.files"
+	stageInput.Origin = "org.osbuild.source"
+	stageInput.References = pkgRefs(specs)
+	return &RPMStageInputs{Packages: stageInput}
+}
+
+func pkgRefs(specs []rpmmd.PackageSpec) RPMStageReferences {
+	refs := make([]string, len(specs))
+	for idx, pkg := range specs {
+		refs[idx] = pkg.Checksum
+	}
+	return refs
+}
