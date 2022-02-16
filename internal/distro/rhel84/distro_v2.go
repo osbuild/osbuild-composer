@@ -471,7 +471,7 @@ func (t *imageTypeS2) bootISOTreePipeline(kernelVer string) *osbuild.Pipeline {
 	p.Name = "bootiso-tree"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewBootISOMonoStage(t.bootISOMonoStageOptions(kernelVer), t.bootISOMonoStageInputs()))
+	p.AddStage(osbuild.NewBootISOMonoStage(t.bootISOMonoStageOptions(kernelVer), osbuild.NewBootISOMonoStagePipelineTreeInputs("anaconda-tree")))
 	p.AddStage(osbuild.NewDiscinfoStage(t.discinfoStageOptions()))
 
 	return p
@@ -756,16 +756,6 @@ func (t *imageTypeS2) bootISOMonoStageOptions(kernelVer string) *osbuild.BootISO
 				},
 			},
 		},
-	}
-}
-
-func (t *imageTypeS2) bootISOMonoStageInputs() *osbuild.BootISOMonoStageInputs {
-	rootfsInput := new(osbuild.BootISOMonoStageInput)
-	rootfsInput.Type = "org.osbuild.tree"
-	rootfsInput.Origin = "org.osbuild.pipeline"
-	rootfsInput.References = osbuild.BootISOMonoStageReferences{"name:anaconda-tree"}
-	return &osbuild.BootISOMonoStageInputs{
-		RootFS: rootfsInput,
 	}
 }
 

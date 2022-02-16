@@ -87,3 +87,13 @@ func NewBootISOMonoStage(options *BootISOMonoStageOptions, inputs *BootISOMonoSt
 		Inputs:  inputs,
 	}
 }
+
+func NewBootISOMonoStagePipelineTreeInputs(pipeline string) *BootISOMonoStageInputs {
+	rootfsInput := new(BootISOMonoStageInput)
+	rootfsInput.Type = "org.osbuild.tree"
+	rootfsInput.Origin = "org.osbuild.pipeline"
+	rootfsInput.References = BootISOMonoStageReferences{"name:" + pipeline}
+	return &BootISOMonoStageInputs{
+		RootFS: rootfsInput,
+	}
+}

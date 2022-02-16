@@ -921,7 +921,7 @@ func bootISOTreePipeline(kernelVer, arch, vendor, product, osVersion, isolabel s
 	p.Name = "bootiso-tree"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel), bootISOMonoStageInputs()))
+	p.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel), osbuild.NewBootISOMonoStagePipelineTreeInputs("anaconda-tree")))
 	p.AddStage(osbuild.NewKickstartStage(ksOptions))
 	p.AddStage(osbuild.NewDiscinfoStage(discinfoStageOptions(arch)))
 
