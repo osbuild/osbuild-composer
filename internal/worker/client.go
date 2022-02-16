@@ -72,11 +72,11 @@ func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string,
 	}
 
 	requester := &http.Client{}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if conf != nil {
-		requester.Transport = &http.Transport{
-			TLSClientConfig: conf,
-		}
+		transport.TLSClientConfig = conf
 	}
+	requester.Transport = transport
 
 	return &Client{server, requester, offlineToken, oAuthURL, nil, nil, &sync.Mutex{}}, nil
 }
