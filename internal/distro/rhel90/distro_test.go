@@ -287,6 +287,7 @@ func TestImageType_Name(t *testing.T) {
 				"edge-commit",
 				"edge-container",
 				"tar",
+				"image-installer",
 			},
 		},
 		{
@@ -479,6 +480,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-simplified-installer",
 				"edge-raw-image",
 				"tar",
+				"image-installer",
 			},
 		},
 		{
