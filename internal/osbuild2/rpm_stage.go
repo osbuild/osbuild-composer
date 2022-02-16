@@ -1,5 +1,9 @@
 package osbuild2
 
+import (
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+)
+
 type RPMStageOptions struct {
 	// Array of GPG key contents to import
 	GPGKeys []string `json:"gpgkeys,omitempty"`
@@ -70,3 +74,36 @@ type RPMPackageMetadata struct {
 }
 
 func (RPMStageMetadata) isStageMetadata() {}
+
+func OSBuildMetadataToRPMs(stagesMetadata map[string]StageMetadata) []rpmmd.RPM {
+	rpms := make([]rpmmd.RPM, 0)
+	for _, md := range stagesMetadata {
+		switch metadata := md.(type) {
+		case *RPMStageMetadata:
+			for _, pkg := range metadata.Packages {
+				rpms = append(rpms, rpmmd.RPM{
+					Type:      "rpm",
+					Name:      pkg.Name,
+					Epoch:     pkg.Epoch,
+					Version:   pkg.Version,
+					Release:   pkg.Release,
+					Arch:      pkg.Arch,
+					Sigmd5:    pkg.SigMD5,
+					Signature: RPMPackageMetadataToSignature(pkg),
+				})
+			}
+		default:
+			continue
+		}
+	}
+	return rpms
+}
+
+func RPMPackageMetadataToSignature(pkg RPMPackageMetadata) *string {
+	if pkg.SigGPG != "" {
+		return &pkg.SigGPG
+	} else if pkg.SigPGP != "" {
+		return &pkg.SigPGP
+	}
+	return nil
+}

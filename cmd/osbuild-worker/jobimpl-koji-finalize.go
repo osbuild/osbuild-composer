@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -127,7 +128,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// collect packages from stages in build pipelines
 		for _, plName := range buildArgs.PipelineNames.Build {
 			buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-			buildRPMs = append(buildRPMs, rpmmd.OSBuildMetadataToRPMs(buildPipelineMd)...)
+			buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
 		}
 		// this dedupe is usually not necessary since we generally only have
 		// one rpm stage in one build pipeline, but it's not invalid to have
@@ -155,7 +156,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		imageRPMs := make([]rpmmd.RPM, 0)
 		for _, plName := range buildArgs.PipelineNames.Payload {
 			payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-			imageRPMs = append(imageRPMs, rpmmd.OSBuildMetadataToRPMs(payloadPipelineMd)...)
+			imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
 		}
 
 		// deduplicate
