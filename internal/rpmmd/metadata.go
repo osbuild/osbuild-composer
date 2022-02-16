@@ -2,8 +2,6 @@ package rpmmd
 
 import (
 	"fmt"
-
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 type RPM struct {
@@ -24,39 +22,6 @@ func (r RPM) String() string {
 		epoch = *r.Epoch + ":"
 	}
 	return fmt.Sprintf("%s-%s%s-%s.%s", r.Name, epoch, r.Version, r.Release, r.Arch)
-}
-
-func OSBuildMetadataToRPMs(stagesMetadata map[string]osbuild.StageMetadata) []RPM {
-	rpms := make([]RPM, 0)
-	for _, md := range stagesMetadata {
-		switch metadata := md.(type) {
-		case *osbuild.RPMStageMetadata:
-			for _, pkg := range metadata.Packages {
-				rpms = append(rpms, RPM{
-					Type:      "rpm",
-					Name:      pkg.Name,
-					Epoch:     pkg.Epoch,
-					Version:   pkg.Version,
-					Release:   pkg.Release,
-					Arch:      pkg.Arch,
-					Sigmd5:    pkg.SigMD5,
-					Signature: PackageMetadataToSignature(pkg),
-				})
-			}
-		default:
-			continue
-		}
-	}
-	return rpms
-}
-
-func PackageMetadataToSignature(pkg osbuild.RPMPackageMetadata) *string {
-	if pkg.SigGPG != "" {
-		return &pkg.SigGPG
-	} else if pkg.SigPGP != "" {
-		return &pkg.SigPGP
-	}
-	return nil
 }
 
 // Deduplicate a list of RPMs based on NEVRA string
