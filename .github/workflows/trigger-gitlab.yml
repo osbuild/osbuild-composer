@@ -34,6 +34,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           route: GET /repos/${{ github.repository }}/pulls
+          per_page: 100
 
       - name: Checkout branch
         run: |
