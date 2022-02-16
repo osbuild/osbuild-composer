@@ -168,7 +168,7 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 	p.Name = "os"
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 	if pt.BootPartition() == nil {
@@ -706,7 +706,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
 	p.Runner = "org.osbuild.rhel90"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(buildPackageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(buildPackageSpecs)))
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(true)))
 	return p
 }
@@ -716,7 +716,7 @@ func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackag
 	p.Name = "os"
 	p.Build = "name:build"
 	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
@@ -797,7 +797,7 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	p.Build = "name:build"
 
 	packages = append(packages, bpPackages...)
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
@@ -914,7 +914,7 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 	p := new(osbuild.Pipeline)
 	p.Name = "container-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
@@ -968,7 +968,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), rpmStageInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	for _, stage := range payloadStages {
 		p.AddStage(stage)
 	}
