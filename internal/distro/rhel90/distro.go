@@ -1260,7 +1260,7 @@ func newDistro(distroName string) distro.Distro {
 		payloadPipelines: []string{"os", "root-tar"},
 		exports:          []string{"root-tar"},
 	}
-	tarInstallerImgTypeX86_64 := imageType{
+	imageInstaller := imageType{
 		name:     "image-installer",
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
@@ -1281,7 +1281,7 @@ func newDistro(distroName string) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
