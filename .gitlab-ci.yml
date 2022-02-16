@@ -18,6 +18,8 @@ stages:
     paths:
       - journal-log.gpg
       - ci-artifacts
+      - "*.repo"
+      - COMPOSER_NVR
     when: always
 
 .terraform:
@@ -57,10 +59,6 @@ RPM:
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
-  artifacts:
-    paths:
-      - journal-log.gpg
-    when: always
   parallel:
     matrix:
       - RUNNER:
@@ -86,9 +84,6 @@ Build -tests RPM for RHEL:
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
-  artifacts:
-    paths:
-      - journal-log.gpg
   parallel:
     matrix:
       - <<: *RPM_RUNNERS_RHEL
@@ -165,11 +160,6 @@ Base:
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - "*.repo"
-    when: always
 
 Manifests:
   stage: test
@@ -186,11 +176,6 @@ Manifests:
       - RUNNER:
           - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - "*.repo"
-    when: always
 
 Regression:
   stage: test
@@ -219,12 +204,6 @@ Regression:
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - "*.repo"
-    when: always
-
 
 Image Tests:
   stage: test
@@ -244,12 +223,6 @@ Image Tests:
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - "*.repo"
-    when: always
-
 
 Test Case Generation:
   stage: test
@@ -264,11 +237,6 @@ Test Case Generation:
       - RUNNER:
           - aws/fedora-34-x86_64
         INTERNAL_NETWORK: ["true"]
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - "*.repo"
-    when: always
 
 OSTree:
   stage: test

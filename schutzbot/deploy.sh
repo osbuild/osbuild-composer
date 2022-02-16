@@ -126,6 +126,9 @@ retry sudo dnf -y upgrade selinux-policy
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
 
+# Save osbuild-composer NVR to a file to be used as CI artifact
+rpm -q osbuild-composer > COMPOSER_NVR
+
 if [ "${NIGHTLY:=false}" == "true" ]; then
     # check if we've installed the osbuild-composer RPM from the nightly tree
     # under test or happen to install a newer version from one of the S3 repositories
