@@ -61,6 +61,8 @@ func validateKojiResult(result *worker.OSBuildKojiJobResult, jobID string) {
 		reason := "osbuild job was unsuccessful"
 		logWithId.Errorf("osbuild job failed: %s", reason)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason)
+	} else {
+		logWithId.Infof("osbuild-koji job succeeded")
 	}
 }
 

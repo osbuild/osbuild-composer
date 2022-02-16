@@ -62,6 +62,8 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 		logWithId.Errorf("osbuild job failed: %s", reason)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason)
 		return
+	} else {
+		logWithId.Infof("osbuild job succeeded")
 	}
 	result.Success = true
 }
