@@ -39,3 +39,14 @@ func NewOSTreePullStage(options *OSTreePullStageOptions, inputs *OSTreePullStage
 		Options: options,
 	}
 }
+
+func NewOstreePullStageInputs(origin, source, commitRef string) *OSTreePullStageInputs {
+	pullStageInput := new(OSTreePullStageInput)
+	pullStageInput.Type = "org.osbuild.ostree"
+	pullStageInput.Origin = origin
+
+	inputRefs := make(map[string]OSTreePullStageReference)
+	inputRefs[source] = OSTreePullStageReference{Ref: commitRef}
+	pullStageInput.References = inputRefs
+	return &OSTreePullStageInputs{Commits: pullStageInput}
+}

@@ -392,7 +392,7 @@ func (t *imageTypeS2) containerTreePipeline(repos []rpmmd.RepoConfig, packages [
 
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: "/var/www/html/repo"},
-		t.ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
 	))
 	return p
 }
@@ -428,7 +428,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		t.ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 	p.AddStage(osbuild.NewBuildstampStage(t.buildStampStageOptions()))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
@@ -486,17 +486,6 @@ func (t *imageTypeS2) bootISOPipeline() *osbuild.Pipeline {
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: t.Filename()}))
 
 	return p
-}
-
-func (t *imageTypeS2) ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePullStageInputs {
-	pullStageInput := new(osbuild.OSTreePullStageInput)
-	pullStageInput.Type = "org.osbuild.ostree"
-	pullStageInput.Origin = origin
-
-	inputRefs := make(map[string]osbuild.OSTreePullStageReference)
-	inputRefs[source] = osbuild.OSTreePullStageReference{Ref: commitRef}
-	pullStageInput.References = inputRefs
-	return &osbuild.OSTreePullStageInputs{Commits: pullStageInput}
 }
 
 func (t *imageTypeS2) rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {

@@ -587,7 +587,7 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath},
-		ostreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
 	))
 
 	// make nginx log directory world writeable, otherwise nginx can't start in
@@ -626,7 +626,7 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
 	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	stages = append(stages, osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 
 	return stages
@@ -794,7 +794,7 @@ func ostreeDeployPipeline(
 	p.AddStage(osbuild.OSTreeInitFsStage())
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: remote},
-		ostreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
 	))
 	p.AddStage(osbuild.NewOSTreeOsInitStage(
 		&osbuild.OSTreeOsInitStageOptions{
