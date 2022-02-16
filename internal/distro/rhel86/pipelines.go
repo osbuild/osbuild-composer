@@ -716,12 +716,12 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 	}
 
 	inputName := "root-tree"
-	copyInputs := copyPipelineTreeInputs(inputName, "efiboot-tree")
+	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, "efiboot-tree")
 	copyOptions, copyDevices, copyMounts := copyFSTreeOptions(inputName, "efiboot-tree", &pt, loopback)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
 	inputName = "coi"
-	copyInputs = copyPipelineTreeInputs(inputName, "coi-tree")
+	copyInputs = osbuild.NewCopyStagePipelineTreeInputs(inputName, "coi-tree")
 	p.AddStage(osbuild.NewCopyStageSimple(
 		&osbuild.CopyStageOptions{
 			Paths: []osbuild.CopyStagePath{
@@ -739,7 +739,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 	))
 
 	inputName = "efi-tree"
-	copyInputs = copyPipelineTreeInputs(inputName, "efiboot-tree")
+	copyInputs = osbuild.NewCopyStagePipelineTreeInputs(inputName, "efiboot-tree")
 	p.AddStage(osbuild.NewCopyStageSimple(
 		&osbuild.CopyStageOptions{
 			Paths: []osbuild.CopyStagePath{
@@ -958,7 +958,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 
 	inputName := "root-tree"
 	copyOptions, copyDevices, copyMounts := copyFSTreeOptions(inputName, inputPipelineName, pt, loopback)
-	copyInputs := copyPipelineTreeInputs(inputName, inputPipelineName)
+	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 	p.AddStage(bootloaderInstStage(outputFilename, pt, arch, kernelVer, copyDevices, copyMounts, loopback))
 	return p
