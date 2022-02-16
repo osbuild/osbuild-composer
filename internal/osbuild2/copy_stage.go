@@ -58,3 +58,11 @@ func NewCopyStageSimple(options *CopyStageOptions, inputs CopyStageInputsNew) *S
 		Inputs:  stageInputs,
 	}
 }
+
+func NewCopyStagePipelineTreeInputs(inputName, inputPipeline string) *CopyStageInputs {
+	treeInput := CopyStageInput{}
+	treeInput.Type = "org.osbuild.tree"
+	treeInput.Origin = "org.osbuild.pipeline"
+	treeInput.References = []string{"name:" + inputPipeline}
+	return &CopyStageInputs{inputName: treeInput}
+}

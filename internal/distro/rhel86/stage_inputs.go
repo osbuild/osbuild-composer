@@ -50,15 +50,6 @@ func xorrisofsStageInputs(pipeline string) *osbuild.XorrisofsStageInputs {
 	return &osbuild.XorrisofsStageInputs{Tree: input}
 }
 
-func copyPipelineTreeInputs(name, inputPipeline string) *osbuild.CopyStageInputs {
-	inputName := name
-	treeInput := osbuild.CopyStageInput{}
-	treeInput.Type = "org.osbuild.tree"
-	treeInput.Origin = "org.osbuild.pipeline"
-	treeInput.References = []string{"name:" + inputPipeline}
-	return &osbuild.CopyStageInputs{inputName: treeInput}
-}
-
 func qemuStageInputs(stage, file string) *osbuild.QEMUStageInputs {
 	stageKey := "name:" + stage
 	ref := map[string]osbuild.QEMUFile{
