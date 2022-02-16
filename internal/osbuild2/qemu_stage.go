@@ -105,3 +105,17 @@ func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(qemuStageOptions(options))
 }
+
+func NewQemuStagePipelineFilesInputs(stage, file string) *QEMUStageInputs {
+	stageKey := "name:" + stage
+	ref := map[string]QEMUFile{
+		stageKey: {
+			File: file,
+		},
+	}
+	input := new(QEMUStageInput)
+	input.Type = "org.osbuild.files"
+	input.Origin = "org.osbuild.pipeline"
+	input.References = ref
+	return &QEMUStageInputs{Image: input}
+}
