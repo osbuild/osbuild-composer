@@ -55,3 +55,11 @@ func NewXorrisofsStage(options *XorrisofsStageOptions, inputs *XorrisofsStageInp
 		Inputs:  inputs,
 	}
 }
+
+func NewXorrisofsStagePipelineTreeInputs(pipeline string) *XorrisofsStageInputs {
+	input := new(XorrisofsStageInput)
+	input.Type = "org.osbuild.tree"
+	input.Origin = "org.osbuild.pipeline"
+	input.References = XorrisofsStageReferences{"name:" + pipeline}
+	return &XorrisofsStageInputs{Tree: input}
+}
