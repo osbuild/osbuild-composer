@@ -42,14 +42,6 @@ func ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePull
 	return &osbuild.OSTreePullStageInputs{Commits: pullStageInput}
 }
 
-func xorrisofsStageInputs() *osbuild.XorrisofsStageInputs {
-	input := new(osbuild.XorrisofsStageInput)
-	input.Type = "org.osbuild.tree"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = osbuild.XorrisofsStageReferences{"name:bootiso-tree"}
-	return &osbuild.XorrisofsStageInputs{Tree: input}
-}
-
 func qemuStageInputs(stage, file string) *osbuild.QEMUStageInputs {
 	stageKey := "name:" + stage
 	ref := map[string]osbuild.QEMUFile{

@@ -936,7 +936,7 @@ func bootISOPipeline(filename, isolabel, arch string, isolinux bool) *osbuild.Pi
 	p.Name = "bootiso"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, isolabel, arch, isolinux), xorrisofsStageInputs("bootiso-tree")))
+	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, isolabel, arch, isolinux), osbuild.NewXorrisofsStagePipelineTreeInputs("bootiso-tree")))
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: filename}))
 
 	return p

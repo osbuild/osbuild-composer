@@ -482,7 +482,7 @@ func (t *imageTypeS2) bootISOPipeline() *osbuild.Pipeline {
 	p.Name = "assembler"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewXorrisofsStage(t.xorrisofsStageOptions(), t.xorrisofsStageInputs()))
+	p.AddStage(osbuild.NewXorrisofsStage(t.xorrisofsStageOptions(), osbuild.NewXorrisofsStagePipelineTreeInputs("bootiso-tree")))
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: t.Filename()}))
 
 	return p
@@ -804,12 +804,4 @@ func (t *imageTypeS2) xorrisofsStageOptions() *osbuild.XorrisofsStageOptions {
 		EFI:          "images/efiboot.img",
 		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
 	}
-}
-
-func (t *imageTypeS2) xorrisofsStageInputs() *osbuild.XorrisofsStageInputs {
-	input := new(osbuild.XorrisofsStageInput)
-	input.Type = "org.osbuild.tree"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = osbuild.XorrisofsStageReferences{"name:bootiso-tree"}
-	return &osbuild.XorrisofsStageInputs{Tree: input}
 }
