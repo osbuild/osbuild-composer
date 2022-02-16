@@ -41,17 +41,3 @@ func ostreePullStageInputs(origin, source, commitRef string) *osbuild.OSTreePull
 	pullStageInput.References = inputRefs
 	return &osbuild.OSTreePullStageInputs{Commits: pullStageInput}
 }
-
-func qemuStageInputs(stage, file string) *osbuild.QEMUStageInputs {
-	stageKey := "name:" + stage
-	ref := map[string]osbuild.QEMUFile{
-		stageKey: {
-			File: file,
-		},
-	}
-	input := new(osbuild.QEMUStageInput)
-	input.Type = "org.osbuild.files"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = ref
-	return &osbuild.QEMUStageInputs{Image: input}
-}

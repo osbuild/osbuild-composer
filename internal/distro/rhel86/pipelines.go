@@ -1039,7 +1039,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 	p.Name = format
 	p.Build = "name:build"
 
-	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), qemuStageInputs(inputPipelineName, inputFilename))
+	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), osbuild.NewQemuStagePipelineFilesInputs(inputPipelineName, inputFilename))
 	p.AddStage(qemuStage)
 	return p
 }
