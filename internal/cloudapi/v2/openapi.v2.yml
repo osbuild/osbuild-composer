@@ -847,7 +847,7 @@ components:
           type: string
           example: '/var'
         min_size:
-          type: integer
+          x-go-type: uint64
           example: 1024
     OSTree:
       type: object
