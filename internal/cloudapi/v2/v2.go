@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -40,7 +41,9 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	AWSBucket string
+	AWSBucket            string
+	TenantProviderFields []string
+	JWTEnabled           bool
 }
 
 type apiHandlers struct {
@@ -163,6 +166,18 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	err := ctx.Bind(&request)
 	if err != nil {
 		return err
+	}
+
+	// channel is empty if JWT is not enabled
+	var channel string
+	if h.server.config.JWTEnabled {
+		tenant, err := auth.GetFromClaims(ctx.Request().Context(), h.server.config.TenantProviderFields)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorTenantNotFound, err)
+		}
+
+		// prefix the tenant to prevent collisions if support for specifying channels in a request is ever added
+		channel = "org-" + tenant
 	}
 
 	distribution := h.server.distros.GetDistro(request.Distribution)
@@ -469,12 +484,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var id uuid.UUID
 	if request.Koji != nil {
-		id, err = enqueueKojiCompose(h.server.workers, uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, distribution, bp, manifestSeed, irs, "")
+		id, err = enqueueKojiCompose(h.server.workers, uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, distribution, bp, manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}
 	} else {
-		id, err = enqueueCompose(h.server.workers, distribution, bp, manifestSeed, irs, "")
+		id, err = enqueueCompose(h.server.workers, distribution, bp, manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}

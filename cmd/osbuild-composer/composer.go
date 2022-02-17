@@ -55,7 +55,9 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	}
 
 	workerConfig := worker.Config{
-		BasePath: config.Worker.BasePath,
+		BasePath:             config.Worker.BasePath,
+		JWTEnabled:           config.Worker.EnableJWT,
+		TenantProviderFields: config.Worker.JWTTenantProviderFields,
 	}
 
 	var err error
@@ -125,7 +127,8 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
 	config := v2.ServerConfig{
 		AWSBucket:            c.config.Koji.AWS.Bucket,
-		TenantProviderFields: c.config.CloudAPI.JWT.TenantProviderFields,
+		JWTEnabled:           c.config.Koji.EnableJWT,
+		TenantProviderFields: c.config.Koji.JWTTenantProviderFields,
 	}
 
 	c.api = cloudapi.NewServer(c.workers, c.distros, config)

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 )
 
@@ -40,6 +41,7 @@ const (
 	ErrorInvalidNumberOfImageBuilds   ServiceErrorCode = 25
 	ErrorInvalidJobType               ServiceErrorCode = 26
 	ErrorInvalidOSTreeParams          ServiceErrorCode = 27
+	ErrorTenantNotFound               ServiceErrorCode = 28
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -104,6 +106,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidJobType, http.StatusNotFound, "Requested job has invalid type"},
 		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
+		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},

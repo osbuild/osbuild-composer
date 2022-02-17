@@ -1265,6 +1265,7 @@ enable_jwt = true
 jwt_keys_urls = ["https://localhost:8080/certs"]
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
 jwt_acl_file = ""
+jwt_tenant_provider_fields = ["rh-org-id"]
 [worker]
 pg_host = "localhost"
 pg_port = "5432"
@@ -1278,6 +1279,7 @@ enable_mtls = false
 enable_jwt = true
 jwt_keys_urls = ["https://localhost:8080/certs"]
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_tenant_provider_fields = ["rh-org-id"]
 EOF
 
 cat <<EOF | sudo tee "/etc/osbuild-worker/token"
