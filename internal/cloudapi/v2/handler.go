@@ -187,7 +187,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			fsCustomizations = append(fsCustomizations,
 				blueprint.FilesystemCustomization{
 					Mountpoint: f.Mountpoint,
-					MinSize:    uint64(f.MinSize),
+					MinSize:    f.MinSize,
 				},
 			)
 		}
