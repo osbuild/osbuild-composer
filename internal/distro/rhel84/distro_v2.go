@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 
@@ -21,23 +22,24 @@ const (
 type pipelinesFunc func(t *imageTypeS2, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
 type imageTypeS2 struct {
-	arch             *architecture
-	name             string
-	filename         string
-	mimeType         string
-	packageSets      map[string]rpmmd.PackageSet
-	enabledServices  []string
-	disabledServices []string
-	defaultTarget    string
-	kernelOptions    string
-	bootable         bool
-	bootISO          bool
-	rpmOstree        bool
-	defaultSize      uint64
-	buildPipelines   []string
-	payloadPipelines []string
-	exports          []string
-	pipelines        pipelinesFunc
+	arch                    *architecture
+	name                    string
+	filename                string
+	mimeType                string
+	packageSets             map[string]rpmmd.PackageSet
+	enabledServices         []string
+	disabledServices        []string
+	defaultTarget           string
+	kernelOptions           string
+	bootable                bool
+	bootISO                 bool
+	rpmOstree               bool
+	defaultSize             uint64
+	buildPipelines          []string
+	payloadPipelines        []string
+	exports                 []string
+	partitionTableGenerator func(imageSize uint64, arch distro.Arch, rng *rand.Rand) disk.PartitionTable
+	pipelines               pipelinesFunc
 }
 
 func (t *imageTypeS2) Arch() distro.Arch {
@@ -151,6 +153,11 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
+
+	if err := t.checkOptions(c, options); err != nil {
+		return distro.Manifest{}, err
+	}
+
 	source := rand.NewSource(seed)
 	// math/rand is good enough in this case
 	/* #nosec G404 */
@@ -220,40 +227,6 @@ func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostr
 }
 
 func edgePipelines(t *imageTypeS2, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-
-	if t.bootISO {
-		if options.OSTree.Parent == "" {
-			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
-		}
-		if t.name == "rhel-edge-installer" {
-			allowed := []string{"User", "Group"}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
-			}
-		}
-	}
-
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
-		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
-	}
-
-	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
-	}
-
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		if m.Mountpoint != "/" {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
-		}
-	}
-
-	if len(invalidMountpoints) > 0 {
-		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
-	}
-
 	pipelines := make([]osbuild.Pipeline, 0)
 
 	pipelines = append(pipelines, *t.buildPipeline(repos, packageSetSpecs["build-packages"]))
@@ -727,4 +700,59 @@ func (t *imageTypeS2) xorrisofsStageOptions() *osbuild.XorrisofsStageOptions {
 		EFI:          "images/efiboot.img",
 		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
 	}
+}
+
+func (t *imageTypeS2) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
+	if t.bootISO {
+		if options.OSTree.Parent == "" {
+			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
+		}
+		if t.name == "rhel-edge-installer" {
+			allowed := []string{"User", "Group"}
+			if err := customizations.CheckAllowed(allowed...); err != nil {
+				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			}
+		}
+	}
+
+	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
+		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
+	}
+
+	mountpoints := customizations.GetFilesystems()
+
+	if mountpoints != nil && t.rpmOstree {
+		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	}
+
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if m.Mountpoint != "/" {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
+	return nil
+}
+
+func (t *imageTypeS2) prependKernelCmdlineStage(pipeline *osbuild.Pipeline, pt *disk.PartitionTable) *osbuild.Pipeline {
+	if t.arch.name == distro.S390xArchName {
+		rootFs := pt.FindMountable("/")
+		if rootFs == nil {
+			panic("s390x image must have a root partition, this is a programming error")
+		}
+		kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFs.GetFSSpec().UUID, t.kernelOptions))
+		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
+	}
+	return pipeline
+}
+
+func (t *imageTypeS2) getPartitionTable(options distro.ImageOptions, rng *rand.Rand) (*disk.PartitionTable, error) {
+	basePartitionTable := t.partitionTableGenerator(options.Size, t.Arch(), rng)
+	pt, err := disk.NewPartitionTable(&basePartitionTable, nil, options.Size, false, rng)
+	return pt, err
 }

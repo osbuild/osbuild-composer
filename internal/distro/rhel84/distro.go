@@ -7,6 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"sort"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -163,23 +164,24 @@ func (a *architecture) addImageTypes(imageTypes ...imageType) {
 func (a *architecture) addS2ImageTypes(imageTypes ...imageTypeS2) {
 	for _, it := range imageTypes {
 		a.imageTypes[it.name] = &imageTypeS2{
-			arch:             a,
-			name:             it.name,
-			filename:         it.filename,
-			mimeType:         it.mimeType,
-			packageSets:      it.packageSets,
-			enabledServices:  it.enabledServices,
-			disabledServices: it.disabledServices,
-			defaultTarget:    it.defaultTarget,
-			kernelOptions:    it.kernelOptions,
-			bootable:         it.bootable,
-			rpmOstree:        it.rpmOstree,
-			defaultSize:      it.defaultSize,
-			bootISO:          it.bootISO,
-			buildPipelines:   it.buildPipelines,
-			payloadPipelines: it.payloadPipelines,
-			exports:          it.exports,
-			pipelines:        it.pipelines,
+			arch:                    a,
+			name:                    it.name,
+			filename:                it.filename,
+			mimeType:                it.mimeType,
+			packageSets:             it.packageSets,
+			enabledServices:         it.enabledServices,
+			disabledServices:        it.disabledServices,
+			defaultTarget:           it.defaultTarget,
+			kernelOptions:           it.kernelOptions,
+			bootable:                it.bootable,
+			rpmOstree:               it.rpmOstree,
+			defaultSize:             it.defaultSize,
+			bootISO:                 it.bootISO,
+			buildPipelines:          it.buildPipelines,
+			payloadPipelines:        it.payloadPipelines,
+			exports:                 it.exports,
+			pipelines:               it.pipelines,
+			partitionTableGenerator: it.partitionTableGenerator,
 		}
 	}
 }
@@ -333,6 +335,10 @@ func (d *distribution) ModulePlatformID() string {
 
 func (d *distribution) OSTreeRef() string {
 	return d.ostreeRef
+}
+
+func (d *distribution) isRHEL() bool {
+	return strings.HasPrefix(d.name, "rhel")
 }
 
 func sources(packages []rpmmd.PackageSpec) *osbuild.Sources {
@@ -1549,6 +1555,27 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		pipelines:        edgePipelines,
 	}
 
+	// This image type does not take the disabled / enabled service definitions
+	// from this structure definition, but rather from distro.ImageConfig instance
+	// defined in the gcePipelines() function. The same applies to the default
+	// target.
+	gceImgType := imageTypeS2{
+		name:     "gce",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": getGcePackageSet(),
+		},
+		kernelOptions:           "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		bootable:                true,
+		defaultSize:             20 * GigaByte,
+		pipelines:               gceByosPipelines,
+		buildPipelines:          []string{"build"},
+		payloadPipelines:        []string{"os", "image", "archive"},
+		exports:                 []string{"archive"},
+		partitionTableGenerator: defaultPartitionTable,
+	}
+
 	x8664.addImageTypes(
 		amiImgType,
 		qcow2ImageType,
@@ -1557,6 +1584,8 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		vhdImgType,
 		vmdkImgType,
 	)
+
+	x8664.addS2ImageTypes(gceImgType)
 
 	if !isCentos {
 		x8664.addImageTypes(edgeImgTypeX86_64)
