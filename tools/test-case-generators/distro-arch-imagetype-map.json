@@ -95,6 +95,7 @@
     "rhel-84": {
         "x86_64": [
             "ami",
+            "gce",
             "openstack",
             "tar",
             "qcow2",

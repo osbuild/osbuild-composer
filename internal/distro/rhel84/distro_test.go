@@ -77,6 +77,12 @@ func TestFilenameFromType(t *testing.T) {
 			want1: "application/x-vmdk",
 		},
 		{
+			name:  "gce",
+			args:  args{"gce"},
+			want:  "image.tar.gz",
+			want1: "application/gzip",
+		},
+		{
 			name:    "invalid-output-type",
 			args:    args{"foobar"},
 			wantErr: true,
@@ -440,7 +446,8 @@ func TestDistro_ManifestError(t *testing.T) {
 			imgOpts := distro.ImageOptions{
 				Size: imgType.Size(0),
 			}
-			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
+			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, 0)
 			if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
 			} else if imgTypeName == "rhel-edge-installer" {
@@ -467,6 +474,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"tar",
 				"vhd",
 				"vmdk",
+				"gce",
 			},
 			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container", "rhel-edge-installer"},
 		},
@@ -615,7 +623,8 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 					imgOpts := distro.ImageOptions{
 						Size: imgType.Size(0),
 					}
-					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
+					testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, 0)
 					if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
 						assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 					} else {
@@ -651,7 +660,8 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 					imgOpts := distro.ImageOptions{
 						Size: imgType.Size(0),
 					}
-					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, nil, 0)
+					testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+					_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, 0)
 					if imgTypeName == "rhel-edge-commit" || imgTypeName == "rhel-edge-container" {
 						assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 					} else {
