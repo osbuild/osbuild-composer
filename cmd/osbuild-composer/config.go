@@ -19,15 +19,16 @@ type ComposerConfigFile struct {
 }
 
 type KojiAPIConfig struct {
-	AllowedDomains []string  `toml:"allowed_domains"`
-	CA             string    `toml:"ca"`
-	EnableTLS      bool      `toml:"enable_tls"`
-	EnableMTLS     bool      `toml:"enable_mtls"`
-	EnableJWT      bool      `toml:"enable_jwt"`
-	JWTKeysURLs    []string  `toml:"jwt_keys_urls"`
-	JWTKeysCA      string    `toml:"jwt_ca_file"`
-	JWTACLFile     string    `toml:"jwt_acl_file"`
-	AWS            AWSConfig `toml:"aws_config"`
+	AllowedDomains          []string  `toml:"allowed_domains"`
+	CA                      string    `toml:"ca"`
+	EnableTLS               bool      `toml:"enable_tls"`
+	EnableMTLS              bool      `toml:"enable_mtls"`
+	EnableJWT               bool      `toml:"enable_jwt"`
+	JWTKeysURLs             []string  `toml:"jwt_keys_urls"`
+	JWTKeysCA               string    `toml:"jwt_ca_file"`
+	JWTACLFile              string    `toml:"jwt_acl_file"`
+	JWTTenantProviderFields []string  `toml:"jwt_tenant_provider_fields"`
+	AWS                     AWSConfig `toml:"aws_config"`
 }
 
 type AWSConfig struct {
@@ -35,24 +36,25 @@ type AWSConfig struct {
 }
 
 type WorkerAPIConfig struct {
-	AllowedDomains    []string `toml:"allowed_domains"`
-	CA                string   `toml:"ca"`
-	RequestJobTimeout string   `toml:"request_job_timeout"`
-	BasePath          string   `toml:"base_path"`
-	EnableArtifacts   bool     `toml:"enable_artifacts"`
-	PGHost            string   `toml:"pg_host" env:"PGHOST"`
-	PGPort            string   `toml:"pg_port" env:"PGPORT"`
-	PGDatabase        string   `toml:"pg_database" env:"PGDATABASE"`
-	PGUser            string   `toml:"pg_user" env:"PGUSER"`
-	PGPassword        string   `toml:"pg_password" env:"PGPASSWORD"`
-	PGSSLMode         string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
-	PGMaxConns        int      `toml:"pg_max_conns" env:"PGMAXCONNS"`
-	EnableTLS         bool     `toml:"enable_tls"`
-	EnableMTLS        bool     `toml:"enable_mtls"`
-	EnableJWT         bool     `toml:"enable_jwt"`
-	JWTKeysURLs       []string `toml:"jwt_keys_urls"`
-	JWTKeysCA         string   `toml:"jwt_ca_file"`
-	JWTACLFile        string   `toml:"jwt_acl_file"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	CA                      string   `toml:"ca"`
+	RequestJobTimeout       string   `toml:"request_job_timeout"`
+	BasePath                string   `toml:"base_path"`
+	EnableArtifacts         bool     `toml:"enable_artifacts"`
+	PGHost                  string   `toml:"pg_host" env:"PGHOST"`
+	PGPort                  string   `toml:"pg_port" env:"PGPORT"`
+	PGDatabase              string   `toml:"pg_database" env:"PGDATABASE"`
+	PGUser                  string   `toml:"pg_user" env:"PGUSER"`
+	PGPassword              string   `toml:"pg_password" env:"PGPASSWORD"`
+	PGSSLMode               string   `toml:"pg_ssl_mode" env:"PGSSLMODE"`
+	PGMaxConns              int      `toml:"pg_max_conns" env:"PGMAXCONNS"`
+	EnableTLS               bool     `toml:"enable_tls"`
+	EnableMTLS              bool     `toml:"enable_mtls"`
+	EnableJWT               bool     `toml:"enable_jwt"`
+	JWTKeysURLs             []string `toml:"jwt_keys_urls"`
+	JWTKeysCA               string   `toml:"jwt_ca_file"`
+	JWTACLFile              string   `toml:"jwt_acl_file"`
+	JWTTenantProviderFields []string `toml:"jwt_tenant_provider_fields"`
 }
 
 type WeldrAPIConfig struct {

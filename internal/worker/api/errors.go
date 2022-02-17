@@ -22,6 +22,7 @@ const (
 	ErrorNotAcceptable        ServiceErrorCode = 13
 	ErrorErrorNotFound        ServiceErrorCode = 14
 	ErrorInvalidJobType       ServiceErrorCode = 15
+	ErrorTenantNotFound       ServiceErrorCode = 16
 	// ErrorTokenNotFound ServiceErrorCode = 6
 
 	// internal errors
@@ -74,6 +75,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
 		serviceError{ErrorErrorNotFound, http.StatusNotFound, "Error with given id not found"},
 		serviceError{ErrorInvalidJobType, http.StatusBadRequest, "Requested job type cannot be dequeued"},
+		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},

@@ -25,14 +25,15 @@ import (
 func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1"})
+	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", TenantProviderFields: []string{"rh-org-id"}})
 
 	distros, err := distro_mock.NewDefaultRegistry()
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
 	config := v2.ServerConfig{
-		AWSBucket: "image-builder.service",
+		AWSBucket:            "image-builder.service",
+		TenantProviderFields: []string{"rh-org-id"},
 	}
 	v2Server := v2.NewServer(workerServer, distros, config)
 	require.NotNil(t, v2Server)

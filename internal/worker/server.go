@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
@@ -45,9 +46,11 @@ var ErrJobNotRunning = errors.New("job isn't running")
 var ErrInvalidJobType = errors.New("job has invalid type")
 
 type Config struct {
-	ArtifactsDir      string
-	RequestJobTimeout time.Duration
-	BasePath          string
+	ArtifactsDir         string
+	RequestJobTimeout    time.Duration
+	BasePath             string
+	JWTEnabled           bool
+	TenantProviderFields []string
 }
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Server {
@@ -554,7 +557,19 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types, []string{""})
+	// channel is empty if JWT is not enabled
+	var channel string
+	if h.server.config.JWTEnabled {
+		tenant, err := auth.GetFromClaims(ctx.Request().Context(), h.server.config.TenantProviderFields)
+		if err != nil {
+			return api.HTTPErrorWithInternal(api.ErrorTenantNotFound, err)
+		}
+
+		// prefix the tenant to prevent collisions if support for specifying channels in a request is ever added
+		channel = "org-" + tenant
+	}
+
+	jobId, jobToken, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types, []string{channel})
 	if err != nil {
 		if err == jobqueue.ErrDequeueTimeout {
 			return ctx.JSON(http.StatusNoContent, api.ObjectReference{
@@ -584,8 +599,8 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 			Id:   jobId.String(),
 			Kind: "RequestJob",
 		},
-		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, token),
+		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, jobToken),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, jobToken),
 		Type:             jobType,
 		Args:             respArgs,
 		DynamicArgs:      respDynArgs,
