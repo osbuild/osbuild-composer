@@ -173,6 +173,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
 	}
+	bp.Customizations = &blueprint.Customizations{}
 
 	// Set the blueprint customisation to take care of the user
 	if request.Customizations != nil && request.Customizations.Users != nil {
@@ -192,9 +193,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				},
 			)
 		}
-		bp.Customizations = &blueprint.Customizations{
-			User: userCustomizations,
-		}
+		bp.Customizations.User = userCustomizations
 	}
 
 	if request.Customizations != nil && request.Customizations.Packages != nil {
@@ -216,9 +215,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				},
 			)
 		}
-		bp.Customizations = &blueprint.Customizations{
-			Filesystem: fsCustomizations,
-		}
+		bp.Customizations.Filesystem = fsCustomizations
 	}
 
 	// add the user-defined repositories only to the depsolve job for the
