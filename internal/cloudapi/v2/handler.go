@@ -376,11 +376,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					share = *gcpUploadOptions.ShareWithAccounts
 				}
 
-				object := fmt.Sprintf("composer-api-%s", uuid.New().String())
+				// the uploaded object must have a valid extension
+				object := fmt.Sprintf("composer-api-%s.tar.gz", uuid.New().String())
 				t := target.NewGCPTarget(&target.GCPTargetOptions{
 					Filename:          imageType.Filename(),
 					Region:            gcpUploadOptions.Region,
-					Os:                "", // not exposed in cloudapi for now
+					Os:                imageType.Arch().Distro().Name(), // not exposed in cloudapi
 					Bucket:            gcpUploadOptions.Bucket,
 					Object:            object,
 					ShareWithAccounts: share,
@@ -472,7 +473,7 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	case ImageTypesAwsSapRhui:
 		return "ec2-sap"
 	case ImageTypesGcp:
-		return "vhd"
+		return "gce"
 	case ImageTypesAzure:
 		return "vhd"
 	case ImageTypesAzureRhui:

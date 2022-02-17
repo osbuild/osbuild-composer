@@ -449,19 +449,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", args.Targets[0].ImageName)
-			imageBuild, importErr := g.ComputeImageImport(ctx, options.Bucket, options.Object, args.Targets[0].ImageName, options.Os, options.Region)
-			if imageBuild != nil {
-				logWithId.Infof("[GCP] 📜 Image import log URL: %s", imageBuild.LogUrl)
-				logWithId.Infof("[GCP] 🎉 Image import finished with status: %s", imageBuild.Status)
 
-				// Cleanup all resources potentially left after the image import job
-				deleted, err := g.CloudbuildBuildCleanup(ctx, imageBuild.Id)
-				for _, d := range deleted {
-					logWithId.Infof("[GCP] 🧹 Deleted resource after image import job: %s", d)
-				}
-				if err != nil {
-					logWithId.Errorf("[GCP] Encountered error during image import cleanup: %v", err)
-				}
+			_, importErr := g.ComputeImageInsert(ctx, options.Bucket, options.Object, args.Targets[0].ImageName, []string{options.Region}, gcp.GuestOsFeaturesByDistro(options.Os))
+			if importErr == nil {
+				logWithId.Infof("[GCP] 🎉 Image import finished successfully")
 			}
 
 			// Cleanup storage before checking for errors
@@ -470,7 +461,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				logWithId.Errorf("[GCP] Encountered error while deleting object: %v", err)
 			}
 
-			// check error from ComputeImageImport()
+			// check error from ComputeImageInsert()
 			if importErr != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, importErr.Error())
 				return nil
