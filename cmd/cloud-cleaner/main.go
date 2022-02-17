@@ -83,17 +83,6 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 		}
 	}
 
-	// Try to clean up storage of cache objects after image import job
-	log.Println("[GCP] 🧹 Cleaning up cache objects from storage after image " +
-		"import. This should fail if the test succeeded.")
-	cacheObjects, errs := g.StorageImageImportCleanup(ctx, GCPImage)
-	for _, err = range errs {
-		log.Printf("[GCP] Error: %v", err)
-	}
-	for _, cacheObject := range cacheObjects {
-		log.Printf("[GCP] 🧹 Deleted image import job file %s", cacheObject)
-	}
-
 	// Try to find the potentially uploaded Storage objects using custom metadata
 	objects, err := g.StorageListObjectsByMetadata(ctx, GCPBucket, map[string]string{gcp.MetadataKeyImageName: GCPImage})
 	if err != nil {
