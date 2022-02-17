@@ -8,14 +8,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
-	"strings"
 
-	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
 
 const (
@@ -101,103 +97,6 @@ func (g *GCP) StorageObjectDelete(ctx context.Context, bucket, object string) er
 	}
 
 	return nil
-}
-
-// StorageImageImportCleanup deletes all objects created as part of an Image
-// import into Compute Engine and the related Build Job. The method returns a list
-// of deleted Storage objects, as well as list of errors which occurred during
-// the cleanup. The method tries to clean up as much as possible, therefore
-// it does not return on non-fatal errors.
-//
-// The Build job stores a copy of the to-be-imported image in a region specific
-// bucket, along with the Build job logs and some cache files.
-//
-// Uses:
-//	- Compute Engine API
-//	- Storage API
-func (g *GCP) StorageImageImportCleanup(ctx context.Context, imageName string) ([]string, []error) {
-	var deletedObjects []string
-	var errors []error
-
-	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to get Storage client: %v", err))
-		return deletedObjects, errors
-	}
-	defer storageClient.Close()
-	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to get Compute Engine Images client: %v", err))
-		return deletedObjects, errors
-	}
-	defer imagesClient.Close()
-
-	// Clean up the cache bucket
-	req := &computepb.GetImageRequest{
-		Project: g.GetProjectID(),
-		Image:   imageName,
-	}
-	image, err := imagesClient.Get(ctx, req)
-	if err != nil {
-		// Without the image, we can not determine which objects to delete, just return
-		errors = append(errors, fmt.Errorf("failed to get image: %v", err))
-		return deletedObjects, errors
-	}
-
-	// Determine the regular expression to match files related to the specific Image Import
-	// e.g. "https://www.googleapis.com/compute/v1/projects/ascendant-braid-303513/zones/europe-west1-b/disks/disk-d7tr4"
-	// e.g. "https://www.googleapis.com/compute/v1/projects/ascendant-braid-303513/zones/europe-west1-b/disks/disk-l7s2w-1"
-	// Needed is only the part between "disk-" and possible "-<num>"/"EOF"
-	ss := strings.Split(image.GetSourceDisk(), "/")
-	srcDiskName := ss[len(ss)-1]
-	ss = strings.Split(srcDiskName, "-")
-	if len(ss) < 2 {
-		errors = append(errors, fmt.Errorf("unexpected source disk name '%s', can not clean up storage", srcDiskName))
-		return deletedObjects, errors
-	}
-	scrDiskSuffix := ss[1]
-	// e.g. "gce-image-import-2021-02-05T17:27:40Z-2xhp5/daisy-import-image-20210205-17:27:43-s6l0l/logs/daisy.log"
-	reStr := fmt.Sprintf("gce-image-import-.+-%s", scrDiskSuffix)
-	cacheFilesRe := regexp.MustCompile(reStr)
-
-	buckets := storageClient.Buckets(ctx, g.creds.ProjectID)
-	for {
-		bkt, err := buckets.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failure while iterating over storage buckets: %v", err))
-			return deletedObjects, errors
-		}
-
-		// Check all buckets created by the Image Import Build jobs
-		// These are named e.g. "<project_id>-daisy-bkt-eu" - "ascendant-braid-303513-daisy-bkt-eu"
-		if strings.HasPrefix(bkt.Name, fmt.Sprintf("%s-daisy-bkt", g.creds.ProjectID)) {
-			objects := storageClient.Bucket(bkt.Name).Objects(ctx, nil)
-			for {
-				obj, err := objects.Next()
-				if err == iterator.Done {
-					break
-				}
-				if err != nil {
-					// Do not return, just log, to clean up as much as possible!
-					errors = append(errors, fmt.Errorf("failure while iterating over bucket objects: %v", err))
-					break
-				}
-				if cacheFilesRe.FindString(obj.Name) != "" {
-					o := storageClient.Bucket(bkt.Name).Object(obj.Name)
-					if err = o.Delete(ctx); err != nil {
-						// Do not return, just log, to clean up as much as possible!
-						errors = append(errors, fmt.Errorf("failed to delete storage object: %v", err))
-					}
-					deletedObjects = append(deletedObjects, fmt.Sprintf("%s/%s", bkt.Name, obj.Name))
-				}
-			}
-		}
-	}
-
-	return deletedObjects, errors
 }
 
 // StorageListObjectsByMetadata searches specified Storage bucket for objects matching the provided
