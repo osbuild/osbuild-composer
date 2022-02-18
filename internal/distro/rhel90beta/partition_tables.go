@@ -5,10 +5,21 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
+const (
+	// For historical reasons the 8.5/9.0 beta images had some
+	// extra padding at the end. The reason was to leave space
+	// for the secondary GPT header, but it was too much and
+	// also done for MBR. Since image definitions are frozen,
+	// we keep this extra padding around.
+	ExtraPaddingGPT = uint64(67)
+	ExtraPaddingMBR = uint64(100)
+)
+
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
 	distro.X86_64ArchName: disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID:         "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type:         "gpt",
+		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
 				Size:     2048,
@@ -44,8 +55,9 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	distro.Aarch64ArchName: disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID:         "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type:         "gpt",
+		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
 				Size: 204800,
@@ -75,8 +87,9 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	distro.Ppc64leArchName: disk.PartitionTable{
-		UUID: "0x14fc63d2",
-		Type: "dos",
+		UUID:         "0x14fc63d2",
+		Type:         "dos",
+		ExtraPadding: ExtraPaddingMBR,
 		Partitions: []disk.Partition{
 			{
 				Size:     8192,
@@ -95,8 +108,9 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	distro.S390xArchName: disk.PartitionTable{
-		UUID: "0x14fc63d2",
-		Type: "dos",
+		UUID:         "0x14fc63d2",
+		Type:         "dos",
+		ExtraPadding: ExtraPaddingMBR,
 		Partitions: []disk.Partition{
 			{
 				Bootable: true,
@@ -114,8 +128,9 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 
 var ec2BasePartitionTables = distro.BasePartitionTableMap{
 	distro.X86_64ArchName: disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID:         "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type:         "gpt",
+		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
 				Size:     2048,
@@ -138,8 +153,9 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	distro.Aarch64ArchName: disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID:         "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type:         "gpt",
+		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
 				Size: 409600,

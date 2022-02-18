@@ -1508,7 +1508,7 @@
                   "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
                 },
                 {
-                  "size": 20967324,
+                  "size": 20967391,
                   "start": 4096,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -1536,7 +1536,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 4096,
-                  "size": 20967324
+                  "size": 20967391
                 }
               }
             }
@@ -1566,7 +1566,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 4096,
-                  "size": 20967324
+                  "size": 20967391
                 }
               }
             },
