@@ -1269,7 +1269,7 @@ func newDistro(distroName string) distro.Distro {
 		rpmOstree:        false,
 		bootISO:          true,
 		bootable:         true,
-		pipelines:        tarInstallerPipelines,
+		pipelines:        imageInstallerPipelines,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
