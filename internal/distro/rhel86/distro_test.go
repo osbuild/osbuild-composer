@@ -699,7 +699,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			} else if layout == "gpt" {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, "maximum number of partitions reached (4)")
+				assert.EqualError(t, err, "failed creating volume: maximum number of partitions reached (4)")
 			}
 		}
 	}

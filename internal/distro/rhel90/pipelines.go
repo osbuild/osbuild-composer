@@ -23,7 +23,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "1.1")
@@ -56,7 +56,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "vpc", "")
@@ -81,7 +81,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "vmdk", "")
@@ -106,7 +106,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "")
@@ -133,14 +133,14 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, &partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, *treePipeline)
 
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
 }
@@ -297,11 +297,11 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	}
 
 	// prepare ostree deployment tree
-	treePipeline := ostreeDeployPipeline(t, &partitionTable, ostreeRepoPath, nil, "", rng, options)
+	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, nil, "", rng, options)
 	pipelines = append(pipelines, *treePipeline)
 
 	// make raw image from tree
-	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, &partitionTable, t.arch, "")
+	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, partitionTable, t.arch, "")
 	pipelines = append(pipelines, *imagePipeline)
 
 	// compress image

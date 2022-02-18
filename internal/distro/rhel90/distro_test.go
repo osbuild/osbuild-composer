@@ -659,7 +659,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 				continue
 			} else if layout == "dos" && arch.Name() == distro.Ppc64leArchName {
 				// PPC64LE uses mbr and has 3 partitions defined in the base layout
-				assert.EqualError(t, err, "maximum number of partitions reached (4)")
+				assert.EqualError(t, err, "failed creating volume: maximum number of partitions reached (4)")
 			} else {
 				assert.NoError(t, err)
 			}
@@ -703,7 +703,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			} else if layout == "gpt" {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, "maximum number of partitions reached (4)")
+				assert.EqualError(t, err, "failed creating volume: maximum number of partitions reached (4)")
 			}
 		}
 	}
