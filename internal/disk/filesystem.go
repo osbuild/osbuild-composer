@@ -18,6 +18,10 @@ type Filesystem struct {
 	FSTabPassNo uint64
 }
 
+func (fs *Filesystem) IsContainer() bool {
+	return false
+}
+
 // Clone the filesystem structure
 func (fs *Filesystem) Clone() *Filesystem {
 	if fs == nil {
