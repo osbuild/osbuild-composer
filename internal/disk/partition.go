@@ -14,6 +14,10 @@ type Partition struct {
 	Filesystem *Filesystem
 }
 
+func (p *Partition) IsContainer() bool {
+	return true
+}
+
 // Ensure the partition has at least the given size. Will do nothing
 // if the partition is already larger. Returns if the size changed.
 func (p *Partition) EnsureSize(s uint64) bool {

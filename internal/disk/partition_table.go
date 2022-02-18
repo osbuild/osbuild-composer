@@ -21,6 +21,10 @@ type PartitionTable struct {
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
 }
 
+func (pt *PartitionTable) IsContainer() bool {
+	return true
+}
+
 // AlignUp will align the given bytes to next aligned grain if not already
 // aligned
 func (pt *PartitionTable) AlignUp(size uint64) uint64 {
