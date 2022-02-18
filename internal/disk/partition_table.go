@@ -313,6 +313,18 @@ func (pt *PartitionTable) GetChild(n uint) Entity {
 	return &pt.Partitions[n]
 }
 
+func (pt *PartitionTable) GetSize() uint64 {
+	return pt.Size
+}
+
+func (pt *PartitionTable) EnsureSize(s uint64) bool {
+	if s > pt.Size {
+		pt.Size = s
+		return true
+	}
+	return false
+}
+
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.
