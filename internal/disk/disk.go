@@ -27,7 +27,8 @@ type PartitionTable struct {
 	Type       string // Partition table type, e.g. dos, gpt.
 	Partitions []Partition
 
-	SectorSize uint64 // Sector size in bytes
+	SectorSize   uint64 // Sector size in bytes
+	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
 }
 
 type Partition struct {
@@ -92,7 +93,8 @@ func (pt *PartitionTable) Clone() *PartitionTable {
 		Type:       pt.Type,
 		Partitions: partitions,
 
-		SectorSize: pt.SectorSize,
+		SectorSize:   pt.SectorSize,
+		ExtraPadding: pt.ExtraPadding,
 	}
 }
 
@@ -333,10 +335,18 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) u
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
 
+	// Calculate the room at the end of the partition table that
+	// we might need to leave empty
+	padding := pt.ExtraPadding
+	if pt.Type == "gpt" {
+		padding += 33 // 33 sectors for the secondary GPT header
+	}
+
 	// If the sum of all partitions is bigger then the specified size,
 	// we use that instead. Grow the partition table size if needed.
-	if sum := pt.SectorsToBytes(root.Start + root.Size); sum > size {
-		size = sum
+	end := root.Start + padding + root.Size
+	if endBytes := pt.SectorsToBytes(end); endBytes > size {
+		size = endBytes
 	}
 
 	if size > pt.Size {
@@ -348,7 +358,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(start, size uint64) u
 
 	// Finally we shrink the last partition, i.e. the root partition,
 	// to leave space for the secondary GPT header.
-	root.Size -= 100
+	root.Size -= padding
 
 	return start
 }

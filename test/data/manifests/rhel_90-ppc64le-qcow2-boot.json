@@ -1023,7 +1023,7 @@
                   "start": 10240
                 },
                 {
-                  "size": 19937180,
+                  "size": 19937280,
                   "start": 1034240
                 }
               ]
@@ -1065,7 +1065,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1034240,
-                  "size": 19937180
+                  "size": 19937280
                 }
               }
             }
@@ -1103,7 +1103,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1034240,
-                  "size": 19937180
+                  "size": 19937280
                 }
               }
             },

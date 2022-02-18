@@ -1068,7 +1068,7 @@
                 },
                 {
                   "bootable": true,
-                  "size": 19945372,
+                  "size": 19945472,
                   "start": 1026048
                 }
               ]
@@ -1110,7 +1110,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 19945372
+                  "size": 19945472
                 }
               }
             }
@@ -1154,7 +1154,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 19945372
+                  "size": 19945472
                 }
               }
             },
@@ -1199,7 +1199,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 19945372
+                  "size": 19945472
                 }
               }
             },
