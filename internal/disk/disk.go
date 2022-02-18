@@ -339,6 +339,16 @@ func (pt *PartitionTable) getPartitionTableSize() uint64 {
 	return size
 }
 
+// Ensure the partition has at least the given size. Will do nothing
+// if the partition is already larger. Returns if the size changed.
+func (p *Partition) EnsureSize(s uint64) bool {
+	if s > p.Size {
+		p.Size = s
+		return true
+	}
+	return false
+}
+
 // Converts Partition to osbuild.QEMUPartition that encodes the same partition.
 func (p *Partition) QEMUPartition() osbuild.QEMUPartition {
 	var fs *osbuild.QEMUFilesystem
