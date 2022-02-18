@@ -29,7 +29,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	treePipeline = prependKernelCmdlineStage(treePipeline, t, &partitionTable)
+	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 
 	if options.Subscription == nil {
 		// RHSM DNF plugins should be by default disabled on RHEL Guest KVM images
@@ -45,14 +45,14 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		}))
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, "qcow2", "0.10")
@@ -86,14 +86,14 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -117,14 +117,14 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -148,14 +148,14 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	if err != nil {
 		return nil, err
@@ -419,10 +419,10 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
 	// rhel-ec2-aarch64
 	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, &partitionTable)
+		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
@@ -430,14 +430,14 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(&partitionTable)))
+	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer, false, false))
 	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
 
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, &partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
 }
@@ -590,11 +590,11 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	}
 
 	// prepare ostree deployment tree
-	treePipeline := ostreeDeployPipeline(t, &partitionTable, ostreeRepoPath, nil, "", rng, options)
+	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, nil, "", rng, options)
 	pipelines = append(pipelines, *treePipeline)
 
 	// make raw image from tree
-	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, &partitionTable, t.arch, "")
+	imagePipeline := liveImagePipeline(treePipeline.Name, imgName, partitionTable, t.arch, "")
 	pipelines = append(pipelines, *imagePipeline)
 
 	// compress image
@@ -1136,7 +1136,7 @@ func ostreeDeployPipeline(
 
 	// TODO: Add users?
 
-	p.AddStage(bootloaderConfigStage(t, *pt, kernel, kernelVer, true, true))
+	p.AddStage(bootloaderConfigStage(t, pt, kernel, kernelVer, true, true))
 
 	p.AddStage(osbuild.NewOSTreeSelinuxStage(
 		&osbuild.OSTreeSelinuxStageOptions{
@@ -1262,7 +1262,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 	return p
 }
 
-func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string, install, greenboot bool) *osbuild.Stage {
+func bootloaderConfigStage(t *imageType, partitionTable *disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string, install, greenboot bool) *osbuild.Stage {
 	if t.arch.name == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
@@ -1271,7 +1271,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
 
-	options := osbuild.NewGrub2StageOptions(&partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", install)
+	options := osbuild.NewGrub2StageOptions(partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", install)
 	options.Greenboot = greenboot
 
 	// before unifying the org.osbuild.grub2 stage option generator, we didn't

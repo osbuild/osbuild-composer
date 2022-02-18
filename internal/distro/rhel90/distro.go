@@ -371,18 +371,18 @@ func (t *imageType) getPartitionTable(
 	mountpoints []blueprint.FilesystemCustomization,
 	options distro.ImageOptions,
 	rng *rand.Rand,
-) (disk.PartitionTable, error) {
+) (*disk.PartitionTable, error) {
 	archName := t.arch.Name()
 
 	basePartitionTable, exists := t.basePartitionTables[archName]
 
 	if !exists {
-		return basePartitionTable, fmt.Errorf("unknown arch: " + archName)
+		return nil, fmt.Errorf("unknown arch: " + archName)
 	}
 
 	imageSize := t.Size(options.Size)
 
-	return disk.CreatePartitionTable(mountpoints, imageSize, &basePartitionTable, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
