@@ -42,9 +42,13 @@ func NewZiplInstStageOptions(kernel string, pt *disk.PartitionTable) *ZiplInstSt
 		if partition.Payload == nil {
 			continue
 		}
-		if partition.Payload.GetMountpoint() == "/boot" {
+		mnt, isMountable := partition.Payload.(disk.Mountable)
+		if !isMountable {
+			continue
+		}
+		if mnt.GetMountpoint() == "/boot" {
 			bootIdx = idx
-		} else if partition.Payload.GetMountpoint() == "/" {
+		} else if mnt.GetMountpoint() == "/" {
 			rootIdx = idx
 		}
 	}
