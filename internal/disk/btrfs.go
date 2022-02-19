@@ -105,6 +105,9 @@ func (bs *BtrfsSubvolume) Clone() Entity {
 }
 
 func (bs *BtrfsSubvolume) GetSize() uint64 {
+	if bs == nil {
+		return 0
+	}
 	return bs.Size
 }
 
@@ -117,6 +120,9 @@ func (bs *BtrfsSubvolume) EnsureSize(s uint64) bool {
 }
 
 func (bs *BtrfsSubvolume) GetMountpoint() string {
+	if bs == nil {
+		return ""
+	}
 	return bs.Mountpoint
 }
 
@@ -125,6 +131,9 @@ func (bs *BtrfsSubvolume) GetFSType() string {
 }
 
 func (bs *BtrfsSubvolume) GetFSSpec() FSSpec {
+	if bs == nil {
+		return FSSpec{}
+	}
 	return FSSpec{
 		UUID:  bs.UUID,
 		Label: bs.Name,
@@ -132,8 +141,11 @@ func (bs *BtrfsSubvolume) GetFSSpec() FSSpec {
 }
 
 func (bs *BtrfsSubvolume) GetFSTabOptions() FSTabOptions {
-	ops := strings.Join([]string{bs.MntOps, fmt.Sprintf("subvol=%s", bs.Name)}, ",")
+	if bs == nil {
+		return FSTabOptions{}
+	}
 
+	ops := strings.Join([]string{bs.MntOps, fmt.Sprintf("subvol=%s", bs.Name)}, ",")
 	return FSTabOptions{
 		MntOps: ops,
 		Freq:   0,

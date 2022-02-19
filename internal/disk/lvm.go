@@ -41,14 +41,23 @@ func (vg *LVMVolumeGroup) Clone() Entity {
 }
 
 func (vg *LVMVolumeGroup) GetItemCount() uint {
+	if vg == nil {
+		return 0
+	}
 	return uint(len(vg.LogicalVolumes))
 }
 
 func (vg *LVMVolumeGroup) GetChild(n uint) Entity {
+	if vg == nil {
+		panic("LVMVolumeGroup.GetChild: nil entity")
+	}
 	return &vg.LogicalVolumes[n]
 }
 
 func (vg *LVMVolumeGroup) CreateVolume(mountpoint string, size uint64) (Entity, error) {
+	if vg == nil {
+		panic("LVMVolumeGroup.CreateVolume: nil entity")
+	}
 	filesystem := Filesystem{
 		Type:         "xfs",
 		Mountpoint:   mountpoint,
@@ -78,6 +87,9 @@ func (lv *LVMLogicalVolume) IsContainer() bool {
 }
 
 func (lv *LVMLogicalVolume) Clone() Entity {
+	if lv == nil {
+		return nil
+	}
 	return &LVMLogicalVolume{
 		Name:    lv.Name,
 		Size:    lv.Size,
@@ -86,24 +98,30 @@ func (lv *LVMLogicalVolume) Clone() Entity {
 }
 
 func (lv *LVMLogicalVolume) GetItemCount() uint {
-	if lv.Payload == nil {
+	if lv == nil || lv.Payload == nil {
 		return 0
 	}
 	return 1
 }
 
 func (lv *LVMLogicalVolume) GetChild(n uint) Entity {
-	if n != 0 {
+	if n != 0 || lv == nil {
 		panic(fmt.Sprintf("invalid child index for LVMLogicalVolume: %d != 0", n))
 	}
 	return lv.Payload
 }
 
 func (lv *LVMLogicalVolume) GetSize() uint64 {
+	if lv == nil {
+		return 0
+	}
 	return lv.Size
 }
 
 func (lv *LVMLogicalVolume) EnsureSize(s uint64) bool {
+	if lv == nil {
+		panic("LVMLogicalVolume.EnsureSize: nil entity")
+	}
 	if s > lv.Size {
 		lv.Size = s
 		return true

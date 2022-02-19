@@ -24,7 +24,7 @@ func (p *Partition) IsContainer() bool {
 
 func (p *Partition) Clone() Entity {
 	if p == nil {
-		return p
+		return nil
 	}
 
 	ent := p.Payload.Clone()
@@ -48,7 +48,7 @@ func (p *Partition) Clone() Entity {
 }
 
 func (pt *Partition) GetItemCount() uint {
-	if pt.Payload == nil {
+	if pt == nil || pt.Payload == nil {
 		return 0
 	}
 	return 1

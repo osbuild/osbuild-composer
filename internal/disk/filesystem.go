@@ -44,14 +44,23 @@ func (fs *Filesystem) Clone() Entity {
 }
 
 func (fs *Filesystem) GetMountpoint() string {
+	if fs == nil {
+		return ""
+	}
 	return fs.Mountpoint
 }
 
 func (fs *Filesystem) GetFSType() string {
+	if fs == nil {
+		return ""
+	}
 	return fs.Type
 }
 
 func (fs *Filesystem) GetFSSpec() FSSpec {
+	if fs == nil {
+		return FSSpec{}
+	}
 	return FSSpec{
 		UUID:  fs.UUID,
 		Label: fs.Label,
@@ -59,6 +68,9 @@ func (fs *Filesystem) GetFSSpec() FSSpec {
 }
 
 func (fs *Filesystem) GetFSTabOptions() FSTabOptions {
+	if fs == nil {
+		return FSTabOptions{}
+	}
 	return FSTabOptions{
 		MntOps: fs.FSTabOptions,
 		Freq:   fs.FSTabFreq,

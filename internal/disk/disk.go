@@ -24,8 +24,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO: guard against nil dereferencing in pointer methods
-
 const (
 	// Default sector size in bytes
 	DefaultSectorSize = 512
