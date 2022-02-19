@@ -71,7 +71,8 @@ func NewQEMUAssemblerOptions(pt *disk.PartitionTable) QEMUAssemblerOptions {
 func NewQEMUPartition(p *disk.Partition) QEMUPartition {
 	var fs *QEMUFilesystem
 	if p.Payload != nil {
-		f := NewQEMUFilesystem(p.Payload)
+		// NOTE: Partition Payload for QEMU assembler should always be a Filesystem
+		f := NewQEMUFilesystem(p.Payload.(*disk.Filesystem))
 		fs = &f
 	}
 	return QEMUPartition{

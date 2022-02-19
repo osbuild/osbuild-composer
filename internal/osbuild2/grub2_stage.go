@@ -49,23 +49,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 	vendor string,
 	install bool) *GRUB2StageOptions {
 
-	var bootFs, rootFs disk.Mountable
-	for idx := range pt.Partitions {
-		// NOTE: we only support having /boot at the top level of the partition
-		// table (e.g., not in LUKS or LVM), so we don't need to descend into
-		// VolumeContainer types. If /boot is on the root partition, then the
-		// root partition needs to be at the top level.
-		partition := &pt.Partitions[idx]
-		if partition.Payload == nil {
-			continue
-		}
-		if partition.Payload.GetMountpoint() == "/boot" {
-			bootFs = partition.Payload
-		} else if partition.Payload.GetMountpoint() == "/" {
-			rootFs = partition.Payload
-		}
-	}
-
+	rootFs := pt.FindMountable("/")
 	if rootFs == nil {
 		panic("root filesystem must be defined for grub2 stage, this is a programming error")
 	}
@@ -76,6 +60,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 		Legacy:             legacy,
 	}
 
+	bootFs := pt.FindMountable("/boot")
 	if bootFs != nil {
 		bootFsUUID := uuid.MustParse(bootFs.GetFSSpec().UUID)
 		stageOptions.BootFilesystemUUID = &bootFsUUID

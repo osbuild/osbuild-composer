@@ -107,9 +107,13 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 		if partition.Payload == nil {
 			continue
 		}
-		if partition.Payload.GetMountpoint() == "/boot" {
+		mnt, isMountable := partition.Payload.(disk.Mountable)
+		if !isMountable {
+			continue
+		}
+		if mnt.GetMountpoint() == "/boot" {
 			bootIdx = idx
-		} else if partition.Payload.GetMountpoint() == "/" {
+		} else if mnt.GetMountpoint() == "/" {
 			rootIdx = idx
 		}
 	}
@@ -123,7 +127,7 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	}
 
 	bootPart := pt.Partitions[bootIdx]
-	bootPayload := bootPart.Payload
+	bootPayload := bootPart.Payload.(disk.Mountable) // this is guaranteed by the search loop above
 	prefixPath := "/boot/grub2"
 	if bootPayload.GetMountpoint() == "/boot" {
 		prefixPath = "/grub2"
