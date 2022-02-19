@@ -1,6 +1,11 @@
 package disk
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+
+	"github.com/google/uuid"
+)
 
 type Argon2id struct {
 	Iterations  uint
@@ -57,5 +62,11 @@ func (lc *LUKSContainer) Clone() Entity {
 			Parallelism: lc.PBKDF.Parallelism,
 		},
 		Payload: lc.Payload,
+	}
+}
+
+func (lc *LUKSContainer) GenUUID(rng *rand.Rand) {
+	if lc.UUID == "" {
+		lc.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
 }

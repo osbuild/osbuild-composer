@@ -19,6 +19,7 @@ package disk
 import (
 	"encoding/hex"
 	"io"
+	"math/rand"
 
 	"github.com/google/uuid"
 )
@@ -100,6 +101,14 @@ type Mountable interface {
 // size and returns it.
 type VolumeContainer interface {
 	CreateVolume(mountpoint string, size uint64) (Entity, error)
+}
+
+// A UniqueEntity is an entity that can be uniquely identified via a UUID.
+//
+// GenUUID generates a UUID for the entity if it does not yet have one.
+type UniqueEntity interface {
+	Entity
+	GenUUID(rng *rand.Rand)
 }
 
 // FSSpec for a filesystem (UUID and Label); the first field of fstab(5)
