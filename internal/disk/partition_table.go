@@ -1,7 +1,6 @@
 package disk
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 
@@ -104,103 +103,10 @@ func (pt *PartitionTable) SectorsToBytes(size uint64) uint64 {
 	return size * sectorSize
 }
 
-func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partition {
-	for idx, p := range pt.Partitions {
-		if p.Payload == nil {
-			continue
-		}
-
-		if p.Payload.Mountpoint == mountpoint {
-			return &pt.Partitions[idx]
-		}
-	}
-
-	return nil
-}
-
-// Returns the index of the boot partition: the partition whose filesystem has
-// /boot as a mountpoint.  If there is no explicit boot partition, the root
-// partition is returned.
-// If neither boot nor root partitions are found, returns -1.
-func (pt *PartitionTable) BootPartitionIndex() int {
-	// find partition with '/boot' mountpoint and fallback to '/'
-	rootIdx := -1
-	for idx, part := range pt.Partitions {
-		if part.Payload == nil {
-			continue
-		}
-		if part.Payload.Mountpoint == "/boot" {
-			return idx
-		} else if part.Payload.Mountpoint == "/" {
-			rootIdx = idx
-		}
-	}
-	return rootIdx
-}
-
-// StopIter is used as a return value from iterator function to indicate
-// the iteration should not continue. Not an actual error and thus not
-// returned by iterator function.
-var StopIter = errors.New("stop the iteration")
-
-// ForEachFileSystemFunc is a type of function called by ForEachFilesystem
-// to iterate over every filesystem in the partition table.
-//
-// If the function returns an error, the iteration stops.
-type ForEachFileSystemFunc func(fs *Filesystem) error
-
-// Iterates over all filesystems in the partition table and calls the
-// callback on each one. The iteration continues as long as the callback
-// does not return an error.
-func (pt *PartitionTable) ForEachFilesystem(cb ForEachFileSystemFunc) error {
-	for _, part := range pt.Partitions {
-		if part.Payload == nil {
-			continue
-		}
-
-		if err := cb(part.Payload); err != nil {
-			if err == StopIter {
-				return nil
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Returns the Filesystem instance for a given mountpoint, if it exists.
-func (pt *PartitionTable) FindFilesystemForMountpoint(mountpoint string) *Filesystem {
-	var res *Filesystem
-	_ = pt.ForEachFilesystem(func(fs *Filesystem) error {
-		if fs.Mountpoint == mountpoint {
-			res = fs
-			return StopIter
-		}
-
-		return nil
-	})
-
-	return res
-}
-
 // Returns if the partition table contains a filesystem with the given
 // mount point.
 func (pt *PartitionTable) ContainsMountpoint(mountpoint string) bool {
 	return len(entityPath(pt, mountpoint)) > 0
-}
-
-// Returns the Filesystem instance that corresponds to the root
-// filesystem, i.e. the filesystem whose mountpoint is '/'.
-func (pt *PartitionTable) RootFilesystem() *Filesystem {
-	return pt.FindFilesystemForMountpoint("/")
-}
-
-// Returns the Filesystem instance that corresponds to the boot
-// filesystem, i.e. the filesystem whose mountpoint is '/boot',
-// if /boot is on a separate partition, otherwise nil
-func (pt *PartitionTable) BootFilesystem() *Filesystem {
-	return pt.FindFilesystemForMountpoint("/boot")
 }
 
 // Create a new filesystem within the partition table at the given mountpoint

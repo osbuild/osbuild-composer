@@ -122,39 +122,6 @@ var canonicalPartitionTable = PartitionTable{
 	},
 }
 
-func TestDisk_ForEachFilesystem(t *testing.T) {
-	rootFs := canonicalPartitionTable.Partitions[3].Payload
-	bootFs := canonicalPartitionTable.Partitions[2].Payload
-	efiFs := canonicalPartitionTable.Partitions[1].Payload
-
-	// check we iterate in the correct order and throughout the whole array
-	var expectedFilesystems []*Filesystem
-	err := canonicalPartitionTable.ForEachFilesystem(func(fs *Filesystem) error {
-		expectedFilesystems = append(expectedFilesystems, fs)
-		return nil
-	})
-
-	assert.NoError(t, err)
-	assert.Equal(t, []*Filesystem{efiFs, bootFs, rootFs}, expectedFilesystems)
-
-	// check we stop iterating when the callback returns false
-	expectedFilesystems = make([]*Filesystem, 0)
-	err = canonicalPartitionTable.ForEachFilesystem(func(fs *Filesystem) error {
-		if fs.Mountpoint != "/boot" {
-			return nil
-		}
-
-		// we should stop at boot, never reaching root
-		assert.NotEqual(t, fs.Mountpoint, "/")
-
-		expectedFilesystems = append(expectedFilesystems, fs)
-		return StopIter
-	})
-
-	assert.NoError(t, err)
-	assert.Equal(t, []*Filesystem{bootFs}, expectedFilesystems)
-}
-
 func TestDisk_ForEachEntity(t *testing.T) {
 
 	count := 0
