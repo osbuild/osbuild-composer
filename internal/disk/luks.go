@@ -66,6 +66,10 @@ func (lc *LUKSContainer) Clone() Entity {
 }
 
 func (lc *LUKSContainer) GenUUID(rng *rand.Rand) {
+	if lc == nil {
+		return
+	}
+
 	if lc.UUID == "" {
 		lc.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
