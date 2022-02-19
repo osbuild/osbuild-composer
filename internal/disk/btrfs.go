@@ -2,7 +2,10 @@ package disk
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Btrfs struct {
@@ -62,6 +65,12 @@ func (b *Btrfs) CreateVolume(mountpoint string, size uint64) (Entity, error) {
 
 	b.Subvolumes = append(b.Subvolumes, subvolume)
 	return &b.Subvolumes[len(b.Subvolumes)-1], nil
+}
+
+func (b *Btrfs) GenUUID(rng *rand.Rand) {
+	if b.UUID == "" {
+		b.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+	}
 }
 
 type BtrfsSubvolume struct {

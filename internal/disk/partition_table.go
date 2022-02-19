@@ -243,12 +243,13 @@ func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) error
 // Will not overwrite existing UUIDs and only generate UUIDs for
 // partitions if the layout is GPT.
 func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
-	_ = pt.ForEachFilesystem(func(fs *Filesystem) error {
-		if fs.UUID == "" {
-			fs.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+	setuuid := func(ent Entity, path []Entity) error {
+		if ui, ok := ent.(UniqueEntity); ok {
+			ui.GenUUID(rng)
 		}
 		return nil
-	})
+	}
+	_ = pt.ForEachEntity(setuuid)
 
 	// if this is a MBR partition table, there is no need to generate
 	// uuids for the partitions themselves
@@ -538,4 +539,12 @@ func resizeEntityBranch(path []Entity, size uint64) {
 		}
 	}
 	resizeEntityBranch(path[1:], size)
+}
+
+// GenUUID generates and sets UUIDs for all Partitions in the PartitionTable if
+// the layout is GPT.
+func (pt *PartitionTable) GenUUID(rng *rand.Rand) {
+	if pt.UUID == "" {
+		pt.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+	}
 }

@@ -1,5 +1,11 @@
 package disk
 
+import (
+	"math/rand"
+
+	"github.com/google/uuid"
+)
+
 // Filesystem related functions
 type Filesystem struct {
 	Type string
@@ -57,5 +63,11 @@ func (fs *Filesystem) GetFSTabOptions() FSTabOptions {
 		MntOps: fs.FSTabOptions,
 		Freq:   fs.FSTabFreq,
 		PassNo: fs.FSTabPassNo,
+	}
+}
+
+func (fs *Filesystem) GenUUID(rng *rand.Rand) {
+	if fs.UUID == "" {
+		fs.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
 }
