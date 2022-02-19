@@ -9,9 +9,10 @@ type LVM2LVDeviceOptions struct {
 
 func (LVM2LVDeviceOptions) isDeviceOptions() {}
 
-func NewLVM2LVDevice(options *LoopbackDeviceOptions) *Device {
+func NewLVM2LVDevice(parent string, options *LVM2LVDeviceOptions) *Device {
 	return &Device{
 		Type:    "org.osbuild.lvm2.lv",
+		Parent:  parent,
 		Options: options,
 	}
 }
