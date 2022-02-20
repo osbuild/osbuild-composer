@@ -154,3 +154,21 @@ func TestDisk_ForEachFilesystem(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []*Filesystem{bootFs}, expectedFilesystems)
 }
+
+func TestDisk_ForEachEntity(t *testing.T) {
+
+	count := 0
+	err := canonicalPartitionTable.ForEachEntity(func(e Entity, path []Entity) error {
+		assert.NotNil(t, e)
+		assert.NotNil(t, path)
+
+		count += 1
+		return nil
+	})
+
+	assert.NoError(t, err)
+
+	// PartitionTable, 4 partitions, 3 filesystems -> 8 entities
+	assert.Equal(t, 8, count)
+
+}
