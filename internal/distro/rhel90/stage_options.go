@@ -346,6 +346,7 @@ func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbu
 		VolID:    fmt.Sprintf(isolabel, arch),
 		SysID:    "LINUX",
 		EFI:      "images/efiboot.img",
+		ISOLevel: 3,
 	}
 
 	if isolinux {

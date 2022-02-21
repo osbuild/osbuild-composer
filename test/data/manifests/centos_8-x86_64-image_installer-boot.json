@@ -2098,7 +2098,8 @@
                 "catalog": "isolinux/boot.cat"
               },
               "efi": "images/efiboot.img",
-              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin"
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
+              "isolevel": 3
             }
           },
           {
