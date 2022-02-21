@@ -1383,9 +1383,6 @@ function verifyInGCP() {
   # Create SSH keys to use
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
   ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
-  GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
-
-  echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
 
   # create the instance
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
@@ -1401,15 +1398,15 @@ function verifyInGCP() {
     --zone="$GCP_ZONE" \
     --image-project="$GCP_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
-    --labels=gitlab-ci-test=true \
-    --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
+    --labels=gitlab-ci-test=true
+
   HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
   echo "⏱ Waiting for GCP instance to respond to ssh"
   _instanceWaitSSH "$HOST"
 
   # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+  _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
   _instanceCheck "$_ssh"
 }
 
