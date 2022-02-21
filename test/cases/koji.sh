@@ -58,10 +58,10 @@ if [[ "$DISTRO_CODE" == rhel-8* ]]; then
 fi
 
 if [ "${COMPOSER_API:=true}" == "true" ]; then
-    greenprint "Pushing compose to Koji (/api/image-builder-comoser/v2/"
+    greenprint "Pushing compose to Koji (/api/image-builder-composer/v2/"
     sudo /usr/libexec/osbuild-composer-test/koji-compose-v2.py "$DISTRO_CODE" "${ARCH}"
 else
-    greenprint "Pushing compose to Koji (/api/comoser-koji/v1/"
+    greenprint "Pushing compose to Koji (/api/composer-koji/v1/"
     sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
 fi
 
