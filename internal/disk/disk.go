@@ -15,19 +15,17 @@ import (
 )
 
 type PartitionTable struct {
-	// Size of the disk.
-	Size uint64
-	UUID string
-	// Partition table type, e.g. dos, gpt.
-	Type       string
+	Size       uint64 // Size of the disk (in bytes).
+	UUID       string // Unique identifier of the partition table (GPT only).
+	Type       string // Partition table type, e.g. dos, gpt.
 	Partitions []Partition
 }
 
 type Partition struct {
-	Start    uint64
-	Size     uint64
-	Type     string
-	Bootable bool
+	Start    uint64 // Start of the partition in sectors
+	Size     uint64 // Size of the partition in sectors
+	Type     string // Partition type, e.g. 0x83 for MBR or a UUID for gpt
+	Bootable bool   // `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
 	// ID of the partition, dos doesn't use traditional UUIDs, therefore this
 	// is just a string.
 	UUID string
