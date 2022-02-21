@@ -6,6 +6,12 @@ if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
     exit 0
 fi
 
+# if a user is logged in to the runner, wait until they're done
+while (( $(who -s | wc -l)  > 0 )); do
+    echo "Waiting for user(s) to log off"
+    sleep 30
+done
+
 if [[ $1 == "start" ]]; then
   GITHUB_NEW_STATE="pending"
   GITHUB_NEW_DESC="I'm currently testing this commit, be patient."
