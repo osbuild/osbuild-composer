@@ -7,12 +7,13 @@ import (
 	"os"
 	"path"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"github.com/sirupsen/logrus"
 )
 
 type OSBuildKojiJobImpl struct {
@@ -168,11 +169,6 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 
 	// copy pipeline info to the result
 	result.PipelineNames = args.PipelineNames
-
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
 
 	return nil
 }
