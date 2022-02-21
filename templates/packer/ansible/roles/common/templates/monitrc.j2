@@ -31,18 +31,18 @@ CHECK FILESYSTEM root PATH /
 CHECK HOST rhel_cdn WITH ADDRESS cdn.redhat.com
   if failed
     ping
-    for 3 cycles
+    for 10 cycles
     then exec {{ pozorbot_script }}
     else if succeeded
-    for 3 cycles
+    for 10 cycles
     then exec {{ pozorbot_script }}
   if failed
     port 443
     protocol https
     status = 403
     with ssl options { CACERTIFICATEFILE: /etc/rhsm/ca/redhat-uep.pem }
-    for 3 cycles
+    for 10 cycles
     then exec {{ pozorbot_script }}
     else if succeeded
-    for 3 cycles
+    for 10 cycles
     then exec {{ pozorbot_script }}
