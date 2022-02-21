@@ -276,7 +276,7 @@ New OSTree:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
 OSTree simplified installer:
@@ -289,8 +289,8 @@ OSTree simplified installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64-large
+          - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
 OSTree raw image:
@@ -302,9 +302,9 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.0-nightly-x86_64
+          - rhos-01/rhel-8.6-nightly-x86_64-large
+          - rhos-01/centos-stream-8-x86_64-large
+          - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
 .INTEGRATION_TESTS: &INTEGRATION_TESTS
