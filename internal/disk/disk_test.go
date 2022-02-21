@@ -12,20 +12,23 @@ import (
 func TestDisk_AlignUp(t *testing.T) {
 
 	pt := disk.PartitionTable{}
-	firstAligned := pt.BytesToSectors(disk.DefaultGrainBytes)
+	firstAligned := disk.DefaultGrainBytes
 
 	tests := []struct {
 		size uint64
 		want uint64
 	}{
-		{0, firstAligned},
+		{0, 0},
 		{1, firstAligned},
 		{firstAligned - 1, firstAligned},
+		{firstAligned, firstAligned}, // grain is already aligned => no change
+		{firstAligned / 2, firstAligned},
+		{firstAligned + 1, firstAligned * 2},
 	}
 
 	for _, tt := range tests {
 		got := pt.AlignUp(tt.size)
-		assert.Equal(t, tt.want, got)
+		assert.Equal(t, tt.want, got, "Expected %d, got %d", tt.want, got)
 	}
 }
 

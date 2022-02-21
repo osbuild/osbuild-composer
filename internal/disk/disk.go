@@ -35,8 +35,8 @@ type PartitionTable struct {
 }
 
 type Partition struct {
-	Start    uint64 // Start of the partition in sectors
-	Size     uint64 // Size of the partition in sectors
+	Start    uint64 // Start of the partition in bytes
+	Size     uint64 // Size of the partition in bytes
 	Type     string // Partition type, e.g. 0x83 for MBR or a UUID for gpt
 	Bootable bool   // `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
 	// ID of the partition, dos doesn't use traditional UUIDs, therefore this
@@ -61,12 +61,15 @@ type Filesystem struct {
 	FSTabPassNo uint64
 }
 
-// AlignUp will align the given sectors to next aligned sector
-func (pt *PartitionTable) AlignUp(sectors uint64) uint64 {
-
-	grain := pt.BytesToSectors(DefaultGrainBytes)
-
-	return ((sectors + grain) / grain) * grain
+// AlignUp will align the given bytes to next aligned grain if not already
+// aligned
+func (pt *PartitionTable) AlignUp(size uint64) uint64 {
+	grain := DefaultGrainBytes
+	if size%grain == 0 {
+		// already aligned: return unchanged
+		return size
+	}
+	return ((size + grain) / grain) * grain
 }
 
 // Convert the given bytes to the number of sectors.
@@ -279,7 +282,7 @@ func (pt *PartitionTable) BootFilesystem() *Filesystem {
 }
 
 // Create a new filesystem within the partition table at the given mountpoint
-// with the given minimum size in sectors.
+// with the given minimum size in bytes.
 func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) error {
 	filesystem := Filesystem{
 		Type:         "xfs",
@@ -346,7 +349,8 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 
 	// always reserve one extra sector for the GPT header
-	header := uint64(1)
+
+	header := pt.SectorsToBytes(1)
 	footer := uint64(0)
 
 	if pt.Type == "gpt" {
@@ -359,14 +363,13 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 			parts = 128
 		}
 
-		nBytes := uint64(parts * 128)
-		header += pt.BytesToSectors(nBytes)
+		header += uint64(parts * 128)
 
 		footer = header
 	}
 
 	start := pt.AlignUp(header)
-	size = pt.SectorsToBytes(pt.AlignUp(pt.BytesToSectors(size) - 1))
+	size = pt.AlignUp(size)
 
 	var rootIdx = -1
 	for i := range pt.Partitions {
@@ -376,21 +379,21 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 			continue
 		}
 		partition.Start = start
-		partition.Size = pt.AlignUp(partition.Size - 1)
+		partition.Size = pt.AlignUp(partition.Size)
 		start += partition.Size
 	}
 
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
 
-	// add the extra pedding specified in the partition table
+	// add the extra padding specified in the partition table
 	footer += pt.ExtraPadding
 
 	// If the sum of all partitions is bigger then the specified size,
 	// we use that instead. Grow the partition table size if needed.
-	end := pt.AlignUp(root.Start + footer + root.Size - 1)
-	if endBytes := pt.SectorsToBytes(end); endBytes > size {
-		size = endBytes
+	end := pt.AlignUp(root.Start + footer + root.Size)
+	if end > size {
+		size = end
 	}
 
 	if size > pt.Size {
@@ -398,7 +401,7 @@ func (pt *PartitionTable) updatePartitionStartPointOffsets(size uint64) uint64 {
 	}
 
 	// If there is space left in the partition table, grow root
-	root.Size = pt.BytesToSectors(pt.Size) - root.Start
+	root.Size = pt.Size - root.Start
 
 	// Finally we shrink the last partition, i.e. the root partition,
 	// to leave space for the footer, e.g. the secondary GPT header.

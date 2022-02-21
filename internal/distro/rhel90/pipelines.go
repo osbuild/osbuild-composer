@@ -683,7 +683,6 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 		},
 	))
 
-	var sectorSize uint64 = 512
 	// TODO: handle error
 	volid, err := disk.NewRandomVolIDFromReader(rng)
 	if err != nil {
@@ -694,7 +693,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 		Partitions: []disk.Partition{
 			{
 				Start: 0,
-				Size:  20971520 / sectorSize,
+				Size:  20971520,
 				Filesystem: &disk.Filesystem{
 					Type:       "vfat",
 					Mountpoint: "/",
@@ -995,8 +994,8 @@ func mkfsStages(pt *disk.PartitionTable, device *osbuild.Device) []*osbuild.Stag
 		stageDevice := osbuild.NewLoopbackDevice(
 			&osbuild.LoopbackDeviceOptions{
 				Filename: devOptions.Filename,
-				Start:    p.Start,
-				Size:     p.Size,
+				Start:    pt.BytesToSectors(p.Start),
+				Size:     pt.BytesToSectors(p.Size),
 			},
 		)
 		switch p.Filesystem.Type {
