@@ -3,6 +3,8 @@ package osbuild2
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/osbuild-composer/internal/disk"
 )
 
 // Install the grub2 boot loader for non-UEFI systems or hybrid boot
@@ -91,4 +93,59 @@ func (options Grub2InstStageOptions) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(g2options)
+}
+
+func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform string) *Grub2InstStageOptions {
+	bootIdx := -1
+	rootIdx := -1
+	for idx := range pt.Partitions {
+		// NOTE: we only support having /boot at the top level of the partition
+		// table (e.g., not in LUKS or LVM), so we don't need to descend into
+		// VolumeContainer types. If /boot is on the root partition, then the
+		// root partition needs to be at the top level.
+		partition := &pt.Partitions[idx]
+		if partition.Payload == nil {
+			continue
+		}
+		if partition.Payload.GetMountpoint() == "/boot" {
+			bootIdx = idx
+		} else if partition.Payload.GetMountpoint() == "/" {
+			rootIdx = idx
+		}
+	}
+	if bootIdx == -1 {
+		// if there's no boot partition, fall back to root
+		if rootIdx == -1 {
+			// no root either!?
+			panic("failed to find boot or root partition for grub2.inst stage")
+		}
+		bootIdx = rootIdx
+	}
+
+	bootPart := pt.Partitions[bootIdx]
+	bootPayload := bootPart.Payload
+	prefixPath := "/boot/grub2"
+	if bootPayload.GetMountpoint() == "/boot" {
+		prefixPath = "/grub2"
+	}
+	core := CoreMkImage{
+		Type:       "mkimage",
+		PartLabel:  pt.Type,
+		Filesystem: bootPayload.GetFSType(),
+	}
+
+	prefix := PrefixPartition{
+		Type:      "partition",
+		PartLabel: pt.Type,
+		Number:    uint(bootIdx),
+		Path:      prefixPath,
+	}
+
+	return &Grub2InstStageOptions{
+		Filename: filename,
+		Platform: platform,
+		Location: pt.BytesToSectors(pt.Partitions[0].Start),
+		Core:     core,
+		Prefix:   prefix,
+	}
 }

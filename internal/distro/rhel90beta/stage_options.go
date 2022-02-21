@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/google/uuid"
-
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -308,44 +306,6 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 	}
 }
 
-func grub2StageOptions(rootFs *disk.Filesystem, bootFs *disk.Filesystem, kernelOptions string,
-	kernel *blueprint.KernelCustomization, kernelVer string, uefi bool, legacy string) *osbuild.GRUB2StageOptions {
-	if rootFs == nil {
-		panic("root filesystem must be defined for grub2 stage, this is a programming error")
-	}
-
-	stageOptions := osbuild.GRUB2StageOptions{
-		RootFilesystemUUID: uuid.MustParse(rootFs.UUID),
-		KernelOptions:      kernelOptions,
-		Legacy:             legacy,
-	}
-
-	if bootFs != nil {
-		bootFsUUID := uuid.MustParse(bootFs.UUID)
-		stageOptions.BootFilesystemUUID = &bootFsUUID
-	}
-
-	if uefi {
-		stageOptions.UEFI = &osbuild.GRUB2UEFI{
-			Vendor:  "redhat",
-			Unified: legacy == "", // force unified grub scheme for pure efi systems
-		}
-	}
-
-	if !uefi {
-		stageOptions.Legacy = legacy
-	}
-
-	if kernel != nil {
-		if kernel.Append != "" {
-			stageOptions.KernelOptions += " " + kernel.Append
-		}
-		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
-	}
-
-	return &stageOptions
-}
-
 // sfdiskStageOptions creates the options and devices properties for an
 // org.osbuild.sfdisk stage based on a partition table description
 func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
@@ -366,33 +326,6 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
 	}
 
 	return stageOptions
-}
-
-func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform string) *osbuild.Grub2InstStageOptions {
-	bootPartIndex := pt.BootPartitionIndex()
-	if bootPartIndex == -1 {
-		panic("failed to find boot or root partition for grub2.inst stage")
-	}
-	core := osbuild.CoreMkImage{
-		Type:       "mkimage",
-		PartLabel:  pt.Type,
-		Filesystem: pt.Partitions[bootPartIndex].Payload.Type,
-	}
-
-	prefix := osbuild.PrefixPartition{
-		Type:      "partition",
-		PartLabel: pt.Type,
-		Number:    uint(bootPartIndex),
-		Path:      "/boot/grub2",
-	}
-
-	return &osbuild.Grub2InstStageOptions{
-		Filename: filename,
-		Platform: platform,
-		Location: pt.BytesToSectors(pt.Partitions[0].Start),
-		Core:     core,
-		Prefix:   prefix,
-	}
 }
 
 func ziplInstStageOptions(kernel string, pt *disk.PartitionTable) *osbuild.ZiplInstStageOptions {
