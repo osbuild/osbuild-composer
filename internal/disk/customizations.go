@@ -33,16 +33,14 @@ func CreatePartitionTable(
 	table := basePartitionTable.Clone()
 
 	for _, m := range mountpoints {
-		sectors := table.BytesToSectors(m.MinSize)
-
 		// if we already have a partition ensure that the
 		// size is at least the requested size, otherwise
 		// create a new filesystem with that size
 		part := table.FindPartitionForMountpoint(m.Mountpoint)
 		if part != nil {
-			part.EnsureSize(sectors)
+			part.EnsureSize(m.MinSize)
 		} else {
-			err := table.CreateFilesystem(m.Mountpoint, sectors)
+			err := table.CreateFilesystem(m.Mountpoint, m.MinSize)
 			if err != nil {
 				return PartitionTable{}, err
 			}

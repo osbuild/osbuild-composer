@@ -11,8 +11,8 @@ const (
 	// for the secondary GPT header, but it was too much and
 	// also done for MBR. Since image definitions are frozen,
 	// we keep this extra padding around.
-	ExtraPaddingGPT = uint64(67)
-	ExtraPaddingMBR = uint64(100)
+	ExtraPaddingGPT = uint64(34304)
+	ExtraPaddingMBR = uint64(51200)
 )
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
@@ -22,13 +22,13 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
-				Size:     2048,
+				Size:     1048576,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 204800,
+				Size: 104857600,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -60,7 +60,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
-				Size: 204800,
+				Size: 104857600,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -92,7 +92,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		ExtraPadding: ExtraPaddingMBR,
 		Partitions: []disk.Partition{
 			{
-				Size:     8192,
+				Size:     4194304,
 				Type:     "41",
 				Bootable: true,
 			},
@@ -133,7 +133,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
-				Size:     2048,
+				Size:     1048576,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
@@ -158,7 +158,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 		ExtraPadding: ExtraPaddingGPT,
 		Partitions: []disk.Partition{
 			{
-				Size: 409600,
+				Size: 209715200,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -171,7 +171,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1048576,
+				Size: 536870912,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{

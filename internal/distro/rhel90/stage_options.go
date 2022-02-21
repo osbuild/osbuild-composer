@@ -417,8 +417,8 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *osbuild.SfdiskStageOptions {
 	for idx, p := range pt.Partitions {
 		partitions[idx] = osbuild.Partition{
 			Bootable: p.Bootable,
-			Size:     p.Size,
-			Start:    p.Start,
+			Start:    pt.BytesToSectors(p.Start),
+			Size:     pt.BytesToSectors(p.Size),
 			Type:     p.Type,
 			UUID:     p.UUID,
 		}
@@ -461,8 +461,8 @@ func copyFSTreeOptions(inputName, inputPipeline string, pt *disk.PartitionTable,
 		devices[name] = *osbuild.NewLoopbackDevice(
 			&osbuild.LoopbackDeviceOptions{
 				Filename: devOptions.Filename,
-				Start:    p.Start,
-				Size:     p.Size,
+				Start:    pt.BytesToSectors(p.Start),
+				Size:     pt.BytesToSectors(p.Size),
 			},
 		)
 		var mount *osbuild.Mount
@@ -530,7 +530,7 @@ func grub2InstStageOptions(filename string, pt *disk.PartitionTable, platform st
 	return &osbuild.Grub2InstStageOptions{
 		Filename: filename,
 		Platform: platform,
-		Location: pt.Partitions[0].Start,
+		Location: pt.BytesToSectors(pt.Partitions[0].Start),
 		Core:     core,
 		Prefix:   prefix,
 	}
@@ -544,7 +544,7 @@ func ziplInstStageOptions(kernel string, pt *disk.PartitionTable) *osbuild.ZiplI
 
 	return &osbuild.ZiplInstStageOptions{
 		Kernel:   kernel,
-		Location: pt.Partitions[bootPartIndex].Start,
+		Location: pt.BytesToSectors(pt.Partitions[bootPartIndex].Start),
 	}
 }
 

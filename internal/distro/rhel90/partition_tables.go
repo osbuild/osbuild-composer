@@ -11,13 +11,13 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     2048, // 1MB
+				Size:     1048576, // 1MB
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 409600, // 200 MB
+				Size: 209715200, // 200 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -31,7 +31,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 524288000, // 500 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
@@ -62,7 +62,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 409600, // 200 MB
+				Size: 209715200, // 200 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -76,7 +76,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 524288000, // 500 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
@@ -107,12 +107,12 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size:     8192,
+				Size:     4194304,
 				Type:     "41",
 				Bootable: true,
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 524288000, // 500 MB
 				Filesystem: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
@@ -138,7 +138,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size: 1024000, // 500 MB
+				Size: 524288000, // 500 MB
 				Filesystem: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
@@ -168,13 +168,13 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     2048, // 1MB
+				Size:     1048576, // 1MB
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 260096, // 127 MB
+				Size: 133169152, // 127 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -188,7 +188,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 786432, // 384 MB
+				Size: 402653184, // 384 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
@@ -219,7 +219,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 260096, // 127 MB
+				Size: 133169152, // 127 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Filesystem: &disk.Filesystem{
@@ -233,7 +233,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 786432, // 384 MB
+				Size: 402653184, // 384 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Filesystem: &disk.Filesystem{
