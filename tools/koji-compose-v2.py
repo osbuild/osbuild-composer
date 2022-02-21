@@ -86,6 +86,12 @@ def main(distro, arch):
         elif status == "failure":
             print("compose failed!")
             print(r.text)
+
+            # Retrieve logs in case of a failure.
+            r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}/logs",
+                             cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
+                             verify="/etc/osbuild-composer/ca-crt.pem")
+            print(r.text)
             sys.exit(1)
         elif status != "pending" and status != "running":
             print(f"unexpected status: {status}")
