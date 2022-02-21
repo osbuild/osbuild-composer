@@ -1081,13 +1081,13 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	kernelOptions := t.kernelOptions
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
-	return osbuild.NewGRUB2Stage(grub2StageOptions(partitionTable.RootFilesystem(), partitionTable.BootFilesystem(), kernelOptions, kernel, kernelVer, uefi, legacy))
+	return osbuild.NewGRUB2Stage(osbuild.NewGrub2StageOptions(&partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", false))
 }
 
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
 	platform := arch.legacy
 	if platform != "" {
-		return osbuild.NewGrub2InstStage(grub2InstStageOptions(filename, pt, platform))
+		return osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(filename, pt, platform))
 	}
 
 	if arch.name == distro.S390xArchName {

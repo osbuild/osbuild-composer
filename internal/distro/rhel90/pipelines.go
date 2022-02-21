@@ -991,7 +991,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
 
-	options := grub2StageOptions(partitionTable.RootFilesystem(), partitionTable.BootFilesystem(), kernelOptions, kernel, kernelVer, uefi, legacy, t.arch.distro.vendor, install)
+	options := osbuild.NewGrub2StageOptions(&partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, t.arch.distro.vendor, install)
 	options.Greenboot = greenboot
 
 	return osbuild.NewGRUB2Stage(options)
@@ -1000,7 +1000,7 @@ func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, ker
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
 	platform := arch.legacy
 	if platform != "" {
-		return osbuild.NewGrub2InstStage(grub2InstStageOptions(filename, pt, platform))
+		return osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(filename, pt, platform))
 	}
 
 	if arch.name == distro.S390xArchName {
