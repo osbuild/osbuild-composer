@@ -31,7 +31,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1644336592519,
+      "iteration": 1645525186957,
       "links": [],
       "panels": [
         {
@@ -279,8 +279,6 @@ data:
               },
               "mappings": [],
               "max": 1,
-              "min": 3,
-              "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -300,7 +298,7 @@ data:
             "x": 16,
             "y": 1
           },
-          "id": 194,
+          "id": 228,
           "options": {
             "legend": {
               "calcs": [],
@@ -314,10 +312,9 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  / \n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
-              "instant": false,
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "interval": "",
-              "legendFormat": "build_job_error_rate",
+              "legendFormat": "",
               "refId": "A"
             }
           ],
@@ -1219,7 +1216,7 @@ data:
         },
         {
           "datasource": "${datasource}",
-          "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
+          "description": "The throughput rate of depsolve job errors and non-errors over time for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1318,12 +1315,12 @@ data:
               "refId": "B"
             }
           ],
-          "title": "Build Job Throughput Rate",
+          "title": "Depsolve Job Throughput Rate",
           "type": "timeseries"
         },
         {
           "datasource": "${datasource}",
-          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
+          "description": "The number of depsolve job errors (as a percentage) over time for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1359,6 +1356,8 @@ data:
               },
               "mappings": [],
               "max": 1,
+              "min": 3,
+              "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1378,7 +1377,7 @@ data:
             "x": 16,
             "y": 35
           },
-          "id": 228,
+          "id": 194,
           "options": {
             "legend": {
               "calcs": [],
@@ -1392,13 +1391,14 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))\n  / \n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "instant": false,
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "title": "Build Job Error Rate",
+          "title": "Depsolve Job Error Rate",
           "type": "timeseries"
         },
         {
@@ -2743,5 +2743,5 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 3
+      "version": 4
     }
