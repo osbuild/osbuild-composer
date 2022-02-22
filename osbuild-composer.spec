@@ -214,6 +214,12 @@ install -m 0755 -vp tools/test-case-generators/generate-test-cases %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer
 install -m 0755 -vp test/cases/*                                   %{buildroot}%{_libexecdir}/tests/osbuild-composer/
 
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/api
+install -m 0755 -vp test/cases/api/*                               %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/
+
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/common
+install -m 0755 -vp test/cases/api/common/*                        %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/common/
+
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/ansible
 install -m 0644 -vp test/data/ansible/*                            %{buildroot}%{_datadir}/tests/osbuild-composer/ansible/
 
