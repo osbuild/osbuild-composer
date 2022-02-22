@@ -929,12 +929,13 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "ro net.ifnames=0",
               "legacy": "i386-pc",
               "uefi": {
-                "vendor": "centos"
+                "vendor": "centos",
+                "unified": true
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64",
+              "write_cmdline": false
             }
           },
           {
@@ -9990,7 +9991,6 @@
   "image-info": {
     "/etc/resolv.conf": [],
     "boot-environment": {
-      "kernelopts": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 ro net.ifnames=0",
       "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64"
     },
     "bootloader": "grub",

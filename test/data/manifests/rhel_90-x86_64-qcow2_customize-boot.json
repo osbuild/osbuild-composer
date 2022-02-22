@@ -358,7 +358,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0"
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug"
             }
           },
           {
@@ -1295,12 +1295,13 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug",
               "legacy": "i386-pc",
               "uefi": {
-                "vendor": "redhat"
+                "vendor": "redhat",
+                "unified": true
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64",
+              "write_cmdline": false
             }
           },
           {
@@ -11936,7 +11937,6 @@
   "image-info": {
     "/etc/resolv.conf": [],
     "boot-environment": {
-      "kernelopts": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug",
       "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64"
     },
     "bootloader": "grub",
@@ -11947,7 +11947,7 @@
         "grub_users": "$grub_users",
         "initrd": "/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
         "linux": "/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug",
         "title": "Red Hat Enterprise Linux (0-rescue-ffffffffffffffffffffffffffffffff) 9.0 (Plow)",
         "version": "0-rescue-ffffffffffffffffffffffffffffffff"
       },
@@ -11957,7 +11957,7 @@
         "grub_users": "$grub_users",
         "initrd": "/initramfs-5.14.0-55.el9.x86_64.img $tuned_initrd",
         "linux": "/vmlinuz-5.14.0-55.el9.x86_64",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 $tuned_params",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug $tuned_params",
         "title": "Red Hat Enterprise Linux (5.14.0-55.el9.x86_64) 9.0 (Plow)",
         "version": "5.14.0-55.el9.x86_64"
       }

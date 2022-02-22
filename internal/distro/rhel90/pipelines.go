@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -40,13 +41,13 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	return pipelines, nil
 }
 
-func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
+func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, kernelOptions string, pt *disk.PartitionTable) *osbuild.Pipeline {
 	rootFs := pt.FindMountable("/")
 	if rootFs == nil {
 		panic("root filesystem must be defined for kernel-cmdline stage, this is a programming error")
 	}
 	rootFsUUID := rootFs.GetFSSpec().UUID
-	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, t.kernelOptions))
+	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, kernelOptions))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
 }
@@ -301,7 +302,7 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	}
 
 	// prepare ostree deployment tree
-	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, nil, "", rng, options)
+	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, rng, options)
 	pipelines = append(pipelines, *treePipeline)
 
 	// make raw image from tree
@@ -528,10 +529,17 @@ func osPipeline(t *imageType,
 	}
 
 	if pt != nil {
-		p = prependKernelCmdlineStage(p, t, pt)
+		kernelOptions := osbuild.GenImageKernelOptions(pt)
+		if t.kernelOptions != "" {
+			kernelOptions = append(kernelOptions, t.kernelOptions)
+		}
+		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+			kernelOptions = append(kernelOptions, bpKernel.Append)
+		}
+		p = prependKernelCmdlineStage(p, strings.Join(kernelOptions, " "), pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
 		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(bpPackages, c.GetKernel().Name)
-		p.AddStage(bootloaderConfigStage(t, *pt, c.GetKernel(), kernelVer, false, false))
+		p.AddStage(bootloaderConfigStage(t, *pt, kernelVer, false, false))
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -797,8 +805,6 @@ func ostreeDeployPipeline(
 	t *imageType,
 	pt *disk.PartitionTable,
 	repoPath string,
-	kernel *blueprint.KernelCustomization,
-	kernelVer string,
 	rng *rand.Rand,
 	options distro.ImageOptions,
 ) *osbuild.Pipeline {
@@ -873,7 +879,7 @@ func ostreeDeployPipeline(
 
 	// TODO: Add users?
 
-	p.AddStage(bootloaderConfigStage(t, *pt, kernel, kernelVer, true, true))
+	p.AddStage(bootloaderConfigStage(t, *pt, "", true, true))
 
 	p.AddStage(osbuild.NewOSTreeSelinuxStage(
 		&osbuild.OSTreeSelinuxStageOptions{
@@ -1008,16 +1014,15 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename, format, qcow
 	return p
 }
 
-func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string, install, greenboot bool) *osbuild.Stage {
+func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernelVer string, install, greenboot bool) *osbuild.Stage {
 	if t.arch.name == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
 
-	kernelOptions := t.kernelOptions
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
 
-	options := osbuild.NewGrub2StageOptions(&partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, t.arch.distro.vendor, install)
+	options := osbuild.NewGrub2StageOptionsUnified(&partitionTable, kernelVer, uefi, legacy, t.arch.distro.vendor, install)
 	options.Greenboot = greenboot
 
 	return osbuild.NewGRUB2Stage(options)
