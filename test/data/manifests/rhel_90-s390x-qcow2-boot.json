@@ -10825,7 +10825,7 @@
         "grub_arg": "--unrestricted",
         "grub_class": "kernel",
         "grub_users": "$grub_users",
-        "id": "-20220219194703-5.14.0-55.el9.s390x",
+        "id": "-20220222232122-5.14.0-55.el9.s390x",
         "initrd": "/boot/initramfs-5.14.0-55.el9.s390x.img",
         "linux": "/boot/vmlinuz-5.14.0-55.el9.s390x",
         "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
