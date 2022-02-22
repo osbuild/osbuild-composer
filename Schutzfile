@@ -107,5 +107,12 @@
         "commit": "087b403042f5179de61a7fc306066d90f8d57e08"
       }
     }
+  },
+  "centos-9": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "06c768a726f977960ab9e90eaf8737582816637c"
+      }
+    }
   }
 }
