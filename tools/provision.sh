@@ -25,9 +25,6 @@ ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical compari
 echo -n "${ID}=${VERSION_ID} "
 if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
     sudo dnf install -y ansible-core koji
-
-    # NOTE: do we need this?
-    sudo ansible-galaxy collection install community.general
 fi
 
 sudo mkdir -p /etc/osbuild-composer
