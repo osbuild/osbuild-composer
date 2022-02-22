@@ -74,10 +74,6 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 		}
 	}
 
-	if !uefi {
-		stageOptions.Legacy = legacy
-	}
-
 	if kernel != nil {
 		if kernel.Append != "" {
 			stageOptions.KernelOptions += " " + kernel.Append
