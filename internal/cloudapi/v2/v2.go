@@ -598,21 +598,22 @@ func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *w
 	var token uuid.UUID
 	var dynArgs []json.RawMessage
 	var err error
+	logWithId := logrus.WithField("jobId", manifestJobID)
 	for {
 		_, token, _, _, dynArgs, err = workers.RequestJobById(ctx, "", manifestJobID)
 		if err == jobqueue.ErrNotPending {
-			logrus.Debugf("Manifest job %v not pending, waiting for depsolve job to finish", manifestJobID)
+			logWithId.Debug("Manifest job not pending, waiting for depsolve job to finish")
 			time.Sleep(time.Millisecond * 50)
 			select {
 			case <-ctx.Done():
-				logrus.Warnf("Manifest job %v's dependencies took longer than 5 minutes to finish, returning to avoid dangling routines", manifestJobID)
+				logWithId.Warning("Manifest job dependencies took longer than 5 minutes to finish, returning to avoid dangling routines")
 				break
 			default:
 				continue
 			}
 		}
 		if err != nil {
-			logrus.Errorf("Error requesting manifest job: %v", err)
+			logWithId.Errorf("Error requesting manifest job: %v", err)
 			return
 		}
 		break
@@ -624,17 +625,17 @@ func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *w
 
 	defer func() {
 		if jobResult.JobError != nil {
-			logrus.Errorf("Error in manifest job %v: %v", manifestJobID, jobResult.JobError.Reason)
+			logWithId.Errorf("Error in manifest job %v: %v", jobResult.JobError.Reason, err)
 		}
 
 		result, err := json.Marshal(jobResult)
 		if err != nil {
-			logrus.Errorf("Error marshalling manifest job %v results: %v", manifestJobID, err)
+			logWithId.Errorf("Error marshalling manifest job results: %v", err)
 		}
 
 		err = workers.FinishJob(token, result)
 		if err != nil {
-			logrus.Errorf("Error finishing manifest job: %v", err)
+			logWithId.Errorf("Error finishing manifest job: %v", err)
 		}
 	}()
 
