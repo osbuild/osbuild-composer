@@ -82,13 +82,20 @@ func main() {
 			Type      string `json:"typ"`
 			ExpiresAt int64  `json:"exp"`
 			IssuedAt  int64  `json:"iat"`
+			RHOrgID   string `json:"rh-org-id"`
 			jwt.Claims
+		}
+
+		if err := r.ParseForm(); err != nil {
+			panic(err)
 		}
 
 		cc := customClaims{
 			Type:      "Bearer",
 			ExpiresAt: 0,
 			IssuedAt:  time.Now().Unix(),
+			// Use refresh_token as rh-org-id
+			RHOrgID: r.Form.Get("refresh_token"),
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, cc)
 		token.Header["kid"] = "key-id"
