@@ -3,6 +3,7 @@ package osbuild2
 import (
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 )
 
@@ -22,6 +23,7 @@ type GRUB2StageOptions struct {
 	UEFI               *GRUB2UEFI `json:"uefi,omitempty"`
 	SavedEntry         string     `json:"saved_entry,omitempty"`
 	Greenboot          bool       `json:"greenboot,omitempty"`
+	WriteCmdLine       *bool      `json:"write_cmdline,omitempty"`
 }
 
 type GRUB2UEFI struct {
@@ -78,6 +80,45 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 		if kernel.Append != "" {
 			stageOptions.KernelOptions += " " + kernel.Append
 		}
+		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
+	}
+
+	return &stageOptions
+}
+
+func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
+	kernelVer string,
+	uefi bool,
+	legacy string,
+	vendor string,
+	install bool) *GRUB2StageOptions {
+
+	rootFs := pt.FindMountable("/")
+	if rootFs == nil {
+		panic("root filesystem must be defined for grub2 stage, this is a programming error")
+	}
+
+	stageOptions := GRUB2StageOptions{
+		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
+		Legacy:             legacy,
+		WriteCmdLine:       common.BoolToPtr(false),
+	}
+
+	bootFs := pt.FindMountable("/boot")
+	if bootFs != nil {
+		bootFsUUID := uuid.MustParse(bootFs.GetFSSpec().UUID)
+		stageOptions.BootFilesystemUUID = &bootFsUUID
+	}
+
+	if uefi {
+		stageOptions.UEFI = &GRUB2UEFI{
+			Vendor:  vendor,
+			Install: install,
+			Unified: true,
+		}
+	}
+
+	if kernelVer != "" {
 		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
 	}
 
