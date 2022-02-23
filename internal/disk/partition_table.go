@@ -21,7 +21,7 @@ type PartitionTable struct {
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 	for _, mnt := range mountpoints {
-		size := newPT.AlignUp(mnt.MinSize)
+		size := newPT.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
 		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
 			resizeEntityBranch(path, size)
 		} else {
@@ -417,6 +417,21 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 	}
 	// first path element is guaranteed to be Mountable
 	return path[0].(Mountable)
+}
+
+func clampFSSize(mountpoint string, size uint64) uint64 {
+	// set a minimum size of 1GB for all mountpoints
+	var minSize uint64 = 1073741824
+	if mountpoint == "/usr" {
+		// set a minimum size of 2GB for `/usr` mountpoint
+		// since this is current behaviour and the minimum
+		// required to create a bootable image
+		minSize = 2147483648
+	}
+	if minSize > size {
+		return minSize
+	}
+	return size
 }
 
 func resizeEntityBranch(path []Entity, size uint64) {
