@@ -40,6 +40,8 @@ var mountpointAllowList = []string{
 	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
 }
 
+var ostreeMountpointAllowList = []string{"/", "/var"}
+
 type distribution struct {
 	name               string
 	product            string
@@ -503,8 +505,8 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 	return sources
 }
 
-func isMountpointAllowed(mountpoint string) bool {
-	for _, allowed := range mountpointAllowList {
+func isMountpointAllowed(mountpoint string, allowlist []string) bool {
+	for _, allowed := range allowlist {
 		match, _ := path.Match(allowed, mountpoint)
 		if match {
 			return true
@@ -530,7 +532,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 
 		if t.name == "edge-simplified-installer" {
-			if err := customizations.CheckAllowed("InstallationDevice", "FDO"); err != nil {
+			if err := customizations.CheckAllowed("InstallationDevice", "FDO", "Filesystem"); err != nil {
 				return fmt.Errorf("boot ISO image type %q contains unsupported blueprint customizations: %v", t.name, err)
 			}
 			if customizations.GetInstallationDevice() == "" {
@@ -570,14 +572,20 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	mountpoints := customizations.GetFilesystems()
 
-	if mountpoints != nil && t.rpmOstree {
+	if mountpoints != nil && t.rpmOstree && t.name != "edge-simplified-installer" {
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if !isMountpointAllowed(m.Mountpoint) {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		if t.name == "edge-simplified-installer" {
+			if !isMountpointAllowed(m.Mountpoint, ostreeMountpointAllowList) {
+				invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+			}
+		} else {
+			if !isMountpointAllowed(m.Mountpoint, mountpointAllowList) {
+				invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+			}
 		}
 	}
 

@@ -291,12 +291,12 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 	return pipelines, nil
 }
 
-func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptions, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
+func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptions, fs []blueprint.FilesystemCustomization, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	ostreeRepoPath := "/ostree/repo"
 	imgName := "image.raw"
 
-	partitionTable, err := t.getPartitionTable(nil, options, rng)
+	partitionTable, err := t.getPartitionTable(fs, options, rng)
 	if err != nil {
 		return nil, "", err
 	}
@@ -323,7 +323,7 @@ func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customization
 	imgName := t.filename
 
 	// create the raw image
-	imagePipelines, _, err := edgeImagePipelines(t, imgName, options, rng)
+	imagePipelines, _, err := edgeImagePipelines(t, imgName, options, nil, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -679,7 +679,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	installDevice := customizations.GetInstallationDevice()
 
 	// create the raw image
-	imagePipelines, imgPipelineName, err := edgeImagePipelines(t, imgName, options, rng)
+	imagePipelines, imgPipelineName, err := edgeImagePipelines(t, imgName, options, customizations.GetFilesystems(), rng)
 	if err != nil {
 		return nil, err
 	}
