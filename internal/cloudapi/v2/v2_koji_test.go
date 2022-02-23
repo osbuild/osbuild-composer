@@ -31,7 +31,7 @@ func TestKojiCompose(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	kojiServer, workerServer, cancel := newV2Server(t, dir)
+	kojiServer, workerServer, cancel := newV2Server(t, dir, []string{""})
 	handler := kojiServer.Handler("/api/image-builder-composer/v2")
 	workerHandler := workerServer.Handler()
 	defer cancel()
@@ -464,7 +464,7 @@ func TestKojiRequest(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	server, _, cancel := newV2Server(t, dir)
+	server, _, cancel := newV2Server(t, dir, []string{""})
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
@@ -496,7 +496,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	server, workers, cancel := newV2Server(t, dir)
+	server, workers, cancel := newV2Server(t, dir, []string{""})
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
