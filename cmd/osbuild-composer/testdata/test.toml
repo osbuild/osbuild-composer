@@ -2,7 +2,7 @@
 allowed_domains = [ "osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
 enable_jwt = false
-jwt_keys_url = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
+jwt_keys_urls = ["https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"]
 jwt_acl_file = "/var/lib/osbuild-composer/acl"
 
 [worker]

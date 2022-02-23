@@ -24,7 +24,6 @@ type KojiAPIConfig struct {
 	EnableTLS      bool      `toml:"enable_tls"`
 	EnableMTLS     bool      `toml:"enable_mtls"`
 	EnableJWT      bool      `toml:"enable_jwt"`
-	JWTKeysURL     string    `toml:"jwt_keys_url"`
 	JWTKeysURLs    []string  `toml:"jwt_keys_urls"`
 	JWTKeysCA      string    `toml:"jwt_ca_file"`
 	JWTACLFile     string    `toml:"jwt_acl_file"`
@@ -51,7 +50,6 @@ type WorkerAPIConfig struct {
 	EnableTLS         bool     `toml:"enable_tls"`
 	EnableMTLS        bool     `toml:"enable_mtls"`
 	EnableJWT         bool     `toml:"enable_jwt"`
-	JWTKeysURL        string   `toml:"jwt_keys_url"`
 	JWTKeysURLs       []string `toml:"jwt_keys_urls"`
 	JWTKeysCA         string   `toml:"jwt_ca_file"`
 	JWTACLFile        string   `toml:"jwt_acl_file"`
