@@ -3,6 +3,7 @@
   become: no
   vars:
     workspace: "{{ lookup('env', 'WORKSPACE') }}"
+    skip_rollback_test: "false"
     total_counter: "0"
     failed_counter: "0"
 
@@ -535,6 +536,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: skip_rollback_test == "false"
 
     # case: check ostree commit after rollback
     - name: check ostree commit after rollback
@@ -559,7 +561,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: result_rollback is succeeded
+      when:
+        - skip_rollback_test == "false"
+        - result_rollback is succeeded
 
     # case: check greenboot* services log again
     - name: fallback log should be found here
@@ -588,7 +592,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: result_rollback is succeeded
+      when:
+        - skip_rollback_test == "false"
+        - result_rollback is succeeded
 
     # case: check grubenv variables again
     - name: grubenv variables should contain boot_success=1
@@ -610,7 +616,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: result_rollback is succeeded
+      when:
+        - skip_rollback_test == "false"
+        - result_rollback is succeeded
 
     - assert:
         that:
