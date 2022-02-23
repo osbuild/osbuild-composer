@@ -1390,7 +1390,7 @@ def get_args():
         "--gen-matrix-file",
         metavar="PATH",
         help="JSON file with test case generation matrix (distro x arch x image type)." + \
-            " If not provided, '<script_location_dir>/distro-arch-imagetype-map.json' is read.",
+            " If not provided, the matrix is fetched directly from composer.",
         type=os.path.abspath
     )
     parser.add_argument(
@@ -1458,11 +1458,17 @@ def main(args):
     if not os.path.isdir(output):
         raise RuntimeError(f"output directory {output} does not exist")
 
-    script_dir = os.path.dirname(__file__)
-    gen_matrix_path = gen_matrix_file if gen_matrix_file else f"{script_dir}/distro-arch-imagetype-map.json"
-    log.info("Loading generation matrix from file: '%s'", gen_matrix_path)
-    with open(gen_matrix_path, "r") as gen_matrix_json:
-        gen_matrix_dict = json.load(gen_matrix_json)
+    if gen_matrix_file is None:
+        # load the matrix directly from composer
+        script_dir = os.path.dirname(__file__)
+        matrix_generator_path = os.path.join(script_dir, "../../cmd/osbuild-composer-image-definitions/main.go")
+        raw_output = subprocess.check_output(["go", "run", matrix_generator_path], encoding="UTF-8")
+        gen_matrix_dict = json.loads(raw_output)
+    else:
+        # read the matrix from a file
+        log.info("Loading generation matrix from file: '%s'", gen_matrix_file)
+        with open(gen_matrix_file, "r") as gen_matrix_json:
+            gen_matrix_dict = json.load(gen_matrix_json)
 
     # Filter generation matrix based on passed arguments
     for distro in list(gen_matrix_dict.keys()):
