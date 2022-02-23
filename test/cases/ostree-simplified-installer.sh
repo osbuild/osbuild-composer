@@ -287,9 +287,9 @@ sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create -
 greenprint "🔧 Prepare fdo manufacturing server"
 sudo git clone https://github.com/runcom/fdo-containers
 cd fdo-containers/ || exit
+sudo git checkout 56f4b8617f3e2afa379032b13e459234c4fba1d8
 sudo ./create-keys.sh
-sudo setenforce 0
-sudo podman run -d -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers -v "$PWD"/config/rendezvous-info.yml:/etc/fdo/rendezvous-info.yml -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.yml -v "$PWD"/keys:/etc/fdo/keys --ip 192.168.200.2 --name fdo-manufacturing-server --network edge quay.io/runcom/fdo-manufacturing-server:0.3.0
+sudo podman run -d -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z -v "$PWD"/config/rendezvous-info.yml:/etc/fdo/rendezvous-info.yml:z -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.yml:z -v "$PWD"/keys:/etc/fdo/keys:z --ip 192.168.200.2 --name fdo-manufacturing-server --network edge quay.io/runcom/fdo-manufacturing-server:0.3.0
 cd .. || exit
 
 # Wait for fdo server to be running
