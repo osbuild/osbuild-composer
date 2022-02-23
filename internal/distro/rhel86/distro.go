@@ -37,7 +37,7 @@ const (
 )
 
 var mountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home",
+	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
 }
 
 type distribution struct {
