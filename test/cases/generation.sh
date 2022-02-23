@@ -1,4 +1,11 @@
 #!/usr/bin/bash
+
+#
+# The objective of this script is to provide special requirement needed
+# for generate-test-cases. For example, disable the dnf-json daemon
+# and then execute generate-test-cases.
+#
+
 set -euxo pipefail
 
 # Provision the software under test.
