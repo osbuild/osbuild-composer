@@ -863,7 +863,7 @@
           {
             "type": "org.osbuild.locale",
             "options": {
-              "language": "en_US.UTF-8"
+              "language": "C.UTF-8"
             }
           },
           {
@@ -9644,7 +9644,7 @@
       "type": "qcow2"
     },
     "locale": {
-      "LANG": "en_US.UTF-8"
+      "LANG": "C.UTF-8"
     },
     "machine-id": "",
     "modprobe": {
