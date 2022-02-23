@@ -22,7 +22,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.CancelFunc) {
+func newV2Server(t *testing.T, dir string, depsolveChannels []string) (*v2.Server, *worker.Server, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
 	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", TenantProviderFields: []string{"rh-org-id"}})
@@ -42,7 +42,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 	depsolveContext, cancel := context.WithCancel(context.Background())
 	go func() {
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"}, []string{""})
+			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"}, depsolveChannels)
 			if err != nil {
 				continue
 			}
@@ -69,7 +69,7 @@ func TestUnknownRoute(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/badroute", ``, http.StatusNotFound, `
@@ -86,7 +86,7 @@ func TestGetError(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/4", ``, http.StatusOK, `
@@ -112,7 +112,7 @@ func TestGetErrorList(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
@@ -134,7 +134,7 @@ func TestCompose(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
@@ -555,7 +555,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, wrksrv, cancel := newV2Server(t, dir)
+	srv, wrksrv, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -627,7 +627,7 @@ func TestComposeStatusFailure(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, wrksrv, cancel := newV2Server(t, dir)
+	srv, wrksrv, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -679,7 +679,7 @@ func TestComposeLegacyError(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, wrksrv, cancel := newV2Server(t, dir)
+	srv, wrksrv, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -734,7 +734,7 @@ func TestComposeJobError(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, wrksrv, cancel := newV2Server(t, dir)
+	srv, wrksrv, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -792,7 +792,7 @@ func TestComposeCustomizations(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -841,7 +841,7 @@ func TestImageTypes(t *testing.T) {
 	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
-	srv, _, cancel := newV2Server(t, dir)
+	srv, _, cancel := newV2Server(t, dir, []string{""})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
