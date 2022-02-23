@@ -326,6 +326,8 @@ Requires:   systemd
 Requires:   qemu-img
 Requires:   osbuild >= 41
 Requires:   osbuild-ostree >= 41
+Requires:   osbuild-lvm2 >= 41
+Requires:   osbuild-luks2 >= 41
 Requires:   %{name}-dnf-json = %{version}-%{release}
 
 # remove in F34
