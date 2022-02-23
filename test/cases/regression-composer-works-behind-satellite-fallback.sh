@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#
+# test osbuild-composer when the host system doesn't have redhat.repo file,
+# but there is a certificate that can be used to access the repositories
+#
+
 set -exuo pipefail
 
 function greenprint {

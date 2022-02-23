@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+#
+# tests that guest images are buildable using composer-cli and and verifies 
+# they boot with cloud-init using libvirt
+#
+
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.

@@ -1,4 +1,12 @@
 #!/bin/bash
+
+#
+# Test osbuild-composer 'upload to azure' functionality. To do so, create and
+# push a blueprint with composer cli. Then, use terraform to create 
+# an instance in azure from the uploaded image. Finally, verify the instance
+# is running with cloud-init ran.
+#
+
 shopt -s expand_aliases
 set -euo pipefail
 
