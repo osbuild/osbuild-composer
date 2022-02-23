@@ -51,6 +51,7 @@
             "qcow2",
             "edge-commit",
             "edge-container",
+            "image-installer",
             "tar"
         ],
         "ppc64le": [
@@ -165,6 +166,7 @@
             "qcow2",
             "edge-commit",
             "edge-container",
+            "image-installer",
             "tar"
         ],
         "ppc64le": [
@@ -229,6 +231,7 @@
             "ec2",
             "edge-commit",
             "edge-container",
+            "image-installer",
             "openstack",
             "qcow2",
             "tar"
@@ -260,6 +263,7 @@
             "qcow2",
             "edge-commit",
             "edge-container",
+            "image-installer",
             "tar"
         ],
         "ppc64le": [
