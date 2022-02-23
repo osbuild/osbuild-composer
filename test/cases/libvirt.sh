@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+#
+# Helper script that executes `tools/libvirt_test.sh` with the appropiate image type and boot type
+#
+
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 

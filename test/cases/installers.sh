@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+#
+# This test builds a image-installer iso which is then used for OS installation. 
+# To do so, it creates an image-installer iso, then modifies the kickstart so it 
+# can be installed automatically, installs the VM with virt-install waits for it 
+# to boot and then run some test using ansible to check if everything is as expected
+#
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
