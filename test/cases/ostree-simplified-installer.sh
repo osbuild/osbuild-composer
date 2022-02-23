@@ -419,6 +419,14 @@ installation_device = "/dev/vda"
 [customizations.fdo]
 manufacturing_server_url="http://192.168.200.2:8080"
 diun_pub_key_insecure="true"
+
+[[customizations.filesystem]]
+mountpoint = "/var"
+size = 2147483648
+
+[[customizations.filesystem]]
+mountpoint = "/"
+size = 2147483648
 EOF
 
 greenprint "📄 installer blueprint"
@@ -539,6 +547,7 @@ greenprint "🧹 Clean up BIOS VM"
 if [[ $(sudo virsh domstate "${IMAGE_KEY}-http") == "running" ]]; then
     sudo virsh destroy "${IMAGE_KEY}-http"
 fi
+
 sudo virsh undefine "${IMAGE_KEY}-http" --nvram
 sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
