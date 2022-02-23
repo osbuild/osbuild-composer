@@ -113,6 +113,43 @@
       "osbuild": {
         "commit": "06c768a726f977960ab9e90eaf8737582816637c"
       }
+    },
+    "repos": {
+      "file": "/etc/yum.repos.d/centos.repo",
+      "x86_64": [
+        {
+          "title": "baseos",
+          "name": "baseos",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220215"
+        },
+        {
+          "title": "appstream",
+          "name": "appstream",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220215"
+        },
+        {
+          "title": "crb",
+          "name": "crb",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-crb-20220222"
+        }
+      ],
+      "aarch64": [
+        {
+          "title": "baseos",
+          "name": "baseos",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220215"
+        },
+        {
+          "title": "appstream",
+          "name": "appstream",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220215"
+        },
+        {
+          "title": "crb",
+          "name": "crb",
+          "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-crb-20220222"
+        }
+      ]
     }
   }
 }
