@@ -44,6 +44,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2147483648, // 2GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -89,6 +90,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2147483648, // 2GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -123,6 +125,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2147483648, // 2GiB
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
@@ -149,6 +152,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size:     2147483648, // 2GiB
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
