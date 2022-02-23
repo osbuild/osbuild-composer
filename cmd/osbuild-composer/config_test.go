@@ -86,7 +86,7 @@ func TestConfig(t *testing.T) {
 	require.Equal(t, "composer-db", config.Worker.PGDatabase)
 
 	require.False(t, config.Koji.EnableJWT)
-	require.Equal(t, "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs", config.Koji.JWTKeysURL)
+	require.Equal(t, []string{"https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"}, config.Koji.JWTKeysURLs)
 	require.Equal(t, "", config.Koji.JWTKeysCA)
 	require.Equal(t, "/var/lib/osbuild-composer/acl", config.Koji.JWTACLFile)
 }

@@ -201,13 +201,15 @@ objects:
     acl.yml: |
       - claim: user_id
         pattern: ^(54629121|54629180|54597799|54676085)$
+      - claim: rh-org-id
+        pattern: ^(13826359)$
     osbuild-composer.toml: |
       log_level = "info"
       [koji]
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
-      jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       [koji.aws_config]
       bucket = "imagebuilder.service.staging"
@@ -218,7 +220,7 @@ objects:
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
-      jwt_keys_url = "${SSO_BASE_URL}/protocol/openid-connect/certs"
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
 
 - apiVersion: batch/v1
@@ -328,9 +330,13 @@ parameters:
     name: PGMAXCONNS
     value: "20"
   - description: base sso url
-    name: SSO_BASE_URL
+    name: RH_SSO_BASE_URL
     required: true
     value: "https://sso.redhat.com/auth/realms/redhat-external"
+  - description: base sso url
+    name: MAS_SSO_BASE_URL
+    required: true
+    value: "https://identity.api.openshift.com/auth/realms/rhoas"
   - description: base sso url
     name: COMPOSER_CONFIG_DIR
     required: true

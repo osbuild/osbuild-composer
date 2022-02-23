@@ -221,9 +221,6 @@ func (c *Composer) Start() error {
 			var err error
 			if c.config.Worker.EnableJWT {
 				keysURLs := c.config.Worker.JWTKeysURLs
-				if c.config.Worker.JWTKeysURL != "" {
-					keysURLs = append(keysURLs, c.config.Worker.JWTKeysURL)
-				}
 				handler, err = auth.BuildJWTAuthHandler(
 					keysURLs,
 					c.config.Worker.JWTKeysCA,
@@ -270,9 +267,6 @@ func (c *Composer) Start() error {
 			var err error
 			if c.config.Koji.EnableJWT {
 				keysURLs := c.config.Koji.JWTKeysURLs
-				if c.config.Koji.JWTKeysURL != "" {
-					keysURLs = append(keysURLs, c.config.Koji.JWTKeysURL)
-				}
 				handler, err = auth.BuildJWTAuthHandler(
 					keysURLs,
 					c.config.Koji.JWTKeysCA,

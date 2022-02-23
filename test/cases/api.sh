@@ -1262,7 +1262,7 @@ cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
 enable_tls = false
 enable_mtls = false
 enable_jwt = true
-jwt_keys_url = "https://localhost:8080/certs"
+jwt_keys_urls = ["https://localhost:8080/certs"]
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
 jwt_acl_file = ""
 [worker]
@@ -1276,7 +1276,7 @@ pg_ssl_mode = "disable"
 enable_tls = true
 enable_mtls = false
 enable_jwt = true
-jwt_keys_url = "https://localhost:8080/certs"
+jwt_keys_urls = ["https://localhost:8080/certs"]
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
 EOF
 
