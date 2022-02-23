@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/sirupsen/logrus"
@@ -42,7 +42,8 @@ func main() {
 	}
 	defer file.Close()
 
-	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", http.DefaultTransport)
+	transport := &retryablehttp.RoundTripper{}
+	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", transport)
 	if err != nil {
 		println(err.Error())
 		return

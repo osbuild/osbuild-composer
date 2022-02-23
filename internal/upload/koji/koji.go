@@ -2,13 +2,16 @@ package koji
 
 import (
 	"bytes"
+	"context"
 	"net"
+	"strings"
 	"time"
 
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,8 +23,10 @@ import (
 	"os"
 
 	"github.com/kolo/xmlrpc"
+	"github.com/sirupsen/logrus"
 	"github.com/ubccr/kerby/khttp"
 
+	rh "github.com/hashicorp/go-retryablehttp"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -136,6 +141,7 @@ func newKoji(server string, transport http.RoundTripper, reply loginReply) (*Koj
 		callnum:    0,
 		transport:  transport,
 	}
+
 	client, err := xmlrpc.NewClient(server, kojiTransport)
 	if err != nil {
 		return nil, err
@@ -156,7 +162,8 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
 	// let's just use the one that the called passed in.
-	loginClient, err := xmlrpc.NewClient(server, http.DefaultTransport)
+	rhTransport := &rh.RoundTripper{Client: rh.NewClient()}
+	loginClient, err := xmlrpc.NewClient(server, rhTransport)
 	if err != nil {
 		return nil, err
 	}
@@ -288,14 +295,14 @@ func (k *Koji) CGImport(build ImageBuild, buildRoots []BuildRoot, images []Image
 }
 
 // uploadChunk uploads a byte slice to a given filepath/filname at a given offset
-func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint64) error {
+func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint64) (uint, error) {
 	// We have to open-code a bastardized version of XML-RPC: We send an octet-stream, as
 	// if it was an RPC call, and get a regular XML-RPC reply back. In addition to the
 	// standard URL parameters, we also have to pass any other parameters as part of the
 	// URL, as the body can only contain the payload.
 	u, err := url.Parse(k.server)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	q := u.Query()
 	q.Add("filepath", filepath)
@@ -304,16 +311,49 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("fileverify", "adler32")
 	u.RawQuery = q.Encode()
 
-	client := http.Client{Transport: k.transport}
-	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
-	if err != nil {
-		return err
+	retries := uint(0)
+
+	countingCheckRetry := func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		retries++
+		shouldRetry, retErr := rh.DefaultRetryPolicy(ctx, resp, err)
+
+		// DefaultRetryPolicy denies retrying for any certificate related error.
+		// Override it in case the error is a timeout.
+		if !shouldRetry && err != nil {
+			if v, ok := err.(*url.Error); ok {
+				if _, ok := v.Err.(x509.UnknownAuthorityError); ok {
+					// retry if it's a timeout
+					return strings.Contains(strings.ToLower(v.Error()), "timeout"), v
+				}
+			}
+		}
+
+		return shouldRetry, retErr
 	}
+	logger := rh.Logger(logrus.StandardLogger())
+
+	client := rh.Client{
+		HTTPClient: &http.Client{
+			Transport: k.transport,
+		},
+		CheckRetry: countingCheckRetry,
+		Logger:     logger,
+	}
+
+	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
+
+	// don't count the first call since it's not a retry
+	retries--
+
+	if err != nil {
+		return retries, err
+	}
+
 	defer respData.Body.Close()
 
 	body, err := ioutil.ReadAll(respData.Body)
 	if err != nil {
-		return err
+		return retries, err
 	}
 
 	var reply struct {
@@ -324,30 +364,31 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	resp := xmlrpc.Response(body)
 
 	if resp.Err() != nil {
-		return fmt.Errorf("xmlrpc server returned an error: %v", resp.Err())
+		return retries, fmt.Errorf("xmlrpc server returned an error: %v", resp.Err())
 	}
 
 	err = resp.Unmarshal(&reply)
 	if err != nil {
-		return fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
+		return retries, fmt.Errorf("cannot unmarshal the xmlrpc response: %v", err)
 	}
 
 	if reply.Size != len(chunk) {
-		return fmt.Errorf("Sent a chunk of %d bytes, but server got %d bytes", len(chunk), reply.Size)
+		return retries, fmt.Errorf("Sent a chunk of %d bytes, but server got %d bytes", len(chunk), reply.Size)
 	}
 
 	digest := fmt.Sprintf("%08x", adler32.Checksum(chunk))
 	if reply.HexDigest != digest {
-		return fmt.Errorf("Sent a chunk with Adler32 digest %s, but server computed digest %s", digest, reply.HexDigest)
+		return retries, fmt.Errorf("Sent a chunk with Adler32 digest %s, but server computed digest %s", digest, reply.HexDigest)
 	}
 
-	return nil
+	return retries, nil
 }
 
 // Upload uploads file to the temporary filepath on the kojiserver under the name filename
 // The md5sum and size of the file is returned on success.
 func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64, error) {
 	chunk := make([]byte, 1024*1024) // upload a megabyte at a time
+	retries := uint(0)
 	offset := uint64(0)
 	// Koji uses MD5 hashes
 	/* #nosec G401 */
@@ -360,8 +401,10 @@ func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64
 			}
 			return "", 0, err
 		}
-		err = k.uploadChunk(chunk[:n], filepath, filename, offset)
+		r, err := k.uploadChunk(chunk[:n], filepath, filename, offset)
+		retries += r
 		if err != nil {
+			logrus.Infof("Koji upload failed after %d retries", retries)
 			return "", 0, err
 		}
 		offset += uint64(n)
@@ -374,6 +417,7 @@ func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64
 			return "", 0, fmt.Errorf("sent %d bytes, but hashed %d", n, m)
 		}
 	}
+	logrus.Infof("Koji upload successful after %d retries", retries)
 	return fmt.Sprintf("%x", hash.Sum(nil)), offset, nil
 }
 
@@ -425,10 +469,13 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 	}, nil
 }
 
-func CreateKojiTransport(relaxTimeout uint) *http.Transport {
+func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
 	// Koji for some reason needs TLS renegotiation enabled.
-	// Clone the default http transport and enable renegotiation.
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// Clone the default http rt and enable renegotiation.
+	rt := &rh.RoundTripper{Client: rh.NewClient()}
+
+	transport := rt.Client.HTTPClient.Transport.(*http.Transport)
+
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
 		MinVersion:    tls.VersionTLS12,
@@ -443,5 +490,5 @@ func CreateKojiTransport(relaxTimeout uint) *http.Transport {
 		}).DialContext
 	}
 
-	return transport
+	return rt
 }
