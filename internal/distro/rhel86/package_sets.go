@@ -661,6 +661,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"librsvg2",
 			"linux-firmware",
 			"lklug-fonts",
+			"lldpad",
 			"lohit-assamese-fonts",
 			"lohit-bengali-fonts",
 			"lohit-devanagari-fonts",
