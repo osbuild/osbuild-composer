@@ -67,7 +67,9 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 			volumes := make([]LogicalVolume, len(ent.LogicalVolumes))
 			for idx, lv := range ent.LogicalVolumes {
 				volumes[idx].Name = lv.Name
-				volumes[idx].Size = fmt.Sprintf("%d", lv.Size)
+				// NB: we need to specify the size in bytes, since lvcreate
+				// defaults to megabytes
+				volumes[idx].Size = fmt.Sprintf("%dB", lv.Size)
 			}
 
 			stage := NewLVM2CreateStage(
