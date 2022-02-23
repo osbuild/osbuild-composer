@@ -57,7 +57,7 @@ type distribution struct {
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
 	Timezone: "America/New_York",
-	Locale:   "en_US.UTF-8",
+	Locale:   "C.UTF-8",
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{
@@ -695,6 +695,9 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: edgeRawImageBuildPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: "en_US.UTF-8",
+		},
 		defaultSize:         10 * GigaByte,
 		rpmOstree:           true,
 		bootable:            true,
@@ -724,6 +727,7 @@ func newDistro(distroName string) distro.Distro {
 			installerPkgsKey: edgeInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
+			Locale:          "en_US.UTF-8",
 			EnabledServices: edgeServices,
 		},
 		rpmOstree:        true,
@@ -806,6 +810,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey:    vhdCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
+			Locale: "en_US.UTF-8",
 			EnabledServices: []string{
 				"sshd",
 				"waagent",
@@ -830,6 +835,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vmdkCommonPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: "en_US.UTF-8",
+		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
@@ -848,6 +856,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    openstackCommonPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: "en_US.UTF-8",
+		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
@@ -860,6 +871,7 @@ func newDistro(distroName string) distro.Distro {
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig := &distro.ImageConfig{
+		Locale:   "en_US.UTF-8",
 		Timezone: "UTC",
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{

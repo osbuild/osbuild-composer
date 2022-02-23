@@ -565,7 +565,7 @@
           {
             "type": "org.osbuild.locale",
             "options": {
-              "language": "en_US.UTF-8"
+              "language": "C.UTF-8"
             }
           },
           {
@@ -5977,7 +5977,7 @@
       "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
     ],
     "locale": {
-      "LANG": "en_US.UTF-8"
+      "LANG": "C.UTF-8"
     },
     "machine-id": "",
     "os-release": {
