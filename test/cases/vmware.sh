@@ -1,4 +1,12 @@
 #!/bin/bash
+
+#
+# Test osbuild-composer 'upload to vmware' functionality. To do so, create and
+# push a blueprint with composer cli. Then, create an instance in vSphere
+# from the uploaded image. Finally, verify that the instance is running and 
+# cloud init ran.
+#
+
 set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+#
+# script that servers as a base for all the regression tests
+#
+
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 TESTS_PATH=/usr/libexec/tests/osbuild-composer/

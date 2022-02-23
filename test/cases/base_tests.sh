@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+#
+# Script that executes different high level sanity tests writen in GO. 
+#
+
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 TESTS_PATH=/usr/libexec/osbuild-composer-test
 mkdir --parents /tmp/logs

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#
+# osbuild-composer can work with multiple subscriptions on the host system.
+# test this by simulating a custom repository with custom certificates and 
+# verifies that an image can be built using those.
+#
+
 set -exuo pipefail
 
 function greenprint {
