@@ -40,6 +40,7 @@ type ImageConfig struct {
 	Authconfig    *osbuild2.AuthconfigStageOptions
 	PwQuality     *osbuild2.PwqualityConfStageOptions
 	WAAgentConfig *osbuild2.WAAgentConfStageOptions
+	Grub2Config   *osbuild2.GRUB2Config
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
