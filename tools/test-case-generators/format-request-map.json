@@ -224,6 +224,48 @@
     "no-image-info": true,
     "overrides": {}
   },
+  "edge-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "ostree": {
+        "ref": "test/edge",
+        "url": "http://edge.example.com/repo",
+        "parent": "test/edge"
+      },
+      "blueprint": {}
+    },
+    "no-image-info": true,
+    "overrides": {}
+  },
+  "edge-simplified-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-simplified-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "ostree": {
+        "ref": "test/edge",
+        "url": "http://edge.example.com/repo",
+        "parent": "test/edge"
+      },
+      "blueprint": {
+        "customizations": {
+          "installation_device": "/dev/vda",
+          "fdo": {
+            "manufacturing_server_url": "https;//fdo.example.com",
+            "diun_pub_key_insecure": "true"
+          }
+        }
+      }
+    },
+    "no-image-info": true,
+    "overrides": {}
+  },
   "oci": {
     "compose-request": {
       "distro": "",
