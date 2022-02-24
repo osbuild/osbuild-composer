@@ -38,6 +38,7 @@ type ImageConfig struct {
 	DNFConfig     []*osbuild2.DNFConfigStageOptions
 	SshdConfig    *osbuild2.SshdConfigStageOptions
 	Authconfig    *osbuild2.AuthconfigStageOptions
+	PwQuality     *osbuild2.PwqualityConfStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -113,6 +114,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.Authconfig == nil {
 			finalConfig.Authconfig = parentConfig.Authconfig
+		}
+		if finalConfig.PwQuality == nil {
+			finalConfig.PwQuality = parentConfig.PwQuality
 		}
 	}
 	return &finalConfig
