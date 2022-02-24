@@ -630,6 +630,7 @@ components:
         - aws-ha-rhui
         - aws-sap-rhui
         - azure
+        - azure-rhui
         - edge-commit
         - edge-container
         - edge-installer

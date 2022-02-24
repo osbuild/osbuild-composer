@@ -843,6 +843,121 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	azureRhuiImgType := imageType{
+		name:     "azure-rhui",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    azureRhuiCommonPackageSet,
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			Timezone: "Etc/UTC",
+			Locale:   "en_US.UTF-8",
+			Keyboard: &osbuild.KeymapStageOptions{
+				Keymap: "us",
+				X11Keymap: &osbuild.X11KeymapOptions{
+					Layouts: []string{"us"},
+				},
+			},
+			EnabledServices: []string{
+				"firewalld",
+				"sshd",
+				"systemd-resolved",
+				"waagent",
+			},
+			SshdConfig: &osbuild.SshdConfigStageOptions{
+				Config: osbuild.SshdConfigConfig{
+					ClientAliveInterval: common.IntToPtr(180),
+				},
+			},
+			Authconfig: &osbuild.AuthconfigStageOptions{},
+			Modprobe: []*osbuild.ModprobeStageOptions{
+				{
+					Filename: "blacklist-nouveau.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+						osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
+					},
+				},
+				{
+					Filename: "blacklist-floppy.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+					},
+				},
+			},
+			CloudInit: []*osbuild.CloudInitStageOptions{
+				{
+					Filename: "10-azure-kvp.cfg",
+					Config: osbuild.CloudInitConfigFile{
+						Reporting: &osbuild.CloudInitConfigReporting{
+							Logging: &osbuild.CloudInitConfigReportingHandlers{
+								Type: "log",
+							},
+							Telemetry: &osbuild.CloudInitConfigReportingHandlers{
+								Type: "hyperv",
+							},
+						},
+					},
+				},
+				{
+					Filename: "91-azure_datasource.cfg",
+					Config: osbuild.CloudInitConfigFile{
+						Datasource: &osbuild.CloudInitConfigDatasource{
+							Azure: &osbuild.CloudInitConfigDatasourceAzure{
+								ApplyNetworkConfig: false,
+							},
+						},
+						DatasourceList: []string{
+							"Azure",
+						},
+					},
+				},
+			},
+			PwQuality: &osbuild.PwqualityConfStageOptions{
+				Config: osbuild.PwqualityConfConfig{
+					Minlen:   common.IntToPtr(6),
+					Minclass: common.IntToPtr(3),
+					Dcredit:  common.IntToPtr(0),
+					Ucredit:  common.IntToPtr(0),
+					Lcredit:  common.IntToPtr(0),
+					Ocredit:  common.IntToPtr(0),
+				},
+			},
+			WAAgentConfig: &osbuild.WAAgentConfStageOptions{
+				Config: osbuild.WAAgentConfig{
+					RDFormat:     common.BoolToPtr(false),
+					RDEnableSwap: common.BoolToPtr(false),
+				},
+			},
+			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+				distro.RHSMConfigNoSubscription: {
+					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+						SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+							Enabled: false,
+						},
+					},
+				},
+			},
+			Grub2Config: &osbuild.GRUB2Config{
+				TerminalInput:  []string{"serial", "console"},
+				TerminalOutput: []string{"serial", "console"},
+				Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+				Timeout:        10,
+			},
+			DefaultTarget: "multi-user.target",
+		},
+		kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",
+		bootable:            true,
+		defaultSize:         68719476736,
+		pipelines:           vhdPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc"},
+		exports:             []string{"vpc"},
+		basePartitionTables: azureRhuiBasePartitionTables,
+	}
+
 	vmdkImgType := imageType{
 		name:     "vmdk",
 		filename: "disk.vmdk",
@@ -1344,6 +1459,9 @@ func newDistro(distroName string) distro.Distro {
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
 
 	if rd.isRHEL() {
+		// add azure to RHEL distro only
+		x86_64.addImageTypes(azureRhuiImgType)
+
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
 		aarch64.addImageTypes(ec2ImgTypeAarch64)

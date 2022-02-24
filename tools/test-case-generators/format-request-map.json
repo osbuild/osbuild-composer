@@ -10,6 +10,24 @@
     },
     "overrides": {}
   },
+  "azure-rhui": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "azure-rhui",
+      "repositories": [],
+      "filename": "disk.vhd",
+      "blueprint": {}
+    },
+    "overrides": {
+      "rhel-85": {
+        "distro": "rhel-86"
+      }
+    },
+    "supported_arches": [
+      "x86_64"
+    ]
+  },
   "ec2": {
     "compose-request": {
       "distro": "",
@@ -81,7 +99,9 @@
       }
     },
     "overrides": {},
-    "supported_arches": ["x86_64"]
+    "supported_arches": [
+      "x86_64"
+    ]
   },
   "rhel-edge-commit": {
     "compose-request": {
@@ -121,7 +141,9 @@
       }
     },
     "overrides": {},
-    "supported_arches": ["x86_64"]
+    "supported_arches": [
+      "x86_64"
+    ]
   },
   "fedora-iot-commit": {
     "compose-request": {
