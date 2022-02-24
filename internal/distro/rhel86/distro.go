@@ -449,20 +449,30 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		allPackageSpecs = append(allPackageSpecs, specs...)
 	}
 
+	// handle OSTree commit inputs
 	var commits []ostreeCommit
 	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
 		commits = []ostreeCommit{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
 	}
+
+	// handle inline sources
+	inlineData := []string{}
+
+	// FDO root certs, if any, are transmitted via an inline source
+	if fdo := customizations.GetFDO(); fdo != nil && fdo.DiunPubKeyRootCerts != "" {
+		inlineData = append(inlineData, fdo.DiunPubKeyRootCerts)
+	}
+
 	return json.Marshal(
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   t.sources(allPackageSpecs, commits),
+			Sources:   t.sources(allPackageSpecs, commits, inlineData),
 		},
 	)
 }
 
-func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostreeCommit) osbuild.Sources {
+func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostreeCommit, inlineData []string) osbuild.Sources {
 	sources := osbuild.Sources{}
 	curl := &osbuild.CurlSource{
 		Items: make(map[string]osbuild.CurlSourceItem),
@@ -492,6 +502,16 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 	if len(ostree.Items) > 0 {
 		sources["org.osbuild.ostree"] = ostree
 	}
+
+	if len(inlineData) > 0 {
+		ils := osbuild.NewInlineSource()
+		for _, data := range inlineData {
+			ils.AddItem(data)
+		}
+
+		sources["org.osbuild.inline"] = ils
+	}
+
 	return sources
 }
 
@@ -522,11 +542,30 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 
 		if t.name == "edge-simplified-installer" {
-			if err := customizations.CheckAllowed("InstallationDevice"); err != nil {
+			if err := customizations.CheckAllowed("InstallationDevice", "FDO"); err != nil {
 				return fmt.Errorf("boot ISO image type %q contains unsupported blueprint customizations: %v", t.name, err)
 			}
 			if customizations.GetInstallationDevice() == "" {
 				return fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.name)
+			}
+			if customizations.GetFDO() == nil {
+				return fmt.Errorf("boot ISO image type %q requires specifying FDO configuration to install to", t.name)
+			}
+			if customizations.GetFDO().ManufacturingServerURL == "" {
+				return fmt.Errorf("boot ISO image type %q requires specifying FDO.ManufacturingServerURL configuration to install to", t.name)
+			}
+			var diunSet int
+			if customizations.GetFDO().DiunPubKeyHash != "" {
+				diunSet++
+			}
+			if customizations.GetFDO().DiunPubKeyInsecure != "" {
+				diunSet++
+			}
+			if customizations.GetFDO().DiunPubKeyRootCerts != "" {
+				diunSet++
+			}
+			if diunSet != 1 {
+				return fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to", t.name)
 			}
 		} else if customizations != nil {
 			return fmt.Errorf("boot ISO image type %q does not support blueprint customizations", t.name)
@@ -620,7 +659,8 @@ func newDistro(distroName string) distro.Distro {
 
 	// Shared Services
 	edgeServices := []string{
-		"NetworkManager.service", "firewalld.service", "sshd.service",
+		// TODO(runcom): move fdo-client-linuxapp.service to presets?
+		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
 	}
 
 	// Image Definitions

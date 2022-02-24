@@ -20,6 +20,16 @@ type Customizations struct {
 	Services           *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
 	Filesystem         []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
 	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
+	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
+}
+
+type FDOCustomization struct {
+	ManufacturingServerURL string `json:"manufacturing_server_url,omitempty" toml:"manufacturing_server_url,omitempty"`
+	DiunPubKeyInsecure     string `json:"diun_pub_key_insecure,omitempty" toml:"diun_pub_key_insecure,omitempty"`
+	// This is the output of:
+	// echo "sha256:$(openssl x509 -fingerprint -sha256 -noout -in diun_cert.pem | cut -d"=" -f2 | sed 's/://g')"
+	DiunPubKeyHash      string `json:"diun_pub_key_hash,omitempty" toml:"diun_pub_key_hash,omitempty"`
+	DiunPubKeyRootCerts string `json:"diun_pub_key_root_certs,omitempty" toml:"diun_pub_key_root_certs,omitempty"`
 }
 
 type KernelCustomization struct {
@@ -336,4 +346,11 @@ func (c *Customizations) GetInstallationDevice() string {
 		return ""
 	}
 	return c.InstallationDevice
+}
+
+func (c *Customizations) GetFDO() *FDOCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.FDO
 }
