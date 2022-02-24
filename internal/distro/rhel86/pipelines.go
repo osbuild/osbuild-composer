@@ -941,6 +941,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 		"lunmask",
 		"nfs",
 	})))
+	p.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	return p
 }

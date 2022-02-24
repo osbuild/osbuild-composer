@@ -1312,6 +1312,12 @@
                 "/.buildstamp"
               ]
             }
+          },
+          {
+            "type": "org.osbuild.selinux.config",
+            "options": {
+              "state": "permissive"
+            }
           }
         ]
       },
