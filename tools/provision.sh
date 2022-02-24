@@ -6,18 +6,10 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 # koji and ansible are not in RHEL repositories. Depending on them in the spec
 # file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel
 # and install koji and ansible here.
-if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 8 ]] && ! rpm -q epel-release; then
+if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${VERSION_ID%.*}".noarch.rpm
     sudo rpm -Uvh /tmp/epel.rpm
-    sudo dnf install -y koji ansible
-elif [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
-    # we have our own small epel for EL9, let's install it
-
-    # install Red Hat certificate, otherwise dnf copr fails
-    curl -LO --insecure https://hdn.corp.redhat.com/rhel8-csb/RPMS/noarch/redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm
-    sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
-    sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
 fi
 
 # RHEL 8.6+ and CentOS 9 require different handling for ansible
@@ -25,6 +17,8 @@ ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical compari
 echo -n "${ID}=${VERSION_ID} "
 if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
     sudo dnf install -y ansible-core koji
+else
+    sudo dnf install -y ansible koji
 fi
 
 sudo mkdir -p /etc/osbuild-composer
