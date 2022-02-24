@@ -16,20 +16,28 @@ import (
 // Note that it is the role of an assembler to install any necessary
 // bootloaders that are stored in the image outside of any filesystem.
 type GRUB2StageOptions struct {
-	RootFilesystemUUID uuid.UUID  `json:"root_fs_uuid"`
-	BootFilesystemUUID *uuid.UUID `json:"boot_fs_uuid,omitempty"`
-	KernelOptions      string     `json:"kernel_opts,omitempty"`
-	Legacy             string     `json:"legacy,omitempty"`
-	UEFI               *GRUB2UEFI `json:"uefi,omitempty"`
-	SavedEntry         string     `json:"saved_entry,omitempty"`
-	Greenboot          bool       `json:"greenboot,omitempty"`
-	WriteCmdLine       *bool      `json:"write_cmdline,omitempty"`
+	RootFilesystemUUID uuid.UUID    `json:"root_fs_uuid"`
+	BootFilesystemUUID *uuid.UUID   `json:"boot_fs_uuid,omitempty"`
+	KernelOptions      string       `json:"kernel_opts,omitempty"`
+	Legacy             string       `json:"legacy,omitempty"`
+	UEFI               *GRUB2UEFI   `json:"uefi,omitempty"`
+	SavedEntry         string       `json:"saved_entry,omitempty"`
+	Greenboot          bool         `json:"greenboot,omitempty"`
+	WriteCmdLine       *bool        `json:"write_cmdline,omitempty"`
+	Config             *GRUB2Config `json:"config,omitempty"`
 }
 
 type GRUB2UEFI struct {
 	Vendor  string `json:"vendor"`
 	Install bool   `json:"install,omitempty"`
 	Unified bool   `json:"unified,omitempty"`
+}
+
+type GRUB2Config struct {
+	TerminalInput  []string `json:"terminal_input,omitempty"`
+	TerminalOutput []string `json:"terminal_output,omitempty"`
+	Timeout        int      `json:"timeout,omitempty"`
+	Serial         string   `json:"serial,omitempty"`
 }
 
 func (GRUB2StageOptions) isStageOptions() {}
