@@ -670,9 +670,9 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	// create boot ISO with raw image
 	d := t.arch.distro
 	archName := t.arch.name
-	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge")
+	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", customizations.GetFDO())
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
-	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel)
+	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetFDO())
 	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer)
 
 	pipelines = append(pipelines, *installerTreePipeline, *efibootTreePipeline, *bootISOTreePipeline)
@@ -774,22 +774,30 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 	return p
 }
 
-func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.Pipeline {
+func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "efiboot-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel)))
+	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel, fdo)))
 	return p
 }
 
-func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string) *osbuild.Pipeline {
+func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, fdo *blueprint.FDOCustomization) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "coi-tree"
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch, product, osVersion, variant)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{"coreos-installer"})))
+	dracutStageOptions := dracutStageOptions(kernelVer, arch, []string{
+		"coreos-installer",
+		"fdo",
+	})
+	if fdo.DiunPubKeyRootCerts != "" {
+		p.AddStage(osbuild.NewFDOStageForRootCerts(fdo.DiunPubKeyRootCerts))
+		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
+	}
+	p.AddStage(osbuild.NewDracutStage(dracutStageOptions))
 
 	return p
 }
