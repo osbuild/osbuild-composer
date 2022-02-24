@@ -545,6 +545,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewPwqualityConfStage(pwQuality))
 	}
 
+	if waConfig := imageConfig.WAAgentConfig; waConfig != nil {
+		p.AddStage(osbuild.NewWAAgentConfStage(waConfig))
+	}
+
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))

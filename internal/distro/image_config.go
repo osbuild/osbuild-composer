@@ -39,6 +39,7 @@ type ImageConfig struct {
 	SshdConfig    *osbuild2.SshdConfigStageOptions
 	Authconfig    *osbuild2.AuthconfigStageOptions
 	PwQuality     *osbuild2.PwqualityConfStageOptions
+	WAAgentConfig *osbuild2.WAAgentConfStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
