@@ -2062,7 +2062,8 @@
               "filename": "installer.iso",
               "volid": "CentOS-Stream-8-aarch64-dvd",
               "sysid": "LINUX",
-              "efi": "images/efiboot.img"
+              "efi": "images/efiboot.img",
+              "isolevel": 3
             }
           },
           {
