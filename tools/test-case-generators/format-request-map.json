@@ -540,6 +540,22 @@
     "no-image-info": true,
     "overrides": {}
   },
+  "edge-raw-image": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-raw-image",
+      "repositories": [],
+      "filename": "image.raw.xz",
+      "ostree": {
+        "ref": "test/edge",
+        "url": "http://edge.example.com/repo",
+        "parent": "test/edge"
+      },
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "oci": {
     "compose-request": {
       "distro": "",
