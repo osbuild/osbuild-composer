@@ -33,6 +33,8 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 		switch name {
 		case "org.osbuild.curl":
 			source = new(CurlSource)
+		case "org.osbuild.inline":
+			source = new(InlineSource)
 		case "org.osbuild.ostree":
 			source = new(OSTreeSource)
 		default:
