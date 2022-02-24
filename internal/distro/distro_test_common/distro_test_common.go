@@ -35,11 +35,12 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			CheckGPG   bool   `json:"check_gpg,omitempty"`
 		}
 		type composeRequest struct {
-			Distro       string               `json:"distro"`
-			Arch         string               `json:"arch"`
-			ImageType    string               `json:"image-type"`
-			Repositories []repository         `json:"repositories"`
-			Blueprint    *blueprint.Blueprint `json:"blueprint"`
+			Distro       string                `json:"distro"`
+			Arch         string                `json:"arch"`
+			ImageType    string                `json:"image-type"`
+			Repositories []repository          `json:"repositories"`
+			Blueprint    *blueprint.Blueprint  `json:"blueprint"`
+			OSTree       *ostree.RequestParams `json:"ostree"`
 		}
 		var tt struct {
 			ComposeRequest  *composeRequest                `json:"compose-request"`
@@ -101,12 +102,17 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = tt.PackageSpecSets
 			}
 
+			ostreeOptions := ostree.RequestParams{
+				Ref: imageType.OSTreeRef(),
+			}
+			if tt.ComposeRequest.OSTree != nil {
+				ostreeOptions = *tt.ComposeRequest.OSTree
+			}
+
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				distro.ImageOptions{
-					Size: imageType.Size(0),
-					OSTree: ostree.RequestParams{
-						Ref: imageType.OSTreeRef(),
-					},
+					Size:   imageType.Size(0),
+					OSTree: ostreeOptions,
 				},
 				repos,
 				imgPackageSpecSets,
