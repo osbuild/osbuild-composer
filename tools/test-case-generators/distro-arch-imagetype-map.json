@@ -115,6 +115,7 @@
     "rhel-85": {
         "x86_64": [
             "ami",
+            "azure-rhui",
             "ec2",
             "ec2-ha",
             "openstack",
@@ -147,6 +148,7 @@
     "rhel-86": {
         "x86_64": [
             "ami",
+            "azure-rhui",
             "ec2",
             "ec2-ha",
             "ec2-sap",
