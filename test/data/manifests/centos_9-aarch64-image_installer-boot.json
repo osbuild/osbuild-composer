@@ -2018,7 +2018,8 @@
               "filename": "installer.iso",
               "volid": "CentOS-Stream-9-BaseOS-aarch64",
               "sysid": "LINUX",
-              "efi": "images/efiboot.img"
+              "efi": "images/efiboot.img",
+              "isolevel": 3
             }
           },
           {

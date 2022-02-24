@@ -2041,7 +2041,8 @@
               "filename": "installer.iso",
               "volid": "RHEL-9-0-0-BaseOS-aarch64",
               "sysid": "LINUX",
-              "efi": "images/efiboot.img"
+              "efi": "images/efiboot.img",
+              "isolevel": 3
             }
           },
           {
