@@ -551,7 +551,15 @@ func osPipeline(t *imageType,
 		p = prependKernelCmdlineStage(p, strings.Join(kernelOptions, " "), pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
 		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(bpPackages, c.GetKernel().Name)
-		p.AddStage(bootloaderConfigStage(t, *pt, kernelVer, false, false))
+		bootloader := bootloaderConfigStage(t, *pt, kernelVer, false, false)
+
+		if cfg := imageConfig.Grub2Config; cfg != nil {
+			if grub2, ok := bootloader.Options.(*osbuild.GRUB2StageOptions); ok {
+				grub2.Config = cfg
+			}
+		}
+
+		p.AddStage(bootloader)
 	}
 
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
