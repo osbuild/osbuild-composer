@@ -37,6 +37,7 @@ type ImageConfig struct {
 	Sysctld       []*osbuild2.SysctldStageOptions
 	DNFConfig     []*osbuild2.DNFConfigStageOptions
 	SshdConfig    *osbuild2.SshdConfigStageOptions
+	Authconfig    *osbuild2.AuthconfigStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -109,6 +110,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.SshdConfig == nil {
 			finalConfig.SshdConfig = parentConfig.SshdConfig
+		}
+		if finalConfig.Authconfig == nil {
+			finalConfig.Authconfig = parentConfig.Authconfig
 		}
 	}
 	return &finalConfig
