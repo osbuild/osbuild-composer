@@ -541,6 +541,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewAuthconfigStage(authConfig))
 	}
 
+	if pwQuality := imageConfig.PwQuality; pwQuality != nil {
+		p.AddStage(osbuild.NewPwqualityConfStage(pwQuality))
+	}
+
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))

@@ -532,6 +532,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewAuthconfigStage(authConfig))
 	}
 
+	if pwQuality := imageConfig.PwQuality; pwQuality != nil {
+		p.AddStage(osbuild.NewPwqualityConfStage(pwQuality))
+	}
+
 	if pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(pt)
 		if t.kernelOptions != "" {
