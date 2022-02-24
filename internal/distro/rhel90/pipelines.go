@@ -528,6 +528,10 @@ func osPipeline(t *imageType,
 		p.AddStage((osbuild.NewSshdConfigStage(sshdConfig)))
 	}
 
+	if authConfig := imageConfig.Authconfig; authConfig != nil {
+		p.AddStage(osbuild.NewAuthconfigStage(authConfig))
+	}
+
 	if pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(pt)
 		if t.kernelOptions != "" {

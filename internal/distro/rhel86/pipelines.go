@@ -537,6 +537,10 @@ func osPipeline(t *imageType,
 		p.AddStage((osbuild.NewSshdConfigStage(sshdConfig)))
 	}
 
+	if authConfig := imageConfig.Authconfig; authConfig != nil {
+		p.AddStage(osbuild.NewAuthconfigStage(authConfig))
+	}
+
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
