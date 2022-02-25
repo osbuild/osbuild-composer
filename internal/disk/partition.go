@@ -69,3 +69,19 @@ func (p *Partition) EnsureSize(s uint64) bool {
 	}
 	return false
 }
+
+func (p *Partition) IsBIOSBoot() bool {
+	if p == nil {
+		return false
+	}
+
+	return p.Type == BIOSBootPartitionGUID
+}
+
+func (p *Partition) IsPReP() bool {
+	if p == nil {
+		return false
+	}
+
+	return p.Type == "41" || p.Type == PRePartitionGUID
+}
