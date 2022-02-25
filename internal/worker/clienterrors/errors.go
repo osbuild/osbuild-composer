@@ -21,7 +21,7 @@ const (
 	ErrorOldResultCompatible  ClientErrorCode = 18
 
 	ErrorDNFDepsolveError ClientErrorCode = 20
-	ErrorDNFMarkingError  ClientErrorCode = 21
+	ErrorDNFMarkingErrors ClientErrorCode = 21
 	ErrorDNFOtherError    ClientErrorCode = 22
 	ErrorRPMMDError       ClientErrorCode = 23
 )
@@ -53,7 +53,7 @@ func GetStatusCode(err *Error) StatusCode {
 	switch err.ID {
 	case ErrorDNFDepsolveError:
 		return JobStatusUserInputError
-	case ErrorDNFMarkingError:
+	case ErrorDNFMarkingErrors:
 		return JobStatusUserInputError
 	case ErrorNoDynamicArgs:
 		return JobStatusUserInputError

@@ -51,8 +51,8 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 			switch e.Kind {
 			case "DepsolveError":
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error())
-			case "MarkingError":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingError, err.Error())
+			case "MarkingErrors":
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error())
 			default:
 				// This still has the kind/reason format but a kind that's returned
 				// by dnf-json and not explicitly handled here.

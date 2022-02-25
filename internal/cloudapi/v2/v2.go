@@ -678,7 +678,7 @@ func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *w
 	}
 
 	if jobErr := depsolveResults.JobError; jobErr != nil {
-		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingError {
+		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
 			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested")
 			return
 		}
