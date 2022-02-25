@@ -114,3 +114,13 @@ func NewTarStage(options *TarStageOptions, inputs *TarStageInputs) *Stage {
 		Inputs:  inputs,
 	}
 }
+
+func NewTarStagePipelineTreeInputs(pipeline string) *TarStageInputs {
+	tree := new(TarStageInput)
+	tree.Type = "org.osbuild.tree"
+	tree.Origin = "org.osbuild.pipeline"
+	tree.References = []string{"name:" + pipeline}
+	return &TarStageInputs{
+		Tree: tree,
+	}
+}
