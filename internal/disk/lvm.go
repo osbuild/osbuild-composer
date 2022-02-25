@@ -1,6 +1,9 @@
 package disk
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type LVMVolumeGroup struct {
 	Name        string
@@ -66,7 +69,33 @@ func (vg *LVMVolumeGroup) CreateVolume(mountpoint string, size uint64) (Entity, 
 		FSTabPassNo:  0,
 	}
 
+	names := make(map[string]bool, len(vg.LogicalVolumes))
+	for _, lv := range vg.LogicalVolumes {
+		names[lv.Name] = true
+	}
+
+	base := lvname(mountpoint)
+	var exists bool
+	name := base
+
+	// Make sure that we don't collide with an existing volume, e.g. 'home/test'
+	// and /home/test_test would collide. We try 100 times and then give up. This
+	// is mimicking what blivet does. See blivet/blivet.py#L1060 commit 2eb4bd4
+	for i := 0; i < 100; i++ {
+		exists = names[name]
+		if !exists {
+			break
+		}
+
+		name = fmt.Sprintf("%s%02d", base, i)
+	}
+
+	if exists {
+		return nil, fmt.Errorf("could not create logical volume: name collision")
+	}
+
 	lv := LVMLogicalVolume{
+		Name:    name,
 		Size:    size,
 		Payload: &filesystem,
 	}
@@ -127,4 +156,14 @@ func (lv *LVMLogicalVolume) EnsureSize(s uint64) bool {
 		return true
 	}
 	return false
+}
+
+// lvname returns a name for a logical volume based on the mountpoint.
+func lvname(path string) string {
+	if path == "/" {
+		return "rootlv"
+	}
+
+	path = strings.TrimLeft(path, "/")
+	return strings.ReplaceAll(path, "/", "_") + "lv"
 }
