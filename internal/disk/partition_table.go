@@ -256,6 +256,31 @@ func (pt *PartitionTable) ForEachEntity(cb EntityCallback) error {
 	return forEachEntity(pt, []Entity{}, cb)
 }
 
+func (pt *PartitionTable) HeaderSize() uint64 {
+	// always reserve one extra sector for the GPT header
+	// this also ensure we have enough space for the MBR
+	header := pt.SectorsToBytes(1)
+
+	if pt.Type == "dos" {
+		return header
+	}
+
+	// calculate the space we need for
+	parts := len(pt.Partitions)
+
+	// reserve a minimum of 128 partition entires
+	if parts < 128 {
+		parts = 128
+	}
+
+	// Assume that each partition entry is 128 bytes
+	// which might not be the case if the partition
+	// name exceeds 72 bytes
+	header += uint64(parts * 128)
+
+	return header
+}
+
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.
@@ -263,21 +288,11 @@ func (pt *PartitionTable) ForEachEntity(cb EntityCallback) error {
 // Returns the updated start point.
 func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// always reserve one extra sector for the GPT header
-	header := pt.SectorsToBytes(1)
+	header := pt.HeaderSize()
 	footer := uint64(0)
 
+	// The GPT header is also at the end of the partition table
 	if pt.Type == "gpt" {
-
-		// calculate the space we need for
-		parts := len(pt.Partitions)
-
-		// reserve a minimum of 128 partition entires
-		if parts < 128 {
-			parts = 128
-		}
-
-		header += uint64(parts * 128)
-
 		footer = header
 	}
 
