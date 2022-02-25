@@ -59,6 +59,7 @@
                   "sha256:f1ce23ee43c747a35367dada19ca200a7758c50955ccc44aa946b86b647077ca",
                   "sha256:8fb69892af346bacf18e8f8e7e8098e09c6ef9547abab9c39f7e729db06c3d1e",
                   "sha256:48aec10d47ff16e8472c6e06ba742f7d34809a5d5a42e22e2847b8fe1bc08c74",
+                  "sha256:b7d6da68eb7d5fbb19574f1565f9ddfe0e2d8818015aa4ef233a32f81600319f",
                   "sha256:e81e3682cbc99cc9d42d070f73ded56cf0ea95666bae82c38d3b36afed7af12c",
                   "sha256:3dd394e5b9403846d3068978bbe63f76b30a1d6801a7b3a93bbb3a9e64881e53",
                   "sha256:c421b9c029abac796ade606f96d638e06a6d4ce5c2d499abd05812c306d25143",
@@ -119,6 +120,7 @@
                   "sha256:c019e648a047a07284cb870b5fe4bc2a4b65937dbbf0c51699144ee305297bba",
                   "sha256:ae493d37d1dcf681064ca490c2c47c8bf3a7713f2fa2d9d9ae597eb08de737d9",
                   "sha256:63f03261cc8109b2fb61002ca50c93e52acb9cfd8382d139e8de6623394051e8",
+                  "sha256:f825b85b4506a740fb2f85b9a577c51264f3cfe792dd8b2bf8963059cc77c3c4",
                   "sha256:5035057553b61cb389c67aa2c29d99c8e0c1677369dad179d683942ccee90b3f",
                   "sha256:98a6386df94fc9595365c3ecbc630708420fa68d1774614a723dec4a55e84b9c",
                   "sha256:06e3b40456f9be68076d03cf7181cbe0d73bf0a9424ab9e3abb7abf634ad3c47",
@@ -262,6 +264,7 @@
                   "sha256:ccba794a7e11afe4b02ca0de1d5131ae6f0fb75836a39c2567b99cd9ab01e2b4",
                   "sha256:fd0ae24a7b03f4bed8c6d18a26f7da60494274bf983012a0d060f9c187a6f77b",
                   "sha256:ed1f7ab0225df75734034cb2aea426c48c089f2bd476ec66b66af879437c5393",
+                  "sha256:2dac7e4cc6f90aaa00b35451ae6b93b2f25a8e69295d7f0ee3da4bb169231cf8",
                   "sha256:d545ada129d3984d85f5049d88fc7b6a6c5653775062138349df7ec29a8cbee6",
                   "sha256:524d7475ccaead0c9b353535a1ca441a73ee465e35ea6f1c8833292af1967fc0",
                   "sha256:ff4c97e0df6ed6090ef36ac853e11bed9aa13f657be1d068ac09ad33c11432cb",
@@ -273,14 +276,22 @@
                   "sha256:61553db2c5d1da168da53ec285de14d00ce91bb02dd902a1688725cf37a7b1a2",
                   "sha256:a604ffec838794e53b7721e4f113dbd780b5a0765f200df6c41ea19018fa7ea6",
                   "sha256:9d62a41fdb82c1e7564bc0228e046dbc013f420705712aff1b873db8d617004c",
+                  "sha256:270361d4856e4c3c0d3efa9b87655c3cb81a0193caf0e2bf8e10f311f0ba1ec6",
+                  "sha256:3c3f955518bf3e960d2bfddb32408d0fd90b3f7d8e52fdaecc005526174ccc9c",
                   "sha256:f98e67e6ed49e1ff2f4c1d8dea7aa139aaff69020013e458d2f3d8bd9d2c91b2",
                   "sha256:bd591ce02aca250a87f879e3f220632589218f384ac968e46c558cd7468fddbb",
                   "sha256:f8ab9e51914b89f1639f238f4e13cbeccd0847edb8975fee556b0d2208cd18e5",
+                  "sha256:3fe3333b7effc712958de6bda1fe92042c7c81e5c8f325d0d84cea41067e0cbd",
+                  "sha256:e962e69dbff98cb2f07e21311719a1a259461c11d0061e1b4cb41db66f7cc76a",
+                  "sha256:60cdae13504dbb8ad77f4dec925d22020c8796d231d326e5b23ed717e4a70669",
+                  "sha256:05d9ffd0ca48b308040afca0cad7da8699eded1e9f32f52c8f440806429ca6c9",
                   "sha256:0b2b79d9f8cd01090816386ad89852662b5489bbd43fbd04760f0e57c28bce4c",
                   "sha256:e03d462995326a4477dcebc8c12eae3c1776ce2f095617ace253c0c492c89082",
                   "sha256:16b8c3bfb668170472cff1286593a40515b5d8ec6ac71658b6636749fd1ca8d8",
                   "sha256:4852fe54dff4a1be9e4feb4b477d391a4a5a5b77a47c4131d144551d21a6de2a",
                   "sha256:e219bc907b566de15e0dc1540be40c1e04583e7b7793ec57c57379f66bfe8c2c",
+                  "sha256:14408a22eca2e145292b51249e74433f0a0b034cedc418ac1091f5942499fee9",
+                  "sha256:75a046bd000400ddba9ca104555270e05b4d38e04fe01e366764da87e2d9ae68",
                   "sha256:d254dcaadff071aa88d7b1ca822a8403ca9e19eccbd8e2be34109b076d6cfa33",
                   "sha256:3014fbd41c00afb2ff2f8157155cfda0c695c7bc15704c52c349f9116425eded",
                   "sha256:9a6e8072669988348eb5bc011ea2173a5d5fb2b2247f5889bd610d20f1bf8d29",
@@ -4083,6 +4094,16 @@
         "check_gpg": true
       },
       {
+        "name": "cryptsetup",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/cryptsetup-2.3.7-1.el8.x86_64.rpm",
+        "checksum": "sha256:b7d6da68eb7d5fbb19574f1565f9ddfe0e2d8818015aa4ef233a32f81600319f",
+        "check_gpg": true
+      },
+      {
         "name": "cryptsetup-libs",
         "epoch": 0,
         "version": "2.3.7",
@@ -4680,6 +4701,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/info-6.5-7.el8_5.x86_64.rpm",
         "checksum": "sha256:63f03261cc8109b2fb61002ca50c93e52acb9cfd8382d139e8de6623394051e8",
+        "check_gpg": true
+      },
+      {
+        "name": "jansson",
+        "epoch": 0,
+        "version": "2.14",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/jansson-2.14-1.el8.x86_64.rpm",
+        "checksum": "sha256:f825b85b4506a740fb2f85b9a577c51264f3cfe792dd8b2bf8963059cc77c3c4",
         "check_gpg": true
       },
       {
@@ -6113,6 +6144,16 @@
         "check_gpg": true
       },
       {
+        "name": "tpm2-tools",
+        "epoch": 0,
+        "version": "4.1.1",
+        "release": "5.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/tpm2-tools-4.1.1-5.el8.x86_64.rpm",
+        "checksum": "sha256:2dac7e4cc6f90aaa00b35451ae6b93b2f25a8e69295d7f0ee3da4bb169231cf8",
+        "check_gpg": true
+      },
+      {
         "name": "tpm2-tss",
         "epoch": 0,
         "version": "2.3.2",
@@ -6223,6 +6264,26 @@
         "check_gpg": true
       },
       {
+        "name": "clevis",
+        "epoch": 0,
+        "version": "15",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/clevis-15-8.el8.x86_64.rpm",
+        "checksum": "sha256:270361d4856e4c3c0d3efa9b87655c3cb81a0193caf0e2bf8e10f311f0ba1ec6",
+        "check_gpg": true
+      },
+      {
+        "name": "clevis-luks",
+        "epoch": 0,
+        "version": "15",
+        "release": "8.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/clevis-luks-15-8.el8.x86_64.rpm",
+        "checksum": "sha256:3c3f955518bf3e960d2bfddb32408d0fd90b3f7d8e52fdaecc005526174ccc9c",
+        "check_gpg": true
+      },
+      {
         "name": "genisoimage",
         "epoch": 0,
         "version": "1.1.11",
@@ -6250,6 +6311,46 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/isomd5sum-1.2.3-3.el8.x86_64.rpm",
         "checksum": "sha256:f8ab9e51914b89f1639f238f4e13cbeccd0847edb8975fee556b0d2208cd18e5",
+        "check_gpg": true
+      },
+      {
+        "name": "jose",
+        "epoch": 0,
+        "version": "10",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/jose-10-2.el8.x86_64.rpm",
+        "checksum": "sha256:3fe3333b7effc712958de6bda1fe92042c7c81e5c8f325d0d84cea41067e0cbd",
+        "check_gpg": true
+      },
+      {
+        "name": "jq",
+        "epoch": 0,
+        "version": "1.6",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/jq-1.6-3.el8.x86_64.rpm",
+        "checksum": "sha256:e962e69dbff98cb2f07e21311719a1a259461c11d0061e1b4cb41db66f7cc76a",
+        "check_gpg": true
+      },
+      {
+        "name": "libjose",
+        "epoch": 0,
+        "version": "10",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/libjose-10-2.el8.x86_64.rpm",
+        "checksum": "sha256:60cdae13504dbb8ad77f4dec925d22020c8796d231d326e5b23ed717e4a70669",
+        "check_gpg": true
+      },
+      {
+        "name": "libluksmeta",
+        "epoch": 0,
+        "version": "9",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/libluksmeta-9-4.el8.x86_64.rpm",
+        "checksum": "sha256:05d9ffd0ca48b308040afca0cad7da8699eded1e9f32f52c8f440806429ca6c9",
         "check_gpg": true
       },
       {
@@ -6300,6 +6401,26 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/lorax-templates-rhel-8.6-3.el8.noarch.rpm",
         "checksum": "sha256:e219bc907b566de15e0dc1540be40c1e04583e7b7793ec57c57379f66bfe8c2c",
+        "check_gpg": true
+      },
+      {
+        "name": "luksmeta",
+        "epoch": 0,
+        "version": "9",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/luksmeta-9-4.el8.x86_64.rpm",
+        "checksum": "sha256:14408a22eca2e145292b51249e74433f0a0b034cedc418ac1091f5942499fee9",
+        "check_gpg": true
+      },
+      {
+        "name": "oniguruma",
+        "epoch": 0,
+        "version": "6.8.2",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/oniguruma-6.8.2-2.el8.x86_64.rpm",
+        "checksum": "sha256:75a046bd000400ddba9ca104555270e05b4d38e04fe01e366764da87e2d9ae68",
         "check_gpg": true
       },
       {

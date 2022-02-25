@@ -62,6 +62,7 @@
                   "sha256:acd4674b3fbe01d6cf94eb18a81cdb00beb73bf3d4a25a28e234f31498f5c389",
                   "sha256:0fa57c508a0f2eda8a65460084e05e928773af89f1b44516f136a33f4b304bb7",
                   "sha256:dff13503ad1435c4eda9c6cd2bede0fbf5b64297823f1c9a359b272842fe1734",
+                  "sha256:6fe3ff30708d6d9ea9a550840edfe30a22a0a1790cee25892b04dde41f1908c1",
                   "sha256:fdd5f73a53f3098a71a7ca7a869c14a0c63cf863224fbc54b88a7def54745ca9",
                   "sha256:12d6bfe52608f37a92a73b84330c66324ea981df4c6e940cc59fe835cbc4164e",
                   "sha256:41cc2d507fdfbba939c00164a563e770d466f992cb64d3c51a79aec20b31d6d1",
@@ -127,6 +128,7 @@
                   "sha256:fc51460213b3bf5b67f08f2695aae8d728f614adbbacb917a0825e4ebfbc3e68",
                   "sha256:6d6990ea51c417dc752c98d34f3a19f9c6fce966f1931bc2cfdddcdbe27931dd",
                   "sha256:30c6a65888b8ee02429e68d3f08887a5d5aeadf26f0fee0b4bd4b5dc1b17ff1e",
+                  "sha256:5dd8869320ffb847155cf39a48818c02100bfe2d0cc466d7a6f331e0bfc8fed2",
                   "sha256:8dac0d0cb596de6697fdc264fd45686b6000306691dd4e84a4915b1c7617a91a",
                   "sha256:1143ac623a74d7feaaaf293c18d942d243248f6356628f87216670c10d11687b",
                   "sha256:10ac3bf7565725a55b0aef56f65befd0d320219fc83adfab6e564c19f8c44bd6",
@@ -278,6 +280,7 @@
                   "sha256:caba9f418a0dc25be4b53c79254e6a5420c917648437fc236a76b66327586c5e",
                   "sha256:baa69b9c3b518630af62c9d528ed970acbccb8bdeac6a4c494a7bc45e4c1dbcc",
                   "sha256:ba66a87402ccc8515e164f597f5d254ad9513979fe3ca1ffabf63c915c0daa73",
+                  "sha256:d29b9e2104f438b0a812423ad48d66b56f08585fa568c5f2aeddbd77b94fecb6",
                   "sha256:5ea4e3462e21220eb88ff94c5d799cc379bd0d63257035a491032a921748773a",
                   "sha256:17334b3eab9c115fa356739e551f50ec59c11709d27a3a5e6ccbff783c87988f",
                   "sha256:bbb25c0afee8c928739801a506a24e54944047b3306498175515544446e7f4f3",
@@ -289,9 +292,13 @@
                   "sha256:094eff70081085f87a7ac0dedafa851ad8ac8e03f9f328636df4a0f8301d0e87",
                   "sha256:3d372ca16c46e471896f6cc4387142f49b5733e6649e7107929387be3117e9a3",
                   "sha256:cf40c404ecf877f43b1cca4b53b2a79a79014c0da521e884ed77f65cb1708a5e",
+                  "sha256:6265398c4aa2ddbf0dcfa3f2b35d6a8bff1f8ddf56005d6e1ffcd53313e16d34",
+                  "sha256:29176b0caa0c21fec0e5a0ac6f95abada0cae3a3cb67215ce53cad11be0105ce",
                   "sha256:d2b6765274e178edcf2e0325a5d3c1916f6ec5a53f62021811d4f6e4c8113236",
                   "sha256:fa795eeae1e87fc81daf25b023934764f2d286acc4940601444995be8367cb1f",
                   "sha256:0949d134a433c2917f8621217e60d59457ef637e39241c6cbd2f65864d95ca89",
+                  "sha256:5a1b052999190993cf04eba28390166834b155d689806174b6ba483e160071a8",
+                  "sha256:3f08b2a89e076a6826bfc793df6ea44e2ed1982187d1a02c2ebb631ba976b6d0",
                   "sha256:dbc8445a77ef2921cc10b38c9ae21f434757df6e5e4f70b795297414afb6e609",
                   "sha256:9aa6f8a4f5c5c1c9e8ee7cd8bbe65579af23b89b0ef8d12dcf8f540037fdc82f",
                   "sha256:881091c6bb0361a38f00603ea6c9e6cf8565340766193f900f399e0495359c82",
@@ -305,18 +312,22 @@
                   "sha256:3cc86a6c631cb069221b616d60e61bff630f5afb1e18e7c3365b567760f58f52",
                   "sha256:cde78d592cbef636dfb24822e87a96a5b01aa93609bb8b461c1c5d73cb0f6179",
                   "sha256:37568d3cbed1d18ace60208b405604a4144879457858e85dfba325adf3e10b29",
+                  "sha256:425ed8338a8ff15ca107e058c4a806c52b7da8f24da5510c57f7e9b9ea031ca2",
+                  "sha256:cc56ab0a8b45859e195464f4514fc61e84ba44da5d112c08ba5b4149a872778c",
                   "sha256:6864c7e2c0b54a7eca033eb8a91bb100b258fb0157a47e568a12a2f489eddabe",
                   "sha256:1e6180aa9bd3af7373395b536a8dede62b8594c6c9f5756eb1eb7d10b58fce0e",
                   "sha256:a07f96031fbe9507a8d6bb0e14cf0783bc615552e4cfb75131672072f5729de8",
                   "sha256:38643ec958182c4c5df403ef7dc749ba11ee675fe43c8492ac3e68a4f1eaad15",
                   "sha256:bf7b04ec582e599d92e96c1724b3531fea8730abc27eea6c0b36dc83561915fa",
                   "sha256:98b3c757302acebae84c06823dd1f246a0830454947218222e7e7024cbab3220",
+                  "sha256:6947e0a550f9841b662c57825e426e2f5096e54f4bfd201058eb038242f620c5",
                   "sha256:60d2cf2ab5a2843fd7f7afb9fe5a210e72280c56ace2f3cb31292a01a2c99d40",
                   "sha256:81fd1124657f7b03cbb9e672655c8d8040c06375cc233046ab4f6a8532462949",
                   "sha256:1e72ae00355a7b8340bbfb1efba43934240849910a9368299059a01ce55ebff7",
                   "sha256:c4b82ee867b4b3eac7fa58179c7e4de9a826d500fffed6dc6b8c2168e8bcbda2",
                   "sha256:78e8ec29e55ceaa91862b0ca5e471028149b2d98cf8640c62f73001dcaf36a41",
                   "sha256:113f836522fb1b7bfd18427a5e3e2ff7fa20a88fe3604dfa79e844d8bb2809f7",
+                  "sha256:a3c479a9afd17f2a92acab491af69de3b3f69850ab3f8fca5562c5f530530174",
                   "sha256:9bcf36a39851dc8211f09b75adfe5af1e618158e67175cf4726880411a7ff805",
                   "sha256:5f23a51d5e1dee49acbd52bb7fd56f37cbd20f9270d16e17b1710b6b73943995",
                   "sha256:22c0e44318e36e04ad1eb4632dcf25db991f481f9a543387d372e1f2ad92561f",
@@ -426,7 +437,8 @@
               },
               "kernel_opts": [
                 "console=tty0",
-                "console=ttyS0"
+                "console=ttyS0",
+                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
               ]
             }
           },
@@ -456,7 +468,7 @@
             "options": {
               "filesystems": [
                 {
-                  "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                  "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
                   "vfs_type": "xfs",
                   "path": "/",
                   "options": "defaults"
@@ -488,7 +500,7 @@
           {
             "type": "org.osbuild.grub2",
             "options": {
-              "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+              "root_fs_uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "uefi": {
                 "vendor": "redhat",
@@ -556,6 +568,52 @@
             }
           },
           {
+            "type": "org.osbuild.luks2.format",
+            "options": {
+              "passphrase": "osbuild",
+              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+              "cipher": "cipher_null",
+              "label": "crypt_root",
+              "sector-size": 0,
+              "pbkdf": {
+                "method": "argon2id",
+                "iterations": 4,
+                "memory": 32,
+                "parallelism": 1
+              }
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "image.raw",
+                  "start": 1048576,
+                  "size": 19922911,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.clevis.luks-bind",
+            "options": {
+              "passphrase": "osbuild",
+              "pin": "null",
+              "policy": "{}"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "image.raw",
+                  "start": 1048576,
+                  "size": 19922911,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.mkfs.fat",
             "options": {
               "volid": "7B7795E7"
@@ -593,11 +651,18 @@
           {
             "type": "org.osbuild.mkfs.xfs",
             "options": {
-              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+              "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
               "label": "root"
             },
             "devices": {
               "device": {
+                "type": "org.osbuild.luks2",
+                "parent": "luks-6e4f",
+                "options": {
+                  "passphrase": "osbuild"
+                }
+              },
+              "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "image.raw",
@@ -644,12 +709,19 @@
                   "size": 260096
                 }
               },
-              "root": {
+              "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "image.raw",
                   "start": 1048576,
                   "size": 19922911
+                }
+              },
+              "root": {
+                "type": "org.osbuild.luks2",
+                "parent": "luks-6e4f",
+                "options": {
+                  "passphrase": "osbuild"
                 }
               }
             },
@@ -673,6 +745,23 @@
                 "target": "/boot/efi"
               }
             ]
+          },
+          {
+            "type": "org.osbuild.luks2.remove-key",
+            "options": {
+              "passphrase": "osbuild"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "image.raw",
+                  "start": 1048576,
+                  "size": 19922911,
+                  "lock": true
+                }
+              }
+            }
           }
         ]
       },
@@ -1156,6 +1245,7 @@
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
+                  "coreos.inst.crypt_root=1",
                   "coreos.inst.isoroot=RHEL-8-6-0-BaseOS-aarch64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/disk.img.xz",
@@ -4170,6 +4260,15 @@
         "checksum": "sha256:dff13503ad1435c4eda9c6cd2bede0fbf5b64297823f1c9a359b272842fe1734"
       },
       {
+        "name": "cryptsetup",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/cryptsetup-2.3.7-1.el8.aarch64.rpm",
+        "checksum": "sha256:6fe3ff30708d6d9ea9a550840edfe30a22a0a1790cee25892b04dde41f1908c1"
+      },
+      {
         "name": "cryptsetup-libs",
         "epoch": 0,
         "version": "2.3.7",
@@ -4753,6 +4852,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/info-6.5-7.el8_5.aarch64.rpm",
         "checksum": "sha256:30c6a65888b8ee02429e68d3f08887a5d5aeadf26f0fee0b4bd4b5dc1b17ff1e"
+      },
+      {
+        "name": "jansson",
+        "epoch": 0,
+        "version": "2.14",
+        "release": "1.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/jansson-2.14-1.el8.aarch64.rpm",
+        "checksum": "sha256:5dd8869320ffb847155cf39a48818c02100bfe2d0cc466d7a6f331e0bfc8fed2"
       },
       {
         "name": "json-c",
@@ -6114,6 +6222,15 @@
         "checksum": "sha256:ba66a87402ccc8515e164f597f5d254ad9513979fe3ca1ffabf63c915c0daa73"
       },
       {
+        "name": "tpm2-tools",
+        "epoch": 0,
+        "version": "4.1.1",
+        "release": "5.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/tpm2-tools-4.1.1-5.el8.aarch64.rpm",
+        "checksum": "sha256:d29b9e2104f438b0a812423ad48d66b56f08585fa568c5f2aeddbd77b94fecb6"
+      },
+      {
         "name": "tpm2-tss",
         "epoch": 0,
         "version": "2.3.2",
@@ -6213,6 +6330,24 @@
         "checksum": "sha256:cf40c404ecf877f43b1cca4b53b2a79a79014c0da521e884ed77f65cb1708a5e"
       },
       {
+        "name": "clevis",
+        "epoch": 0,
+        "version": "15",
+        "release": "8.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/clevis-15-8.el8.aarch64.rpm",
+        "checksum": "sha256:6265398c4aa2ddbf0dcfa3f2b35d6a8bff1f8ddf56005d6e1ffcd53313e16d34"
+      },
+      {
+        "name": "clevis-luks",
+        "epoch": 0,
+        "version": "15",
+        "release": "8.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/clevis-luks-15-8.el8.aarch64.rpm",
+        "checksum": "sha256:29176b0caa0c21fec0e5a0ac6f95abada0cae3a3cb67215ce53cad11be0105ce"
+      },
+      {
         "name": "genisoimage",
         "epoch": 0,
         "version": "1.1.11",
@@ -6238,6 +6373,24 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/isomd5sum-1.2.3-3.el8.aarch64.rpm",
         "checksum": "sha256:0949d134a433c2917f8621217e60d59457ef637e39241c6cbd2f65864d95ca89"
+      },
+      {
+        "name": "jose",
+        "epoch": 0,
+        "version": "10",
+        "release": "2.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/jose-10-2.el8.aarch64.rpm",
+        "checksum": "sha256:5a1b052999190993cf04eba28390166834b155d689806174b6ba483e160071a8"
+      },
+      {
+        "name": "jq",
+        "epoch": 0,
+        "version": "1.6",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/jq-1.6-3.el8.aarch64.rpm",
+        "checksum": "sha256:3f08b2a89e076a6826bfc793df6ea44e2ed1982187d1a02c2ebb631ba976b6d0"
       },
       {
         "name": "libatasmart",
@@ -6357,6 +6510,24 @@
         "checksum": "sha256:37568d3cbed1d18ace60208b405604a4144879457858e85dfba325adf3e10b29"
       },
       {
+        "name": "libjose",
+        "epoch": 0,
+        "version": "10",
+        "release": "2.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/libjose-10-2.el8.aarch64.rpm",
+        "checksum": "sha256:425ed8338a8ff15ca107e058c4a806c52b7da8f24da5510c57f7e9b9ea031ca2"
+      },
+      {
+        "name": "libluksmeta",
+        "epoch": 0,
+        "version": "9",
+        "release": "4.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/libluksmeta-9-4.el8.aarch64.rpm",
+        "checksum": "sha256:cc56ab0a8b45859e195464f4514fc61e84ba44da5d112c08ba5b4149a872778c"
+      },
+      {
         "name": "libudisks2",
         "epoch": 0,
         "version": "2.9.0",
@@ -6411,6 +6582,15 @@
         "checksum": "sha256:98b3c757302acebae84c06823dd1f246a0830454947218222e7e7024cbab3220"
       },
       {
+        "name": "luksmeta",
+        "epoch": 0,
+        "version": "9",
+        "release": "4.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/luksmeta-9-4.el8.aarch64.rpm",
+        "checksum": "sha256:6947e0a550f9841b662c57825e426e2f5096e54f4bfd201058eb038242f620c5"
+      },
+      {
         "name": "nspr",
         "epoch": 0,
         "version": "4.32.0",
@@ -6463,6 +6643,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/nss-util-3.67.0-7.el8_5.aarch64.rpm",
         "checksum": "sha256:113f836522fb1b7bfd18427a5e3e2ff7fa20a88fe3604dfa79e844d8bb2809f7"
+      },
+      {
+        "name": "oniguruma",
+        "epoch": 0,
+        "version": "6.8.2",
+        "release": "2.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/oniguruma-6.8.2-2.el8.aarch64.rpm",
+        "checksum": "sha256:a3c479a9afd17f2a92acab491af69de3b3f69850ab3f8fca5562c5f530530174"
       },
       {
         "name": "ostree",
