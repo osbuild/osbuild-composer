@@ -29,13 +29,13 @@ type TarStageOptions struct {
 	Format TarArchiveFormat `json:"format,omitempty"`
 
 	// Enable support for POSIX ACLs
-	ACLs bool `json:"acls,omitempty"`
+	ACLs *bool `json:"acls,omitempty"`
 
 	// Enable support for SELinux contexts
-	SELinux bool `json:"selinux,omitempty"`
+	SELinux *bool `json:"selinux,omitempty"`
 
 	// Enable support for extended attributes
-	Xattrs bool `json:"xattrs,omitempty"`
+	Xattrs *bool `json:"xattrs,omitempty"`
 
 	// How to handle the root node: include or omit
 	RootNode TarRootNode `json:"root-node,omitempty"`
