@@ -2377,6 +2377,7 @@ def append_filesystem(report, tree, *, is_ostree=False):
 def append_partitions(report, device, loctl):
     partitions = report["partitions"]
 
+    lvm = False
     with contextlib.ExitStack() as cm:
         # open each partition as a loop device
         devices = {}
@@ -2388,6 +2389,11 @@ def append_partitions(report, device, loctl):
             read_partition(dev, part)
             if part["uuid"]:
                 device_idx_by_part_uuid[part["uuid"].upper()] = n
+            if part["type"] == "E6D6D379-F507-44C2-A23C-238F2A3DF928":
+                lvm = True
+
+        if lvm:
+            return
 
         # find partition with fstab and read it
         fstab = []
