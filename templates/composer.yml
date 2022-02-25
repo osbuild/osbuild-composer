@@ -200,7 +200,7 @@ objects:
   data:
     acl.yml: |
       - claim: user_id
-        pattern: ^(54629121|54629180|54597799|54676085)$
+        pattern: ^(54629121|54629180|54597799|54676085|54968801)$
       - claim: rh-org-id
         pattern: ^(13826359)$
     osbuild-composer.toml: |
