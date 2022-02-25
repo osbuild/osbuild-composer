@@ -147,11 +147,11 @@ mountpoint = "/"
 size = 2147483648
 
 [[customizations.filesystem]]
-mountpoint = "/tmp"
+mountpoint = "/var"
 size = 131072000
 
 [[customizations.filesystem]]
-mountpoint = "/var/tmp"
+mountpoint = "/var/log"
 size = 131072000
 
 [[customizations.filesystem]]
@@ -175,7 +175,7 @@ greenprint "💬 Checking mountpoints"
 INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
-for MOUNTPOINT in '/' '/tmp' '/var/tmp' '/var/log/audit' '/usr'; do
+for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/usr'; do
   EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
   if $EXISTS; then
     greenprint "INFO: mountpoint $MOUNTPOINT exists"
