@@ -275,6 +275,7 @@ class Cli(contextlib.AbstractContextManager):
         else:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self._exitstack.enter_context(contextlib.closing(sock))
+            os.makedirs("/run/osbuild-dnf-json/", exist_ok=True)
             sock.bind("/run/osbuild-dnf-json/api.sock")
             sock.listen()
 
