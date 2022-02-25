@@ -437,10 +437,11 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 func clampFSSize(mountpoint string, size uint64) uint64 {
 	// set a minimum size of 1GB for all mountpoints
 	var minSize uint64 = 1073741824
-	if mountpoint == "/usr" {
+	if mountpoint == "/usr" || mountpoint == "/" {
 		// set a minimum size of 2GB for `/usr` mountpoint
 		// since this is current behaviour and the minimum
-		// required to create a bootable image
+		// required to create a bootable image. For `ostree`
+		// images we need a minimum size of 2GB for `/`
 		minSize = 2147483648
 	}
 	if minSize > size {
