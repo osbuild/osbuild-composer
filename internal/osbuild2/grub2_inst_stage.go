@@ -98,12 +98,16 @@ func (options Grub2InstStageOptions) MarshalJSON() ([]byte, error) {
 func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform string) *Grub2InstStageOptions {
 	bootIdx := -1
 	rootIdx := -1
+	coreIdx := -1 // where to put grub2 core image
 	for idx := range pt.Partitions {
 		// NOTE: we only support having /boot at the top level of the partition
 		// table (e.g., not in LUKS or LVM), so we don't need to descend into
 		// VolumeContainer types. If /boot is on the root partition, then the
 		// root partition needs to be at the top level.
 		partition := &pt.Partitions[idx]
+		if partition.IsBIOSBoot() || partition.IsPReP() {
+			coreIdx = idx
+		}
 		if partition.Payload == nil {
 			continue
 		}
@@ -125,6 +129,11 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 		}
 		bootIdx = rootIdx
 	}
+
+	if coreIdx == -1 {
+		panic("failed to find partition for the grub2 core in the grub2.inst stage")
+	}
+	coreLocation := pt.BytesToSectors(pt.Partitions[coreIdx].Start)
 
 	bootPart := pt.Partitions[bootIdx]
 	bootPayload := bootPart.Payload.(disk.Mountable) // this is guaranteed by the search loop above
@@ -148,7 +157,7 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	return &Grub2InstStageOptions{
 		Filename: filename,
 		Platform: platform,
-		Location: pt.BytesToSectors(pt.Partitions[0].Start),
+		Location: coreLocation,
 		Core:     core,
 		Prefix:   prefix,
 	}
