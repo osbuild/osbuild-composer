@@ -21,6 +21,14 @@ else
     sudo dnf install -y ansible koji
 fi
 
+# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2057769
+if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
+    if [[ -f "/usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json" ]]; then
+        jq '.mapping += {"nvram-template": {"filename": "/usr/share/edk2/ovmf/OVMF_VARS.fd","format": "raw"}}' /usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json | sudo tee /tmp/50-edk2-ovmf-amdsev.json
+        sudo mv /tmp/50-edk2-ovmf-amdsev.json /usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json
+    fi
+fi
+
 sudo mkdir -p /etc/osbuild-composer
 sudo cp -a /usr/share/tests/osbuild-composer/composer/osbuild-composer.toml \
     /etc/osbuild-composer/
