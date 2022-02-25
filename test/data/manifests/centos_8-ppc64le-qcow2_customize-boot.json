@@ -134,7 +134,10 @@
                   "sha256:59e910f892580bb2b86f3035a34c3ad7b5ff9c7b70a4aa81b5db970729111337",
                   "sha256:91c956afb1260fbe9ee5565c6e0efb1c7c7cc4bc586f8177f7675c78c7466b2f",
                   "sha256:694860d31a89109386570e6e665acf2a718ca11c8148df9cefbee5d537d61538",
+                  "sha256:6b897357e022602a5a5c15910ee7b6f9acb7a100ea3e11fbe63552215109b862",
+                  "sha256:136916d6ce7b0320af5b5f7e4f60b7b8878097a928c062b09632783432887019",
                   "sha256:3c1e923ff80b166ff14022502aeeec2125160495961e50e349e610f8282fe63d",
+                  "sha256:565fcd17f9a518079f39a9dbad051efd12a69d2f83a06dabab666ee610597fb1",
                   "sha256:4f92835a6e4ee4276df49019e068d1871b75821f52b405c699bd9f199df58b80",
                   "sha256:c5f76d4032450cc3fed58ec54604c64fb102a2442eaea44929863dba3f07a727",
                   "sha256:74028102daef17fb520fd7f373da7153b4ea5faeab77da8f4be3c422bc21acac",
@@ -249,6 +252,8 @@
                   "sha256:8904fdb492f34e5242ba483fb6b7b158342662575b3d5ac9abbc380568840d4a",
                   "sha256:6bfc201a12dc7bba21069a663aa692a96c5e8920b0d94a4e355c332d7ead15ba",
                   "sha256:e25d8b411317be99b4db057a6eb1a536866458cb16a51dec1b8eea550bbc2e8b",
+                  "sha256:cffdd3a0187e37f64f4d8f7e94ea55f17029cf89988d9bf4303590b168075d74",
+                  "sha256:fc1db576d1c7580fcbb40d0c58d5d0b6c684cf85acaa0beb30786f4efa5dff6d",
                   "sha256:f24bce642ec88622490b2f09a45fa3985da7f6511a1aae131853c4ea4c309e6b",
                   "sha256:4c5aabda0cd9edb40e141066d400d2e4b232bc22ab60e806a6399691c391cabc",
                   "sha256:9936485ac7111967d6962bc539de7b08807e310117adb78b11c21a5db0f0f890",
@@ -1663,6 +1668,9 @@
           "sha256:12fda64dea45a7b085a35a816a7d8035be6600cae38f7df04a3bc22ced4d4502": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-appstream-20220208/Packages/pinentry-1.1.0-2.el8.ppc64le.rpm"
           },
+          "sha256:136916d6ce7b0320af5b5f7e4f60b7b8878097a928c062b09632783432887019": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-event-libs-1.02.181-3.el8.ppc64le.rpm"
+          },
           "sha256:14e81676d77fcc53bba97e26e90b0cedb9400343a79d0dc24237ffa6cb2dbbb6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/python3-rpm-4.14.3-21.el8.ppc64le.rpm"
           },
@@ -2032,6 +2040,9 @@
           "sha256:563b3741d26b6af963fdb7b0634e0791445a707d0b6093ac71c3224299241639": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/python3-slip-dbus-0.6.4-11.el8.noarch.rpm"
           },
+          "sha256:565fcd17f9a518079f39a9dbad051efd12a69d2f83a06dabab666ee610597fb1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-persistent-data-0.9.0-6.el8.ppc64le.rpm"
+          },
           "sha256:56c3d429ea949467dc0bca882646cf40a58fb6f27750f5664ff2919f5d38ada5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/bzip2-libs-1.0.6-26.el8.ppc64le.rpm"
           },
@@ -2205,6 +2216,9 @@
           },
           "sha256:6b588ff47d46d33b02bc296e6e5cc263d6c8ff51ee97b59ca8b34d5c45d57912": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/perl-PathTools-3.74-1.el8.ppc64le.rpm"
+          },
+          "sha256:6b897357e022602a5a5c15910ee7b6f9acb7a100ea3e11fbe63552215109b862": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-event-1.02.181-3.el8.ppc64le.rpm"
           },
           "sha256:6b9875495111bcd2d3c5e9e380b3be17fb0a730891468fb45bdba3b3692b00ea": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/libusbx-1.0.23-4.el8.ppc64le.rpm"
@@ -2812,6 +2826,9 @@
           "sha256:cff4b4ac50fed2ceab6add52a66513ed9ca04b024f07a25c53df49f762eea2d2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/groff-base-1.22.3-18.el8.ppc64le.rpm"
           },
+          "sha256:cffdd3a0187e37f64f4d8f7e94ea55f17029cf89988d9bf4303590b168075d74": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/lvm2-2.03.14-3.el8.ppc64le.rpm"
+          },
           "sha256:d03b9f4b9848e3a88d62bcf6e536d659c325b2dc03b2136be7342b5fe5e2b6a9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/perl-Carp-1.42-396.el8.noarch.rpm"
           },
@@ -3072,6 +3089,9 @@
           },
           "sha256:fba747b31faa9163410b9569c780ef7da697cbbcb3556907e3f1740768895444": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-appstream-20220208/Packages/plymouth-core-libs-0.9.4-10.20200615git1e36e30.el8.ppc64le.rpm"
+          },
+          "sha256:fc1db576d1c7580fcbb40d0c58d5d0b6c684cf85acaa0beb30786f4efa5dff6d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/lvm2-libs-2.03.14-3.el8.ppc64le.rpm"
           },
           "sha256:fc8e4e96da6ee6201a5126473666831314938e98bf699677be296e7811f6b7dd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-appstream-20220208/Packages/libXext-1.3.4-1.el8.ppc64le.rpm"
@@ -7425,6 +7445,26 @@
         "check_gpg": true
       },
       {
+        "name": "device-mapper-event",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-event-1.02.181-3.el8.ppc64le.rpm",
+        "checksum": "sha256:6b897357e022602a5a5c15910ee7b6f9acb7a100ea3e11fbe63552215109b862",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-event-libs",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-event-libs-1.02.181-3.el8.ppc64le.rpm",
+        "checksum": "sha256:136916d6ce7b0320af5b5f7e4f60b7b8878097a928c062b09632783432887019",
+        "check_gpg": true
+      },
+      {
         "name": "device-mapper-libs",
         "epoch": 8,
         "version": "1.02.181",
@@ -7432,6 +7472,16 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-libs-1.02.181-3.el8.ppc64le.rpm",
         "checksum": "sha256:3c1e923ff80b166ff14022502aeeec2125160495961e50e349e610f8282fe63d",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-persistent-data",
+        "epoch": 0,
+        "version": "0.9.0",
+        "release": "6.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/device-mapper-persistent-data-0.9.0-6.el8.ppc64le.rpm",
+        "checksum": "sha256:565fcd17f9a518079f39a9dbad051efd12a69d2f83a06dabab666ee610597fb1",
         "check_gpg": true
       },
       {
@@ -8572,6 +8622,26 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/lua-libs-5.3.4-12.el8.ppc64le.rpm",
         "checksum": "sha256:e25d8b411317be99b4db057a6eb1a536866458cb16a51dec1b8eea550bbc2e8b",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/lvm2-2.03.14-3.el8.ppc64le.rpm",
+        "checksum": "sha256:cffdd3a0187e37f64f4d8f7e94ea55f17029cf89988d9bf4303590b168075d74",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2-libs",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/lvm2-libs-2.03.14-3.el8.ppc64le.rpm",
+        "checksum": "sha256:fc1db576d1c7580fcbb40d0c58d5d0b6c684cf85acaa0beb30786f4efa5dff6d",
         "check_gpg": true
       },
       {
@@ -14453,6 +14523,15 @@
     },
     "default-target": "multi-user.target",
     "dnf": {
+      "dnf.conf": {
+        "main": {
+          "best": "True",
+          "clean_requirements_on_remove": "True",
+          "gpgcheck": "1",
+          "installonly_limit": "3",
+          "skip_if_unavailable": "False"
+        }
+      },
       "vars": {
         "contentdir": "centos",
         "infra": "stock",
@@ -15270,6 +15349,49 @@
       "tuned.service",
       "unbound-anchor.timer"
     ],
+    "ssh_config": {
+      "/etc/ssh": {
+        "ssh_config": [
+          "Include /etc/ssh/ssh_config.d/*.conf"
+        ]
+      },
+      "/etc/ssh/ssh_config.d": {
+        "05-redhat.conf": [
+          "Match final all",
+          "Include /etc/crypto-policies/back-ends/openssh.config",
+          "GSSAPIAuthentication yes",
+          "ForwardX11Trusted yes",
+          "SendEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "SendEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "SendEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "SendEnv XMODIFIERS"
+        ]
+      }
+    },
+    "sshd_config": {
+      "/etc/ssh": {
+        "sshd_config": [
+          "HostKey /etc/ssh/ssh_host_rsa_key",
+          "HostKey /etc/ssh/ssh_host_ecdsa_key",
+          "HostKey /etc/ssh/ssh_host_ed25519_key",
+          "SyslogFacility AUTHPRIV",
+          "PermitRootLogin yes",
+          "AuthorizedKeysFile\t.ssh/authorized_keys",
+          "PasswordAuthentication yes",
+          "ChallengeResponseAuthentication no",
+          "GSSAPIAuthentication yes",
+          "GSSAPICleanupCredentials no",
+          "UsePAM yes",
+          "X11Forwarding yes",
+          "PrintMotd no",
+          "AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES",
+          "AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT",
+          "AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE",
+          "AcceptEnv XMODIFIERS",
+          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
+        ]
+      }
+    },
     "sudoers": {
       "/etc/sudoers": [
         "Defaults   !visiblepw",
@@ -15484,6 +15606,165 @@
           "D! /tmp/.Test-unix 1777 root root 10d",
           "r! /tmp/.X[0-9]*-lock"
         ]
+      }
+    },
+    "yum_repos": {
+      "/etc/yum.repos.d": {
+        "CentOS-Stream-AppStream.repo": {
+          "appstream": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=AppStream&infra=$infra",
+            "name": "CentOS Stream $releasever - AppStream"
+          }
+        },
+        "CentOS-Stream-BaseOS.repo": {
+          "baseos": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=BaseOS&infra=$infra",
+            "name": "CentOS Stream $releasever - BaseOS"
+          }
+        },
+        "CentOS-Stream-Debuginfo.repo": {
+          "debuginfo": {
+            "baseurl": "http://debuginfo.centos.org/$stream/$basearch/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Debuginfo"
+          }
+        },
+        "CentOS-Stream-Extras.repo": {
+          "extras": {
+            "enabled": "1",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=extras&infra=$infra",
+            "name": "CentOS Stream $releasever - Extras"
+          }
+        },
+        "CentOS-Stream-HighAvailability.repo": {
+          "ha": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=HighAvailability&infra=$infra",
+            "name": "CentOS Stream $releasever - HighAvailability"
+          }
+        },
+        "CentOS-Stream-Media.repo": {
+          "media-appstream": {
+            "baseurl": "file:///media/CentOS/AppStream\nfile:///media/cdrom/AppStream\nfile:///media/cdrecorder/AppStream",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Media - AppStream"
+          },
+          "media-baseos": {
+            "baseurl": "file:///media/CentOS/BaseOS\nfile:///media/cdrom/BaseOS\nfile:///media/cdrecorder/BaseOS",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Media - BaseOS"
+          }
+        },
+        "CentOS-Stream-NFV.repo": {
+          "nfv": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=NFV&infra=$infra",
+            "name": "CentOS Stream $releasever - NFV"
+          }
+        },
+        "CentOS-Stream-PowerTools.repo": {
+          "powertools": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=PowerTools&infra=$infra",
+            "name": "CentOS Stream $releasever - PowerTools"
+          }
+        },
+        "CentOS-Stream-RealTime.repo": {
+          "rt": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=RT&infra=$infra",
+            "name": "CentOS Stream $releasever - RealTime"
+          }
+        },
+        "CentOS-Stream-ResilientStorage.repo": {
+          "resilientstorage": {
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "mirrorlist": "http://mirrorlist.centos.org/?release=$stream&arch=$basearch&repo=ResilientStorage&infra=$infra",
+            "name": "CentOS Stream $releasever - ResilientStorage"
+          }
+        },
+        "CentOS-Stream-Sources.repo": {
+          "appstream-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/AppStream/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - AppStream - Source"
+          },
+          "baseos-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/BaseOS/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - BaseOS - Source"
+          },
+          "extras-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/extras/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - Extras - Source"
+          },
+          "ha-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/HighAvailability/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - HighAvailability - Source"
+          },
+          "nfv-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/NFV/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - NFV - Source"
+          },
+          "powertools-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/PowerTools/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - PowerTools - Source"
+          },
+          "resilientstorage-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/ResilientStorage/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - ResilientStorage - Source"
+          },
+          "rt-source": {
+            "baseurl": "http://vault.centos.org/$contentdir/$stream/RT/Source/",
+            "enabled": "0",
+            "gpgcheck": "1",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial",
+            "name": "CentOS Stream $releasever - RT - Source"
+          }
+        }
       }
     }
   }

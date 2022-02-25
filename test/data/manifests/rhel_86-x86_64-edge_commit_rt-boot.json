@@ -72,7 +72,10 @@
                   "sha256:ca6c80d3b1ce62b1b12f1a30ca4ec018855e92b0c447bdc831a0a0644accbb6e",
                   "sha256:933071dcdeccd57028cf1c28f034bc0a091d5904a80765dae6e491c15dad4411",
                   "sha256:c6c77f539e43fa79a202b0939599d2a62a0ddcce4876436c88ae820638803ed8",
+                  "sha256:d6566a116551e68db4b4fde7368dd66fc0e5715131a82954c1207913cebbda35",
+                  "sha256:2c6c406ef5f070a06d9369ae64a8e737c3a42f6ce478187327111f6bb28b5edc",
                   "sha256:f0f0b9606d40f3e7ca0ac57ab1b5b01cd0c4aa7510a6af2f639544ca78eac613",
+                  "sha256:48877e5a29b708170eff6fe2baeb60082b878229ed55db40a2af8259ef3886ba",
                   "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce",
                   "sha256:801231dfc882376ddf0801e7630fb3f018591840fa285094252ac7c86951f7f2",
                   "sha256:0adfa1170d0d43b67de3ca02e7acbd46b811e4efc1aa6da58bb6c6f081d20d50",
@@ -190,6 +193,8 @@
                   "sha256:018409b1eda8be48a11a5b76b95e82ff1d9002569e0644291532d8424dc31edf",
                   "sha256:45cc50a8b02f9bbbbe2c8c056f34622d15d383f695916ac07821d688fcab1c25",
                   "sha256:1c040f943aba945547ebd7a060f1df910dca5d65cb353d6c7e7edbb51243d4c0",
+                  "sha256:a736f5fe95a825fe7712f92b6c366b37883dd03410eea82b27debe77d7c67aa3",
+                  "sha256:3b03c4955dd9cfa1b1aec1378ebb174f9fc93ec587a33b5ab0950fd5fb6b8f8e",
                   "sha256:f0e3f336e2910f8282c39a5bce21ffa35d6037842d219761ed8c58b4208077cc",
                   "sha256:a3dedf8c077b4656d3cd4ef641e696397a3fff83ee8b14f0e3fc69d7c10cebcf",
                   "sha256:55a58ea1e63e2cc102d82ab4d02e04e90e2c03819b2a2dee74395905868eb5fd",
@@ -4494,6 +4499,24 @@
         "checksum": "sha256:c6c77f539e43fa79a202b0939599d2a62a0ddcce4876436c88ae820638803ed8"
       },
       {
+        "name": "device-mapper-event",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/device-mapper-event-1.02.181-3.el8.x86_64.rpm",
+        "checksum": "sha256:d6566a116551e68db4b4fde7368dd66fc0e5715131a82954c1207913cebbda35"
+      },
+      {
+        "name": "device-mapper-event-libs",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/device-mapper-event-libs-1.02.181-3.el8.x86_64.rpm",
+        "checksum": "sha256:2c6c406ef5f070a06d9369ae64a8e737c3a42f6ce478187327111f6bb28b5edc"
+      },
+      {
         "name": "device-mapper-libs",
         "epoch": 8,
         "version": "1.02.181",
@@ -4501,6 +4524,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/device-mapper-libs-1.02.181-3.el8.x86_64.rpm",
         "checksum": "sha256:f0f0b9606d40f3e7ca0ac57ab1b5b01cd0c4aa7510a6af2f639544ca78eac613"
+      },
+      {
+        "name": "device-mapper-persistent-data",
+        "epoch": 0,
+        "version": "0.9.0",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/device-mapper-persistent-data-0.9.0-6.el8.x86_64.rpm",
+        "checksum": "sha256:48877e5a29b708170eff6fe2baeb60082b878229ed55db40a2af8259ef3886ba"
       },
       {
         "name": "diffutils",
@@ -5554,6 +5586,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/lua-libs-5.3.4-12.el8.x86_64.rpm",
         "checksum": "sha256:1c040f943aba945547ebd7a060f1df910dca5d65cb353d6c7e7edbb51243d4c0"
+      },
+      {
+        "name": "lvm2",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/lvm2-2.03.14-3.el8.x86_64.rpm",
+        "checksum": "sha256:a736f5fe95a825fe7712f92b6c366b37883dd03410eea82b27debe77d7c67aa3"
+      },
+      {
+        "name": "lvm2-libs",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/lvm2-libs-2.03.14-3.el8.x86_64.rpm",
+        "checksum": "sha256:3b03c4955dd9cfa1b1aec1378ebb174f9fc93ec587a33b5ab0950fd5fb6b8f8e"
       },
       {
         "name": "lz4-libs",
