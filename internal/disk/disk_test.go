@@ -66,7 +66,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
-	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, rng)
+	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, false, rng)
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, newpt.Size, expectedSize)
 }
@@ -358,7 +358,7 @@ func TestCreatePartitionTable(t *testing.T) {
 	rng := rand.New(rand.NewSource(13))
 	for name := range testPartitionTables {
 		pt := testPartitionTables[name]
-		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), rng)
+		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), false, rng)
 		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
 		assert.NotNil(mpt, "Partition table generation failed: %s (nil partition table)", name)
 		assert.Greater(mpt.GetSize(), uint64(37*1024*1024*1024))
@@ -368,4 +368,34 @@ func TestCreatePartitionTable(t *testing.T) {
 		mnt := pt.FindMountable("/")
 		assert.NotNil(mnt, "Partition table '%s': failed to find root mountable", name)
 	}
+}
+
+func TestCreatePartitionTableLVMify(t *testing.T) {
+	assert := assert.New(t)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	for name := range testPartitionTables {
+		pt := testPartitionTables[name]
+
+		if name == "btrfs" || name == "luks" {
+			assert.Panics(func() {
+				_, _ = NewPartitionTable(&pt, bp, uint64(13*1024*1024), true, rng)
+			})
+			continue
+		}
+
+		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), true, rng)
+		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
+
+		rootPath := entityPath(mpt, "/")
+		if rootPath == nil {
+			panic("no root mountpoint for PartitionTable")
+		}
+
+		parent := rootPath[1]
+		_, ok := parent.(*LVMLogicalVolume)
+		assert.True(ok, "Partition table '%s': root's parent (%q) is not an LVM logical volume", name, parent)
+	}
+
 }
