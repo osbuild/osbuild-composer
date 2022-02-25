@@ -18,13 +18,16 @@ type PartitionTable struct {
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
 }
 
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 	for _, mnt := range mountpoints {
 		size := newPT.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
 		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
 			resizeEntityBranch(path, size)
 		} else {
+			if lvmify {
+				newPT.ensureLVM()
+			}
 			if err := newPT.createFilesystem(mnt.Mountpoint, size); err != nil {
 				return nil, err
 			}
@@ -482,5 +485,47 @@ func resizeEntityBranch(path []Entity, size uint64) {
 func (pt *PartitionTable) GenUUID(rng *rand.Rand) {
 	if pt.UUID == "" {
 		pt.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
+	}
+}
+
+// ensureLVM will ensure that the root partition is on an LVM volume, i.e. if
+// it currently is not, it will wrap it in one
+func (pt *PartitionTable) ensureLVM() {
+
+	rootPath := entityPath(pt, "/")
+	if rootPath == nil {
+		panic("no root mountpoint for PartitionTable")
+	}
+
+	parent := rootPath[1] // NB: entityPath has reversed order
+
+	if _, ok := parent.(*LVMLogicalVolume); ok {
+		return
+	} else if part, ok := parent.(*Partition); ok {
+		filesystem := part.Payload
+
+		part.Payload = &LVMVolumeGroup{
+			Name:        "rootvg",
+			Description: "created via lvm2 and osbuild",
+			LogicalVolumes: []LVMLogicalVolume{
+				{
+					Size:    part.Size,
+					Name:    "rootlv",
+					Payload: filesystem,
+				},
+			},
+		}
+
+		// reset it so it will be grown later
+		part.Size = 0
+
+		if pt.Type == "gpt" {
+			part.Type = LVMPartitionGUID
+		} else {
+			part.Type = "8e"
+		}
+
+	} else {
+		panic("unsupported parent for LVM")
 	}
 }

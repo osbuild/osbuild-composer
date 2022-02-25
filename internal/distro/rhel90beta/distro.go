@@ -359,7 +359,7 @@ func (t *imageType) getPartitionTable(
 
 	imageSize := t.Size(options.Size)
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, false, rng)
 }
 
 func (t *imageType) PartitionType() string {
