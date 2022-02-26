@@ -316,12 +316,12 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 		panic("no root mountpoint for PartitionTable")
 	}
 
-	var vc VolumeContainer
+	var vc MountpointCreator
 	var entity Entity
 	var idx int
 	for idx, entity = range rootPath {
 		var ok bool
-		if vc, ok = entity.(VolumeContainer); ok {
+		if vc, ok = entity.(MountpointCreator); ok {
 			break
 		}
 	}
