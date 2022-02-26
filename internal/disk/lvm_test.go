@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLVMVGCreateVolume(t *testing.T) {
+func TestLVMVCreateMountpoint(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -15,15 +15,15 @@ func TestLVMVGCreateVolume(t *testing.T) {
 		Description: "root volume group",
 	}
 
-	entity, err := vg.CreateVolume("/", 0)
+	entity, err := vg.CreateMountpoint("/", 0)
 	assert.NoError(err)
 	rootlv := entity.(*LVMLogicalVolume)
 	assert.Equal("rootlv", rootlv.Name)
 
-	_, err = vg.CreateVolume("/home_test", 0)
+	_, err = vg.CreateMountpoint("/home_test", 0)
 	assert.NoError(err)
 
-	entity, err = vg.CreateVolume("/home/test", 0)
+	entity, err = vg.CreateMountpoint("/home/test", 0)
 	assert.NoError(err)
 
 	dedup := entity.(*LVMLogicalVolume)
@@ -31,10 +31,10 @@ func TestLVMVGCreateVolume(t *testing.T) {
 
 	// Lets collide it
 	for i := 0; i < 98; i++ {
-		_, err = vg.CreateVolume("/home/test", 0)
+		_, err = vg.CreateMountpoint("/home/test", 0)
 		assert.NoError(err)
 	}
 
-	_, err = vg.CreateVolume("/home/test", 0)
+	_, err = vg.CreateMountpoint("/home/test", 0)
 	assert.Error(err)
 }
