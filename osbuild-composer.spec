@@ -324,10 +324,10 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 41
-Requires:   osbuild-ostree >= 41
-Requires:   osbuild-lvm2 >= 41
-Requires:   osbuild-luks2 >= 41
+Requires:   osbuild >= 47
+Requires:   osbuild-ostree >= 47
+Requires:   osbuild-lvm2 >= 47
+Requires:   osbuild-luks2 >= 47
 Requires:   %{name}-dnf-json = %{version}-%{release}
 
 # remove in F34
