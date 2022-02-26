@@ -74,3 +74,12 @@ func (lc *LUKSContainer) GenUUID(rng *rand.Rand) {
 		lc.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
 }
+
+func (lc *LUKSContainer) MetadataSize() uint64 {
+	if lc == nil {
+		return 0
+	}
+
+	// 16 MiB is the default size for the LUKS2 header
+	return 16 * 1024 * 1024
+}
