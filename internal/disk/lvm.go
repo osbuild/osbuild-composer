@@ -105,6 +105,18 @@ func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Enti
 	return &vg.LogicalVolumes[len(vg.LogicalVolumes)-1], nil
 }
 
+func (vg *LVMVolumeGroup) MetadataSize() uint64 {
+	if vg == nil {
+		return 0
+	}
+
+	// LVM2 allows for a lot of customizations that will affect the size
+	// of the metadata and its location and thus the start of the physical
+	// extent. For now we assume the default which results in a start of
+	// the physical extent 1 MiB
+	return 1024 * 1024
+}
+
 type LVMLogicalVolume struct {
 	Name    string
 	Size    uint64

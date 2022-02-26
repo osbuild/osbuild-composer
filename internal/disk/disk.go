@@ -112,6 +112,15 @@ type UniqueEntity interface {
 	GenUUID(rng *rand.Rand)
 }
 
+// VolumeContainer is a specific container that contains volume entities
+type VolumeContainer interface {
+
+	// MetadataSize returns the size of the container's metadata (in
+	// bytes), i.e. the storage space that needs to be reserved for
+	// the container itself, in contrast to the data it contains.
+	MetadataSize() uint64
+}
+
 // FSSpec for a filesystem (UUID and Label); the first field of fstab(5)
 type FSSpec struct {
 	UUID  string

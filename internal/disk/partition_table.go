@@ -433,6 +433,9 @@ func resizeEntityBranch(path []Entity, size uint64) {
 				break
 			}
 		}
+		if vc, ok := element.(VolumeContainer); ok {
+			containerSize += vc.MetadataSize()
+		}
 		if containerSize > size {
 			size = containerSize
 		}
