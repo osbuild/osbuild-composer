@@ -96,11 +96,11 @@ type Mountable interface {
 	GetFSTabOptions() FSTabOptions
 }
 
-// A VolumeContainer is a container that is able to create new volumes.
+// A MountpointCreator is a container that is able to create new volumes.
 //
 // CreateMountpoint creates a new mountpoint with the given size and
 // returns the entity that represents the new mountpoint.
-type VolumeContainer interface {
+type MountpointCreator interface {
 	CreateMountpoint(mountpoint string, size uint64) (Entity, error)
 }
 
