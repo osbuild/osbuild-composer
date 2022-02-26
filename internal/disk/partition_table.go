@@ -158,7 +158,7 @@ func (pt *PartitionTable) EnsureSize(s uint64) bool {
 	return false
 }
 
-func (pt *PartitionTable) CreateVolume(mountpoint string, size uint64) (Entity, error) {
+func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
 	filesystem := Filesystem{
 		Type:         "xfs",
 		Mountpoint:   mountpoint,
@@ -330,7 +330,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 		panic("could not find root volume container")
 	}
 
-	newVol, err := vc.CreateVolume(mountpoint, 0)
+	newVol, err := vc.CreateMountpoint(mountpoint, 0)
 	if err != nil {
 		return fmt.Errorf("failed creating volume: " + err.Error())
 	}

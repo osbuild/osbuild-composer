@@ -98,10 +98,10 @@ type Mountable interface {
 
 // A VolumeContainer is a container that is able to create new volumes.
 //
-// CreateVolume creates a new volume with the given mount point and
-// size and returns it.
+// CreateMountpoint creates a new mountpoint with the given size and
+// returns the entity that represents the new mountpoint.
 type VolumeContainer interface {
-	CreateVolume(mountpoint string, size uint64) (Entity, error)
+	CreateMountpoint(mountpoint string, size uint64) (Entity, error)
 }
 
 // A UniqueEntity is an entity that can be uniquely identified via a UUID.
