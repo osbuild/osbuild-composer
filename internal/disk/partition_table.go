@@ -112,41 +112,6 @@ func (pt *PartitionTable) ContainsMountpoint(mountpoint string) bool {
 	return len(entityPath(pt, mountpoint)) > 0
 }
 
-// Create a new filesystem within the partition table at the given mountpoint
-// with the given minimum size in bytes.
-func (pt *PartitionTable) CreateFilesystem(mountpoint string, size uint64) error {
-	filesystem := Filesystem{
-		Type:         "xfs",
-		Mountpoint:   mountpoint,
-		FSTabOptions: "defaults",
-		FSTabFreq:    0,
-		FSTabPassNo:  0,
-	}
-
-	partition := Partition{
-		Size:    size,
-		Payload: &filesystem,
-	}
-
-	n := len(pt.Partitions)
-	var maxNo int
-
-	if pt.Type == "gpt" {
-		partition.Type = FilesystemDataGUID
-		maxNo = 128
-	} else {
-		maxNo = 4
-	}
-
-	if n == maxNo {
-		return fmt.Errorf("maximum number of partitions reached (%d)", maxNo)
-	}
-
-	pt.Partitions = append(pt.Partitions, partition)
-
-	return nil
-}
-
 // Generate all needed UUIDs for all the partiton and filesystems
 //
 // Will not overwrite existing UUIDs and only generate UUIDs for
