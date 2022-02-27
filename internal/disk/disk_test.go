@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -397,5 +398,32 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 		_, ok := parent.(*LVMLogicalVolume)
 		assert.True(ok, "Partition table '%s': root's parent (%q) is not an LVM logical volume", name, parent)
 	}
+}
 
+func collectEntities(pt *PartitionTable) []Entity {
+	entities := make([]Entity, 0)
+	collector := func(ent Entity, path []Entity) error {
+		entities = append(entities, ent)
+		return nil
+	}
+	_ = pt.ForEachEntity(collector)
+	return entities
+}
+
+func TestClone(t *testing.T) {
+	for name := range testPartitionTables {
+		basePT := testPartitionTables[name]
+		baseEntities := collectEntities(&basePT)
+
+		clonePT := basePT.Clone().(*PartitionTable)
+		cloneEntities := collectEntities(clonePT)
+
+		for idx := range baseEntities {
+			for jdx := range cloneEntities {
+				if fmt.Sprintf("%p", baseEntities[idx]) == fmt.Sprintf("%p", cloneEntities[jdx]) {
+					t.Fatalf("found reference to same entity %#v in list of clones for partition table %q", baseEntities[idx], name)
+				}
+			}
+		}
+	}
 }
