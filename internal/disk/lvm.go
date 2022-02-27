@@ -93,7 +93,7 @@ func (lv *LVMLogicalVolume) Clone() Entity {
 	return &LVMLogicalVolume{
 		Name:    lv.Name,
 		Size:    lv.Size,
-		Payload: lv.Payload,
+		Payload: lv.Payload.Clone(),
 	}
 }
 

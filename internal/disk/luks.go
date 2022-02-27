@@ -61,7 +61,7 @@ func (lc *LUKSContainer) Clone() Entity {
 			Memory:      lc.PBKDF.Memory,
 			Parallelism: lc.PBKDF.Parallelism,
 		},
-		Payload: lc.Payload,
+		Payload: lc.Payload.Clone(),
 	}
 }
 
