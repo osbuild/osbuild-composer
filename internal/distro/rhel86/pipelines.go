@@ -693,7 +693,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", customizations.GetFDO())
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetFDO())
-	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer)
+	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer, rng)
 
 	pipelines = append(pipelines, *installerTreePipeline, *efibootTreePipeline, *bootISOTreePipeline)
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, t.Arch().Name(), false))
@@ -701,7 +701,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	return pipelines, nil
 }
 
-func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *osbuild.Pipeline {
+func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rng *rand.Rand) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "bootiso-tree"
 	p.Build = "name:build"
@@ -741,6 +741,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string) *o
 				Payload: &disk.Filesystem{
 					Type:       "vfat",
 					Mountpoint: "/",
+					UUID:       disk.NewVolIDFromRand(rng),
 				},
 			},
 		},
