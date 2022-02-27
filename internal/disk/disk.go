@@ -151,10 +151,13 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 	return id, nil
 }
 
-// NewRandomVolIDFromReader creates a random 32 bit hex string to use as a
+// NewVolIDFromRand creates a random 32 bit hex string to use as a
 // volume ID for FAT filesystems
-func NewRandomVolIDFromReader(r io.Reader) (string, error) {
+func NewVolIDFromRand(r *rand.Rand) string {
 	volid := make([]byte, 4)
-	_, err := r.Read(volid)
-	return hex.EncodeToString(volid), err
+	len, _ := r.Read(volid)
+	if len != 4 {
+		panic("expected four random bytes")
+	}
+	return hex.EncodeToString(volid)
 }
