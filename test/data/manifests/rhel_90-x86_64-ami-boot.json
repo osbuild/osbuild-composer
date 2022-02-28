@@ -53,7 +53,10 @@
                   "sha256:9dc719992c6b385ce2c5d3ef35ecb5a0b5aae29ea99fa164f97aa2acb4346a02",
                   "sha256:d07d38957b3cc41160a80dc704ac0102d2e061b81e4b594a154bde0afbba0ec2",
                   "sha256:ada47830190c9c63f8963870b180eca19f00fe3d570eedecd530e48716f5c160",
+                  "sha256:84a88ef32206f0562cc7692039281416dae6884ad5009a39638cd3c7b583477d",
+                  "sha256:29cfcb0061f1d7ae6fabfbfc4357fec18e6320b78229d4f08b4794d68c7136ff",
                   "sha256:0f97ae871b19c01313979bfc246d1d9aa6cc6bd9a8d3c9f496e6427a3ff50796",
+                  "sha256:ee21707fd626731a95029fd87a97f3d254283b072491246e951a4e2724e2bd21",
                   "sha256:2d4c4fdfc10215af3c957c24995b79a26e27e6d76de4ed1f5198d25bf7ef9671",
                   "sha256:f1f333c1504961280da664d7cf50428d477aaf1c93aa5178c3919f8cda26799b",
                   "sha256:f6ed0807c49ed75d33a3e24df58bb6e8509c8846580359379ddb1e9bbd219269",
@@ -157,6 +160,8 @@
                   "sha256:409beeb1faf626a882e95763ec4892d514077289e6074d3b61bef1b90739ad66",
                   "sha256:dfbb0c4f2c524b731e2c2ed7d352541183667ad7981fb01de6474c6be5e52951",
                   "sha256:3ec90a458c2a92a76b7d70b8e360011a597c1637bf76aae6ebbd23971094f2ee",
+                  "sha256:95f517c1c1130d2fb8b562cbff77a69f5845f5f8fa75b4e18642a8c299fcc065",
+                  "sha256:b7d9597aa6a247344ffdb19d0805124e718156a87cf0cb259c108ea79d1a43b2",
                   "sha256:9658da838021711f687cf283368664984bfb1c8b9176897d7d477a724a11a731",
                   "sha256:2703054410f61e3a0cc8bf082800a75170644141e4f98aea3f483765ae372d3f",
                   "sha256:cf60adcc7a5f0cb469e6f066a1bdc62ae9af7c06305c76c15884b59df7f93274",
@@ -1392,6 +1397,9 @@
           "sha256:298a276622e42061af13cd50820ece993a463f657a6145cb957518c7b8765286": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-decorator-4.4.2-6.el9.noarch.rpm"
           },
+          "sha256:29cfcb0061f1d7ae6fabfbfc4357fec18e6320b78229d4f08b4794d68c7136ff": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-event-libs-1.02.181-3.el9.x86_64.rpm"
+          },
           "sha256:2b7f7e08ee453638eb1f19acfd85477c4c7265f6cacf9a174946131bdbca455d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libssh-0.9.6-3.el9.x86_64.rpm"
           },
@@ -1788,6 +1796,9 @@
           "sha256:842dd78442c7d8d0342e1606b9d5465d454f2140a547b7ad4832d86c023f0040": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/policycoreutils-3.3-2.el9.x86_64.rpm"
           },
+          "sha256:84a88ef32206f0562cc7692039281416dae6884ad5009a39638cd3c7b583477d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-event-1.02.181-3.el9.x86_64.rpm"
+          },
           "sha256:8551b711718596fbfef6622bbf32f785864959af9d06a76da2545ec9f3a126e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/cracklib-2.9.6-27.el9.x86_64.rpm"
           },
@@ -1868,6 +1879,9 @@
           },
           "sha256:94e7ec73e7998cb2f94f5306fded9be2bc175e5a4c912fd3744f2ca18f2afce1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/rootfiles-8.1-31.el9.noarch.rpm"
+          },
+          "sha256:95f517c1c1130d2fb8b562cbff77a69f5845f5f8fa75b4e18642a8c299fcc065": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/lvm2-2.03.14-3.el9.x86_64.rpm"
           },
           "sha256:9624fc9a5d5b4b0229d8d6f2505992142b6ba236fe02610214419e6e3ff9f273": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/shadow-utils-4.9-3.el9.x86_64.rpm"
@@ -2033,6 +2047,9 @@
           },
           "sha256:b786c929717b1319ccc399cca2c3b3eb8fcf88b469c2f381cbed804074da16c0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libisoburn-1.5.4-3.el9.x86_64.rpm"
+          },
+          "sha256:b7d9597aa6a247344ffdb19d0805124e718156a87cf0cb259c108ea79d1a43b2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/lvm2-libs-2.03.14-3.el9.x86_64.rpm"
           },
           "sha256:b7fe377d0cb75a9592f0f2381e8419c645d9158032b71a809b77e0c42d7c7cc8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/openssh-server-8.7p1-6.el9.x86_64.rpm"
@@ -2282,6 +2299,9 @@
           },
           "sha256:ed36145fea237f5666bffe6547178740a16c592f48432ef86756a15e2d0a5e04": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/sssd-kcm-2.6.2-2.el9.x86_64.rpm"
+          },
+          "sha256:ee21707fd626731a95029fd87a97f3d254283b072491246e951a4e2724e2bd21": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-persistent-data-0.9.0-12.el9.x86_64.rpm"
           },
           "sha256:eee3d14606c828e51397d52535c56cec7fe9423bbbbe7e7e1c738ffda73edefd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/setup-2.13.7-6.el9.noarch.rpm"
@@ -3516,6 +3536,24 @@
         "checksum": "sha256:ada47830190c9c63f8963870b180eca19f00fe3d570eedecd530e48716f5c160"
       },
       {
+        "name": "device-mapper-event",
+        "epoch": 9,
+        "version": "1.02.181",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-event-1.02.181-3.el9.x86_64.rpm",
+        "checksum": "sha256:84a88ef32206f0562cc7692039281416dae6884ad5009a39638cd3c7b583477d"
+      },
+      {
+        "name": "device-mapper-event-libs",
+        "epoch": 9,
+        "version": "1.02.181",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-event-libs-1.02.181-3.el9.x86_64.rpm",
+        "checksum": "sha256:29cfcb0061f1d7ae6fabfbfc4357fec18e6320b78229d4f08b4794d68c7136ff"
+      },
+      {
         "name": "device-mapper-libs",
         "epoch": 9,
         "version": "1.02.181",
@@ -3523,6 +3561,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-libs-1.02.181-3.el9.x86_64.rpm",
         "checksum": "sha256:0f97ae871b19c01313979bfc246d1d9aa6cc6bd9a8d3c9f496e6427a3ff50796"
+      },
+      {
+        "name": "device-mapper-persistent-data",
+        "epoch": 0,
+        "version": "0.9.0",
+        "release": "12.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/device-mapper-persistent-data-0.9.0-12.el9.x86_64.rpm",
+        "checksum": "sha256:ee21707fd626731a95029fd87a97f3d254283b072491246e951a4e2724e2bd21"
       },
       {
         "name": "diffutils",
@@ -4450,6 +4497,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/lua-libs-5.4.2-4.el9.x86_64.rpm",
         "checksum": "sha256:3ec90a458c2a92a76b7d70b8e360011a597c1637bf76aae6ebbd23971094f2ee"
+      },
+      {
+        "name": "lvm2",
+        "epoch": 9,
+        "version": "2.03.14",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/lvm2-2.03.14-3.el9.x86_64.rpm",
+        "checksum": "sha256:95f517c1c1130d2fb8b562cbff77a69f5845f5f8fa75b4e18642a8c299fcc065"
+      },
+      {
+        "name": "lvm2-libs",
+        "epoch": 9,
+        "version": "2.03.14",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/lvm2-libs-2.03.14-3.el9.x86_64.rpm",
+        "checksum": "sha256:b7d9597aa6a247344ffdb19d0805124e718156a87cf0cb259c108ea79d1a43b2"
       },
       {
         "name": "lz4-libs",
