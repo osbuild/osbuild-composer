@@ -86,7 +86,7 @@ func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.Pa
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
-		stageDevices, name := getDevices(path, filename)
+		stageDevices, name := getDevices(path, filename, false)
 		mountpoint := mnt.GetMountpoint()
 
 		var mount *Mount

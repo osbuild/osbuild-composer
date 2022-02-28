@@ -22,7 +22,7 @@ func GenMkfsStages(pt *disk.PartitionTable, device *Device) []*Stage {
 		t := mnt.GetFSType()
 		var stage *Stage
 
-		stageDevices, lastName := getDevices(path, devOptions.Filename)
+		stageDevices, lastName := getDevices(path, devOptions.Filename, true)
 
 		// the last device on the PartitionTable must be named "device"
 		lastDevice := stageDevices[lastName]

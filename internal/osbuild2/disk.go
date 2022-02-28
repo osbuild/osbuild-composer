@@ -43,7 +43,10 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string) []*Stage {
 	// create the partition layout in the empty file
 	sfOptions := sfdiskStageOptions(pt)
 	loopback := NewLoopbackDevice(
-		&LoopbackDeviceOptions{Filename: filename},
+		&LoopbackDeviceOptions{
+			Filename: filename,
+			Lock:     true,
+		},
 	)
 
 	sfdisk := NewSfdiskStage(sfOptions, loopback)

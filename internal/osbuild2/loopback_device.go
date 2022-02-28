@@ -14,6 +14,9 @@ type LoopbackDeviceOptions struct {
 
 	// Sector size (in bytes)
 	SectorSize *uint64 `json:"sector-size,omitempty"`
+
+	// Lock (bsd lock) the device after opening it
+	Lock bool `json:"lock,omitempty"`
 }
 
 func (LoopbackDeviceOptions) isDeviceOptions() {}

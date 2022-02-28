@@ -1133,7 +1133,8 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw"
+                  "filename": "image.raw",
+                  "lock": true
                 }
               }
             }
@@ -1149,7 +1150,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 2048,
-                  "size": 409600
+                  "size": 409600,
+                  "lock": true
                 }
               }
             }
@@ -1165,7 +1167,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 411648,
-                  "size": 1048576
+                  "size": 1048576,
+                  "lock": true
                 }
               }
             }
@@ -1182,7 +1185,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 1460224,
-                  "size": 19511263
+                  "size": 19511263,
+                  "lock": true
                 }
               }
             }

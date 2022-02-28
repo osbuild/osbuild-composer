@@ -1427,7 +1427,8 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "disk.img"
+                  "filename": "disk.img",
+                  "lock": true
                 }
               }
             }
@@ -1443,7 +1444,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 204800
+                  "size": 204800,
+                  "lock": true
                 }
               }
             }
@@ -1460,7 +1462,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 6498304,
-                  "size": 14473116
+                  "size": 14473116,
+                  "lock": true
                 }
               }
             }
@@ -1476,7 +1479,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 206848,
-                  "size": 4194304
+                  "size": 4194304,
+                  "lock": true
                 }
               }
             }
@@ -1492,7 +1496,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4401152,
-                  "size": 2097152
+                  "size": 2097152,
+                  "lock": true
                 }
               }
             }
