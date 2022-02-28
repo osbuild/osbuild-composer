@@ -46,24 +46,16 @@
                 "type": "org.osbuild.files",
                 "origin": "org.osbuild.source",
                 "references": [
-                  "sha256:e2eee1c2bfb1986325b00ffd4955a25d0aff48e144f5d6ebaecff0eecc8d4bfd",
-                  "sha256:2668ea669597bf9fc36cd70f4b70c1523c4c68c6acce273223ae9f0a9b6200b7",
                   "sha256:f999447892157a6bb614f09f2a2c6768a50b8ed79754fe3c0ed0a3b6470f4844",
                   "sha256:30b5718d0b96ad56ec441e34d021ef1382cb1ef878810e350819cd2d5c4c979e",
-                  "sha256:7170d6ffc37514a8e30d141dd7c39da11bcc69be660e5a10f1d1d36372c7110d",
-                  "sha256:4a55f33d373bd5dcba39549832a60f29513e8fb9feab690ac47839ff41bb7b28",
                   "sha256:a5693a983446d91040c281cd1b5f2468f639ab2dbed69e75b9ce6f1621366d9b",
                   "sha256:ab52af68e627882a4f28ac22584c5354cd373baa521dd433e0d52e0464f350ee",
                   "sha256:d5e173429f190a280c6efaa7856b10dd929c4255b32a0d6c8c57f77063a204d6",
-                  "sha256:98ffc16e34b5c694651838a87ddcb5727ff6e28651f4d5dc48874576ecc13ad5",
-                  "sha256:ce57e00abebbf355aea1df897d91c6b4d2d24bf72344e3c5f1dddb2d08554141",
                   "sha256:3ea916c72412d3a7efd8c70cfa1ed18863c018091001b631390b19c454136b87",
                   "sha256:2c6a1c36a8a8f3e78fa5bb063b0514af48f1063c9c7f618f801a35b011f453c9",
                   "sha256:1f4f7bcb53966547a351feadc90764061f8f9531a3a03342560b41078965895b",
                   "sha256:6846c6702e874155a238a652093f058441fed0b46cf21ef4f1aaeeb6e26a5242",
-                  "sha256:5ae5b08ac1851b0c2d7ac395a7a6f219319a5af55c59905912b8a5af14bf1549",
                   "sha256:b237a95bcd71c749d58e65a39acab143315851b420351df92e365e1d57e8e96b",
-                  "sha256:3e34af9215b224e447ecdc197963b635844f56126dc0a879c8deebf40f22fc88",
                   "sha256:a5398d519621bf860157e807c55bd8a92930539ff54adf6322179b66e272937b",
                   "sha256:51215b94203d89d3277871a951c5d49811e064d5685d3e336be818973a39dd67",
                   "sha256:3bb064ceb18523e043c75d9d90ff3c2fccf6dbd93377c2557d7d2ae30e528fc1",
@@ -97,7 +89,6 @@
                   "sha256:be9deb2efd06b4b2c1c130acae94c687161d04830119e65a989d904ba9fd1864",
                   "sha256:01df2a72fcdf988132e82764ce1a22a5a9513fa253b54e17d23058bdb53c2d85",
                   "sha256:28d73d3800cb895b265bc0755c41241c593ebd7551a7da7f001f1e254b85c662",
-                  "sha256:11d8d78fc86f6c409da7e46547b60a4936e2ecde580a8a4fbf938861a1e9ddf6",
                   "sha256:6919d88afdd2cf89982ec8edd4401ff93394a81873f81cf89bb273384f39104f",
                   "sha256:9fb98bd7ebb8d210b77bca1c70aac00b0f0dfc6f776157e9c7f64fd7339bff3c",
                   "sha256:74da76dccfc0a1ec831c673c983c8360ac052027206eda996623721d6d8a22db",
@@ -150,7 +141,6 @@
                   "sha256:3b5ce98a03a3336a3f32ac7a0867fbc23da702e8618bfd20d49d882d42a460f4",
                   "sha256:d3702a11723568f820ab3b0796beb5634ec3daa635040187ddc64f6e1bce71fa",
                   "sha256:97fd3010085b28c2d9c2c3d147607dcffc4b3d04826496e8c5bfeb6be653f78d",
-                  "sha256:c3fb9f8020f978f9b392709996e62e4ddb6cb19074635af3338487195b688f66",
                   "sha256:1a75404c6bc8c1369914077dc99480e73bf13a40f15fd1cd8afc792b8600adf8",
                   "sha256:d850cb45d31fe84cb50cb1fa26eb5418633aae1f0dcab8b7ebadd3bd3e340956",
                   "sha256:9c7395caebf76e15f496d9dc7690d772cb34f29d3f6626086b578565e412df51",
@@ -283,7 +273,6 @@
                   "sha256:3552f7cc9077d5831f859f6cf721d419eccc83cb381d14a7a1483512272bd586",
                   "sha256:d9c47e7088b8d279b8fd51e2274df957c3b68a265b42123ef9bbeb339d5ce3ba",
                   "sha256:4cb3bcc3e5d2e9d8820960bd9aa8fdc5bfc0d53a5f5da0a5fd9a8090b3e86150",
-                  "sha256:a1a23b14376984f2b7a3f5800e57762c802beff55c75eb0cc560550d8b65ced7",
                   "sha256:358ba60af99b59ff760c1091393be2b8b39354c150f4e1a41240c58658d2972c",
                   "sha256:42d89577a0f887c4baa162250862dea2c1830b1ced56c45ced9645ad8e2a3671",
                   "sha256:119e159428dda0e194c6428da57fae87ef75cce5c7271d347fe84283a7374c03",
@@ -4264,26 +4253,6 @@
     ],
     "build": [
       {
-        "name": "clevis",
-        "epoch": 0,
-        "version": "18",
-        "release": "102.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/clevis-18-102.el9.x86_64.rpm",
-        "checksum": "sha256:e2eee1c2bfb1986325b00ffd4955a25d0aff48e144f5d6ebaecff0eecc8d4bfd",
-        "check_gpg": true
-      },
-      {
-        "name": "clevis-luks",
-        "epoch": 0,
-        "version": "18",
-        "release": "102.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/clevis-luks-18-102.el9.x86_64.rpm",
-        "checksum": "sha256:2668ea669597bf9fc36cd70f4b70c1523c4c68c6acce273223ae9f0a9b6200b7",
-        "check_gpg": true
-      },
-      {
         "name": "gawk-all-langpacks",
         "epoch": 0,
         "version": "5.1.0",
@@ -4301,26 +4270,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/isomd5sum-1.2.3-14.el9.x86_64.rpm",
         "checksum": "sha256:30b5718d0b96ad56ec441e34d021ef1382cb1ef878810e350819cd2d5c4c979e",
-        "check_gpg": true
-      },
-      {
-        "name": "jose",
-        "epoch": 0,
-        "version": "11",
-        "release": "3.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/jose-11-3.el9.x86_64.rpm",
-        "checksum": "sha256:7170d6ffc37514a8e30d141dd7c39da11bcc69be660e5a10f1d1d36372c7110d",
-        "check_gpg": true
-      },
-      {
-        "name": "jq",
-        "epoch": 0,
-        "version": "1.6",
-        "release": "9.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/jq-1.6-9.el9.x86_64.rpm",
-        "checksum": "sha256:4a55f33d373bd5dcba39549832a60f29513e8fb9feab690ac47839ff41bb7b28",
         "check_gpg": true
       },
       {
@@ -4351,26 +4300,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/libisofs-1.5.4-3.el9.x86_64.rpm",
         "checksum": "sha256:d5e173429f190a280c6efaa7856b10dd929c4255b32a0d6c8c57f77063a204d6",
-        "check_gpg": true
-      },
-      {
-        "name": "libjose",
-        "epoch": 0,
-        "version": "11",
-        "release": "3.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/libjose-11-3.el9.x86_64.rpm",
-        "checksum": "sha256:98ffc16e34b5c694651838a87ddcb5727ff6e28651f4d5dc48874576ecc13ad5",
-        "check_gpg": true
-      },
-      {
-        "name": "libluksmeta",
-        "epoch": 0,
-        "version": "9",
-        "release": "12.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/libluksmeta-9-12.el9.x86_64.rpm",
-        "checksum": "sha256:ce57e00abebbf355aea1df897d91c6b4d2d24bf72344e3c5f1dddb2d08554141",
         "check_gpg": true
       },
       {
@@ -4414,16 +4343,6 @@
         "check_gpg": true
       },
       {
-        "name": "luksmeta",
-        "epoch": 0,
-        "version": "9",
-        "release": "12.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/luksmeta-9-12.el9.x86_64.rpm",
-        "checksum": "sha256:5ae5b08ac1851b0c2d7ac395a7a6f219319a5af55c59905912b8a5af14bf1549",
-        "check_gpg": true
-      },
-      {
         "name": "memstrack",
         "epoch": 0,
         "version": "0.2.3",
@@ -4431,16 +4350,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/memstrack-0.2.3-2.el9.x86_64.rpm",
         "checksum": "sha256:b237a95bcd71c749d58e65a39acab143315851b420351df92e365e1d57e8e96b",
-        "check_gpg": true
-      },
-      {
-        "name": "oniguruma",
-        "epoch": 0,
-        "version": "6.9.6",
-        "release": "1.el9.5",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/oniguruma-6.9.6-1.el9.5.x86_64.rpm",
-        "checksum": "sha256:3e34af9215b224e447ecdc197963b635844f56126dc0a879c8deebf40f22fc88",
         "check_gpg": true
       },
       {
@@ -4771,16 +4680,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/crypto-policies-20220203-1.gitf03e75e.el9.noarch.rpm",
         "checksum": "sha256:28d73d3800cb895b265bc0755c41241c593ebd7551a7da7f001f1e254b85c662",
-        "check_gpg": true
-      },
-      {
-        "name": "cryptsetup",
-        "epoch": 0,
-        "version": "2.4.3",
-        "release": "1.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/cryptsetup-2.4.3-1.el9.x86_64.rpm",
-        "checksum": "sha256:11d8d78fc86f6c409da7e46547b60a4936e2ecde580a8a4fbf938861a1e9ddf6",
         "check_gpg": true
       },
       {
@@ -5301,16 +5200,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/inih-49-5.el9.x86_64.rpm",
         "checksum": "sha256:97fd3010085b28c2d9c2c3d147607dcffc4b3d04826496e8c5bfeb6be653f78d",
-        "check_gpg": true
-      },
-      {
-        "name": "jansson",
-        "epoch": 0,
-        "version": "2.14",
-        "release": "1.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/jansson-2.14-1.el9.x86_64.rpm",
-        "checksum": "sha256:c3fb9f8020f978f9b392709996e62e4ddb6cb19074635af3338487195b688f66",
         "check_gpg": true
       },
       {
@@ -6631,16 +6520,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/tar-1.34-3.el9.x86_64.rpm",
         "checksum": "sha256:4cb3bcc3e5d2e9d8820960bd9aa8fdc5bfc0d53a5f5da0a5fd9a8090b3e86150",
-        "check_gpg": true
-      },
-      {
-        "name": "tpm2-tools",
-        "epoch": 0,
-        "version": "5.0",
-        "release": "10.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/tpm2-tools-5.0-10.el9.x86_64.rpm",
-        "checksum": "sha256:a1a23b14376984f2b7a3f5800e57762c802beff55c75eb0cc560550d8b65ced7",
         "check_gpg": true
       },
       {

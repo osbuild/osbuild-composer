@@ -79,16 +79,29 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{
-				"clevis",
-				"clevis-luks",
-				"cryptsetup",
 				"rpm-ostree",
 			},
 		})
 }
 
+func edgeEncryptionBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"clevis",
+			"clevis-luks",
+			"cryptsetup",
+		},
+	}
+}
+
+func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return edgeInstallerBuildPackageSet(t).Append(
+		edgeEncryptionBuildPackageSet(t),
+	)
+}
+
 func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeBuildPackageSet(t).Append(
+	return edgeBuildPackageSet(t).Append(edgeEncryptionBuildPackageSet(t)).Append(
 		bootPackageSet(t),
 	)
 }
