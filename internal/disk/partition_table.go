@@ -26,7 +26,10 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 			resizeEntityBranch(path, size)
 		} else {
 			if lvmify {
-				newPT.ensureLVM()
+				err := newPT.ensureLVM()
+				if err != nil {
+					return nil, err
+				}
 			}
 			if err := newPT.createFilesystem(mnt.Mountpoint, size); err != nil {
 				return nil, err
@@ -458,17 +461,24 @@ func (pt *PartitionTable) GenUUID(rng *rand.Rand) {
 
 // ensureLVM will ensure that the root partition is on an LVM volume, i.e. if
 // it currently is not, it will wrap it in one
-func (pt *PartitionTable) ensureLVM() {
+func (pt *PartitionTable) ensureLVM() error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
 		panic("no root mountpoint for PartitionTable")
 	}
 
+	// we need a /boot partition to boot LVM, ensure one exists
+	bootPath := entityPath(pt, "/boot")
+	if bootPath == nil {
+		_, err := pt.CreateMountpoint("/boot", 512*1024*1024)
+		return err
+	}
+
 	parent := rootPath[1] // NB: entityPath has reversed order
 
 	if _, ok := parent.(*LVMLogicalVolume); ok {
-		return
+		return nil
 	} else if part, ok := parent.(*Partition); ok {
 		filesystem := part.Payload
 
@@ -496,4 +506,6 @@ func (pt *PartitionTable) ensureLVM() {
 	} else {
 		panic("unsupported parent for LVM")
 	}
+
+	return nil
 }

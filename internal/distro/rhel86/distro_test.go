@@ -704,13 +704,10 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
-			layout := imgType.PartitionType()
-			if layout == "" || strings.HasPrefix(imgTypeName, "edge-") {
+			if strings.HasPrefix(imgTypeName, "edge-") {
 				continue
-			} else if layout == "gpt" {
-				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, "failed creating volume: maximum number of partitions reached (4)")
+				assert.NoError(t, err)
 			}
 		}
 	}
