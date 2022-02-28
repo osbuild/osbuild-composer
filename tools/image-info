@@ -12,6 +12,7 @@ import json
 import os
 import platform
 import re
+import stat
 import subprocess
 import sys
 import time
@@ -19,6 +20,7 @@ import tempfile
 import xml.etree.ElementTree
 import yaml
 
+from collections import OrderedDict
 from typing import Dict
 
 from osbuild import loop
@@ -108,9 +110,11 @@ def mount_at(device, mountpoint, options=[], extra=[]):
 
 
 @contextlib.contextmanager
-def mount(device):
+def mount(device, options=None):
+    options = options or []
+    opts = ",".join(["ro"] + options)
     with tempfile.TemporaryDirectory() as mountpoint:
-        subprocess.run(["mount", "-o", "ro", device, mountpoint], check=True)
+        subprocess.run(["mount", "-o", opts, device, mountpoint], check=True)
         try:
             yield mountpoint
         finally:
@@ -188,7 +192,8 @@ def read_partition(device, partition):
     Returns: the 'partition' dictionary provided as an argument, extended with
     'label', 'uuid' and 'fstype' keys and their values.
     """
-    res = subprocess.run(["blkid", "--output", "export", device],
+    res = subprocess.run(["blkid", "-c", "/dev/null", "--output", "export",
+                          device],
                          check=False, encoding="utf-8",
                          stdout=subprocess.PIPE)
     if res.returncode == 0:
@@ -2377,6 +2382,111 @@ def append_filesystem(report, tree, *, is_ostree=False):
         print("EFI partition", file=sys.stderr)
 
 
+def volume_group_for_device(device: str) -> str:
+    # Find the volume group that belongs to the device specified via `parent`
+    vg_name = None
+    count = 0
+
+    cmd = [
+        "pvdisplay", "-C", "--noheadings", "-o", "vg_name", device
+    ]
+
+    while True:
+        res = subprocess.run(cmd,
+                             check=False,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             encoding="UTF-8")
+
+        if res.returncode == 5:
+            if count == 10:
+                raise RuntimeError("Could not find parent device")
+            time.sleep(1*count)
+            count += 1
+            continue
+
+        if res.returncode != 0:
+             raise RuntimeError(res.stderr.strip())
+
+        vg_name = res.stdout.strip()
+        if vg_name:
+            break
+
+    return vg_name
+
+
+def ensure_device_file(path: str, major: int, minor: int):
+    """Ensure the device file with the given major, minor exists"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if not os.path.exists(path):
+        os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
+
+
+@contextlib.contextmanager
+def discover_lvm(dev) -> Dict:
+    # find the volume group name for the device file
+    vg_name = volume_group_for_device(dev)
+
+    # activate it
+    r = subprocess.run(["vgchange", "-ay", vg_name],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.PIPE,
+                       check=False)
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr.strip())
+
+    try:
+        # Find all logical volumes in the volume group
+        cmd = [
+            "lvdisplay", "-C", "--noheadings",
+            "-o", "lv_name,path,lv_kernel_major,lv_kernel_minor",
+            "--separator", ";",
+            vg_name
+        ]
+
+        res = subprocess.run(cmd,
+                             check=False,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             encoding="UTF-8")
+
+        if res.returncode != 0:
+            raise RuntimeError(res.stderr.strip())
+
+        data = res.stdout.strip()
+        parsed = list(map(lambda l: l.split(";"), data.split("\n")))
+        volumes = OrderedDict()
+
+        for vol in parsed:
+            vol = list(map(lambda v: v.strip(), vol))
+            assert len(vol) == 4
+            name, voldev, major, minor = vol
+            info = {
+                "device": voldev
+            }
+            ensure_device_file(voldev, int(major), int(minor))
+
+            read_partition(voldev, info)
+            volumes[name] = info
+            if name.startswith("root"):
+                volumes.move_to_end(name, last=False)
+        res = {
+            "lvm": True,
+            "lvm.vg": vg_name,
+            "lvm.volumes": volumes
+        }
+
+        yield res
+
+    finally:
+        r = subprocess.run(["vgchange", "-an", vg_name],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.PIPE,
+                            check=False)
+        if r.returncode != 0:
+            raise RuntimeError(r.stderr.strip())
+
+
 def partition_is_lvm(part: Dict) -> bool:
     return part["type"].upper() in ["E6D6D379-F507-44C2-A23C-238F2A3DF928", "8E"]
 
@@ -2384,7 +2494,6 @@ def partition_is_lvm(part: Dict) -> bool:
 def append_partitions(report, device, loctl):
     partitions = report["partitions"]
 
-    lvm = False
     with contextlib.ExitStack() as cm:
         # open each partition as a loop device
         filesystems = {}
@@ -2393,17 +2502,32 @@ def append_partitions(report, device, loctl):
             dev = cm.enter_context(loop_open(loctl, device, offset=start, size=size))
             read_partition(dev, part)
             if partition_is_lvm(part):
-                lvm = True
+                lvm = cm.enter_context(discover_lvm(dev))
+                for vol in lvm["lvm.volumes"].values():
+                    if vol["fstype"]:
+                        mntopts = []
+                        # we cannot recover since the underlying loopback device is mounted
+                        # read-only but since we are using the it through the device mapper
+                        # the fact might not be communicated and the kernel attempt a to
+                        # a recovery of the filesystem, which will lead to a kernel panic
+                        if vol["fstype"] in ("ext4", "ext3", "xfs"):
+                            mntopts = ["norecovery"]
+                        filesystems[vol["uuid"].upper()] = {
+                            "device": vol["device"],
+                            "mntops": mntopts
+                        }
+                    del vol["device"]
+                part.update(lvm)
             elif part["uuid"] and part["fstype"]:
-                filesystems[part["uuid"].upper()] = dev
-
-        if lvm:
-            return
+                filesystems[part["uuid"].upper()] = {
+                    "device": dev
+                }
 
         # find partition with fstab and read it
         fstab = []
-        for dev in filesystems.values():
-            with mount(dev) as tree:
+        for fs in filesystems.values():
+            dev, opts = fs["device"], fs.get("mntops")
+            with mount(dev, opts) as tree:
                 if os.path.exists(f"{tree}/etc/fstab"):
                     fstab.extend(read_fstab(tree))
                     break
@@ -2414,16 +2538,17 @@ def append_partitions(report, device, loctl):
         root_tree = ""
         for n, fstab_entry in enumerate(fstab):
             part_uuid = fstab_entry[0].split("=")[1].upper()
-            part_device = filesystems[part_uuid]
+            part_device = filesystems[part_uuid]["device"]
             part_mountpoint = fstab_entry[1]
             part_fstype = fstab_entry[2]
             part_options = fstab_entry[3].split(",")
+            part_options += filesystems[part_uuid].get("mntops", [])
 
             # the first mount point should be root
             if n == 0:
                 if part_mountpoint != "/":
                     raise RuntimeError("The first mountpoint in sorted fstab entries is not '/'")
-                root_tree = cm.enter_context(mount(part_device))
+                root_tree = cm.enter_context(mount(part_device, part_options))
                 continue
 
             cm.enter_context(mount_at(part_device, f"{root_tree}{part_mountpoint}", options=part_options, extra=["-t", part_fstype]))
