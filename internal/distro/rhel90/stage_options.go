@@ -189,27 +189,6 @@ func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osb
 	}
 }
 
-func tarKickstartStageOptions(tarURL string) *osbuild.KickstartStageOptions {
-	return &osbuild.KickstartStageOptions{
-		Path: kspath,
-		LiveIMG: &osbuild.LiveIMG{
-			URL: tarURL,
-		},
-	}
-}
-
-func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
-	return &osbuild.KickstartStageOptions{
-		Path: kspath,
-		OSTree: &osbuild.OSTreeOptions{
-			OSName: "rhel",
-			URL:    ostreeURL,
-			Ref:    ostreeRef,
-			GPG:    false,
-		},
-	}
-}
-
 func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
 	comprOptions := new(osbuild.FSCompressionOptions)
 	if bcj := osbuild.BCJOption(arch); bcj != "" {
