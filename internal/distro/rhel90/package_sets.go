@@ -21,6 +21,7 @@ func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
 			"glibc",
 			"lorax-templates-generic",
 			"lorax-templates-rhel",
+			"lvm2",
 			"policycoreutils",
 			"python3-iniparse",
 			"qemu-img",

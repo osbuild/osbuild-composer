@@ -101,7 +101,10 @@
                   "sha256:150048b6fdafd4271bd6badab3f8a2e56b86967266f890770eab7578289cc773",
                   "sha256:82e14607e23a2e299e4f3753caf98707f7b9650a220bc1b61620225ea4056247",
                   "sha256:91d57858ac71e60b3a6e16f0de9d98d32513a3fb46fa6e4757053fb692e848fc",
+                  "sha256:578ff455f9f95837e9b2e00153a20231ba2a682888d35933b5e8353ccaf7b41b",
+                  "sha256:b95a1fb0917485e7e9eaad6286432e14603a12e322eb639b6543031907fa858b",
                   "sha256:f924d24d0960179a856a9a173f5730f4c9033465ce0aa4e927a954fb4cc5315a",
+                  "sha256:fa8eb8281cb302c4bc75a6e86fab76ab6488e98106e34b7de2accc2bc4422c28",
                   "sha256:f10f674ba9895a8cf82fb807964230b606d05b6063842509adfa4fbf7f6f012e",
                   "sha256:122405e5eac63bc673b30192b76e339bf9866e0a41a939f42caeb452a6fee1c1",
                   "sha256:3391937c02eb0dc0fb90dffa654593b5fd696a03ba81720a7bce208f1b4eb857",
@@ -204,6 +207,8 @@
                   "sha256:625a424f04d99c0027fc250e4beb996f03775e92c6093eb337789014355a8397",
                   "sha256:97b48b7f5640880d783dbd6f4955d85e8ab135353eb92042cf23aaffafae5463",
                   "sha256:240c28bea4cbef8e6ab85f075987b2611a53f4b85ce52f8cf3429431211d3c61",
+                  "sha256:cf4069a65419cb98e8c942645bb4100c090416b03d776c82c500df81d02192c0",
+                  "sha256:111f115685a362fe475793340f42d5d58e37c8ef521baabe5cab987fbb4a2413",
                   "sha256:2c72c2152a44dc3c4e04551b131e2d0d69a302c55dfed56fcb9e9f465ecde0a1",
                   "sha256:e3373d962f3941eecefa873b080619f290c0b65510b59f24d9b4efb0a34bde76",
                   "sha256:711c6e5b128331a2358348cc2e7d5680bb32813f47d32f8ce1e1ba669a2ab52a",
@@ -682,6 +687,9 @@
           "sha256:0f8fdbac7dd06330e3d275db85af76cebc622ae9b78ed7958c6431a12456e2c8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/librepo-1.14.2-1.el9.ppc64le.rpm"
           },
+          "sha256:111f115685a362fe475793340f42d5d58e37c8ef521baabe5cab987fbb4a2413": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/lvm2-libs-2.03.14-3.el9.ppc64le.rpm"
+          },
           "sha256:11c6dfb8021d602c59cdecb9846af9a26b5b4ba10907b52e2740e86faac1e097": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/gpgme-1.15.1-5.el9.ppc64le.rpm"
           },
@@ -928,6 +936,9 @@
           "sha256:5764d64420390484b70171a1e5cd0f1fa084feca2f2e75e5026749d81a51da3e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/inih-49-5.el9.ppc64le.rpm"
           },
+          "sha256:578ff455f9f95837e9b2e00153a20231ba2a682888d35933b5e8353ccaf7b41b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-event-1.02.181-3.el9.ppc64le.rpm"
+          },
           "sha256:57dd757f5057deed9a14ca85a7496062dfc9bdc5e431c583f228f5ea5a93d302": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/grub2-ppc64le-2.06-13.el9.ppc64le.rpm"
           },
@@ -1171,6 +1182,9 @@
           "sha256:b2c28ea110c7cc5896fa5d04e41aa1ac0996409844869e33e6f48443255ac709": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-appstream-20220208/Packages/pbzip2-1.1.13-6.el9.ppc64le.rpm"
           },
+          "sha256:b95a1fb0917485e7e9eaad6286432e14603a12e322eb639b6543031907fa858b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-event-libs-1.02.181-3.el9.ppc64le.rpm"
+          },
           "sha256:ba0a878e951fd27f5de66c6a1a593a3e61efcce6aca6a5490a486a54f6240c71": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-appstream-20220208/Packages/xz-lzma-compat-5.2.5-7.el9.ppc64le.rpm"
           },
@@ -1215,6 +1229,9 @@
           },
           "sha256:cf24f1d939f9ca979eb08f1d786bea401bd544e545e2b3826a4abdee151661cb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/openssl-libs-3.0.1-5.el9.ppc64le.rpm"
+          },
+          "sha256:cf4069a65419cb98e8c942645bb4100c090416b03d776c82c500df81d02192c0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/lvm2-2.03.14-3.el9.ppc64le.rpm"
           },
           "sha256:d553941ce5927859d43e2d514332aaf9fa646e1d6b6bdc429903e2167d8ab626": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/libblkid-2.37.2-1.el9.ppc64le.rpm"
@@ -1314,6 +1331,9 @@
           },
           "sha256:f95c8e526cf25a2c790f920694c4fc5be8c6b6c6a63fb862c4430b0e9c7e6998": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-appstream-20220208/Packages/lorax-templates-generic-34.9.11-1.el9.ppc64le.rpm"
+          },
+          "sha256:fa8eb8281cb302c4bc75a6e86fab76ab6488e98106e34b7de2accc2bc4422c28": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-persistent-data-0.9.0-12.el9.ppc64le.rpm"
           },
           "sha256:fadf8a2f0fb126ec94931bd3fc213cccc7975f6ff112d2599cd1282817aaff2d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/python3-libdnf-0.65.0-2.el9.ppc64le.rpm"
@@ -2923,6 +2943,26 @@
         "check_gpg": true
       },
       {
+        "name": "device-mapper-event",
+        "epoch": 9,
+        "version": "1.02.181",
+        "release": "3.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-event-1.02.181-3.el9.ppc64le.rpm",
+        "checksum": "sha256:578ff455f9f95837e9b2e00153a20231ba2a682888d35933b5e8353ccaf7b41b",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-event-libs",
+        "epoch": 9,
+        "version": "1.02.181",
+        "release": "3.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-event-libs-1.02.181-3.el9.ppc64le.rpm",
+        "checksum": "sha256:b95a1fb0917485e7e9eaad6286432e14603a12e322eb639b6543031907fa858b",
+        "check_gpg": true
+      },
+      {
         "name": "device-mapper-libs",
         "epoch": 9,
         "version": "1.02.181",
@@ -2930,6 +2970,16 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-libs-1.02.181-3.el9.ppc64le.rpm",
         "checksum": "sha256:f924d24d0960179a856a9a173f5730f4c9033465ce0aa4e927a954fb4cc5315a",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-persistent-data",
+        "epoch": 0,
+        "version": "0.9.0",
+        "release": "12.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/device-mapper-persistent-data-0.9.0-12.el9.ppc64le.rpm",
+        "checksum": "sha256:fa8eb8281cb302c4bc75a6e86fab76ab6488e98106e34b7de2accc2bc4422c28",
         "check_gpg": true
       },
       {
@@ -3950,6 +4000,26 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/lua-libs-5.4.2-4.el9.ppc64le.rpm",
         "checksum": "sha256:240c28bea4cbef8e6ab85f075987b2611a53f4b85ce52f8cf3429431211d3c61",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2",
+        "epoch": 9,
+        "version": "2.03.14",
+        "release": "3.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/lvm2-2.03.14-3.el9.ppc64le.rpm",
+        "checksum": "sha256:cf4069a65419cb98e8c942645bb4100c090416b03d776c82c500df81d02192c0",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2-libs",
+        "epoch": 9,
+        "version": "2.03.14",
+        "release": "3.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20220208/Packages/lvm2-libs-2.03.14-3.el9.ppc64le.rpm",
+        "checksum": "sha256:111f115685a362fe475793340f42d5d58e37c8ef521baabe5cab987fbb4a2413",
         "check_gpg": true
       },
       {
