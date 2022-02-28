@@ -122,14 +122,14 @@
         device_name: /dev/vda3
       when: result_uefi.stat.exists
 
-    # for edge-simplified-installer and edge-raw-image, /sysroot is mounted at /dev/vda4, need to set device_name to /dev/vda4
+    # Check if it is raw-image or simplified-installer, the disk are encrypted, and mount point starts with /dev/mapper/luks-
     - name: check if it is simplified-installer or raw-image
-      command: df -h
-      register: result_df
+      command: findmnt -r -o SOURCE -n /sysroot
+      register: result_encrypted
     
     - set_fact:
-        device_name: /dev/vda4
-      when: "'/dev/vda4' in result_df.stdout"
+        device_name: "{{ result_encrypted.stdout }}"
+      when: "'/dev/mapper/luks-' in result_encrypted.stdout"
 
     # case: check /sysroot moutn point
     - name: check /sysroot mount point
@@ -141,8 +141,8 @@
         - assert:
             that:
               - result_sysroot_mount_point.stdout == "{{ device_name }}"
-            fail_msg: "/var does not mount on {{ device_name }}"
-            success_msg: "/var mounts on {{ device_name }}"
+            fail_msg: "/sysroot does not mount on {{ device_name }}"
+            success_msg: "/sysroot mounts on {{ device_name }}"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
