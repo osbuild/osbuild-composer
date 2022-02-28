@@ -216,7 +216,8 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge"))
+	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", ksUsers))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, false))
@@ -250,13 +251,14 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), nil, nil, "", "")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "")
 	if err != nil {
 		return nil, err
 	}
 	archName := t.arch.name
 	d := t.arch.distro
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "BaseOS"))
+	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "BaseOS", ksUsers))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, tarPayloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, t.Arch().Name(), t.Arch().Name() == "x86_64"))
@@ -907,7 +909,7 @@ func ostreeDeployPipeline(
 	return p
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string) *osbuild.Pipeline {
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, users bool) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
@@ -940,7 +942,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(users)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",
