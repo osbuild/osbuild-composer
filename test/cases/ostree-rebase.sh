@@ -1,12 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+# Get OS data.
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+
+# Get compose url if it's running on unsubscried RHEL
+if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
+    source /usr/libexec/osbuild-composer-test/define-compose-url.sh
+fi
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
-
-# Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
 
 # Colorful output.
 function greenprint {
