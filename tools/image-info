@@ -14,9 +14,12 @@ import platform
 import re
 import subprocess
 import sys
+import time
 import tempfile
 import xml.etree.ElementTree
 import yaml
+
+from typing import Dict
 
 from osbuild import loop
 
@@ -2374,33 +2377,33 @@ def append_filesystem(report, tree, *, is_ostree=False):
         print("EFI partition", file=sys.stderr)
 
 
+def partition_is_lvm(part: Dict) -> bool:
+    return part["type"].upper() in ["E6D6D379-F507-44C2-A23C-238F2A3DF928", "8E"]
+
+
 def append_partitions(report, device, loctl):
     partitions = report["partitions"]
 
     lvm = False
     with contextlib.ExitStack() as cm:
         # open each partition as a loop device
-        devices = {}
-        device_idx_by_part_uuid = {}
-        for n, part in enumerate(partitions):
+        filesystems = {}
+        for part in partitions:
             start, size = part["start"], part["size"]
             dev = cm.enter_context(loop_open(loctl, device, offset=start, size=size))
-            devices[n] = dev
             read_partition(dev, part)
-            if part["uuid"]:
-                device_idx_by_part_uuid[part["uuid"].upper()] = n
-            if part["type"] == "E6D6D379-F507-44C2-A23C-238F2A3DF928":
+            if partition_is_lvm(part):
                 lvm = True
+            elif part["uuid"] and part["fstype"]:
+                filesystems[part["uuid"].upper()] = dev
 
         if lvm:
             return
 
         # find partition with fstab and read it
         fstab = []
-        for n, part in enumerate(partitions):
-            if not part["fstype"]:
-                continue
-            with mount(devices[n]) as tree:
+        for dev in filesystems.values():
+            with mount(dev) as tree:
                 if os.path.exists(f"{tree}/etc/fstab"):
                     fstab.extend(read_fstab(tree))
                     break
@@ -2411,7 +2414,7 @@ def append_partitions(report, device, loctl):
         root_tree = ""
         for n, fstab_entry in enumerate(fstab):
             part_uuid = fstab_entry[0].split("=")[1].upper()
-            part_device = devices[device_idx_by_part_uuid[part_uuid]]
+            part_device = filesystems[part_uuid]
             part_mountpoint = fstab_entry[1]
             part_fstype = fstab_entry[2]
             part_options = fstab_entry[3].split(",")
