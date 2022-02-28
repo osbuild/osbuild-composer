@@ -124,6 +124,45 @@ var testPartitionTables = map[string]PartitionTable{
 		},
 	},
 
+	"plain-noboot": {
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
+		Partitions: []Partition{
+			{
+				Size:     1048576, // 1MB
+				Bootable: true,
+				Type:     BIOSBootPartitionGUID,
+				UUID:     BIOSBootPartitionUUID,
+			},
+			{
+				Size: 209715200, // 200 MB
+				Type: EFISystemPartitionGUID,
+				UUID: EFISystemPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "vfat",
+					UUID:         EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+			{
+				Type: FilesystemDataGUID,
+				UUID: RootPartitionUUID,
+				Payload: &Filesystem{
+					Type:         "xfs",
+					Label:        "root",
+					Mountpoint:   "/",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+		},
+	},
+
 	"luks": {
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
@@ -391,6 +430,11 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 		rootPath := entityPath(mpt, "/")
 		if rootPath == nil {
 			panic("no root mountpoint for PartitionTable")
+		}
+
+		bootPath := entityPath(mpt, "/boot")
+		if bootPath == nil {
+			panic("no boot mountpoint for PartitionTable")
 		}
 
 		parent := rootPath[1]
