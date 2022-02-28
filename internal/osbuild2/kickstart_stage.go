@@ -1,5 +1,9 @@
 package osbuild2
 
+import (
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+)
+
 type KickstartStageOptions struct {
 	// Where to place the kickstart file
 	Path string `json:"path"`
@@ -32,4 +36,49 @@ func NewKickstartStage(options *KickstartStageOptions) *Stage {
 		Type:    "org.osbuild.kickstart",
 		Options: options,
 	}
+}
+
+func NewKickstartStageOptions(
+	path string,
+	imageURL string,
+	userCustomizations []blueprint.UserCustomization,
+	groupCustomizations []blueprint.GroupCustomization,
+	ostreeURL string,
+	ostreeRef string) (*KickstartStageOptions, error) {
+
+	var users map[string]UsersStageOptionsUser
+	if usersOptions, err := NewUsersStageOptions(userCustomizations, false); err != nil {
+		return nil, err
+	} else if usersOptions != nil {
+		users = usersOptions.Users
+	}
+
+	var groups map[string]GroupsStageOptionsGroup
+	if groupsOptions := NewGroupsStageOptions(groupCustomizations); groupsOptions != nil {
+		groups = groupsOptions.Groups
+	}
+
+	var ostreeOptions *OSTreeOptions
+	if ostreeURL != "" {
+		ostreeOptions = &OSTreeOptions{
+			OSName: "rhel",
+			URL:    ostreeURL,
+			Ref:    ostreeRef,
+			GPG:    false,
+		}
+	}
+
+	var liveImg *LiveIMG
+	if imageURL != "" {
+		liveImg = &LiveIMG{
+			URL: imageURL,
+		}
+	}
+	return &KickstartStageOptions{
+		Path:    path,
+		OSTree:  ostreeOptions,
+		LiveIMG: liveImg,
+		Users:   users,
+		Groups:  groups,
+	}, nil
 }
