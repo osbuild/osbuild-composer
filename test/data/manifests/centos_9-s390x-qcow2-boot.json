@@ -1082,7 +1082,8 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "disk.img"
+                  "filename": "disk.img",
+                  "lock": true
                 }
               }
             }
@@ -1099,7 +1100,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 1024000
+                  "size": 1024000,
+                  "lock": true
                 }
               }
             }
@@ -1115,7 +1117,8 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 19945472
+                  "size": 19945472,
+                  "lock": true
                 }
               }
             }

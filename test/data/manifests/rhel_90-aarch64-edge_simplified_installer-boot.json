@@ -541,7 +541,8 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw"
+                  "filename": "image.raw",
+                  "lock": true
                 }
               }
             }
@@ -557,7 +558,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 2048,
-                  "size": 260096
+                  "size": 260096,
+                  "lock": true
                 }
               }
             }
@@ -574,7 +576,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 262144,
-                  "size": 786432
+                  "size": 786432,
+                  "lock": true
                 }
               }
             }
@@ -591,7 +594,8 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 1048576,
-                  "size": 19922911
+                  "size": 19922911,
+                  "lock": true
                 }
               }
             }
@@ -1213,7 +1217,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "images/efiboot.img",
-                  "size": 40960
+                  "size": 40960,
+                  "lock": true
                 }
               }
             }

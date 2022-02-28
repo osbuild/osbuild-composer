@@ -27,7 +27,7 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 		switch ent := e.(type) {
 		case *disk.LUKSContainer:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
 
 			// "org.osbuild.luks2.format" expects a "device" to create the VG on,
 			// thus rename the last device to "device"
@@ -56,7 +56,7 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
 
 			// "org.osbuild.lvm2.create" expects a "device" to create the VG on,
 			// thus rename the last device to "device"
@@ -95,7 +95,7 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 		switch ent := e.(type) {
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename)
+			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
 
 			// "org.osbuild.lvm2.metadata" expects a "device" to rename the VG,
 			// thus rename the last device to "device"
@@ -136,7 +136,7 @@ func deviceName(p disk.Entity) string {
 	panic(fmt.Sprintf("unsupported device type in deviceName: '%T'", p))
 }
 
-func getDevices(path []disk.Entity, filename string) (map[string]Device, string) {
+func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string) {
 	var pt *disk.PartitionTable
 
 	do := make(map[string]Device)
@@ -154,6 +154,7 @@ func getDevices(path []disk.Entity, filename string) (map[string]Device, string)
 				Start:      pt.BytesToSectors(e.Start),
 				Size:       pt.BytesToSectors(e.Size),
 				SectorSize: nil,
+				Lock:       lockLoopback,
 			}
 			name := deviceName(e.Payload)
 			do[name] = *NewLoopbackDevice(&lbopt)
