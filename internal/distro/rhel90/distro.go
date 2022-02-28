@@ -575,8 +575,11 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 			if diunSet != 1 {
 				return fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to", t.name)
 			}
-		} else if customizations != nil {
-			return fmt.Errorf("boot ISO image type %q does not support blueprint customizations", t.name)
+		} else if t.name == "edge-installer" {
+			allowed := []string{"User", "Group"}
+			if err := customizations.CheckAllowed(allowed...); err != nil {
+				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			}
 		}
 	}
 
