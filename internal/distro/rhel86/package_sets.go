@@ -73,9 +73,6 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{
 			Include: []string{
-				"clevis",
-				"clevis-luks",
-				"cryptsetup",
 				"rpm-ostree",
 			},
 			Exclude: nil,
@@ -83,7 +80,7 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeBuildPackageSet(t).Append(
+	return edgeBuildPackageSet(t).Append(edgeEncryptionBuildPackageSet(t)).Append(
 		bootPackageSet(t),
 	)
 }
@@ -170,6 +167,22 @@ func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return anacondaBuildPackageSet(t).Append(
 		edgeBuildPackageSet(t),
 	)
+}
+
+func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return edgeInstallerBuildPackageSet(t).Append(
+		edgeEncryptionBuildPackageSet(t),
+	)
+}
+
+func edgeEncryptionBuildPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"clevis",
+			"clevis-luks",
+			"cryptsetup",
+		},
+	}
 }
 
 // BOOT PACKAGE SETS

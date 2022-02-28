@@ -788,7 +788,7 @@ func newDistro(distroName string) distro.Distro {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeInstallerBuildPackageSet,
+			buildPkgsKey:     edgeSimplifiedInstallerBuildPackageSet,
 			installerPkgsKey: edgeSimplifiedInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
