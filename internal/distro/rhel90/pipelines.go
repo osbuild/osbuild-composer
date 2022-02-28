@@ -402,7 +402,7 @@ func osPipeline(t *imageType,
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
