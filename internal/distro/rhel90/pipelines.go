@@ -411,25 +411,29 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
-	}
+	if !t.bootISO {
+		// don't put users and groups in the payload of an installer
+		// add them via kickstart instead
+		if groups := c.GetGroups(); len(groups) > 0 {
+			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
+		}
 
-	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
-		return nil, err
-	} else if userOptions != nil {
-		if t.rpmOstree {
-			// for ostree, writing the key during user creation is redundant
-			// and can cause issues so create users without keys and write them
-			// on first boot
-			userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
-			if err != nil {
-				return nil, err
+		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+			return nil, err
+		} else if userOptions != nil {
+			if t.rpmOstree {
+				// for ostree, writing the key during user creation is redundant
+				// and can cause issues so create users without keys and write them
+				// on first boot
+				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
+				if err != nil {
+					return nil, err
+				}
+				p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
+				p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+			} else {
+				p.AddStage(osbuild.NewUsersStage(userOptions))
 			}
-			p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
-			p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
-		} else {
-			p.AddStage(osbuild.NewUsersStage(userOptions))
 		}
 	}
 
