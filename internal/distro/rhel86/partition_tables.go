@@ -30,6 +30,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -61,6 +62,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -84,6 +86,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Bootable: true,
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
@@ -99,6 +102,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
+				Size:     2 * 1024 * 1024 * 1024, // 2 GiB
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
@@ -124,6 +128,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -167,6 +172,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -221,6 +227,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -266,6 +273,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
+				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
