@@ -42,6 +42,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "vhd",
             "vmdk"
         ],
@@ -52,6 +53,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "tar"
         ],
         "ppc64le": [
@@ -158,6 +160,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "vhd",
             "vmdk"
         ],
@@ -169,6 +172,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "tar"
         ],
         "ppc64le": [
@@ -222,6 +226,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "openstack",
             "qcow2",
             "tar",
@@ -234,6 +239,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "openstack",
             "qcow2",
             "tar"
@@ -256,6 +262,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "vhd",
             "vmdk"
         ],
@@ -266,6 +273,7 @@
             "edge-commit",
             "edge-container",
             "image-installer",
+            "edge-simplified-installer",
             "tar"
         ],
         "ppc64le": [
