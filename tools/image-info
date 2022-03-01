@@ -554,6 +554,24 @@ def read_default_target(tree):
     return subprocess_check_output(["systemctl", f"--root={tree}", "get-default"]).rstrip()
 
 
+def read_firewall_default_zone(tree):
+    """
+    Read the name of the default firewall zone
+
+    Returns: a string with the zone name. If the firewall configuration doesn't
+    exist, an empty string is returned.
+
+    An example return value:
+    "trusted"
+    """
+    try:
+        with open(f"{tree}/etc/firewalld/firewalld.conf") as f:
+            conf = parse_environment_vars(f.read())
+            return conf["DefaultZone"]
+    except FileNotFoundError:
+        return ""
+
+
 def read_firewall_zone(tree):
     """
     Read enabled services from the configuration of the default firewall zone.
@@ -568,11 +586,8 @@ def read_firewall_zone(tree):
         "cockpit"
     ]
     """
-    try:
-        with open(f"{tree}/etc/firewalld/firewalld.conf") as f:
-            conf = parse_environment_vars(f.read())
-            default = conf["DefaultZone"]
-    except FileNotFoundError:
+    default = read_firewall_default_zone(tree)
+    if default == "":
         default = "public"
 
     r = []
@@ -2272,6 +2287,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
 
         with contextlib.suppress(FileNotFoundError):
             report["firewall-enabled"] = read_firewall_zone(tree)
+
+        firewall_default_zone = read_firewall_default_zone(tree)
+        if firewall_default_zone:
+            report["firewall-default-zone"] = firewall_default_zone
 
         fstab = read_fstab(tree)
         if fstab:
