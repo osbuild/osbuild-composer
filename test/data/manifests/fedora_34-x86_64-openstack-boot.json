@@ -9805,6 +9805,7 @@
         }
       }
     },
+    "firewall-default-zone": "public",
     "firewall-enabled": [
       "ssh",
       "mdns",

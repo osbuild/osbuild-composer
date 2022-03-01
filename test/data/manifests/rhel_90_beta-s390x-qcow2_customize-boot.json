@@ -13014,6 +13014,7 @@
         }
       }
     },
+    "firewall-default-zone": "public",
     "firewall-enabled": [
       "ssh",
       "dhcpv6-client",
