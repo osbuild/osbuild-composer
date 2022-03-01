@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
@@ -14,9 +13,9 @@ type Server struct {
 	v2 *v2.Server
 }
 
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry, awsBucket string) *Server {
+func NewServer(workers *worker.Server, distros *distroregistry.Registry, awsBucket string) *Server {
 	server := &Server{
-		v2: v2.NewServer(workers, rpmMetadata, distros, awsBucket),
+		v2: v2.NewServer(workers, distros, awsBucket),
 	}
 	return server
 }

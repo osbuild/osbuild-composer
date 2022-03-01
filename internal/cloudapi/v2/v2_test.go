@@ -31,7 +31,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	v2Server := v2.NewServer(rpmFixture.Workers, rpm, distros, "image-builder.service")
+	v2Server := v2.NewServer(rpmFixture.Workers, distros, "image-builder.service")
 	require.NotNil(t, v2Server)
 
 	// start a routine which just completes depsolve jobs
