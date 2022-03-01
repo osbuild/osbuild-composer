@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
-	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -23,28 +24,28 @@ import (
 )
 
 func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.CancelFunc) {
-	rpmFixture := rpmmd_mock.BaseFixture(dir)
-	rpm := rpmmd_mock.NewRPMMDMock(rpmFixture)
-	require.NotNil(t, rpm)
+	q, err := fsjobqueue.New(dir)
+	require.NoError(t, err)
+	workerServer := worker.NewServer(nil, q, "", time.Duration(0), "/api/worker/v1")
 
 	distros, err := distro_mock.NewDefaultRegistry()
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	v2Server := v2.NewServer(rpmFixture.Workers, distros, "image-builder.service")
+	v2Server := v2.NewServer(workerServer, distros, "image-builder.service")
 	require.NotNil(t, v2Server)
 
 	// start a routine which just completes depsolve jobs
 	depsolveContext, cancel := context.WithCancel(context.Background())
 	go func() {
 		for {
-			_, token, _, _, _, err := rpmFixture.Workers.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"})
+			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"})
 			if err != nil {
 				continue
 			}
 			rawMsg, err := json.Marshal(&worker.DepsolveJobResult{PackageSpecs: map[string][]rpmmd.PackageSpec{"build": []rpmmd.PackageSpec{rpmmd.PackageSpec{Name: "pkg1"}}}, Error: "", ErrorType: worker.ErrorType("")})
 			require.NoError(t, err)
-			err = rpmFixture.Workers.FinishJob(token, rawMsg)
+			err = workerServer.FinishJob(token, rawMsg)
 			if err != nil {
 				return
 			}
@@ -58,7 +59,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 		}
 	}()
 
-	return v2Server, rpmFixture.Workers, cancel
+	return v2Server, workerServer, cancel
 }
 
 func TestUnknownRoute(t *testing.T) {
