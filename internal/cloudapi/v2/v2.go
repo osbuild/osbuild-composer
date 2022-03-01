@@ -34,10 +34,9 @@ import (
 
 // Server represents the state of the cloud Server
 type Server struct {
-	workers     *worker.Server
-	rpmMetadata rpmmd.RPMMD
-	distros     *distroregistry.Registry
-	awsBucket   string
+	workers   *worker.Server
+	distros   *distroregistry.Registry
+	awsBucket string
 }
 
 type apiHandlers struct {
@@ -46,12 +45,11 @@ type apiHandlers struct {
 
 type binder struct{}
 
-func NewServer(workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry, bucket string) *Server {
+func NewServer(workers *worker.Server, distros *distroregistry.Registry, bucket string) *Server {
 	server := &Server{
-		workers:     workers,
-		rpmMetadata: rpmMetadata,
-		distros:     distros,
-		awsBucket:   bucket,
+		workers:   workers,
+		distros:   distros,
+		awsBucket: bucket,
 	}
 	return server
 }
