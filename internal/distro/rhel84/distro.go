@@ -1576,6 +1576,23 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		partitionTableGenerator: defaultPartitionTable,
 	}
 
+	gceRhuiImgType := imageTypeS2{
+		name:     "gce-rhui",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]rpmmd.PackageSet{
+			"packages": getGceRhuiPackageSet(),
+		},
+		kernelOptions:           "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		bootable:                true,
+		defaultSize:             20 * GigaByte,
+		pipelines:               gceRhuiPipelines,
+		buildPipelines:          []string{"build"},
+		payloadPipelines:        []string{"os", "image", "archive"},
+		exports:                 []string{"archive"},
+		partitionTableGenerator: defaultPartitionTable,
+	}
+
 	x8664.addImageTypes(
 		amiImgType,
 		qcow2ImageType,
@@ -1585,7 +1602,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		vmdkImgType,
 	)
 
-	x8664.addS2ImageTypes(gceImgType)
+	x8664.addS2ImageTypes(gceImgType, gceRhuiImgType)
 
 	if !isCentos {
 		x8664.addImageTypes(edgeImgTypeX86_64)
