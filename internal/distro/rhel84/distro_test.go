@@ -83,6 +83,12 @@ func TestFilenameFromType(t *testing.T) {
 			want1: "application/gzip",
 		},
 		{
+			name:  "gce-rhui",
+			args:  args{"gce-rhui"},
+			want:  "image.tar.gz",
+			want1: "application/gzip",
+		},
+		{
 			name:    "invalid-output-type",
 			args:    args{"foobar"},
 			wantErr: true,
@@ -475,6 +481,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"vhd",
 				"vmdk",
 				"gce",
+				"gce-rhui",
 			},
 			rhelAdditionalImageTypes: []string{"rhel-edge-commit", "rhel-edge-container", "rhel-edge-installer"},
 		},

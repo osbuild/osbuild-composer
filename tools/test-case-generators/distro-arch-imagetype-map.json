@@ -96,6 +96,7 @@
         "x86_64": [
             "ami",
             "gce",
+            "gce-rhui",
             "openstack",
             "tar",
             "qcow2",
