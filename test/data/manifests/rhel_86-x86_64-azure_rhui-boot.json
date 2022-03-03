@@ -1255,10 +1255,6 @@
             }
           },
           {
-            "type": "org.osbuild.authconfig",
-            "options": {}
-          },
-          {
             "type": "org.osbuild.pwquality.conf",
             "options": {
               "config": {
