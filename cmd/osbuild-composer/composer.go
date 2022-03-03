@@ -54,10 +54,13 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		cacheDir: cacheDir,
 	}
 
+	workerConfig := worker.Config{
+		BasePath: config.Worker.BasePath,
+	}
+
 	var err error
-	artifactsDir := ""
 	if config.Worker.EnableArtifacts {
-		artifactsDir, err = c.ensureStateDirectory("artifacts", 0755)
+		workerConfig.ArtifactsDir, err = c.ensureStateDirectory("artifacts", 0755)
 		if err != nil {
 			return nil, err
 		}
@@ -98,12 +101,12 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		}
 	}
 
-	requestJobTimeout, err := time.ParseDuration(config.Worker.RequestJobTimeout)
+	workerConfig.RequestJobTimeout, err = time.ParseDuration(config.Worker.RequestJobTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse request job timeout: %v", err)
 	}
 
-	c.workers = worker.NewServer(c.logger, jobs, artifactsDir, requestJobTimeout, config.Worker.BasePath)
+	c.workers = worker.NewServer(c.logger, jobs, workerConfig)
 
 	return &c, nil
 }
@@ -121,8 +124,10 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 
 func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
 	config := v2.ServerConfig{
-		AWSBucket: c.config.Koji.AWS.Bucket,
+		AWSBucket:            c.config.Koji.AWS.Bucket,
+		TenantProviderFields: c.config.CloudAPI.JWT.TenantProviderFields,
 	}
+
 	c.api = cloudapi.NewServer(c.workers, c.distros, config)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 

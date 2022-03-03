@@ -28,10 +28,9 @@ import (
 )
 
 type Server struct {
-	jobs              jobqueue.JobQueue
-	logger            *log.Logger
-	artifactsDir      string
-	requestJobTimeout time.Duration
+	jobs   jobqueue.JobQueue
+	logger *log.Logger
+	config Config
 }
 
 type JobStatus struct {
@@ -45,15 +44,20 @@ var ErrInvalidToken = errors.New("token does not exist")
 var ErrJobNotRunning = errors.New("job isn't running")
 var ErrInvalidJobType = errors.New("job has invalid type")
 
-func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, artifactsDir string, requestJobTimeout time.Duration, basePath string) *Server {
+type Config struct {
+	ArtifactsDir      string
+	RequestJobTimeout time.Duration
+	BasePath          string
+}
+
+func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Server {
 	s := &Server{
-		jobs:              jobs,
-		logger:            logger,
-		artifactsDir:      artifactsDir,
-		requestJobTimeout: requestJobTimeout,
+		jobs:   jobs,
+		logger: logger,
+		config: config,
 	}
 
-	api.BasePath = basePath
+	api.BasePath = config.BasePath
 
 	go s.WatchHeartbeats()
 	return s
@@ -344,7 +348,7 @@ func (s *Server) Cancel(id uuid.UUID) error {
 // Provides access to artifacts of a job. Returns an io.Reader for the artifact
 // and the artifact's size.
 func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error) {
-	if s.artifactsDir == "" {
+	if s.config.ArtifactsDir == "" {
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
@@ -357,7 +361,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, fmt.Errorf("Cannot access artifacts before job is finished: %s", id)
 	}
 
-	p := path.Join(s.artifactsDir, id.String(), name)
+	p := path.Join(s.config.ArtifactsDir, id.String(), name)
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Error accessing artifact %s for job %s: %v", name, id, err)
@@ -373,7 +377,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 
 // Deletes all artifacts for job `id`.
 func (s *Server) DeleteArtifacts(id uuid.UUID) error {
-	if s.artifactsDir == "" {
+	if s.config.ArtifactsDir == "" {
 		return errors.New("Artifacts not enabled")
 	}
 
@@ -386,7 +390,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return fmt.Errorf("Cannot delete artifacts before job is finished: %s", id)
 	}
 
-	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
+	return os.RemoveAll(path.Join(s.config.ArtifactsDir, id.String()))
 }
 
 func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
@@ -415,8 +419,8 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 
 	dequeueCtx := ctx
 	var cancel context.CancelFunc
-	if s.requestJobTimeout != 0 {
-		dequeueCtx, cancel = context.WithTimeout(ctx, s.requestJobTimeout)
+	if s.config.RequestJobTimeout != 0 {
+		dequeueCtx, cancel = context.WithTimeout(ctx, s.config.RequestJobTimeout)
 		defer cancel()
 	}
 
@@ -444,8 +448,8 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		dynamicArgs = append(dynamicArgs, result)
 	}
 
-	if s.artifactsDir != "" {
-		err = os.MkdirAll(path.Join(s.artifactsDir, "tmp", token.String()), 0700)
+	if s.config.ArtifactsDir != "" {
+		err = os.MkdirAll(path.Join(s.config.ArtifactsDir, "tmp", token.String()), 0700)
 		if err != nil {
 			return
 		}
@@ -493,8 +497,8 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	// Move artifacts from the temporary location to the final job
 	// location. Log any errors, but do not treat them as fatal. The job is
 	// already finished.
-	if s.artifactsDir != "" {
-		err := os.Rename(path.Join(s.artifactsDir, "tmp", token.String()), path.Join(s.artifactsDir, jobId.String()))
+	if s.config.ArtifactsDir != "" {
+		err := os.Rename(path.Join(s.config.ArtifactsDir, "tmp", token.String()), path.Join(s.config.ArtifactsDir, jobId.String()))
 		if err != nil {
 			logrus.Errorf("Error moving artifacts for job %s: %v", jobId, err)
 		}
@@ -672,7 +676,7 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 
 	request := ctx.Request()
 
-	if h.server.artifactsDir == "" {
+	if h.server.config.ArtifactsDir == "" {
 		_, err := io.Copy(ioutil.Discard, request.Body)
 		if err != nil {
 			return api.HTTPErrorWithInternal(api.ErrorDiscardingArtifact, err)
@@ -680,7 +684,7 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 		return ctx.NoContent(http.StatusOK)
 	}
 
-	f, err := os.Create(path.Join(h.server.artifactsDir, "tmp", token.String(), name))
+	f, err := os.Create(path.Join(h.server.config.ArtifactsDir, "tmp", token.String(), name))
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorDiscardingArtifact, err)
 	}

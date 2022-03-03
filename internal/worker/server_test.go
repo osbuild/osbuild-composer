@@ -30,7 +30,12 @@ func newTestServer(t *testing.T, tempdir string, jobRequestTimeout time.Duration
 	if err != nil {
 		t.Fatalf("error creating fsjobqueue: %v", err)
 	}
-	return worker.NewServer(nil, q, "", jobRequestTimeout, basePath)
+
+	config := worker.Config{
+		RequestJobTimeout: jobRequestTimeout,
+		BasePath:          basePath,
+	}
+	return worker.NewServer(nil, q, config)
 }
 
 // Ensure that the status request returns OK.
@@ -326,7 +331,11 @@ func TestOAuth(t *testing.T) {
 
 	q, err := fsjobqueue.New(tempdir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, tempdir, time.Duration(0), "/api/image-builder-worker/v1")
+	config := worker.Config{
+		ArtifactsDir: tempdir,
+		BasePath:     "/api/image-builder-worker/v1",
+	}
+	workerServer := worker.NewServer(nil, q, config)
 	handler := workerServer.Handler()
 
 	workSrv := httptest.NewServer(handler)

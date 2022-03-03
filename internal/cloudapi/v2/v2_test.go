@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +25,7 @@ import (
 func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, "", time.Duration(0), "/api/worker/v1")
+	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1"})
 
 	distros, err := distro_mock.NewDefaultRegistry()
 	require.NoError(t, err)
