@@ -103,14 +103,34 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 	}
 
 	oneargs := argument{7, "🐠"}
-	one := pushTestJob(t, q, "fish", oneargs, nil, "")
-
-	twoargs := argument{42, "🐙"}
-	two := pushTestJob(t, q, "octopus", twoargs, nil, "")
-
 	var parsedArgs argument
 
-	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+	one := pushTestJob(t, q, "fish", oneargs, nil, "toucan")
+
+	// Read job params before Dequeue
+	jtype, jargs, jdeps, jchan, err := q.Job(one)
+	require.NoError(t, err)
+	err = json.Unmarshal(jargs, &parsedArgs)
+	require.NoError(t, err)
+	require.Equal(t, oneargs, parsedArgs)
+	require.Empty(t, jdeps)
+	require.Equal(t, "toucan", jchan)
+	require.Equal(t, "fish", jtype)
+
+	twoargs := argument{42, "🐙"}
+	two := pushTestJob(t, q, "octopus", twoargs, nil, "kingfisher")
+
+	// Read job params before Dequeue
+	jtype, jargs, jdeps, jchan, err = q.Job(two)
+	require.NoError(t, err)
+	err = json.Unmarshal(jargs, &parsedArgs)
+	require.NoError(t, err)
+	require.Equal(t, twoargs, parsedArgs)
+	require.Empty(t, jdeps)
+	require.Equal(t, "kingfisher", jchan)
+	require.Equal(t, "octopus", jtype)
+
+	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{"kingfisher"})
 	require.NoError(t, err)
 	require.Equal(t, two, id)
 	require.NotEmpty(t, tok)
@@ -121,13 +141,14 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, twoargs, parsedArgs)
 
 	// Read job params after Dequeue
-	jtype, jargs, jdeps, _, err := q.Job(id)
+	jtype, jargs, jdeps, jchan, err = q.Job(id)
 	require.NoError(t, err)
 	require.Equal(t, args, jargs)
 	require.Equal(t, deps, jdeps)
+	require.Equal(t, "kingfisher", jchan)
 	require.Equal(t, typ, jtype)
 
-	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"}, []string{""})
+	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"}, []string{"toucan"})
 	require.NoError(t, err)
 	require.Equal(t, one, id)
 	require.NotEmpty(t, tok)
@@ -137,10 +158,11 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.Equal(t, oneargs, parsedArgs)
 
-	jtype, jargs, jdeps, _, err = q.Job(id)
+	jtype, jargs, jdeps, jchan, err = q.Job(id)
 	require.NoError(t, err)
 	require.Equal(t, args, jargs)
 	require.Equal(t, deps, jdeps)
+	require.Equal(t, "toucan", jchan)
 	require.Equal(t, typ, jtype)
 
 	_, _, _, _, err = q.Job(uuid.New())
